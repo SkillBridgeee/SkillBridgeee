@@ -1,12 +1,12 @@
-# 🎓 SkillSwap
+# 🎓 SkillBridge
 
-**SkillSwap** is a peer-to-peer learning marketplace that connects students who want to learn with other students who can teach.  
+**SkillBridge** is a peer-to-peer learning marketplace that connects students who want to learn with other students who can teach.  
 
 Our mission is to make learning **affordable, flexible, and community-driven** by leveraging the skills already available within the student community.  
 
 Many students struggle to afford professional tutoring, while others want to earn money or gain experience by teaching what they know.  
 
-With **SkillSwap**:
+With **SkillBridge**:
 - Learners get affordable help in both academics and hobbies.  
 - Tutors earn extra income and experience by sharing their skills.  
 - The student community becomes a self-sustaining support network.  
