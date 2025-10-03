@@ -40,10 +40,19 @@ With **SkillBridge**:
 - ✅ Available offline: profile, saved tutors, booked lessons  
 - 🔄 Online required: new tutor listings, updated ratings, personalized recommendations
 
-
   
 
 ## 🔒 Security
 - Accounts managed with **Firebase Authentication**  
 - Role-based permissions (Learner / Tutor)  
-- Data stored securely in **Cloud Firestore** with strict access rules  
+- Data stored securely in **Cloud Firestore** with strict access rules
+
+
+## 🎨 Design (Figma)  
+We use **Figma** to create mockups and track design work.  
+
+- 🔗 [SkillSwap Mockup on Figma](https://www.figma.com/design/KLu1v4Q1ahcIgpufrbxQCV/SkillBridge-mockup?node-id=0-1&t=MaZllQ2pNaWYwCoW-1)  
+- ✅ All team members have **edit access**.  
+- 👩‍💻 **Dev Mode** is enabled so developers can inspect styles and assets.  
+- 🌍 File is set to **public view** so course staff can access it.  
+
