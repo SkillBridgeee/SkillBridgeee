@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-    alias(libs.plugins.jetbrainsKotlinPluginCompose)
     alias(libs.plugins.ktfmt)
     alias(libs.plugins.sonar)
     id("jacoco")
@@ -9,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.github.skillbridge"
+    namespace = "com.android.sample"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.github.skillbridge"
+        applicationId = "com.android.sample"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
@@ -48,6 +47,9 @@ android {
         compose = true
     }
 
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.1"
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -120,7 +122,7 @@ dependencies {
     testImplementation(libs.junit)
     globalTestImplementation(libs.androidx.junit)
     globalTestImplementation(libs.androidx.espresso.core)
-    implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
 
     // Firebase
     implementation(libs.firebase.database.ktx)
