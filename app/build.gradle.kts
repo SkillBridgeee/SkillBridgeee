@@ -93,9 +93,9 @@ android {
 
 sonar {
     properties {
-        property("sonar.projectKey", "SkillBridgeee_SkillBridgeee")
+        property("sonar.projectKey", "skilbridge")
         property("sonar.projectName", "SkillBridgeee")
-        property("sonar.organization", "SkillBridgeee")
+        property("sonar.organization", "skilbridge")
         property("sonar.host.url", "https://sonarcloud.io")
         // Comma-separated paths to the various directories containing the *.xml JUnit report files. Each path may be absolute or relative to the project base directory.
         property("sonar.junit.reportPaths", "${project.layout.buildDirectory.get()}/test-results/testDebugUnitTest/")
