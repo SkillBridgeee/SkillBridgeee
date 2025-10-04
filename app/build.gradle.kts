@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.github.skillshare"
+    namespace = "com.github.skillbridge"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.github.skillshare"
+        applicationId = "com.github.skillbridge"
         minSdk = 28
         targetSdk = 34
         versionCode = 1
