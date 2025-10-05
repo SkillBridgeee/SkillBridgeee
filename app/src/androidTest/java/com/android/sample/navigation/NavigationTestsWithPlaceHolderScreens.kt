@@ -111,6 +111,7 @@ class NavigationTestsWithPlaceHolderScreens {
     composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
   }
 
+
   @Test
   fun back_button_navigation_from_settings_multiple_times() {
     // Navigate to settings
@@ -167,4 +168,5 @@ class NavigationTestsWithPlaceHolderScreens {
     // Should end up on Home
     composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
   }
+
 }
