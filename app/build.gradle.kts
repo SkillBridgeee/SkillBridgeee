@@ -122,7 +122,6 @@ dependencies {
     testImplementation(libs.junit)
     globalTestImplementation(libs.androidx.junit)
     globalTestImplementation(libs.androidx.espresso.core)
-    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
 
     // Firebase
     implementation(libs.firebase.database.ktx)
