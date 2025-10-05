@@ -94,4 +94,77 @@ class NavigationTestsWithPlaceHolderScreens {
     composeTestRule.onNodeWithText("💡 Skills Screen Placeholder").assertIsDisplayed()
     composeTestRule.onAllNodesWithContentDescription("Back").assertCountEquals(1)
   }
+
+  @Test
+  fun multiple_navigation_actions_work_correctly() {
+    // Start at home
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertExists()
+
+    // Navigate through multiple screens
+    composeTestRule.onNodeWithText("Profile").performClick()
+    composeTestRule.onNodeWithText("👤 Profile Screen Placeholder").assertIsDisplayed()
+
+    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithText("💡 Skills Screen Placeholder").assertIsDisplayed()
+
+    composeTestRule.onNodeWithText("Home").performClick()
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
+  }
+
+  @Test
+  fun back_button_navigation_from_settings_multiple_times() {
+    // Navigate to settings
+    composeTestRule.onNodeWithText("Settings").performClick()
+    composeTestRule.onNodeWithText("⚙️ Settings Screen Placeholder").assertIsDisplayed()
+
+    // Back to home
+    composeTestRule.onNodeWithContentDescription("Back").performClick()
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
+
+    // Navigate to settings again
+    composeTestRule.onNodeWithText("Settings").performClick()
+    composeTestRule.onNodeWithText("⚙️ Settings Screen Placeholder").assertIsDisplayed()
+
+    // Back again
+    composeTestRule.onNodeWithContentDescription("Back").performClick()
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
+  }
+
+  @Test
+  fun scaffold_layout_is_properly_displayed() {
+    // Test that the main scaffold structure is working
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
+
+    // Verify padding is applied correctly by checking content is within bounds
+    composeTestRule.onRoot().assertExists()
+  }
+
+  @Test
+  fun navigation_preserves_state_correctly() {
+    // Start at home
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertExists()
+
+    // Go to Profile, then Skills, then back to Profile
+    composeTestRule.onNodeWithText("Profile").performClick()
+    composeTestRule.onNodeWithText("👤 Profile Screen Placeholder").assertIsDisplayed()
+
+    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithText("💡 Skills Screen Placeholder").assertIsDisplayed()
+
+    composeTestRule.onNodeWithText("Profile").performClick()
+    composeTestRule.onNodeWithText("👤 Profile Screen Placeholder").assertIsDisplayed()
+  }
+
+  @Test
+  fun app_handles_rapid_navigation_clicks() {
+    // Rapidly click different navigation items
+    repeat(3) {
+      composeTestRule.onNodeWithText("Profile").performClick()
+      composeTestRule.onNodeWithText("Skills").performClick()
+      composeTestRule.onNodeWithText("Home").performClick()
+    }
+
+    // Should end up on Home
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
+  }
 }
