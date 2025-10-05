@@ -46,10 +46,8 @@ class NavigationTestsWithPlaceHolderScreens {
   fun clicking_profile_tab_navigates_to_profile_screen() {
     composeTestRule.setContent {
       val navController = rememberNavController()
-      Scaffold(bottomBar = { BottomNavBar(navController) }) { paddingValues ->
-        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
-          AppNavGraph(navController = navController)
-        }
+      Scaffold(bottomBar = { BottomNavBar(navController) }) {
+        AppNavGraph(navController = navController)
       }
     }
 
@@ -64,10 +62,8 @@ class NavigationTestsWithPlaceHolderScreens {
   fun clicking_skills_tab_navigates_to_skills_screen() {
     composeTestRule.setContent {
       val navController = rememberNavController()
-      Scaffold(bottomBar = { BottomNavBar(navController) }) { paddingValues ->
-        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
-          AppNavGraph(navController = navController)
-        }
+      Scaffold(bottomBar = { BottomNavBar(navController) }) {
+        AppNavGraph(navController = navController)
       }
     }
 
@@ -83,10 +79,8 @@ class NavigationTestsWithPlaceHolderScreens {
   fun topBar_backButton_isNotVisible_onRootScreens() {
     composeTestRule.setContent {
       val navController = rememberNavController()
-      Scaffold(bottomBar = { BottomNavBar(navController) }) { paddingValues ->
-        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
-          AppNavGraph(navController = navController)
-        }
+      Scaffold(bottomBar = { BottomNavBar(navController) }) {
+        AppNavGraph(navController = navController)
       }
     }
 

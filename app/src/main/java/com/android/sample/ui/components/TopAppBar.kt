@@ -1,7 +1,6 @@
 package com.android.sample.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -44,7 +43,7 @@ fun TopAppBar(navController: NavController) {
         // Show back arrow only if not on the root (e.g., Home)
         if (canNavigateBack) {
           IconButton(onClick = { navController.navigateUp() }) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
           }
         }
       })

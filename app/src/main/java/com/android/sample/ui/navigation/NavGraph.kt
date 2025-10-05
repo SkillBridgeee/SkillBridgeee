@@ -34,9 +34,9 @@ import com.android.sample.ui.screens.SkillsPlaceholder
 @Composable
 fun AppNavGraph(navController: NavHostController) {
   NavHost(navController = navController, startDestination = NavRoutes.HOME) {
-    composable(NavRoutes.HOME) { HomePlaceholder() }
-    composable(NavRoutes.PROFILE) { ProfilePlaceholder() }
-    composable(NavRoutes.SKILLS) { SkillsPlaceholder() }
-    composable(NavRoutes.SETTINGS) { SettingsPlaceholder() }
+    composable(NavRoutes.HOME) { HomePlaceholder(navController) }
+    composable(NavRoutes.PROFILE) { ProfilePlaceholder(navController) }
+    composable(NavRoutes.SKILLS) { SkillsPlaceholder(navController) }
+    composable(NavRoutes.SETTINGS) { SettingsPlaceholder(navController) }
   }
 }
