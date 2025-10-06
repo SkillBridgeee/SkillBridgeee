@@ -14,11 +14,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.ui.theme.SampleAppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyProfileScreen(
+    profileViewModel: MyProfileViewModel = viewModel(),
+    profileId: String
 ) {
     Scaffold(
         topBar = {
@@ -33,13 +36,16 @@ fun MyProfileScreen(
         },
         floatingActionButton = {},
         content = { pd ->
-            ProfileContent(pd)
+            ProfileContent(pd, profileId, profileViewModel)
         }
     )
 }
 
 @Composable
-private fun ProfileContent(pd: PaddingValues) {
+private fun ProfileContent(pd: PaddingValues, profileId: String, profileViewModel: MyProfileViewModel) {
+
+    LaunchedEffect(profileId) { profileViewModel.loadProfile() }
+    val profileUIState by profileViewModel.uiState.collectAsState()
 
     val fieldSpacing = 8.dp
 
@@ -56,7 +62,7 @@ private fun ProfileContent(pd: PaddingValues) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "J",
+                text = profileUIState.name.firstOrNull()?.uppercase() ?: "",
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.Black,
                 fontWeight = FontWeight.Bold
@@ -66,7 +72,7 @@ private fun ProfileContent(pd: PaddingValues) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "John Doe",
+            text = profileUIState.name,
             style = MaterialTheme.typography.titleLarge
         )
         Text(
@@ -102,36 +108,15 @@ private fun ProfileContent(pd: PaddingValues) {
                 Spacer(modifier = Modifier.height(10.dp))
 
                 OutlinedTextField(
-                    value = "John Doe",
-                    onValueChange = { },
+                    value = profileUIState.name,
+                    onValueChange = { profileViewModel.setName(it) },
                     label = { Text("Name") },
                     placeholder = { Text("Enter Your Full Name") },
-                    isError = false,
-                    supportingText = {},
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(fieldSpacing))
-
-                OutlinedTextField(
-                    value = "johnDoe@email.com",
-                    onValueChange = { },
-                    label = { Text("Email") },
-                    placeholder = { Text("Enter Your Email") },
-                    isError = false,
-                    supportingText = {},
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(fieldSpacing))
-
-                OutlinedTextField(
-                    value = "EPFL",
-                    onValueChange = {  },
-                    label = { Text("Location / Campus") },
-                    placeholder = { Text("Enter Your Location or University") },
-                    isError = false,
+                    isError = profileUIState.invalidNameMsg != null,
                     supportingText = {
+                        profileUIState.invalidNameMsg?.let {
+                            Text(it)
+                        }
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -139,12 +124,48 @@ private fun ProfileContent(pd: PaddingValues) {
                 Spacer(modifier = Modifier.height(fieldSpacing))
 
                 OutlinedTextField(
-                    value = "Nice Guy :)",
-                    onValueChange = {  },
+                    value = profileUIState.email,
+                    onValueChange = { profileViewModel.setEmail(it) },
+                    label = { Text("Email") },
+                    placeholder = { Text("Enter Your Email") },
+                    isError = profileUIState.invalidEmailMsg != null,
+                    supportingText = {
+                        profileUIState.invalidEmailMsg?.let {
+                            Text(it)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(fieldSpacing))
+
+                OutlinedTextField(
+                    value = profileUIState.location,
+                    onValueChange = { profileViewModel.setLocation(it) },
+                    label = { Text("Location / Campus") },
+                    placeholder = { Text("Enter Your Location or University") },
+                    isError = profileUIState.invalidLocationMsg != null,
+                    supportingText = {
+                        profileUIState.invalidLocationMsg?.let {
+                            Text(it)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(fieldSpacing))
+
+                OutlinedTextField(
+                    value = profileUIState.bio,
+                    onValueChange = { profileViewModel.setBio(it) },
                     label = { Text("Bio") },
                     placeholder = { Text("Info About You") },
-                    isError = false,
-                    supportingText = {},
+                    isError = profileUIState.invalidBioMsg != null,
+                    supportingText = {
+                        profileUIState.invalidBioMsg?.let {
+                            Text(it)
+                        }
+                    },
                     minLines = 2,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -157,6 +178,6 @@ private fun ProfileContent(pd: PaddingValues) {
 @Composable
 fun MyProfilePreview() {
     SampleAppTheme {
-        MyProfileScreen()
+        MyProfileScreen(profileId = "")
     }
 }
