@@ -1,9 +1,11 @@
 package com.android.sample.ui.profile
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 /** UI state for the MyProfile screen. Holds all data needed to edit a profile */
 data class MyProfileUIState(
@@ -36,6 +38,17 @@ class MyProfileViewModel() : ViewModel() {
     /** Removes any error message from the UI state */
     fun clearErrorMsg() {
         _uiState.value = _uiState.value.copy(errorMsg = null)
+    }
+
+    /** Loads the profile data (to be implemented) */
+    fun loadProfile() {
+        viewModelScope.launch {
+            try {
+                // TODO: Load profile data here
+            } catch (_: Exception) {
+                // TODO: Handle error
+            }
+        }
     }
 
 
