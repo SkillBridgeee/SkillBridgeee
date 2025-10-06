@@ -19,6 +19,7 @@ data class MyProfileUIState(
     val invalidLocationMsg: String? = null,
     val invalidBioMsg: String? = null,
 ) {
+    // Checks if all fields are valid
     val isValid: Boolean
         get() =
             invalidNameMsg == null &&
@@ -31,7 +32,9 @@ data class MyProfileUIState(
                     bio.isNotEmpty()
 }
 
+// ViewModel to manage profile editing logic and state
 class MyProfileViewModel() : ViewModel() {
+    // Holds the current UI state
     private val _uiState = MutableStateFlow(MyProfileUIState())
     val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
 

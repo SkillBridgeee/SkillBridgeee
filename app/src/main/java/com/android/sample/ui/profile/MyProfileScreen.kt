@@ -41,6 +41,7 @@ fun MyProfileScreen(
     profileViewModel: MyProfileViewModel = viewModel(),
     profileId: String
 ) {
+    // Scaffold structures the screen with top bar, bottom bar, and save button
     Scaffold(
         topBar = {
             TopAppBar(
@@ -53,6 +54,7 @@ fun MyProfileScreen(
             Text("BotBar")
         },
         floatingActionButton = {
+            // Button to save profile changes
             AppButton(
                 text = "Save Profile Changes",
                 // TODO Implement on save action
@@ -61,6 +63,7 @@ fun MyProfileScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
         content = { pd ->
+            // Profile content
             ProfileContent(pd, profileId, profileViewModel)
         }
     )
@@ -70,6 +73,8 @@ fun MyProfileScreen(
 private fun ProfileContent(pd: PaddingValues, profileId: String, profileViewModel: MyProfileViewModel) {
 
     LaunchedEffect(profileId) { profileViewModel.loadProfile() }
+
+    // Observe profile state to update the UI
     val profileUIState by profileViewModel.uiState.collectAsState()
 
     val fieldSpacing = 8.dp
@@ -78,6 +83,7 @@ private fun ProfileContent(pd: PaddingValues, profileId: String, profileViewMode
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth().padding(pd)
     ) {
+        // Profile icon (first letter of name)
         Box(
             modifier = Modifier
                 .size(50.dp)
@@ -96,10 +102,12 @@ private fun ProfileContent(pd: PaddingValues, profileId: String, profileViewMode
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Display name
         Text(
             text = profileUIState.name,
             style = MaterialTheme.typography.titleLarge
         )
+        // Display status
         Text(
             text = "Student",
             style = MaterialTheme.typography.bodyMedium,
@@ -107,6 +115,7 @@ private fun ProfileContent(pd: PaddingValues, profileId: String, profileViewMode
         )
 
 
+        // Form fields container
         Box(
             modifier = Modifier
                 .widthIn(max = 300.dp)
@@ -125,6 +134,7 @@ private fun ProfileContent(pd: PaddingValues, profileId: String, profileViewMode
                 .padding(16.dp)
         ) {
             Column {
+                // Section title
                 Text(
                     text = "Personal Details",
                     fontWeight = FontWeight.Bold
@@ -132,6 +142,7 @@ private fun ProfileContent(pd: PaddingValues, profileId: String, profileViewMode
 
                 Spacer(modifier = Modifier.height(10.dp))
 
+                // Name input field
                 OutlinedTextField(
                     value = profileUIState.name,
                     onValueChange = { profileViewModel.setName(it) },
@@ -148,6 +159,7 @@ private fun ProfileContent(pd: PaddingValues, profileId: String, profileViewMode
 
                 Spacer(modifier = Modifier.height(fieldSpacing))
 
+                // Email input field
                 OutlinedTextField(
                     value = profileUIState.email,
                     onValueChange = { profileViewModel.setEmail(it) },
@@ -164,6 +176,7 @@ private fun ProfileContent(pd: PaddingValues, profileId: String, profileViewMode
 
                 Spacer(modifier = Modifier.height(fieldSpacing))
 
+                // Location input field
                 OutlinedTextField(
                     value = profileUIState.location,
                     onValueChange = { profileViewModel.setLocation(it) },
@@ -180,6 +193,7 @@ private fun ProfileContent(pd: PaddingValues, profileId: String, profileViewMode
 
                 Spacer(modifier = Modifier.height(fieldSpacing))
 
+                // Bio input field
                 OutlinedTextField(
                     value = profileUIState.bio,
                     onValueChange = { profileViewModel.setBio(it) },
