@@ -127,8 +127,8 @@ class MyProfileTest : AppTest() {
     composeTestRule.setContent { MyProfileScreen(profileId = "test") }
     composeTestRule.enterText(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL, "John")
     composeTestRule
-      .onNodeWithTag(testTag = MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
-      .assertIsDisplayed()
+        .onNodeWithTag(testTag = MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   @Test
