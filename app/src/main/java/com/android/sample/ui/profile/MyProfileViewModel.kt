@@ -67,7 +67,12 @@ class MyProfileViewModel() : ViewModel() {
             _uiState.value.copy(
                 email = email,
                 invalidEmailMsg =
-                    if (email.isBlank()) "Email cannot be empty" else null)
+                    if (email.isBlank())
+                        "Email cannot be empty"
+                    else if (!isValidEmail(email))
+                        "Email is not in the right format"
+                    else null
+            )
     }
 
     // Updates the location and validates it
@@ -86,6 +91,14 @@ class MyProfileViewModel() : ViewModel() {
                 bio = bio,
                 invalidBioMsg =
                     if (bio.isBlank()) "Bio cannot be empty" else null)
+    }
+
+
+
+    // Checks if the email format is valid
+    private fun isValidEmail(email: String): Boolean {
+        val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        return email.matches(emailRegex.toRegex())
     }
 
 }
