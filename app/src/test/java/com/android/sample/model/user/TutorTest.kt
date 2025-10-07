@@ -60,12 +60,12 @@ class TutorTest {
 
   @Test(expected = IllegalArgumentException::class)
   fun `test Tutor validation - star rating too low`() {
-    Tutor(starRating = -0.1)
+    Tutor(starRating = -0.1, ratingNumber = 1)
   }
 
   @Test(expected = IllegalArgumentException::class)
   fun `test Tutor validation - star rating too high`() {
-    Tutor(starRating = 5.1)
+    Tutor(starRating = 5.1, ratingNumber = 1)
   }
 
   @Test(expected = IllegalArgumentException::class)

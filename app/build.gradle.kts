@@ -7,6 +7,15 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// Force JaCoCo version to support Java 21
+configurations.all {
+    resolutionStrategy {
+        force("org.jacoco:org.jacoco.core:0.8.11")
+        force("org.jacoco:org.jacoco.agent:0.8.11")
+        force("org.jacoco:org.jacoco.report:0.8.11")
+    }
+}
+
 android {
     namespace = "com.android.sample"
     compileSdk = 34
@@ -40,7 +49,7 @@ android {
     }
 
     testCoverage {
-        jacocoVersion = "0.8.10"
+        jacocoVersion = "0.8.11"
     }
 
     buildFeatures {
@@ -165,6 +174,10 @@ tasks.withType<Test> {
         isIncludeNoLocationClasses = true
         excludes = listOf("jdk.internal.*")
     }
+}
+
+jacoco {
+    toolVersion = "0.8.11"
 }
 
 tasks.register("jacocoTestReport", JacocoReport::class) {
