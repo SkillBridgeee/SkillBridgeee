@@ -12,7 +12,9 @@ data class Tutor(
     val ratingNumber: Int = 0 // Number of ratings received
 ) {
   init {
-    require(starRating in 1.0..5.0) { "Star rating must be between 1.0 and 5.0" }
+    require(starRating == 0.0 || starRating in 1.0..5.0) {
+      "Star rating must be 0.0 (no rating) or between 1.0 and 5.0"
+    }
     require(ratingNumber >= 0) { "Rating number must be non-negative" }
   }
 }
