@@ -1,12 +1,10 @@
-package com.android.sample.ui.theme
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+package com.android.sample
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -14,10 +12,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+object HomeScreenTestTags {
+    const val WELCOME_SECTION = "welcomeSection"
+    const val EXPLORE_SKILLS_SECTION = "exploreSkillsSection"
+    const val SKILL_CARD = "skillCard"
+    const val TOP_TUTOR_SECTION = "topTutorSection"
+    const val TUTOR_CARD = "tutorCard"
+    const val TUTOR_BOOK_BUTTON = "tutorBookButton"
+    const val TUTOR_LIST = "tutorList"
+    const val FAB_ADD = "fabAdd"
+}
 
 @Preview
 @Composable
@@ -27,7 +37,8 @@ fun HomeScreen() {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { /* TODO add new tutor */ },
-                containerColor = Color(0xFF00ACC1)
+                containerColor = Color(0xFF00ACC1),
+                modifier = Modifier.testTag(HomeScreenTestTags.FAB_ADD)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add")
             }
@@ -52,7 +63,7 @@ fun HomeScreen() {
 
 @Composable
 fun GreetingSection() {
-    Column(modifier = Modifier.padding(horizontal = 10.dp)) {
+    Column(modifier = Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.WELCOME_SECTION)) {
         Text("Welcome back, Ava!", fontWeight = FontWeight.Bold, fontSize = 18.sp)
         Text("Ready to learn something new today?", color = Color.Gray, fontSize = 14.sp)
     }
@@ -60,12 +71,13 @@ fun GreetingSection() {
 
 @Composable
 fun ExploreSkills() {
-    Column(modifier = Modifier.padding(horizontal = 10.dp)) {
+    Column(modifier = Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.EXPLORE_SKILLS_SECTION)) {
         Text("Explore skills", fontWeight = FontWeight.Bold, fontSize = 16.sp)
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // TODO: remove when we are able to have a list of the skills to dispaly
             SkillCard("Academics", Color(0xFF4FC3F7))
             SkillCard("Music", Color(0xFFBA68C8))
             SkillCard("Sports", Color(0xFF81C784))
@@ -78,7 +90,8 @@ fun SkillCard(title: String, bgColor: Color) {
     Column(
         modifier = Modifier
             .background(bgColor, RoundedCornerShape(12.dp))
-            .padding(16.dp),
+            .padding(16.dp)
+            .testTag(HomeScreenTestTags.SKILL_CARD),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
@@ -89,10 +102,14 @@ fun SkillCard(title: String, bgColor: Color) {
 
 @Composable
 fun TutorsSection() {
-    Column(modifier = Modifier.padding(horizontal = 10.dp)) {
-        Text("Top-Rated Tutors", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+    Column(modifier = Modifier.padding(horizontal = 10.dp)
+                              .verticalScroll(rememberScrollState())
+                              .testTag(HomeScreenTestTags.TUTOR_LIST)) {
+        Text("Top-Rated Tutors", fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.testTag(
+            HomeScreenTestTags.TOP_TUTOR_SECTION))
         Spacer(modifier = Modifier.height(10.dp))
 
+        //TODO: remove when we will have the database and connect to the list of the tutors
         TutorCard("Liam P.", "Piano Lessons", "$25/hr", 23)
         TutorCard("Maria G.", "Calculus & Algebra", "$30/hr", 41)
         TutorCard("David C.", "Acoustic Guitar", "$20/hr", 18)
@@ -104,7 +121,8 @@ fun TutorCard(name: String, subject: String, price: String, reviews: Int) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 5.dp),
+            .padding(vertical = 5.dp)
+            .testTag(HomeScreenTestTags.TUTOR_CARD),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
@@ -142,7 +160,8 @@ fun TutorCard(name: String, subject: String, price: String, reviews: Int) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Button(
                     onClick = { /* book tutor */ },
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_BOOK_BUTTON)
                 ) {
                     Text("Book")
                 }
