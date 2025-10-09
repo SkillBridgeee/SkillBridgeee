@@ -1,34 +1,43 @@
 package com.android.sample.ui.screens.newSkill
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Alignment
-import androidx.compose.material3.FabPosition
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.android.sample.model.skill.MainSubject
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,7 +86,6 @@ fun NewSkillScreen(
 fun SkillsContent(pd : PaddingValues, profileId: String, skillViewModel: NewSkillOverviewModel) {
 
     LaunchedEffect(profileId) { skillViewModel.loadSkill() }
-
     val skillUIState by skillViewModel.uiState.collectAsState()
 
     Column(
@@ -149,7 +157,7 @@ fun SkillsContent(pd : PaddingValues, profileId: String, skillViewModel: NewSkil
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
 
                 // Price Input
                 OutlinedTextField(
@@ -166,8 +174,65 @@ fun SkillsContent(pd : PaddingValues, profileId: String, skillViewModel: NewSkil
                     modifier =
                         Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                SubjectMenu(
+                    selectedSubject = skillUIState.subject,
+                    skillViewModel = skillViewModel
+                )
+
             }
         }
     }
 }
 
+
+
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SubjectMenu(
+    selectedSubject: MainSubject?,
+    skillViewModel: NewSkillOverviewModel,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val subjects = MainSubject.entries.toTypedArray()
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = selectedSubject?.name ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Subject") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor().fillMaxWidth()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            subjects.forEach { suject ->
+                DropdownMenuItem(
+                    text = { Text(suject.name) },
+                    onClick = {
+                        skillViewModel.setSubject(suject)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+
+@Preview(showBackground = true, widthDp = 320)
+@Composable
+fun NewSkillPreview() {
+    NewSkillScreen(profileId = "")
+}

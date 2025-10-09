@@ -2,6 +2,7 @@ package com.android.sample.ui.screens.newSkill
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.skill.MainSubject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +16,7 @@ data class SkillUIState(
     val title: String = "",
     val description: String = "",
     val price: String = "",
+    val subject: MainSubject? = null,
 
     val errorMsg: String? = null,
     val invalidTitleMsg: String? = null,
@@ -88,6 +90,13 @@ class NewSkillOverviewModel() : ViewModel() {
                     if (price.isBlank()) "Price cannot be empty"
                     else if (!isNumber(price)) "Price must be a positive number"
                     else null)
+    }
+
+    fun setSubject(sub: MainSubject) {
+        _uiState.value =
+            _uiState.value.copy(
+                subject = sub
+            )
     }
 
 
