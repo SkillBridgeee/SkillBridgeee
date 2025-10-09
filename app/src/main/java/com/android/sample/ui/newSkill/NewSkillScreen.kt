@@ -22,14 +22,19 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewSkillScreen(
+    skillViewModel: NewSkillOverviewModel = viewModel(),
     profileId: String
 ) {
 
@@ -57,7 +62,7 @@ fun NewSkillScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
         content = { pd ->
-            SkillsContent(pd, profileId)
+            SkillsContent(pd, profileId, skillViewModel)
         }
     )
 }
@@ -66,7 +71,12 @@ fun NewSkillScreen(
 
 
 @Composable
-fun SkillsContent(pd : PaddingValues, profileId: String) {
+fun SkillsContent(pd : PaddingValues, profileId: String, skillViewModel: NewSkillOverviewModel) {
+
+
+    LaunchedEffect(profileId) { skillViewModel.loadSkill() }
+
+    val skillUIState by skillViewModel.uiState.collectAsState()
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -104,12 +114,16 @@ fun SkillsContent(pd : PaddingValues, profileId: String) {
 
                 // Title Input
                 OutlinedTextField(
-                    value = "Course Title",
-                    onValueChange = { },
+                    value = skillUIState.title,
+                    onValueChange = { skillViewModel.setTitle(it) },
                     label = { Text("Course Title") },
                     placeholder = { Text("Title") },
-                    isError = false,
-                    supportingText = {},
+                    isError = skillUIState.invalidTitleMsg != null,
+                    supportingText = {
+                        skillUIState.invalidTitleMsg?.let {
+                            Text(it)
+                        }
+                    },
                     modifier =
                         Modifier.fillMaxWidth()
                 )
@@ -118,12 +132,16 @@ fun SkillsContent(pd : PaddingValues, profileId: String) {
 
                 // Desc Input
                 OutlinedTextField(
-                    value = "Desc",
-                    onValueChange = {  },
+                    value = skillUIState.description,
+                    onValueChange = { skillViewModel.setDesc(it) },
                     label = { Text("Description") },
                     placeholder = { Text("Description of the skill") },
-                    isError = false,
-                    supportingText = {},
+                    isError = skillUIState.invalidDescMsg != null,
+                    supportingText = {
+                        skillUIState.invalidDescMsg?.let {
+                            Text(it)
+                        }
+                    },
                     modifier =
                         Modifier.fillMaxWidth()
                 )
@@ -160,12 +178,16 @@ fun SkillsContent(pd : PaddingValues, profileId: String) {
 
                 // Price Input
                 OutlinedTextField(
-                    value = "Price",
-                    onValueChange = {},
+                    value = skillUIState.price,
+                    onValueChange = { skillViewModel.setPrice(it) },
                     label = { Text("Hourly Rate") },
                     placeholder = { Text("Price per Hours") },
-                    isError = false,
-                    supportingText = {},
+                    isError = skillUIState.invalidPriceMsg != null,
+                    supportingText = {
+                        skillUIState.invalidPriceMsg?.let {
+                            Text(it)
+                        }
+                    },
                     modifier =
                         Modifier.fillMaxWidth()
                 )
