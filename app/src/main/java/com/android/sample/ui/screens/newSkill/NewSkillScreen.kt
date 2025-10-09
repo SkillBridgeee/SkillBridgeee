@@ -1,4 +1,4 @@
-package com.android.sample.ui.screens
+package com.android.sample.ui.screens.newSkill
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +22,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewSkillScreen(
+    skillViewModel: NewSkillOverviewModel = NewSkillOverviewModel(),
+    profileId: String
 ) {
 
 
@@ -58,7 +63,7 @@ fun NewSkillScreen(
         },
         floatingActionButtonPosition = FabPosition.Center,
         content = { pd ->
-            SkillsContent(pd)
+            SkillsContent(pd, profileId, skillViewModel)
         }
     )
 }
@@ -69,8 +74,11 @@ fun NewSkillScreen(
 
 
 @Composable
-fun SkillsContent(pd : PaddingValues) {
+fun SkillsContent(pd : PaddingValues, profileId: String, skillViewModel: NewSkillOverviewModel) {
 
+    LaunchedEffect(profileId) { skillViewModel.loadSkill() }
+
+    val skillUIState by skillViewModel.uiState.collectAsState()
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -108,12 +116,15 @@ fun SkillsContent(pd : PaddingValues) {
 
                 // Title Input
                 OutlinedTextField(
-                    value = "titre",
-                    onValueChange = { },
+                    value = skillUIState.title,
+                    onValueChange = { skillViewModel.setTitle(it) },
                     label = { Text("Course Title") },
                     placeholder = { Text("Title") },
-                    isError =false,
+                    isError = skillUIState.invalidTitleMsg != null,
                     supportingText = {
+                        skillUIState.invalidTitleMsg?.let {
+                            Text(it)
+                        }
                     },
                     modifier =
                         Modifier.fillMaxWidth()
@@ -123,41 +134,38 @@ fun SkillsContent(pd : PaddingValues) {
 
                 // Desc Input
                 OutlinedTextField(
-                    value = "Desc",
-                    onValueChange = { },
+                    value = skillUIState.description,
+                    onValueChange = { skillViewModel.setDesc(it) },
                     label = { Text("Description") },
                     placeholder = { Text("Description of the skill") },
-                    isError = false,
+                    isError = skillUIState.invalidDescMsg != null,
                     supportingText = {
+                        skillUIState.invalidDescMsg?.let {
+                            Text(it)
+                        }
                     },
                     modifier =
                         Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
-
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-
-                Spacer(modifier = Modifier.height(20.dp))
+                
 
                 // Price Input
                 OutlinedTextField(
-                    value = "price",
-                    onValueChange = { },
+                    value = skillUIState.price,
+                    onValueChange = { skillViewModel.setPrice(it) },
                     label = { Text("Hourly Rate") },
                     placeholder = { Text("Price per Hours") },
-                    isError = false,
+                    isError = skillUIState.invalidPriceMsg != null,
                     supportingText = {
+                        skillUIState.invalidPriceMsg?.let {
+                            Text(it)
+                        }
                     },
                     modifier =
                         Modifier.fillMaxWidth()
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-
             }
         }
     }
