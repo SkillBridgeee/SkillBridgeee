@@ -104,14 +104,14 @@ class MyProfileTest : AppTest() {
     composeTestRule.onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG).assertIsNotDisplayed()
   }
 
-  //  @Test
-  //  fun nameField_empty_showsError() {
-  //    composeTestRule.setContent { MyProfileScreen(profileId = "test") }
-  //    composeTestRule.enterText(MyProfileScreenTestTag.INPUT_PROFILE_NAME, "")
-  //    composeTestRule
-  //        .onNodeWithTag(testTag = MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
-  //        .assertIsDisplayed()
-  //  }
+  @Test
+  fun nameField_empty_showsError() {
+    composeTestRule.setContent { MyProfileScreen(profileId = "test") }
+    composeTestRule.enterText(MyProfileScreenTestTag.INPUT_PROFILE_NAME, "")
+    composeTestRule
+        .onNodeWithTag(testTag = MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
 
   @Test
   fun emailField_empty_showsError() {
@@ -140,12 +140,12 @@ class MyProfileTest : AppTest() {
         .assertIsDisplayed()
   }
 
-  @Test
-  fun bioField_empty_showsError() {
-    composeTestRule.setContent { MyProfileScreen(profileId = "test") }
-    composeTestRule.enterText(MyProfileScreenTestTag.INPUT_PROFILE_BIO, "")
-    composeTestRule
-        .onNodeWithTag(testTag = MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
-        .assertIsDisplayed()
-  }
+  //  @Test
+  //  fun bioField_empty_showsError() {
+  //    composeTestRule.setContent { MyProfileScreen(profileId = "test") }
+  //    composeTestRule.enterText(MyProfileScreenTestTag.INPUT_PROFILE_BIO, "")
+  //    composeTestRule
+  //        .onNodeWithTag(testTag = MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
+  //        .assertIsDisplayed()
+  //  }
 }
