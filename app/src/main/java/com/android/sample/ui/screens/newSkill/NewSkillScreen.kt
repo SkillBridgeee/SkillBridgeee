@@ -39,11 +39,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.skill.MainSubject
 
+object NewSkillScreenTestTag {
+    const val TOP_APP_BAR_TITLE = "topAppBarTitle"
+    const val NAV_BACK_BUTTON = "navBackButton"
+    const val BOTTOM_BAR = "bottomBar"
+    const val CREATE_LESSONS_TITLE = "createLessonsTitle"
+    const val INPUT_COURSE_TITLE = "inputCourseTitle"
+    const val INVALID_TITLE_MSG = "invalidTitleMsg"
+    const val INPUT_DESCRIPTION = "inputDescription"
+    const val INVALID_DESC_MSG = "invalidDescMsg"
+    const val INPUT_PRICE = "inputPrice"
+    const val INVALID_PRICE_MSG = "invalidPriceMsg"
+    const val SUBJECT_FIELD = "subjectField"
+    const val SUBJECT_DROPDOWN = "subjectDropdown"
+    const val SUBJECT_DROPDOWN_ITEM_PREFIX = "subjectItem_" // usage: subjectItem_{name}
+    const val SUPPORTING_ERROR_MSG = "supportingErrorMsg"
+}
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewSkillScreen(
-    skillViewModel: NewSkillOverviewModel = NewSkillOverviewModel(),
+    skillViewModel: NewSkillViewModel = NewSkillViewModel(),
     profileId: String
 ) {
 
@@ -65,7 +84,6 @@ fun NewSkillScreen(
         },
         bottomBar = {
             // TODO implement bottom navigation Bar
-            Text("BotBar")
         },
         floatingActionButton = {
             // TODO appButton
@@ -83,7 +101,7 @@ fun NewSkillScreen(
 
 
 @Composable
-fun SkillsContent(pd : PaddingValues, profileId: String, skillViewModel: NewSkillOverviewModel) {
+fun SkillsContent(pd : PaddingValues, profileId: String, skillViewModel: NewSkillViewModel) {
 
     LaunchedEffect(profileId) { skillViewModel.loadSkill() }
     val skillUIState by skillViewModel.uiState.collectAsState()
@@ -195,7 +213,7 @@ fun SkillsContent(pd : PaddingValues, profileId: String, skillViewModel: NewSkil
 @Composable
 fun SubjectMenu(
     selectedSubject: MainSubject?,
-    skillViewModel: NewSkillOverviewModel,
+    skillViewModel: NewSkillViewModel,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val subjects = MainSubject.entries.toTypedArray()
