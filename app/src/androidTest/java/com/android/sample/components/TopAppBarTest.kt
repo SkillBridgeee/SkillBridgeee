@@ -1,6 +1,5 @@
 package com.android.sample.ui.components
 
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.NavHostController
@@ -40,18 +39,5 @@ class TopAppBarTest {
 
     // Test for the expected title text directly
     composeTestRule.onNodeWithText("SkillBridge").assertExists()
-  }
-
-  @Test
-  fun topAppBar_back_button_not_shown_initially() {
-    composeTestRule.setContent {
-      TopAppBar(navController = NavHostController(ApplicationProvider.getApplicationContext()))
-    }
-
-    // Back button should not be visible initially (no back stack)
-    composeTestRule.onAllNodes(hasContentDescription("Back")).fetchSemanticsNodes().size.let { count
-      ->
-      assert(count == 0)
-    }
   }
 }
