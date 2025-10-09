@@ -18,6 +18,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.sample.ui.theme.AccentBlue
+import com.android.sample.ui.theme.AccentGreen
+import com.android.sample.ui.theme.AccentPurple
+import com.android.sample.ui.theme.PrimaryColor
+import com.android.sample.ui.theme.SecondaryColor
 
 object HomeScreenTestTags {
   const val WELCOME_SECTION = "welcomeSection"
@@ -30,6 +35,7 @@ object HomeScreenTestTags {
   const val FAB_ADD = "fabAdd"
 }
 
+
 @Preview
 @Composable
 fun HomeScreen() {
@@ -38,14 +44,14 @@ fun HomeScreen() {
       floatingActionButton = {
         FloatingActionButton(
             onClick = { /* TODO add new tutor */},
-            containerColor = Color(0xFF00ACC1),
+            containerColor = PrimaryColor,
             modifier = Modifier.testTag(HomeScreenTestTags.FAB_ADD)) {
               Icon(Icons.Default.Add, contentDescription = "Add")
             }
       }) { paddingValues ->
         Column(
             modifier =
-                Modifier.padding(paddingValues).fillMaxSize().background(Color(0xFFEFEFEF))) {
+                Modifier.padding(paddingValues).fillMaxSize().background(Color.White)) {
               Spacer(modifier = Modifier.height(10.dp))
               GreetingSection()
               Spacer(modifier = Modifier.height(20.dp))
@@ -76,9 +82,9 @@ fun ExploreSkills() {
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
           // TODO: remove when we are able to have a list of the skills to dispaly
-          SkillCard("Academics", Color(0xFF4FC3F7))
-          SkillCard("Music", Color(0xFFBA68C8))
-          SkillCard("Sports", Color(0xFF81C784))
+          SkillCard("Academics", AccentBlue)
+          SkillCard("Music", AccentPurple)
+          SkillCard("Sports", AccentGreen)
         }
       }
 }
@@ -131,7 +137,7 @@ fun TutorCard(name: String, subject: String, price: String, reviews: Int) {
 
           Column(modifier = Modifier.weight(1f)) {
             Text(name, fontWeight = FontWeight.Bold)
-            Text(subject, color = Color(0xFF1E88E5))
+            Text(subject, color = SecondaryColor)
             Row {
               repeat(5) {
                 Icon(
@@ -145,7 +151,7 @@ fun TutorCard(name: String, subject: String, price: String, reviews: Int) {
           }
 
           Column(horizontalAlignment = Alignment.End) {
-            Text(price, color = Color(0xFF1E88E5), fontWeight = FontWeight.Bold)
+            Text(price, color = SecondaryColor, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(6.dp))
             Button(
                 onClick = { /* book tutor */},
