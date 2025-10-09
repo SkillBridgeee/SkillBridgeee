@@ -17,7 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-object SignInScreeTestTags {
+object SignInScreenTestTags {
   const val TITLE = "title"
   const val ROLE_LEARNER = "roleLearner"
   const val EMAIL_INPUT = "emailInput"
@@ -42,7 +42,10 @@ enum class UserRole(string: String) {
 fun LoginScreen() {
   var email by remember { mutableStateOf("") }
   var password by remember { mutableStateOf("") }
-  var selectedRole by remember { mutableStateOf(UserRole.Learner) }
+  var selectedRole by remember { mutableStateOf(UserRole.Learner)}
+
+
+
 
   Column(
       modifier = Modifier.fillMaxSize().padding(20.dp),
@@ -50,16 +53,16 @@ fun LoginScreen() {
       verticalArrangement = Arrangement.Center) {
         // App name
         Text(
-            text = "SkillBridgeee",
+            text = "SkillBridge",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1E88E5),
-            modifier = Modifier.testTag(SignInScreeTestTags.TITLE))
+            modifier = Modifier.testTag(SignInScreenTestTags.TITLE))
 
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             "Welcome back! Please sign in.",
-            modifier = Modifier.testTag(SignInScreeTestTags.SUBTITLE))
+            modifier = Modifier.testTag(SignInScreenTestTags.SUBTITLE))
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -73,7 +76,7 @@ fun LoginScreen() {
                           if (selectedRole == UserRole.Learner) Color(0xFF42A5F5)
                           else Color.LightGray),
               shape = RoundedCornerShape(10.dp),
-              modifier = Modifier.testTag(SignInScreeTestTags.ROLE_LEARNER)) {
+              modifier = Modifier.testTag(SignInScreenTestTags.ROLE_LEARNER)) {
                 Text("I'm a Learner")
               }
           Button(
@@ -84,7 +87,7 @@ fun LoginScreen() {
                           if (selectedRole == UserRole.Tutor) Color(0xFF42A5F5)
                           else Color.LightGray),
               shape = RoundedCornerShape(10.dp),
-              modifier = Modifier.testTag(SignInScreeTestTags.ROLE_TUTOR)) {
+              modifier = Modifier.testTag(SignInScreenTestTags.ROLE_TUTOR)) {
                 Text("I'm a Tutor")
               }
         }
@@ -100,7 +103,7 @@ fun LoginScreen() {
                   painterResource(id = android.R.drawable.ic_dialog_email),
                   contentDescription = null)
             },
-            modifier = Modifier.fillMaxWidth().testTag(SignInScreeTestTags.EMAIL_INPUT))
+            modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT))
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -114,7 +117,7 @@ fun LoginScreen() {
                   painterResource(id = android.R.drawable.ic_lock_idle_lock),
                   contentDescription = null)
             },
-            modifier = Modifier.fillMaxWidth().testTag(SignInScreeTestTags.PASSWORD_INPUT))
+            modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.PASSWORD_INPUT))
 
         Spacer(modifier = Modifier.height(10.dp))
         Text(
@@ -122,7 +125,7 @@ fun LoginScreen() {
             modifier =
                 Modifier.align(Alignment.End)
                     .clickable {}
-                    .testTag(SignInScreeTestTags.FORGOT_PASSWORD),
+                    .testTag(SignInScreenTestTags.FORGOT_PASSWORD),
             fontSize = 14.sp,
             color = Color.Gray)
 
@@ -131,8 +134,9 @@ fun LoginScreen() {
         // TODO: Replace with Nahuel's SignIn button when implemented
         Button(
             onClick = {},
+            enabled = email.isNotEmpty() && password.isNotEmpty(),
             modifier =
-                Modifier.fillMaxWidth().height(50.dp).testTag(SignInScreeTestTags.SIGN_IN_BUTTON),
+                Modifier.fillMaxWidth().height(50.dp).testTag(SignInScreenTestTags.SIGN_IN_BUTTON),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00ACC1)),
             shape = RoundedCornerShape(12.dp)) {
               Text("Sign In", fontSize = 18.sp)
@@ -140,7 +144,7 @@ fun LoginScreen() {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text("or continue with", modifier = Modifier.testTag(SignInScreeTestTags.AUTH_SECTION))
+        Text("or continue with", modifier = Modifier.testTag(SignInScreenTestTags.AUTH_SECTION))
 
         Spacer(modifier = Modifier.height(15.dp))
 
@@ -152,7 +156,7 @@ fun LoginScreen() {
               modifier =
                   Modifier.weight(1f)
                       .border(width = 2.dp, color = Color.Gray, shape = RoundedCornerShape(12.dp))
-                      .testTag(SignInScreeTestTags.AUTH_GOOGLE)) {
+                      .testTag(SignInScreenTestTags.AUTH_GOOGLE)) {
                 Text("Google", color = Color.Black)
               }
           Button(
@@ -162,7 +166,7 @@ fun LoginScreen() {
               modifier =
                   Modifier.weight(1f)
                       .border(width = 2.dp, color = Color.Gray, shape = RoundedCornerShape(12.dp))
-                      .testTag(SignInScreeTestTags.AUTH_GITHUB)) {
+                      .testTag(SignInScreenTestTags.AUTH_GITHUB)) {
                 Text("GitHub", color = Color.Black)
               }
         }
@@ -175,7 +179,7 @@ fun LoginScreen() {
               "Sign Up",
               color = Color.Blue,
               fontWeight = FontWeight.Bold,
-              modifier = Modifier.clickable {}.testTag(SignInScreeTestTags.SIGNUP_LINK))
+              modifier = Modifier.clickable {}.testTag(SignInScreenTestTags.SIGNUP_LINK))
         }
       }
 }

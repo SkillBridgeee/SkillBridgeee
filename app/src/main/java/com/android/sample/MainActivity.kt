@@ -3,30 +3,24 @@ package com.android.sample
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.rememberNavController
-import com.android.sample.ui.components.BottomNavBar
-import com.android.sample.ui.components.TopAppBar
-import com.android.sample.ui.navigation.AppNavGraph
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.tooling.preview.Preview
+import com.android.sample.resources.C
+import com.android.sample.ui.theme.SampleAppTheme
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    setContent { MainApp() }
-  }
-}
+    setContent {
 
-@Composable
-fun MainApp() {
-  val navController = rememberNavController()
-
-  Scaffold(topBar = { TopAppBar(navController) }, bottomBar = { BottomNavBar(navController) }) {
-      paddingValues ->
-    androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
-      AppNavGraph(navController = navController)
     }
   }
 }
+
