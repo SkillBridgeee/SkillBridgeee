@@ -85,7 +85,19 @@ class NewSkillOverviewModel() : ViewModel() {
             _uiState.value.copy(
                 price = price,
                 invalidPriceMsg =
-                    if (price.isBlank()) "Price cannot be empty" else null)
+                    if (price.isBlank()) "Price cannot be empty"
+                    else if (!isNumber(price)) "Price must be a positive number"
+                    else null)
+    }
+
+
+    private fun isNumber(num: String): Boolean {
+        return try {
+            val res = num.toDouble()
+            !res.isNaN() && (res >= 0.0)
+        } catch (_: Exception) {
+            false
+        }
     }
 
 }
