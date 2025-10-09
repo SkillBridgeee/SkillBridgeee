@@ -7,6 +7,15 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// Force JaCoCo version to support Java 21
+configurations.all {
+    resolutionStrategy {
+        force("org.jacoco:org.jacoco.core:0.8.11")
+        force("org.jacoco:org.jacoco.agent:0.8.11")
+        force("org.jacoco:org.jacoco.report:0.8.11")
+    }
+}
+
 android {
     namespace = "com.android.sample"
     compileSdk = 34
@@ -40,7 +49,7 @@ android {
     }
 
     testCoverage {
-        jacocoVersion = "0.8.8"
+        jacocoVersion = "0.8.11"
     }
 
     buildFeatures {
@@ -98,6 +107,7 @@ sonar {
         property("sonar.projectName", "SkillBridgeee")
         property("sonar.organization", "skilbridge")
         property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.gradle.skipCompile", "true")
         // Comma-separated paths to the various directories containing the *.xml JUnit report files. Each path may be absolute or relative to the project base directory.
         property("sonar.junit.reportPaths", "${project.layout.buildDirectory.get()}/test-results/testDebugUnitTest/")
         // Paths to xml files with Android Lint issues. If the main flavor is changed, this file will have to be changed too.
@@ -164,6 +174,10 @@ tasks.withType<Test> {
         isIncludeNoLocationClasses = true
         excludes = listOf("jdk.internal.*")
     }
+}
+
+jacoco {
+    toolVersion = "0.8.11"
 }
 
 tasks.register("jacocoTestReport", JacocoReport::class) {
