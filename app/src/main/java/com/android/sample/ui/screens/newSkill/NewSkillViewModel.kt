@@ -68,14 +68,15 @@ class NewSkillViewModel() : ViewModel() {
             price = price,
             invalidPriceMsg =
                 if (price.isBlank()) "Price cannot be empty"
-                else if (!isNumber(price)) "Price must be a positive number" else null)
+                else if (!isPosNumber(price)) "Price must be a positive number" else null)
   }
 
   fun setSubject(sub: MainSubject) {
     _uiState.value = _uiState.value.copy(subject = sub)
   }
 
-  private fun isNumber(num: String): Boolean {
+  // Check if a string represent a positive number
+  private fun isPosNumber(num: String): Boolean {
     return try {
       val res = num.toDouble()
       !res.isNaN() && (res >= 0.0)

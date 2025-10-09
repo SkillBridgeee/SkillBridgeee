@@ -91,6 +91,8 @@ fun NewSkillScreen(skillViewModel: NewSkillViewModel = NewSkillViewModel(), prof
 @Composable
 fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkillViewModel) {
 
+  val textSpace = 8.dp
+
   LaunchedEffect(profileId) { skillViewModel.loadSkill() }
   val skillUIState by skillViewModel.uiState.collectAsState()
 
@@ -134,7 +136,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     modifier =
                         Modifier.fillMaxWidth().testTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE))
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(textSpace))
 
                 // Desc Input
                 OutlinedTextField(
@@ -153,7 +155,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     modifier =
                         Modifier.fillMaxWidth().testTag(NewSkillScreenTestTag.INPUT_DESCRIPTION))
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(textSpace))
 
                 // Price Input
                 OutlinedTextField(
@@ -171,7 +173,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     },
                     modifier = Modifier.fillMaxWidth().testTag(NewSkillScreenTestTag.INPUT_PRICE))
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(textSpace))
 
                 SubjectMenu(selectedSubject = skillUIState.subject, skillViewModel = skillViewModel)
               }
