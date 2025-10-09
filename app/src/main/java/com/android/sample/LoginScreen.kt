@@ -42,10 +42,7 @@ enum class UserRole(string: String) {
 fun LoginScreen() {
   var email by remember { mutableStateOf("") }
   var password by remember { mutableStateOf("") }
-  var selectedRole by remember { mutableStateOf(UserRole.Learner)}
-
-
-
+  var selectedRole by remember { mutableStateOf(UserRole.Learner) }
 
   Column(
       modifier = Modifier.fillMaxSize().padding(20.dp),

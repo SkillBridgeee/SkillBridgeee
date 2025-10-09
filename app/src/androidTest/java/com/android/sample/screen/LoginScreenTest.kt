@@ -1,11 +1,9 @@
 package com.android.sample.screen
 
-import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.assertValueEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -68,20 +66,20 @@ class LoginScreenTest {
     val mail = "guillaume.lepin@epfl.ch"
     val password = "truc1234567890"
 
-
     composeRule.onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON)
     composeRule.onNodeWithTag(SignInScreenTestTags.EMAIL_INPUT).performTextInput(mail)
     composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT).performTextInput(password)
     composeRule.onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).assertIsEnabled().performClick()
-
-
   }
 
   @Test
   fun signInButtonIsClickable() {
     composeRule.setContent { LoginScreen() }
 
-    composeRule.onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).assertIsDisplayed().assertIsNotEnabled()
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON)
+        .assertIsDisplayed()
+        .assertIsNotEnabled()
     composeRule.onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).assertTextEquals("Sign In")
   }
 
@@ -135,7 +133,9 @@ class LoginScreenTest {
   @Test
   fun authSectionTextIsCorrect() {
     composeRule.setContent { LoginScreen() }
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_SECTION).assertTextEquals("or continue with")
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.AUTH_SECTION)
+        .assertTextEquals("or continue with")
   }
 
   @Test
