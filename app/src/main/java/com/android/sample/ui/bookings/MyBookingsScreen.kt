@@ -32,6 +32,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.Scaffold
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.android.sample.ui.components.BottomNavBar
+import com.android.sample.ui.components.TopAppBar
+import androidx.compose.foundation.clickable
+
 
 
 object MyBookingsPageTestTag {
@@ -45,22 +52,30 @@ object MyBookingsPageTestTag {
     const val NAV_MESSAGES = "MyBookingsPageTestTag.NAV_MESSAGES"
     const val NAV_PROFILE = "MyBookingsPageTestTag.NAV_PROFILE"
 }
+
 @Composable
 fun MyBookingsScreen(
     vm: MyBookingsViewModel,
+    navController: NavHostController,
     onOpenDetails: (BookingCardUi) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val items by vm.items.collectAsState()
-
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(items, key = { it.id }) { ui ->
-            BookingCard(ui, onOpenDetails)
+    Scaffold(
+        topBar = { TopAppBar(navController) },
+        bottomBar = { BottomNavBar(navController) }
+    ) { innerPadding ->
+        val items by vm.items.collectAsState()
+        // Pass innerPadding to your content to avoid overlap
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(items, key = { it.id }) { ui ->
+                BookingCard(ui, onOpenDetails)
+            }
         }
     }
 }
@@ -94,7 +109,12 @@ private fun BookingCard(
             Spacer(Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(ui.tutorName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    ui.tutorName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { /* No-op for now */ }
+                )
                 Spacer(Modifier.height(2.dp))
                 Text(ui.subject, color = BrandBlue)
                 Spacer(Modifier.height(4.dp))
@@ -133,5 +153,10 @@ private fun RatingRow(stars: Int, count: Int) {
 @Preview(showBackground = true, widthDp = 360, heightDp = 640)
 @Composable
 private fun MyBookingsScreenPreview() {
-    SampleAppTheme { MyBookingsScreen(vm = MyBookingsViewModel()) }
+    SampleAppTheme {
+        MyBookingsScreen(
+            vm = MyBookingsViewModel(),
+            navController = rememberNavController()
+        )
+    }
 }

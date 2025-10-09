@@ -11,6 +11,8 @@ import com.android.sample.ui.screens.PianoSkillScreen
 import com.android.sample.ui.screens.ProfilePlaceholder
 import com.android.sample.ui.screens.SettingsPlaceholder
 import com.android.sample.ui.screens.SkillsPlaceholder
+import com.android.sample.ui.bookings.MyBookingsScreen
+import com.android.sample.ui.bookings.MyBookingsViewModel
 
 /**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
@@ -66,6 +68,14 @@ fun AppNavGraph(navController: NavHostController) {
     composable(NavRoutes.SETTINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SETTINGS) }
       SettingsPlaceholder()
+    }
+
+    composable(NavRoutes.BOOKINGS) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
+      MyBookingsScreen(
+        vm = MyBookingsViewModel(),
+        navController = navController
+      )
     }
   }
 }
