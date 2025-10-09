@@ -1,4 +1,4 @@
-package com.android.sample.model.skills
+package com.android.sample.model.skill
 
 /** Enum representing main subject categories */
 enum class MainSubject {
@@ -119,7 +119,7 @@ enum class ExpertiseLevel {
 }
 
 /** Data class representing a skill */
-data class Skills(
+data class Skill(
     val userId: String = "", // UID of the user who has this skill
     val mainSubject: MainSubject = MainSubject.ACADEMICS,
     val skill: String = "", // Specific skill name (use enum.name when creating)

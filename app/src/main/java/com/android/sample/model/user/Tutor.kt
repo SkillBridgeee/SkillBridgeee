@@ -1,13 +1,16 @@
 package com.android.sample.model.user
 
+import com.android.sample.model.map.Location
+import com.android.sample.model.skill.Skill
+
 /** Data class representing tutor information */
 data class Tutor(
     val userId: String = "",
     val name: String = "",
     val email: String = "",
-    val location: String = "",
+    val location: Location = Location(),
     val description: String = "",
-    val skills: List<String> = emptyList(), // Will reference Skills data
+    val skills: List<Skill> = emptyList(), // Will reference Skills data
     val starRating: Double = 0.0, // Average rating 1.0-5.0
     val ratingNumber: Int = 0 // Number of ratings received
 ) {

@@ -1,5 +1,9 @@
 package com.android.sample.model.user
 
+import com.android.sample.model.map.Location
+import com.android.sample.model.skill.ExpertiseLevel
+import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.Skill
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -12,22 +16,36 @@ class TutorTest {
     assertEquals("", tutor.userId)
     assertEquals("", tutor.name)
     assertEquals("", tutor.email)
-    assertEquals("", tutor.location)
+    assertEquals(Location(), tutor.location)
     assertEquals("", tutor.description)
-    assertEquals(emptyList<String>(), tutor.skills)
+    assertEquals(emptyList<Skill>(), tutor.skills)
     assertEquals(0.0, tutor.starRating, 0.01)
     assertEquals(0, tutor.ratingNumber)
   }
 
   @Test
   fun `test Tutor creation with valid values`() {
-    val skills = listOf("MATHEMATICS", "PHYSICS")
+    val customLocation = Location(42.3601, -71.0589, "Boston, MA")
+    val skills =
+        listOf(
+            Skill(
+                userId = "tutor123",
+                mainSubject = MainSubject.ACADEMICS,
+                skill = "MATHEMATICS",
+                skillTime = 5.0,
+                expertise = ExpertiseLevel.EXPERT),
+            Skill(
+                userId = "tutor123",
+                mainSubject = MainSubject.ACADEMICS,
+                skill = "PHYSICS",
+                skillTime = 3.0,
+                expertise = ExpertiseLevel.ADVANCED))
     val tutor =
         Tutor(
             userId = "tutor123",
             name = "Dr. Smith",
             email = "dr.smith@example.com",
-            location = "Boston",
+            location = customLocation,
             description = "Math and Physics tutor",
             skills = skills,
             starRating = 4.5,
@@ -36,7 +54,7 @@ class TutorTest {
     assertEquals("tutor123", tutor.userId)
     assertEquals("Dr. Smith", tutor.name)
     assertEquals("dr.smith@example.com", tutor.email)
-    assertEquals("Boston", tutor.location)
+    assertEquals(customLocation, tutor.location)
     assertEquals("Math and Physics tutor", tutor.description)
     assertEquals(skills, tutor.skills)
     assertEquals(4.5, tutor.starRating, 0.01)
@@ -75,9 +93,21 @@ class TutorTest {
 
   @Test
   fun `test Tutor equality and hashCode`() {
-    val tutor1 = Tutor(userId = "tutor123", name = "Dr. Smith", starRating = 4.5, ratingNumber = 20)
-
-    val tutor2 = Tutor(userId = "tutor123", name = "Dr. Smith", starRating = 4.5, ratingNumber = 20)
+    val location = Location(42.3601, -71.0589, "Boston, MA")
+    val tutor1 =
+        Tutor(
+            userId = "tutor123",
+            name = "Dr. Smith",
+            location = location,
+            starRating = 4.5,
+            ratingNumber = 20)
+    val tutor2 =
+        Tutor(
+            userId = "tutor123",
+            name = "Dr. Smith",
+            location = location,
+            starRating = 4.5,
+            ratingNumber = 20)
 
     assertEquals(tutor1, tutor2)
     assertEquals(tutor1.hashCode(), tutor2.hashCode())
@@ -85,13 +115,20 @@ class TutorTest {
 
   @Test
   fun `test Tutor copy functionality`() {
+    val location = Location(42.3601, -71.0589, "Boston, MA")
     val originalTutor =
-        Tutor(userId = "tutor123", name = "Dr. Smith", starRating = 4.5, ratingNumber = 20)
+        Tutor(
+            userId = "tutor123",
+            name = "Dr. Smith",
+            location = location,
+            starRating = 4.5,
+            ratingNumber = 20)
 
     val updatedTutor = originalTutor.copy(starRating = 4.8, ratingNumber = 25)
 
     assertEquals("tutor123", updatedTutor.userId)
     assertEquals("Dr. Smith", updatedTutor.name)
+    assertEquals(location, updatedTutor.location)
     assertEquals(4.8, updatedTutor.starRating, 0.01)
     assertEquals(25, updatedTutor.ratingNumber)
 
@@ -99,19 +136,37 @@ class TutorTest {
   }
 
   @Test
-  fun `test Tutor with empty skills list`() {
-    val tutor = Tutor(skills = emptyList())
-    assertTrue(tutor.skills.isEmpty())
+  fun `test Tutor with skills`() {
+    val skills =
+        listOf(
+            Skill(
+                userId = "tutor456",
+                mainSubject = MainSubject.ACADEMICS,
+                skill = "MATHEMATICS",
+                skillTime = 2.5,
+                expertise = ExpertiseLevel.INTERMEDIATE),
+            Skill(
+                userId = "tutor456",
+                mainSubject = MainSubject.ACADEMICS,
+                skill = "CHEMISTRY",
+                skillTime = 4.0,
+                expertise = ExpertiseLevel.ADVANCED))
+    val tutor = Tutor(userId = "tutor456", skills = skills)
+
+    assertEquals(skills, tutor.skills)
+    assertEquals(2, tutor.skills.size)
+    assertEquals("MATHEMATICS", tutor.skills[0].skill)
+    assertEquals("CHEMISTRY", tutor.skills[1].skill)
+    assertEquals(MainSubject.ACADEMICS, tutor.skills[0].mainSubject)
+    assertEquals(ExpertiseLevel.INTERMEDIATE, tutor.skills[0].expertise)
   }
 
   @Test
-  fun `test Tutor with multiple skills`() {
-    val skills = listOf("MATHEMATICS", "PHYSICS", "CHEMISTRY")
-    val tutor = Tutor(skills = skills)
+  fun `test Tutor toString contains key information`() {
+    val tutor = Tutor(userId = "tutor123", name = "Dr. Smith")
+    val tutorString = tutor.toString()
 
-    assertEquals(3, tutor.skills.size)
-    assertTrue(tutor.skills.contains("MATHEMATICS"))
-    assertTrue(tutor.skills.contains("PHYSICS"))
-    assertTrue(tutor.skills.contains("CHEMISTRY"))
+    assertTrue(tutorString.contains("tutor123"))
+    assertTrue(tutorString.contains("Dr. Smith"))
   }
 }

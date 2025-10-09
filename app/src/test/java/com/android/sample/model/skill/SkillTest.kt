@@ -1,41 +1,41 @@
-package com.android.sample.model.skills
+package com.android.sample.model.skill
 
 import org.junit.Assert.*
 import org.junit.Test
 
-class SkillsTest {
+class SkillTest {
 
   @Test
-  fun `test Skills creation with default values`() {
-    val skills = Skills()
+  fun `test Skill creation with default values`() {
+    val skill = Skill()
 
-    assertEquals("", skills.userId)
-    assertEquals(MainSubject.ACADEMICS, skills.mainSubject)
-    assertEquals("", skills.skill)
-    assertEquals(0.0, skills.skillTime, 0.01)
-    assertEquals(ExpertiseLevel.BEGINNER, skills.expertise)
+    assertEquals("", skill.userId)
+    assertEquals(MainSubject.ACADEMICS, skill.mainSubject)
+    assertEquals("", skill.skill)
+    assertEquals(0.0, skill.skillTime, 0.01)
+    assertEquals(ExpertiseLevel.BEGINNER, skill.expertise)
   }
 
   @Test
-  fun `test Skills creation with valid values`() {
-    val skills =
-        Skills(
+  fun `test Skill creation with valid values`() {
+    val skill =
+        Skill(
             userId = "user123",
             mainSubject = MainSubject.SPORTS,
             skill = "FOOTBALL",
             skillTime = 5.5,
             expertise = ExpertiseLevel.INTERMEDIATE)
 
-    assertEquals("user123", skills.userId)
-    assertEquals(MainSubject.SPORTS, skills.mainSubject)
-    assertEquals("FOOTBALL", skills.skill)
-    assertEquals(5.5, skills.skillTime, 0.01)
-    assertEquals(ExpertiseLevel.INTERMEDIATE, skills.expertise)
+    assertEquals("user123", skill.userId)
+    assertEquals(MainSubject.SPORTS, skill.mainSubject)
+    assertEquals("FOOTBALL", skill.skill)
+    assertEquals(5.5, skill.skillTime, 0.01)
+    assertEquals(ExpertiseLevel.INTERMEDIATE, skill.expertise)
   }
 
   @Test(expected = IllegalArgumentException::class)
-  fun `test Skills validation - negative skill time`() {
-    Skills(
+  fun `test Skill validation - negative skill time`() {
+    Skill(
         userId = "user123",
         mainSubject = MainSubject.ACADEMICS,
         skill = "MATHEMATICS",
@@ -44,31 +44,31 @@ class SkillsTest {
   }
 
   @Test
-  fun `test Skills with zero skill time`() {
-    val skills = Skills(userId = "user123", skillTime = 0.0)
-    assertEquals(0.0, skills.skillTime, 0.01)
+  fun `test Skill with zero skill time`() {
+    val skill = Skill(userId = "user123", skillTime = 0.0)
+    assertEquals(0.0, skill.skillTime, 0.01)
   }
 
   @Test
-  fun `test Skills with various skill times`() {
-    val skills1 = Skills(skillTime = 0.5)
-    val skills2 = Skills(skillTime = 10.0)
-    val skills3 = Skills(skillTime = 1000.25)
+  fun `test Skill with various skill times`() {
+    val skill1 = Skill(skillTime = 0.5)
+    val skill2 = Skill(skillTime = 10.0)
+    val skill3 = Skill(skillTime = 1000.25)
 
-    assertEquals(0.5, skills1.skillTime, 0.01)
-    assertEquals(10.0, skills2.skillTime, 0.01)
-    assertEquals(1000.25, skills3.skillTime, 0.01)
+    assertEquals(0.5, skill1.skillTime, 0.01)
+    assertEquals(10.0, skill2.skillTime, 0.01)
+    assertEquals(1000.25, skill3.skillTime, 0.01)
   }
 
   @Test
   fun `test all MainSubject enum values`() {
-    val academics = Skills(mainSubject = MainSubject.ACADEMICS)
-    val sports = Skills(mainSubject = MainSubject.SPORTS)
-    val music = Skills(mainSubject = MainSubject.MUSIC)
-    val arts = Skills(mainSubject = MainSubject.ARTS)
-    val technology = Skills(mainSubject = MainSubject.TECHNOLOGY)
-    val languages = Skills(mainSubject = MainSubject.LANGUAGES)
-    val crafts = Skills(mainSubject = MainSubject.CRAFTS)
+    val academics = Skill(mainSubject = MainSubject.ACADEMICS)
+    val sports = Skill(mainSubject = MainSubject.SPORTS)
+    val music = Skill(mainSubject = MainSubject.MUSIC)
+    val arts = Skill(mainSubject = MainSubject.ARTS)
+    val technology = Skill(mainSubject = MainSubject.TECHNOLOGY)
+    val languages = Skill(mainSubject = MainSubject.LANGUAGES)
+    val crafts = Skill(mainSubject = MainSubject.CRAFTS)
 
     assertEquals(MainSubject.ACADEMICS, academics.mainSubject)
     assertEquals(MainSubject.SPORTS, sports.mainSubject)
@@ -81,11 +81,11 @@ class SkillsTest {
 
   @Test
   fun `test all ExpertiseLevel enum values`() {
-    val beginner = Skills(expertise = ExpertiseLevel.BEGINNER)
-    val intermediate = Skills(expertise = ExpertiseLevel.INTERMEDIATE)
-    val advanced = Skills(expertise = ExpertiseLevel.ADVANCED)
-    val expert = Skills(expertise = ExpertiseLevel.EXPERT)
-    val master = Skills(expertise = ExpertiseLevel.MASTER)
+    val beginner = Skill(expertise = ExpertiseLevel.BEGINNER)
+    val intermediate = Skill(expertise = ExpertiseLevel.INTERMEDIATE)
+    val advanced = Skill(expertise = ExpertiseLevel.ADVANCED)
+    val expert = Skill(expertise = ExpertiseLevel.EXPERT)
+    val master = Skill(expertise = ExpertiseLevel.MASTER)
 
     assertEquals(ExpertiseLevel.BEGINNER, beginner.expertise)
     assertEquals(ExpertiseLevel.INTERMEDIATE, intermediate.expertise)
@@ -95,46 +95,46 @@ class SkillsTest {
   }
 
   @Test
-  fun `test Skills equality and hashCode`() {
-    val skills1 =
-        Skills(
+  fun `test Skill equality and hashCode`() {
+    val skill1 =
+        Skill(
             userId = "user123",
             mainSubject = MainSubject.TECHNOLOGY,
             skill = "PROGRAMMING",
             skillTime = 15.5,
             expertise = ExpertiseLevel.ADVANCED)
 
-    val skills2 =
-        Skills(
+    val skill2 =
+        Skill(
             userId = "user123",
             mainSubject = MainSubject.TECHNOLOGY,
             skill = "PROGRAMMING",
             skillTime = 15.5,
             expertise = ExpertiseLevel.ADVANCED)
 
-    assertEquals(skills1, skills2)
-    assertEquals(skills1.hashCode(), skills2.hashCode())
+    assertEquals(skill1, skill2)
+    assertEquals(skill1.hashCode(), skill2.hashCode())
   }
 
   @Test
-  fun `test Skills copy functionality`() {
-    val originalSkills =
-        Skills(
+  fun `test Skill copy functionality`() {
+    val originalSkill =
+        Skill(
             userId = "user123",
             mainSubject = MainSubject.MUSIC,
             skill = "PIANO",
             skillTime = 8.0,
             expertise = ExpertiseLevel.INTERMEDIATE)
 
-    val updatedSkills = originalSkills.copy(skillTime = 12.0, expertise = ExpertiseLevel.ADVANCED)
+    val updatedSkill = originalSkill.copy(skillTime = 12.0, expertise = ExpertiseLevel.ADVANCED)
 
-    assertEquals("user123", updatedSkills.userId)
-    assertEquals(MainSubject.MUSIC, updatedSkills.mainSubject)
-    assertEquals("PIANO", updatedSkills.skill)
-    assertEquals(12.0, updatedSkills.skillTime, 0.01)
-    assertEquals(ExpertiseLevel.ADVANCED, updatedSkills.expertise)
+    assertEquals("user123", updatedSkill.userId)
+    assertEquals(MainSubject.MUSIC, updatedSkill.mainSubject)
+    assertEquals("PIANO", updatedSkill.skill)
+    assertEquals(12.0, updatedSkill.skillTime, 0.01)
+    assertEquals(ExpertiseLevel.ADVANCED, updatedSkill.expertise)
 
-    assertNotEquals(originalSkills, updatedSkills)
+    assertNotEquals(originalSkill, updatedSkill)
   }
 }
 

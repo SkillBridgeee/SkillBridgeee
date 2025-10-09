@@ -7,79 +7,88 @@ class RatingsTest {
 
   @Test
   fun `test Ratings creation with default values`() {
-    // This will fail validation because default rating is 0 (invalid)
-    try {
-      val rating = Ratings()
-      fail("Should have thrown IllegalArgumentException")
-    } catch (e: IllegalArgumentException) {
-      assertTrue(e.message!!.contains("Rating must be between 1 and 5"))
-    }
+    val rating = Ratings()
+
+    assertEquals(StarRating.ONE, rating.rating)
+    assertEquals("", rating.fromUserId)
+    assertEquals("", rating.fromUserName)
+    assertEquals("", rating.ratingUID)
   }
 
   @Test
   fun `test Ratings creation with valid values`() {
     val rating =
         Ratings(
-            rating = 5, fromUserId = "user123", fromUserName = "John Doe", ratingId = "tutor456")
+            rating = StarRating.FIVE,
+            fromUserId = "user123",
+            fromUserName = "John Doe",
+            ratingUID = "tutor456")
 
-    assertEquals(5, rating.rating)
+    assertEquals(StarRating.FIVE, rating.rating)
     assertEquals("user123", rating.fromUserId)
     assertEquals("John Doe", rating.fromUserName)
-    assertEquals("tutor456", rating.ratingId)
+    assertEquals("tutor456", rating.ratingUID)
   }
 
   @Test
   fun `test Ratings with all valid rating values`() {
-    for (ratingValue in 1..5) {
+    val allRatings =
+        listOf(StarRating.ONE, StarRating.TWO, StarRating.THREE, StarRating.FOUR, StarRating.FIVE)
+
+    for (starRating in allRatings) {
       val rating =
           Ratings(
-              rating = ratingValue,
+              rating = starRating,
               fromUserId = "user123",
               fromUserName = "John Doe",
-              ratingId = "tutor456")
-      assertEquals(ratingValue, rating.rating)
+              ratingUID = "tutor456")
+      assertEquals(starRating, rating.rating)
     }
   }
 
-  @Test(expected = IllegalArgumentException::class)
-  fun `test Ratings validation - rating too low`() {
-    Ratings(rating = 0, fromUserId = "user123", fromUserName = "John Doe", ratingId = "tutor456")
-  }
-
-  @Test(expected = IllegalArgumentException::class)
-  fun `test Ratings validation - rating too high`() {
-    Ratings(rating = 6, fromUserId = "user123", fromUserName = "John Doe", ratingId = "tutor456")
-  }
-
-  @Test(expected = IllegalArgumentException::class)
-  fun `test Ratings validation - negative rating`() {
-    Ratings(rating = -1, fromUserId = "user123", fromUserName = "John Doe", ratingId = "tutor456")
+  @Test
+  fun `test StarRating enum values`() {
+    assertEquals(1, StarRating.ONE.value)
+    assertEquals(2, StarRating.TWO.value)
+    assertEquals(3, StarRating.THREE.value)
+    assertEquals(4, StarRating.FOUR.value)
+    assertEquals(5, StarRating.FIVE.value)
   }
 
   @Test
-  fun `test Ratings boundary values`() {
-    // Test minimum valid rating
-    val minRating =
-        Ratings(
-            rating = 1, fromUserId = "user123", fromUserName = "John Doe", ratingId = "tutor456")
-    assertEquals(1, minRating.rating)
+  fun `test StarRating fromInt conversion`() {
+    assertEquals(StarRating.ONE, StarRating.fromInt(1))
+    assertEquals(StarRating.TWO, StarRating.fromInt(2))
+    assertEquals(StarRating.THREE, StarRating.fromInt(3))
+    assertEquals(StarRating.FOUR, StarRating.fromInt(4))
+    assertEquals(StarRating.FIVE, StarRating.fromInt(5))
+  }
 
-    // Test maximum valid rating
-    val maxRating =
-        Ratings(
-            rating = 5, fromUserId = "user456", fromUserName = "Jane Doe", ratingId = "tutor789")
-    assertEquals(5, maxRating.rating)
+  @Test(expected = IllegalArgumentException::class)
+  fun `test StarRating fromInt with invalid value - too low`() {
+    StarRating.fromInt(0)
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `test StarRating fromInt with invalid value - too high`() {
+    StarRating.fromInt(6)
   }
 
   @Test
   fun `test Ratings equality and hashCode`() {
     val rating1 =
         Ratings(
-            rating = 4, fromUserId = "user123", fromUserName = "John Doe", ratingId = "tutor456")
+            rating = StarRating.FOUR,
+            fromUserId = "user123",
+            fromUserName = "John Doe",
+            ratingUID = "tutor456")
 
     val rating2 =
         Ratings(
-            rating = 4, fromUserId = "user123", fromUserName = "John Doe", ratingId = "tutor456")
+            rating = StarRating.FOUR,
+            fromUserId = "user123",
+            fromUserName = "John Doe",
+            ratingUID = "tutor456")
 
     assertEquals(rating1, rating2)
     assertEquals(rating1.hashCode(), rating2.hashCode())
@@ -89,54 +98,33 @@ class RatingsTest {
   fun `test Ratings copy functionality`() {
     val originalRating =
         Ratings(
-            rating = 3, fromUserId = "user123", fromUserName = "John Doe", ratingId = "tutor456")
+            rating = StarRating.THREE,
+            fromUserId = "user123",
+            fromUserName = "John Doe",
+            ratingUID = "tutor456")
 
-    val updatedRating = originalRating.copy(rating = 5, fromUserName = "John Smith")
+    val updatedRating = originalRating.copy(rating = StarRating.FIVE, fromUserName = "Jane Doe")
 
-    assertEquals(5, updatedRating.rating)
+    assertEquals(StarRating.FIVE, updatedRating.rating)
     assertEquals("user123", updatedRating.fromUserId)
-    assertEquals("John Smith", updatedRating.fromUserName)
-    assertEquals("tutor456", updatedRating.ratingId)
+    assertEquals("Jane Doe", updatedRating.fromUserName)
+    assertEquals("tutor456", updatedRating.ratingUID)
 
     assertNotEquals(originalRating, updatedRating)
   }
 
   @Test
-  fun `test Ratings with empty string fields`() {
-    val rating = Ratings(rating = 3, fromUserId = "", fromUserName = "", ratingId = "")
-
-    assertEquals(3, rating.rating)
-    assertEquals("", rating.fromUserId)
-    assertEquals("", rating.fromUserName)
-    assertEquals("", rating.ratingId)
-  }
-
-  @Test
-  fun `test Ratings toString contains relevant information`() {
+  fun `test Ratings toString contains key information`() {
     val rating =
         Ratings(
-            rating = 4, fromUserId = "user123", fromUserName = "John Doe", ratingId = "tutor456")
+            rating = StarRating.FOUR,
+            fromUserId = "user123",
+            fromUserName = "John Doe",
+            ratingUID = "tutor456")
 
     val ratingString = rating.toString()
-    assertTrue(ratingString.contains("4"))
     assertTrue(ratingString.contains("user123"))
     assertTrue(ratingString.contains("John Doe"))
     assertTrue(ratingString.contains("tutor456"))
-  }
-
-  @Test
-  fun `test Ratings with different user combinations`() {
-    val rating1 =
-        Ratings(rating = 5, fromUserId = "user123", fromUserName = "Alice", ratingId = "tutor456")
-
-    val rating2 =
-        Ratings(rating = 3, fromUserId = "user789", fromUserName = "Bob", ratingId = "tutor456")
-
-    // Same tutor, different raters
-    assertEquals("tutor456", rating1.ratingId)
-    assertEquals("tutor456", rating2.ratingId)
-    assertNotEquals(rating1.fromUserId, rating2.fromUserId)
-    assertNotEquals(rating1.fromUserName, rating2.fromUserName)
-    assertNotEquals(rating1.rating, rating2.rating)
   }
 }
