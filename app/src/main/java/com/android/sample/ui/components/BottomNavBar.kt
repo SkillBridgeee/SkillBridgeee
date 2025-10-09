@@ -11,27 +11,33 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.android.sample.ui.navigation.NavRoutes
+import com.android.sample.ui.navigation.RouteStackManager
 
 /**
- * BottomNavBar
+ * BottomNavBar - Main navigation bar component for SkillBridge app
  *
- * This composable defines the app’s bottom navigation bar. It allows users to switch between key
- * screens (Home, Skills, Profile, Settings) by tapping icons at the bottom of the screen.
+ * A Material3 NavigationBar that provides tab-based navigation between main app sections.
+ * Integrates with RouteStackManager to maintain proper navigation state and back stack handling.
  *
- * How it works:
- * - The NavigationBar is part of Material3 design.
- * - Each [NavigationBarItem] represents a screen and has: → An icon → A text label → A route to
- *   navigate to when clicked
- * - The bar highlights the active route using [selected].
- * - Navigation is handled by the shared [NavHostController].
+ * Features:
+ * - Shows 4 main tabs: Home, Skills, Profile, Settings
+ * - Highlights currently selected tab based on navigation state
+ * - Resets route stack when switching tabs to prevent deep navigation issues
+ * - Preserves tab state with saveState/restoreState for smooth UX
+ * - Uses launchSingleTop to prevent duplicate destinations
  *
- * How to add a new tab:
- * 1. Add a new route constant to [NavRoutes].
- * 2. Add a new [BottomNavItem] to the `items` list below.
- * 3. Add a corresponding `composable()` entry to [NavGraph].
+ * Usage:
+ * - Place in main activity/screen as persistent bottom navigation
+ * - Pass NavHostController from parent composable
+ * - Navigation routes must match those defined in NavRoutes object
  *
- * How to remove a tab:
- * - Simply remove it from the `items` list below.
+ * Adding a new tab:
+ * 1. Add new BottomNavItem to the items list with label, icon, and route
+ * 2. Ensure corresponding route exists in NavRoutes
+ * 3. Add route to RouteStackManager.mainRoutes if needed
+ * 4. Import appropriate Material icon
+ *
+ * Note: Tab switching automatically clears and resets the navigation stack
  */
 @Composable
 fun BottomNavBar(navController: NavHostController) {
@@ -50,6 +56,10 @@ fun BottomNavBar(navController: NavHostController) {
       NavigationBarItem(
           selected = currentRoute == item.route,
           onClick = {
+            // Reset the route stack when switching tabs
+            RouteStackManager.clear()
+            RouteStackManager.addRoute(item.route)
+
             navController.navigate(item.route) {
               popUpTo(NavRoutes.HOME) { saveState = true }
               launchSingleTop = true
