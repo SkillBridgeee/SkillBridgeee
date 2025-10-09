@@ -32,7 +32,7 @@ data class SkillUIState(
                     description.isNotEmpty()
 }
 
-class NewSkillOverviewModel() : ViewModel() {
+class NewSkillViewModel() : ViewModel() {
     // Profile UI state
     private val _uiState = MutableStateFlow(SkillUIState())
     val uiState: StateFlow<SkillUIState> = _uiState.asStateFlow()
@@ -51,17 +51,11 @@ class NewSkillOverviewModel() : ViewModel() {
     fun loadSkill() {
         viewModelScope.launch {
             try {
-
             } catch (_: Exception) {
-
             }
         }
     }
 
-
-    fun addSkill() : Boolean {return true}
-
-    private fun addSkillRepository() {}
 
     // Functions to update the UI state.
     fun setTitle(title: String) {
