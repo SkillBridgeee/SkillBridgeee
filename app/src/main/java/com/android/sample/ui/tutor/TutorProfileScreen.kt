@@ -182,35 +182,35 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
       }
 }
 
-/** Sample tutor data for previewing the Tutor Profile screen. */
-private fun sampleTutor(): Tutor =
-    Tutor(
-        userId = "demo",
-        name = "Kendrick Lamar",
-        email = "kendrick@gmail.com",
-        description = "Performer and mentor",
-        skills =
-            listOf(
-                Skill(
-                    userId = "demo",
-                    mainSubject = MainSubject.MUSIC,
-                    skill = "SINGING",
-                    skillTime = 10.0,
-                    expertise = ExpertiseLevel.EXPERT),
-                Skill(
-                    userId = "demo",
-                    mainSubject = MainSubject.MUSIC,
-                    skill = "DANCING",
-                    skillTime = 5.0,
-                    expertise = ExpertiseLevel.INTERMEDIATE),
-                Skill(
-                    userId = "demo",
-                    mainSubject = MainSubject.MUSIC,
-                    skill = "GUITAR",
-                    skillTime = 7.0,
-                    expertise = ExpertiseLevel.BEGINNER)),
-        starRating = 5.0,
-        ratingNumber = 23)
+///** Sample tutor data for previewing the Tutor Profile screen. */
+//private fun sampleTutor(): Tutor =
+//    Tutor(
+//        userId = "demo",
+//        name = "Kendrick Lamar",
+//        email = "kendrick@gmail.com",
+//        description = "Performer and mentor",
+//        skills =
+//            listOf(
+//                Skill(
+//                    userId = "demo",
+//                    mainSubject = MainSubject.MUSIC,
+//                    skill = "SINGING",
+//                    skillTime = 10.0,
+//                    expertise = ExpertiseLevel.EXPERT),
+//                Skill(
+//                    userId = "demo",
+//                    mainSubject = MainSubject.MUSIC,
+//                    skill = "DANCING",
+//                    skillTime = 5.0,
+//                    expertise = ExpertiseLevel.INTERMEDIATE),
+//                Skill(
+//                    userId = "demo",
+//                    mainSubject = MainSubject.MUSIC,
+//                    skill = "GUITAR",
+//                    skillTime = 7.0,
+//                    expertise = ExpertiseLevel.BEGINNER)),
+//        starRating = 5.0,
+//        ratingNumber = 23)
 
 /**
  * A simple Instagram glyph drawn using Canvas.
@@ -244,16 +244,17 @@ private fun InstagramGlyph(modifier: Modifier = Modifier) {
         style = Fill)
   }
 }
-/** A preview of the Tutor Profile screen */
-@Preview(showBackground = true)
-@Composable
-private fun Preview_TutorProfile_WithBars() {
-  val nav = rememberNavController()
-  MaterialTheme {
-    Scaffold(
-        topBar = { TopAppBar(navController = nav) },
-    ) { inner ->
-      TutorContent(tutor = sampleTutor(), modifier = Modifier, padding = inner)
-    }
-  }
-}
+
+///** A preview of the Tutor Profile screen */
+//@Preview(showBackground = true)
+//@Composable
+//private fun Preview_TutorProfile_WithBars() {
+//  val nav = rememberNavController()
+//  MaterialTheme {
+//    Scaffold(
+//        topBar = { TopAppBar(navController = nav) },
+//    ) { inner ->
+//      TutorContent(tutor = sampleTutor(), modifier = Modifier, padding = inner)
+//    }
+//  }
+//}
