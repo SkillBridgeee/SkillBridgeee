@@ -6,6 +6,7 @@ import com.android.sample.model.skill.MainSubject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -24,10 +25,10 @@ data class SkillUIState(
     val description: String = "",
     val price: String = "",
     val subject: MainSubject? = null,
-    val errorMsg: String? = null,
     val invalidTitleMsg: String? = null,
     val invalidDescMsg: String? = null,
     val invalidPriceMsg: String? = null,
+    val invalidSubjectMsg: String? = null,
 ) {
 
   /** Indicates whether the current UI state is valid for submission. */
@@ -36,8 +37,11 @@ data class SkillUIState(
         invalidTitleMsg == null &&
             invalidDescMsg == null &&
             invalidPriceMsg == null &&
-            title.isNotEmpty() &&
-            description.isNotEmpty()
+            invalidSubjectMsg == null &&
+            title.isNotBlank() &&
+            description.isNotBlank() &&
+            price.isNotBlank() &&
+            subject != null
 }
 
 /**
@@ -52,10 +56,11 @@ class NewSkillViewModel() : ViewModel() {
   // Public read-only state flow for the UI to observe
   val uiState: StateFlow<SkillUIState> = _uiState.asStateFlow()
 
-  /** Clears the error message in the UI state. */
-  fun clearErrorMsg() {
-    _uiState.value = _uiState.value.copy(errorMsg = null)
-  }
+  private val titleMsgError = "Title cannot be empty"
+  private val descMsgError = "Description cannot be empty"
+  private val priceEmptyMsg = "Price cannot be empty"
+  private val priceInvalidMsg = "Price must be a positive number"
+  private val subjectMsgError = "You must choose a subject"
 
   /**
    * Placeholder to load an existing skill.
@@ -66,24 +71,37 @@ class NewSkillViewModel() : ViewModel() {
     viewModelScope.launch { try {} catch (_: Exception) {} }
   }
 
+  // Set all messages error, if invalid field
+  fun setError() {
+    _uiState.update { currentState ->
+      currentState.copy(
+          invalidTitleMsg = if (currentState.title.isBlank()) titleMsgError else null,
+          invalidDescMsg = if (currentState.description.isBlank()) descMsgError else null,
+          invalidPriceMsg =
+              if (currentState.price.isBlank()) priceEmptyMsg
+              else if (!isPosNumber(currentState.price)) priceInvalidMsg else null,
+          invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null)
+    }
+  }
+
   // --- State update helpers used by the UI ---
 
   /** Update the title and validate presence. If the title is blank, sets `invalidTitleMsg`. */
   fun setTitle(title: String) {
     _uiState.value =
         _uiState.value.copy(
-            title = title, invalidTitleMsg = if (title.isBlank()) "Title cannot be empty" else null)
+            title = title, invalidTitleMsg = if (title.isBlank()) titleMsgError else null)
   }
 
   /**
    * Update the description and validate presence. If the description is blank, sets
    * `invalidDescMsg`.
    */
-  fun setDesc(description: String) {
+  fun setDescription(description: String) {
     _uiState.value =
         _uiState.value.copy(
             description = description,
-            invalidDescMsg = if (description.isBlank()) "Description cannot be empty" else null)
+            invalidDescMsg = if (description.isBlank()) descMsgError else null)
   }
 
   /**
@@ -98,8 +116,8 @@ class NewSkillViewModel() : ViewModel() {
         _uiState.value.copy(
             price = price,
             invalidPriceMsg =
-                if (price.isBlank()) "Price cannot be empty"
-                else if (!isPosNumber(price)) "Price must be a positive number" else null)
+                if (price.isBlank()) priceEmptyMsg
+                else if (!isPosNumber(price)) priceInvalidMsg else null)
   }
 
   /** Update the selected main subject. */

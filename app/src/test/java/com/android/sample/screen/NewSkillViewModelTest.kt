@@ -2,8 +2,6 @@ package com.android.sample.screen
 
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.screens.newSkill.NewSkillViewModel
-import com.android.sample.ui.screens.newSkill.SkillUIState
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -29,11 +27,11 @@ class NewSkillViewModelTest {
 
   @Test
   fun `setDesc blank and valid`() {
-    viewModel.setDesc("")
+    viewModel.setDescription("")
     assertNotNull(viewModel.uiState.value.invalidDescMsg)
     assertFalse(viewModel.uiState.value.isValid)
 
-    viewModel.setDesc("A description")
+    viewModel.setDescription("A description")
     assertNull(viewModel.uiState.value.invalidDescMsg)
   }
 
@@ -65,21 +63,54 @@ class NewSkillViewModelTest {
   @Test
   fun `isValid becomes true when all fields valid`() {
     viewModel.setTitle("T")
-    viewModel.setDesc("D")
+    viewModel.setDescription("D")
     viewModel.setPrice("5")
+    viewModel.setSubject(MainSubject.TECHNOLOGY)
     assertTrue(viewModel.uiState.value.isValid)
   }
 
   @Test
-  fun `clearErrorMsg via reflection`() {
-    val vm = viewModel
-    val field = vm.javaClass.getDeclaredField("_uiState")
-    field.isAccessible = true
-    val stateFlow = field.get(vm) as MutableStateFlow<SkillUIState>
-    stateFlow.value = stateFlow.value.copy(errorMsg = "some error")
+  fun `setError sets all errors when fields are empty`() {
+    viewModel.setTitle("")
+    viewModel.setDescription("")
+    viewModel.setPrice("")
+    viewModel.setError()
 
-    assertEquals("some error", vm.uiState.value.errorMsg)
-    vm.clearErrorMsg()
-    assertNull(vm.uiState.value.errorMsg)
+    assertEquals("Title cannot be empty", viewModel.uiState.value.invalidTitleMsg)
+    assertEquals("Description cannot be empty", viewModel.uiState.value.invalidDescMsg)
+    assertEquals("Price cannot be empty", viewModel.uiState.value.invalidPriceMsg)
+    assertEquals("You must choose a subject", viewModel.uiState.value.invalidSubjectMsg)
+    assertFalse(viewModel.uiState.value.isValid)
+  }
+
+  @Test
+  fun `setError sets price invalid message for non numeric or negative`() {
+
+    viewModel.setTitle("Valid")
+    viewModel.setDescription("Valid")
+    viewModel.setPrice("abc") // non-numeric
+    viewModel.setError()
+
+    assertNull(viewModel.uiState.value.invalidTitleMsg)
+    assertNull(viewModel.uiState.value.invalidDescMsg)
+    assertEquals("Price must be a positive number", viewModel.uiState.value.invalidPriceMsg)
+    assertEquals("You must choose a subject", viewModel.uiState.value.invalidSubjectMsg)
+    assertFalse(viewModel.uiState.value.isValid)
+  }
+
+  @Test
+  fun `setError clears errors when all fields valid`() {
+    viewModel.setTitle("T")
+    viewModel.setDescription("D")
+    viewModel.setPrice("10")
+    viewModel.setSubject(MainSubject.TECHNOLOGY)
+
+    viewModel.setError()
+
+    assertNull(viewModel.uiState.value.invalidTitleMsg)
+    assertNull(viewModel.uiState.value.invalidDescMsg)
+    assertNull(viewModel.uiState.value.invalidPriceMsg)
+    assertNull(viewModel.uiState.value.invalidSubjectMsg)
+    assertTrue(viewModel.uiState.value.isValid)
   }
 }
