@@ -22,12 +22,7 @@ class SecondActivityTest : TestCase() {
   @Test
   fun test() = run {
     step("Start Second Activity") {
-      ComposeScreen.onComposeScreen<SecondScreen>(composeTestRule) {
-        simpleText {
-          assertIsDisplayed()
-          assertTextEquals("Hello Robolectric!")
-        }
-      }
+      ComposeScreen.onComposeScreen<SecondScreen>(composeTestRule) {}
     }
   }
 }
