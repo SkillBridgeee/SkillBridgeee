@@ -5,6 +5,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.android.sample.ui.bookings.MyBookingsScreen
+import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.screens.HomePlaceholder
 import com.android.sample.ui.screens.PianoSkill2Screen
 import com.android.sample.ui.screens.PianoSkillScreen
@@ -66,6 +68,11 @@ fun AppNavGraph(navController: NavHostController) {
     composable(NavRoutes.SETTINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SETTINGS) }
       SettingsPlaceholder()
+    }
+
+    composable(NavRoutes.BOOKINGS) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
+      MyBookingsScreen(vm = MyBookingsViewModel(), navController = navController)
     }
   }
 }

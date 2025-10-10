@@ -28,4 +28,5 @@ object NavRoutes {
   // Secondary pages
   const val PIANO_SKILL = "skills/piano"
   const val PIANO_SKILL_2 = "skills/piano2"
+  const val BOOKINGS = "bookings"
 }
