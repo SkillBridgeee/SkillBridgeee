@@ -72,10 +72,10 @@ object MyBookingsPageTestTag {
   const val BOOKING_CARD = "MyBookingsPageTestTag.BOOKING_CARD"
   const val BOOKING_DETAILS_BUTTON = "MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON"
   const val BOTTOM_NAV = "MyBookingsPageTestTag.BOTTOM_NAV"
-  /*  const val NAV_HOME = "MyBookingsPageTestTag.NAV_HOME"
+  const val NAV_HOME = "MyBookingsPageTestTag.NAV_HOME"
   const val NAV_BOOKINGS = "MyBookingsPageTestTag.NAV_BOOKINGS"
   const val NAV_MESSAGES = "MyBookingsPageTestTag.NAV_MESSAGES"
-  const val NAV_PROFILE = "MyBookingsPageTestTag.NAV_PROFILE"*/
+  const val NAV_PROFILE = "MyBookingsPageTestTag.NAV_PROFILE"
 }
 
 @Composable
