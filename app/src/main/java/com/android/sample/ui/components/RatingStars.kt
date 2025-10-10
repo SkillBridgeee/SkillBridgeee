@@ -10,12 +10,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import kotlin.math.roundToInt
 
-/**
- * Test tags for the [RatingStars] composable.
- */
+/** Test tags for the [RatingStars] composable. */
 object RatingStarsTestTags {
-    const val FILLED_STAR = "RatingStarsTestTags.FILLED_STAR"
-    const val OUTLINED_STAR = "RatingStarsTestTags.OUTLINED_STAR"
+  const val FILLED_STAR = "RatingStarsTestTags.FILLED_STAR"
+  const val OUTLINED_STAR = "RatingStarsTestTags.OUTLINED_STAR"
 }
 
 /**
@@ -31,16 +29,14 @@ fun RatingStars(ratingOutOfFive: Double, modifier: Modifier = Modifier) {
   val filled = ratingOutOfFive.coerceIn(0.0, 5.0).roundToInt()
   Row(modifier) {
     repeat(5) { i ->
-        val isFilled = i < filled
+      val isFilled = i < filled
       Icon(
           imageVector = if (i < filled) Icons.Filled.Star else Icons.Outlined.Star,
           contentDescription = null,
-          modifier = Modifier.testTag(
-              if (isFilled)
-                  RatingStarsTestTags.FILLED_STAR
-              else
-                  RatingStarsTestTags.OUTLINED_STAR
-          ))
+          modifier =
+              Modifier.testTag(
+                  if (isFilled) RatingStarsTestTags.FILLED_STAR
+                  else RatingStarsTestTags.OUTLINED_STAR))
     }
   }
 }

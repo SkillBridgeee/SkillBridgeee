@@ -14,32 +14,34 @@ import org.junit.Test
 
 class SkillChipTest {
 
-    @get:Rule val compose = createComposeRule()
+  @get:Rule val compose = createComposeRule()
 
-    @Test
-    fun chip_is_displayed() {
-        val skill = Skill("u", MainSubject.MUSIC, "PIANO", 2.0, ExpertiseLevel.INTERMEDIATE)
-        compose.setContent { SkillChip(skill = skill) }
+  @Test
+  fun chip_is_displayed() {
+    val skill = Skill("u", MainSubject.MUSIC, "PIANO", 2.0, ExpertiseLevel.INTERMEDIATE)
+    compose.setContent { SkillChip(skill = skill) }
 
-        compose.onNodeWithTag(SkillChipTestTags.CHIP, useUnmergedTree = true).assertIsDisplayed()
-        compose.onNodeWithTag(SkillChipTestTags.TEXT, useUnmergedTree = true).assertIsDisplayed()
-    }
+    compose.onNodeWithTag(SkillChipTestTags.CHIP, useUnmergedTree = true).assertIsDisplayed()
+    compose.onNodeWithTag(SkillChipTestTags.TEXT, useUnmergedTree = true).assertIsDisplayed()
+  }
 
-    @Test
-    fun formats_integer_years_and_level_lowercase() {
-        val skill = Skill("u", MainSubject.MUSIC, "DATA_SCIENCE", 10.0, ExpertiseLevel.EXPERT)
-        compose.setContent { SkillChip(skill = skill) }
+  @Test
+  fun formats_integer_years_and_level_lowercase() {
+    val skill = Skill("u", MainSubject.MUSIC, "DATA_SCIENCE", 10.0, ExpertiseLevel.EXPERT)
+    compose.setContent { SkillChip(skill = skill) }
 
-        compose.onNodeWithTag(SkillChipTestTags.TEXT, useUnmergedTree = true)
-            .assertTextEquals("Data science: 10 years, expert")
-    }
+    compose
+        .onNodeWithTag(SkillChipTestTags.TEXT, useUnmergedTree = true)
+        .assertTextEquals("Data science: 10 years, expert")
+  }
 
-    @Test
-    fun formats_decimal_years_and_capitalizes_name() {
-        val skill = Skill("u", MainSubject.MUSIC, "VOCAL_TRAINING", 1.5, ExpertiseLevel.BEGINNER)
-        compose.setContent { SkillChip(skill = skill) }
+  @Test
+  fun formats_decimal_years_and_capitalizes_name() {
+    val skill = Skill("u", MainSubject.MUSIC, "VOCAL_TRAINING", 1.5, ExpertiseLevel.BEGINNER)
+    compose.setContent { SkillChip(skill = skill) }
 
-        compose.onNodeWithTag(SkillChipTestTags.TEXT, useUnmergedTree = true)
-            .assertTextEquals("Vocal training: 1.5 years, beginner")
-    }
+    compose
+        .onNodeWithTag(SkillChipTestTags.TEXT, useUnmergedTree = true)
+        .assertTextEquals("Vocal training: 1.5 years, beginner")
+  }
 }

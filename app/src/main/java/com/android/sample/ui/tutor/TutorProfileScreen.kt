@@ -51,9 +51,7 @@ import com.android.sample.ui.components.SkillChip
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.theme.White
 
-/**
- * Test tags for the Tutor Profile screen.
- */
+/** Test tags for the Tutor Profile screen. */
 object TutorPageTestTags {
   const val PFP = "TutorPageTestTags.PFP"
   const val NAME = "TutorPageTestTags.NAME"
@@ -62,8 +60,7 @@ object TutorPageTestTags {
   const val SKILL = "TutorPageTestTags.SKILL"
   const val CONTACT_SECTION = "TutorPageTestTags.CONTACT_SECTION"
 
-    const val TOP_BAR = "TutorPageTestTags.TOP_BAR"
-
+  const val TOP_BAR = "TutorPageTestTags.TOP_BAR"
 }
 
 /**
@@ -82,41 +79,27 @@ fun TutorProfileScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-    LaunchedEffect(Unit) { vm.load(tutorId) }
-    val state by vm.state.collectAsStateWithLifecycle()
+  LaunchedEffect(Unit) { vm.load(tutorId) }
+  val state by vm.state.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = { Box(
-            Modifier
-                .fillMaxWidth()
-                .testTag(TutorPageTestTags.TOP_BAR)
-            ) {
-            TopAppBar(navController = navController)
-            }
+  Scaffold(
+      topBar = {
+        Box(Modifier.fillMaxWidth().testTag(TutorPageTestTags.TOP_BAR)) {
+          TopAppBar(navController = navController)
         }
-    ) { innerPadding ->
+      }) { innerPadding ->
         // Show a loading spinner while loading and the content when loaded
         if (state.loading) {
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
+          Box(
+              modifier = modifier.fillMaxSize().padding(innerPadding),
+              contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
-            }
+              }
         } else {
-            state.tutor?.let {
-                TutorContent(
-                    tutor = it,
-                    modifier = modifier,
-                    padding = innerPadding
-                )
-            }
+          state.tutor?.let { TutorContent(tutor = it, modifier = modifier, padding = innerPadding) }
         }
-    }
+      }
 }
-
 
 /**
  * Displays the content of the Tutor Profile screen, including the tutor's name, profile picture,
@@ -199,9 +182,7 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
       }
 }
 
-/**
- * Sample tutor data for previewing the Tutor Profile screen.
- */
+/** Sample tutor data for previewing the Tutor Profile screen. */
 private fun sampleTutor(): Tutor =
     Tutor(
         userId = "demo",
@@ -230,7 +211,6 @@ private fun sampleTutor(): Tutor =
                     expertise = ExpertiseLevel.BEGINNER)),
         starRating = 5.0,
         ratingNumber = 23)
-
 
 /**
  * A simple Instagram glyph drawn using Canvas.
@@ -264,23 +244,16 @@ private fun InstagramGlyph(modifier: Modifier = Modifier) {
         style = Fill)
   }
 }
-/**
- * A preview of the Tutor Profile screen
- */
+/** A preview of the Tutor Profile screen */
 @Preview(showBackground = true)
 @Composable
 private fun Preview_TutorProfile_WithBars() {
-    val nav = rememberNavController()
-    MaterialTheme {
-        Scaffold(
-            topBar = { TopAppBar(navController = nav) },
-        ) { inner ->
-            TutorContent(
-                tutor = sampleTutor(),
-                modifier = Modifier,
-                padding = inner
-            )
-        }
+  val nav = rememberNavController()
+  MaterialTheme {
+    Scaffold(
+        topBar = { TopAppBar(navController = nav) },
+    ) { inner ->
+      TutorContent(tutor = sampleTutor(), modifier = Modifier, padding = inner)
     }
+  }
 }
-

@@ -16,12 +16,10 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.ui.theme.TealChip
 import com.android.sample.ui.theme.White
 
-/**
- * Test tags for the [SkillChip] composable.
- */
+/** Test tags for the [SkillChip] composable. */
 object SkillChipTestTags {
-    const val CHIP = "SkillChipTestTags.CHIP"
-    const val TEXT = "SkillChipTestTags.TEXT"
+  const val CHIP = "SkillChipTestTags.CHIP"
+  const val TEXT = "SkillChipTestTags.TEXT"
 }
 
 /**
@@ -43,27 +41,20 @@ private fun yearsText(years: Double): String {
 fun SkillChip(skill: Skill, modifier: Modifier = Modifier) {
   val level = skill.expertise.name.lowercase()
   val name = skill.skill.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }
-    Surface(
-        color = TealChip,
-        shape = MaterialTheme.shapes.large,
-        modifier = modifier
-            .padding(vertical = 4.dp)
-            .fillMaxWidth()
-            .testTag(SkillChipTestTags.CHIP),
-        tonalElevation = 0.dp
-    ) {
+  Surface(
+      color = TealChip,
+      shape = MaterialTheme.shapes.large,
+      modifier = modifier.padding(vertical = 4.dp).fillMaxWidth().testTag(SkillChipTestTags.CHIP),
+      tonalElevation = 0.dp) {
         Box(
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Text(
-                text = "$name: ${yearsText(skill.skillTime)}, $level",
-                color = White,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Start,
-                modifier = Modifier.testTag(SkillChipTestTags.TEXT)
-            )
-        }
-    }
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            contentAlignment = Alignment.CenterStart) {
+              Text(
+                  text = "$name: ${yearsText(skill.skillTime)}, $level",
+                  color = White,
+                  style = MaterialTheme.typography.bodyMedium,
+                  textAlign = TextAlign.Start,
+                  modifier = Modifier.testTag(SkillChipTestTags.TEXT))
+            }
+      }
 }
