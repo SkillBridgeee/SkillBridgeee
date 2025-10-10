@@ -3,10 +3,13 @@ package com.android.sample.screen
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollToNode
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
@@ -74,15 +77,26 @@ class TutorProfileScreenTest {
         .assertCountEquals(sampleTutor.skills.size)
   }
 
-  @Test
-  fun contact_section_shows_email_and_handle() {
-    launch()
-    compose.onNodeWithTag(TutorPageTestTags.CONTACT_SECTION).assertIsDisplayed()
-    compose.onNodeWithText("kendrick@gmail.com").assertIsDisplayed()
-    compose.onNodeWithText("@KendrickLamar").assertIsDisplayed()
-  }
+    @Test
+    fun contact_section_shows_email_and_handle() {
+        launch()
 
-  @Test
+        // Wait for Compose to finish any recompositions or loading
+        compose.waitForIdle()
+
+        // Scroll the LazyColumn so the contact section becomes visible
+        compose.onNode(hasScrollAction())
+            .performScrollToNode(hasTestTag(TutorPageTestTags.CONTACT_SECTION))
+
+        // Now assert visibility and text content
+        compose.onNodeWithTag(TutorPageTestTags.CONTACT_SECTION, useUnmergedTree = true)
+            .assertIsDisplayed()
+        compose.onNodeWithText("kendrick@gmail.com").assertIsDisplayed()
+        compose.onNodeWithText("@KendrickLamar").assertIsDisplayed()
+    }
+
+
+    @Test
   fun top_bar_isDisplayed() {
     launch()
     compose.onNodeWithTag(TutorPageTestTags.TOP_BAR, useUnmergedTree = true).assertIsDisplayed()
