@@ -37,9 +37,14 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.android.sample.model.skill.ExpertiseLevel
+import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Tutor
 import com.android.sample.ui.components.RatingStars
 import com.android.sample.ui.components.SkillChip
@@ -54,7 +59,6 @@ object TutorPageTestTags {
   const val SKILLS_SECTION = "TutorPageTestTags.SKILLS_SECTION"
   const val SKILL = "TutorPageTestTags.SKILL"
   const val CONTACT_SECTION = "TutorPageTestTags.CONTACT_SECTION"
-
   const val TOP_BAR = "TutorPageTestTags.TOP_BAR"
 }
 
@@ -113,7 +117,6 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
         item {
           Surface(
               color = White,
-              tonalElevation = 0.dp,
               shape = MaterialTheme.shapes.large,
               modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -177,7 +180,7 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
       }
 }
 
-/// ** Sample tutor data for previewing the Tutor Profile screen. */
+/** Sample tutor data for previewing the Tutor Profile screen. */
 // private fun sampleTutor(): Tutor =
 //    Tutor(
 //        userId = "demo",
@@ -191,7 +194,8 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
 //                    mainSubject = MainSubject.MUSIC,
 //                    skill = "SINGING",
 //                    skillTime = 10.0,
-//                    expertise = ExpertiseLevel.EXPERT),
+//                    expertise = ExpertiseLevel.EXPERT
+//                ),
 //                Skill(
 //                    userId = "demo",
 //                    mainSubject = MainSubject.MUSIC,
@@ -208,7 +212,7 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
 //        ratingNumber = 23)
 
 /**
- * A simple Instagram glyph drawn using Canvas.
+ * A simple Instagram glyph drawn using Canvas (Ai generated).
  *
  * @param modifier The modifier to be applied to the composable.
  */
@@ -240,7 +244,9 @@ private fun InstagramGlyph(modifier: Modifier = Modifier) {
   }
 }
 
-/// ** A preview of the Tutor Profile screen */
+/**
+ * Preview of the Tutor Profile screen with top app bar.
+ */
 // @Preview(showBackground = true)
 // @Composable
 // private fun Preview_TutorProfile_WithBars() {
