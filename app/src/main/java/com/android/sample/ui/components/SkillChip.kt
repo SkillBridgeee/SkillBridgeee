@@ -44,7 +44,7 @@ fun SkillChip(skill: Skill, modifier: Modifier = Modifier) {
   Surface(
       color = TealChip,
       shape = MaterialTheme.shapes.large,
-      modifier = modifier.padding(vertical = 4.dp).fillMaxWidth().testTag(SkillChipTestTags.CHIP)){
+      modifier = modifier.padding(vertical = 4.dp).fillMaxWidth().testTag(SkillChipTestTags.CHIP)) {
         Box(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
             contentAlignment = Alignment.CenterStart) {
@@ -53,8 +53,7 @@ fun SkillChip(skill: Skill, modifier: Modifier = Modifier) {
                   color = White,
                   style = MaterialTheme.typography.bodyMedium,
                   textAlign = TextAlign.Start,
-                  modifier = Modifier.testTag(SkillChipTestTags.TEXT)
-              )
+                  modifier = Modifier.testTag(SkillChipTestTags.TEXT))
             }
       }
 }

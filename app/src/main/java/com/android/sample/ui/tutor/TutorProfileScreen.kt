@@ -37,14 +37,9 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.android.sample.model.skill.ExpertiseLevel
-import com.android.sample.model.skill.MainSubject
-import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Tutor
 import com.android.sample.ui.components.RatingStars
 import com.android.sample.ui.components.SkillChip
@@ -244,9 +239,7 @@ private fun InstagramGlyph(modifier: Modifier = Modifier) {
   }
 }
 
-/**
- * Preview of the Tutor Profile screen with top app bar.
- */
+/** Preview of the Tutor Profile screen with top app bar. */
 // @Preview(showBackground = true)
 // @Composable
 // private fun Preview_TutorProfile_WithBars() {

@@ -26,7 +26,7 @@ object RatingStarsTestTags {
  */
 @Composable
 fun RatingStars(ratingOutOfFive: Double, modifier: Modifier = Modifier) {
-    // Coerce the rating to be within the range of 0 to 5 and round to the nearest integer
+  // Coerce the rating to be within the range of 0 to 5 and round to the nearest integer
   val filled = ratingOutOfFive.coerceIn(0.0, 5.0).roundToInt()
   Row(modifier) {
     repeat(5) { i ->
