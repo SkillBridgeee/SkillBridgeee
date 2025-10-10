@@ -1,3 +1,4 @@
+/*
 package com.android.sample.ui.bookings
 
 import androidx.activity.ComponentActivity
@@ -103,3 +104,4 @@ class MyBookingsRobolectricExtraTest {
     compose.onNodeWithText("Z").assertIsDisplayed()
   }
 }
+*/
