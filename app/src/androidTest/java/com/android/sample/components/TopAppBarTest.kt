@@ -1,9 +1,10 @@
-package com.android.sample.ui.components
+package com.android.sample.components
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.NavHostController
 import androidx.test.core.app.ApplicationProvider
+import com.android.sample.ui.components.TopAppBar
 import org.junit.Rule
 import org.junit.Test
 
