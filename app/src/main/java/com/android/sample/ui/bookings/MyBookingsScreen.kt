@@ -4,12 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -40,35 +34,36 @@ import com.android.sample.ui.theme.ChipBorder
 import com.android.sample.ui.theme.SampleAppTheme
 
 /**
- * MyBookingsScreen - Displays the user's bookings in a scrollable list.
+ * Renders the **My Bookings** page.
  *
- * This composable renders the "My Bookings" page, including:
- * - A top app bar with navigation and title.
- * - A bottom navigation bar for main app sections.
- * - A vertical list of booking cards, each showing tutor, subject, price, duration, date, and
- *   rating.
- * - A "details" button for each booking, invoking [onOpenDetails] when clicked.
+ * ### Responsibilities
+ * - Shows a scrollable list of user bookings.
+ * - Provides the shared top app bar and bottom navigation.
+ * - Emits a callback when the “details” button on a card is pressed.
  *
- * UI Structure:
- * - Uses [Scaffold] to provide top and bottom bars.
- * - Booking data is provided by [MyBookingsViewModel] via StateFlow.
- * - Each booking is rendered using a private [BookingCard] composable.
+ * ### Data flow
+ * - Collects [MyBookingsViewModel.items] and renders each item via [BookingCard].
+ * - The list uses stable keys ([BookingCardUi.id]) to support smooth updates.
  *
- * Behavior:
- * - The list updates automatically when the view model's data changes.
- * - Handles empty state by showing no cards if there are no bookings.
- * - [onOpenDetails] is called with the selected [BookingCardUi] when the details button is pressed.
+ * ### Testing hooks
+ * - Top bar wrapper: [MyBookingsPageTestTag.TOP_BAR_TITLE]
+ * - Bottom nav wrapper: [MyBookingsPageTestTag.BOTTOM_NAV]
+ * - Each booking card: [MyBookingsPageTestTag.BOOKING_CARD]
+ * - Each details button: [MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON]
  *
- * @param vm The [MyBookingsViewModel] providing the list of bookings.
- * @param navController The [NavHostController] for navigation actions.
- * @param onOpenDetails Callback invoked when the details button is clicked for a booking.
- * @param modifier Optional [Modifier] for the root composable.
+ * ### Empty state
+ * - When [MyBookingsViewModel.items] is empty, no cards are rendered (dedicated empty UI can be
+ *   added later without changing this contract).
  *
- * Usage:
+ * @param vm ViewModel that exposes the list of bookings as a `StateFlow<List<BookingCardUi>>`.
+ * @param navController Host controller for navigation used by the shared bars.
+ * @param onOpenDetails Invoked with the associated [BookingCardUi] when a card’s “details” is
+ *   tapped.
+ * @param modifier Optional root [Modifier].
  */
 object MyBookingsPageTestTag {
   const val GO_BACK = "MyBookingsPageTestTag.GO_BACK"
-  const val TOP_BAR_TITLE = "MyBookingsPageTestTag.TOP_BAR_TITLE"
+  const val TOP_BAR_TITLE = "MyBookingsPageTestTag.TOP_BAR_TITLE" // <— Missing before; added.
   const val BOOKING_CARD = "MyBookingsPageTestTag.BOOKING_CARD"
   const val BOOKING_DETAILS_BUTTON = "MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON"
   const val BOTTOM_NAV = "MyBookingsPageTestTag.BOTTOM_NAV"
@@ -87,13 +82,13 @@ fun MyBookingsScreen(
 ) {
   Scaffold(
       topBar = {
+        // testTag is applied to a wrapper to avoid touching the shared component.
         Box(Modifier.testTag(MyBookingsPageTestTag.TOP_BAR_TITLE)) { TopAppBar(navController) }
       },
       bottomBar = {
         Box(Modifier.testTag(MyBookingsPageTestTag.BOTTOM_NAV)) { BottomNavBar(navController) }
       }) { innerPadding ->
         val items by vm.items.collectAsState()
-        // Pass innerPadding to your content to avoid overlap
         LazyColumn(
             modifier = modifier.fillMaxSize().padding(innerPadding).padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -102,6 +97,15 @@ fun MyBookingsScreen(
       }
 }
 
+/**
+ * Visual representation of a single booking.
+ *
+ * ### Shows
+ * - Avatar initial (first letter of tutor’s name) inside a circular chip.
+ * - Tutor name, subject (link-styled color), star rating (0..5) with count.
+ * - Price per hour + duration (e.g., `$50/hr-2hrs`) and the booking date.
+ * - Primary “details” button that triggers [onOpenDetails].
+ */
 @Composable
 private fun BookingCard(ui: BookingCardUi, onOpenDetails: (BookingCardUi) -> Unit) {
   Card(
@@ -109,6 +113,7 @@ private fun BookingCard(ui: BookingCardUi, onOpenDetails: (BookingCardUi) -> Uni
       shape = MaterialTheme.shapes.large,
       colors = CardDefaults.cardColors(containerColor = CardBg)) {
         Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+          // Avatar chip
           Box(
               modifier =
                   Modifier.size(36.dp)
@@ -120,18 +125,20 @@ private fun BookingCard(ui: BookingCardUi, onOpenDetails: (BookingCardUi) -> Uni
 
           Spacer(Modifier.width(12.dp))
 
+          // Left column
           Column(modifier = Modifier.weight(1f)) {
             Text(
                 ui.tutorName,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { /* No-op for now */})
+                modifier = Modifier.clickable { /* reserved for future profile nav */})
             Spacer(Modifier.height(2.dp))
             Text(ui.subject, color = BrandBlue)
             Spacer(Modifier.height(4.dp))
             RatingRow(stars = ui.ratingStars, count = ui.ratingCount)
           }
 
+          // Right column
           Column(horizontalAlignment = Alignment.End) {
             Text(
                 "${ui.pricePerHourLabel}-${ui.durationLabel}",
@@ -155,6 +162,11 @@ private fun BookingCard(ui: BookingCardUi, onOpenDetails: (BookingCardUi) -> Uni
       }
 }
 
+/**
+ * Small row that renders a 0..5 star visualization and the rating count.
+ *
+ * The provided [stars] value is clamped to the valid range for safety.
+ */
 @Composable
 private fun RatingRow(stars: Int, count: Int) {
   val full = "★".repeat(stars.coerceIn(0, 5))
@@ -162,7 +174,7 @@ private fun RatingRow(stars: Int, count: Int) {
   Row(verticalAlignment = Alignment.CenterVertically) {
     Text(full + empty)
     Spacer(Modifier.width(6.dp))
-    Text("(${count})")
+    Text("($count)")
   }
 }
 
