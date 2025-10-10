@@ -37,14 +37,9 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.android.sample.model.skill.ExpertiseLevel
-import com.android.sample.model.skill.MainSubject
-import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Tutor
 import com.android.sample.ui.components.RatingStars
 import com.android.sample.ui.components.SkillChip
@@ -182,8 +177,8 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
       }
 }
 
-///** Sample tutor data for previewing the Tutor Profile screen. */
-//private fun sampleTutor(): Tutor =
+/// ** Sample tutor data for previewing the Tutor Profile screen. */
+// private fun sampleTutor(): Tutor =
 //    Tutor(
 //        userId = "demo",
 //        name = "Kendrick Lamar",
@@ -245,10 +240,10 @@ private fun InstagramGlyph(modifier: Modifier = Modifier) {
   }
 }
 
-///** A preview of the Tutor Profile screen */
-//@Preview(showBackground = true)
-//@Composable
-//private fun Preview_TutorProfile_WithBars() {
+/// ** A preview of the Tutor Profile screen */
+// @Preview(showBackground = true)
+// @Composable
+// private fun Preview_TutorProfile_WithBars() {
 //  val nav = rememberNavController()
 //  MaterialTheme {
 //    Scaffold(
@@ -257,4 +252,4 @@ private fun InstagramGlyph(modifier: Modifier = Modifier) {
 //      TutorContent(tutor = sampleTutor(), modifier = Modifier, padding = inner)
 //    }
 //  }
-//}
+// }
