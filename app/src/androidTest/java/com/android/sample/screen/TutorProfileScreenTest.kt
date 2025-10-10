@@ -77,26 +77,27 @@ class TutorProfileScreenTest {
         .assertCountEquals(sampleTutor.skills.size)
   }
 
-    @Test
-    fun contact_section_shows_email_and_handle() {
-        launch()
+  @Test
+  fun contact_section_shows_email_and_handle() {
+    launch()
 
-        // Wait for Compose to finish any recompositions or loading
-        compose.waitForIdle()
+    // Wait for Compose to finish any recompositions or loading
+    compose.waitForIdle()
 
-        // Scroll the LazyColumn so the contact section becomes visible
-        compose.onNode(hasScrollAction())
-            .performScrollToNode(hasTestTag(TutorPageTestTags.CONTACT_SECTION))
+    // Scroll the LazyColumn so the contact section becomes visible
+    compose
+        .onNode(hasScrollAction())
+        .performScrollToNode(hasTestTag(TutorPageTestTags.CONTACT_SECTION))
 
-        // Now assert visibility and text content
-        compose.onNodeWithTag(TutorPageTestTags.CONTACT_SECTION, useUnmergedTree = true)
-            .assertIsDisplayed()
-        compose.onNodeWithText("kendrick@gmail.com").assertIsDisplayed()
-        compose.onNodeWithText("@KendrickLamar").assertIsDisplayed()
-    }
+    // Now assert visibility and text content
+    compose
+        .onNodeWithTag(TutorPageTestTags.CONTACT_SECTION, useUnmergedTree = true)
+        .assertIsDisplayed()
+    compose.onNodeWithText("kendrick@gmail.com").assertIsDisplayed()
+    compose.onNodeWithText("@KendrickLamar").assertIsDisplayed()
+  }
 
-
-    @Test
+  @Test
   fun top_bar_isDisplayed() {
     launch()
     compose.onNodeWithTag(TutorPageTestTags.TOP_BAR, useUnmergedTree = true).assertIsDisplayed()
