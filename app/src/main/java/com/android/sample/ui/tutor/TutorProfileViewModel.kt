@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 /**
  * UI state for the TutorProfile screen. This state holds the data needed to display a tutor's
  * profile.
+ *
  * @param loading Indicates if the data is still loading.
  * @param tutor The tutor data to be displayed, or null if not yet loaded.
  */
@@ -19,6 +20,7 @@ data class TutorUiState(val loading: Boolean = true, val tutor: Tutor? = null)
 /**
  * ViewModel for the TutorProfile screen. This ViewModel manages the state of the tutor profile
  * screen.
+ *
  * @param repository The repository to fetch tutor data.
  */
 class TutorProfileViewModel(
@@ -28,11 +30,12 @@ class TutorProfileViewModel(
   private val _state = MutableStateFlow(TutorUiState())
   val state: StateFlow<TutorUiState> = _state.asStateFlow()
 
-    /**
-     * Loads the tutor data for the given tutor ID. If the data is already loaded, this function
-     * does nothing.
-     * @param tutorId The ID of the tutor to load.
-     */
+  /**
+   * Loads the tutor data for the given tutor ID. If the data is already loaded, this function does
+   * nothing.
+   *
+   * @param tutorId The ID of the tutor to load.
+   */
   fun load(tutorId: String) {
     if (!_state.value.loading) return
     viewModelScope.launch {
