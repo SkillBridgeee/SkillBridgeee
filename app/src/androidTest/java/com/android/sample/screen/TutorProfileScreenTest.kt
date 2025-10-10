@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
@@ -40,10 +41,17 @@ class TutorProfileScreenTest {
     override suspend fun getTutorById(id: String): Tutor = t
   }
 
-  private fun launch() {
-    val vm = TutorProfileViewModel(ImmediateRepo(sampleTutor))
-    compose.setContent { TutorProfileScreen(tutorId = "demo", vm = vm) }
-  }
+    private fun launch() {
+        val vm = TutorProfileViewModel(ImmediateRepo(sampleTutor))
+        compose.setContent {
+            val navController = rememberNavController()
+            TutorProfileScreen(
+                tutorId = "demo",
+                vm = vm,
+                navController = navController
+            )
+        }
+    }
 
   @Test
   fun core_elements_areDisplayed() {
@@ -77,4 +85,12 @@ class TutorProfileScreenTest {
     compose.onNodeWithText("kendrick@gmail.com").assertIsDisplayed()
     compose.onNodeWithText("@KendrickLamar").assertIsDisplayed()
   }
+
+    @Test
+    fun top_bar_isDisplayed() {
+        launch()
+        compose.onNodeWithTag(TutorPageTestTags.TOP_BAR, useUnmergedTree = true)
+            .assertIsDisplayed()
+    }
+
 }
