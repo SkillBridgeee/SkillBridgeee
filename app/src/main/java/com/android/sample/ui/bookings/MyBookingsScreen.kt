@@ -45,10 +45,10 @@ object MyBookingsPageTestTag {
   const val BOOKING_CARD = "MyBookingsPageTestTag.BOOKING_CARD"
   const val BOOKING_DETAILS_BUTTON = "MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON"
   const val BOTTOM_NAV = "MyBookingsPageTestTag.BOTTOM_NAV"
-  const val NAV_HOME = "MyBookingsPageTestTag.NAV_HOME"
+  /*  const val NAV_HOME = "MyBookingsPageTestTag.NAV_HOME"
   const val NAV_BOOKINGS = "MyBookingsPageTestTag.NAV_BOOKINGS"
   const val NAV_MESSAGES = "MyBookingsPageTestTag.NAV_MESSAGES"
-  const val NAV_PROFILE = "MyBookingsPageTestTag.NAV_PROFILE"
+  const val NAV_PROFILE = "MyBookingsPageTestTag.NAV_PROFILE"*/
 }
 
 @Composable
@@ -58,16 +58,21 @@ fun MyBookingsScreen(
     onOpenDetails: (BookingCardUi) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-  Scaffold(topBar = { TopAppBar(navController) }, bottomBar = { BottomNavBar(navController) }) {
-      innerPadding ->
-    val items by vm.items.collectAsState()
-    // Pass innerPadding to your content to avoid overlap
-    LazyColumn(
-        modifier = modifier.fillMaxSize().padding(innerPadding).padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)) {
-          items(items, key = { it.id }) { ui -> BookingCard(ui, onOpenDetails) }
-        }
-  }
+  Scaffold(
+      topBar = {
+        Box(Modifier.testTag(MyBookingsPageTestTag.TOP_BAR_TITLE)) { TopAppBar(navController) }
+      },
+      bottomBar = {
+        Box(Modifier.testTag(MyBookingsPageTestTag.BOTTOM_NAV)) { BottomNavBar(navController) }
+      }) { innerPadding ->
+        val items by vm.items.collectAsState()
+        // Pass innerPadding to your content to avoid overlap
+        LazyColumn(
+            modifier = modifier.fillMaxSize().padding(innerPadding).padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+              items(items, key = { it.id }) { ui -> BookingCard(ui, onOpenDetails) }
+            }
+      }
 }
 
 @Composable
