@@ -39,6 +39,36 @@ import com.android.sample.ui.theme.CardBg
 import com.android.sample.ui.theme.ChipBorder
 import com.android.sample.ui.theme.SampleAppTheme
 
+
+/**
+ * MyBookingsScreen - Displays the user's bookings in a scrollable list.
+ *
+ * This composable renders the "My Bookings" page, including:
+ * - A top app bar with navigation and title.
+ * - A bottom navigation bar for main app sections.
+ * - A vertical list of booking cards, each showing tutor, subject, price, duration, date, and rating.
+ * - A "details" button for each booking, invoking [onOpenDetails] when clicked.
+ *
+ * UI Structure:
+ * - Uses [Scaffold] to provide top and bottom bars.
+ * - Booking data is provided by [MyBookingsViewModel] via StateFlow.
+ * - Each booking is rendered using a private [BookingCard] composable.
+ *
+ * Behavior:
+ * - The list updates automatically when the view model's data changes.
+ * - Handles empty state by showing no cards if there are no bookings.
+ * - [onOpenDetails] is called with the selected [BookingCardUi] when the details button is pressed.
+ *
+ * @param vm The [MyBookingsViewModel] providing the list of bookings.
+ * @param navController The [NavHostController] for navigation actions.
+ * @param onOpenDetails Callback invoked when the details button is clicked for a booking.
+ * @param modifier Optional [Modifier] for the root composable.
+ *
+ * Usage:
+*/
+
+
+
 object MyBookingsPageTestTag {
   const val GO_BACK = "MyBookingsPageTestTag.GO_BACK"
   const val TOP_BAR_TITLE = "MyBookingsPageTestTag.TOP_BAR_TITLE"
