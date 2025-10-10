@@ -22,6 +22,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,45 +40,92 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Tutor
 import com.android.sample.ui.components.RatingStars
 import com.android.sample.ui.components.SkillChip
+import com.android.sample.ui.components.TopAppBar
+import com.android.sample.ui.theme.White
 
+/**
+ * Test tags for the Tutor Profile screen.
+ */
 object TutorPageTestTags {
-  const val GO_BACK = "TutorPageTestTags.GO_BACK" // kept for test parity (unused here)
-  const val TOP_BAR_TITLE = "TutorPageTestTags.TOP_BAR_TITLE" // kept for test parity (unused here)
   const val PFP = "TutorPageTestTags.PFP"
   const val NAME = "TutorPageTestTags.NAME"
   const val RATING = "TutorPageTestTags.RATING"
   const val SKILLS_SECTION = "TutorPageTestTags.SKILLS_SECTION"
   const val SKILL = "TutorPageTestTags.SKILL"
   const val CONTACT_SECTION = "TutorPageTestTags.CONTACT_SECTION"
+
+    const val TOP_BAR = "TutorPageTestTags.TOP_BAR"
+
 }
 
+/**
+ * The Tutor Profile screen displays detailed information about a tutor, including their name,
+ * profile picture, skills, and contact information.
+ *
+ * @param tutorId The unique identifier of the tutor whose profile is to be displayed.
+ * @param vm The ViewModel that provides the data for the screen.
+ * @param navController The NavHostController for navigation actions.
+ * @param modifier The modifier to be applied to the composable.
+ */
 @Composable
 fun TutorProfileScreen(
     tutorId: String,
     vm: TutorProfileViewModel,
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    navController: NavHostController,
+    modifier: Modifier = Modifier
 ) {
-  LaunchedEffect(Unit) { vm.load(tutorId) }
-  val state by vm.state.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.load(tutorId) }
+    val state by vm.state.collectAsStateWithLifecycle()
 
-  if (state.loading) {
-    Box(
-        modifier = modifier.fillMaxSize().padding(contentPadding),
-        contentAlignment = Alignment.Center) {
-          CircularProgressIndicator()
+    Scaffold(
+        topBar = { Box(
+            Modifier
+                .fillMaxWidth()
+                .testTag(TutorPageTestTags.TOP_BAR)
+            ) {
+            TopAppBar(navController = navController)
+            }
         }
-  } else {
-    state.tutor?.let { TutorContent(it, modifier, contentPadding) }
-  }
+    ) { innerPadding ->
+        // Show a loading spinner while loading and the content when loaded
+        if (state.loading) {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            state.tutor?.let {
+                TutorContent(
+                    tutor = it,
+                    modifier = modifier,
+                    padding = innerPadding
+                )
+            }
+        }
+    }
 }
 
+
+/**
+ * Displays the content of the Tutor Profile screen, including the tutor's name, profile picture,
+ * skills, and contact information.
+ *
+ * @param tutor The tutor whose profile is to be displayed.
+ * @param modifier The modifier to be applied to the composable.
+ * @param padding The padding values to be applied to the content.
+ */
 @Composable
 private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValues) {
   LazyColumn(
@@ -86,7 +134,8 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
       verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item {
           Surface(
-              tonalElevation = 2.dp,
+              color = White,
+              tonalElevation = 0.dp,
               shape = MaterialTheme.shapes.large,
               modifier = Modifier.fillMaxWidth()) {
                 Column(
@@ -128,7 +177,8 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
 
         item {
           Surface(
-              tonalElevation = 1.dp,
+              color = White,
+              tonalElevation = 0.dp,
               shape = MaterialTheme.shapes.large,
               modifier = Modifier.fillMaxWidth().testTag(TutorPageTestTags.CONTACT_SECTION)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -149,6 +199,9 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
       }
 }
 
+/**
+ * Sample tutor data for previewing the Tutor Profile screen.
+ */
 private fun sampleTutor(): Tutor =
     Tutor(
         userId = "demo",
@@ -178,14 +231,12 @@ private fun sampleTutor(): Tutor =
         starRating = 5.0,
         ratingNumber = 23)
 
-@Preview(showBackground = true)
-@Composable
-private fun Preview_TutorProfile_Light() {
-  MaterialTheme {
-    TutorContent(tutor = sampleTutor(), modifier = Modifier, padding = PaddingValues(0.dp))
-  }
-}
 
+/**
+ * A simple Instagram glyph drawn using Canvas.
+ *
+ * @param modifier The modifier to be applied to the composable.
+ */
 @Composable
 private fun InstagramGlyph(modifier: Modifier = Modifier) {
   val color = LocalContentColor.current
@@ -213,3 +264,23 @@ private fun InstagramGlyph(modifier: Modifier = Modifier) {
         style = Fill)
   }
 }
+/**
+ * A preview of the Tutor Profile screen
+ */
+@Preview(showBackground = true)
+@Composable
+private fun Preview_TutorProfile_WithBars() {
+    val nav = rememberNavController()
+    MaterialTheme {
+        Scaffold(
+            topBar = { TopAppBar(navController = nav) },
+        ) { inner ->
+            TutorContent(
+                tutor = sampleTutor(),
+                modifier = Modifier,
+                padding = inner
+            )
+        }
+    }
+}
+
