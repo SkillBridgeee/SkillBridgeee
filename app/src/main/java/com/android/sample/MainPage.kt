@@ -35,7 +35,6 @@ object HomeScreenTestTags {
   const val FAB_ADD = "fabAdd"
 }
 
-
 @Preview
 @Composable
 fun HomeScreen() {
@@ -49,16 +48,14 @@ fun HomeScreen() {
               Icon(Icons.Default.Add, contentDescription = "Add")
             }
       }) { paddingValues ->
-        Column(
-            modifier =
-                Modifier.padding(paddingValues).fillMaxSize().background(Color.White)) {
-              Spacer(modifier = Modifier.height(10.dp))
-              GreetingSection()
-              Spacer(modifier = Modifier.height(20.dp))
-              ExploreSkills()
-              Spacer(modifier = Modifier.height(20.dp))
-              TutorsSection()
-            }
+        Column(modifier = Modifier.padding(paddingValues).fillMaxSize().background(Color.White)) {
+          Spacer(modifier = Modifier.height(10.dp))
+          GreetingSection()
+          Spacer(modifier = Modifier.height(20.dp))
+          ExploreSkills()
+          Spacer(modifier = Modifier.height(20.dp))
+          TutorsSection()
+        }
       }
 }
 
