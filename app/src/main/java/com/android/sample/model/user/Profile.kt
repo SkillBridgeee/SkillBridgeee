@@ -10,5 +10,5 @@ data class Profile(
     val location: Location = Location(),
     val description: String = "",
     val tutorRating: RatingInfo = RatingInfo(),
-    val studentRating: RatingInfo = RatingInfo()
+    val studentRating: RatingInfo = RatingInfo(),
 )
