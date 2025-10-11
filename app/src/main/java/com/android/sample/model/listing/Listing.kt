@@ -7,8 +7,7 @@ import java.util.Date
 /** Base class for proposals and requests */
 sealed class Listing {
   abstract val listingId: String
-  abstract val userId: String
-  abstract val userName: String
+  abstract val creatorUserId: String
   abstract val skill: Skill
   abstract val description: String
   abstract val location: Location
@@ -19,8 +18,7 @@ sealed class Listing {
 /** Proposal - user offering to teach */
 data class Proposal(
     override val listingId: String = "",
-    override val userId: String = "",
-    override val userName: String = "",
+    override val creatorUserId: String = "",
     override val skill: Skill = Skill(),
     override val description: String = "",
     override val location: Location = Location(),
@@ -36,8 +34,7 @@ data class Proposal(
 /** Request - user looking for a tutor */
 data class Request(
     override val listingId: String = "",
-    override val userId: String = "",
-    override val userName: String = "",
+    override val creatorUserId: String = "",
     override val skill: Skill = Skill(),
     override val description: String = "",
     override val location: Location = Location(),
