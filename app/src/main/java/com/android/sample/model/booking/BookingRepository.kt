@@ -7,9 +7,9 @@ interface BookingRepository {
 
   suspend fun getBooking(bookingId: String): Booking
 
-  suspend fun getBookingsByProvider(providerId: String): List<Booking>
+  suspend fun getBookingsByTutor(tutorId: String): List<Booking>
 
-  suspend fun getBookingsByReceiver(receiverId: String): List<Booking>
+  suspend fun getBookingsByStudent(studentId: String): List<Booking>
 
   suspend fun getBookingsByListing(listingId: String): List<Booking>
 
