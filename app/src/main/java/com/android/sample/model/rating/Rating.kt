@@ -11,16 +11,18 @@ data class Rating(
 )
 
 sealed class RatingType {
-    data class Tutor(val listingId: String) : RatingType()
-    data class Student(val studentId: String) : RatingType()
-    data class Listing(val listingId: String) : RatingType()
+  data class Tutor(val listingId: String) : RatingType()
+
+  data class Student(val studentId: String) : RatingType()
+
+  data class Listing(val listingId: String) : RatingType()
 }
 
 data class RatingInfo(val averageRating: Double = 0.0, val totalRatings: Int = 0) {
-    init {
-        require(averageRating == 0.0 || averageRating in 1.0..5.0) {
-            "Average rating must be 0.0 or between 1.0 and 5.0"
-        }
-        require(totalRatings >= 0) { "Total ratings must be non-negative" }
+  init {
+    require(averageRating == 0.0 || averageRating in 1.0..5.0) {
+      "Average rating must be 0.0 or between 1.0 and 5.0"
     }
+    require(totalRatings >= 0) { "Total ratings must be non-negative" }
+  }
 }
