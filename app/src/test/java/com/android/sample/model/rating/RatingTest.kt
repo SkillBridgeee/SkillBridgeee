@@ -6,58 +6,55 @@ import org.junit.Test
 class RatingTest {
 
   @Test
-  fun `test Rating creation with default values`() {
-    val rating = Rating()
-
-    assertEquals("", rating.ratingId)
-    assertEquals("", rating.bookingId)
-    assertEquals("", rating.listingId)
-    assertEquals("", rating.fromUserId)
-    assertEquals("", rating.toUserId)
-    assertEquals(StarRating.ONE, rating.starRating)
-    assertEquals("", rating.comment)
-    assertEquals(RatingType.TUTOR, rating.ratingType)
-  }
-
-  @Test
-  fun `test Rating creation with valid tutor rating`() {
+  fun `test Rating creation with tutor rating type`() {
     val rating =
         Rating(
             ratingId = "rating123",
-            bookingId = "booking456",
-            listingId = "listing789",
             fromUserId = "student123",
             toUserId = "tutor456",
             starRating = StarRating.FIVE,
             comment = "Excellent tutor!",
-            ratingType = RatingType.TUTOR)
+            ratingType = RatingType.Tutor("listing789"))
 
     assertEquals("rating123", rating.ratingId)
-    assertEquals("booking456", rating.bookingId)
-    assertEquals("listing789", rating.listingId)
     assertEquals("student123", rating.fromUserId)
     assertEquals("tutor456", rating.toUserId)
     assertEquals(StarRating.FIVE, rating.starRating)
     assertEquals("Excellent tutor!", rating.comment)
-    assertEquals(RatingType.TUTOR, rating.ratingType)
+    assertTrue(rating.ratingType is RatingType.Tutor)
+    assertEquals("listing789", (rating.ratingType as RatingType.Tutor).listingId)
   }
 
   @Test
-  fun `test Rating creation with valid student rating`() {
+  fun `test Rating creation with student rating type`() {
     val rating =
         Rating(
             ratingId = "rating123",
-            bookingId = "booking456",
-            listingId = "listing789",
             fromUserId = "tutor456",
             toUserId = "student123",
             starRating = StarRating.FOUR,
             comment = "Great student, very engaged",
-            ratingType = RatingType.STUDENT)
+            ratingType = RatingType.Student("student123"))
 
-    assertEquals(RatingType.STUDENT, rating.ratingType)
+    assertTrue(rating.ratingType is RatingType.Student)
+    assertEquals("student123", (rating.ratingType as RatingType.Student).studentId)
     assertEquals("tutor456", rating.fromUserId)
     assertEquals("student123", rating.toUserId)
+  }
+
+  @Test
+  fun `test Rating creation with listing rating type`() {
+    val rating =
+        Rating(
+            ratingId = "rating123",
+            fromUserId = "user123",
+            toUserId = "tutor456",
+            starRating = StarRating.THREE,
+            comment = "Good listing",
+            ratingType = RatingType.Listing("listing789"))
+
+    assertTrue(rating.ratingType is RatingType.Listing)
+    assertEquals("listing789", (rating.ratingType as RatingType.Listing).listingId)
   }
 
   @Test
@@ -69,12 +66,11 @@ class RatingTest {
       val rating =
           Rating(
               ratingId = "rating123",
-              bookingId = "booking456",
-              listingId = "listing789",
               fromUserId = "user123",
               toUserId = "user456",
               starRating = starRating,
-              ratingType = RatingType.TUTOR)
+              comment = "Test comment",
+              ratingType = RatingType.Tutor("listing789"))
       assertEquals(starRating, rating.starRating)
     }
   }
@@ -108,38 +104,50 @@ class RatingTest {
   }
 
   @Test
-  fun `test RatingType enum values`() {
-    assertEquals(2, RatingType.values().size)
-    assertTrue(RatingType.values().contains(RatingType.TUTOR))
-    assertTrue(RatingType.values().contains(RatingType.STUDENT))
-  }
-
-  @Test
-  fun `test Rating equality and hashCode`() {
+  fun `test Rating equality with same tutor rating`() {
     val rating1 =
         Rating(
             ratingId = "rating123",
-            bookingId = "booking456",
-            listingId = "listing789",
             fromUserId = "user123",
             toUserId = "user456",
             starRating = StarRating.FOUR,
             comment = "Good",
-            ratingType = RatingType.TUTOR)
+            ratingType = RatingType.Tutor("listing789"))
 
     val rating2 =
         Rating(
             ratingId = "rating123",
-            bookingId = "booking456",
-            listingId = "listing789",
             fromUserId = "user123",
             toUserId = "user456",
             starRating = StarRating.FOUR,
             comment = "Good",
-            ratingType = RatingType.TUTOR)
+            ratingType = RatingType.Tutor("listing789"))
 
     assertEquals(rating1, rating2)
     assertEquals(rating1.hashCode(), rating2.hashCode())
+  }
+
+  @Test
+  fun `test Rating equality with different rating types`() {
+    val rating1 =
+        Rating(
+            ratingId = "rating123",
+            fromUserId = "user123",
+            toUserId = "user456",
+            starRating = StarRating.FOUR,
+            comment = "Good",
+            ratingType = RatingType.Tutor("listing789"))
+
+    val rating2 =
+        Rating(
+            ratingId = "rating123",
+            fromUserId = "user123",
+            toUserId = "user456",
+            starRating = StarRating.FOUR,
+            comment = "Good",
+            ratingType = RatingType.Student("student123"))
+
+    assertNotEquals(rating1, rating2)
   }
 
   @Test
@@ -147,21 +155,18 @@ class RatingTest {
     val originalRating =
         Rating(
             ratingId = "rating123",
-            bookingId = "booking456",
-            listingId = "listing789",
             fromUserId = "user123",
             toUserId = "user456",
             starRating = StarRating.THREE,
             comment = "Average",
-            ratingType = RatingType.TUTOR)
+            ratingType = RatingType.Tutor("listing789"))
 
     val updatedRating = originalRating.copy(starRating = StarRating.FIVE, comment = "Excellent!")
 
     assertEquals("rating123", updatedRating.ratingId)
-    assertEquals("booking456", updatedRating.bookingId)
-    assertEquals("listing789", updatedRating.listingId)
     assertEquals(StarRating.FIVE, updatedRating.starRating)
     assertEquals("Excellent!", updatedRating.comment)
+    assertTrue(updatedRating.ratingType is RatingType.Tutor)
 
     assertNotEquals(originalRating, updatedRating)
   }
@@ -171,13 +176,11 @@ class RatingTest {
     val rating =
         Rating(
             ratingId = "rating123",
-            bookingId = "booking456",
-            listingId = "listing789",
             fromUserId = "user123",
             toUserId = "user456",
             starRating = StarRating.FOUR,
             comment = "",
-            ratingType = RatingType.STUDENT)
+            ratingType = RatingType.Student("student123"))
 
     assertEquals("", rating.comment)
   }
@@ -187,18 +190,72 @@ class RatingTest {
     val rating =
         Rating(
             ratingId = "rating123",
-            bookingId = "booking456",
-            listingId = "listing789",
             fromUserId = "user123",
             toUserId = "user456",
             starRating = StarRating.FOUR,
             comment = "Great!",
-            ratingType = RatingType.TUTOR)
+            ratingType = RatingType.Tutor("listing789"))
 
     val ratingString = rating.toString()
     assertTrue(ratingString.contains("rating123"))
-    assertTrue(ratingString.contains("listing789"))
     assertTrue(ratingString.contains("user123"))
     assertTrue(ratingString.contains("user456"))
+  }
+
+  @Test
+  fun `test RatingType sealed class instances`() {
+    val tutorRating = RatingType.Tutor("listing123")
+    val studentRating = RatingType.Student("student456")
+    val listingRating = RatingType.Listing("listing789")
+
+    assertTrue(tutorRating is RatingType)
+    assertTrue(studentRating is RatingType)
+    assertTrue(listingRating is RatingType)
+
+    assertEquals("listing123", tutorRating.listingId)
+    assertEquals("student456", studentRating.studentId)
+    assertEquals("listing789", listingRating.listingId)
+  }
+
+  @Test
+  fun `test RatingInfo creation with valid values`() {
+    val ratingInfo = RatingInfo(averageRating = 4.5, totalRatings = 10)
+
+    assertEquals(4.5, ratingInfo.averageRating, 0.01)
+    assertEquals(10, ratingInfo.totalRatings)
+  }
+
+  @Test
+  fun `test RatingInfo creation with default values`() {
+    val ratingInfo = RatingInfo()
+
+    assertEquals(0.0, ratingInfo.averageRating, 0.01)
+    assertEquals(0, ratingInfo.totalRatings)
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `test RatingInfo validation - average rating too low`() {
+    RatingInfo(averageRating = 0.5, totalRatings = 5)
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `test RatingInfo validation - average rating too high`() {
+    RatingInfo(averageRating = 5.5, totalRatings = 5)
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `test RatingInfo validation - negative total ratings`() {
+    RatingInfo(averageRating = 4.0, totalRatings = -1)
+  }
+
+  @Test
+  fun `test RatingInfo with boundary values`() {
+    val minRating = RatingInfo(averageRating = 1.0, totalRatings = 1)
+    val maxRating = RatingInfo(averageRating = 5.0, totalRatings = 100)
+
+    assertEquals(1.0, minRating.averageRating, 0.01)
+    assertEquals(1, minRating.totalRatings)
+    assertEquals(5.0, maxRating.averageRating, 0.01)
+    assertEquals(100, maxRating.totalRatings)
   }
 }
