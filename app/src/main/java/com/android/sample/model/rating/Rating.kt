@@ -3,20 +3,18 @@ package com.android.sample.model.rating
 /** Rating given to a listing after a booking is completed */
 data class Rating(
     val ratingId: String = "",
-    val listingId: String = "", // The context listing being rated
-    val fromUserId: String = "", // Who gave the rating
-    val toUserId: String = "", // Who receives the rating (listing owner or student)
+    val fromUserId: String = "",
+    val toUserId: String = "",
     val starRating: StarRating = StarRating.ONE,
     val comment: String = "",
-    val ratingType: RatingType = RatingType.TUTOR
+    val ratingType: RatingType
 )
 
-enum class RatingType {
-  TUTOR, // Rating for the listing/tutor's performance
-  STUDENT, // Rating for the student's performance
-  LISTING //Rating for the listing
+sealed class RatingType {
+    data class Tutor(val listingId: String) : RatingType()
+    data class Student(val studentId: String) : RatingType()
+    data class Listing(val listingId: String) : RatingType()
 }
-
 
 data class RatingInfo(val averageRating: Double = 0.0, val totalRatings: Int = 0) {
     init {
