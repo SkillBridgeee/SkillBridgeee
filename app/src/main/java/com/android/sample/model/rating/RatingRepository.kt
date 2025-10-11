@@ -11,7 +11,7 @@ interface RatingRepository {
 
   suspend fun getRatingsByToUser(toUserId: String): List<Rating>
 
-  suspend fun getRatingsByBooking(bookingId: String): Rating?
+  suspend fun getRatingsOfListing(listingId: String): Rating?
 
   suspend fun addRating(rating: Rating)
 
@@ -20,21 +20,9 @@ interface RatingRepository {
   suspend fun deleteRating(ratingId: String)
 
   /** Gets all tutor ratings for listings owned by this user */
-  suspend fun getTutorRatingsForUser(
+  suspend fun getTutorRatingsOfUser(
       userId: String): List<Rating>
 
   /** Gets all student ratings received by this user */
-  suspend fun getStudentRatingsForUser(userId: String): List<Rating>
-
-  /** Adds rating and updates the corresponding user's profile rating */
-  suspend fun addRatingAndUpdateProfile(
-      rating: Rating,
-      profileRepository: com.android.sample.model.user.ProfileRepository,
-      listingRepository: com.android.sample.model.listing.ListingRepository
-  )
-  suspend fun removeRatingAndUpdateProfile(
-      ratingId: String,
-      profileRepository: com.android.sample.model.user.ProfileRepository,
-      listingRepository: com.android.sample.model.listing.ListingRepository
-  )
+  suspend fun getStudentRatingsOfUser(userId: String): List<Rating>
 }
