@@ -6,8 +6,8 @@ import java.util.Date
 data class Booking(
     val bookingId: String = "",
     val associatedListingId: String = "",
-    val tutorId: String = "",
-    val userId: String = "",
+    val listingCreatorId: String = "",
+    val bookerId: String = "",
     val sessionStart: Date = Date(),
     val sessionEnd: Date = Date(),
     val status: BookingStatus = BookingStatus.PENDING,
@@ -15,7 +15,7 @@ data class Booking(
 ) {
   init {
     require(sessionStart.before(sessionEnd)) { "Session start must be before session end" }
-    require(tutorId != userId) { "Provider and receiver must be different users" }
+    require(listingCreatorId != bookerId) { "Provider and receiver must be different users" }
     require(price >= 0) { "Price must be non-negative" }
   }
 }
