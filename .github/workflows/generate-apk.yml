@@ -44,11 +44,16 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
-      # 6 Make gradlew executable (sometimes loses permission)
+      # 6 Restore google-services.json from GitHub secret
+      - name: Restore google-services.json
+        run: |
+          echo '${{ secrets.GOOGLE_SERVICES }}' > app/google-services.json
+
+      # 7 Make gradlew executable (sometimes loses permission)
       - name: Grant Gradle wrapper permissions
         run: chmod +x ./gradlew
 
-      # 7 Build APK
+      # 8 Build APK
       - name: Build ${{ github.event.inputs.build_type }} APK
         run: |
           if [ "${{ github.event.inputs.build_type }}" = "release" ]; then
@@ -57,7 +62,7 @@ jobs:
             ./gradlew :app:assembleDebug --no-daemon --stacktrace
           fi
 
-      # 8 Upload APK artifact so you can download it from GitHub Actions UI
+      # 9 Upload APK artifact so you can download it from GitHub Actions UI
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
