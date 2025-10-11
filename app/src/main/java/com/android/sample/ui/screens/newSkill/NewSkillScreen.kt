@@ -53,6 +53,7 @@ object NewSkillScreenTestTag {
   const val SUBJECT_FIELD = "subjectField"
   const val SUBJECT_DROPDOWN = "subjectDropdown"
   const val SUBJECT_DROPDOWN_ITEM_PREFIX = "subjectItem"
+  const val INVALID_SUBJECT_MSG = "invalidSubjectMsg"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,7 +83,7 @@ fun NewSkillScreen(skillViewModel: NewSkillViewModel = NewSkillViewModel(), prof
         // TODO implement bottom navigation Bar
       },
       floatingActionButton = {
-        // TODO appButton
+        // TODO appButton not yet on main branch
       },
       floatingActionButtonPosition = FabPosition.Center,
       content = { pd -> SkillsContent(pd, profileId, skillViewModel) })
@@ -141,7 +142,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                 // Desc Input
                 OutlinedTextField(
                     value = skillUIState.description,
-                    onValueChange = { skillViewModel.setDesc(it) },
+                    onValueChange = { skillViewModel.setDescription(it) },
                     label = { Text("Description") },
                     placeholder = { Text("Description of the skill") },
                     isError = skillUIState.invalidDescMsg != null,
@@ -175,7 +176,10 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
 
                 Spacer(modifier = Modifier.height(textSpace))
 
-                SubjectMenu(selectedSubject = skillUIState.subject, skillViewModel = skillViewModel)
+                SubjectMenu(
+                    selectedSubject = skillUIState.subject,
+                    skillViewModel = skillViewModel,
+                    skillUIState = skillUIState)
               }
             }
       }
@@ -186,6 +190,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
 fun SubjectMenu(
     selectedSubject: MainSubject?,
     skillViewModel: NewSkillViewModel,
+    skillUIState: SkillUIState
 ) {
   var expanded by remember { mutableStateOf(false) }
   val subjects = MainSubject.entries.toTypedArray()
@@ -200,6 +205,14 @@ fun SubjectMenu(
             readOnly = true,
             label = { Text("Subject") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            isError = skillUIState.invalidSubjectMsg != null,
+            supportingText = {
+              skillUIState.invalidSubjectMsg?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG))
+              }
+            },
             modifier =
                 Modifier.menuAnchor().fillMaxWidth().testTag(NewSkillScreenTestTag.SUBJECT_FIELD))
         ExposedDropdownMenu(

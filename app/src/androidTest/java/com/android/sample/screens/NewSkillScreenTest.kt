@@ -12,6 +12,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.android.sample.ui.screens.newSkill.NewSkillScreen
 import com.android.sample.ui.screens.newSkill.NewSkillScreenTestTag
+import com.android.sample.ui.screens.newSkill.NewSkillViewModel
 import org.junit.Rule
 import org.junit.Test
 
@@ -133,6 +134,27 @@ class NewSkillScreenTest {
     composeTestRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("abc")
     composeTestRule
         .onNodeWithTag(testTag = NewSkillScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun setError_showsAllFieldErrors() {
+    val vm = NewSkillViewModel()
+    composeTestRule.setContent { NewSkillScreen(skillViewModel = vm, profileId = "test") }
+
+    composeTestRule.runOnIdle { vm.setError() }
+
+    composeTestRule
+        .onNodeWithTag(NewSkillScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewSkillScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewSkillScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
   }
 }
