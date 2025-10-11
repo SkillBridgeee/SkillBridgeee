@@ -24,18 +24,18 @@ class BookingTest {
     val booking =
         Booking(
             bookingId = "booking123",
-            listingId = "listing456",
-            providerId = "provider789",
-            receiverId = "receiver012",
+            associatedListingId = "listing456",
+            tutorId = "tutor789",
+            userId = "user012",
             sessionStart = startTime,
             sessionEnd = endTime,
             status = BookingStatus.CONFIRMED,
             price = 50.0)
 
     assertEquals("booking123", booking.bookingId)
-    assertEquals("listing456", booking.listingId)
-    assertEquals("provider789", booking.providerId)
-    assertEquals("receiver012", booking.receiverId)
+    assertEquals("listing456", booking.associatedListingId)
+    assertEquals("tutor789", booking.tutorId)
+    assertEquals("user012", booking.userId)
     assertEquals(startTime, booking.sessionStart)
     assertEquals(endTime, booking.sessionEnd)
     assertEquals(BookingStatus.CONFIRMED, booking.status)
@@ -49,9 +49,9 @@ class BookingTest {
 
     Booking(
         bookingId = "booking123",
-        listingId = "listing456",
-        providerId = "provider789",
-        receiverId = "receiver012",
+        associatedListingId = "listing456",
+        tutorId = "tutor789",
+        userId = "user012",
         sessionStart = startTime,
         sessionEnd = endTime)
   }
@@ -62,23 +62,23 @@ class BookingTest {
 
     Booking(
         bookingId = "booking123",
-        listingId = "listing456",
-        providerId = "provider789",
-        receiverId = "receiver012",
+        associatedListingId = "listing456",
+        tutorId = "tutor789",
+        userId = "user012",
         sessionStart = time,
         sessionEnd = time)
   }
 
   @Test(expected = IllegalArgumentException::class)
-  fun `test Booking validation - provider and receiver are same`() {
+  fun `test Booking validation - tutor and user are same`() {
     val startTime = Date()
     val endTime = Date(startTime.time + 3600000)
 
     Booking(
         bookingId = "booking123",
-        listingId = "listing456",
-        providerId = "user123",
-        receiverId = "user123",
+        associatedListingId = "listing456",
+        tutorId = "user123",
+        userId = "user123",
         sessionStart = startTime,
         sessionEnd = endTime)
   }
@@ -90,9 +90,9 @@ class BookingTest {
 
     Booking(
         bookingId = "booking123",
-        listingId = "listing456",
-        providerId = "provider789",
-        receiverId = "receiver012",
+        associatedListingId = "listing456",
+        tutorId = "tutor789",
+        userId = "user012",
         sessionStart = startTime,
         sessionEnd = endTime,
         price = -10.0)
@@ -107,9 +107,9 @@ class BookingTest {
       val booking =
           Booking(
               bookingId = "booking123",
-              listingId = "listing456",
-              providerId = "provider789",
-              receiverId = "receiver012",
+              associatedListingId = "listing456",
+              tutorId = "tutor789",
+              userId = "user012",
               sessionStart = startTime,
               sessionEnd = endTime,
               status = status)
@@ -126,9 +126,9 @@ class BookingTest {
     val booking1 =
         Booking(
             bookingId = "booking123",
-            listingId = "listing456",
-            providerId = "provider789",
-            receiverId = "receiver012",
+            associatedListingId = "listing456",
+            tutorId = "tutor789",
+            userId = "user012",
             sessionStart = startTime,
             sessionEnd = endTime,
             status = BookingStatus.CONFIRMED,
@@ -137,9 +137,9 @@ class BookingTest {
     val booking2 =
         Booking(
             bookingId = "booking123",
-            listingId = "listing456",
-            providerId = "provider789",
-            receiverId = "receiver012",
+            associatedListingId = "listing456",
+            tutorId = "tutor789",
+            userId = "user012",
             sessionStart = startTime,
             sessionEnd = endTime,
             status = BookingStatus.CONFIRMED,
@@ -157,9 +157,9 @@ class BookingTest {
     val originalBooking =
         Booking(
             bookingId = "booking123",
-            listingId = "listing456",
-            providerId = "provider789",
-            receiverId = "receiver012",
+            associatedListingId = "listing456",
+            tutorId = "tutor789",
+            userId = "user012",
             sessionStart = startTime,
             sessionEnd = endTime,
             status = BookingStatus.PENDING,
@@ -168,7 +168,7 @@ class BookingTest {
     val updatedBooking = originalBooking.copy(status = BookingStatus.COMPLETED, price = 60.0)
 
     assertEquals("booking123", updatedBooking.bookingId)
-    assertEquals("listing456", updatedBooking.listingId)
+    assertEquals("listing456", updatedBooking.associatedListingId)
     assertEquals(BookingStatus.COMPLETED, updatedBooking.status)
     assertEquals(60.0, updatedBooking.price, 0.01)
 
@@ -192,9 +192,9 @@ class BookingTest {
     val booking =
         Booking(
             bookingId = "booking123",
-            listingId = "listing456",
-            providerId = "provider789",
-            receiverId = "receiver012",
+            associatedListingId = "listing456",
+            tutorId = "tutor789",
+            userId = "user012",
             sessionStart = startTime,
             sessionEnd = endTime,
             status = BookingStatus.CONFIRMED,
@@ -203,7 +203,7 @@ class BookingTest {
     val bookingString = booking.toString()
     assertTrue(bookingString.contains("booking123"))
     assertTrue(bookingString.contains("listing456"))
-    assertTrue(bookingString.contains("provider789"))
-    assertTrue(bookingString.contains("receiver012"))
+    assertTrue(bookingString.contains("tutor789"))
+    assertTrue(bookingString.contains("user012"))
   }
 }

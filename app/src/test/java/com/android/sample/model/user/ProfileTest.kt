@@ -1,6 +1,7 @@
 package com.android.sample.model.user
 
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.RatingInfo
 import org.junit.Assert.*
 import org.junit.Test
 
