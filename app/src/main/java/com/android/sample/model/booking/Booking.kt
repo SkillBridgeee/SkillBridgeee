@@ -5,9 +5,9 @@ import java.util.Date
 /** Enhanced booking with listing association */
 data class Booking(
     val bookingId: String = "",
-    val listingId: String = "",
-    val providerId: String = "",
-    val receiverId: String = "",
+    val associatedListingId: String = "",
+    val tutorId: String = "",
+    val userId: String = "",
     val sessionStart: Date = Date(),
     val sessionEnd: Date = Date(),
     val status: BookingStatus = BookingStatus.PENDING,
@@ -15,7 +15,7 @@ data class Booking(
 ) {
   init {
     require(sessionStart.before(sessionEnd)) { "Session start must be before session end" }
-    require(providerId != receiverId) { "Provider and receiver must be different users" }
+    require(tutorId != userId) { "Provider and receiver must be different users" }
     require(price >= 0) { "Price must be non-negative" }
   }
 }
