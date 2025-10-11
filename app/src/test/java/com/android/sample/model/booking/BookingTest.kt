@@ -25,8 +25,8 @@ class BookingTest {
         Booking(
             bookingId = "booking123",
             associatedListingId = "listing456",
-            tutorId = "tutor789",
-            userId = "user012",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
             sessionStart = startTime,
             sessionEnd = endTime,
             status = BookingStatus.CONFIRMED,
@@ -34,8 +34,8 @@ class BookingTest {
 
     assertEquals("booking123", booking.bookingId)
     assertEquals("listing456", booking.associatedListingId)
-    assertEquals("tutor789", booking.tutorId)
-    assertEquals("user012", booking.userId)
+    assertEquals("tutor789", booking.listingCreatorId)
+    assertEquals("user012", booking.bookerId)
     assertEquals(startTime, booking.sessionStart)
     assertEquals(endTime, booking.sessionEnd)
     assertEquals(BookingStatus.CONFIRMED, booking.status)
@@ -50,8 +50,8 @@ class BookingTest {
     Booking(
         bookingId = "booking123",
         associatedListingId = "listing456",
-        tutorId = "tutor789",
-        userId = "user012",
+        listingCreatorId = "tutor789",
+        bookerId = "user012",
         sessionStart = startTime,
         sessionEnd = endTime)
   }
@@ -63,8 +63,8 @@ class BookingTest {
     Booking(
         bookingId = "booking123",
         associatedListingId = "listing456",
-        tutorId = "tutor789",
-        userId = "user012",
+        listingCreatorId = "tutor789",
+        bookerId = "user012",
         sessionStart = time,
         sessionEnd = time)
   }
@@ -77,8 +77,8 @@ class BookingTest {
     Booking(
         bookingId = "booking123",
         associatedListingId = "listing456",
-        tutorId = "user123",
-        userId = "user123",
+        listingCreatorId = "user123",
+        bookerId = "user123",
         sessionStart = startTime,
         sessionEnd = endTime)
   }
@@ -91,8 +91,8 @@ class BookingTest {
     Booking(
         bookingId = "booking123",
         associatedListingId = "listing456",
-        tutorId = "tutor789",
-        userId = "user012",
+        listingCreatorId = "tutor789",
+        bookerId = "user012",
         sessionStart = startTime,
         sessionEnd = endTime,
         price = -10.0)
@@ -108,8 +108,8 @@ class BookingTest {
           Booking(
               bookingId = "booking123",
               associatedListingId = "listing456",
-              tutorId = "tutor789",
-              userId = "user012",
+              listingCreatorId = "tutor789",
+              bookerId = "user012",
               sessionStart = startTime,
               sessionEnd = endTime,
               status = status)
@@ -127,8 +127,8 @@ class BookingTest {
         Booking(
             bookingId = "booking123",
             associatedListingId = "listing456",
-            tutorId = "tutor789",
-            userId = "user012",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
             sessionStart = startTime,
             sessionEnd = endTime,
             status = BookingStatus.CONFIRMED,
@@ -138,8 +138,8 @@ class BookingTest {
         Booking(
             bookingId = "booking123",
             associatedListingId = "listing456",
-            tutorId = "tutor789",
-            userId = "user012",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
             sessionStart = startTime,
             sessionEnd = endTime,
             status = BookingStatus.CONFIRMED,
@@ -158,8 +158,8 @@ class BookingTest {
         Booking(
             bookingId = "booking123",
             associatedListingId = "listing456",
-            tutorId = "tutor789",
-            userId = "user012",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
             sessionStart = startTime,
             sessionEnd = endTime,
             status = BookingStatus.PENDING,
@@ -193,8 +193,8 @@ class BookingTest {
         Booking(
             bookingId = "booking123",
             associatedListingId = "listing456",
-            tutorId = "tutor789",
-            userId = "user012",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
             sessionStart = startTime,
             sessionEnd = endTime,
             status = BookingStatus.CONFIRMED,
