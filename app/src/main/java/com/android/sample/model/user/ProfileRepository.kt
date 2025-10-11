@@ -13,21 +13,9 @@ interface ProfileRepository {
 
   suspend fun getAllProfiles(): List<Profile>
 
-  /** Recalculates and updates tutor rating based on all their listing ratings */
-  suspend fun recalculateTutorRating(
-      userId: String,
-      listingRepository: com.android.sample.model.listing.ListingRepository,
-      ratingRepository: com.android.sample.model.rating.RatingRepository
-  )
-
-  /** Recalculates and updates student rating based on all bookings they've taken */
-  suspend fun recalculateStudentRating(
-      userId: String,
-      ratingRepository: com.android.sample.model.rating.RatingRepository
-  )
-
   suspend fun searchProfilesByLocation(
       location: com.android.sample.model.map.Location,
       radiusKm: Double
   ): List<Profile>
+
 }
