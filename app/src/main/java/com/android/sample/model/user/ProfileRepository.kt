@@ -17,5 +17,4 @@ interface ProfileRepository {
       location: com.android.sample.model.map.Location,
       radiusKm: Double
   ): List<Profile>
-
 }
