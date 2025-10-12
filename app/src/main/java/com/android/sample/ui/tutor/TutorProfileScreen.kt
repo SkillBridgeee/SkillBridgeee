@@ -154,7 +154,6 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
         item {
           Surface(
               color = White,
-              tonalElevation = 0.dp,
               shape = MaterialTheme.shapes.large,
               modifier = Modifier.fillMaxWidth().testTag(TutorPageTestTags.CONTACT_SECTION)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
