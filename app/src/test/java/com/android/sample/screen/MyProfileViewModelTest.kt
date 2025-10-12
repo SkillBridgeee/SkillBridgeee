@@ -59,17 +59,17 @@ class MyProfileViewModelTest {
   }
 
   @Test
-  fun setBioValid() {
-    viewModel.setBio("")
+  fun setDescriptionValid() {
+    viewModel.setDescription("")
     val state = viewModel.uiState.value
-    assertEquals("Bio cannot be empty", state.invalidBioMsg)
+    assertEquals("Bio cannot be empty", state.invalidDescMsg)
   }
 
   @Test
-  fun setBioInvalid() {
-    viewModel.setBio("")
+  fun setDescriptionInvalid() {
+    viewModel.setDescription("")
     val state = viewModel.uiState.value
-    assertEquals("Bio cannot be empty", state.invalidBioMsg)
+    assertEquals("Bio cannot be empty", state.invalidDescMsg)
   }
 
   @Test
@@ -77,7 +77,7 @@ class MyProfileViewModelTest {
     viewModel.setName("Alice")
     viewModel.setEmail("alice@example.com")
     viewModel.setLocation("Paris")
-    viewModel.setBio("Bio")
+    viewModel.setDescription("Bio")
     val state = viewModel.uiState.value
     assertTrue(state.isValid)
   }

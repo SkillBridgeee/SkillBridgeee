@@ -45,7 +45,7 @@ object MyProfileScreenTestTag {
   const val INPUT_PROFILE_NAME = "inputProfileName"
   const val INPUT_PROFILE_EMAIL = "inputProfileEmail"
   const val INPUT_PROFILE_LOCATION = "inputProfileLocation"
-  const val INPUT_PROFILE_BIO = "inputProfileBio"
+  const val INPUT_PROFILE_DESC = "inputProfileDesc"
   const val SAVE_BUTTON = "saveButton"
   const val ERROR_MSG = "errorMsg"
 }
@@ -209,15 +209,15 @@ private fun ProfileContent(
 
                 Spacer(modifier = Modifier.height(fieldSpacing))
 
-                // Bio input field
+                // Description input field
                 OutlinedTextField(
-                    value = profileUIState.bio,
-                    onValueChange = { profileViewModel.setBio(it) },
-                    label = { Text("Bio") },
+                    value = profileUIState.description,
+                    onValueChange = { profileViewModel.setDescription(it) },
+                    label = { Text("Description") },
                     placeholder = { Text("Info About You") },
-                    isError = profileUIState.invalidBioMsg != null,
+                    isError = profileUIState.invalidDescMsg != null,
                     supportingText = {
-                      profileUIState.invalidBioMsg?.let {
+                      profileUIState.invalidDescMsg?.let {
                         Text(
                             text = it,
                             modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
@@ -225,7 +225,7 @@ private fun ProfileContent(
                     },
                     minLines = 2,
                     modifier =
-                        Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INPUT_PROFILE_BIO))
+                        Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC))
               }
             }
       }

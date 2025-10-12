@@ -51,7 +51,7 @@ class MyProfileTest : AppTest() {
     composeTestRule.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME).assertIsDisplayed()
     composeTestRule.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL).assertIsDisplayed()
     composeTestRule.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_LOCATION).assertIsDisplayed()
-    composeTestRule.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_BIO).assertIsDisplayed()
+    composeTestRule.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC).assertIsDisplayed()
   }
 
   @Test
@@ -97,9 +97,9 @@ class MyProfileTest : AppTest() {
   fun bioField_acceptsInput_andNoError() {
     composeTestRule.setContent { MyProfileScreen(profileId = "test") }
     val testBio = "Développeur Android"
-    composeTestRule.enterText(MyProfileScreenTestTag.INPUT_PROFILE_BIO, testBio)
+    composeTestRule.enterText(MyProfileScreenTestTag.INPUT_PROFILE_DESC, testBio)
     composeTestRule
-        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_BIO)
+        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
         .assertTextContains(testBio)
     composeTestRule.onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG).assertIsNotDisplayed()
   }

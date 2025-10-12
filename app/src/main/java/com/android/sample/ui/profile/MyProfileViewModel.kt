@@ -12,12 +12,12 @@ data class MyProfileUIState(
     val name: String = "John Doe",
     val email: String = "john.doe@epfl.ch",
     val location: String = "EPFL",
-    val bio: String = "Very nice guy :)",
+    val description: String = "Very nice guy :)",
     val errorMsg: String? = null,
     val invalidNameMsg: String? = null,
     val invalidEmailMsg: String? = null,
     val invalidLocationMsg: String? = null,
-    val invalidBioMsg: String? = null,
+    val invalidDescMsg: String? = null,
 ) {
   // Checks if all fields are valid
   val isValid: Boolean
@@ -25,11 +25,11 @@ data class MyProfileUIState(
         invalidNameMsg == null &&
             invalidEmailMsg == null &&
             invalidLocationMsg == null &&
-            invalidBioMsg == null &&
-            name.isNotEmpty() &&
-            email.isNotEmpty() &&
-            location.isNotEmpty() &&
-            bio.isNotEmpty()
+            invalidDescMsg == null &&
+            name.isNotBlank() &&
+            email.isNotBlank() &&
+            location.isNotBlank() &&
+            description.isNotBlank()
 }
 
 // ViewModel to manage profile editing logic and state
@@ -79,11 +79,11 @@ class MyProfileViewModel() : ViewModel() {
             invalidLocationMsg = if (location.isBlank()) "Location cannot be empty" else null)
   }
 
-  // Updates the bio and validates it
-  fun setBio(bio: String) {
+  // Updates the desc and validates it
+  fun setDescription(desc: String) {
     _uiState.value =
         _uiState.value.copy(
-            bio = bio, invalidBioMsg = if (bio.isBlank()) "Bio cannot be empty" else null)
+            description = desc, invalidDescMsg = if (desc.isBlank()) "Description cannot be empty" else null)
   }
 
   // Checks if the email format is valid
