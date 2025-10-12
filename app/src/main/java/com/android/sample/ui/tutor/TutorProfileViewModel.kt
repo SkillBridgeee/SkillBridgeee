@@ -24,8 +24,7 @@ data class TutorUiState(
 )
 
 /**
- * ViewModel for the TutorProfile screen. This ViewModel manages the state of the tutor profile
- * screen.
+ * ViewModel for the TutorProfile screen.
  *
  * @param repository The repository to fetch tutor data.
  */
