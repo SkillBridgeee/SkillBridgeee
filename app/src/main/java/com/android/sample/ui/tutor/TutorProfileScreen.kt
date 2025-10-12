@@ -40,11 +40,64 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.android.sample.model.user.Tutor
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.RatingStars
 import com.android.sample.ui.components.SkillChip
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.theme.White
+
+// A preview of the Tutor Profile screen with sample data.
+// Uncomment the below code to enable the preview in Android Studio.
+// @Preview(showBackground = true)
+// @Composable
+// private fun Preview_TutorContent() {
+//    val sampleProfile =
+//        Profile(
+//            userId = "demo",
+//            name = "Kendrick Lamar",
+//            email = "kendrick@gmail.com",
+//            description = "Performer and mentor",
+//            tutorRating = RatingInfo(averageRating = 4.6, totalRatings = 23),
+//            studentRating = RatingInfo(averageRating = 4.9, totalRatings = 12),
+//        )
+//
+//    val sampleSkills =
+//        listOf(
+//            Skill(
+//                userId = "demo",
+//                mainSubject = MainSubject.MUSIC,
+//                skill = "SINGING",
+//                skillTime = 10.0,
+//                expertise = ExpertiseLevel.EXPERT
+//            ),
+//            Skill(
+//                userId = "demo",
+//                mainSubject = MainSubject.MUSIC,
+//                skill = "GUITAR",
+//                skillTime = 7.0,
+//                expertise = ExpertiseLevel.ADVANCED
+//            ),
+//            Skill(
+//                userId = "demo",
+//                mainSubject = MainSubject.MUSIC,
+//                skill = "DRUMS",
+//                skillTime = 3.0,
+//                expertise = ExpertiseLevel.INTERMEDIATE
+//            )
+//        )
+//
+//    MaterialTheme {
+//        Scaffold { inner ->
+//            TutorContent(
+//                profile = sampleProfile,
+//                skills = sampleSkills,
+//                modifier = Modifier,
+//                padding = inner
+//            )
+//        }
+//    }
+// }
 
 /** Test tags for the Tutor Profile screen. */
 object TutorPageTestTags {
@@ -73,7 +126,7 @@ fun TutorProfileScreen(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
-  LaunchedEffect(Unit) { vm.load(tutorId) }
+  LaunchedEffect(tutorId) { vm.load(tutorId) }
   val state by vm.state.collectAsStateWithLifecycle()
 
   Scaffold(
@@ -90,21 +143,34 @@ fun TutorProfileScreen(
                 CircularProgressIndicator()
               }
         } else {
-          state.tutor?.let { TutorContent(tutor = it, modifier = modifier, padding = innerPadding) }
+          val profile = state.profile
+          if (profile != null) {
+            TutorContent(
+                profile = profile,
+                skills = state.skills,
+                modifier = modifier,
+                padding = innerPadding)
+          }
         }
       }
 }
 
 /**
- * Displays the content of the Tutor Profile screen, including the tutor's name, profile picture,
- * skills, and contact information.
+ * The main content of the Tutor Profile screen, displaying the tutor's profile information, skills,
+ * and contact details.
  *
- * @param tutor The tutor whose profile is to be displayed.
+ * @param profile The profile of the tutor.
+ * @param skills The list of skills the tutor offers.
  * @param modifier The modifier to be applied to the composable.
  * @param padding The padding values to be applied to the content.
  */
 @Composable
-private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValues) {
+private fun TutorContent(
+    profile: Profile,
+    skills: List<Skill>,
+    modifier: Modifier,
+    padding: PaddingValues
+) {
   LazyColumn(
       contentPadding = PaddingValues(16.dp),
       modifier = modifier.fillMaxSize().padding(padding),
@@ -128,15 +194,17 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
                                     .testTag(TutorPageTestTags.PFP))
                           }
                       Text(
-                          tutor.name,
+                          profile.name,
                           style =
                               MaterialTheme.typography.titleLarge.copy(
                                   fontWeight = FontWeight.SemiBold),
                           modifier = Modifier.testTag(TutorPageTestTags.NAME))
                       RatingStars(
-                          ratingOutOfFive = tutor.starRating,
+                          ratingOutOfFive = profile.tutorRating.averageRating,
                           modifier = Modifier.testTag(TutorPageTestTags.RATING))
-                      Text("(${tutor.ratingNumber})", style = MaterialTheme.typography.bodyMedium)
+                      Text(
+                          "(${profile.tutorRating.totalRatings})",
+                          style = MaterialTheme.typography.bodyMedium)
                     }
               }
         }
@@ -147,7 +215,7 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
           }
         }
 
-        items(tutor.skills) { s ->
+        items(skills) { s ->
           SkillChip(skill = s, modifier = Modifier.fillMaxWidth().testTag(TutorPageTestTags.SKILL))
         }
 
@@ -160,12 +228,12 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
                   Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Outlined.MailOutline, contentDescription = "Email")
                     Spacer(Modifier.width(8.dp))
-                    Text(tutor.email, style = MaterialTheme.typography.bodyMedium)
+                    Text(profile.email, style = MaterialTheme.typography.bodyMedium)
                   }
                   Row(verticalAlignment = Alignment.CenterVertically) {
                     InstagramGlyph()
                     Spacer(Modifier.width(8.dp))
-                    val handle = "@${tutor.name.replace(" ", "")}"
+                    val handle = "@${profile.name.replace(" ", "")}"
                     Text(handle, style = MaterialTheme.typography.bodyMedium)
                   }
                 }
@@ -173,37 +241,6 @@ private fun TutorContent(tutor: Tutor, modifier: Modifier, padding: PaddingValue
         }
       }
 }
-
-/** Sample tutor data for previewing the Tutor Profile screen. */
-// private fun sampleTutor(): Tutor =
-//    Tutor(
-//        userId = "demo",
-//        name = "Kendrick Lamar",
-//        email = "kendrick@gmail.com",
-//        description = "Performer and mentor",
-//        skills =
-//            listOf(
-//                Skill(
-//                    userId = "demo",
-//                    mainSubject = MainSubject.MUSIC,
-//                    skill = "SINGING",
-//                    skillTime = 10.0,
-//                    expertise = ExpertiseLevel.EXPERT
-//                ),
-//                Skill(
-//                    userId = "demo",
-//                    mainSubject = MainSubject.MUSIC,
-//                    skill = "DANCING",
-//                    skillTime = 5.0,
-//                    expertise = ExpertiseLevel.INTERMEDIATE),
-//                Skill(
-//                    userId = "demo",
-//                    mainSubject = MainSubject.MUSIC,
-//                    skill = "GUITAR",
-//                    skillTime = 7.0,
-//                    expertise = ExpertiseLevel.BEGINNER)),
-//        starRating = 5.0,
-//        ratingNumber = 23)
 
 /**
  * A simple Instagram glyph drawn using Canvas (Ai generated).
@@ -237,17 +274,3 @@ private fun InstagramGlyph(modifier: Modifier = Modifier) {
         style = Fill)
   }
 }
-
-/** Preview of the Tutor Profile screen with top app bar. */
-// @Preview(showBackground = true)
-// @Composable
-// private fun Preview_TutorProfile_WithBars() {
-//  val nav = rememberNavController()
-//  MaterialTheme {
-//    Scaffold(
-//        topBar = { TopAppBar(navController = nav) },
-//    ) { inner ->
-//      TutorContent(tutor = sampleTutor(), modifier = Modifier, padding = inner)
-//    }
-//  }
-// }

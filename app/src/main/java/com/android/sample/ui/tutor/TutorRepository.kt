@@ -1,14 +1,22 @@
 package com.android.sample.ui.tutor
 
-import com.android.sample.model.user.Tutor
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.user.Profile
 
 /** Repository interface for fetching tutor data. */
 interface TutorRepository {
+
   /**
-   * Fetches a tutor by their ID.
+   * Fetch the tutor's profile by user id
    *
-   * @param id The ID of the tutor to fetch.
-   * @return The tutor with the specified ID.
+   * @param id The user id of the tutor
    */
-  suspend fun getTutorById(id: String): Tutor
+  suspend fun getProfileById(id: String): Profile
+
+  /**
+   * Fetch the skills owned by this user
+   *
+   * @param userId The user id of the tutor
+   */
+  suspend fun getSkillsForUser(userId: String): List<Skill>
 }

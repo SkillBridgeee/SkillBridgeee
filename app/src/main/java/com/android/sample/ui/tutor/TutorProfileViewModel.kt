@@ -2,7 +2,8 @@ package com.android.sample.ui.tutor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.android.sample.model.user.Tutor
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.user.Profile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,10 +13,15 @@ import kotlinx.coroutines.launch
  * UI state for the TutorProfile screen. This state holds the data needed to display a tutor's
  * profile.
  *
- * @param loading Indicates if the data is still loading.
- * @param tutor The tutor data to be displayed, or null if not yet loaded.
+ * @param loading Whether the data is still loading.
+ * @param profile The profile of the tutor.
+ * @param skills The list of skills the tutor offers.
  */
-data class TutorUiState(val loading: Boolean = true, val tutor: Tutor? = null)
+data class TutorUiState(
+    val loading: Boolean = true,
+    val profile: Profile? = null,
+    val skills: List<Skill> = emptyList()
+)
 
 /**
  * ViewModel for the TutorProfile screen. This ViewModel manages the state of the tutor profile
@@ -39,8 +45,9 @@ class TutorProfileViewModel(
   fun load(tutorId: String) {
     if (!_state.value.loading) return
     viewModelScope.launch {
-      val t = repository.getTutorById(tutorId)
-      _state.value = TutorUiState(loading = false, tutor = t)
+      val profile = repository.getProfileById(tutorId)
+      val skills = repository.getSkillsForUser(tutorId)
+      _state.value = TutorUiState(loading = false, profile = profile, skills = skills)
     }
   }
 }
