@@ -41,35 +41,39 @@ class MyProfileViewModelTest {
   fun setEmailInvalid() {
     viewModel.setEmail("alice")
     val state = viewModel.uiState.value
+    assertEquals("alice", state.email)
     assertEquals("Email is not in the right format", state.invalidEmailMsg)
   }
 
   @Test
   fun setLocationValid() {
-    viewModel.setLocation("")
+    viewModel.setLocation("EPFL")
     val state = viewModel.uiState.value
-    assertEquals("Location cannot be empty", state.invalidLocationMsg)
+    assertEquals("EPFL", state.location?.name)
+    assertNull(state.invalidLocationMsg)
   }
 
   @Test
   fun setLocationInvalid() {
     viewModel.setLocation("")
     val state = viewModel.uiState.value
+    assertNull(state.location)
     assertEquals("Location cannot be empty", state.invalidLocationMsg)
   }
 
   @Test
   fun setDescriptionValid() {
-    viewModel.setDescription("")
+    viewModel.setDescription("Nice person")
     val state = viewModel.uiState.value
-    assertEquals("Bio cannot be empty", state.invalidDescMsg)
+    assertEquals("Nice person", state.description)
+    assertEquals(null, state.invalidDescMsg)
   }
 
   @Test
   fun setDescriptionInvalid() {
     viewModel.setDescription("")
     val state = viewModel.uiState.value
-    assertEquals("Bio cannot be empty", state.invalidDescMsg)
+    assertEquals("Description cannot be empty", state.invalidDescMsg)
   }
 
   @Test
@@ -77,7 +81,7 @@ class MyProfileViewModelTest {
     viewModel.setName("Alice")
     viewModel.setEmail("alice@example.com")
     viewModel.setLocation("Paris")
-    viewModel.setDescription("Bio")
+    viewModel.setDescription("Desc")
     val state = viewModel.uiState.value
     assertTrue(state.isValid)
   }

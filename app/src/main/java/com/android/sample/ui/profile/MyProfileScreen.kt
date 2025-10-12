@@ -191,7 +191,7 @@ private fun ProfileContent(
 
                 // Location input field
                 OutlinedTextField(
-                    value = profileUIState.location,
+                    value = profileUIState.location?.name ?: "",
                     onValueChange = { profileViewModel.setLocation(it) },
                     label = { Text("Location / Campus") },
                     placeholder = { Text("Enter Your Location or University") },

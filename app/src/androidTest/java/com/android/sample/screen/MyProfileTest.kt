@@ -139,13 +139,4 @@ class MyProfileTest : AppTest() {
         .onNodeWithTag(testTag = MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
   }
-
-  //  @Test
-  //  fun bioField_empty_showsError() {
-  //    composeTestRule.setContent { MyProfileScreen(profileId = "test") }
-  //    composeTestRule.enterText(MyProfileScreenTestTag.INPUT_PROFILE_BIO, "")
-  //    composeTestRule
-  //        .onNodeWithTag(testTag = MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
-  //        .assertIsDisplayed()
-  //  }
 }

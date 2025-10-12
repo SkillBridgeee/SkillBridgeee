@@ -2,6 +2,7 @@ package com.android.sample.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.map.Location
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,9 +12,8 @@ import kotlinx.coroutines.launch
 data class MyProfileUIState(
     val name: String = "John Doe",
     val email: String = "john.doe@epfl.ch",
-    val location: String = "EPFL",
+    val location: Location? = Location(name = "EPFL"),
     val description: String = "Very nice guy :)",
-    val errorMsg: String? = null,
     val invalidNameMsg: String? = null,
     val invalidEmailMsg: String? = null,
     val invalidLocationMsg: String? = null,
@@ -28,7 +28,7 @@ data class MyProfileUIState(
             invalidDescMsg == null &&
             name.isNotBlank() &&
             email.isNotBlank() &&
-            location.isNotBlank() &&
+            location != null &&
             description.isNotBlank()
 }
 
@@ -37,11 +37,6 @@ class MyProfileViewModel() : ViewModel() {
   // Holds the current UI state
   private val _uiState = MutableStateFlow(MyProfileUIState())
   val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
-
-  /** Removes any error message from the UI state */
-  fun clearErrorMsg() {
-    _uiState.value = _uiState.value.copy(errorMsg = null)
-  }
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile() {
@@ -72,18 +67,19 @@ class MyProfileViewModel() : ViewModel() {
   }
 
   // Updates the location and validates it
-  fun setLocation(location: String) {
+  fun setLocation(locationName: String) {
     _uiState.value =
         _uiState.value.copy(
-            location = location,
-            invalidLocationMsg = if (location.isBlank()) "Location cannot be empty" else null)
+            location = if (locationName.isBlank()) null else Location(name = locationName),
+            invalidLocationMsg = if (locationName.isBlank()) "Location cannot be empty" else null)
   }
 
   // Updates the desc and validates it
   fun setDescription(desc: String) {
     _uiState.value =
         _uiState.value.copy(
-            description = desc, invalidDescMsg = if (desc.isBlank()) "Description cannot be empty" else null)
+            description = desc,
+            invalidDescMsg = if (desc.isBlank()) "Description cannot be empty" else null)
   }
 
   // Checks if the email format is valid
