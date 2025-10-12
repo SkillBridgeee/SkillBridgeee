@@ -8,8 +8,6 @@ on:
         description: "Which build type to assemble (debug or release)"
         required: true
         default: "debug"
-  push: # Add this temporarily for testing
-    branches: [ bjlpedersen-chore/add-apk-workflow ]
 
 jobs:
   build:
