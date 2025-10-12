@@ -11,10 +11,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.navigation.compose.rememberNavController
+import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
-import com.android.sample.model.user.Tutor
+import com.android.sample.model.user.Profile
 import com.android.sample.ui.tutor.TutorPageTestTags
 import com.android.sample.ui.tutor.TutorProfileScreen
 import com.android.sample.ui.tutor.TutorProfileViewModel
@@ -26,26 +27,31 @@ class TutorProfileScreenTest {
 
   @get:Rule val compose = createComposeRule()
 
-  private val sampleTutor =
-      Tutor(
+  private val sampleProfile =
+      Profile(
           userId = "demo",
           name = "Kendrick Lamar",
           email = "kendrick@gmail.com",
           description = "Performer and mentor",
-          skills =
-              listOf(
-                  Skill("demo", MainSubject.MUSIC, "SINGING", 10.0, ExpertiseLevel.EXPERT),
-                  Skill("demo", MainSubject.MUSIC, "DANCING", 5.0, ExpertiseLevel.INTERMEDIATE),
-                  Skill("demo", MainSubject.MUSIC, "GUITAR", 7.0, ExpertiseLevel.BEGINNER)),
-          starRating = 5.0,
-          ratingNumber = 23)
+          tutorRating = RatingInfo(averageRating = 5.0, totalRatings = 23),
+          studentRating = RatingInfo(averageRating = 4.9, totalRatings = 12),
+      )
 
-  private class ImmediateRepo(private val t: Tutor) : TutorRepository {
-    override suspend fun getTutorById(id: String): Tutor = t
+  private val sampleSkills =
+      listOf(
+          Skill("demo", MainSubject.MUSIC, "SINGING", 10.0, ExpertiseLevel.EXPERT),
+          Skill("demo", MainSubject.MUSIC, "DANCING", 5.0, ExpertiseLevel.INTERMEDIATE),
+          Skill("demo", MainSubject.MUSIC, "GUITAR", 7.0, ExpertiseLevel.BEGINNER))
+
+  private class ImmediateRepo(private val profile: Profile, private val skills: List<Skill>) :
+      TutorRepository {
+    override suspend fun getProfileById(id: String): Profile = profile
+
+    override suspend fun getSkillsForUser(userId: String): List<Skill> = skills
   }
 
   private fun launch() {
-    val vm = TutorProfileViewModel(ImmediateRepo(sampleTutor))
+    val vm = TutorProfileViewModel(ImmediateRepo(sampleProfile, sampleSkills))
     compose.setContent {
       val navController = rememberNavController()
       TutorProfileScreen(tutorId = "demo", vm = vm, navController = navController)
@@ -74,14 +80,13 @@ class TutorProfileScreenTest {
     launch()
     compose
         .onAllNodesWithTag(TutorPageTestTags.SKILL, useUnmergedTree = true)
-        .assertCountEquals(sampleTutor.skills.size)
+        .assertCountEquals(sampleSkills.size)
   }
 
   @Test
   fun contact_section_shows_email_and_handle() {
     launch()
 
-    // Wait for Compose to finish any recompositions or loading
     compose.waitForIdle()
 
     // Scroll the LazyColumn so the contact section becomes visible
