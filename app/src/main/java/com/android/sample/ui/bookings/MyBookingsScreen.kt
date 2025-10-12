@@ -72,18 +72,27 @@ object MyBookingsPageTestTag {
 
 @Composable
 fun MyBookingsScreen(
-    vm: MyBookingsViewModel,
+    viewModel: MyBookingsViewModel,
     navController: NavHostController,
-    onOpenDetails: (BookingCardUi) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-  val items by vm.items.collectAsState()
+  val items by viewModel.items.collectAsState()
 
   LazyColumn(
-      modifier =
-          modifier.fillMaxSize().padding(12.dp), // root Scaffold will supply its own inner padding
+      modifier = modifier.fillMaxSize().padding(12.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(items, key = { it.id }) { ui -> BookingCard(ui, onOpenDetails) }
+        items(items, key = { it.id }) { ui ->
+          BookingCard(
+              ui = ui,
+              onOpenDetails = {
+                // navigate to lesson detail with booking id (destination will be merged later)
+                navController.navigate("lesson/${ui.id}")
+              },
+              onOpenTutor = {
+                // navigate to tutor profile with tutor id (destination will be merged later)
+                navController.navigate("tutor/${ui.tutorId}")
+              })
+        }
       }
 }
 
@@ -97,13 +106,16 @@ fun MyBookingsScreen(
  * - Primary “details” button that triggers [onOpenDetails].
  */
 @Composable
-private fun BookingCard(ui: BookingCardUi, onOpenDetails: (BookingCardUi) -> Unit) {
+private fun BookingCard(
+    ui: BookingCardUi,
+    onOpenDetails: (BookingCardUi) -> Unit,
+    onOpenTutor: (BookingCardUi) -> Unit
+) {
   Card(
-      modifier = Modifier.fillMaxWidth().testTag(MyBookingsPageTestTag.BOOKING_CARD),
+      modifier = Modifier.fillMaxWidth().testTag("MyBookingsPageTestTag.BOOKING_CARD"),
       shape = MaterialTheme.shapes.large,
       colors = CardDefaults.cardColors(containerColor = CardBg)) {
         Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-          // Avatar chip
           Box(
               modifier =
                   Modifier.size(36.dp)
@@ -115,33 +127,25 @@ private fun BookingCard(ui: BookingCardUi, onOpenDetails: (BookingCardUi) -> Uni
 
           Spacer(Modifier.width(12.dp))
 
-          // Left column
           Column(modifier = Modifier.weight(1f)) {
             Text(
                 ui.tutorName,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { /* reserved for future profile nav */})
+                modifier = Modifier.clickable { onOpenTutor(ui) })
             Spacer(Modifier.height(2.dp))
             Text(ui.subject, color = BrandBlue)
-            Spacer(Modifier.height(4.dp))
-            RatingRow(stars = ui.ratingStars, count = ui.ratingCount)
           }
 
-          // Right column
           Column(horizontalAlignment = Alignment.End) {
             Text(
                 "${ui.pricePerHourLabel}-${ui.durationLabel}",
                 color = BrandBlue,
                 fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(2.dp))
-            Text(ui.dateLabel, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
             Button(
                 onClick = { onOpenDetails(ui) },
-                modifier = Modifier.testTag(MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON),
-                shape = MaterialTheme.shapes.medium,
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                modifier = Modifier.testTag("MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON"),
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = BrandBlue, contentColor = Color.White)) {
@@ -172,6 +176,6 @@ private fun RatingRow(stars: Int, count: Int) {
 @Composable
 private fun MyBookingsScreenPreview() {
   SampleAppTheme {
-    MyBookingsScreen(vm = MyBookingsViewModel(), navController = rememberNavController())
+    MyBookingsScreen(viewModel = MyBookingsViewModel(), navController = rememberNavController())
   }
 }

@@ -21,12 +21,13 @@ import kotlinx.coroutines.flow.StateFlow
  */
 data class BookingCardUi(
     val id: String,
+    val tutorId: String,
     val tutorName: String,
     val subject: String,
-    val pricePerHourLabel: String, // e.g., "$50/hr"
-    val durationLabel: String, // e.g., "2hrs"
-    val dateLabel: String, // e.g., "06/10/2025"
-    val ratingStars: Int, // 0..5
+    val pricePerHourLabel: String,
+    val durationLabel: String,
+    val dateLabel: String,
+    val ratingStars: Int,
     val ratingCount: Int
 )
 
@@ -72,16 +73,15 @@ class MyBookingsViewModel : ViewModel() {
    */
   private fun demo(): List<BookingCardUi> {
     val df = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-
-    fun datePlus(daysFromNow: Int): String {
-      val cal = Calendar.getInstance()
-      cal.add(Calendar.DAY_OF_MONTH, daysFromNow)
-      return df.format(cal.time)
+    fun datePlus(days: Int): String {
+      val c = Calendar.getInstance()
+      c.add(Calendar.DAY_OF_MONTH, days)
+      return df.format(c.time)
     }
-
     return listOf(
         BookingCardUi(
             id = "b1",
+            tutorId = "t1",
             tutorName = "Liam P.",
             subject = "Piano Lessons",
             pricePerHourLabel = "$50/hr",
@@ -91,6 +91,7 @@ class MyBookingsViewModel : ViewModel() {
             ratingCount = 23),
         BookingCardUi(
             id = "b2",
+            tutorId = "t2",
             tutorName = "Maria G.",
             subject = "Calculus & Algebra",
             pricePerHourLabel = "$30/hr",
