@@ -12,7 +12,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,8 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.android.sample.ui.components.BottomNavBar
-import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.theme.BrandBlue
 import com.android.sample.ui.theme.CardBg
 import com.android.sample.ui.theme.ChipBorder
@@ -80,20 +77,13 @@ fun MyBookingsScreen(
     onOpenDetails: (BookingCardUi) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-  Scaffold(
-      topBar = {
-        // testTag is applied to a wrapper to avoid touching the shared component.
-        Box(Modifier.testTag(MyBookingsPageTestTag.TOP_BAR_TITLE)) { TopAppBar(navController) }
-      },
-      bottomBar = {
-        Box(Modifier.testTag(MyBookingsPageTestTag.BOTTOM_NAV)) { BottomNavBar(navController) }
-      }) { innerPadding ->
-        val items by vm.items.collectAsState()
-        LazyColumn(
-            modifier = modifier.fillMaxSize().padding(innerPadding).padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)) {
-              items(items, key = { it.id }) { ui -> BookingCard(ui, onOpenDetails) }
-            }
+  val items by vm.items.collectAsState()
+
+  LazyColumn(
+      modifier =
+          modifier.fillMaxSize().padding(12.dp), // root Scaffold will supply its own inner padding
+      verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items(items, key = { it.id }) { ui -> BookingCard(ui, onOpenDetails) }
       }
 }
 

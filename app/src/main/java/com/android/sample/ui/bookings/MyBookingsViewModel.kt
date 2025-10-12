@@ -1,7 +1,6 @@
 package com.android.sample.ui.bookings
 
 import androidx.lifecycle.ViewModel
-import com.android.sample.model.booking.Booking
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -74,57 +73,30 @@ class MyBookingsViewModel : ViewModel() {
   private fun demo(): List<BookingCardUi> {
     val df = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
-    fun startEnd(daysFromNow: Int, hours: Int): Pair<java.util.Date, java.util.Date> {
+    fun datePlus(daysFromNow: Int): String {
       val cal = Calendar.getInstance()
       cal.add(Calendar.DAY_OF_MONTH, daysFromNow)
-      val start = cal.time
-      cal.add(Calendar.HOUR_OF_DAY, hours) // ensure end > start
-      val end = cal.time
-      return start to end
+      return df.format(cal.time)
     }
 
-    val (s1, e1) = startEnd(daysFromNow = 1, hours = 2)
-    val (s2, e2) = startEnd(daysFromNow = 5, hours = 1)
-
-    // Domain objects (kept if/when repository replaces demo generation)
-    val b1 =
-        Booking(
-            bookingId = "b1",
-            tutorId = "t1",
-            tutorName = "Liam P.",
-            bookerId = "u_you",
-            bookerName = "You",
-            sessionStart = s1,
-            sessionEnd = e1)
-    val b2 =
-        Booking(
-            bookingId = "b2",
-            tutorId = "t2",
-            tutorName = "Maria G.",
-            bookerId = "u_you",
-            bookerName = "You",
-            sessionStart = s2,
-            sessionEnd = e2)
-
-    // Map to UI contracts (with star clamping just in case)
     return listOf(
         BookingCardUi(
-            id = b1.bookingId,
-            tutorName = b1.tutorName,
+            id = "b1",
+            tutorName = "Liam P.",
             subject = "Piano Lessons",
             pricePerHourLabel = "$50/hr",
             durationLabel = "2hrs",
-            dateLabel = df.format(b1.sessionStart),
-            ratingStars = 5.coerceIn(0, 5),
+            dateLabel = datePlus(1),
+            ratingStars = 5,
             ratingCount = 23),
         BookingCardUi(
-            id = b2.bookingId,
-            tutorName = b2.tutorName,
+            id = "b2",
+            tutorName = "Maria G.",
             subject = "Calculus & Algebra",
             pricePerHourLabel = "$30/hr",
             durationLabel = "1hr",
-            dateLabel = df.format(b2.sessionStart),
-            ratingStars = 4.coerceIn(0, 5),
+            dateLabel = datePlus(5),
+            ratingStars = 4,
             ratingCount = 41))
   }
 }
