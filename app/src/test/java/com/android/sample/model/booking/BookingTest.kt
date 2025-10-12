@@ -8,12 +8,11 @@ class BookingTest {
 
   @Test
   fun `test Booking creation with default values`() {
-    // This will fail validation because sessionStart equals sessionEnd
     try {
       val booking = Booking()
       fail("Should have thrown IllegalArgumentException")
     } catch (e: IllegalArgumentException) {
-      assertTrue(e.message!!.contains("Session start time must be before session end time"))
+      assertTrue(e.message!!.contains("Session start must be before session end"))
     }
   }
 
@@ -25,20 +24,22 @@ class BookingTest {
     val booking =
         Booking(
             bookingId = "booking123",
-            tutorId = "tutor456",
-            tutorName = "Dr. Smith",
-            bookerId = "user789",
-            bookerName = "John Doe",
+            associatedListingId = "listing456",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
             sessionStart = startTime,
-            sessionEnd = endTime)
+            sessionEnd = endTime,
+            status = BookingStatus.CONFIRMED,
+            price = 50.0)
 
     assertEquals("booking123", booking.bookingId)
-    assertEquals("tutor456", booking.tutorId)
-    assertEquals("Dr. Smith", booking.tutorName)
-    assertEquals("user789", booking.bookerId)
-    assertEquals("John Doe", booking.bookerName)
+    assertEquals("listing456", booking.associatedListingId)
+    assertEquals("tutor789", booking.listingCreatorId)
+    assertEquals("user012", booking.bookerId)
     assertEquals(startTime, booking.sessionStart)
     assertEquals(endTime, booking.sessionEnd)
+    assertEquals(BookingStatus.CONFIRMED, booking.status)
+    assertEquals(50.0, booking.price, 0.01)
   }
 
   @Test(expected = IllegalArgumentException::class)
@@ -48,10 +49,9 @@ class BookingTest {
 
     Booking(
         bookingId = "booking123",
-        tutorId = "tutor456",
-        tutorName = "Dr. Smith",
-        bookerId = "user789",
-        bookerName = "John Doe",
+        associatedListingId = "listing456",
+        listingCreatorId = "tutor789",
+        bookerId = "user012",
         sessionStart = startTime,
         sessionEnd = endTime)
   }
@@ -62,23 +62,60 @@ class BookingTest {
 
     Booking(
         bookingId = "booking123",
-        tutorId = "tutor456",
-        tutorName = "Dr. Smith",
-        bookerId = "user789",
-        bookerName = "John Doe",
+        associatedListingId = "listing456",
+        listingCreatorId = "tutor789",
+        bookerId = "user012",
         sessionStart = time,
         sessionEnd = time)
   }
 
-  @Test
-  fun `test Booking with valid time difference`() {
+  @Test(expected = IllegalArgumentException::class)
+  fun `test Booking validation - tutor and user are same`() {
     val startTime = Date()
-    val endTime = Date(startTime.time + 1800000) // 30 minutes later
+    val endTime = Date(startTime.time + 3600000)
 
-    val booking = Booking(sessionStart = startTime, sessionEnd = endTime)
+    Booking(
+        bookingId = "booking123",
+        associatedListingId = "listing456",
+        listingCreatorId = "user123",
+        bookerId = "user123",
+        sessionStart = startTime,
+        sessionEnd = endTime)
+  }
 
-    assertTrue(booking.sessionStart.before(booking.sessionEnd))
-    assertEquals(1800000, booking.sessionEnd.time - booking.sessionStart.time)
+  @Test(expected = IllegalArgumentException::class)
+  fun `test Booking validation - negative price`() {
+    val startTime = Date()
+    val endTime = Date(startTime.time + 3600000)
+
+    Booking(
+        bookingId = "booking123",
+        associatedListingId = "listing456",
+        listingCreatorId = "tutor789",
+        bookerId = "user012",
+        sessionStart = startTime,
+        sessionEnd = endTime,
+        price = -10.0)
+  }
+
+  @Test
+  fun `test Booking with all valid statuses`() {
+    val startTime = Date()
+    val endTime = Date(startTime.time + 3600000)
+
+    BookingStatus.values().forEach { status ->
+      val booking =
+          Booking(
+              bookingId = "booking123",
+              associatedListingId = "listing456",
+              listingCreatorId = "tutor789",
+              bookerId = "user012",
+              sessionStart = startTime,
+              sessionEnd = endTime,
+              status = status)
+
+      assertEquals(status, booking.status)
+    }
   }
 
   @Test
@@ -89,16 +126,24 @@ class BookingTest {
     val booking1 =
         Booking(
             bookingId = "booking123",
-            tutorId = "tutor456",
+            associatedListingId = "listing456",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
             sessionStart = startTime,
-            sessionEnd = endTime)
+            sessionEnd = endTime,
+            status = BookingStatus.CONFIRMED,
+            price = 75.0)
 
     val booking2 =
         Booking(
             bookingId = "booking123",
-            tutorId = "tutor456",
+            associatedListingId = "listing456",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
             sessionStart = startTime,
-            sessionEnd = endTime)
+            sessionEnd = endTime,
+            status = BookingStatus.CONFIRMED,
+            price = 75.0)
 
     assertEquals(booking1, booking2)
     assertEquals(booking1.hashCode(), booking2.hashCode())
@@ -108,47 +153,35 @@ class BookingTest {
   fun `test Booking copy functionality`() {
     val startTime = Date()
     val endTime = Date(startTime.time + 3600000)
-    val newEndTime = Date(startTime.time + 7200000) // 2 hours later
 
     val originalBooking =
         Booking(
             bookingId = "booking123",
-            tutorId = "tutor456",
-            tutorName = "Dr. Smith",
+            associatedListingId = "listing456",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
             sessionStart = startTime,
-            sessionEnd = endTime)
+            sessionEnd = endTime,
+            status = BookingStatus.PENDING,
+            price = 50.0)
 
-    val updatedBooking = originalBooking.copy(tutorName = "Dr. Johnson", sessionEnd = newEndTime)
+    val updatedBooking = originalBooking.copy(status = BookingStatus.COMPLETED, price = 60.0)
 
     assertEquals("booking123", updatedBooking.bookingId)
-    assertEquals("tutor456", updatedBooking.tutorId)
-    assertEquals("Dr. Johnson", updatedBooking.tutorName)
-    assertEquals(startTime, updatedBooking.sessionStart)
-    assertEquals(newEndTime, updatedBooking.sessionEnd)
+    assertEquals("listing456", updatedBooking.associatedListingId)
+    assertEquals(BookingStatus.COMPLETED, updatedBooking.status)
+    assertEquals(60.0, updatedBooking.price, 0.01)
 
     assertNotEquals(originalBooking, updatedBooking)
   }
 
   @Test
-  fun `test Booking with empty string fields`() {
-    val startTime = Date()
-    val endTime = Date(startTime.time + 3600000)
-
-    val booking =
-        Booking(
-            bookingId = "",
-            tutorId = "",
-            tutorName = "",
-            bookerId = "",
-            bookerName = "",
-            sessionStart = startTime,
-            sessionEnd = endTime)
-
-    assertEquals("", booking.bookingId)
-    assertEquals("", booking.tutorId)
-    assertEquals("", booking.tutorName)
-    assertEquals("", booking.bookerId)
-    assertEquals("", booking.bookerName)
+  fun `test BookingStatus enum values`() {
+    assertEquals(4, BookingStatus.values().size)
+    assertTrue(BookingStatus.values().contains(BookingStatus.PENDING))
+    assertTrue(BookingStatus.values().contains(BookingStatus.CONFIRMED))
+    assertTrue(BookingStatus.values().contains(BookingStatus.COMPLETED))
+    assertTrue(BookingStatus.values().contains(BookingStatus.CANCELLED))
   }
 
   @Test
@@ -159,16 +192,18 @@ class BookingTest {
     val booking =
         Booking(
             bookingId = "booking123",
-            tutorId = "tutor456",
-            tutorName = "Dr. Smith",
-            bookerId = "user789",
-            bookerName = "John Doe",
+            associatedListingId = "listing456",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
             sessionStart = startTime,
-            sessionEnd = endTime)
+            sessionEnd = endTime,
+            status = BookingStatus.CONFIRMED,
+            price = 50.0)
 
     val bookingString = booking.toString()
     assertTrue(bookingString.contains("booking123"))
-    assertTrue(bookingString.contains("tutor456"))
-    assertTrue(bookingString.contains("Dr. Smith"))
+    assertTrue(bookingString.contains("listing456"))
+    assertTrue(bookingString.contains("tutor789"))
+    assertTrue(bookingString.contains("user012"))
   }
 }
