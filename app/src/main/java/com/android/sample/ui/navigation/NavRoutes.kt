@@ -29,4 +29,5 @@ object NavRoutes {
   const val PIANO_SKILL = "skills/piano"
   const val PIANO_SKILL_2 = "skills/piano2"
   const val BOOKINGS = "bookings"
+  const val MESSAGES = "messages"
 }

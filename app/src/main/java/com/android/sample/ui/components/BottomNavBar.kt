@@ -62,7 +62,7 @@ fun BottomNavBar(navController: NavHostController) {
             NavRoutes.HOME -> Modifier.testTag(MyBookingsPageTestTag.NAV_HOME)
             NavRoutes.BOOKINGS -> Modifier.testTag(MyBookingsPageTestTag.NAV_BOOKINGS)
             NavRoutes.PROFILE -> Modifier.testTag(MyBookingsPageTestTag.NAV_PROFILE)
-            NavRoutes.PROFILE -> Modifier.testTag(MyBookingsPageTestTag.NAV_MESSAGES)
+            NavRoutes.MESSAGES -> Modifier.testTag(MyBookingsPageTestTag.NAV_MESSAGES)
 
             // Add NAV_MESSAGES mapping here if needed
             else -> Modifier
