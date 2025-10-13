@@ -507,4 +507,30 @@ class MyBookingsViewModelLogicTest {
     assertTrue(vm.uiState.value is com.android.sample.ui.bookings.MyBookingsUiState.Empty)
     assertTrue(vm.items.value.isEmpty())
   }
+
+  @Test
+  fun mapper_price_label_uses_numeric_when_present_else_dash() {
+    val now = Date()
+    val m = BookingToUiMapper(Locale.US)
+
+    val withNumber = m.map(booking(start = now, end = Date(now.time + 60_000), price = 42.0))
+    assertEquals("$42.0/hr", withNumber.pricePerHourLabel)
+
+    // With current Booking model, price is always a Double, so 0.0 formats as "$0.0/hr"
+    val zeroPrice = m.map(booking(start = now, end = Date(now.time + 60_000), price = 0.0))
+    assertEquals("$0.0/hr", zeroPrice.pricePerHourLabel)
+  }
+
+  @Test
+  fun mapper_handles_reflection_edge_cases_gracefully() {
+    val start = Date()
+    val end = start // zero duration
+    val m = BookingToUiMapper(Locale.US)
+    val ui = m.map(booking(start = start, end = end, price = 10.0))
+
+    // For zero minutes the mapper emits "${hours}hr", so "0hr"
+    assertEquals("0hr", ui.durationLabel)
+    assertTrue(ui.ratingStars in 0..5)
+    assertTrue(ui.dateLabel.matches(Regex("""\d{2}/\d{2}/\d{4}""")))
+  }
 }

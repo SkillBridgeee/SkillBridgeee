@@ -55,7 +55,7 @@ fun BottomNavBar(navController: NavHostController) {
           BottomNavItem("Profile", Icons.Default.Person, NavRoutes.PROFILE),
           BottomNavItem("Settings", Icons.Default.Settings, NavRoutes.SETTINGS))
 
-  NavigationBar(modifier = Modifier.testTag(MyBookingsPageTestTag.BOTTOM_NAV)) {
+  NavigationBar(modifier = Modifier) {
     items.forEach { item ->
       val itemModifier =
           when (item.route) {

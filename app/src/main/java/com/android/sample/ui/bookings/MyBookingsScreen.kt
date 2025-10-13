@@ -43,7 +43,6 @@ data class BookingCardUi(
 
 /** Test tags used by tests. */
 object MyBookingsPageTestTag {
-  const val GO_BACK = "MyBookingsPageTestTag.GO_BACK"
   const val TOP_BAR_TITLE = "MyBookingsPageTestTag.TOP_BAR_TITLE"
   const val BOOKING_CARD = "MyBookingsPageTestTag.BOOKING_CARD"
   const val BOOKING_DETAILS_BUTTON = "MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON"

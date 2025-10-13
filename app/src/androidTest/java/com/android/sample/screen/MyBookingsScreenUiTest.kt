@@ -13,6 +13,9 @@ import androidx.compose.ui.test.performClick
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.android.sample.model.booking.Booking
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.booking.FakeBookingRepository
 import com.android.sample.ui.bookings.BookingCardUi
 import com.android.sample.ui.bookings.BookingToUiMapper
@@ -257,5 +260,174 @@ class MyBookingsScreenUiTest {
     }
     composeRule.onNodeWithTag(MyBookingsPageTestTag.TOP_BAR_TITLE).assertIsDisplayed()
     composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(2)
+  }
+
+  @Test
+  fun content_renders_zero_cards_when_empty() {
+    // repo that returns empty list
+    val emptyVm =
+        MyBookingsViewModel(
+            repo =
+                object : com.android.sample.model.booking.BookingRepository {
+                  override fun getNewUid() = "x"
+
+                  override suspend fun getBookingsByUserId(userId: String) =
+                      emptyList<com.android.sample.model.booking.Booking>()
+
+                  override suspend fun getAllBookings() =
+                      emptyList<com.android.sample.model.booking.Booking>()
+
+                  override suspend fun getBooking(bookingId: String) =
+                      throw UnsupportedOperationException()
+
+                  override suspend fun getBookingsByTutor(tutorId: String) =
+                      emptyList<com.android.sample.model.booking.Booking>()
+
+                  override suspend fun getBookingsByStudent(studentId: String) =
+                      emptyList<com.android.sample.model.booking.Booking>()
+
+                  override suspend fun getBookingsByListing(listingId: String) =
+                      emptyList<com.android.sample.model.booking.Booking>()
+
+                  override suspend fun addBooking(
+                      booking: com.android.sample.model.booking.Booking
+                  ) {}
+
+                  override suspend fun updateBooking(
+                      bookingId: String,
+                      booking: com.android.sample.model.booking.Booking
+                  ) {}
+
+                  override suspend fun deleteBooking(bookingId: String) {}
+
+                  override suspend fun updateBookingStatus(
+                      bookingId: String,
+                      status: com.android.sample.model.booking.BookingStatus
+                  ) {}
+
+                  override suspend fun confirmBooking(bookingId: String) {}
+
+                  override suspend fun completeBooking(bookingId: String) {}
+
+                  override suspend fun cancelBooking(bookingId: String) {}
+                },
+            userId = "s1",
+            initialLoadBlocking = true)
+
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        MyBookingsContent(viewModel = emptyVm, navController = nav)
+      }
+    }
+    composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(0)
+  }
+
+  @Test
+  fun content_survives_error_repo_without_crash_or_cards() {
+    val errorVm =
+        MyBookingsViewModel(
+            repo =
+                object : com.android.sample.model.booking.BookingRepository {
+                  override fun getNewUid() = "x"
+
+                  override suspend fun getBookingsByUserId(userId: String) =
+                      throw RuntimeException("boom")
+
+                  override suspend fun getAllBookings() =
+                      emptyList<com.android.sample.model.booking.Booking>()
+
+                  override suspend fun getBooking(bookingId: String) =
+                      throw UnsupportedOperationException()
+
+                  override suspend fun getBookingsByTutor(tutorId: String) =
+                      emptyList<com.android.sample.model.booking.Booking>()
+
+                  override suspend fun getBookingsByStudent(studentId: String) =
+                      emptyList<com.android.sample.model.booking.Booking>()
+
+                  override suspend fun getBookingsByListing(listingId: String) =
+                      emptyList<com.android.sample.model.booking.Booking>()
+
+                  override suspend fun addBooking(
+                      booking: com.android.sample.model.booking.Booking
+                  ) {}
+
+                  override suspend fun updateBooking(
+                      bookingId: String,
+                      booking: com.android.sample.model.booking.Booking
+                  ) {}
+
+                  override suspend fun deleteBooking(bookingId: String) {}
+
+                  override suspend fun updateBookingStatus(
+                      bookingId: String,
+                      status: com.android.sample.model.booking.BookingStatus
+                  ) {}
+
+                  override suspend fun confirmBooking(bookingId: String) {}
+
+                  override suspend fun completeBooking(bookingId: String) {}
+
+                  override suspend fun cancelBooking(bookingId: String) {}
+                },
+            userId = "s1",
+            initialLoadBlocking = true)
+
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        MyBookingsContent(viewModel = errorVm, navController = nav)
+      }
+    }
+    composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(0)
+  }
+
+  @Test
+  fun content_renders_zero_cards_when_vm_is_empty() {
+    // repo that returns nothing so the VM emits an empty list
+    val emptyRepo =
+        object : BookingRepository {
+          override fun getNewUid() = "x"
+
+          override suspend fun getBookingsByUserId(userId: String) = emptyList<Booking>()
+
+          override suspend fun getAllBookings() = emptyList<Booking>()
+
+          override suspend fun getBooking(bookingId: String) = throw UnsupportedOperationException()
+
+          override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+          override suspend fun addBooking(booking: Booking) {}
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+          override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+          override suspend fun confirmBooking(bookingId: String) {}
+
+          override suspend fun completeBooking(bookingId: String) {}
+
+          override suspend fun cancelBooking(bookingId: String) {}
+        }
+
+    val vm = MyBookingsViewModel(emptyRepo, "s1", initialLoadBlocking = true)
+
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        MyBookingsScreen(viewModel = vm, navController = nav)
+      }
+    }
+
+    composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(0)
+    composeRule.onNodeWithTag(MyBookingsPageTestTag.TOP_BAR_TITLE).assertIsDisplayed()
+    composeRule.onNodeWithTag(MyBookingsPageTestTag.BOTTOM_NAV).assertIsDisplayed()
   }
 }
