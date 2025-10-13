@@ -11,7 +11,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -23,8 +25,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.android.sample.ui.components.BottomNavBar
+import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.theme.BrandBlue
 import com.android.sample.ui.theme.CardBg
 import com.android.sample.ui.theme.ChipBorder
@@ -70,10 +75,41 @@ object MyBookingsPageTestTag {
   const val NAV_PROFILE = "MyBookingsPageTestTag.NAV_PROFILE"
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyBookingsScreen(
     viewModel: MyBookingsViewModel,
     navController: NavHostController,
+    onOpenDetails: ((BookingCardUi) -> Unit)? = null,
+    onOpenTutor: ((BookingCardUi) -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+  Scaffold(
+      topBar = {
+        Box(Modifier.testTag(MyBookingsPageTestTag.TOP_BAR_TITLE)) { TopAppBar(navController) }
+      },
+      bottomBar = {
+        Box(Modifier.testTag(MyBookingsPageTestTag.BOTTOM_NAV)) { BottomNavBar(navController) }
+      }) { innerPadding ->
+        MyBookingsContent(
+            viewModel = viewModel,
+            navController = navController,
+            onOpenDetails = onOpenDetails,
+            onOpenTutor = onOpenTutor,
+            modifier = modifier.padding(innerPadding))
+      }
+}
+
+/**
+ * Content-only composable that renders the scrollable list of bookings. Use this directly in tests
+ * that already provide top/bottom bars to avoid duplicate tags.
+ */
+@Composable
+fun MyBookingsContent(
+    viewModel: MyBookingsViewModel,
+    navController: NavHostController,
+    onOpenDetails: ((BookingCardUi) -> Unit)? = null,
+    onOpenTutor: ((BookingCardUi) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
   val items by viewModel.items.collectAsState()
@@ -85,12 +121,10 @@ fun MyBookingsScreen(
           BookingCard(
               ui = ui,
               onOpenDetails = {
-                // navigate to lesson detail with booking id (destination will be merged later)
-                navController.navigate("lesson/${ui.id}")
+                onOpenDetails?.invoke(it) ?: navController.navigate("lesson/${it.id}")
               },
               onOpenTutor = {
-                // navigate to tutor profile with tutor id (destination will be merged later)
-                navController.navigate("tutor/${ui.tutorId}")
+                onOpenTutor?.invoke(it) ?: navController.navigate("tutor/${it.tutorId}")
               })
         }
       }
@@ -112,7 +146,7 @@ private fun BookingCard(
     onOpenTutor: (BookingCardUi) -> Unit
 ) {
   Card(
-      modifier = Modifier.fillMaxWidth().testTag("MyBookingsPageTestTag.BOOKING_CARD"),
+      modifier = Modifier.fillMaxWidth().testTag(MyBookingsPageTestTag.BOOKING_CARD),
       shape = MaterialTheme.shapes.large,
       colors = CardDefaults.cardColors(containerColor = CardBg)) {
         Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -135,17 +169,22 @@ private fun BookingCard(
                 modifier = Modifier.clickable { onOpenTutor(ui) })
             Spacer(Modifier.height(2.dp))
             Text(ui.subject, color = BrandBlue)
-          }
-
-          Column(horizontalAlignment = Alignment.End) {
+            Spacer(Modifier.height(6.dp))
             Text(
                 "${ui.pricePerHourLabel}-${ui.durationLabel}",
                 color = BrandBlue,
                 fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(4.dp))
+            Text(ui.dateLabel)
+            Spacer(Modifier.height(6.dp))
+            RatingRow(stars = ui.ratingStars, count = ui.ratingCount)
+          }
+
+          Column(horizontalAlignment = Alignment.End) {
             Spacer(Modifier.height(8.dp))
             Button(
                 onClick = { onOpenDetails(ui) },
-                modifier = Modifier.testTag("MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON"),
+                modifier = Modifier.testTag(MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON),
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = BrandBlue, contentColor = Color.White)) {

@@ -15,11 +15,12 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.ui.bookings.BookingCardUi
+import com.android.sample.ui.bookings.MyBookingsContent
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
-import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.theme.SampleAppTheme
 import java.util.concurrent.atomic.AtomicReference
@@ -51,7 +52,8 @@ class MyBookingsRobolectricTest {
       SampleAppTheme {
         val nav = rememberNavController()
         TestHost(nav) {
-          MyBookingsScreen(vm = MyBookingsViewModel(), navController = nav, onOpenDetails = onOpen)
+          MyBookingsContent(
+              viewModel = MyBookingsViewModel(), navController = nav, onOpenDetails = onOpen)
         }
       }
     }
@@ -141,7 +143,7 @@ class MyBookingsRobolectricTest {
     composeRule.setContent {
       SampleAppTheme {
         val nav = rememberNavController()
-        TestHost(nav) { MyBookingsScreen(vm = emptyVm, navController = nav) }
+        TestHost(nav) { MyBookingsContent(viewModel = emptyVm, navController = nav) }
       }
     }
 
