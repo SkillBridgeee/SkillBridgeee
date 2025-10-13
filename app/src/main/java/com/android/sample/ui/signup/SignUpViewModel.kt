@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.android.sample.model.user.FakeProfileRepository
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
+import kotlin.compareTo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -71,12 +72,29 @@ class SignUpViewModel(private val repo: ProfileRepository = FakeProfileRepositor
   }
 
   private fun validate() {
+    val namePattern = Regex("^[\\p{L} ]+\$") // Unicode letters and spaces only
+
     _state.update { s ->
-      val ok =
-          s.name.isNotBlank() &&
-              s.surname.isNotBlank() &&
-              s.email.contains("@") &&
-              s.password.length >= 6
+      val nameTrim = s.name.trim()
+      val surnameTrim = s.surname.trim()
+      val nameOk = nameTrim.isNotEmpty() && namePattern.matches(nameTrim)
+      val surnameOk = surnameTrim.isNotEmpty() && namePattern.matches(surnameTrim)
+
+      val emailTrim = s.email.trim()
+      val emailOk = run {
+        // require exactly one '@', non-empty local and domain, and at least one dot in domain
+        val atCount = emailTrim.count { it == '@' }
+        if (atCount != 1) return@run false
+        val (local, domain) = emailTrim.split("@", limit = 2)
+        local.isNotEmpty() && domain.isNotEmpty() && domain.contains('.')
+      }
+
+      val password = s.password
+      val passwordOk =
+          password.length >= 8 && password.any { it.isDigit() } && password.any { it.isLetter() }
+      val addressOk = s.address.trim().isNotEmpty()
+      val levelOk = s.levelOfEducation.trim().isNotEmpty()
+      val ok = nameOk && surnameOk && emailOk && passwordOk && addressOk && levelOk
       s.copy(canSubmit = ok, error = null)
     }
   }
