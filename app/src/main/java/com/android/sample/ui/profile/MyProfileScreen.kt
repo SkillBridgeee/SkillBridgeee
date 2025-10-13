@@ -60,7 +60,7 @@ fun MyProfileScreen(profileViewModel: MyProfileViewModel = viewModel(), profileI
         AppButton(
             text = "Save Profile Changes",
             // TODO Implement on save action
-            onClick = {},
+            onClick = { profileViewModel.editProfile(userId = profileId)},
             testTag = MyProfileScreenTestTag.SAVE_BUTTON)
       },
       floatingActionButtonPosition = FabPosition.Center,
