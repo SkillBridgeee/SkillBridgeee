@@ -18,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,7 +36,6 @@ import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.theme.SampleAppTheme
 
 object MyProfileScreenTestTag {
-  const val HEADER_TITLE = "headerTitle"
   const val PROFILE_ICON = "profileIcon"
   const val NAME_DISPLAY = "nameDisplay"
   const val ROLE_BADGE = "roleBadge"
@@ -55,19 +53,8 @@ object MyProfileScreenTestTag {
 fun MyProfileScreen(profileViewModel: MyProfileViewModel = viewModel(), profileId: String) {
   // Scaffold structures the screen with top bar, bottom bar, and save button
   Scaffold(
-      topBar = {
-        TopAppBar(
-            title = {
-              Text(
-                  text = "My Profile",
-                  modifier = Modifier.testTag(MyProfileScreenTestTag.HEADER_TITLE))
-            },
-            actions = {})
-      },
-      bottomBar = {
-        // TODO: Implement bottom navigation bar
-        Text("BotBar")
-      },
+      topBar = {},
+      bottomBar = {},
       floatingActionButton = {
         // Button to save profile changes
         AppButton(
@@ -90,7 +77,7 @@ private fun ProfileContent(
     profileViewModel: MyProfileViewModel
 ) {
 
-  LaunchedEffect(profileId) { profileViewModel.loadProfile() }
+  LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
 
   // Observe profile state to update the UI
   val profileUIState by profileViewModel.uiState.collectAsState()

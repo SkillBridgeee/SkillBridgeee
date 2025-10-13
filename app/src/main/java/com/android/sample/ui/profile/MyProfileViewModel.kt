@@ -1,8 +1,12 @@
 package com.android.sample.ui.profile
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.map.Location
+import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,10 +14,10 @@ import kotlinx.coroutines.launch
 
 /** UI state for the MyProfile screen. Holds all data needed to edit a profile */
 data class MyProfileUIState(
-    val name: String = "John Doe",
-    val email: String = "john.doe@epfl.ch",
-    val location: Location? = Location(name = "EPFL"),
-    val description: String = "Very nice guy :)",
+    val name: String = "",
+    val email: String = "",
+    val location: Location? = Location(name = ""),
+    val description: String = "",
     val invalidNameMsg: String? = null,
     val invalidEmailMsg: String? = null,
     val invalidLocationMsg: String? = null,
@@ -33,18 +37,68 @@ data class MyProfileUIState(
 }
 
 // ViewModel to manage profile editing logic and state
-class MyProfileViewModel() : ViewModel() {
+class MyProfileViewModel(
+    private val repository: ProfileRepository = ProfileRepositoryProvider.repository
+) : ViewModel() {
   // Holds the current UI state
   private val _uiState = MutableStateFlow(MyProfileUIState())
   val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
 
   /** Loads the profile data (to be implemented) */
-  fun loadProfile() {
+  fun loadProfile(userId: String) {
     viewModelScope.launch {
       try {
-        // TODO: Load profile data here
-      } catch (_: Exception) {
-        // TODO: Handle error
+        viewModelScope.launch {
+          val profile = repository.getProfile(userId = userId)
+          _uiState.value =
+              MyProfileUIState(
+                  name = profile.name,
+                  email = profile.email,
+                  location = profile.location,
+                  description = profile.description)
+        }
+      } catch (e: Exception) {
+        Log.e("MyProfileViewModel", "Error loading ToDo by ID: $userId", e)
+      }
+    }
+  }
+
+  /**
+   * Edits a Profile.
+   *
+   * @param userId The ID of the profile to edit.
+   * @return true if the update process was started, false if validation failed.
+   */
+  fun editProfile(userId: String): Boolean {
+    val state = _uiState.value
+    if (!state.isValid) {
+      return false
+    }
+
+    val profile =
+        Profile(
+            userId = userId,
+            name = state.name,
+            email = state.email,
+            location = state.location ?: Location(name = ""),
+            description = state.description)
+
+    editProfileToRepository(userId = userId, profile = profile)
+    return true
+  }
+
+  /**
+   * Edits a Profile in the repository.
+   *
+   * @param userId The ID of the profile to be edited.
+   * @param profile The Profile object containing the new values.
+   */
+  private fun editProfileToRepository(userId: String, profile: Profile) {
+    viewModelScope.launch {
+      try {
+        repository.updateProfile(userId = userId, profile = profile)
+      } catch (e: Exception) {
+        Log.e("MyProfileViewModel", "Error updating Profile", e)
       }
     }
   }
