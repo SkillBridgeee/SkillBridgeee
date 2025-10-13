@@ -1,11 +1,14 @@
 package com.android.sample.ui.bookings
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.android.sample.model.booking.BookingRepository
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 /**
  * UI model for a single booking row in the "My Bookings" list.
@@ -50,16 +53,38 @@ data class BookingCardUi(
  * - Replace demo generation with a repository-backed flow of domain `Booking` models.
  * - Map domain → UI using i18n-aware formatters for dates, price, and duration.
  */
-class MyBookingsViewModel : ViewModel() {
+class MyBookingsViewModel(private val repo: BookingRepository, private val userId: String) :
+    ViewModel() {
 
-  // Backing state; mutated only inside the VM.
-  private val _items = MutableStateFlow<List<BookingCardUi>>(emptyList())
-
-  /** Stream of bookings for the UI. */
+  private val _items = MutableStateFlow<List<BookingCardUi>>(demo())
   val items: StateFlow<List<BookingCardUi>> = _items
 
-  init {
-    _items.value = demo()
+  fun refresh() {
+    viewModelScope.launch {
+      val bookings = repo.getBookingsByUserId(userId)
+      val df = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+      _items.value =
+          bookings.map { b ->
+            val durationMs = b.sessionEnd.time - b.sessionStart.time
+            val hours = durationMs / (60 * 60 * 1000)
+            val mins = (durationMs / (60 * 1000)) % 60
+            val durationLabel =
+                if (mins == 0L) "${hours}hr" + if (hours == 1L) "" else "s"
+                else "${hours}h ${mins}m"
+
+            BookingCardUi(
+                id = b.bookingId,
+                tutorId = b.listingCreatorId,
+                tutorName = b.listingCreatorId,
+                subject = "—",
+                pricePerHourLabel = "$${b.price}/hr",
+                durationLabel = durationLabel,
+                dateLabel = df.format(b.sessionStart),
+                ratingStars = 0,
+                ratingCount = 0)
+          }
+    }
   }
 
   // --- Demo data generation (deterministic) -----------------------------------------------

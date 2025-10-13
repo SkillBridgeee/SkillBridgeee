@@ -1,5 +1,6 @@
 package com.android.sample.ui.bookings
 
+import com.android.sample.model.booking.FakeBookingRepository
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -7,7 +8,7 @@ class MyBookingsViewModelTest {
 
   @Test
   fun demo_items_are_mapped_correctly() {
-    val vm = MyBookingsViewModel()
+    val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
     val items = vm.items.value
     assertEquals(2, items.size)
 
@@ -31,7 +32,7 @@ class MyBookingsViewModelTest {
   @Test
   fun dates_are_ddMMyyyy() {
     val pattern = Regex("""\d{2}/\d{2}/\d{4}""")
-    val items = MyBookingsViewModel().items.value
+    val items = MyBookingsViewModel(FakeBookingRepository(), "s1").items.value
     assert(pattern.matches(items[0].dateLabel))
     assert(pattern.matches(items[1].dateLabel))
   }

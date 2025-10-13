@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
@@ -18,6 +19,7 @@ import androidx.compose.ui.test.performClick
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.android.sample.model.booking.FakeBookingRepository
 import com.android.sample.ui.bookings.BookingCardUi
 import com.android.sample.ui.bookings.MyBookingsContent
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
@@ -41,8 +43,12 @@ class MyBookingsRobolectricTest {
   @Composable
   private fun TestHost(nav: NavHostController, content: @Composable () -> Unit) {
     Scaffold(
-        topBar = { com.android.sample.ui.components.TopAppBar(nav) },
-        bottomBar = { com.android.sample.ui.components.BottomNavBar(nav) }) { inner ->
+        topBar = {
+          Box(Modifier.testTag(MyBookingsPageTestTag.TOP_BAR_TITLE)) {
+            com.android.sample.ui.components.TopAppBar(nav)
+          }
+        },
+        bottomBar = { Box { com.android.sample.ui.components.BottomNavBar(nav) } }) { inner ->
           Box(Modifier.padding(inner)) { content() }
         }
   }
@@ -53,7 +59,9 @@ class MyBookingsRobolectricTest {
         val nav = rememberNavController()
         TestHost(nav) {
           MyBookingsContent(
-              viewModel = MyBookingsViewModel(), navController = nav, onOpenDetails = onOpen)
+              viewModel = MyBookingsViewModel(FakeBookingRepository(), "s1"),
+              navController = nav,
+              onOpenDetails = onOpen)
         }
       }
     }
@@ -76,7 +84,7 @@ class MyBookingsRobolectricTest {
 
   @Test
   fun price_duration_and_date_visible() {
-    val vm = MyBookingsViewModel()
+    val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
     val items = vm.items.value
     setContent()
     composeRule
@@ -133,7 +141,7 @@ class MyBookingsRobolectricTest {
   @Test
   fun empty_state_renders_zero_cards() {
     val emptyVm =
-        MyBookingsViewModel().also { vm ->
+        MyBookingsViewModel(FakeBookingRepository(), "s1").also { vm ->
           val f = vm::class.java.getDeclaredField("_items")
           f.isAccessible = true
           @Suppress("UNCHECKED_CAST")

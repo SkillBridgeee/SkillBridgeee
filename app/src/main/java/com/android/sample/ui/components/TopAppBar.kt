@@ -6,11 +6,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
 
@@ -69,7 +67,7 @@ fun TopAppBar(navController: NavController) {
               RouteStackManager.getCurrentRoute() != null)
 
   TopAppBar(
-      modifier = Modifier.testTag(MyBookingsPageTestTag.TOP_BAR_TITLE),
+      modifier = Modifier,
       title = { Text(text = title, fontWeight = FontWeight.SemiBold) },
       navigationIcon = {
         if (canNavigateBack) {

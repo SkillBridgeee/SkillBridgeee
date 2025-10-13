@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.android.sample.model.booking.FakeBookingRepository
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.screens.HomePlaceholder
@@ -72,7 +73,8 @@ fun AppNavGraph(navController: NavHostController) {
 
     composable(NavRoutes.BOOKINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
-      MyBookingsScreen(viewModel = MyBookingsViewModel(), navController = navController)
+      val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
+      MyBookingsScreen(viewModel = vm, navController = navController)
     }
   }
 }

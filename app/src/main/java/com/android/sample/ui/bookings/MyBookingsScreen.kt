@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.android.sample.model.booking.FakeBookingRepository
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.theme.BrandBlue
@@ -215,6 +217,8 @@ private fun RatingRow(stars: Int, count: Int) {
 @Composable
 private fun MyBookingsScreenPreview() {
   SampleAppTheme {
-    MyBookingsScreen(viewModel = MyBookingsViewModel(), navController = rememberNavController())
+    val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
+    LaunchedEffect(Unit) { vm.refresh() }
+    MyBookingsScreen(viewModel = vm, navController = rememberNavController())
   }
 }
