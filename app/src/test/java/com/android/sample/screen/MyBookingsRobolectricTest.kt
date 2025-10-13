@@ -39,7 +39,6 @@ class MyBookingsRobolectricTest {
 
   @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-  // Render the shared bars so their testTags exist during tests
   @Composable
   private fun TestHost(nav: NavHostController, content: @Composable () -> Unit) {
     Scaffold(
@@ -59,12 +58,52 @@ class MyBookingsRobolectricTest {
         val nav = rememberNavController()
         TestHost(nav) {
           MyBookingsContent(
-              viewModel = MyBookingsViewModel(FakeBookingRepository(), "s1"),
+              viewModel =
+                  MyBookingsViewModel(
+                      com.android.sample.model.booking.FakeBookingRepository(), "s1"),
               navController = nav,
               onOpenDetails = onOpen)
         }
       }
     }
+  }
+
+  @Test
+  fun booking_card_renders_and_details_click() {
+    // create a single UI item and inject into VM
+    val ui =
+        BookingCardUi(
+            id = "x1",
+            tutorId = "t1",
+            tutorName = "Test Tutor",
+            subject = "Test Subject",
+            pricePerHourLabel = "$40/hr",
+            durationLabel = "2hrs",
+            dateLabel = "01/01/2025",
+            ratingStars = 3,
+            ratingCount = 5)
+
+    val vm = MyBookingsViewModel(com.android.sample.model.booking.FakeBookingRepository(), "s1")
+    val field = vm::class.java.getDeclaredField("_items")
+    field.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
+    (field.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = listOf(ui)
+
+    val clicked = AtomicReference<BookingCardUi?>()
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        TestHost(nav) {
+          MyBookingsContent(
+              viewModel = vm, navController = nav, onOpenDetails = { clicked.set(it) })
+        }
+      }
+    }
+
+    composeRule.onNodeWithText("Test Tutor").assertIsDisplayed()
+    composeRule.onNodeWithText("Test Subject").assertIsDisplayed()
+    composeRule.onNodeWithTag(MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON).performClick()
+    requireNotNull(clicked.get())
   }
 
   @Test
