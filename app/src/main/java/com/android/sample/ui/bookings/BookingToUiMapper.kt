@@ -159,7 +159,8 @@ class BookingToUiMapper(private val locale: Locale = Locale.getDefault()) {
 
     val durationLabel =
         if (mins == 0L) {
-          "${hours}hr" + if (hours == 1L) "" else "s"
+          val plural = if (hours > 1L) "s" else ""
+          "${hours}hr$plural"
         } else {
           "${hours}h ${mins}m"
         }
