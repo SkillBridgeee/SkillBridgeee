@@ -205,4 +205,84 @@ class MyBookingsRobolectricTest {
     composeRule.onNodeWithText("★★★★☆").assertIsDisplayed()
     composeRule.onNodeWithText("(41)").assertIsDisplayed()
   }
+
+  // kotlin
+  @Test
+  fun `tutor name click invokes onOpenTutor`() {
+    val ui =
+        BookingCardUi(
+            id = "x-click",
+            tutorId = "t1",
+            tutorName = "Clickable Tutor",
+            subject = "Subj",
+            pricePerHourLabel = "$10/hr",
+            durationLabel = "1hr",
+            dateLabel = "01/01/2025",
+            ratingStars = 2,
+            ratingCount = 1)
+
+    val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
+    val field = vm::class.java.getDeclaredField("_items")
+    field.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
+    (field.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = listOf(ui)
+
+    val clicked = java.util.concurrent.atomic.AtomicReference<BookingCardUi?>()
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        TestHost(nav) {
+          MyBookingsContent(viewModel = vm, navController = nav, onOpenTutor = { clicked.set(it) })
+        }
+      }
+    }
+
+    composeRule.onNodeWithText("Clickable Tutor").performClick()
+    requireNotNull(clicked.get())
+  }
+
+  @Test
+  fun rating_row_clamps_negative_and_over_five_values() {
+    val low =
+        BookingCardUi(
+            id = "low",
+            tutorId = "tlow",
+            tutorName = "Low",
+            subject = "S",
+            pricePerHourLabel = "$0/hr",
+            durationLabel = "1hr",
+            dateLabel = "01/01/2025",
+            ratingStars = -3,
+            ratingCount = 0)
+
+    val high =
+        BookingCardUi(
+            id = "high",
+            tutorId = "thigh",
+            tutorName = "High",
+            subject = "S",
+            pricePerHourLabel = "$0/hr",
+            durationLabel = "1hr",
+            dateLabel = "01/01/2025",
+            ratingStars = 10,
+            ratingCount = 99)
+
+    val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
+    val field = vm::class.java.getDeclaredField("_items")
+    field.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
+    (field.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = listOf(low, high)
+
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        TestHost(nav) { MyBookingsContent(viewModel = vm, navController = nav) }
+      }
+    }
+
+    // negative -> shows all empty stars "☆☆☆☆☆"
+    composeRule.onNodeWithText("☆☆☆☆☆").assertIsDisplayed()
+    // >5 -> clamped to 5 full stars "★★★★★"
+    composeRule.onNodeWithText("★★★★★").assertIsDisplayed()
+  }
 }

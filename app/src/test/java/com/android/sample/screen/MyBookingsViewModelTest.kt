@@ -5,6 +5,7 @@ import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.booking.FakeBookingRepository
 import java.util.Date
+import kotlin.collections.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -125,5 +126,67 @@ class MyBookingsViewModelTest {
     assertTrue(mapped.dateLabel.matches(Regex("""\d{2}/\d{2}/\d{4}""")))
     assertEquals(0, mapped.ratingStars)
     assertEquals(0, mapped.ratingCount)
+  }
+
+  // kotlin
+  @Test
+  fun refresh_produces_correct_duration_labels_for_various_lengths() = runTest {
+    val now = java.util.Date()
+    fun bookingWith(msOffset: Long, id: String, tutorId: String) =
+        Booking(
+            bookingId = id,
+            associatedListingId = "l",
+            listingCreatorId = tutorId,
+            bookerId = "u1",
+            sessionStart = now,
+            sessionEnd = java.util.Date(now.time + msOffset),
+            status = BookingStatus.CONFIRMED,
+            price = 10.0)
+
+    val oneHour = bookingWith(60 * 60 * 1000, "b1", "t1")
+    val twoHours = bookingWith(2 * 60 * 60 * 1000, "b2", "t2")
+    val oneHourThirty = bookingWith(90 * 60 * 1000, "b3", "t3")
+
+    val repo =
+        object : BookingRepository {
+          override fun getNewUid(): String = "u"
+
+          override suspend fun getAllBookings(): List<Booking> = listOf()
+
+          override suspend fun getBooking(bookingId: String): Booking = oneHour
+
+          override suspend fun getBookingsByTutor(tutorId: String): List<Booking> = listOf()
+
+          override suspend fun getBookingsByUserId(userId: String): List<Booking> =
+              listOf(oneHour, twoHours, oneHourThirty)
+
+          override suspend fun getBookingsByStudent(studentId: String): List<Booking> = listOf()
+
+          override suspend fun getBookingsByListing(listingId: String): List<Booking> = listOf()
+
+          override suspend fun addBooking(booking: Booking) {}
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+          override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+          override suspend fun confirmBooking(bookingId: String) {}
+
+          override suspend fun completeBooking(bookingId: String) {}
+
+          override suspend fun cancelBooking(bookingId: String) {}
+        }
+
+    val vm = MyBookingsViewModel(repo, "u1")
+    vm.refresh()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    val items = vm.items.value
+    assertEquals(3, items.size)
+    assertEquals("1hr", items[0].durationLabel)
+    assertEquals("2hrs", items[1].durationLabel)
+    assertEquals("1h 30m", items[2].durationLabel)
   }
 }
