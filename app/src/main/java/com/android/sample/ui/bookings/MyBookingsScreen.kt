@@ -38,6 +38,25 @@ import com.android.sample.ui.theme.ChipBorder
 import com.android.sample.ui.theme.SampleAppTheme
 
 /**
+ * Testing tags used in this file:
+ * - Top bar wrapper: [MyBookingsPageTestTag.TOP_BAR_TITLE]
+ * - Bottom nav wrapper: [MyBookingsPageTestTag.BOTTOM_NAV]
+ * - Each booking card: [MyBookingsPageTestTag.BOOKING_CARD]
+ * - Each details button: [MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON]
+ */
+object MyBookingsPageTestTag {
+  const val GO_BACK = "MyBookingsPageTestTag.GO_BACK"
+  const val TOP_BAR_TITLE = "MyBookingsPageTestTag.TOP_BAR_TITLE" // <— Missing before; added.
+  const val BOOKING_CARD = "MyBookingsPageTestTag.BOOKING_CARD"
+  const val BOOKING_DETAILS_BUTTON = "MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON"
+  const val BOTTOM_NAV = "MyBookingsPageTestTag.BOTTOM_NAV"
+  const val NAV_HOME = "MyBookingsPageTestTag.NAV_HOME"
+  const val NAV_BOOKINGS = "MyBookingsPageTestTag.NAV_BOOKINGS"
+  const val NAV_MESSAGES = "MyBookingsPageTestTag.NAV_MESSAGES"
+  const val NAV_PROFILE = "MyBookingsPageTestTag.NAV_PROFILE"
+}
+
+/**
  * Renders the **My Bookings** page.
  *
  * ### Responsibilities
@@ -65,18 +84,6 @@ import com.android.sample.ui.theme.SampleAppTheme
  *   tapped.
  * @param modifier Optional root [Modifier].
  */
-object MyBookingsPageTestTag {
-  const val GO_BACK = "MyBookingsPageTestTag.GO_BACK"
-  const val TOP_BAR_TITLE = "MyBookingsPageTestTag.TOP_BAR_TITLE" // <— Missing before; added.
-  const val BOOKING_CARD = "MyBookingsPageTestTag.BOOKING_CARD"
-  const val BOOKING_DETAILS_BUTTON = "MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON"
-  const val BOTTOM_NAV = "MyBookingsPageTestTag.BOTTOM_NAV"
-  const val NAV_HOME = "MyBookingsPageTestTag.NAV_HOME"
-  const val NAV_BOOKINGS = "MyBookingsPageTestTag.NAV_BOOKINGS"
-  const val NAV_MESSAGES = "MyBookingsPageTestTag.NAV_MESSAGES"
-  const val NAV_PROFILE = "MyBookingsPageTestTag.NAV_PROFILE"
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyBookingsScreen(
