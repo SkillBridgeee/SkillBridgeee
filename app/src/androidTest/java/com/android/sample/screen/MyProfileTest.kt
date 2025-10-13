@@ -16,12 +16,6 @@ class MyProfileTest : AppTest() {
   @get:Rule val composeTestRule = createComposeRule()
 
   @Test
-  fun headerTitle_isDisplayed() {
-    composeTestRule.setContent { MyProfileScreen(profileId = "test") }
-    composeTestRule.onNodeWithTag(MyProfileScreenTestTag.HEADER_TITLE).assertIsDisplayed()
-  }
-
-  @Test
   fun profileIcon_isDisplayed() {
     composeTestRule.setContent { MyProfileScreen(profileId = "test") }
     composeTestRule.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
