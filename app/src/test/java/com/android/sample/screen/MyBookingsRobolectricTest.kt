@@ -17,6 +17,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.booking.FakeBookingRepository
 import com.android.sample.ui.bookings.BookingCardUi
@@ -29,6 +31,7 @@ import com.android.sample.ui.theme.SampleAppTheme
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -378,5 +381,75 @@ class MyBookingsRobolectricTest {
     }
     // Just ensure list renders; bar assertions live in your existing bar tests
     composeRule.onAllNodes(hasTestTag(MyBookingsPageTestTag.BOOKING_CARD)).assertCountEquals(2)
+  }
+
+  @Test
+  fun default_click_details_navigates_to_lesson_route_without_testnav() {
+    // Build a VM with mapped items synchronously so the list is stable
+    val repo = FakeBookingRepository()
+    val vm = MyBookingsViewModel(repo, "s1")
+    val mapper = BookingToUiMapper()
+    val uiItems = runBlocking { repo.getBookingsByUserId("s1") }.map { mapper.map(it) }
+    val f = vm::class.java.getDeclaredField("_items").apply { isAccessible = true }
+    @Suppress("UNCHECKED_CAST")
+    (f.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = uiItems
+
+    // capture nav from inside composition
+    val navRef =
+        java.util.concurrent.atomic.AtomicReference<androidx.navigation.NavHostController>()
+
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        navRef.set(nav)
+        // minimal graph; IMPORTANT: do NOT pass onOpenDetails/onOpenTutor
+        NavHost(navController = nav, startDestination = "root") {
+          composable("root") { MyBookingsContent(viewModel = vm, navController = nav) }
+          composable("lesson/{id}") {}
+          composable("tutor/{tutorId}") {}
+        }
+      }
+    }
+
+    // click first Details
+    composeRule
+        .onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON)
+        .onFirst()
+        .performClick()
+
+    composeRule.runOnIdle { assertEquals("lesson/{id}", navRef.get().currentDestination?.route) }
+  }
+
+  @Test
+  fun default_click_tutor_name_navigates_to_tutor_route_without_testnav() {
+    val repo = FakeBookingRepository()
+    val vm = MyBookingsViewModel(repo, "s1")
+    val mapper = BookingToUiMapper()
+    val uiItems = runBlocking { repo.getBookingsByUserId("s1") }.map { mapper.map(it) }
+    val f = vm::class.java.getDeclaredField("_items").apply { isAccessible = true }
+    @Suppress("UNCHECKED_CAST")
+    (f.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = uiItems
+
+    val navRef =
+        java.util.concurrent.atomic.AtomicReference<androidx.navigation.NavHostController>()
+
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        navRef.set(nav)
+        NavHost(navController = nav, startDestination = "root") {
+          composable("root") { MyBookingsContent(viewModel = vm, navController = nav) }
+          composable("lesson/{id}") {}
+          composable("tutor/{tutorId}") {}
+        }
+      }
+    }
+
+    // seed has "Liam P." — click name (default onOpenTutor path)
+    composeRule.onNodeWithText("Liam P.").performClick()
+
+    composeRule.runOnIdle {
+      assertEquals("tutor/{tutorId}", navRef.get().currentDestination?.route)
+    }
   }
 }

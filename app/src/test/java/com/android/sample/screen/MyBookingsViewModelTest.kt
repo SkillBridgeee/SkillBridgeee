@@ -167,4 +167,43 @@ class MyBookingsViewModelTest {
     assertEquals("2hrs", items[1].durationLabel)
     assertEquals("1h 30m", items[2].durationLabel)
   }
+
+  @Test
+  fun refresh_sets_empty_on_repository_error() = runTest {
+    val failingRepo =
+        object : BookingRepository {
+          override fun getNewUid() = "x"
+
+          override suspend fun getBookingsByUserId(userId: String) = throw RuntimeException("boom")
+
+          override suspend fun getAllBookings() = emptyList<Booking>()
+
+          override suspend fun getBooking(bookingId: String) = throw UnsupportedOperationException()
+
+          override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+          override suspend fun addBooking(booking: Booking) {}
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+          override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+          override suspend fun confirmBooking(bookingId: String) {}
+
+          override suspend fun completeBooking(bookingId: String) {}
+
+          override suspend fun cancelBooking(bookingId: String) {}
+        }
+
+    val vm = MyBookingsViewModel(failingRepo, "u1")
+    vm.refresh()
+    testScheduler.advanceUntilIdle()
+    assertEquals(0, vm.items.value.size)
+  }
 }
