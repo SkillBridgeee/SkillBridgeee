@@ -3,7 +3,7 @@ package com.android.sample.ui.tutor
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.skill.Skill
-import com.android.sample.model.tutor.TutorRepositoryProvider
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +31,7 @@ data class TutorUiState(
  * @param repository The repository to fetch tutor data.
  */
 class TutorProfileViewModel(
-    private val repository: ProfileRepository = TutorRepositoryProvider.repository,
+    private val repository: ProfileRepository = ProfileRepositoryProvider.repository,
 ) : ViewModel() {
 
   private val _state = MutableStateFlow(TutorUiState())
