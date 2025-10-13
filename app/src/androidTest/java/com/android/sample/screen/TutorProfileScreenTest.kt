@@ -11,15 +11,16 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.navigation.compose.rememberNavController
+import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.tutor.TutorPageTestTags
 import com.android.sample.ui.tutor.TutorProfileScreen
 import com.android.sample.ui.tutor.TutorProfileViewModel
-import com.android.sample.ui.tutor.TutorRepository
 import org.junit.Rule
 import org.junit.Test
 
@@ -41,13 +42,49 @@ class TutorProfileScreenTest {
       listOf(
           Skill("demo", MainSubject.MUSIC, "SINGING", 10.0, ExpertiseLevel.EXPERT),
           Skill("demo", MainSubject.MUSIC, "DANCING", 5.0, ExpertiseLevel.INTERMEDIATE),
-          Skill("demo", MainSubject.MUSIC, "GUITAR", 7.0, ExpertiseLevel.BEGINNER))
+          Skill("demo", MainSubject.MUSIC, "GUITAR", 7.0, ExpertiseLevel.BEGINNER),
+      )
 
-  private class ImmediateRepo(private val profile: Profile, private val skills: List<Skill>) :
-      TutorRepository {
-    override suspend fun getProfileById(id: String): Profile = profile
+  /** Test double that satisfies the full TutorRepository contract. */
+  private class ImmediateRepo(
+      private val profile: Profile,
+      private val skills: List<Skill>,
+  ) : ProfileRepository {
+    override suspend fun getProfileById(userId: String): Profile = profile
 
     override suspend fun getSkillsForUser(userId: String): List<Skill> = skills
+
+    override fun getNewUid(): String {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getProfile(userId: String): Profile {
+      TODO("Not yet implemented")
+    }
+
+    // No-ops to satisfy the interface (if your interface includes writes)
+    override suspend fun addProfile(profile: Profile) {
+      /* no-op */
+    }
+
+    override suspend fun updateProfile(userId: String, profile: Profile) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteProfile(userId: String) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getAllProfiles(): List<Profile> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun searchProfilesByLocation(
+        location: Location,
+        radiusKm: Double
+    ): List<Profile> {
+      TODO("Not yet implemented")
+    }
   }
 
   private fun launch() {
@@ -55,6 +92,13 @@ class TutorProfileScreenTest {
     compose.setContent {
       val navController = rememberNavController()
       TutorProfileScreen(tutorId = "demo", vm = vm, navController = navController)
+    }
+    // Wait until the VM finishes its initial load and the NAME node appears
+    compose.waitUntil(timeoutMillis = 5_000) {
+      compose
+          .onAllNodesWithTag(TutorPageTestTags.NAME, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
   }
 
@@ -86,8 +130,6 @@ class TutorProfileScreenTest {
   @Test
   fun contact_section_shows_email_and_handle() {
     launch()
-
-    compose.waitForIdle()
 
     // Scroll the LazyColumn so the contact section becomes visible
     compose

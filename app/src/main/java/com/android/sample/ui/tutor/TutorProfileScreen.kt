@@ -47,58 +47,6 @@ import com.android.sample.ui.components.SkillChip
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.theme.White
 
-// A preview of the Tutor Profile screen with sample data.
-// Uncomment the below code to enable the preview in Android Studio.
-// @Preview(showBackground = true)
-// @Composable
-// private fun Preview_TutorContent() {
-//    val sampleProfile =
-//        Profile(
-//            userId = "demo",
-//            name = "Kendrick Lamar",
-//            email = "kendrick@gmail.com",
-//            description = "Performer and mentor",
-//            tutorRating = RatingInfo(averageRating = 4.6, totalRatings = 23),
-//            studentRating = RatingInfo(averageRating = 4.9, totalRatings = 12),
-//        )
-//
-//    val sampleSkills =
-//        listOf(
-//            Skill(
-//                userId = "demo",
-//                mainSubject = MainSubject.MUSIC,
-//                skill = "SINGING",
-//                skillTime = 10.0,
-//                expertise = ExpertiseLevel.EXPERT
-//            ),
-//            Skill(
-//                userId = "demo",
-//                mainSubject = MainSubject.MUSIC,
-//                skill = "GUITAR",
-//                skillTime = 7.0,
-//                expertise = ExpertiseLevel.ADVANCED
-//            ),
-//            Skill(
-//                userId = "demo",
-//                mainSubject = MainSubject.MUSIC,
-//                skill = "DRUMS",
-//                skillTime = 3.0,
-//                expertise = ExpertiseLevel.INTERMEDIATE
-//            )
-//        )
-//
-//    MaterialTheme {
-//        Scaffold { inner ->
-//            TutorContent(
-//                profile = sampleProfile,
-//                skills = sampleSkills,
-//                modifier = Modifier,
-//                padding = inner
-//            )
-//        }
-//    }
-// }
-
 /** Test tags for the Tutor Profile screen. */
 object TutorPageTestTags {
   const val PFP = "TutorPageTestTags.PFP"
