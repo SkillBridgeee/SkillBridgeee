@@ -533,4 +533,167 @@ class MyBookingsViewModelLogicTest {
     assertTrue(ui.ratingStars in 0..5)
     assertTrue(ui.dateLabel.matches(Regex("""\d{2}/\d{2}/\d{4}""")))
   }
+
+  // ===== Extra coverage for BookingToUiMapper private helpers =====
+
+  /** Helper to call a private mapper method reflectively. */
+  private fun <T> callPrivate(instance: Any, name: String, vararg args: Any): T? {
+    val method =
+        instance::class.java.declaredMethods.first {
+          it.name == name && it.parameterTypes.size == args.size
+        }
+    method.isAccessible = true
+    @Suppress("UNCHECKED_CAST") return method.invoke(instance, *args) as T?
+  }
+
+  @Test
+  fun mapper_safeString_formats_string_number_and_date() {
+    val start = Date(1735689600000L) // 01/01/2025 UTC-ish
+    val bk =
+        booking(
+            id = "b1", tutorId = "t1", start = start, end = Date(start.time + 60_000), price = 7.5)
+    val mapper = BookingToUiMapper(Locale.UK)
+
+    // String
+    val s: String? = callPrivate(mapper, "safeString", bk, listOf("bookerId"))
+    assertEquals("s1", s)
+
+    // Number -> toString()
+    val n: String? = callPrivate(mapper, "safeString", bk, listOf("price"))
+    assertEquals("7.5", n)
+
+    // Date -> formatted
+    val d: String? = callPrivate(mapper, "safeString", bk, listOf("sessionStart"))
+    assertEquals("01/01/2025", d)
+  }
+
+  @Test
+  fun mapper_safeDouble_handles_number_string_and_null() {
+    val bk =
+        booking(
+            id = "111", // not used
+            tutorId = "123.5", // numeric string to exercise String -> Double?
+            price = 50.0)
+    val mapper = BookingToUiMapper(Locale.US)
+
+    // Number branch
+    val fromNum: Double? = callPrivate(mapper, "safeDouble", bk, listOf("price"))
+    assertEquals(50.0, fromNum!!, 0.0)
+
+    // String (numeric) branch
+    val fromStr: Double? = callPrivate(mapper, "safeDouble", bk, listOf("listingCreatorId"))
+    assertEquals(123.5, fromStr!!, 0.0)
+
+    // String (non-numeric) -> null
+    val nonNumeric: Double? = callPrivate(mapper, "safeDouble", bk, listOf("bookerId"))
+    assertNull(nonNumeric)
+  }
+
+  @Test
+  fun mapper_safeInt_handles_number_string_and_default_zero() {
+    val bk =
+        booking(
+            id = "42", // numeric string (used below via bookingId or listingCreatorId)
+            tutorId = "42",
+            price = 7.9 // will be truncated by toInt()
+            )
+    val mapper = BookingToUiMapper(Locale.US)
+
+    // Number branch -> toInt
+    val fromNum: Int? = callPrivate(mapper, "safeInt", bk, listOf("price"))
+    assertEquals(7, fromNum)
+
+    // String numeric -> Int
+    val fromStr: Int? = callPrivate(mapper, "safeInt", bk, listOf("listingCreatorId"))
+    assertEquals(42, fromStr)
+
+    // Missing key -> default 0
+    val missing: Int? = callPrivate(mapper, "safeInt", bk, listOf("nope"))
+    assertEquals(0, missing)
+  }
+
+  @Test
+  fun mapper_safeDate_from_date_number_long_like_and_string_epoch() {
+    val epoch = 1735689600000L // 01/01/2025
+    val bk =
+        booking(
+            id = epoch.toString(), // String epoch
+            tutorId = "t1",
+            start = Date(epoch),
+            end = Date(epoch + 1),
+            price = epoch.toDouble() // Number branch
+            )
+    val mapper = BookingToUiMapper(Locale.US)
+
+    // Date branch
+    val fromDate: Date? = callPrivate(mapper, "safeDate", bk, listOf("sessionStart"))
+    assertEquals(Date(epoch), fromDate)
+
+    // Number -> Date(v.toLong())
+    val fromNumber: Date? = callPrivate(mapper, "safeDate", bk, listOf("price"))
+    assertEquals(Date(epoch), fromNumber)
+
+    // String epoch -> Date
+    val fromString: Date? = callPrivate(mapper, "safeDate", bk, listOf("bookingId"))
+    assertEquals(Date(epoch), fromString)
+
+    // Non-parsable string -> null
+    val nullCase: Date? = callPrivate(mapper, "safeDate", bk, listOf("bookerId"))
+    assertNull(nullCase)
+  }
+
+  /* ---------- findValueOn branches (Map, getter, field, exception) ---------- */
+
+  private class GetterCarrier {
+    @Suppress("unused") fun getDisplayName(): String = "GetterName"
+  }
+
+  private class FieldCarrier {
+    @Suppress("unused") val ratingCount: Int = 42
+  }
+
+  private class ThrowingCarrier {
+    @Suppress("unused")
+    fun getExplode(): String {
+      throw IllegalStateException("boom")
+    }
+  }
+
+  @Test
+  fun mapper_findValueOn_returns_value_from_map_branch() {
+    val mapper = BookingToUiMapper(Locale.US)
+    val res: Any? =
+        callPrivate(mapper, "findValueOn", mapOf("subject" to "Physics"), listOf("x", "subject"))
+    assertEquals("Physics", res)
+  }
+
+  @Test
+  fun mapper_findValueOn_hits_method_getter_branch() {
+    val mapper = BookingToUiMapper(Locale.US)
+
+    // Carrier exposing a method, not a backing field
+    class GetterCarrier {
+      @Suppress("unused") fun getDisplayName(): String = "GetterName"
+    }
+
+    // Ask for the method name directly so the equals(name, true) branch matches
+    val res: Any? = callPrivate(mapper, "findValueOn", GetterCarrier(), listOf("getDisplayName"))
+
+    assertEquals("GetterName", res)
+  }
+
+  @Test
+  fun mapper_findValueOn_hits_field_branch() {
+    val mapper = BookingToUiMapper(Locale.US)
+    val res: Any? = callPrivate(mapper, "findValueOn", FieldCarrier(), listOf("ratingCount"))
+    assertEquals(42, res)
+  }
+
+  @Test
+  fun mapper_findValueOn_swallows_exceptions_and_returns_null_when_no_match() {
+    val mapper = BookingToUiMapper(Locale.US)
+    // First candidate throws; no alternative matches -> expect null
+    val res: Any? = callPrivate(mapper, "findValueOn", ThrowingCarrier(), listOf("explode", "nope"))
+    assertNull(res)
+  }
 }
