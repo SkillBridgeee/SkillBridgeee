@@ -1,6 +1,7 @@
 package com.android.sample.model.user
 
 import com.android.sample.model.map.Location
+import com.android.sample.model.skill.Skill
 import kotlin.math.*
 
 // Simple in-memory fake repository for tests / previews.
@@ -40,6 +41,14 @@ class FakeProfileRepository : ProfileRepository {
     return synchronized(this) {
       data.values.filter { distanceKm(it.location, location) <= radiusKm }
     }
+  }
+
+  override suspend fun getProfileById(userId: String): Profile {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getSkillsForUser(userId: String): List<Skill> {
+    TODO("Not yet implemented")
   }
 
   private fun distanceKm(a: Location, b: Location): Double {
