@@ -52,20 +52,18 @@ class MyProfileViewModel(
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile(userId: String) {
-    viewModelScope.launch {
-      try {
-        viewModelScope.launch {
-          val profile = repository.getProfile(userId = userId)
-          _uiState.value =
-              MyProfileUIState(
-                  name = profile.name,
-                  email = profile.email,
-                  location = profile.location,
-                  description = profile.description)
-        }
-      } catch (e: Exception) {
-        Log.e("MyProfileViewModel", "Error loading ToDo by ID: $userId", e)
+    try {
+      viewModelScope.launch {
+        val profile = repository.getProfile(userId = userId)
+        _uiState.value =
+            MyProfileUIState(
+                name = profile.name,
+                email = profile.email,
+                location = profile.location,
+                description = profile.description)
       }
+    } catch (e: Exception) {
+      Log.e("MyProfileViewModel", "Error loading ToDo by ID: $userId", e)
     }
   }
 
@@ -113,7 +111,7 @@ class MyProfileViewModel(
     _uiState.update { currentState ->
       currentState.copy(
           invalidNameMsg = if (currentState.name.isBlank()) nameMsgError else null,
-          invalidEmailMsg = if (currentState.description.isBlank()) emailMsgError else null,
+          invalidEmailMsg = if (currentState.email.isBlank()) emailMsgError else null,
           invalidLocationMsg = if (currentState.location == null) locationMsgError else null,
           invalidDescMsg = if (currentState.description.isBlank()) descMsgError else null)
     }
