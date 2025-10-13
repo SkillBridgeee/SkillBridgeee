@@ -1,5 +1,6 @@
 package com.android.sample.ui.signup
 
+import SignUpViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape

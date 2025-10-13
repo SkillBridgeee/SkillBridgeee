@@ -19,7 +19,6 @@ val TurquoiseEnd = Color(0xFF36D1C1)
 val FieldContainer = Color(0xFFE9ECF1)
 val DisabledContent = Color(0xFF9E9E9E)
 val GrayE6 = Color(0xFFE6E6E6)
-val AppWhite = Color(0xFFFFFFFF)
 val BrandBlue = Color(0xFF0288D1) // links, price, "details" button
 val CardBg = Color(0xFFE9EAF1) // card fill close to figma light grey
 val ChipBorder = Color(0xFF333333) // chip border close to figma dark grey
