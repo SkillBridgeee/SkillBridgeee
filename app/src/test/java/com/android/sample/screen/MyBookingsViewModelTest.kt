@@ -31,11 +31,11 @@ class MyBookingsViewModelTest {
     Dispatchers.resetMain()
   }
 
-
   @Test
   fun dates_are_ddMMyyyy() {
     val pattern = Regex("""\d{2}/\d{2}/\d{4}""")
-    val items = MyBookingsViewModel(FakeBookingRepository(), "s1", initialLoadBlocking = true).items.value
+    val items =
+        MyBookingsViewModel(FakeBookingRepository(), "s1", initialLoadBlocking = true).items.value
     assert(pattern.matches(items[0].dateLabel))
     assert(pattern.matches(items[1].dateLabel))
   }

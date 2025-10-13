@@ -20,6 +20,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.booking.FakeBookingRepository
 import com.android.sample.ui.bookings.BookingCardUi
+import com.android.sample.ui.bookings.BookingToUiMapper
 import com.android.sample.ui.bookings.MyBookingsContent
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.bookings.MyBookingsScreen
@@ -33,8 +34,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import kotlinx.coroutines.runBlocking
-import com.android.sample.ui.bookings.BookingToUiMapper
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -55,30 +54,30 @@ class MyBookingsRobolectricTest {
         }
   }
 
-    private fun setContent(onOpen: (BookingCardUi) -> Unit = {}) {
-        // create VM outside composition and synchronously populate its _items so tests see stable data
-        val repo = com.android.sample.model.booking.FakeBookingRepository()
-        val vm = MyBookingsViewModel(repo, "s1")
+  private fun setContent(onOpen: (BookingCardUi) -> Unit = {}) {
+    // create VM outside composition and synchronously populate its _items so tests see stable data
+    val repo = com.android.sample.model.booking.FakeBookingRepository()
+    val vm = MyBookingsViewModel(repo, "s1")
 
-        // load repository data synchronously for test stability and map to UI
-        val bookings = runBlocking { repo.getBookingsByUserId("s1") }
-        val mapper = BookingToUiMapper()
-        val uiItems = bookings.map { mapper.map(it) }
+    // load repository data synchronously for test stability and map to UI
+    val bookings = runBlocking { repo.getBookingsByUserId("s1") }
+    val mapper = BookingToUiMapper()
+    val uiItems = bookings.map { mapper.map(it) }
 
-        val field = vm::class.java.getDeclaredField("_items")
-        field.isAccessible = true
-        @Suppress("UNCHECKED_CAST")
-        (field.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = uiItems
+    val field = vm::class.java.getDeclaredField("_items")
+    field.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
+    (field.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = uiItems
 
-        composeRule.setContent {
-            SampleAppTheme {
-                val nav = rememberNavController()
-                TestHost(nav) {
-                    MyBookingsContent(viewModel = vm, navController = nav, onOpenDetails = onOpen)
-                }
-            }
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        TestHost(nav) {
+          MyBookingsContent(viewModel = vm, navController = nav, onOpenDetails = onOpen)
         }
+      }
     }
+  }
 
   @Test
   fun booking_card_renders_and_details_click() {
@@ -124,49 +123,49 @@ class MyBookingsRobolectricTest {
     composeRule.onAllNodes(hasTestTag(MyBookingsPageTestTag.BOOKING_CARD)).assertCountEquals(2)
   }
 
-    @Test
-    fun shows_professor_and_course() {
-        val liam =
-            BookingCardUi(
-                id = "p1",
-                tutorId = "t-liam",
-                tutorName = "Liam P.",
-                subject = "Piano Lessons",
-                pricePerHourLabel = "$50/hr",
-                durationLabel = "1hr",
-                dateLabel = "01/02/2025",
-                ratingStars = 5,
-                ratingCount = 23)
-        val maria =
-            BookingCardUi(
-                id = "p2",
-                tutorId = "t-maria",
-                tutorName = "Maria G.",
-                subject = "Calculus & Algebra",
-                pricePerHourLabel = "$40/hr",
-                durationLabel = "2hrs",
-                dateLabel = "02/02/2025",
-                ratingStars = 4,
-                ratingCount = 41)
+  @Test
+  fun shows_professor_and_course() {
+    val liam =
+        BookingCardUi(
+            id = "p1",
+            tutorId = "t-liam",
+            tutorName = "Liam P.",
+            subject = "Piano Lessons",
+            pricePerHourLabel = "$50/hr",
+            durationLabel = "1hr",
+            dateLabel = "01/02/2025",
+            ratingStars = 5,
+            ratingCount = 23)
+    val maria =
+        BookingCardUi(
+            id = "p2",
+            tutorId = "t-maria",
+            tutorName = "Maria G.",
+            subject = "Calculus & Algebra",
+            pricePerHourLabel = "$40/hr",
+            durationLabel = "2hrs",
+            dateLabel = "02/02/2025",
+            ratingStars = 4,
+            ratingCount = 41)
 
-        val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
-        val field = vm::class.java.getDeclaredField("_items")
-        field.isAccessible = true
-        @Suppress("UNCHECKED_CAST")
-        (field.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = listOf(liam, maria)
+    val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
+    val field = vm::class.java.getDeclaredField("_items")
+    field.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
+    (field.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = listOf(liam, maria)
 
-        composeRule.setContent {
-            SampleAppTheme {
-                val nav = rememberNavController()
-                TestHost(nav) { MyBookingsContent(viewModel = vm, navController = nav) }
-            }
-        }
-
-        composeRule.onNodeWithText("Liam P.").assertIsDisplayed()
-        composeRule.onNodeWithText("Piano Lessons").assertIsDisplayed()
-        composeRule.onNodeWithText("Maria G.").assertIsDisplayed()
-        composeRule.onNodeWithText("Calculus & Algebra").assertIsDisplayed()
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        TestHost(nav) { MyBookingsContent(viewModel = vm, navController = nav) }
+      }
     }
+
+    composeRule.onNodeWithText("Liam P.").assertIsDisplayed()
+    composeRule.onNodeWithText("Piano Lessons").assertIsDisplayed()
+    composeRule.onNodeWithText("Maria G.").assertIsDisplayed()
+    composeRule.onNodeWithText("Calculus & Algebra").assertIsDisplayed()
+  }
 
   @Test
   fun price_duration_and_date_visible() {
@@ -244,49 +243,49 @@ class MyBookingsRobolectricTest {
     composeRule.onAllNodes(hasTestTag(MyBookingsPageTestTag.BOOKING_CARD)).assertCountEquals(0)
   }
 
-    @Test
-    fun rating_row_shows_stars_and_counts() {
-        val a =
-            BookingCardUi(
-                id = "r1",
-                tutorId = "t1",
-                tutorName = "Tutor A",
-                subject = "S A",
-                pricePerHourLabel = "$0/hr",
-                durationLabel = "1hr",
-                dateLabel = "01/01/2025",
-                ratingStars = 5,
-                ratingCount = 23)
-        val b =
-            BookingCardUi(
-                id = "r2",
-                tutorId = "t2",
-                tutorName = "Tutor B",
-                subject = "S B",
-                pricePerHourLabel = "$0/hr",
-                durationLabel = "1hr",
-                dateLabel = "01/01/2025",
-                ratingStars = 4,
-                ratingCount = 41)
+  @Test
+  fun rating_row_shows_stars_and_counts() {
+    val a =
+        BookingCardUi(
+            id = "r1",
+            tutorId = "t1",
+            tutorName = "Tutor A",
+            subject = "S A",
+            pricePerHourLabel = "$0/hr",
+            durationLabel = "1hr",
+            dateLabel = "01/01/2025",
+            ratingStars = 5,
+            ratingCount = 23)
+    val b =
+        BookingCardUi(
+            id = "r2",
+            tutorId = "t2",
+            tutorName = "Tutor B",
+            subject = "S B",
+            pricePerHourLabel = "$0/hr",
+            durationLabel = "1hr",
+            dateLabel = "01/01/2025",
+            ratingStars = 4,
+            ratingCount = 41)
 
-        val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
-        val field = vm::class.java.getDeclaredField("_items")
-        field.isAccessible = true
-        @Suppress("UNCHECKED_CAST")
-        (field.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = listOf(a, b)
+    val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
+    val field = vm::class.java.getDeclaredField("_items")
+    field.isAccessible = true
+    @Suppress("UNCHECKED_CAST")
+    (field.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = listOf(a, b)
 
-        composeRule.setContent {
-            SampleAppTheme {
-                val nav = rememberNavController()
-                TestHost(nav) { MyBookingsContent(viewModel = vm, navController = nav) }
-            }
-        }
-
-        composeRule.onNodeWithText("★★★★★").assertIsDisplayed()
-        composeRule.onNodeWithText("(23)").assertIsDisplayed()
-        composeRule.onNodeWithText("★★★★☆").assertIsDisplayed()
-        composeRule.onNodeWithText("(41)").assertIsDisplayed()
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        TestHost(nav) { MyBookingsContent(viewModel = vm, navController = nav) }
+      }
     }
+
+    composeRule.onNodeWithText("★★★★★").assertIsDisplayed()
+    composeRule.onNodeWithText("(23)").assertIsDisplayed()
+    composeRule.onNodeWithText("★★★★☆").assertIsDisplayed()
+    composeRule.onNodeWithText("(41)").assertIsDisplayed()
+  }
 
   // kotlin
   @Test
