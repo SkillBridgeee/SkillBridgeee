@@ -10,6 +10,7 @@ import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** UI state for the MyProfile screen. Holds all data needed to edit a profile */
@@ -44,6 +45,11 @@ class MyProfileViewModel(
   private val _uiState = MutableStateFlow(MyProfileUIState())
   val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
 
+  private val nameMsgError = "Name cannot be empty"
+  private val emailMsgError = "Email is not in the right format"
+  private val locationMsgError = "Location cannot be empty"
+  private val descMsgError = "Description cannot be empty"
+
   /** Loads the profile data (to be implemented) */
   fun loadProfile(userId: String) {
     viewModelScope.launch {
@@ -69,12 +75,12 @@ class MyProfileViewModel(
    * @param userId The ID of the profile to edit.
    * @return true if the update process was started, false if validation failed.
    */
-  fun editProfile(userId: String): Boolean {
+  fun editProfile(userId: String) {
     val state = _uiState.value
     if (!state.isValid) {
-      return false
+      setError()
+      return
     }
-
     val profile =
         Profile(
             userId = userId,
@@ -84,7 +90,6 @@ class MyProfileViewModel(
             description = state.description)
 
     editProfileToRepository(userId = userId, profile = profile)
-    return true
   }
 
   /**
@@ -103,11 +108,22 @@ class MyProfileViewModel(
     }
   }
 
+  // Set all messages error, if invalid field
+  fun setError() {
+    _uiState.update { currentState ->
+      currentState.copy(
+          invalidNameMsg = if (currentState.name.isBlank()) nameMsgError else null,
+          invalidEmailMsg = if (currentState.description.isBlank()) emailMsgError else null,
+          invalidLocationMsg = if (currentState.location == null) locationMsgError else null,
+          invalidDescMsg = if (currentState.description.isBlank()) descMsgError else null)
+    }
+  }
+
   // Updates the name and validates it
   fun setName(name: String) {
     _uiState.value =
         _uiState.value.copy(
-            name = name, invalidNameMsg = if (name.isBlank()) "Name cannot be empty" else null)
+            name = name, invalidNameMsg = if (name.isBlank()) nameMsgError else null)
   }
 
   // Updates the email and validates it
@@ -117,7 +133,7 @@ class MyProfileViewModel(
             email = email,
             invalidEmailMsg =
                 if (email.isBlank()) "Email cannot be empty"
-                else if (!isValidEmail(email)) "Email is not in the right format" else null)
+                else if (!isValidEmail(email)) emailMsgError else null)
   }
 
   // Updates the location and validates it
@@ -125,15 +141,14 @@ class MyProfileViewModel(
     _uiState.value =
         _uiState.value.copy(
             location = if (locationName.isBlank()) null else Location(name = locationName),
-            invalidLocationMsg = if (locationName.isBlank()) "Location cannot be empty" else null)
+            invalidLocationMsg = if (locationName.isBlank()) locationMsgError else null)
   }
 
   // Updates the desc and validates it
   fun setDescription(desc: String) {
     _uiState.value =
         _uiState.value.copy(
-            description = desc,
-            invalidDescMsg = if (desc.isBlank()) "Description cannot be empty" else null)
+            description = desc, invalidDescMsg = if (desc.isBlank()) descMsgError else null)
   }
 
   // Checks if the email format is valid

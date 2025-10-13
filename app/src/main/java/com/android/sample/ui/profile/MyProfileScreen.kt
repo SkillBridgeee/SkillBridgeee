@@ -50,7 +50,10 @@ object MyProfileScreenTestTag {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyProfileScreen(profileViewModel: MyProfileViewModel = viewModel(), profileId: String) {
+fun MyProfileScreen(
+    profileViewModel: MyProfileViewModel = viewModel(),
+    profileId: String,
+) {
   // Scaffold structures the screen with top bar, bottom bar, and save button
   Scaffold(
       topBar = {},
@@ -59,8 +62,7 @@ fun MyProfileScreen(profileViewModel: MyProfileViewModel = viewModel(), profileI
         // Button to save profile changes
         AppButton(
             text = "Save Profile Changes",
-            // TODO Implement on save action
-            onClick = { profileViewModel.editProfile(userId = profileId)},
+            onClick = {},
             testTag = MyProfileScreenTestTag.SAVE_BUTTON)
       },
       floatingActionButtonPosition = FabPosition.Center,

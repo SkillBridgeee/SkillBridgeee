@@ -27,9 +27,8 @@ class ProfileRepositoryLocal : ProfileRepository {
   }
 
   override suspend fun getProfile(userId: String): Profile {
-      return profileList.firstOrNull { it.userId == userId }
-          ?: throw NoSuchElementException("Profile with id '$userId' not found")
-
+    return profileList.firstOrNull { it.userId == userId }
+        ?: throw NoSuchElementException("Profile with id '$userId' not found")
   }
 
   override suspend fun addProfile(profile: Profile) {
