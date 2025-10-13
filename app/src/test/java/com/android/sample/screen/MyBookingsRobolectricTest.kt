@@ -452,4 +452,32 @@ class MyBookingsRobolectricTest {
       assertEquals("tutor/{tutorId}", navRef.get().currentDestination?.route)
     }
   }
+
+  @Test
+  fun avatar_initial_is_uppercased_for_lowercase_name() {
+    val ui =
+        BookingCardUi(
+            id = "lc",
+            tutorId = "t",
+            tutorName = "mike",
+            subject = "S",
+            pricePerHourLabel = "$1/hr",
+            durationLabel = "1hr",
+            dateLabel = "01/01/2025",
+            ratingStars = 0,
+            ratingCount = 0)
+    val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
+    val f = vm::class.java.getDeclaredField("_items").apply { isAccessible = true }
+    @Suppress("UNCHECKED_CAST")
+    (f.get(vm) as MutableStateFlow<List<BookingCardUi>>).value = listOf(ui)
+
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        TestHost(nav) { MyBookingsContent(viewModel = vm, navController = nav) }
+      }
+    }
+
+    composeRule.onNodeWithText("M").assertIsDisplayed()
+  }
 }

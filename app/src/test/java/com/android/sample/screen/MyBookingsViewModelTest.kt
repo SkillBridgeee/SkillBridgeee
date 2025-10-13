@@ -31,6 +31,63 @@ class MyBookingsViewModelTest {
     Dispatchers.resetMain()
   }
 
+  private fun aBooking(
+      id: String = "b1",
+      tutorId: String = "t1",
+      start: Date = Date(),
+      end: Date = Date(start.time + 1),
+      price: Double = 10.0
+  ): Booking {
+    return Booking(
+        bookingId = id,
+        associatedListingId = "l1",
+        listingCreatorId = tutorId,
+        bookerId = "s1",
+        sessionStart = start,
+        sessionEnd = end,
+        status = BookingStatus.CONFIRMED,
+        price = price)
+  }
+
+  @Test
+  fun init_async_populates_items() {
+    val repo =
+        object : BookingRepository {
+          override fun getNewUid() = "x"
+
+          override suspend fun getBookingsByUserId(userId: String) = listOf(aBooking())
+
+          override suspend fun getAllBookings() = emptyList<Booking>()
+
+          override suspend fun getBooking(bookingId: String) = aBooking()
+
+          override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+          override suspend fun addBooking(booking: Booking) {}
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+          override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+          override suspend fun confirmBooking(bookingId: String) {}
+
+          override suspend fun completeBooking(bookingId: String) {}
+
+          override suspend fun cancelBooking(bookingId: String) {}
+        }
+
+    val vm = MyBookingsViewModel(repo, "s1")
+    // advance async work
+    testDispatcher.scheduler.advanceUntilIdle()
+    assertEquals(1, vm.items.value.size)
+  }
+
   @Test
   fun dates_are_ddMMyyyy() {
     val pattern = Regex("""\d{2}/\d{2}/\d{4}""")
@@ -205,5 +262,224 @@ class MyBookingsViewModelTest {
     vm.refresh()
     testScheduler.advanceUntilIdle()
     assertEquals(0, vm.items.value.size)
+  }
+
+  @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+  @Test
+  fun refresh_updates_items_on_success() = runTest {
+    // mutable repo that can return different lists
+    class MutableRepo(var next: List<Booking>) : BookingRepository {
+      override fun getNewUid() = "x"
+
+      override suspend fun getBookingsByUserId(userId: String): List<Booking> = next
+
+      override suspend fun getAllBookings(): List<Booking> = emptyList<Booking>()
+
+      override suspend fun getBooking(bookingId: String): Booking = aBooking()
+
+      override suspend fun getBookingsByTutor(tutorId: String): List<Booking> = emptyList<Booking>()
+
+      override suspend fun getBookingsByStudent(studentId: String): List<Booking> =
+          emptyList<Booking>()
+
+      override suspend fun getBookingsByListing(listingId: String): List<Booking> =
+          emptyList<Booking>()
+
+      override suspend fun addBooking(booking: Booking) {}
+
+      override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+      override suspend fun deleteBooking(bookingId: String) {}
+
+      override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+      override suspend fun confirmBooking(bookingId: String) {}
+
+      override suspend fun completeBooking(bookingId: String) {}
+
+      override suspend fun cancelBooking(bookingId: String) {}
+    }
+
+    val repo = MutableRepo(emptyList<Booking>())
+    val vm = MyBookingsViewModel(repo, "s1")
+
+    // let init coroutine complete
+    testScheduler.advanceUntilIdle()
+    assertEquals(0, vm.items.value.size)
+
+    // change repo to return one booking and refresh
+    repo.next = listOf(aBooking("b2"))
+    vm.refresh()
+    testScheduler.advanceUntilIdle()
+
+    assertEquals(1, vm.items.value.size)
+    assertEquals("b2", vm.items.value[0].id)
+  }
+
+  @Test
+  fun refresh_updates_items() {
+    // mutable backing list to simulate repository updating over time
+    val backing = mutableListOf(aBooking(id = "b1"))
+    val repo =
+        object : BookingRepository {
+          override fun getNewUid() = "x"
+
+          override suspend fun getBookingsByUserId(userId: String) = backing.toList()
+
+          override suspend fun getAllBookings() = emptyList<Booking>()
+
+          override suspend fun getBooking(bookingId: String) = aBooking()
+
+          override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+          override suspend fun addBooking(booking: Booking) {}
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+          override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+          override suspend fun confirmBooking(bookingId: String) {}
+
+          override suspend fun completeBooking(bookingId: String) {}
+
+          override suspend fun cancelBooking(bookingId: String) {}
+        }
+
+    val vm = MyBookingsViewModel(repo, "s1")
+    testDispatcher.scheduler.advanceUntilIdle()
+    assertEquals(1, vm.items.value.size)
+
+    // simulate repo getting a new booking
+    backing.add(aBooking(id = "b2"))
+    vm.refresh()
+    testDispatcher.scheduler.advanceUntilIdle()
+    assertEquals(2, vm.items.value.size)
+  }
+
+  @Test
+  fun refresh_failure_sets_empty_list() {
+    // repo that will throw on call after flag flipped
+    var shouldThrow = false
+    val backing = mutableListOf(aBooking(id = "b1"))
+    val repo =
+        object : BookingRepository {
+          override fun getNewUid() = "x"
+
+          override suspend fun getBookingsByUserId(userId: String): List<Booking> {
+            if (shouldThrow) throw RuntimeException("boom")
+            return backing.toList()
+          }
+
+          override suspend fun getAllBookings() = emptyList<Booking>()
+
+          override suspend fun getBooking(bookingId: String) = aBooking()
+
+          override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+          override suspend fun addBooking(booking: Booking) {}
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+          override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+          override suspend fun confirmBooking(bookingId: String) {}
+
+          override suspend fun completeBooking(bookingId: String) {}
+
+          override suspend fun cancelBooking(bookingId: String) {}
+        }
+
+    val vm = MyBookingsViewModel(repo, "s1")
+    testDispatcher.scheduler.advanceUntilIdle()
+    assertEquals(1, vm.items.value.size)
+
+    // make repo fail and refresh -> viewmodel should set empty list
+    shouldThrow = true
+    vm.refresh()
+    testDispatcher.scheduler.advanceUntilIdle()
+    assertEquals(0, vm.items.value.size)
+  }
+
+  @Test
+  fun init_blocking_success_and_failure_paths() {
+    // success path
+    val okRepo =
+        object : BookingRepository {
+          override fun getNewUid() = "x"
+
+          override suspend fun getBookingsByUserId(userId: String) = listOf(aBooking())
+
+          override suspend fun getAllBookings() = emptyList<Booking>()
+
+          override suspend fun getBooking(bookingId: String) = aBooking()
+
+          override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+          override suspend fun addBooking(booking: Booking) {}
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+          override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+          override suspend fun confirmBooking(bookingId: String) {}
+
+          override suspend fun completeBooking(bookingId: String) {}
+
+          override suspend fun cancelBooking(bookingId: String) {}
+        }
+    val okVm = MyBookingsViewModel(okRepo, "s1", initialLoadBlocking = true)
+    assertEquals(1, okVm.items.value.size)
+
+    // failure path
+    val badRepo =
+        object : BookingRepository {
+          override fun getNewUid() = "x"
+
+          override suspend fun getBookingsByUserId(userId: String) = throw RuntimeException("boom")
+
+          override suspend fun getAllBookings() = emptyList<Booking>()
+
+          override suspend fun getBooking(bookingId: String) = aBooking()
+
+          override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+          override suspend fun addBooking(booking: Booking) {}
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+          override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+          override suspend fun confirmBooking(bookingId: String) {}
+
+          override suspend fun completeBooking(bookingId: String) {}
+
+          override suspend fun cancelBooking(bookingId: String) {}
+        }
+    val badVm = MyBookingsViewModel(badRepo, "s1", initialLoadBlocking = true)
+    assertEquals(0, badVm.items.value.size)
   }
 }
