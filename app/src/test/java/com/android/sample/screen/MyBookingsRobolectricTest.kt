@@ -16,13 +16,13 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.booking.FakeBookingRepository
 import com.android.sample.ui.bookings.BookingCardUi
 import com.android.sample.ui.bookings.MyBookingsContent
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
+import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.theme.SampleAppTheme
 import java.util.concurrent.atomic.AtomicReference
@@ -284,5 +284,18 @@ class MyBookingsRobolectricTest {
     composeRule.onNodeWithText("☆☆☆☆☆").assertIsDisplayed()
     // >5 -> clamped to 5 full stars "★★★★★"
     composeRule.onNodeWithText("★★★★★").assertIsDisplayed()
+  }
+
+  @Test
+  fun my_bookings_screen_scaffold_renders() {
+    composeRule.setContent {
+      SampleAppTheme {
+        MyBookingsScreen(
+            viewModel = MyBookingsViewModel(FakeBookingRepository(), "s1"),
+            navController = rememberNavController())
+      }
+    }
+    // Just ensure list renders; bar assertions live in your existing bar tests
+    composeRule.onAllNodes(hasTestTag(MyBookingsPageTestTag.BOOKING_CARD)).assertCountEquals(2)
   }
 }
