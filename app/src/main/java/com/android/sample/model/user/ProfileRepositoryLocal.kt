@@ -1,6 +1,7 @@
 package com.android.sample.model.user
 
 import com.android.sample.model.map.Location
+import com.android.sample.model.skill.Skill
 import kotlin.String
 
 class ProfileRepositoryLocal : ProfileRepository {
@@ -51,6 +52,14 @@ class ProfileRepositoryLocal : ProfileRepository {
       location: Location,
       radiusKm: Double
   ): List<Profile> {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getProfileById(userId: String): Profile {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getSkillsForUser(userId: String): List<Skill> {
     TODO("Not yet implemented")
   }
 }
