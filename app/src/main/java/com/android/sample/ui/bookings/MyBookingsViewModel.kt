@@ -97,7 +97,7 @@ class MyBookingsViewModel(
   ): BookingCardUi {
     val tutorName = profile.name
     val subject = listing.skill.mainSubject.toString()
-    val pricePerHourLabel = String.format(Locale.US, "$%.1f/hr", b.price)
+    val pricePerHourLabel = String.format(locale, "$%.1f/hr", b.price)
     val durationLabel = formatDuration(b.sessionStart, b.sessionEnd)
     val dateLabel = formatDate(b.sessionStart)
 
