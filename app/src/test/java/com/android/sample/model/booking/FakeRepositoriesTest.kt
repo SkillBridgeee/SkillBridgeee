@@ -228,4 +228,127 @@ class FakeRepositoriesTest {
             repo, "findValueOn", NoLocation(), listOf("location", "place", "coords", "position"))
     assertNull(nullVal)
   }
+
+  // -------------------- Providers: default + swapping --------------------
+
+  @Test
+  fun providers_expose_defaults_and_allow_swapping() = runBlocking {
+    // keep originals to restore
+    val origBooking = BookingRepositoryProvider.repository
+    val origRating = RatingRepositoryProvider.repository
+    try {
+      // Defaults should be the lazy singletons
+      assertTrue(BookingRepositoryProvider.repository is FakeBookingRepository)
+      assertTrue(RatingRepositoryProvider.repository is FakeRatingRepository)
+
+      // Swap Booking repo to a custom stub and verify
+      val customBooking =
+          object : BookingRepository {
+            override fun getNewUid() = "X"
+
+            override suspend fun getAllBookings() = emptyList<Booking>()
+
+            override suspend fun getBooking(bookingId: String) = error("unused")
+
+            override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+            override suspend fun getBookingsByUserId(userId: String) = emptyList<Booking>()
+
+            override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+            override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+            override suspend fun addBooking(booking: Booking) {}
+
+            override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+            override suspend fun deleteBooking(bookingId: String) {}
+
+            override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+            override suspend fun confirmBooking(bookingId: String) {}
+
+            override suspend fun completeBooking(bookingId: String) {}
+
+            override suspend fun cancelBooking(bookingId: String) {}
+          }
+      BookingRepositoryProvider.repository = customBooking
+      assertSame(customBooking, BookingRepositoryProvider.repository)
+
+      // Swap Rating repo to a new instance and verify
+      val customRating = FakeRatingRepository()
+      RatingRepositoryProvider.repository = customRating
+      assertSame(customRating, RatingRepositoryProvider.repository)
+    } finally {
+      // restore singletons so other tests aren’t affected
+      BookingRepositoryProvider.repository = origBooking
+      RatingRepositoryProvider.repository = origRating
+    }
+  }
+
+  // -------------------- FakeRatingRepository: branch + CRUD coverage --------------------
+
+  @Test
+  fun ratingFake_hardcoded_getRatingsOfListing_branches() = runBlocking {
+    val repo = FakeRatingRepository()
+
+    // listing-1 branch (3 ratings → 5,4,5)
+    val l1 = repo.getRatingsOfListing("listing-1")
+    assertEquals(3, l1.size)
+    assertEquals(StarRating.FIVE, l1[0].starRating)
+    assertEquals(StarRating.FOUR, l1[1].starRating)
+
+    // listing-2 branch (2 ratings → 4,4)
+    val l2 = repo.getRatingsOfListing("listing-2")
+    assertEquals(2, l2.size)
+    assertEquals(StarRating.FOUR, l2[0].starRating)
+
+    // else branch
+    val other = repo.getRatingsOfListing("does-not-exist")
+    assertTrue(other.isEmpty())
+  }
+
+  @Test
+  fun ratingFake_add_update_get_delete_and_filters() = runBlocking {
+    val repo = FakeRatingRepository()
+
+    // add → stored under provided ratingId (reflection path getIdOrGenerate)
+    val r1 =
+        Rating(
+            ratingId = "R1",
+            fromUserId = "student-1",
+            toUserId = "tutor-1",
+            starRating = StarRating.FOUR,
+            comment = "good",
+            ratingType = RatingType.Listing("L1"))
+    repo.addRating(r1)
+
+    // filters by from/to user
+    assertEquals(1, repo.getRatingsByFromUser("student-1").size)
+    assertEquals(1, repo.getRatingsByToUser("tutor-1").size)
+
+    // tutor & student aggregates (heuristics use toUserId/target)
+    assertEquals(1, repo.getTutorRatingsOfUser("tutor-1").size)
+    assertEquals(1, repo.getStudentRatingsOfUser("tutor-1").size) // same object targeted to tutor-1
+
+    // update existing id
+    val r1updated = r1.copy(starRating = StarRating.FIVE, comment = "great!")
+    runCatching { repo.updateRating("R1", r1updated) }.onFailure { fail("update failed: $it") }
+    assertEquals(StarRating.FIVE, repo.getRating("R1").starRating)
+
+    // delete and verify removal
+    repo.deleteRating("R1")
+    assertTrue(repo.getAllRatings().none { it.ratingId == "R1" })
+  }
+
+  @Test
+  fun ratingFake_getRating_throws_when_missing() = runBlocking {
+    val repo = FakeRatingRepository()
+    try {
+      repo.getRating("missing-id")
+      fail("Expected NoSuchElementException")
+    } catch (e: NoSuchElementException) {
+      // expected
+    }
+  }
 }
