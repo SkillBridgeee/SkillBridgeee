@@ -1,14 +1,14 @@
-//package com.android.sample.model.communication
+// package com.android.sample.model.communication
 //
-//import android.util.Log
-//import com.google.firebase.firestore.DocumentSnapshot
-//import com.google.firebase.firestore.FirebaseFirestore
-//import java.util.Date
-//import kotlinx.coroutines.tasks.await
+// import android.util.Log
+// import com.google.firebase.firestore.DocumentSnapshot
+// import com.google.firebase.firestore.FirebaseFirestore
+// import java.util.Date
+// import kotlinx.coroutines.tasks.await
 //
-//const val MESSAGES_COLLECTION_PATH = "messages"
+// const val MESSAGES_COLLECTION_PATH = "messages"
 //
-//class MessageRepositoryFirestore(private val db: FirebaseFirestore) : MessageRepository {
+// class MessageRepositoryFirestore(private val db: FirebaseFirestore) : MessageRepository {
 //
 //  override fun getNewUid(): String {
 //    return db.collection(MESSAGES_COLLECTION_PATH).document().id
@@ -78,7 +78,8 @@
 //  }
 //
 //  override suspend fun markAsRead(messageId: String, readTime: Date) {
-//    db.collection(MESSAGES_COLLECTION_PATH).document(messageId).update("readTime", readTime).await()
+//    db.collection(MESSAGES_COLLECTION_PATH).document(messageId).update("readTime",
+// readTime).await()
 //  }
 //
 //  override suspend fun getUnreadMessages(userId: String): List<Message> {
@@ -112,4 +113,4 @@
 //      null
 //    }
 //  }
-//}
+// }
