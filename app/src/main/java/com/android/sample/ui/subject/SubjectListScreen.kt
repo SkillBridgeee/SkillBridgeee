@@ -52,8 +52,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.rating.RatingInfo
-import com.android.sample.model.tutor.ProfileRepositoryLocal
 import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepositoryLocal
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.components.RatingStars
 import com.android.sample.ui.components.TopAppBar

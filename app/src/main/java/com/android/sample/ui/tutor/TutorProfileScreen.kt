@@ -77,12 +77,7 @@ fun TutorProfileScreen(
   LaunchedEffect(tutorId) { vm.load(tutorId) }
   val state by vm.state.collectAsStateWithLifecycle()
 
-  Scaffold(
-      topBar = {
-        Box(Modifier.fillMaxWidth().testTag(TutorPageTestTags.TOP_BAR)) {
-          TopAppBar(navController = navController)
-        }
-      }) { innerPadding ->
+  Scaffold { innerPadding ->
         // Show a loading spinner while loading and the content when loaded
         if (state.loading) {
           Box(

@@ -46,7 +46,7 @@ class TutorProfileViewModel(
   fun load(tutorId: String) {
     if (!_state.value.loading) return
     viewModelScope.launch {
-      val profile = repository.getProfileById(tutorId)
+      val profile = repository.getProfile(tutorId)
       val skills = repository.getSkillsForUser(tutorId)
       _state.value = TutorUiState(loading = false, profile = profile, skills = skills)
     }

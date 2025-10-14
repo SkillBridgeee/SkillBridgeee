@@ -1,6 +1,9 @@
 package com.android.sample.model.user
 
 import com.android.sample.model.map.Location
+import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.skill.SkillsHelper
 import kotlin.String
 
 class ProfileRepositoryLocal : ProfileRepository {
@@ -53,4 +56,24 @@ class ProfileRepositoryLocal : ProfileRepository {
   ): List<Profile> {
     TODO("Not yet implemented")
   }
+
+    override suspend fun getSkillsForUser(userId: String): List<Skill> {
+        val musicSkills = SkillsHelper.getSkillNames(MainSubject.MUSIC)
+
+        return when (userId) {
+            "test" -> musicSkills
+                .take(3) // e.g., first three skills
+                .map { skillName ->
+                    Skill(mainSubject = MainSubject.MUSIC, skill = skillName)
+                }
+
+            "fake2" -> musicSkills
+                .drop(3).take(2) // next two skills
+                .map { skillName ->
+                    Skill(mainSubject = MainSubject.MUSIC, skill = skillName)
+                }
+
+            else -> emptyList()
+        }
+    }
 }
