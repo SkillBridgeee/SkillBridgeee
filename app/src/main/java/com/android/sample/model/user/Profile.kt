@@ -7,10 +7,9 @@ data class Profile(
     val userId: String = "",
     val name: String = "",
     val email: String = "",
-    val location: Location? = null,
+    val location: Location = Location(),
     val hourlyRate: String = "",
     val description: String = "",
     val tutorRating: RatingInfo = RatingInfo(),
     val studentRating: RatingInfo = RatingInfo(),
 )
-
