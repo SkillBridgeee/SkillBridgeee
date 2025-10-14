@@ -1,9 +1,11 @@
 package com.android.sample.ui.signup
 
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -97,7 +99,7 @@ private class SlowFailRepo : ProfileRepository {
 // ---------- tests ----------
 class SignUpScreenTest {
 
-  @get:Rule val composeRule = createComposeRule()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   @Test
   fun all_fields_render_and_role_toggle() {
