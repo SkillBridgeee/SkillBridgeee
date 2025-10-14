@@ -1,8 +1,13 @@
 package com.android.sample.ui.screens.newSkill
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.listing.Proposal
 import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.Skill
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +25,6 @@ import kotlinx.coroutines.launch
  * - invalid*Msg: per-field validation messages
  */
 data class SkillUIState(
-    val ownerId: String = "John Doe",
     val title: String = "",
     val description: String = "",
     val price: String = "",
@@ -50,7 +54,9 @@ data class SkillUIState(
  * Exposes a StateFlow of [SkillUIState] and provides functions to update the state and perform
  * simple validation.
  */
-class NewSkillViewModel() : ViewModel() {
+class NewSkillViewModel(
+    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository
+) : ViewModel() {
   // Internal mutable UI state
   private val _uiState = MutableStateFlow(SkillUIState())
   // Public read-only state flow for the UI to observe
@@ -69,6 +75,39 @@ class NewSkillViewModel() : ViewModel() {
    */
   fun loadSkill() {
     viewModelScope.launch { try {} catch (_: Exception) {} }
+  }
+
+  fun addProfile(userId: String) {
+    val state = _uiState.value
+    if (state.isValid) {
+      val newSkill =
+          Skill(
+              userId = userId,
+              mainSubject = state.subject!!,
+              skill = state.title,
+          )
+
+      val newProposal =
+          Proposal(
+              listingId = listingRepository.getNewUid(),
+              creatorUserId = userId,
+              skill = newSkill,
+              description = state.description)
+
+      addSkillToRepository(proposal = newProposal)
+    } else {
+      setError()
+    }
+  }
+
+  private fun addSkillToRepository(proposal: Proposal) {
+    viewModelScope.launch {
+      try {
+        listingRepository.addProposal(proposal)
+      } catch (e: Exception) {
+        Log.e("NewSkillViewModel", "Error adding NewSkill", e)
+      }
+    }
   }
 
   // Set all messages error, if invalid field

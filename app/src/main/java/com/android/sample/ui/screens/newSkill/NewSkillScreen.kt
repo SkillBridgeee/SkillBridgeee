@@ -9,20 +9,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.skill.MainSubject
+import com.android.sample.ui.components.AppButton
 
 object NewSkillScreenTestTag {
   const val TOP_APP_BAR_TITLE = "topAppBarTitle"
@@ -61,29 +57,13 @@ object NewSkillScreenTestTag {
 fun NewSkillScreen(skillViewModel: NewSkillViewModel = NewSkillViewModel(), profileId: String) {
 
   Scaffold(
-      topBar = {
-        TopAppBar(
-            title = {
-              Text(
-                  text = "Add a New Skill",
-                  modifier = Modifier.testTag(NewSkillScreenTestTag.TOP_APP_BAR_TITLE))
-            },
-            navigationIcon = {
-              IconButton(
-                  onClick = {},
-                  modifier = Modifier.testTag(NewSkillScreenTestTag.NAV_BACK_BUTTON)) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back")
-                  }
-            },
-            actions = {})
-      },
-      bottomBar = {
-        // TODO implement bottom navigation Bar
-      },
+      topBar = {},
+      bottomBar = {},
       floatingActionButton = {
-        // TODO appButton not yet on main branch
+        AppButton(
+            text = "Save New Skill",
+            onClick = { skillViewModel.addProfile(userId = profileId) },
+            testTag = "")
       },
       floatingActionButtonPosition = FabPosition.Center,
       content = { pd -> SkillsContent(pd, profileId, skillViewModel) })
