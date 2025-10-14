@@ -1,42 +1,71 @@
 package com.android.sample.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.android.sample.ui.screens.HomePlaceholder
+import com.android.sample.ui.screens.PianoSkill2Screen
+import com.android.sample.ui.screens.PianoSkillScreen
 import com.android.sample.ui.screens.ProfilePlaceholder
 import com.android.sample.ui.screens.SettingsPlaceholder
 import com.android.sample.ui.screens.SkillsPlaceholder
 
 /**
- * AppNavGraph
+ * AppNavGraph - Main navigation configuration for the SkillBridge app
  *
- * This file defines the navigation graph for the app using Jetpack Navigation Compose. It maps
- * navigation routes (defined in [NavRoutes]) to the composable screens that should be displayed
- * when the user navigates to that route.
+ * This file defines all navigation routes and their corresponding screen composables. Each route is
+ * registered with the NavHost and includes route tracking via RouteStackManager.
  *
- * How it works:
- * - [NavHost] acts as the navigation container.
- * - Each `composable()` inside NavHost represents one screen in the app.
- * - The [navController] is used to navigate between routes.
+ * Usage:
+ * - Call AppNavGraph(navController) from your main activity/composable
+ * - Navigation is handled through the provided NavHostController
  *
- * Example usage: navController.navigate(NavRoutes.PROFILE)
+ * Adding a new screen:
+ * 1. Add route constant to NavRoutes object
+ * 2. Import the new screen composable
+ * 3. Add composable() block with LaunchedEffect for route tracking
+ * 4. Pass navController parameter if screen needs navigation
  *
- * To add a new screen:
- * 1. Create a new composable screen (e.g., MyNewScreen.kt) inside ui/screens/.
- * 2. Add a new route constant to [NavRoutes] (e.g., const val MY_NEW_SCREEN = "my_new_screen").
- * 3. Add a new `composable()` entry below with your screen function.
- * 4. (Optional) Add your route to the bottom navigation bar if needed.
+ * Removing a screen:
+ * 1. Delete the composable() block
+ * 2. Remove unused import
+ * 3. Remove route constant from NavRoutes (if no longer needed)
  *
- * This makes it easy to add, remove, or rename screens without breaking navigation.
+ * Note: All screens automatically register with RouteStackManager for back navigation tracking
  */
 @Composable
 fun AppNavGraph(navController: NavHostController) {
   NavHost(navController = navController, startDestination = NavRoutes.HOME) {
-    composable(NavRoutes.HOME) { HomePlaceholder(navController) }
-    composable(NavRoutes.PROFILE) { ProfilePlaceholder(navController) }
-    composable(NavRoutes.SKILLS) { SkillsPlaceholder(navController) }
-    composable(NavRoutes.SETTINGS) { SettingsPlaceholder(navController) }
+    composable(NavRoutes.PIANO_SKILL) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PIANO_SKILL) }
+      PianoSkillScreen(navController = navController)
+    }
+
+    composable(NavRoutes.PIANO_SKILL_2) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PIANO_SKILL_2) }
+      PianoSkill2Screen()
+    }
+
+    composable(NavRoutes.SKILLS) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
+      SkillsPlaceholder(navController)
+    }
+
+    composable(NavRoutes.PROFILE) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
+      ProfilePlaceholder()
+    }
+
+    composable(NavRoutes.HOME) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.HOME) }
+      HomePlaceholder()
+    }
+
+    composable(NavRoutes.SETTINGS) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SETTINGS) }
+      SettingsPlaceholder()
+    }
   }
 }

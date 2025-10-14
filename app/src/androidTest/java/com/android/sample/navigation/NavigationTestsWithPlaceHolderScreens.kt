@@ -111,7 +111,6 @@ class NavigationTestsWithPlaceHolderScreens {
     composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
   }
 
-
   @Test
   fun back_button_navigation_from_settings_multiple_times() {
     // Navigate to settings
@@ -169,4 +168,95 @@ class NavigationTestsWithPlaceHolderScreens {
     composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
   }
 
+  @Test
+  fun navigating_to_piano_skill_and_back_returns_to_skills() {
+    // Go to Skills
+    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithText("💡 Skills Screen Placeholder").assertIsDisplayed()
+
+    // Tap the button to go to Piano screen
+    composeTestRule.onNodeWithText("Go to Piano").performClick()
+
+    // Verify Piano screen is visible
+    composeTestRule.onNodeWithText("Piano Screen").assertExists().assertIsDisplayed()
+
+    // Click back button
+    composeTestRule.onNodeWithContentDescription("Back").performClick()
+
+    // Verify we returned to Skills screen
+    composeTestRule
+        .onNodeWithText("💡 Skills Screen Placeholder")
+        .assertExists()
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun navigating_piano_to_piano2_and_back_returns_correctly() {
+    // Go to Skills → Piano
+    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithText("💡 Skills Screen Placeholder").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Go to Piano").performClick()
+    composeTestRule.onNodeWithText("Piano Screen").assertIsDisplayed()
+
+    // Go to Piano 2
+    composeTestRule.onNodeWithText("Go to Piano 2").performClick()
+    composeTestRule.onNodeWithText("Piano 2 Screen").assertIsDisplayed()
+
+    // Press back → should go to Piano 1
+    composeTestRule.onNodeWithContentDescription("Back").performClick()
+    composeTestRule.onNodeWithText("Piano Screen").assertIsDisplayed()
+
+    // Press back again → should go to Skills
+    composeTestRule.onNodeWithContentDescription("Back").performClick()
+    composeTestRule.onNodeWithText("💡 Skills Screen Placeholder").assertIsDisplayed()
+  }
+
+  @Test
+  fun back_from_secondary_screen_on_main_route_returns_home() {
+    // Go to Profile
+    composeTestRule.onNodeWithText("Profile").performClick()
+    composeTestRule.onNodeWithText("👤 Profile Screen Placeholder").assertIsDisplayed()
+
+    // Press back → should go home (main route behavior)
+    composeTestRule.onNodeWithContentDescription("Back").performClick()
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
+  }
+
+  @Test
+  fun route_stack_clears_when_returning_home_from_main_screen() {
+    // Navigate deeply: Home → Skills → Piano → Piano 2
+    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithText("Go to Piano").performClick()
+    composeTestRule.onNodeWithText("Go to Piano 2").performClick()
+    composeTestRule.onNodeWithText("Piano 2 Screen").assertIsDisplayed()
+
+    // Press back until home
+    composeTestRule.onNodeWithContentDescription("Back").performClick()
+    composeTestRule.onNodeWithContentDescription("Back").performClick()
+    composeTestRule.onNodeWithContentDescription("Back").performClick()
+
+    // Confirm we are on Home
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
+
+    // Go to Settings → back → ensure stack still behaves normally
+    composeTestRule.onNodeWithText("Settings").performClick()
+    composeTestRule.onNodeWithText("⚙️ Settings Screen Placeholder").assertIsDisplayed()
+    composeTestRule.onNodeWithContentDescription("Back").performClick()
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
+  }
+
+  @Test
+  fun rapid_secondary_navigation_and_back_does_not_loop() {
+    // Navigate to Skills → Piano → Piano 2
+    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithText("Go to Piano").performClick()
+    composeTestRule.onNodeWithText("Go to Piano 2").performClick()
+    composeTestRule.onNodeWithText("Piano 2 Screen").assertIsDisplayed()
+
+    // Press back multiple times quickly
+    repeat(3) { composeTestRule.onNodeWithContentDescription("Back").performClick() }
+
+    // Should be on Home after all backs
+    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
+  }
 }

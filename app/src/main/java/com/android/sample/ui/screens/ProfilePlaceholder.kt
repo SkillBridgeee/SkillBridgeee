@@ -2,9 +2,9 @@ package com.android.sample.ui.screens
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
+import androidx.compose.ui.Modifier
 
 @Composable
-fun ProfilePlaceholder(navController: NavHostController) {
+fun ProfilePlaceholder(modifier: Modifier = Modifier) {
   Text("👤 Profile Screen Placeholder")
 }
