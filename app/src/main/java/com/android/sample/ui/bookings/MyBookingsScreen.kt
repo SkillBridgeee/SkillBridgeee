@@ -15,18 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import com.android.sample.model.booking.FakeBookingRepository
-import com.android.sample.model.listing.FakeListingRepository
-import com.android.sample.model.rating.FakeRatingRepository
-import com.android.sample.model.user.ProfileRepositoryLocal
 import com.android.sample.ui.theme.BrandBlue
 import com.android.sample.ui.theme.CardBg
 import com.android.sample.ui.theme.ChipBorder
-import com.android.sample.ui.theme.SampleAppTheme
 
 object MyBookingsPageTestTag {
   const val TOP_BAR_TITLE = "MyBookingsPageTestTag.TOP_BAR_TITLE"
@@ -167,23 +160,5 @@ private fun RatingRow(stars: Int, count: Int) {
     Text(full + empty)
     Spacer(Modifier.width(6.dp))
     Text("($count)")
-  }
-}
-
-@Preview(showBackground = true, widthDp = 360, heightDp = 640)
-@Composable
-private fun MyBookingsScreenPreview() {
-  SampleAppTheme {
-    val vm =
-        MyBookingsViewModel(
-            bookingRepo = FakeBookingRepository(),
-            userId = "s1",
-            listingRepo = FakeListingRepository(),
-            profileRepo = ProfileRepositoryLocal(),
-            ratingRepo = FakeRatingRepository(),
-            locale = java.util.Locale.getDefault(),
-            demo = true)
-    LaunchedEffect(Unit) { vm.load() }
-    MyBookingsScreen(viewModel = vm, navController = rememberNavController())
   }
 }
