@@ -55,7 +55,6 @@ object TutorPageTestTags {
   const val SKILLS_SECTION = "TutorPageTestTags.SKILLS_SECTION"
   const val SKILL = "TutorPageTestTags.SKILL"
   const val CONTACT_SECTION = "TutorPageTestTags.CONTACT_SECTION"
-  const val TOP_BAR = "TutorPageTestTags.TOP_BAR"
 }
 
 /**
@@ -77,12 +76,7 @@ fun TutorProfileScreen(
   LaunchedEffect(tutorId) { vm.load(tutorId) }
   val state by vm.state.collectAsStateWithLifecycle()
 
-  Scaffold(
-      topBar = {
-        Box(Modifier.fillMaxWidth().testTag(TutorPageTestTags.TOP_BAR)) {
-          TopAppBar(navController = navController)
-        }
-      }) { innerPadding ->
+  Scaffold { innerPadding ->
         // Show a loading spinner while loading and the content when loaded
         if (state.loading) {
           Box(

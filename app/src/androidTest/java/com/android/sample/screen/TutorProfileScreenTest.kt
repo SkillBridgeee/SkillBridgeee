@@ -144,9 +144,4 @@ class TutorProfileScreenTest {
     compose.onNodeWithText("@KendrickLamar").assertIsDisplayed()
   }
 
-  @Test
-  fun top_bar_isDisplayed() {
-    launch()
-    compose.onNodeWithTag(TutorPageTestTags.TOP_BAR, useUnmergedTree = true).assertIsDisplayed()
-  }
 }
