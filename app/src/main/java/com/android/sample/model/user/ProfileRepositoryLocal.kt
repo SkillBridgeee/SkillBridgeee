@@ -57,23 +57,20 @@ class ProfileRepositoryLocal : ProfileRepository {
     TODO("Not yet implemented")
   }
 
-    override suspend fun getSkillsForUser(userId: String): List<Skill> {
-        val musicSkills = SkillsHelper.getSkillNames(MainSubject.MUSIC)
+  override suspend fun getSkillsForUser(userId: String): List<Skill> {
+    val musicSkills = SkillsHelper.getSkillNames(MainSubject.MUSIC)
 
-        return when (userId) {
-            "test" -> musicSkills
-                .take(3) // e.g., first three skills
-                .map { skillName ->
-                    Skill(mainSubject = MainSubject.MUSIC, skill = skillName)
-                }
-
-            "fake2" -> musicSkills
-                .drop(3).take(2) // next two skills
-                .map { skillName ->
-                    Skill(mainSubject = MainSubject.MUSIC, skill = skillName)
-                }
-
-            else -> emptyList()
-        }
+    return when (userId) {
+      "test" ->
+          musicSkills
+              .take(3) // e.g., first three skills
+              .map { skillName -> Skill(mainSubject = MainSubject.MUSIC, skill = skillName) }
+      "fake2" ->
+          musicSkills
+              .drop(3)
+              .take(2) // next two skills
+              .map { skillName -> Skill(mainSubject = MainSubject.MUSIC, skill = skillName) }
+      else -> emptyList()
     }
+  }
 }
