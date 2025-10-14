@@ -83,6 +83,10 @@ class SubjectListViewModelTest {
       TODO("Not yet implemented")
     }
 
+    override suspend fun getProfileById(userId: String): Profile {
+      TODO("Not yet implemented")
+    }
+
     override suspend fun getSkillsForUser(userId: String): List<Skill> = skills[userId].orEmpty()
   }
 
