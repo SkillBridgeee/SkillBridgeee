@@ -1,9 +1,10 @@
-package com.android.sample.ui.components
+package com.android.sample.components
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation.compose.rememberNavController
+import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.navigation.AppNavGraph
 import org.junit.Rule
 import org.junit.Test

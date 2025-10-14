@@ -1,5 +1,7 @@
 package com.android.sample.model.user
 
+import com.android.sample.model.skill.Skill
+
 interface ProfileRepository {
   fun getNewUid(): String
 
@@ -17,4 +19,8 @@ interface ProfileRepository {
       location: com.android.sample.model.map.Location,
       radiusKm: Double
   ): List<Profile>
+
+  suspend fun getProfileById(userId: String): Profile
+
+  suspend fun getSkillsForUser(userId: String): List<Skill>
 }
