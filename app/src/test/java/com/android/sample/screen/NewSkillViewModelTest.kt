@@ -113,4 +113,16 @@ class NewSkillViewModelTest {
     assertNull(viewModel.uiState.value.invalidSubjectMsg)
     assertTrue(viewModel.uiState.value.isValid)
   }
+
+  @Test
+  fun `addProfile withInvallid data`() {
+    viewModel.setTitle("T")
+
+    viewModel.addProfile(userId = "")
+
+    assertEquals("Description cannot be empty", viewModel.uiState.value.invalidDescMsg)
+    assertEquals("Price cannot be empty", viewModel.uiState.value.invalidPriceMsg)
+    assertEquals("You must choose a subject", viewModel.uiState.value.invalidSubjectMsg)
+    assertFalse(viewModel.uiState.value.isValid)
+  }
 }

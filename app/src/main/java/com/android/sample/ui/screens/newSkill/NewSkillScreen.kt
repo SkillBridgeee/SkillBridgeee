@@ -37,8 +37,7 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
 
 object NewSkillScreenTestTag {
-  const val TOP_APP_BAR_TITLE = "topAppBarTitle"
-  const val NAV_BACK_BUTTON = "navBackButton"
+  const val BUTTON_SAVE_SKILL = "navBackButton"
   const val CREATE_LESSONS_TITLE = "createLessonsTitle"
   const val INPUT_COURSE_TITLE = "inputCourseTitle"
   const val INVALID_TITLE_MSG = "invalidTitleMsg"
@@ -63,7 +62,7 @@ fun NewSkillScreen(skillViewModel: NewSkillViewModel = NewSkillViewModel(), prof
         AppButton(
             text = "Save New Skill",
             onClick = { skillViewModel.addProfile(userId = profileId) },
-            testTag = "")
+            testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center,
       content = { pd -> SkillsContent(pd, profileId, skillViewModel) })

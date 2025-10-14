@@ -21,15 +21,10 @@ class NewSkillScreenTest {
   @get:Rule val composeTestRule = createComposeRule()
 
   @Test
-  fun topAppBarTitle_isDisplayed() {
+  fun saveButton_isDisplayed_andClickable() {
     composeTestRule.setContent { NewSkillScreen(profileId = "test") }
-    composeTestRule.onNodeWithTag(NewSkillScreenTestTag.TOP_APP_BAR_TITLE).assertIsDisplayed()
-  }
-
-  @Test
-  fun navBackButton_isDisplayed() {
-    composeTestRule.setContent { NewSkillScreen(profileId = "test") }
-    composeTestRule.onNodeWithTag(NewSkillScreenTestTag.NAV_BACK_BUTTON).assertIsDisplayed()
+    composeTestRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).assertIsDisplayed()
+    composeTestRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
   }
 
   @Test
