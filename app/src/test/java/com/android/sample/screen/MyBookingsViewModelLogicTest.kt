@@ -138,6 +138,14 @@ class MyBookingsViewModelLogicTest {
         location: com.android.sample.model.map.Location,
         radiusKm: Double
     ) = emptyList<Profile>()
+
+    override suspend fun getProfileById(userId: String): Profile {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getSkillsForUser(userId: String): List<Skill> {
+      TODO("Not yet implemented")
+    }
   }
 
   private class FakeListingRepo(private val map: Map<String, Listing>) : ListingRepository {
@@ -299,6 +307,14 @@ class MyBookingsViewModelLogicTest {
               location: com.android.sample.model.map.Location,
               radiusKm: Double
           ) = emptyList<Profile>()
+
+          override suspend fun getProfileById(userId: String): Profile {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getSkillsForUser(userId: String): List<Skill> {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =

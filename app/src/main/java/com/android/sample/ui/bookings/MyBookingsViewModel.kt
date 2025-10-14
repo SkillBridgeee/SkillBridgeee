@@ -5,10 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
@@ -40,23 +43,22 @@ data class BookingCardUi(
  * - load() loops bookings and pulls listing/profile/rating to build each card
  */
 class MyBookingsViewModel(
-    private val bookingRepo: BookingRepository,
+    private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository,
     private val userId: String,
-    private val listingRepo: ListingRepository,
+    private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
     private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
-    private val ratingRepo: RatingRepository,
+    private val ratingRepo: RatingRepository = RatingRepositoryProvider.repository,
     private val locale: Locale = Locale.getDefault(),
     private val demo: Boolean = false
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow<List<BookingCardUi>>(emptyList())
   val uiState: StateFlow<List<BookingCardUi>> = _uiState.asStateFlow()
-  val items: StateFlow<List<BookingCardUi>> = uiState
 
   private val dateFmt = SimpleDateFormat("dd/MM/yyyy", locale)
 
   init {
-    viewModelScope.launch { load() }
+    load()
   }
 
   fun load() {

@@ -136,6 +136,14 @@ class MyBookingsScreenUiTest {
                     location: com.android.sample.model.map.Location,
                     radiusKm: Double
                 ) = emptyList<Profile>()
+
+                override suspend fun getProfileById(userId: String): Profile {
+                  TODO("Not yet implemented")
+                }
+
+                override suspend fun getSkillsForUser(userId: String): List<Skill> {
+                  TODO("Not yet implemented")
+                }
               },
           ratingRepo =
               object : RatingRepository {

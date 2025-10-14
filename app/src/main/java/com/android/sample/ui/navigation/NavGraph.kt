@@ -5,12 +5,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.android.sample.model.booking.FakeBookingRepository
-import com.android.sample.model.listing.FakeListingRepository
-import com.android.sample.model.rating.FakeRatingRepository
-import com.android.sample.model.user.ProfileRepositoryLocal
-import com.android.sample.ui.bookings.MyBookingsScreen
-import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.screens.HomePlaceholder
 import com.android.sample.ui.screens.PianoSkill2Screen
 import com.android.sample.ui.screens.PianoSkillScreen
@@ -76,18 +70,6 @@ fun AppNavGraph(navController: NavHostController) {
 
     composable(NavRoutes.BOOKINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
-
-      val vm =
-          MyBookingsViewModel(
-              bookingRepo = FakeBookingRepository(),
-              userId = "s1",
-              listingRepo = FakeListingRepository(),
-              profileRepo = ProfileRepositoryLocal(),
-              ratingRepo = FakeRatingRepository(),
-              locale = java.util.Locale.getDefault(),
-              demo = true)
-
-      MyBookingsScreen(viewModel = vm, navController = navController)
     }
   }
 }
