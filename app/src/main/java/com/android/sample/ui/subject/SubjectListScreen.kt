@@ -61,21 +61,26 @@ import com.android.sample.ui.theme.TealChip
 import com.android.sample.ui.theme.White
 import com.android.sample.ui.tutor.TutorPageTestTags
 
+object SubjectListTestTags {
+    const val SEARCHBAR = "SubjectListTestTags.SEARCHBAR"
+    const val CATEGORY_SELECTOR = "SubjectListTestTags.CATEGORY_SELECTOR"
+    const val TOP_TUTORS_SECTION = "SubjectListTestTags.TOP_TUTORS_SECTION"
+    const val TUTOR_LIST = "SubjectListTestTags.TUTOR_LIST"
+    const val TUTOR_CARD = "SubjectListTestTags.TUTOR_CARD"
+    const val TUTOR_BOOK_BUTTON = "SubjectListTestTags.TUTOR_BOOK_BUTTON"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubjectListScreen(
     viewModel: SubjectListViewModel,
     onBookTutor: (Profile) -> Unit = {},
-    navController: NavHostController
     ) {
     val ui by viewModel.ui.collectAsState()
 
-    Scaffold(
-        topBar = {
-            Box(Modifier.fillMaxWidth().testTag(TutorPageTestTags.TOP_BAR)) {
-                TopAppBar(navController = navController)
-            }
-        }) { padding ->
+    LaunchedEffect(Unit) { viewModel.refresh() }
+
+    Scaffold { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
             // Search
@@ -86,7 +91,11 @@ fun SubjectListScreen(
                 placeholder = { Text("Find a tutor about...") },
                 singleLine = true,
                 modifier =
-                    Modifier.fillMaxWidth().padding(top = 8.dp))
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                        .testTag(SubjectListTestTags.SEARCHBAR)
+            )
 
             Spacer(Modifier.height(12.dp))
 
@@ -102,7 +111,12 @@ fun SubjectListScreen(
                     onValueChange = {},
                     label = { Text("Category") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth())
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                        .testTag(SubjectListTestTags.CATEGORY_SELECTOR)
+                )
+
                 ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     // "All" option
                     DropdownMenuItem(
@@ -128,15 +142,17 @@ fun SubjectListScreen(
 
             // Top Rated section
             if (ui.topTutors.isNotEmpty()) {
-                Text(
-                    "Top-Rated Tutors",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier =
-                        Modifier.padding(vertical = 8.dp))
-                ui.topTutors.forEach { p ->
-                    TutorCard(profile = p, onBook = onBookTutor)
-                    Spacer(Modifier.height(8.dp))
+                Column(modifier = Modifier.testTag(SubjectListTestTags.TOP_TUTORS_SECTION)) {
+                    Text(
+                        "Top-Rated Tutors",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                    ui.topTutors.forEach { p ->
+                        TutorCard(profile = p, onBook = onBookTutor)
+                        Spacer(Modifier.height(8.dp))
+                    }
                 }
             }
             Spacer(Modifier.height(8.dp))
@@ -149,7 +165,9 @@ fun SubjectListScreen(
             }
 
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(SubjectListTestTags.TUTOR_LIST),
                 contentPadding = PaddingValues(bottom = 24.dp)) {
                 items(ui.tutors) { p ->
                     TutorCard(profile = p, onBook = onBookTutor)
@@ -166,7 +184,9 @@ private fun TutorCard(profile: Profile, onBook: (Profile) -> Unit) {
     ElevatedCard(
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.elevatedCardColors(containerColor = White),
-        modifier = Modifier.fillMaxWidth()) {
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(SubjectListTestTags.TUTOR_CARD)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(16.dp)) {
@@ -215,7 +235,8 @@ private fun TutorCard(profile: Profile, onBook: (Profile) -> Unit) {
                         disabledContainerColor = TealChip.copy(alpha = 0.38f),
                         disabledContentColor = White.copy(alpha = 0.38f)
                     ),
-                    shape = MaterialTheme.shapes.extraLarge
+                    shape = MaterialTheme.shapes.extraLarge,
+                    modifier = Modifier.testTag(SubjectListTestTags.TUTOR_BOOK_BUTTON)
                 ) {
                     Text("Book")
                 }
@@ -248,7 +269,7 @@ private fun SubjectListScreenPreview() {
     val vm: SubjectListViewModel = viewModel()
     LaunchedEffect(Unit) { vm.refresh() }
 
-    MaterialTheme { Surface { SubjectListScreen(viewModel = vm, navController = rememberNavController()) } }
+    MaterialTheme { Surface { SubjectListScreen(viewModel = vm)} }
 }
 
 

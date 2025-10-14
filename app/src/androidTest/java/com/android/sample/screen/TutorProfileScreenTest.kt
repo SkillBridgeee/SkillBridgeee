@@ -50,7 +50,6 @@ class TutorProfileScreenTest {
       private val profile: Profile,
       private val skills: List<Skill>,
   ) : ProfileRepository {
-    override suspend fun getProfileById(userId: String): Profile = profile
 
     override suspend fun getSkillsForUser(userId: String): List<Skill> = skills
 

@@ -61,10 +61,11 @@ fun AppNavGraph(navController: NavHostController) {
 
     composable(NavRoutes.PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
+      //ProfilePlaceholder()
       val vm: SubjectListViewModel = viewModel()
       val vm2: TutorProfileViewModel = viewModel()
-      //SubjectListScreen(vm,{ _: Profile -> }, navController)
-      TutorProfileScreen("test", vm2, navController)
+      SubjectListScreen(vm,{ _: Profile -> })
+      //TutorProfileScreen("test", vm2, navController)
     }
 
     composable(NavRoutes.HOME) {

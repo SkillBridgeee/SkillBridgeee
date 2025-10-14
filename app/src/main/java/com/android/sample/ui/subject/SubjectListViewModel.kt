@@ -23,6 +23,8 @@ data class SubjectListUiState(
     val selectedSkill: String? = null,
     val skillsForSubject: List<String> = SkillsHelper.getSkillNames(MainSubject.MUSIC),
     val topTutors: List<Profile> = emptyList(),
+    /** Full set of tutors loaded from repo (before any filters) */
+    val allTutors: List<Profile> = emptyList(),
     /** The currently displayed list (after filters applied) */
     val tutors: List<Profile> = emptyList(),
     /** Cache of each tutor's skills so filtering is non-suspending */
@@ -75,7 +77,7 @@ class SubjectListViewModel(
                     _ui.update {
                         it.copy(
                             topTutors = top,
-                            tutors = allProfiles, // temporary; will be filtered below
+                            allTutors = allProfiles,
                             userSkills = skillsByUser,
                             isLoading = false,
                             error = null)
@@ -102,22 +104,32 @@ class SubjectListViewModel(
         val state = _ui.value
         val topIds = state.topTutors.map { it.userId }.toSet()
 
-        val filtered = state.tutors.filter { profile ->
+        // normalize a skill key for robust matching
+        fun key(s: String) = s.trim().lowercase()
+
+        val selectedSkillKey = state.selectedSkill?.let(::key)
+
+        val filtered = state.allTutors.filter { profile ->
+            // exclude top tutors from the list
+            if (profile.userId in topIds) return@filter false
+
             val matchesQuery =
                 state.query.isBlank() ||
                         profile.name.contains(state.query, ignoreCase = true) ||
                         profile.description.contains(state.query, ignoreCase = true)
 
             val matchesSkill =
-                state.selectedSkill.isNullOrBlank() ||
+                selectedSkillKey == null ||
                         state.userSkills[profile.userId].orEmpty().any {
-                            it.mainSubject == state.mainSubject && it.skill == state.selectedSkill
+                            it.mainSubject == state.mainSubject &&
+                                    key(it.skill) == selectedSkillKey
                         }
 
-            matchesQuery && matchesSkill && (profile.userId !in topIds)
+            matchesQuery && matchesSkill
         }
 
         _ui.update { it.copy(tutors = filtered) }
     }
+
 
 }
