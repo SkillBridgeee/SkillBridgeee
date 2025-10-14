@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -162,14 +163,12 @@ class SubjectListScreenTest {
 
     composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertExists()
 
-    composeRule
-        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
-        .performScrollToNode(hasText("Nora Q."))
+    composeRule.onNode(hasScrollAction())
+      .performScrollToNode(hasText("Nora Q."))
     composeRule.onNodeWithText("Nora Q.").assertIsDisplayed()
 
-    composeRule
-        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
-        .performScrollToNode(hasText("Maya R."))
+    composeRule.onNode(hasScrollAction())
+      .performScrollToNode(hasText("Maya R."))
     composeRule.onNodeWithText("Maya R.").assertIsDisplayed()
   }
 
