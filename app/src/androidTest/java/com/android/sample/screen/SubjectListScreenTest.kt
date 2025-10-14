@@ -5,7 +5,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -161,13 +160,30 @@ class SubjectListScreenTest {
   fun rendersTutorList_excludingTopTutors() {
     setContent()
 
-    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertExists()
+    // Ensure the main list has at least one card rendered
+    composeRule.waitUntil(5_000) {
+      composeRule
+          .onAllNodes(
+              hasTestTag(SubjectListTestTags.TUTOR_CARD) and
+                  hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)),
+              useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
-    composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Nora Q."))
-    composeRule.onNodeWithText("Nora Q.").assertIsDisplayed()
+    // Scroll to Nora and wait for idle
+    composeRule
+        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+        .performScrollToNode(hasText("Nora Q.", substring = true, ignoreCase = false))
+    composeRule.waitForIdle()
+    composeRule.onNodeWithText("Nora Q.", useUnmergedTree = true).assertIsDisplayed()
 
-    composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Maya R."))
-    composeRule.onNodeWithText("Maya R.").assertIsDisplayed()
+    // Scroll to Maya and wait for idle
+    composeRule
+        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+        .performScrollToNode(hasText("Maya R.", substring = true, ignoreCase = false))
+    composeRule.waitForIdle()
+    composeRule.onNodeWithText("Maya R.", useUnmergedTree = true).assertIsDisplayed()
   }
 
   @Test
