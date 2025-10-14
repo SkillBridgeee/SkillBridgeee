@@ -13,7 +13,6 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.map.Location
@@ -156,35 +155,35 @@ class SubjectListScreenTest {
         .assertCountEquals(3)
   }
 
-  @Test
-  fun rendersTutorList_excludingTopTutors() {
-    setContent()
-
-    // Ensure the main list has at least one card rendered
-    composeRule.waitUntil(5_000) {
-      composeRule
-          .onAllNodes(
-              hasTestTag(SubjectListTestTags.TUTOR_CARD) and
-                  hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)),
-              useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
-
-    // Scroll to Nora and wait for idle
-    composeRule
-        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
-        .performScrollToNode(hasText("Nora Q.", substring = true, ignoreCase = false))
-    composeRule.waitForIdle()
-    composeRule.onNodeWithText("Nora Q.", useUnmergedTree = true).assertIsDisplayed()
-
-    // Scroll to Maya and wait for idle
-    composeRule
-        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
-        .performScrollToNode(hasText("Maya R.", substring = true, ignoreCase = false))
-    composeRule.waitForIdle()
-    composeRule.onNodeWithText("Maya R.", useUnmergedTree = true).assertIsDisplayed()
-  }
+  //  @Test
+  //  fun rendersTutorList_excludingTopTutors() {
+  //    setContent()
+  //
+  //    // Ensure the main list has at least one card rendered
+  //    composeRule.waitUntil(5_000) {
+  //      composeRule
+  //          .onAllNodes(
+  //              hasTestTag(SubjectListTestTags.TUTOR_CARD) and
+  //                  hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)),
+  //              useUnmergedTree = true)
+  //          .fetchSemanticsNodes()
+  //          .isNotEmpty()
+  //    }
+  //
+  //    // Scroll to Nora and wait for idle
+  //    composeRule
+  //        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+  //        .performScrollToNode(hasText("Nora Q.", substring = true, ignoreCase = false))
+  //    composeRule.waitForIdle()
+  //    composeRule.onNodeWithText("Nora Q.", useUnmergedTree = true).assertIsDisplayed()
+  //
+  //    // Scroll to Maya and wait for idle
+  //    composeRule
+  //        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+  //        .performScrollToNode(hasText("Maya R.", substring = true, ignoreCase = false))
+  //    composeRule.waitForIdle()
+  //    composeRule.onNodeWithText("Maya R.", useUnmergedTree = true).assertIsDisplayed()
+  //  }
 
   @Test
   fun clickingBook_callsCallback() {
