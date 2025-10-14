@@ -34,18 +34,47 @@ class FakeRatingRepository(private val initial: List<Rating> = emptyList()) : Ra
       }
 
   override suspend fun getRatingsOfListing(listingId: String): List<Rating> =
-      synchronized(ratings) {
-        ratings.values.filter { r ->
-          when (val t = r.ratingType) {
-            is RatingType.Listing -> t.listingId == listingId
-            is RatingType.Tutor -> t.listingId == listingId
-            is RatingType.Student -> {
-              // not tied to a listing; try legacy/fallback fields just in case
-              val v = findValueOn(r, listOf("listingId", "associatedListingId", "listing_id"))
-              v?.toString() == listingId
-            }
-          }
-        }
+      when (listingId) {
+        "listing-1" ->
+            listOf(
+                Rating(
+                    ratingId = "r-l1-1",
+                    fromUserId = "u1",
+                    toUserId = "tutor-1",
+                    starRating = StarRating.FIVE,
+                    comment = "",
+                    ratingType = RatingType.Listing("listing-1")),
+                Rating(
+                    ratingId = "r-l1-2",
+                    fromUserId = "u2",
+                    toUserId = "tutor-1",
+                    starRating = StarRating.FOUR,
+                    comment = "",
+                    ratingType = RatingType.Listing("listing-1")),
+                Rating(
+                    ratingId = "r-l1-3",
+                    fromUserId = "u3",
+                    toUserId = "tutor-1",
+                    starRating = StarRating.FIVE,
+                    comment = "",
+                    ratingType = RatingType.Listing("listing-1")))
+        "listing-2" ->
+            listOf(
+                Rating(
+                    ratingId = "r-l2-1",
+                    fromUserId = "u4",
+                    toUserId = "tutor-2",
+                    starRating = StarRating.FOUR,
+                    comment = "",
+                    ratingType = RatingType.Listing("listing-2")),
+                Rating(
+                    ratingId = "r-l2-2",
+                    fromUserId = "u5",
+                    toUserId = "tutor-2",
+                    starRating = StarRating.FOUR,
+                    comment = "",
+                    ratingType = RatingType.Listing("listing-2")))
+        else -> emptyList()
       }
 
   override suspend fun addRating(rating: Rating) {

@@ -49,7 +49,6 @@ class MyBookingsViewModel(
     private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
     private val ratingRepo: RatingRepository = RatingRepositoryProvider.repository,
     private val locale: Locale = Locale.getDefault(),
-    private val demo: Boolean = false
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow<List<BookingCardUi>>(emptyList())
@@ -63,11 +62,6 @@ class MyBookingsViewModel(
 
   fun load() {
     viewModelScope.launch {
-      if (demo) {
-        _uiState.value = demoCards()
-        return@launch
-      }
-
       val result = mutableListOf<BookingCardUi>()
       try {
         val bookings = bookingRepo.getBookingsByUserId(userId)
@@ -81,31 +75,6 @@ class MyBookingsViewModel(
         _uiState.value = emptyList()
       }
     }
-  }
-
-  private fun demoCards(): List<BookingCardUi> {
-    val now = Date()
-    return listOf(
-        BookingCardUi(
-            id = "demo-1",
-            tutorId = "tutor-1",
-            tutorName = "Alice Martin",
-            subject = "Guitar - Beginner",
-            pricePerHourLabel = "$30.0/hr",
-            durationLabel = "1hr",
-            dateLabel = dateFmt.format(now),
-            ratingStars = 5,
-            ratingCount = 12),
-        BookingCardUi(
-            id = "demo-2",
-            tutorId = "tutor-2",
-            tutorName = "Lucas Dupont",
-            subject = "French Conversation",
-            pricePerHourLabel = "$25.0/hr",
-            durationLabel = "1h 30m",
-            dateLabel = dateFmt.format(now),
-            ratingStars = 4,
-            ratingCount = 8))
   }
 
   private suspend fun buildCardSafely(b: Booking): BookingCardUi? {

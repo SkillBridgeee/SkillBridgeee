@@ -1,6 +1,7 @@
 package com.android.sample.model.listing
 
 import com.android.sample.model.map.Location
+import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import java.util.UUID
 
@@ -22,9 +23,16 @@ class FakeListingRepository(private val initial: List<Listing> = emptyList()) : 
   override suspend fun getRequests(): List<Request> = synchronized(requests) { requests.toList() }
 
   override suspend fun getListing(listingId: String): Listing =
-      synchronized(listings) {
-        listings[listingId] ?: throw NoSuchElementException("Listing $listingId not found")
-      }
+      Proposal(
+          listingId = listingId, // echo exact id used by bookings
+          creatorUserId =
+              when (listingId) {
+                "listing-1" -> "tutor-1"
+                "listing-2" -> "tutor-2"
+                else -> "test" // fallback
+              },
+          skill = Skill(mainSubject = MainSubject.TECHNOLOGY), // stable .toString() for UI
+          description = "Hardcoded listing $listingId")
 
   override suspend fun getListingsByUser(userId: String): List<Listing> =
       synchronized(listings) { listings.values.filter { matchesUser(it, userId) } }

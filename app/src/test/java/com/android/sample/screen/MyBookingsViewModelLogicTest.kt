@@ -197,7 +197,7 @@ class MyBookingsViewModelLogicTest {
             profileRepo = FakeProfileRepo(mapOf("t1" to prof)),
             ratingRepo = FakeRatingRepo(mapOf("L1" to listOf(rating))),
             locale = Locale.UK,
-            demo = false)
+        )
 
     this.testScheduler.advanceUntilIdle()
 
@@ -230,7 +230,7 @@ class MyBookingsViewModelLogicTest {
             profileRepo = FakeProfileRepo(mapOf("t1" to Profile("t1", "T", "t@t.com"))),
             ratingRepo = FakeRatingRepo(mapOf("L1" to emptyList())), // no rating
             locale = Locale.US,
-            demo = false)
+        )
 
     this.testScheduler.advanceUntilIdle()
     val c = vm.uiState.value.single()
@@ -280,7 +280,7 @@ class MyBookingsViewModelLogicTest {
             listingRepo = failingListingRepo,
             profileRepo = FakeProfileRepo(emptyMap()),
             ratingRepo = FakeRatingRepo(emptyMap()),
-            demo = false)
+        )
 
     this.testScheduler.advanceUntilIdle()
     assertTrue(vm.uiState.value.isEmpty()) // buildCardSafely returned null → skipped
@@ -324,7 +324,7 @@ class MyBookingsViewModelLogicTest {
             listingRepo = FakeListingRepo(mapOf("L1" to listing)),
             profileRepo = failingProfiles,
             ratingRepo = FakeRatingRepo(emptyMap()),
-            demo = false)
+        )
 
     this.testScheduler.advanceUntilIdle()
     assertTrue(vm.uiState.value.isEmpty())
@@ -339,25 +339,8 @@ class MyBookingsViewModelLogicTest {
             listingRepo = FakeListingRepo(emptyMap()),
             profileRepo = FakeProfileRepo(emptyMap()),
             ratingRepo = FakeRatingRepo(emptyMap()),
-            demo = false)
+        )
     this.testScheduler.advanceUntilIdle()
     assertTrue(vm.uiState.value.isEmpty())
-  }
-
-  @Test
-  fun load_demo_populates_demo_cards() = runTest {
-    val vm =
-        MyBookingsViewModel(
-            bookingRepo = FakeBookingRepo(emptyList()),
-            userId = "s1",
-            listingRepo = FakeListingRepo(emptyMap()),
-            profileRepo = FakeProfileRepo(emptyMap()),
-            ratingRepo = FakeRatingRepo(emptyMap()),
-            demo = true)
-    this.testScheduler.advanceUntilIdle()
-    val cards = vm.uiState.value
-    assertEquals(2, cards.size)
-    assertEquals("Alice Martin", cards[0].tutorName)
-    assertEquals("Lucas Dupont", cards[1].tutorName)
   }
 }

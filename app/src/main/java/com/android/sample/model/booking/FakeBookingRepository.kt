@@ -49,8 +49,48 @@ class FakeBookingRepository : BookingRepository {
   override suspend fun getBookingsByTutor(tutorId: String): List<Booking> =
       bookings.filter { it.listingCreatorId == tutorId }
 
-  override suspend fun getBookingsByUserId(userId: String): List<Booking> =
-      bookings.filter { it.bookerId == userId }
+  override suspend fun getBookingsByUserId(userId: String): List<Booking> {
+    return listOf(
+        Booking(
+            bookingId = "b-1",
+            associatedListingId = "listing-1",
+            listingCreatorId = "tutor-1",
+            bookerId = userId,
+            sessionStart = Date(),
+            sessionEnd = Date(System.currentTimeMillis() + 60 * 60 * 1000),
+            price = 30.0),
+        Booking(
+            bookingId = "b-2",
+            associatedListingId = "listing-2",
+            listingCreatorId = "tutor-2",
+            bookerId = userId,
+            sessionStart = Date(),
+            sessionEnd = Date(System.currentTimeMillis() + 90 * 60 * 1000),
+            price = 25.0))
+  }
+
+  //            val now = Date()
+  //            return listOf(
+  //                BookingCardUi(
+  //                    id = "demo-1",
+  //                    tutorId = "tutor-1",
+  //                    tutorName = "Alice Martin",
+  //                    subject = "Guitar - Beginner",
+  //                    pricePerHourLabel = "$30.0/hr",
+  //                    durationLabel = "1hr",
+  //                    dateLabel = dateFmt.format(now),
+  //                    ratingStars = 5,
+  //                    ratingCount = 12),
+  //                BookingCardUi(
+  //                    id = "demo-2",
+  //                    tutorId = "tutor-2",
+  //                    tutorName = "Lucas Dupont",
+  //                    subject = "French Conversation",
+  //                    pricePerHourLabel = "$25.0/hr",
+  //                    durationLabel = "1h 30m",
+  //                    dateLabel = dateFmt.format(now),
+  //                    ratingStars = 4,
+  //                    ratingCount = 8))
 
   override suspend fun getBookingsByStudent(studentId: String): List<Booking> =
       bookings.filter { it.bookerId == studentId }

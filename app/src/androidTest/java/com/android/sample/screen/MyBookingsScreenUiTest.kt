@@ -37,6 +37,7 @@ class MyBookingsScreenUiTest {
   /** VM wired to use demo=true so the screen shows 2 cards deterministically. */
   private fun vmWithDemo(): MyBookingsViewModel =
       MyBookingsViewModel(
+          // 2 deterministic bookings (L1/t1 = 1h @ $30; L2/t2 = 1h30 @ $25)
           bookingRepo =
               object : BookingRepository {
                 override fun getNewUid() = "X"
@@ -47,7 +48,24 @@ class MyBookingsScreenUiTest {
 
                 override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
 
-                override suspend fun getBookingsByUserId(userId: String) = emptyList<Booking>()
+                override suspend fun getBookingsByUserId(userId: String) =
+                    listOf(
+                        Booking(
+                            bookingId = "b-1",
+                            associatedListingId = "L1",
+                            listingCreatorId = "t1",
+                            bookerId = userId,
+                            sessionStart = Date(),
+                            sessionEnd = Date(System.currentTimeMillis() + 60 * 60 * 1000), // 1h
+                            price = 30.0),
+                        Booking(
+                            bookingId = "b-2",
+                            associatedListingId = "L2",
+                            listingCreatorId = "t2",
+                            bookerId = userId,
+                            sessionStart = Date(),
+                            sessionEnd = Date(System.currentTimeMillis() + 90 * 60 * 1000), // 1h30
+                            price = 25.0))
 
                 override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
 
@@ -71,33 +89,36 @@ class MyBookingsScreenUiTest {
                 override suspend fun cancelBooking(bookingId: String) {}
               },
           userId = "s1",
+
+          // Listing echoes the requested id and maps creator to t1/t2
           listingRepo =
               object : ListingRepository {
                 override fun getNewUid() = "L"
 
                 override suspend fun getAllListings() = emptyList<Listing>()
 
-                override suspend fun getProposals() =
-                    emptyList<com.android.sample.model.listing.Proposal>()
+                override suspend fun getProposals() = emptyList<Proposal>()
 
                 override suspend fun getRequests() =
                     emptyList<com.android.sample.model.listing.Request>()
 
                 override suspend fun getListing(listingId: String): Listing =
-                    // Use defaults for Skill() – don't pass name/mainSubject
-                    com.android.sample.model.listing.Proposal(
-                        listingId = "L1",
-                        creatorUserId = "t1",
-                        // skill = Skill() // (optional – default is already Skill())
-                        description = "",
-                        location = com.android.sample.model.map.Location(),
-                        hourlyRate = 30.0)
+                    Proposal(
+                        listingId = listingId,
+                        creatorUserId =
+                            when (listingId) {
+                              "L1" -> "t1"
+                              "L2" -> "t2"
+                              else -> "t1"
+                            },
+                        // Let defaults for Skill() be used to keep subject stable
+                        description = "demo $listingId",
+                        location = Location(),
+                        hourlyRate = if (listingId == "L1") 30.0 else 25.0)
 
                 override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
 
-                override suspend fun addProposal(
-                    proposal: com.android.sample.model.listing.Proposal
-                ) {}
+                override suspend fun addProposal(proposal: Proposal) {}
 
                 override suspend fun addRequest(
                     request: com.android.sample.model.listing.Request
@@ -112,17 +133,21 @@ class MyBookingsScreenUiTest {
                 override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
                     emptyList<Listing>()
 
-                override suspend fun searchByLocation(
-                    location: com.android.sample.model.map.Location,
-                    radiusKm: Double
-                ) = emptyList<Listing>()
+                override suspend fun searchByLocation(location: Location, radiusKm: Double) =
+                    emptyList<Listing>()
               },
+
+          // Profiles for both tutors
           profileRepo =
               object : ProfileRepository {
                 override fun getNewUid() = "P"
 
                 override suspend fun getProfile(userId: String) =
-                    Profile(userId = "t1", name = "Alice Martin", email = "a@a.com")
+                    when (userId) {
+                      "t1" -> Profile(userId = "t1", name = "Alice Martin", email = "a@a.com")
+                      "t2" -> Profile(userId = "t2", name = "Lucas Dupont", email = "l@a.com")
+                      else -> Profile(userId = userId, name = "Unknown", email = "u@a.com")
+                    }
 
                 override suspend fun addProfile(profile: Profile) {}
 
@@ -133,18 +158,17 @@ class MyBookingsScreenUiTest {
                 override suspend fun getAllProfiles() = emptyList<Profile>()
 
                 override suspend fun searchProfilesByLocation(
-                    location: com.android.sample.model.map.Location,
+                    location: Location,
                     radiusKm: Double
                 ) = emptyList<Profile>()
 
-                override suspend fun getProfileById(userId: String): Profile {
-                  TODO("Not yet implemented")
-                }
+                override suspend fun getProfileById(userId: String) = getProfile(userId)
 
-                override suspend fun getSkillsForUser(userId: String): List<Skill> {
-                  TODO("Not yet implemented")
-                }
+                override suspend fun getSkillsForUser(userId: String) =
+                    emptyList<com.android.sample.model.skill.Skill>()
               },
+
+          // Ratings: L1 averages to 5★, L2 to 4★
           ratingRepo =
               object : RatingRepository {
                 override fun getNewUid() = "R"
@@ -158,9 +182,23 @@ class MyBookingsScreenUiTest {
                 override suspend fun getRatingsByToUser(toUserId: String) = emptyList<Rating>()
 
                 override suspend fun getRatingsOfListing(listingId: String): List<Rating> =
-                    listOf(
-                        Rating(
-                            "r1", "s1", "t1", StarRating.FIVE, "", RatingType.Listing(listingId)))
+                    when (listingId) {
+                      "L1" ->
+                          listOf(
+                              Rating(
+                                  "r1", "s1", "t1", StarRating.FIVE, "", RatingType.Listing("L1")),
+                              Rating(
+                                  "r2", "s2", "t1", StarRating.FIVE, "", RatingType.Listing("L1")),
+                              Rating(
+                                  "r3", "s3", "t1", StarRating.FIVE, "", RatingType.Listing("L1")))
+                      "L2" ->
+                          listOf(
+                              Rating(
+                                  "r4", "s4", "t2", StarRating.FOUR, "", RatingType.Listing("L2")),
+                              Rating(
+                                  "r5", "s5", "t2", StarRating.FOUR, "", RatingType.Listing("L2")))
+                      else -> emptyList()
+                    }
 
                 override suspend fun addRating(rating: Rating) {}
 
@@ -172,8 +210,7 @@ class MyBookingsScreenUiTest {
 
                 override suspend fun getStudentRatingsOfUser(userId: String) = emptyList<Rating>()
               },
-          locale = Locale.US,
-          demo = true)
+          locale = Locale.US)
 
   @Test
   fun full_screen_demo_renders_two_cards() {
