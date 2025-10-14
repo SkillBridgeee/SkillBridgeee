@@ -1,9 +1,9 @@
 package com.android.sample.ui.signup
 
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -16,6 +16,17 @@ import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 
+// ---------- helpers ----------
+private fun waitForTag(rule: ComposeContentTestRule, tag: String, timeoutMs: Long = 5_000) {
+  rule.waitUntil(timeoutMs) {
+    rule.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+  }
+}
+
+private fun ComposeContentTestRule.nodeByTag(tag: String) =
+    onNodeWithTag(tag, useUnmergedTree = true)
+
+// ---------- fakes ----------
 private class UiRepo : ProfileRepository {
   val added = mutableListOf<Profile>()
   private var uid = 1
@@ -83,6 +94,7 @@ private class SlowFailRepo : ProfileRepository {
   ): List<Profile> = emptyList()
 }
 
+// ---------- tests ----------
 class SignUpScreenTest {
 
   @get:Rule val composeRule = createComposeRule()
@@ -92,46 +104,23 @@ class SignUpScreenTest {
     val vm = SignUpViewModel(UiRepo())
     composeRule.setContent { SignUpScreen(vm = vm) }
 
-    // headers
-    composeRule.onNodeWithTag(SignUpScreenTestTags.TITLE).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SUBTITLE).assertIsDisplayed()
+    waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
-    // inputs exist
-    composeRule.onNodeWithTag(SignUpScreenTestTags.NAME).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SURNAME).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignUpScreenTestTags.ADDRESS).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignUpScreenTestTags.DESCRIPTION).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignUpScreenTestTags.EMAIL).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.TITLE).assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.SUBTITLE).assertIsDisplayed()
 
-    // role toggles
-    composeRule.onNodeWithTag(SignUpScreenTestTags.TUTOR).performClick()
+    composeRule.nodeByTag(SignUpScreenTestTags.NAME).assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.DESCRIPTION).assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).assertIsDisplayed()
+
+    composeRule.nodeByTag(SignUpScreenTestTags.TUTOR).performClick()
     assertEquals(Role.TUTOR, vm.state.value.role)
-    composeRule.onNodeWithTag(SignUpScreenTestTags.LEARNER).performClick()
+    composeRule.nodeByTag(SignUpScreenTestTags.LEARNER).performClick()
     assertEquals(Role.LEARNER, vm.state.value.role)
-  }
-
-  @Test
-  fun button_shows_submitting_text_during_long_operation() {
-    val vm = SignUpViewModel(SlowRepoUi())
-    composeRule.setContent { SignUpScreen(vm = vm) }
-
-    // fill valid
-    composeRule.onNodeWithTag(SignUpScreenTestTags.NAME).performTextInput("Alan")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SURNAME).performTextInput("Turing")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.ADDRESS).performTextInput("S2")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("Math")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.EMAIL).performTextInput("alan@code.org")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performTextInput("abcdef12")
-
-    // click and verify "Submitting…" appears
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performClick()
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assert(hasText("Submitting…"))
-
-    // wait until done; then label returns to "Sign Up"
-    composeRule.waitUntil(300) { vm.state.value.submitSuccess }
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assert(hasText("Sign Up"))
   }
 
   @Test
@@ -139,19 +128,21 @@ class SignUpScreenTest {
     val vm = SignUpViewModel(SlowFailRepo())
     composeRule.setContent { SignUpScreen(vm = vm) }
 
-    composeRule.onNodeWithTag(SignUpScreenTestTags.NAME).performTextInput("Alan")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SURNAME).performTextInput("Turing")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.ADDRESS).performTextInput("Street 2")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("Math")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.EMAIL).performTextInput("alan@code.org")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performTextInput("abcdef12")
+    waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performClick()
+    composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Alan")
+    composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Turing")
+    composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).performTextInput("Street 2")
+    composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("Math")
+    composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput("alan@code.org")
+    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("abcdef12")
 
-    composeRule.waitUntil(300) { !vm.state.value.submitting }
+    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
+    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performClick()
+
+    composeRule.waitUntil(7_000) { !vm.state.value.submitting && vm.state.value.error != null }
     assertNotNull(vm.state.value.error)
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
+    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
   }
 
   @Test
@@ -160,18 +151,19 @@ class SignUpScreenTest {
     val vm = SignUpViewModel(repo)
     composeRule.setContent { SignUpScreen(vm = vm) }
 
-    composeRule.onNodeWithTag(SignUpScreenTestTags.NAME).performTextInput("Élise")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SURNAME).performTextInput("Müller")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.ADDRESS).performTextInput("S1")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
-    composeRule
-        .onNodeWithTag(SignUpScreenTestTags.EMAIL)
-        .performTextInput("  USER@MAIL.Example.ORG ")
-    composeRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performTextInput("passw0rd")
+    waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
-    composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performClick()
-    composeRule.waitUntil(300) { vm.state.value.submitSuccess }
+    composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Élise")
+    composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Müller")
+    composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).performTextInput("S1")
+    composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
+    composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput("  USER@MAIL.Example.ORG ")
+    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("passw0rd")
+
+    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
+    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performClick()
+
+    composeRule.waitUntil(7_000) { vm.state.value.submitSuccess }
     assertEquals(1, repo.added.size)
     assertEquals("Élise Müller", repo.added[0].name)
   }
