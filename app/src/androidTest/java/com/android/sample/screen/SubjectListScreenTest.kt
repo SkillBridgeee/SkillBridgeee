@@ -113,18 +113,22 @@ class SubjectListScreenTest {
 
   private fun setContent(onBook: (Profile) -> Unit = {}) {
     val vm = makeViewModel()
-    composeRule.setContent {
-      MaterialTheme { SubjectListScreen(viewModel = vm, onBookTutor = onBook) }
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, onBook) } }
+
+    // Wait until top section appears
+    composeRule.waitUntil(5_000) {
+      composeRule.onAllNodesWithTag(SubjectListTestTags.TOP_TUTORS_SECTION)
+        .fetchSemanticsNodes().isNotEmpty()
     }
-    // Wait until refresh() finishes and lists are shown
-    composeRule.waitUntil(timeoutMillis = 5_000) {
-      // top tutors shows up when loaded
-      composeRule
-          .onAllNodesWithTag(SubjectListTestTags.TOP_TUTORS_SECTION)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
+    // THEN wait until the main list has items (non-top tutors)
+    composeRule.waitUntil(5_000) {
+      composeRule.onAllNodes(
+        hasTestTag(SubjectListTestTags.TUTOR_CARD) and
+                hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST))
+      ).fetchSemanticsNodes().isNotEmpty()
     }
   }
+
 
   /** ---- Tests ----------------------------------------------------------- */
   @Test
@@ -153,20 +157,17 @@ class SubjectListScreenTest {
   fun rendersTutorList_excludingTopTutors() {
     setContent()
 
-    // List exists, even if not in viewport
     composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertExists()
 
-    // Scroll the list to the items, then assert
-    composeRule
-        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
-        .performScrollToNode(hasText("Nora Q."))
+    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+      .performScrollToNode(hasText("Nora Q."))
     composeRule.onNodeWithText("Nora Q.").assertIsDisplayed()
 
-    composeRule
-        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
-        .performScrollToNode(hasText("Maya R."))
+    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+      .performScrollToNode(hasText("Maya R."))
     composeRule.onNodeWithText("Maya R.").assertIsDisplayed()
   }
+
 
   @Test
   fun clickingBook_callsCallback() {

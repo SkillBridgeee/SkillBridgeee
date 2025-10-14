@@ -82,22 +82,23 @@ class TutorProfileScreenTest {
     override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
   }
 
-  private fun launch() {
-    val vm = TutorProfileViewModel(ImmediateRepo(sampleProfile, sampleSkills))
-    compose.setContent {
-      val navController = rememberNavController()
-      TutorProfileScreen(tutorId = "demo", vm = vm, navController = navController)
+    private fun launch() {
+        val repo = ImmediateRepo(sampleProfile, sampleSkills).apply {
+            seed(sampleProfile)   // <-- ensure "demo" is present
+        }
+        val vm = TutorProfileViewModel(repo)
+        compose.setContent {
+            val nav = rememberNavController()
+            TutorProfileScreen(tutorId = "demo", vm = vm, navController = nav)
+        }
+        compose.waitUntil(5_000) {
+            compose.onAllNodesWithTag(TutorPageTestTags.NAME, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
     }
-    // Wait until the VM finishes its initial load and the NAME node appears
-    compose.waitUntil(timeoutMillis = 5_000) {
-      compose
-          .onAllNodesWithTag(TutorPageTestTags.NAME, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
-  }
 
-  @Test
+
+    @Test
   fun core_elements_areDisplayed() {
     launch()
     compose.onNodeWithTag(TutorPageTestTags.PFP).assertIsDisplayed()
