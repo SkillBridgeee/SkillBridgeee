@@ -5,14 +5,15 @@ import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.screens.newSkill.NewSkillScreen
 import com.android.sample.ui.screens.newSkill.NewSkillScreenTestTag
 import com.android.sample.ui.screens.newSkill.NewSkillViewModel
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -62,11 +63,11 @@ class NewSkillScreenTest {
     composeTestRule.setContent { NewSkillScreen(profileId = "test") }
     composeTestRule.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
     composeTestRule.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN).assertIsDisplayed()
-    // le premier item (les items partagent le même tag) doit être visible
-    composeTestRule
-        .onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)
-        .onFirst()
-        .assertIsDisplayed()
+    val itemsDisplay =
+        composeTestRule
+            .onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)
+            .fetchSemanticsNodes()
+    assertEquals(MainSubject.entries.size, itemsDisplay.size)
   }
 
   @Test

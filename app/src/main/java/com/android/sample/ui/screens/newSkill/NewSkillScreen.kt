@@ -37,7 +37,7 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
 
 object NewSkillScreenTestTag {
-  const val BUTTON_SAVE_SKILL = "navBackButton"
+  const val BUTTON_SAVE_SKILL = "buttonSaveSkill"
   const val CREATE_LESSONS_TITLE = "createLessonsTitle"
   const val INPUT_COURSE_TITLE = "inputCourseTitle"
   const val INVALID_TITLE_MSG = "invalidTitleMsg"
@@ -56,8 +56,6 @@ object NewSkillScreenTestTag {
 fun NewSkillScreen(skillViewModel: NewSkillViewModel = NewSkillViewModel(), profileId: String) {
 
   Scaffold(
-      topBar = {},
-      bottomBar = {},
       floatingActionButton = {
         AppButton(
             text = "Save New Skill",
@@ -73,7 +71,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
 
   val textSpace = 8.dp
 
-  LaunchedEffect(profileId) { skillViewModel.loadSkill() }
+  LaunchedEffect(profileId) { skillViewModel.load() }
   val skillUIState by skillViewModel.uiState.collectAsState()
 
   Column(
@@ -142,7 +140,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     value = skillUIState.price,
                     onValueChange = { skillViewModel.setPrice(it) },
                     label = { Text("Hourly Rate") },
-                    placeholder = { Text("Price per Hours") },
+                    placeholder = { Text("Price per Hour") },
                     isError = skillUIState.invalidPriceMsg != null,
                     supportingText = {
                       skillUIState.invalidPriceMsg?.let {
@@ -198,11 +196,11 @@ fun SubjectMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier.testTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN)) {
-              subjects.forEach { suject ->
+              subjects.forEach { subject ->
                 DropdownMenuItem(
-                    text = { Text(suject.name) },
+                    text = { Text(subject.name) },
                     onClick = {
-                      skillViewModel.setSubject(suject)
+                      skillViewModel.setSubject(subject)
                       expanded = false
                     },
                     modifier = Modifier.testTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX))

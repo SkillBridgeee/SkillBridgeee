@@ -73,9 +73,7 @@ class NewSkillViewModel(
    *
    * Kept as a coroutine scope for future asynchronous loading.
    */
-  fun loadSkill() {
-    viewModelScope.launch { try {} catch (_: Exception) {} }
-  }
+  fun load() {}
 
   fun addProfile(userId: String) {
     val state = _uiState.value
@@ -148,7 +146,7 @@ class NewSkillViewModel(
    *
    * Rules:
    * - empty -> "Price cannot be empty"
-   * - non positive number or non-numeric -> "Price must be a positive number"
+   * - non positive number or non-numeric -> "Price must be a positive number or null (0.0)"
    */
   fun setPrice(price: String) {
     _uiState.value =
