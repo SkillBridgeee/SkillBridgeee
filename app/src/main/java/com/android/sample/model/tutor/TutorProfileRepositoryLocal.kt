@@ -1,35 +1,22 @@
-package com.android.sample.model.user
+package com.android.sample.model.tutor
 
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
-import kotlin.String
+import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepository
 
-class ProfileRepositoryLocal : ProfileRepository {
+class TutorProfileRepositoryLocal : ProfileRepository {
 
-  val profileFake1 =
-      Profile(
-          userId = "test",
-          name = "John Doe",
-          email = "john.doe@epfl.ch",
-          location = Location(latitude = 0.0, longitude = 0.0, name = "EPFL"),
-          description = "Nice Guy")
-  val profileFake2 =
-      Profile(
-          userId = "fake2",
-          name = "GuiGui",
-          email = "mimi@epfl.ch",
-          location = Location(latitude = 0.0, longitude = 0.0, name = "Renens"),
-          description = "Bad Guy")
+  private val profiles = mutableListOf<Profile>()
 
-  val profileList = listOf(profileFake1, profileFake2)
+  private val userSkills = mutableMapOf<String, MutableList<Skill>>()
 
   override fun getNewUid(): String {
     TODO("Not yet implemented")
   }
 
   override suspend fun getProfile(userId: String): Profile {
-    return profileList.firstOrNull { it.userId == userId }
-        ?: throw NoSuchElementException("Profile with id '$userId' not found")
+    TODO("Not yet implemented")
   }
 
   override suspend fun addProfile(profile: Profile) {
@@ -45,7 +32,7 @@ class ProfileRepositoryLocal : ProfileRepository {
   }
 
   override suspend fun getAllProfiles(): List<Profile> {
-    return profileList
+    TODO("Not yet implemented")
   }
 
   override suspend fun searchProfilesByLocation(
@@ -56,10 +43,11 @@ class ProfileRepositoryLocal : ProfileRepository {
   }
 
   override suspend fun getProfileById(userId: String): Profile {
-    TODO("Not yet implemented")
+    return profiles.find { it.userId == userId }
+        ?: throw IllegalArgumentException("TutorRepositoryLocal: Profile not found for $userId")
   }
 
   override suspend fun getSkillsForUser(userId: String): List<Skill> {
-    TODO("Not yet implemented")
+    return userSkills[userId]?.toList() ?: emptyList()
   }
 }
