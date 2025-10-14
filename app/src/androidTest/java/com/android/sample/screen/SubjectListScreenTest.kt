@@ -6,12 +6,14 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.map.Location
@@ -151,12 +153,18 @@ class SubjectListScreenTest {
   fun rendersTutorList_excludingTopTutors() {
     setContent()
 
-    // Scrollable list exists
-    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertIsDisplayed()
+    // List exists, even if not in viewport
+    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertExists()
 
-    // The list should contain the non-top tutors (2 in our dataset: p4, p5)
-    // We can search for their names to make sure they appear somewhere.
+    // Scroll the list to the items, then assert
+    composeRule
+        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+        .performScrollToNode(hasText("Nora Q."))
     composeRule.onNodeWithText("Nora Q.").assertIsDisplayed()
+
+    composeRule
+        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+        .performScrollToNode(hasText("Maya R."))
     composeRule.onNodeWithText("Maya R.").assertIsDisplayed()
   }
 
@@ -175,14 +183,25 @@ class SubjectListScreenTest {
   fun searchFiltersList_visually() {
     setContent()
 
-    // Type into search bar to find "Nora"
     composeRule.onNodeWithTag(SubjectListTestTags.SEARCHBAR).performTextInput("Nora")
 
-    // Now the main list should contain only Nora (from the non-top list).
-    composeRule.onNodeWithText("Nora Q.").assertIsDisplayed()
-    // And Maya should be filtered out from the visible list
-    // (Top section remains unchanged; we're validating the list behavior)
-    composeRule.onNodeWithText("Maya R.").assertDoesNotExist()
+    // Wait until filtered result appears
+    composeRule.waitUntil(3_000) {
+      composeRule.onAllNodes(hasText("Nora Q.")).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    // Only one tutor card remains in the main list
+    composeRule
+        .onAllNodes(
+            hasTestTag(SubjectListTestTags.TUTOR_CARD) and
+                hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
+        .assertCountEquals(1)
+
+    // “Maya R.” no longer exists in the main list subtree
+    composeRule
+        .onAllNodes(
+            hasText("Maya R.") and hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
+        .assertCountEquals(0)
   }
 
   @Test

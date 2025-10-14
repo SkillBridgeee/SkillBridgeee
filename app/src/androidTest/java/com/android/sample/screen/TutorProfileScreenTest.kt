@@ -46,48 +46,40 @@ class TutorProfileScreenTest {
       )
 
   /** Test double that satisfies the full TutorRepository contract. */
-  private class ImmediateRepo(
-      private val profile: Profile,
-      private val skills: List<Skill>,
-  ) : ProfileRepository {
+  // inside TutorProfileScreenTest
+  private class ImmediateRepo(sampleProfile: Profile, sampleSkills: List<Skill>) :
+      ProfileRepository {
+    private val profiles = mutableMapOf<String, Profile>()
 
-    override suspend fun getSkillsForUser(userId: String): List<Skill> = skills
-
-    override fun getNewUid(): String {
-      TODO("Not yet implemented")
+    fun seed(profile: Profile) {
+      profiles[profile.userId] = profile
     }
 
-    override suspend fun getProfile(userId: String): Profile {
-      TODO("Not yet implemented")
-    }
+    override fun getNewUid(): String = "fake"
 
-    // No-ops to satisfy the interface (if your interface includes writes)
+    override suspend fun getProfile(userId: String): Profile =
+        profiles[userId] ?: error("No profile $userId")
+
+    override suspend fun getProfileById(userId: String): Profile = getProfile(userId)
+
     override suspend fun addProfile(profile: Profile) {
-      /* no-op */
+      profiles[profile.userId] = profile
     }
 
     override suspend fun updateProfile(userId: String, profile: Profile) {
-      TODO("Not yet implemented")
+      profiles[userId] = profile
     }
 
     override suspend fun deleteProfile(userId: String) {
-      TODO("Not yet implemented")
+      profiles.remove(userId)
     }
 
-    override suspend fun getAllProfiles(): List<Profile> {
-      TODO("Not yet implemented")
-    }
+    override suspend fun getAllProfiles(): List<Profile> = profiles.values.toList()
 
-    override suspend fun searchProfilesByLocation(
-        location: Location,
-        radiusKm: Double
-    ): List<Profile> {
-      TODO("Not yet implemented")
-    }
+    override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+        emptyList<Profile>()
 
-    override suspend fun getProfileById(userId: String): Profile {
-      TODO("Not yet implemented")
-    }
+    override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
   }
 
   private fun launch() {
