@@ -2,20 +2,15 @@ package com.android.sample.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.android.sample.model.user.Profile
 import com.android.sample.ui.screens.HomePlaceholder
 import com.android.sample.ui.screens.PianoSkill2Screen
 import com.android.sample.ui.screens.PianoSkillScreen
 import com.android.sample.ui.screens.ProfilePlaceholder
 import com.android.sample.ui.screens.SettingsPlaceholder
 import com.android.sample.ui.screens.SkillsPlaceholder
-import com.android.sample.ui.subject.SubjectListScreen
-import com.android.sample.ui.subject.SubjectListViewModel
-import com.android.sample.ui.tutor.TutorProfileViewModel
 
 /**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
@@ -61,10 +56,10 @@ fun AppNavGraph(navController: NavHostController) {
     composable(NavRoutes.PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
       ProfilePlaceholder()
-//      val vm: SubjectListViewModel = viewModel()
-//      val vm2: TutorProfileViewModel = viewModel()
-//      SubjectListScreen(vm, { _: Profile -> })
-//      // TutorProfileScreen("test", vm2, navController)
+      //      val vm: SubjectListViewModel = viewModel()
+      //      val vm2: TutorProfileViewModel = viewModel()
+      //      SubjectListScreen(vm, { _: Profile -> })
+      //      // TutorProfileScreen("test", vm2, navController)
     }
 
     composable(NavRoutes.HOME) {
