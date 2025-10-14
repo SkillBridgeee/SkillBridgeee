@@ -87,6 +87,10 @@ class SubjectListScreenTest {
             TODO("Not yet implemented")
           }
 
+          override suspend fun getProfileById(userId: String): Profile {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun getSkillsForUser(userId: String): List<Skill> {
             return allSkills[userId].orEmpty()
           }
