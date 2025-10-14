@@ -143,5 +143,4 @@ class TutorProfileScreenTest {
     compose.onNodeWithText("kendrick@gmail.com").assertIsDisplayed()
     compose.onNodeWithText("@KendrickLamar").assertIsDisplayed()
   }
-
 }

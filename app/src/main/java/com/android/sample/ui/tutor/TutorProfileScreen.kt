@@ -44,7 +44,6 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.RatingStars
 import com.android.sample.ui.components.SkillChip
-import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.theme.White
 
 /** Test tags for the Tutor Profile screen. */
@@ -77,24 +76,21 @@ fun TutorProfileScreen(
   val state by vm.state.collectAsStateWithLifecycle()
 
   Scaffold { innerPadding ->
-        // Show a loading spinner while loading and the content when loaded
-        if (state.loading) {
-          Box(
-              modifier = modifier.fillMaxSize().padding(innerPadding),
-              contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-              }
-        } else {
-          val profile = state.profile
-          if (profile != null) {
-            TutorContent(
-                profile = profile,
-                skills = state.skills,
-                modifier = modifier,
-                padding = innerPadding)
+    // Show a loading spinner while loading and the content when loaded
+    if (state.loading) {
+      Box(
+          modifier = modifier.fillMaxSize().padding(innerPadding),
+          contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
           }
-        }
+    } else {
+      val profile = state.profile
+      if (profile != null) {
+        TutorContent(
+            profile = profile, skills = state.skills, modifier = modifier, padding = innerPadding)
       }
+    }
+  }
 }
 
 /**
