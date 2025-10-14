@@ -117,18 +117,21 @@ class SubjectListScreenTest {
 
     // Wait until top section appears
     composeRule.waitUntil(5_000) {
-      composeRule.onAllNodesWithTag(SubjectListTestTags.TOP_TUTORS_SECTION)
-        .fetchSemanticsNodes().isNotEmpty()
+      composeRule
+          .onAllNodesWithTag(SubjectListTestTags.TOP_TUTORS_SECTION)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
     // THEN wait until the main list has items (non-top tutors)
     composeRule.waitUntil(5_000) {
-      composeRule.onAllNodes(
-        hasTestTag(SubjectListTestTags.TUTOR_CARD) and
-                hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST))
-      ).fetchSemanticsNodes().isNotEmpty()
+      composeRule
+          .onAllNodes(
+              hasTestTag(SubjectListTestTags.TUTOR_CARD) and
+                  hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
   }
-
 
   /** ---- Tests ----------------------------------------------------------- */
   @Test
@@ -159,15 +162,16 @@ class SubjectListScreenTest {
 
     composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertExists()
 
-    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
-      .performScrollToNode(hasText("Nora Q."))
+    composeRule
+        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+        .performScrollToNode(hasText("Nora Q."))
     composeRule.onNodeWithText("Nora Q.").assertIsDisplayed()
 
-    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
-      .performScrollToNode(hasText("Maya R."))
+    composeRule
+        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+        .performScrollToNode(hasText("Maya R."))
     composeRule.onNodeWithText("Maya R.").assertIsDisplayed()
   }
-
 
   @Test
   fun clickingBook_callsCallback() {
