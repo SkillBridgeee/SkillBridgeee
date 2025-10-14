@@ -76,4 +76,11 @@ class ProfileRepositoryLocal : ProfileRepository {
             else -> emptyList()
         }
     }
+  override suspend fun getProfileById(userId: String): Profile {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getSkillsForUser(userId: String): List<Skill> {
+    TODO("Not yet implemented")
+  }
 }

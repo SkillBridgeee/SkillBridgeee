@@ -14,3 +14,6 @@ val White = Color(0xFFFFFFFF)
 val TealChip = Color(0xFF0EA5B6)
 val BlueApp = Color(0xFF90CAF9)
 val GreenApp = Color(0xFF43EA7F)
+
+val BlueApp = Color(0xFF90CAF9)
+val GreenApp = Color(0xFF43EA7F)

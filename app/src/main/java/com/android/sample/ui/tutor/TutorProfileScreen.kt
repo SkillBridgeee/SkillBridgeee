@@ -44,7 +44,6 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.RatingStars
 import com.android.sample.ui.components.SkillChip
-import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.theme.White
 
 /** Test tags for the Tutor Profile screen. */
@@ -55,7 +54,6 @@ object TutorPageTestTags {
   const val SKILLS_SECTION = "TutorPageTestTags.SKILLS_SECTION"
   const val SKILL = "TutorPageTestTags.SKILL"
   const val CONTACT_SECTION = "TutorPageTestTags.CONTACT_SECTION"
-  const val TOP_BAR = "TutorPageTestTags.TOP_BAR"
 }
 
 /**
@@ -94,8 +92,14 @@ fun TutorProfileScreen(
                 modifier = modifier,
                 padding = innerPadding)
           }
-        }
+    } else {
+      val profile = state.profile
+      if (profile != null) {
+        TutorContent(
+            profile = profile, skills = state.skills, modifier = modifier, padding = innerPadding)
       }
+    }
+  }
 }
 
 /**
