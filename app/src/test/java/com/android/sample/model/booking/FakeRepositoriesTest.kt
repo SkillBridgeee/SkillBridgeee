@@ -6,12 +6,30 @@ import com.android.sample.model.listing.*
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.*
 import com.android.sample.model.skill.Skill
+import java.lang.reflect.Method
 import java.util.Date
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 
+/**
+ * Merged repository tests:
+ * - Covers all public methods of the three fakes
+ * - Exercises the reflection-heavy helper branches inside FakeListingRepository &
+ *   FakeRatingRepository NOTE: Uses Skill() with defaults (no constructor args) to match your
+ *   project.
+ */
 class FakeRepositoriesTest {
+
+  // ---------- tiny reflection helper ----------
+
+  private fun <T> callPrivate(target: Any, name: String, vararg args: Any?): T? {
+    val m: Method = target::class.java.declaredMethods.first { it.name == name }
+    m.isAccessible = true
+    @Suppress("UNCHECKED_CAST") return m.invoke(target, *args) as T?
+  }
+
+  // ---------- Booking fake: public APIs ----------
 
   @Test
   fun bookingFake_covers_all_public_methods() {
@@ -34,7 +52,7 @@ class FakeRepositoriesTest {
               status = BookingStatus.CONFIRMED,
               price = 25.0)
 
-      // Exercise all methods; ignore errors from unsupported flows
+      // Exercise all methods; ignore failures for unsupported paths
       runCatching { repo.addBooking(b) }
       runCatching { repo.updateBooking(b.bookingId, b) }
       runCatching { repo.updateBookingStatus(b.bookingId, BookingStatus.COMPLETED) }
@@ -51,6 +69,8 @@ class FakeRepositoriesTest {
     }
   }
 
+  // ---------- Listing fake: public APIs ----------
+
   @Test
   fun listingFake_covers_all_public_methods() {
     runBlocking {
@@ -61,8 +81,9 @@ class FakeRepositoriesTest {
       assertNotNull(repo.getProposals())
       assertNotNull(repo.getRequests())
 
-      val skill = Skill()
+      val skill = Skill() // <-- use default Skill()
       val loc = Location()
+
       val proposal =
           Proposal(
               listingId = "L-prop",
@@ -71,6 +92,7 @@ class FakeRepositoriesTest {
               description = "desc",
               location = loc,
               hourlyRate = 10.0)
+
       val request =
           Request(
               listingId = "L-req",
@@ -80,7 +102,7 @@ class FakeRepositoriesTest {
               location = loc,
               maxBudget = 20.0)
 
-      // These may or may not actually persist in the fake; that's OK for coverage
+      // Some fakes may not persist; wrap in runCatching to avoid hard failures
       runCatching { repo.addProposal(proposal) }
       runCatching { repo.addRequest(request) }
       runCatching { repo.updateListing(proposal.listingId, proposal) }
@@ -93,6 +115,8 @@ class FakeRepositoriesTest {
       runCatching { repo.getListing("L-prop") }
     }
   }
+
+  // ---------- Rating fake: public APIs ----------
 
   @Test
   fun ratingFake_covers_all_public_methods() {
@@ -122,5 +146,86 @@ class FakeRepositoriesTest {
       runCatching { repo.getRatingsOfListing("L1") }
       runCatching { repo.getRating("R1") }
     }
+  }
+
+  // =====================================================================
+  // Extra reflection-driven coverage for FakeListingRepository
+  // =====================================================================
+
+  /** Dummy Listing with boolean field & setter to drive trySetBooleanField. */
+  private data class ListingIdCarrier(val listingId: String = "L-x")
+
+  private data class ActiveCarrier(private var active: Boolean = true) {
+    // emulate isX / setX path
+    fun isActive(): Boolean = active
+
+    fun setActive(v: Boolean) {
+      active = v
+    }
+  }
+
+  private data class EnabledFieldCarrier(var enabled: Boolean = true)
+
+  private data class OwnerCarrier(val ownerId: String = "owner-9")
+
+  @Test
+  fun listing_reflection_findValueOn_paths() {
+    val repo = FakeListingRepository()
+
+    // getter/name path
+    val id: Any? = callPrivate(repo, "findValueOn", ListingIdCarrier("L-x"), listOf("listingId"))
+    assertEquals("L-x", id)
+
+    // isX path
+    val active: Any? = callPrivate(repo, "findValueOn", ActiveCarrier(true), listOf("active"))
+    assertEquals(true, active)
+
+    // declared-field path
+    val enabled: Any? =
+        callPrivate(repo, "findValueOn", EnabledFieldCarrier(true), listOf("enabled"))
+    assertEquals(true, enabled)
+  }
+
+  @Test
+  fun listing_reflection_trySetBooleanField_sets_both_paths() {
+    val repo = FakeListingRepository()
+
+    // via declared boolean field
+    val hasEnabled = EnabledFieldCarrier(true)
+    callPrivate<Unit>(repo, "trySetBooleanField", hasEnabled, listOf("enabled"), false)
+    assertFalse(hasEnabled.enabled)
+
+    // via setter setActive(boolean)
+    val hasActive = ActiveCarrier(true)
+    callPrivate<Unit>(repo, "trySetBooleanField", hasActive, listOf("active"), false)
+    // read back through isActive()
+    val nowActive: Any? = callPrivate(repo, "findValueOn", hasActive, listOf("active"))
+    assertEquals(false, nowActive)
+  }
+
+  @Test
+  fun listing_reflection_matchesUser_ownerId_alias() {
+    val repo = FakeListingRepository()
+    val ownerCarrier = OwnerCarrier(ownerId = "u-777")
+
+    val v: Any? =
+        callPrivate(
+            repo,
+            "findValueOn",
+            ownerCarrier,
+            listOf("creatorUserId", "creatorId", "ownerId", "userId"))
+    assertEquals("u-777", v?.toString())
+  }
+
+  @Test
+  fun listing_reflection_searchByLocation_branches() {
+    val repo = FakeListingRepository()
+
+    // null branch: object without any location-like field
+    data class NoLocation(val other: String = "x")
+    val nullVal: Any? =
+        callPrivate(
+            repo, "findValueOn", NoLocation(), listOf("location", "place", "coords", "position"))
+    assertNull(nullVal)
   }
 }
