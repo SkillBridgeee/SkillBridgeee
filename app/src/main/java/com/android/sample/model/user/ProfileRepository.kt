@@ -16,9 +16,11 @@ interface ProfileRepository {
   suspend fun getAllProfiles(): List<Profile>
 
   suspend fun searchProfilesByLocation(
-      location: com.android.sample.model.map.Location,
-      radiusKm: Double
+    location: com.android.sample.model.map.Location,
+    radiusKm: Double
   ): List<Profile>
+
+  suspend fun getProfileById(userId: String): Profile
 
   suspend fun getSkillsForUser(userId: String): List<Skill>
 }
