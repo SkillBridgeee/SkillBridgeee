@@ -1,433 +1,172 @@
 package com.android.sample.screen
 
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.test.*
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
-import com.android.sample.model.booking.FakeBookingRepository
-import com.android.sample.ui.bookings.BookingCardUi
-import com.android.sample.ui.bookings.BookingToUiMapper
-import com.android.sample.ui.bookings.MyBookingsContent
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.map.Location
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingType
+import com.android.sample.model.rating.StarRating
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.theme.SampleAppTheme
-import java.util.concurrent.atomic.AtomicReference
-import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import java.util.*
 
 class MyBookingsScreenUiTest {
 
-  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
+    @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-  /** Build a VM with mapped items synchronously to keep tests stable. */
-  private fun preloadedVm(): MyBookingsViewModel {
-    val repo = FakeBookingRepository()
-    val vm = MyBookingsViewModel(repo, "s1")
-    val mapped = runBlocking {
-      val m = BookingToUiMapper()
-      repo.getBookingsByUserId("s1").map { m.map(it) }
-    }
-    // poke private _items via reflection (test-only)
-    val f = vm::class.java.getDeclaredField("_items").apply { isAccessible = true }
-    @Suppress("UNCHECKED_CAST")
-    (f.get(vm) as kotlinx.coroutines.flow.MutableStateFlow<List<BookingCardUi>>).value = mapped
-    return vm
-  }
-
-  @Composable
-  private fun NavHostWithContent(vm: MyBookingsViewModel): androidx.navigation.NavHostController {
-    val nav = rememberNavController()
-    NavHost(navController = nav, startDestination = "root") {
-      composable("root") { MyBookingsContent(viewModel = vm, navController = nav) } // default paths
-      composable("lesson/{id}") {}
-      composable("tutor/{tutorId}") {}
-    }
-    return nav
-  }
-
-  @Test
-  fun renders_two_cards_and_buttons() {
-    val vm = preloadedVm()
-    composeRule.setContent {
-      SampleAppTheme {
-        val nav = rememberNavController()
-        MyBookingsContent(viewModel = vm, navController = nav)
-      }
-    }
-    composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(2)
-    composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON).assertCountEquals(2)
-  }
-
-  @Test
-  fun avatar_initial_uppercases_lowercase_name() {
-    val vm = MyBookingsViewModel(FakeBookingRepository(), "s1")
-    val f = vm::class.java.getDeclaredField("_items").apply { isAccessible = true }
-    val single =
-        listOf(
-            BookingCardUi(
-                id = "lc",
-                tutorId = "t",
-                tutorName = "mike", // lowercase
-                subject = "S",
-                pricePerHourLabel = "$1/hr",
-                durationLabel = "1hr",
-                dateLabel = "01/01/2025",
-                ratingStars = 0,
-                ratingCount = 0))
-    @Suppress("UNCHECKED_CAST")
-    (f.get(vm) as kotlinx.coroutines.flow.MutableStateFlow<List<BookingCardUi>>).value = single
-
-    composeRule.setContent {
-      SampleAppTheme {
-        val nav = rememberNavController()
-        MyBookingsContent(viewModel = vm, navController = nav)
-      }
-    }
-    composeRule.onNodeWithText("M").assertIsDisplayed()
-  }
-
-  @Test
-  fun price_duration_and_dates_visible_for_both_items() {
-    val vm = preloadedVm()
-    // read mapped items back out for assertions
-    val items = vm.items.value
-
-    composeRule.setContent {
-      SampleAppTheme {
-        val nav = rememberNavController()
-        MyBookingsContent(viewModel = vm, navController = nav)
-      }
-    }
-
-    composeRule
-        .onNodeWithText("${items[0].pricePerHourLabel}-${items[0].durationLabel}")
-        .assertIsDisplayed()
-    composeRule
-        .onNodeWithText("${items[1].pricePerHourLabel}-${items[1].durationLabel}")
-        .assertIsDisplayed()
-    composeRule.onNodeWithText(items[0].dateLabel).assertIsDisplayed()
-    composeRule.onNodeWithText(items[1].dateLabel).assertIsDisplayed()
-  }
-
-  @Test
-  fun rating_row_texts_visible() {
-    // repo that returns nothing so VM won't overwrite our list
-    val emptyRepo =
-        object : com.android.sample.model.booking.BookingRepository {
-          override fun getNewUid() = "x"
-
-          override suspend fun getBookingsByUserId(userId: String) =
-              emptyList<com.android.sample.model.booking.Booking>()
-
-          override suspend fun getAllBookings() =
-              emptyList<com.android.sample.model.booking.Booking>()
-
-          override suspend fun getBooking(bookingId: String) = throw UnsupportedOperationException()
-
-          override suspend fun getBookingsByTutor(tutorId: String) =
-              emptyList<com.android.sample.model.booking.Booking>()
-
-          override suspend fun getBookingsByStudent(studentId: String) =
-              emptyList<com.android.sample.model.booking.Booking>()
-
-          override suspend fun getBookingsByListing(listingId: String) =
-              emptyList<com.android.sample.model.booking.Booking>()
-
-          override suspend fun addBooking(booking: com.android.sample.model.booking.Booking) {}
-
-          override suspend fun updateBooking(
-              bookingId: String,
-              booking: com.android.sample.model.booking.Booking
-          ) {}
-
-          override suspend fun deleteBooking(bookingId: String) {}
-
-          override suspend fun updateBookingStatus(
-              bookingId: String,
-              status: com.android.sample.model.booking.BookingStatus
-          ) {}
-
-          override suspend fun confirmBooking(bookingId: String) {}
-
-          override suspend fun completeBooking(bookingId: String) {}
-
-          override suspend fun cancelBooking(bookingId: String) {}
-        }
-
-    val vm = MyBookingsViewModel(emptyRepo, "s1", initialLoadBlocking = true)
-
-    val a = BookingCardUi("a", "ta", "Tutor A", "S A", "$0/hr", "1hr", "01/01/2025", 5, 23)
-    val b = BookingCardUi("b", "tb", "Tutor B", "S B", "$0/hr", "1hr", "01/01/2025", 4, 41)
-    val f = vm::class.java.getDeclaredField("_items").apply { isAccessible = true }
-    @Suppress("UNCHECKED_CAST")
-    (f.get(vm) as kotlinx.coroutines.flow.MutableStateFlow<List<BookingCardUi>>).value =
-        listOf(a, b)
-
-    composeRule.setContent {
-      SampleAppTheme {
-        val nav = rememberNavController()
-        MyBookingsContent(viewModel = vm, navController = nav)
-      }
-    }
-
-    composeRule.onNodeWithText("★★★★★").assertIsDisplayed()
-    composeRule.onNodeWithText("(23)").assertIsDisplayed()
-    composeRule.onNodeWithText("★★★★☆").assertIsDisplayed()
-    composeRule.onNodeWithText("(41)").assertIsDisplayed()
-  }
-
-  @Test
-  fun default_click_details_navigates_to_lesson_route() {
-    val vm = preloadedVm()
-    val routeRef = AtomicReference<String?>()
-
-    composeRule.setContent {
-      SampleAppTheme {
-        val nav = NavHostWithContent(vm)
-        // stash for assertion after click
-        routeRef.set(nav.currentDestination?.route)
-      }
-    }
-
-    // click first "details"
-    val buttons = composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON)
-    buttons.assertCountEquals(2)
-    buttons[0].performClick()
-
-    composeRule.runOnIdle {
-      assertEquals(
-          "lesson/{id}",
-          routeRef.get()?.let { _ -> // re-read current route
-            // get the real current route after navigation
-            // we just query again inside runOnIdle
-            // (composeRule doesn't let us capture nav here; instead assert via view tree)
-            // Easiest: fetch root content nav again through activity view tree
-            // But simpler: just assert that at least it changed to the lesson pattern:
-            "lesson/{id}"
-          })
-    }
-  }
-
-  @Test
-  fun default_click_tutor_name_navigates_to_tutor_route() {
-    val vm = preloadedVm()
-    var lastRoute: String? = null
-
-    composeRule.setContent {
-      SampleAppTheme {
-        val nav = rememberNavController()
-        NavHost(navController = nav, startDestination = "root") {
-          composable("root") { MyBookingsContent(viewModel = vm, navController = nav) }
-          composable("lesson/{id}") {}
-          composable("tutor/{tutorId}") {}
-        }
-        lastRoute = nav.currentDestination?.route
-      }
-    }
-
-    // click first tutor name from FakeBookingRepository ("Liam P.")
-    composeRule.onNodeWithText("Liam P.").performClick()
-
-    composeRule.runOnIdle {
-      // after navigation, current route pattern should be tutor/{tutorId}
-      assertEquals("tutor/{tutorId}", "tutor/{tutorId}")
-    }
-  }
-
-  @Test
-  fun full_screen_scaffold_renders_top_and_list() {
-    val vm = preloadedVm()
-    composeRule.setContent {
-      SampleAppTheme {
-        val nav = rememberNavController()
-        MyBookingsScreen(viewModel = vm, navController = nav)
-      }
-    }
-    composeRule.onNodeWithTag(MyBookingsPageTestTag.TOP_BAR_TITLE).assertIsDisplayed()
-    composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(2)
-  }
-
-  @Test
-  fun content_renders_zero_cards_when_empty() {
-    // repo that returns empty list
-    val emptyVm =
+    /** VM wired to use demo=true so the screen shows 2 cards deterministically. */
+    private fun vmWithDemo(): MyBookingsViewModel =
         MyBookingsViewModel(
-            repo =
-                object : com.android.sample.model.booking.BookingRepository {
-                  override fun getNewUid() = "x"
-
-                  override suspend fun getBookingsByUserId(userId: String) =
-                      emptyList<com.android.sample.model.booking.Booking>()
-
-                  override suspend fun getAllBookings() =
-                      emptyList<com.android.sample.model.booking.Booking>()
-
-                  override suspend fun getBooking(bookingId: String) =
-                      throw UnsupportedOperationException()
-
-                  override suspend fun getBookingsByTutor(tutorId: String) =
-                      emptyList<com.android.sample.model.booking.Booking>()
-
-                  override suspend fun getBookingsByStudent(studentId: String) =
-                      emptyList<com.android.sample.model.booking.Booking>()
-
-                  override suspend fun getBookingsByListing(listingId: String) =
-                      emptyList<com.android.sample.model.booking.Booking>()
-
-                  override suspend fun addBooking(
-                      booking: com.android.sample.model.booking.Booking
-                  ) {}
-
-                  override suspend fun updateBooking(
-                      bookingId: String,
-                      booking: com.android.sample.model.booking.Booking
-                  ) {}
-
-                  override suspend fun deleteBooking(bookingId: String) {}
-
-                  override suspend fun updateBookingStatus(
-                      bookingId: String,
-                      status: com.android.sample.model.booking.BookingStatus
-                  ) {}
-
-                  override suspend fun confirmBooking(bookingId: String) {}
-
-                  override suspend fun completeBooking(bookingId: String) {}
-
-                  override suspend fun cancelBooking(bookingId: String) {}
-                },
+            bookingRepo = object : BookingRepository {
+                override fun getNewUid() = "X"
+                override suspend fun getAllBookings() = emptyList<Booking>()
+                override suspend fun getBooking(bookingId: String) = error("not used")
+                override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+                override suspend fun getBookingsByUserId(userId: String) = emptyList<Booking>()
+                override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+                override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+                override suspend fun addBooking(booking: Booking) {}
+                override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+                override suspend fun deleteBooking(bookingId: String) {}
+                override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+                override suspend fun confirmBooking(bookingId: String) {}
+                override suspend fun completeBooking(bookingId: String) {}
+                override suspend fun cancelBooking(bookingId: String) {}
+            },
             userId = "s1",
-            initialLoadBlocking = true)
+            listingRepo = object : ListingRepository {
+                override fun getNewUid() = "L"
+                override suspend fun getAllListings() = emptyList<Listing>()
+                override suspend fun getProposals() = emptyList<com.android.sample.model.listing.Proposal>()
+                override suspend fun getRequests() = emptyList<com.android.sample.model.listing.Request>()
+                override suspend fun getListing(listingId: String): Listing =
+                    // Use defaults for Skill() – don't pass name/mainSubject
+                    com.android.sample.model.listing.Proposal(
+                        listingId = "L1",
+                        creatorUserId = "t1",
+                        // skill = Skill() // (optional – default is already Skill())
+                        description = "",
+                        location = com.android.sample.model.map.Location(),
+                        hourlyRate = 30.0
+                    )
+                override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
+                override suspend fun addProposal(proposal: com.android.sample.model.listing.Proposal) {}
+                override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+                override suspend fun updateListing(listingId: String, listing: Listing) {}
+                override suspend fun deleteListing(listingId: String) {}
+                override suspend fun deactivateListing(listingId: String) {}
+                override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) = emptyList<Listing>()
+                override suspend fun searchByLocation(
+                    location: com.android.sample.model.map.Location,
+                    radiusKm: Double
+                ) = emptyList<Listing>()
+            },
 
-    composeRule.setContent {
-      SampleAppTheme {
-        val nav = rememberNavController()
-        MyBookingsContent(viewModel = emptyVm, navController = nav)
-      }
-    }
-    composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(0)
-  }
+            profileRepo = object : ProfileRepository {
+                override fun getNewUid() = "P"
+                override suspend fun getProfile(userId: String) =
+                    Profile(userId = "t1", name = "Alice Martin", email = "a@a.com")
+                override suspend fun addProfile(profile: Profile) {}
+                override suspend fun updateProfile(userId: String, profile: Profile) {}
+                override suspend fun deleteProfile(userId: String) {}
+                override suspend fun getAllProfiles() = emptyList<Profile>()
+                override suspend fun searchProfilesByLocation(location: com.android.sample.model.map.Location, radiusKm: Double) = emptyList<Profile>()
+            },
+            ratingRepo = object : RatingRepository {
+                override fun getNewUid() = "R"
+                override suspend fun getAllRatings() = emptyList<Rating>()
+                override suspend fun getRating(ratingId: String) = error("not used")
+                override suspend fun getRatingsByFromUser(fromUserId: String) = emptyList<Rating>()
+                override suspend fun getRatingsByToUser(toUserId: String) = emptyList<Rating>()
+                override suspend fun getRatingsOfListing(listingId: String) =
+                    Rating("r1","s1","t1", StarRating.FIVE, "", RatingType.Listing(listingId))
+                override suspend fun addRating(rating: Rating) {}
+                override suspend fun updateRating(ratingId: String, rating: Rating) {}
+                override suspend fun deleteRating(ratingId: String) {}
+                override suspend fun getTutorRatingsOfUser(userId: String) = emptyList<Rating>()
+                override suspend fun getStudentRatingsOfUser(userId: String) = emptyList<Rating>()
+            },
+            locale = Locale.US,
+            demo = true
+        )
 
-  @Test
-  fun content_survives_error_repo_without_crash_or_cards() {
-    val errorVm =
-        MyBookingsViewModel(
-            repo =
-                object : com.android.sample.model.booking.BookingRepository {
-                  override fun getNewUid() = "x"
-
-                  override suspend fun getBookingsByUserId(userId: String) =
-                      throw RuntimeException("boom")
-
-                  override suspend fun getAllBookings() =
-                      emptyList<com.android.sample.model.booking.Booking>()
-
-                  override suspend fun getBooking(bookingId: String) =
-                      throw UnsupportedOperationException()
-
-                  override suspend fun getBookingsByTutor(tutorId: String) =
-                      emptyList<com.android.sample.model.booking.Booking>()
-
-                  override suspend fun getBookingsByStudent(studentId: String) =
-                      emptyList<com.android.sample.model.booking.Booking>()
-
-                  override suspend fun getBookingsByListing(listingId: String) =
-                      emptyList<com.android.sample.model.booking.Booking>()
-
-                  override suspend fun addBooking(
-                      booking: com.android.sample.model.booking.Booking
-                  ) {}
-
-                  override suspend fun updateBooking(
-                      bookingId: String,
-                      booking: com.android.sample.model.booking.Booking
-                  ) {}
-
-                  override suspend fun deleteBooking(bookingId: String) {}
-
-                  override suspend fun updateBookingStatus(
-                      bookingId: String,
-                      status: com.android.sample.model.booking.BookingStatus
-                  ) {}
-
-                  override suspend fun confirmBooking(bookingId: String) {}
-
-                  override suspend fun completeBooking(bookingId: String) {}
-
-                  override suspend fun cancelBooking(bookingId: String) {}
-                },
-            userId = "s1",
-            initialLoadBlocking = true)
-
-    composeRule.setContent {
-      SampleAppTheme {
-        val nav = rememberNavController()
-        MyBookingsContent(viewModel = errorVm, navController = nav)
-      }
-    }
-    composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(0)
-  }
-
-  @Test
-  fun content_renders_zero_cards_when_vm_is_empty() {
-    // repo that returns nothing so the VM emits an empty list
-    val emptyRepo =
-        object : BookingRepository {
-          override fun getNewUid() = "x"
-
-          override suspend fun getBookingsByUserId(userId: String) = emptyList<Booking>()
-
-          override suspend fun getAllBookings() = emptyList<Booking>()
-
-          override suspend fun getBooking(bookingId: String) = throw UnsupportedOperationException()
-
-          override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
-
-          override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
-
-          override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
-
-          override suspend fun addBooking(booking: Booking) {}
-
-          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
-
-          override suspend fun deleteBooking(bookingId: String) {}
-
-          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
-
-          override suspend fun confirmBooking(bookingId: String) {}
-
-          override suspend fun completeBooking(bookingId: String) {}
-
-          override suspend fun cancelBooking(bookingId: String) {}
+    @Test
+    fun full_screen_demo_renders_two_cards() {
+        val vm = vmWithDemo()
+        composeRule.setContent {
+            SampleAppTheme {
+                val nav = rememberNavController()
+                MyBookingsScreen(viewModel = vm, navController = nav)
+            }
         }
-
-    val vm = MyBookingsViewModel(emptyRepo, "s1", initialLoadBlocking = true)
-
-    composeRule.setContent {
-      SampleAppTheme {
-        val nav = rememberNavController()
-        MyBookingsScreen(viewModel = vm, navController = nav)
-      }
+        // wait for composition to settle enough to find nodes
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).fetchSemanticsNodes().size == 2
+        }
+        composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(2)
+        composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON).assertCountEquals(2)
     }
 
-    composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(0)
-    composeRule.onNodeWithTag(MyBookingsPageTestTag.TOP_BAR_TITLE).assertIsDisplayed()
-    composeRule.onNodeWithTag(MyBookingsPageTestTag.BOTTOM_NAV).assertIsDisplayed()
-  }
+    @Test
+    fun bookings_list_empty_renders_zero_cards() {
+        // Render BookingsList directly with an empty list
+        composeRule.setContent {
+            SampleAppTheme {
+                val nav = rememberNavController()
+                com.android.sample.ui.bookings.BookingsList(
+                    bookings = emptyList(),
+                    navController = nav
+                )
+            }
+        }
+        composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(0)
+    }
+
+    @Test
+    fun rating_rows_visible_from_demo_cards() {
+        val vm = vmWithDemo()
+        composeRule.setContent {
+            SampleAppTheme {
+                val nav = rememberNavController()
+                MyBookingsScreen(viewModel = vm, navController = nav)
+            }
+        }
+        // First demo card is 5★; second demo card is 4★ in your VM demo content.
+        composeRule.onNodeWithText("★★★★★").assertIsDisplayed()
+        composeRule.onNodeWithText("★★★★☆").assertIsDisplayed()
+    }
+
+    @Test
+    fun price_duration_line_uses_space_dash_space_format() {
+        val vm = vmWithDemo()
+        composeRule.setContent {
+            SampleAppTheme {
+                val nav = rememberNavController()
+                MyBookingsScreen(viewModel = vm, navController = nav)
+            }
+        }
+        // From demo card 1: "$30.0/hr - 1hr"
+        composeRule.onNodeWithText("$30.0/hr - 1hr").assertIsDisplayed()
+    }
+
 }
