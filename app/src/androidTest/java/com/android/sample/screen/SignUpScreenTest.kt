@@ -130,7 +130,7 @@ class SignUpScreenTest {
     composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assert(hasText("Submitting…"))
 
     // wait until done; then label returns to "Sign Up"
-    composeRule.waitUntil(3_000) { vm.state.value.submitSuccess }
+    composeRule.waitUntil(300) { vm.state.value.submitSuccess }
     composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assert(hasText("Sign Up"))
   }
 
@@ -149,7 +149,7 @@ class SignUpScreenTest {
     composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
     composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performClick()
 
-    composeRule.waitUntil(3_000) { !vm.state.value.submitting }
+    composeRule.waitUntil(300) { !vm.state.value.submitting }
     assertNotNull(vm.state.value.error)
     composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
   }
@@ -171,7 +171,7 @@ class SignUpScreenTest {
 
     composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
     composeRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performClick()
-    composeRule.waitUntil(3_000) { vm.state.value.submitSuccess }
+    composeRule.waitUntil(300) { vm.state.value.submitSuccess }
     assertEquals(1, repo.added.size)
     assertEquals("Élise Müller", repo.added[0].name)
   }
