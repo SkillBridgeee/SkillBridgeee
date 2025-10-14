@@ -20,7 +20,5 @@ interface ProfileRepository {
       radiusKm: Double
   ): List<Profile>
 
-  suspend fun getProfileById(userId: String): Profile
-
   suspend fun getSkillsForUser(userId: String): List<Skill>
 }
