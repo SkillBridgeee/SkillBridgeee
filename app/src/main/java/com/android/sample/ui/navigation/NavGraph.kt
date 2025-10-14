@@ -71,5 +71,9 @@ fun AppNavGraph(navController: NavHostController) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SETTINGS) }
       SettingsPlaceholder()
     }
+
+    composable(NavRoutes.BOOKINGS) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
+    }
   }
 }

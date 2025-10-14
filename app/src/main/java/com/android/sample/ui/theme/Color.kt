@@ -12,5 +12,8 @@ val Pink40 = Color(0xFF7D5260)
 
 val White = Color(0xFFFFFFFF)
 val TealChip = Color(0xFF0EA5B6)
+val BrandBlue = Color(0xFF0288D1) // links, price, "details" button
+val CardBg = Color(0xFFE9EAF1) // card fill close to figma light grey
+val ChipBorder = Color(0xFF333333) // chip border close to figma dark grey
 val BlueApp = Color(0xFF90CAF9)
 val GreenApp = Color(0xFF43EA7F)

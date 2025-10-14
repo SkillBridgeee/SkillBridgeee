@@ -8,8 +8,11 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
 
@@ -47,19 +50,30 @@ fun BottomNavBar(navController: NavHostController) {
   val items =
       listOf(
           BottomNavItem("Home", Icons.Default.Home, NavRoutes.HOME),
+          BottomNavItem("Bookings", Icons.Default.Home, NavRoutes.BOOKINGS),
           BottomNavItem("Skills", Icons.Default.Star, NavRoutes.SKILLS),
           BottomNavItem("Profile", Icons.Default.Person, NavRoutes.PROFILE),
           BottomNavItem("Settings", Icons.Default.Settings, NavRoutes.SETTINGS))
 
-  NavigationBar {
+  NavigationBar(modifier = Modifier) {
     items.forEach { item ->
+      val itemModifier =
+          when (item.route) {
+            NavRoutes.HOME -> Modifier.testTag(MyBookingsPageTestTag.NAV_HOME)
+            NavRoutes.BOOKINGS -> Modifier.testTag(MyBookingsPageTestTag.NAV_BOOKINGS)
+            NavRoutes.PROFILE -> Modifier.testTag(MyBookingsPageTestTag.NAV_PROFILE)
+            NavRoutes.MESSAGES -> Modifier.testTag(MyBookingsPageTestTag.NAV_MESSAGES)
+
+            // Add NAV_MESSAGES mapping here if needed
+            else -> Modifier
+          }
+
       NavigationBarItem(
+          modifier = itemModifier,
           selected = currentRoute == item.route,
           onClick = {
-            // Reset the route stack when switching tabs
             RouteStackManager.clear()
             RouteStackManager.addRoute(item.route)
-
             navController.navigate(item.route) {
               popUpTo(NavRoutes.HOME) { saveState = true }
               launchSingleTop = true
