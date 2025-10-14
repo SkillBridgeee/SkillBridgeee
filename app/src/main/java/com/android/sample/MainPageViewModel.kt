@@ -5,6 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.map.Location
+import com.android.sample.model.rating.RatingInfo
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.user.Profile
 import com.android.sample.ui.theme.AccentBlue
 import com.android.sample.ui.theme.AccentGreen
 import com.android.sample.ui.theme.AccentPurple
@@ -14,27 +20,20 @@ import com.android.sample.ui.theme.AccentPurple
  * Manages UI state such as skills, tutors, and user actions.
  */
 class MainPageViewModel(
-    private val tutorsRepository: TutorsRepository
+    //private val tutorsRepository: TutorsRepository
 ) : ViewModel() {
 
-    data class Skill(
-        val title: String,
-        val color: Color
-    )
-
-    data class Tutor(
-        val name: String,
-        val subject: String,
-        val price: String,
-        val reviews: Int,
-        val rating: Int = 5
-    )
 
     private val _skills = mutableStateListOf<Skill>()
     val skills: List<Skill> get() = _skills
 
-    private val _tutors = mutableStateListOf<Tutor>()
-    val tutors: List<Tutor> get() = _tutors
+    private val _tutors = mutableStateListOf<Profile>()
+    val tutors: List<Profile> get() = _tutors
+
+    private val _listings = mutableStateListOf<Listing>()
+    val listings: List<Listing> get() = _listings
+
+
 
     private val _welcomeMessage = mutableStateOf("Welcome back, Ava!")
     val welcomeMessage: State<String> get() = _welcomeMessage
@@ -44,24 +43,45 @@ class MainPageViewModel(
     }
 
     private fun loadMockData() {
-        _skills.addAll(
-            listOf(
-                Skill("Academics", AccentBlue),
-                Skill("Music", AccentPurple),
-                Skill("Sports", AccentGreen)
-            )
-        )
+
 
         _tutors.addAll(
             listOf(
-                Tutor("Liam P.", "Piano Lessons", "$25/hr", 23),
-                Tutor("Maria G.", "Calculus & Algebra", "$30/hr", 41),
-                Tutor("David C.", "Acoustic Guitar", "$20/hr", 18)
+                Profile("12", "Liam P.", "Piano Lessons", null, "$25/hr", "", RatingInfo(4.8, 23)),
+                Profile("13", "Maria G.", "Calculus & Algebra", null, "$30/hr",  "", RatingInfo(4.9, 41)),
+                Profile("14", "David C.", "Acoustic Guitar", null, "$20/hr", "", RatingInfo(4.7, 18))
+            )
+        )
+
+        _listings.addAll(
+            listOf(
+                Proposal(
+                    "1",
+                    "12",
+                    Skill("Piano"),
+                    "Experienced piano teacher",
+                    Location(37.7749, -122.4194),
+                    amount = 25.0
+                ),
+                Proposal("2",
+                    "13",
+                    Skill("Calculus"),
+                    "Math tutor for high school students",
+                    Location(34.0522, -118.2437),
+                    amount = 30.0
+                ),
+                Proposal("3",
+                    "14",
+                    Skill("Guitar"),
+                    "Learn acoustic guitar basics",
+                    Location(40.7128, -74.0060),
+                    amount = 20.0
+                )
             )
         )
     }
 
-    fun onBookTutorClicked(tutor: Tutor) {
+    fun onBookTutorClicked(tutor: Profile) {
         viewModelScope.launch {
 
         }
@@ -72,4 +92,9 @@ class MainPageViewModel(
 
         }
     }
+    fun getTutorFromId(tutorId: String): Profile {
+        return tutors.find { it.userId == tutorId }
+            ?: Profile(userId = tutorId, name = "Unknown Tutor", description = "No description available")
+    }
+
 }
