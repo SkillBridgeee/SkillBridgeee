@@ -84,6 +84,10 @@ class TutorProfileScreenTest {
     ): List<Profile> {
       TODO("Not yet implemented")
     }
+
+      override suspend fun getProfileById(userId: String): Profile {
+          TODO("Not yet implemented")
+      }
   }
 
   private fun launch() {
