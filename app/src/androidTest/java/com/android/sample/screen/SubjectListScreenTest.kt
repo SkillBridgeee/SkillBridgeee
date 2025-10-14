@@ -163,12 +163,10 @@ class SubjectListScreenTest {
 
     composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertExists()
 
-    composeRule.onNode(hasScrollAction())
-      .performScrollToNode(hasText("Nora Q."))
+    composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Nora Q."))
     composeRule.onNodeWithText("Nora Q.").assertIsDisplayed()
 
-    composeRule.onNode(hasScrollAction())
-      .performScrollToNode(hasText("Maya R."))
+    composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("Maya R."))
     composeRule.onNodeWithText("Maya R.").assertIsDisplayed()
   }
 

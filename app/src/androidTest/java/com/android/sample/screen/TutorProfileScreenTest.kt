@@ -52,40 +52,47 @@ class TutorProfileScreenTest {
       private val sampleSkills: List<Skill>
   ) : ProfileRepository {
 
-      private val profiles = mutableMapOf<String, Profile>()
-      private val skillsByUser = mutableMapOf<String, List<Skill>>()
+    private val profiles = mutableMapOf<String, Profile>()
+    private val skillsByUser = mutableMapOf<String, List<Skill>>()
 
-      fun seed(profile: Profile, skills: List<Skill>) {
-          profiles[profile.userId] = profile
-          skillsByUser[profile.userId] = skills
-      }
+    fun seed(profile: Profile, skills: List<Skill>) {
+      profiles[profile.userId] = profile
+      skillsByUser[profile.userId] = skills
+    }
 
-      override fun getNewUid() = "fake"
+    override fun getNewUid() = "fake"
 
-      override suspend fun getProfile(userId: String): Profile =
-          profiles[userId] ?: error("No profile $userId")
+    override suspend fun getProfile(userId: String): Profile =
+        profiles[userId] ?: error("No profile $userId")
 
-      override suspend fun getProfileById(userId: String) = getProfile(userId)
+    override suspend fun getProfileById(userId: String) = getProfile(userId)
 
-      override suspend fun addProfile(profile: Profile) { profiles[profile.userId] = profile }
+    override suspend fun addProfile(profile: Profile) {
+      profiles[profile.userId] = profile
+    }
 
-      override suspend fun updateProfile(userId: String, profile: Profile) { profiles[userId] = profile }
+    override suspend fun updateProfile(userId: String, profile: Profile) {
+      profiles[userId] = profile
+    }
 
-      override suspend fun deleteProfile(userId: String) { profiles.remove(userId); skillsByUser.remove(userId) }
+    override suspend fun deleteProfile(userId: String) {
+      profiles.remove(userId)
+      skillsByUser.remove(userId)
+    }
 
-      override suspend fun getAllProfiles(): List<Profile> = profiles.values.toList()
+    override suspend fun getAllProfiles(): List<Profile> = profiles.values.toList()
 
-      override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) = emptyList<Profile>()
+    override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+        emptyList<Profile>()
 
-      override suspend fun getSkillsForUser(userId: String): List<Skill> =
-          skillsByUser[userId] ?: emptyList()
+    override suspend fun getSkillsForUser(userId: String): List<Skill> =
+        skillsByUser[userId] ?: emptyList()
   }
 
-
-    private fun launch() {
+  private fun launch() {
     val repo =
         ImmediateRepo(sampleProfile, sampleSkills).apply {
-            seed(sampleProfile, sampleSkills) // <-- ensure "demo" is present
+          seed(sampleProfile, sampleSkills) // <-- ensure "demo" is present
         }
     val vm = TutorProfileViewModel(repo)
     compose.setContent {
