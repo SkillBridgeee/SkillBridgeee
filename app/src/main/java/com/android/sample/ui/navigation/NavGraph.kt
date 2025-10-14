@@ -77,15 +77,15 @@ fun AppNavGraph(navController: NavHostController) {
     composable(NavRoutes.BOOKINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
 
-      val vm = MyBookingsViewModel(
-        bookingRepo = FakeBookingRepository(),
-        userId = "s1",
-        listingRepo = FakeListingRepository(),
-        profileRepo = ProfileRepositoryLocal(),
-        ratingRepo = FakeRatingRepository(),
-        locale = java.util.Locale.getDefault(),
-        demo = true
-      )
+      val vm =
+          MyBookingsViewModel(
+              bookingRepo = FakeBookingRepository(),
+              userId = "s1",
+              listingRepo = FakeListingRepository(),
+              profileRepo = ProfileRepositoryLocal(),
+              ratingRepo = FakeRatingRepository(),
+              locale = java.util.Locale.getDefault(),
+              demo = true)
 
       MyBookingsScreen(viewModel = vm, navController = navController)
     }
