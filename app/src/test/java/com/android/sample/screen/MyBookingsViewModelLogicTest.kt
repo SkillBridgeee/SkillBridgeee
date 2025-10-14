@@ -94,6 +94,52 @@ class MyBookingsViewModelLogicTest {
     override suspend fun cancelBooking(bookingId: String) {}
   }
 
+  private class FakeRatingRepo(
+      private val map: Map<String, List<Rating>> // key: listingId -> ratings
+  ) : RatingRepository {
+    override fun getNewUid() = "R"
+
+    override suspend fun getAllRatings(): List<Rating> = map.values.flatten()
+
+    override suspend fun getRating(ratingId: String) = error("not used in these tests")
+
+    override suspend fun getRatingsByFromUser(fromUserId: String) = emptyList<Rating>()
+
+    override suspend fun getRatingsByToUser(toUserId: String) = emptyList<Rating>()
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> =
+        map[listingId] ?: emptyList()
+
+    override suspend fun addRating(rating: Rating) {}
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+    override suspend fun deleteRating(ratingId: String) {}
+
+    override suspend fun getTutorRatingsOfUser(userId: String) = emptyList<Rating>()
+
+    override suspend fun getStudentRatingsOfUser(userId: String) = emptyList<Rating>()
+  }
+
+  private class FakeProfileRepo(private val map: Map<String, Profile>) : ProfileRepository {
+    override fun getNewUid() = "P"
+
+    override suspend fun getProfile(userId: String) = map.getValue(userId)
+
+    override suspend fun addProfile(profile: Profile) {}
+
+    override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+    override suspend fun deleteProfile(userId: String) {}
+
+    override suspend fun getAllProfiles() = map.values.toList()
+
+    override suspend fun searchProfilesByLocation(
+        location: com.android.sample.model.map.Location,
+        radiusKm: Double
+    ) = emptyList<Profile>()
+  }
+
   private class FakeListingRepo(private val map: Map<String, Listing>) : ListingRepository {
     override fun getNewUid() = "L"
 
@@ -126,51 +172,6 @@ class MyBookingsViewModelLogicTest {
     ) = emptyList<Listing>()
   }
 
-  private class FakeProfileRepo(private val map: Map<String, Profile>) : ProfileRepository {
-    override fun getNewUid() = "P"
-
-    override suspend fun getProfile(userId: String) = map.getValue(userId)
-
-    override suspend fun addProfile(profile: Profile) {}
-
-    override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-    override suspend fun deleteProfile(userId: String) {}
-
-    override suspend fun getAllProfiles() = map.values.toList()
-
-    override suspend fun searchProfilesByLocation(
-        location: com.android.sample.model.map.Location,
-        radiusKm: Double
-    ) = emptyList<Profile>()
-  }
-
-  private class FakeRatingRepo(
-      private val map: Map<String, Rating?> // key: listingId
-  ) : RatingRepository {
-    override fun getNewUid() = "R"
-
-    override suspend fun getAllRatings() = map.values.filterNotNull()
-
-    override suspend fun getRating(ratingId: String) = error("not used")
-
-    override suspend fun getRatingsByFromUser(fromUserId: String) = emptyList<Rating>()
-
-    override suspend fun getRatingsByToUser(toUserId: String) = emptyList<Rating>()
-
-    override suspend fun getRatingsOfListing(listingId: String) = map[listingId]
-
-    override suspend fun addRating(rating: Rating) {}
-
-    override suspend fun updateRating(ratingId: String, rating: Rating) {}
-
-    override suspend fun deleteRating(ratingId: String) {}
-
-    override suspend fun getTutorRatingsOfUser(userId: String) = emptyList<Rating>()
-
-    override suspend fun getStudentRatingsOfUser(userId: String) = emptyList<Rating>()
-  }
-
   @Test
   fun load_success_populates_cards_and_formats_labels() = runTest {
     val start = Date(0L) // 01/01/1970 00:00 UTC
@@ -186,7 +187,7 @@ class MyBookingsViewModelLogicTest {
             userId = "s1",
             listingRepo = FakeListingRepo(mapOf("L1" to listing)),
             profileRepo = FakeProfileRepo(mapOf("t1" to prof)),
-            ratingRepo = FakeRatingRepo(mapOf("L1" to rating)),
+            ratingRepo = FakeRatingRepo(mapOf("L1" to listOf(rating))),
             locale = Locale.UK,
             demo = false)
 
@@ -219,7 +220,7 @@ class MyBookingsViewModelLogicTest {
                                 location = Location(),
                                 hourlyRate = 10.0))),
             profileRepo = FakeProfileRepo(mapOf("t1" to Profile("t1", "T", "t@t.com"))),
-            ratingRepo = FakeRatingRepo(mapOf("L1" to null)), // no rating
+            ratingRepo = FakeRatingRepo(mapOf("L1" to emptyList())), // no rating
             locale = Locale.US,
             demo = false)
 

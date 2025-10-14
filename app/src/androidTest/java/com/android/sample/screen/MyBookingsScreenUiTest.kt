@@ -149,8 +149,10 @@ class MyBookingsScreenUiTest {
 
                 override suspend fun getRatingsByToUser(toUserId: String) = emptyList<Rating>()
 
-                override suspend fun getRatingsOfListing(listingId: String) =
-                    Rating("r1", "s1", "t1", StarRating.FIVE, "", RatingType.Listing(listingId))
+                override suspend fun getRatingsOfListing(listingId: String): List<Rating> =
+                    listOf(
+                        Rating(
+                            "r1", "s1", "t1", StarRating.FIVE, "", RatingType.Listing(listingId)))
 
                 override suspend fun addRating(rating: Rating) {}
 

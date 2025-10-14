@@ -15,6 +15,7 @@ import com.android.sample.model.user.ProfileRepositoryProvider
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,28 +60,24 @@ class MyBookingsViewModel(
   }
 
   fun load() {
-    try {
-      viewModelScope.launch {
-        if (demo) {
-          _uiState.value = demoCards()
-          return@launch
-        }
-
-        val result = mutableListOf<BookingCardUi>()
-        try {
-          val bookings = bookingRepo.getBookingsByUserId(userId)
-          for (b in bookings) {
-            val card = buildCardSafely(b)
-            if (card != null) result += card
-          }
-          _uiState.value = result
-        } catch (e: Throwable) {
-          Log.e("MyBookingsViewModel", "Error loading bookings for $userId", e)
-          _uiState.value = emptyList()
-        }
+    viewModelScope.launch {
+      if (demo) {
+        _uiState.value = demoCards()
+        return@launch
       }
-    } catch (e: Throwable) {
-      Log.e("MyBookingsViewModel", "Error launching load()", e)
+
+      val result = mutableListOf<BookingCardUi>()
+      try {
+        val bookings = bookingRepo.getBookingsByUserId(userId)
+        for (b in bookings) {
+          val card = buildCardSafely(b)
+          if (card != null) result += card
+        }
+        _uiState.value = result
+      } catch (e: Throwable) {
+        Log.e("MyBookingsViewModel", "Error loading bookings for $userId", e)
+        _uiState.value = emptyList()
+      }
     }
   }
 
@@ -113,8 +110,8 @@ class MyBookingsViewModel(
     return try {
       val listing = listingRepo.getListing(b.associatedListingId)
       val profile = profileRepo.getProfile(b.listingCreatorId)
-      val rating = ratingRepo.getRatingsOfListing(b.associatedListingId)
-      buildCard(b, listing, profile, rating)
+      val ratings = ratingRepo.getRatingsOfListing(b.associatedListingId)
+      buildCard(b, listing, profile, ratings)
     } catch (e: Throwable) {
       Log.e("MyBookingsViewModel", "Skipping booking ${b.bookingId}", e)
       null
@@ -125,15 +122,22 @@ class MyBookingsViewModel(
       b: Booking,
       listing: Listing,
       profile: Profile,
-      rating: Rating?
+      ratings: List<Rating>
   ): BookingCardUi {
     val tutorName = profile.name
     val subject = listing.skill.mainSubject.toString()
     val pricePerHourLabel = String.format(Locale.US, "$%.1f/hr", b.price)
     val durationLabel = formatDuration(b.sessionStart, b.sessionEnd)
     val dateLabel = formatDate(b.sessionStart)
-    val ratingStars = rating?.starRating?.value?.coerceIn(0, 5) ?: 0
-    val ratingCount = if (rating != null) 1 else 0
+
+    val ratingCount = ratings.size
+    val ratingStars =
+        if (ratingCount > 0) {
+          val total = ratings.sumOf { it.starRating.value } // assuming value is Int 1..5
+          (total.toDouble() / ratingCount).roundToInt().coerceIn(0, 5)
+        } else {
+          0
+        }
 
     return BookingCardUi(
         id = b.bookingId,

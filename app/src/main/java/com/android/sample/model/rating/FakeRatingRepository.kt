@@ -33,11 +33,18 @@ class FakeRatingRepository(private val initial: List<Rating> = emptyList()) : Ra
         }
       }
 
-  override suspend fun getRatingsOfListing(listingId: String): Rating? =
+  override suspend fun getRatingsOfListing(listingId: String): List<Rating> =
       synchronized(ratings) {
-        ratings.values.firstOrNull { r ->
-          val v = findValueOn(r, listOf("listingId", "associatedListingId", "listing_id"))
-          v?.toString() == listingId
+        ratings.values.filter { r ->
+          when (val t = r.ratingType) {
+            is RatingType.Listing -> t.listingId == listingId
+            is RatingType.Tutor -> t.listingId == listingId
+            is RatingType.Student -> {
+              // not tied to a listing; try legacy/fallback fields just in case
+              val v = findValueOn(r, listOf("listingId", "associatedListingId", "listing_id"))
+              v?.toString() == listingId
+            }
+          }
         }
       }
 
