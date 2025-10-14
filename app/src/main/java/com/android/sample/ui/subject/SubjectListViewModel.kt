@@ -42,7 +42,6 @@ class SubjectListViewModel(
     private val repository: ProfileRepository = ProfileRepositoryProvider.repository,
     private val tutorsPerTopSection: Int = 3
 ) : ViewModel() {
-
     private val _ui = MutableStateFlow(SubjectListUiState())
     val ui: StateFlow<SubjectListUiState> = _ui
 
