@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.android.sample.model.user.FakeProfileRepository
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
-import kotlin.compareTo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
