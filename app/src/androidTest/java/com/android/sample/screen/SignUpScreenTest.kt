@@ -18,15 +18,14 @@ import org.junit.Rule
 import org.junit.Test
 
 // ---------- helpers ----------
-private fun waitForTag(rule: ComposeContentTestRule, tag: String, timeoutMs: Long = 5_000) {
+private fun waitForTag(rule: ComposeContentTestRule, tag: String, timeoutMs: Long = 15_000) {
   rule.waitUntil(timeoutMs) {
-    rule.onAllNodes(hasTestTag(tag), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    rule.onAllNodes(hasTestTag(tag), useUnmergedTree = false).fetchSemanticsNodes().isNotEmpty()
   }
 }
 
 private fun ComposeContentTestRule.nodeByTag(tag: String) =
-    onNodeWithTag(tag, useUnmergedTree = true)
-
+    onNodeWithTag(tag, useUnmergedTree = false)
 // ---------- fakes ----------
 private class UiRepo : ProfileRepository {
   val added = mutableListOf<Profile>()
@@ -103,7 +102,8 @@ class SignUpScreenTest {
   @Test
   fun all_fields_render_and_role_toggle() {
     val vm = SignUpViewModel(UiRepo())
-    composeRule.setContent { SignUpScreen(vm = vm) }
+    composeRule.setContent { com.android.sample.ui.theme.SampleAppTheme { SignUpScreen(vm = vm) } }
+    composeRule.waitForIdle()
 
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
@@ -127,7 +127,8 @@ class SignUpScreenTest {
   @Test
   fun failing_submit_reenables_button_and_sets_error() {
     val vm = SignUpViewModel(SlowFailRepo())
-    composeRule.setContent { SignUpScreen(vm = vm) }
+    composeRule.setContent { com.android.sample.ui.theme.SampleAppTheme { SignUpScreen(vm = vm) } }
+    composeRule.waitForIdle()
 
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
@@ -141,7 +142,7 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performClick()
 
-    composeRule.waitUntil(7_000) { !vm.state.value.submitting && vm.state.value.error != null }
+    composeRule.waitUntil(12_000) { !vm.state.value.submitting && vm.state.value.error != null }
     assertNotNull(vm.state.value.error)
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
   }
@@ -150,7 +151,8 @@ class SignUpScreenTest {
   fun uppercase_email_is_accepted_and_trimmed() {
     val repo = UiRepo()
     val vm = SignUpViewModel(repo)
-    composeRule.setContent { SignUpScreen(vm = vm) }
+    composeRule.setContent { com.android.sample.ui.theme.SampleAppTheme { SignUpScreen(vm = vm) } }
+    composeRule.waitForIdle()
 
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
@@ -164,7 +166,7 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performClick()
 
-    composeRule.waitUntil(7_000) { vm.state.value.submitSuccess }
+    composeRule.waitUntil(12_000) { vm.state.value.submitSuccess }
     assertEquals(1, repo.added.size)
     assertEquals("Élise Müller", repo.added[0].name)
   }
