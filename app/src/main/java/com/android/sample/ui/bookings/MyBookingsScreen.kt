@@ -1,3 +1,4 @@
+// Kotlin
 package com.android.sample.ui.bookings
 
 import androidx.compose.foundation.background
@@ -22,14 +23,13 @@ import com.android.sample.ui.theme.CardBg
 import com.android.sample.ui.theme.ChipBorder
 
 object MyBookingsPageTestTag {
-  const val TOP_BAR_TITLE = "MyBookingsPageTestTag.TOP_BAR_TITLE"
-  const val BOOKING_CARD = "MyBookingsPageTestTag.BOOKING_CARD"
-  const val BOOKING_DETAILS_BUTTON = "MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON"
-  const val BOTTOM_NAV = "MyBookingsPageTestTag.BOTTOM_NAV"
-  const val NAV_HOME = "MyBookingsPageTestTag.NAV_HOME"
-  const val NAV_BOOKINGS = "MyBookingsPageTestTag.NAV_BOOKINGS"
-  const val NAV_MESSAGES = "MyBookingsPageTestTag.NAV_MESSAGES"
-  const val NAV_PROFILE = "MyBookingsPageTestTag.NAV_PROFILE"
+  const val BOOKING_CARD = "bookingCard"
+  const val BOOKING_DETAILS_BUTTON = "bookingDetailsButton"
+  const val NAV_HOME = "navHome"
+  const val NAV_BOOKINGS = "navBookings"
+  const val NAV_MESSAGES = "navMessages"
+  const val NAV_PROFILE = "navProfile"
+  const val EMPTY_BOOKINGS = "emptyBookings"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -42,33 +42,14 @@ fun MyBookingsScreen(
     modifier: Modifier = Modifier
 ) {
   Scaffold { inner ->
-    MyBookingsContent(
-        viewModel = viewModel,
+    val bookings by viewModel.uiState.collectAsState(initial = emptyList())
+    BookingsList(
+        bookings = bookings,
         navController = navController,
         onOpenDetails = onOpenDetails,
         onOpenTutor = onOpenTutor,
         modifier = modifier.padding(inner))
   }
-}
-
-@Composable
-fun MyBookingsContent(
-    viewModel: MyBookingsViewModel,
-    navController: NavHostController,
-    onOpenDetails: ((BookingCardUi) -> Unit)? = null,
-    onOpenTutor: ((BookingCardUi) -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-  // collect the list of BookingCardUi from the ViewModel
-  val bookings by viewModel.uiState.collectAsState(initial = emptyList())
-
-  // delegate actual list rendering to a dedicated composable
-  BookingsList(
-      bookings = bookings,
-      navController = navController,
-      onOpenDetails = onOpenDetails,
-      onOpenTutor = onOpenTutor,
-      modifier = modifier)
 }
 
 @Composable
@@ -79,12 +60,22 @@ fun BookingsList(
     onOpenTutor: ((BookingCardUi) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+  if (bookings.isEmpty()) {
+    Box(
+        modifier =
+            modifier.fillMaxSize().padding(16.dp).testTag(MyBookingsPageTestTag.EMPTY_BOOKINGS),
+        contentAlignment = Alignment.Center) {
+          Text(text = "No bookings available")
+        }
+    return
+  }
+
   LazyColumn(
       modifier = modifier.fillMaxSize().padding(12.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(bookings, key = { it.id }) { ui ->
+        items(bookings, key = { it.id }) { booking ->
           BookingCard(
-              ui = ui,
+              booking = booking,
               onOpenDetails = {
                 onOpenDetails?.invoke(it) ?: navController.navigate("lesson/${it.id}")
               },
@@ -97,7 +88,7 @@ fun BookingsList(
 
 @Composable
 private fun BookingCard(
-    ui: BookingCardUi,
+    booking: BookingCardUi,
     onOpenDetails: (BookingCardUi) -> Unit,
     onOpenTutor: (BookingCardUi) -> Unit
 ) {
@@ -112,7 +103,7 @@ private fun BookingCard(
                       .background(Color.White, CircleShape)
                       .border(2.dp, ChipBorder, CircleShape),
               contentAlignment = Alignment.Center) {
-                val first = ui.tutorName.firstOrNull()?.uppercaseChar() ?: '—'
+                val first = booking.tutorName.firstOrNull()?.uppercaseChar() ?: '—'
                 Text(first.toString(), fontWeight = FontWeight.Bold)
               }
 
@@ -120,27 +111,27 @@ private fun BookingCard(
 
           Column(modifier = Modifier.weight(1f)) {
             Text(
-                ui.tutorName,
+                booking.tutorName,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { onOpenTutor(ui) })
+                modifier = Modifier.clickable { onOpenTutor(booking) })
             Spacer(Modifier.height(2.dp))
-            Text(ui.subject, color = BrandBlue)
+            Text(booking.subject, color = BrandBlue)
             Spacer(Modifier.height(6.dp))
             Text(
-                "${ui.pricePerHourLabel} - ${ui.durationLabel}",
+                "${booking.pricePerHourLabel} - ${booking.durationLabel}",
                 color = BrandBlue,
                 fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(4.dp))
-            Text(ui.dateLabel)
+            Text(booking.dateLabel)
             Spacer(Modifier.height(6.dp))
-            RatingRow(stars = ui.ratingStars, count = ui.ratingCount)
+            RatingRow(stars = booking.ratingStars, count = booking.ratingCount)
           }
 
           Column(horizontalAlignment = Alignment.End) {
             Spacer(Modifier.height(8.dp))
             Button(
-                onClick = { onOpenDetails(ui) },
+                onClick = { onOpenDetails(booking) },
                 modifier = Modifier.testTag(MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON),
                 colors =
                     ButtonDefaults.buttonColors(

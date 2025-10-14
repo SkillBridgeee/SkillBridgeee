@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.booking.Booking
@@ -221,5 +222,25 @@ class MyBookingsScreenUiTest {
     }
     // From demo card 1: "$30.0/hr - 1hr"
     composeRule.onNodeWithText("$30.0/hr - 1hr").assertIsDisplayed()
+  }
+
+  @Test
+  fun empty_state_shows_message_and_tag() {
+    composeRule.setContent {
+      SampleAppTheme {
+        val nav = rememberNavController()
+        // Render the list with no items to trigger the empty state
+        com.android.sample.ui.bookings.BookingsList(bookings = emptyList(), navController = nav)
+      }
+    }
+
+    // No cards are rendered
+    composeRule.onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD).assertCountEquals(0)
+
+    // The empty-state container is visible
+    composeRule.onNodeWithTag(MyBookingsPageTestTag.EMPTY_BOOKINGS).assertIsDisplayed()
+
+    // The helper text is visible
+    composeRule.onNodeWithText("No bookings available").assertIsDisplayed()
   }
 }

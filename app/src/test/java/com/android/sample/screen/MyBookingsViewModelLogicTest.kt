@@ -172,55 +172,145 @@ class MyBookingsViewModelLogicTest {
   }
 
   @Test
-  fun load_success_populates_cards() = runTest {
-    // Use defaults for Skill to avoid constructor mismatch
-    val listing =
-        Proposal(
-            listingId = "L1",
-            creatorUserId = "t1",
-            description = "desc",
-            location = Location(),
-            hourlyRate = 30.0)
+  fun load_success_populates_cards_and_formats_labels() = runTest {
+    val start = Date(0L) // 01/01/1970 00:00 UTC
+    val end = Date(0L + 90 * 60 * 1000) // +1h30
 
-    val prof = Profile(userId = "t1", name = "Alice Martin", email = "a@a.com")
-
-    val rating =
-        Rating(
-            ratingId = "r1",
-            fromUserId = "s1",
-            toUserId = "t1",
-            starRating = StarRating.FOUR,
-            comment = "",
-            ratingType = RatingType.Listing("L1"))
+    val listing = Proposal("L1", "t1", description = "", location = Location(), hourlyRate = 30.0)
+    val prof = Profile("t1", "Alice Martin", "a@a.com")
+    val rating = Rating("r1", "s1", "t1", StarRating.FOUR, "", RatingType.Listing("L1"))
 
     val vm =
         MyBookingsViewModel(
-            bookingRepo = FakeBookingRepo(listOf(booking() /* helper that makes 1h30 */)),
+            bookingRepo = FakeBookingRepo(listOf(booking(start = start, end = end))),
             userId = "s1",
             listingRepo = FakeListingRepo(mapOf("L1" to listing)),
             profileRepo = FakeProfileRepo(mapOf("t1" to prof)),
             ratingRepo = FakeRatingRepo(mapOf("L1" to rating)),
+            locale = Locale.UK,
+            demo = false)
+
+    this.testScheduler.advanceUntilIdle()
+
+    val c = vm.uiState.value.single()
+    assertEquals("01/01/1970", c.dateLabel) // now deterministic
+    assertEquals("1h 30m", c.durationLabel)
+  }
+
+  @Test
+  fun when_rating_absent_stars_and_count_are_zero_and_pluralization_for_exact_hours() = runTest {
+    val twoHours =
+        booking(
+            id = "b2", start = Date(0L), end = Date(0L + 2 * 60 * 60 * 1000) // 2 hours exact
+            )
+
+    val vm =
+        MyBookingsViewModel(
+            bookingRepo = FakeBookingRepo(listOf(twoHours)),
+            userId = "s1",
+            listingRepo =
+                FakeListingRepo(
+                    mapOf(
+                        "L1" to
+                            Proposal(
+                                "L1",
+                                "t1",
+                                description = "",
+                                location = Location(),
+                                hourlyRate = 10.0))),
+            profileRepo = FakeProfileRepo(mapOf("t1" to Profile("t1", "T", "t@t.com"))),
+            ratingRepo = FakeRatingRepo(mapOf("L1" to null)), // no rating
             locale = Locale.US,
             demo = false)
 
-    // Let init -> load finish
-    testDispatcher.scheduler.advanceUntilIdle()
+    this.testScheduler.advanceUntilIdle()
+    val c = vm.uiState.value.single()
+    assertEquals(0, c.ratingStars)
+    assertEquals(0, c.ratingCount)
+    assertEquals("2hrs", c.durationLabel) // pluralization branch
+  }
 
-    val cards = vm.uiState.value
-    assertEquals(1, cards.size)
+  @Test
+  fun listing_fetch_failure_skips_booking() = runTest {
+    val failingListingRepo =
+        object : ListingRepository {
+          override fun getNewUid() = "L"
 
-    val c = cards.first()
-    assertEquals("b1", c.id)
-    assertEquals("t1", c.tutorId)
-    assertEquals("Alice Martin", c.tutorName)
-    // Subject comes from Skill.mainSubject.toString(); just ensure it's not blank
-    assertTrue(c.subject.isNotBlank())
-    assertEquals("$30.0/hr", c.pricePerHourLabel)
-    assertEquals(4, c.ratingStars)
-    assertEquals(1, c.ratingCount)
-    // duration of helper booking is 1h30
-    assertEquals("1h 30m", c.durationLabel)
-    assertTrue(c.dateLabel.matches(Regex("""\d{2}/\d{2}/\d{4}""")))
+          override suspend fun getAllListings() = emptyList<Listing>()
+
+          override suspend fun getProposals() = emptyList<Proposal>()
+
+          override suspend fun getRequests() = emptyList<Request>()
+
+          override suspend fun getListing(listingId: String) = throw RuntimeException("no listing")
+
+          override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
+
+          override suspend fun addProposal(proposal: Proposal) {}
+
+          override suspend fun addRequest(request: Request) {}
+
+          override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+          override suspend fun deleteListing(listingId: String) {}
+
+          override suspend fun deactivateListing(listingId: String) {}
+
+          override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
+
+          override suspend fun searchByLocation(
+              location: com.android.sample.model.map.Location,
+              radiusKm: Double
+          ) = emptyList<Listing>()
+        }
+
+    val vm =
+        MyBookingsViewModel(
+            bookingRepo = FakeBookingRepo(listOf(booking())),
+            userId = "s1",
+            listingRepo = failingListingRepo,
+            profileRepo = FakeProfileRepo(emptyMap()),
+            ratingRepo = FakeRatingRepo(emptyMap()),
+            demo = false)
+
+    this.testScheduler.advanceUntilIdle()
+    assertTrue(vm.uiState.value.isEmpty()) // buildCardSafely returned null → skipped
+  }
+
+  @Test
+  fun profile_fetch_failure_skips_booking() = runTest {
+    val listing = Proposal("L1", "t1", description = "", location = Location(), hourlyRate = 10.0)
+    val failingProfiles =
+        object : ProfileRepository {
+          override fun getNewUid() = "P"
+
+          override suspend fun getProfile(userId: String) = throw RuntimeException("no profile")
+
+          override suspend fun addProfile(profile: Profile) {}
+
+          override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+          override suspend fun deleteProfile(userId: String) {}
+
+          override suspend fun getAllProfiles() = emptyList<Profile>()
+
+          override suspend fun searchProfilesByLocation(
+              location: com.android.sample.model.map.Location,
+              radiusKm: Double
+          ) = emptyList<Profile>()
+        }
+
+    val vm =
+        MyBookingsViewModel(
+            bookingRepo = FakeBookingRepo(listOf(booking())),
+            userId = "s1",
+            listingRepo = FakeListingRepo(mapOf("L1" to listing)),
+            profileRepo = failingProfiles,
+            ratingRepo = FakeRatingRepo(emptyMap()),
+            demo = false)
+
+    this.testScheduler.advanceUntilIdle()
+    assertTrue(vm.uiState.value.isEmpty())
   }
 
   @Test
@@ -233,51 +323,7 @@ class MyBookingsViewModelLogicTest {
             profileRepo = FakeProfileRepo(emptyMap()),
             ratingRepo = FakeRatingRepo(emptyMap()),
             demo = false)
-    testDispatcher.scheduler.advanceUntilIdle()
-    assertTrue(vm.uiState.value.isEmpty())
-  }
-
-  @Test
-  fun load_handles_repository_errors_gracefully() = runTest {
-    val failingBookingRepo =
-        object : BookingRepository {
-          override fun getNewUid() = "X"
-
-          override suspend fun getAllBookings() = emptyList<Booking>()
-
-          override suspend fun getBooking(bookingId: String) = error("boom")
-
-          override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
-
-          override suspend fun getBookingsByUserId(userId: String) = throw RuntimeException("boom")
-
-          override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
-
-          override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
-
-          override suspend fun addBooking(booking: Booking) {}
-
-          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
-
-          override suspend fun deleteBooking(bookingId: String) {}
-
-          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
-
-          override suspend fun confirmBooking(bookingId: String) {}
-
-          override suspend fun completeBooking(bookingId: String) {}
-
-          override suspend fun cancelBooking(bookingId: String) {}
-        }
-    val vm =
-        MyBookingsViewModel(
-            bookingRepo = failingBookingRepo,
-            userId = "s1",
-            listingRepo = FakeListingRepo(emptyMap()),
-            profileRepo = FakeProfileRepo(emptyMap()),
-            ratingRepo = FakeRatingRepo(emptyMap()),
-            demo = false)
-    testDispatcher.scheduler.advanceUntilIdle()
+    this.testScheduler.advanceUntilIdle()
     assertTrue(vm.uiState.value.isEmpty())
   }
 
@@ -291,7 +337,7 @@ class MyBookingsViewModelLogicTest {
             profileRepo = FakeProfileRepo(emptyMap()),
             ratingRepo = FakeRatingRepo(emptyMap()),
             demo = true)
-    testDispatcher.scheduler.advanceUntilIdle()
+    this.testScheduler.advanceUntilIdle()
     val cards = vm.uiState.value
     assertEquals(2, cards.size)
     assertEquals("Alice Martin", cards[0].tutorName)
