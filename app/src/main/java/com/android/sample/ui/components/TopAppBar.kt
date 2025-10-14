@@ -5,6 +5,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -54,6 +55,7 @@ fun TopAppBar(navController: NavController) {
         NavRoutes.SKILLS -> "Skills"
         NavRoutes.PROFILE -> "Profile"
         NavRoutes.SETTINGS -> "Settings"
+        NavRoutes.BOOKINGS -> "My Bookings"
         else -> "SkillBridge"
       }
 
@@ -65,6 +67,7 @@ fun TopAppBar(navController: NavController) {
               RouteStackManager.getCurrentRoute() != null)
 
   TopAppBar(
+      modifier = Modifier,
       title = { Text(text = title, fontWeight = FontWeight.SemiBold) },
       navigationIcon = {
         if (canNavigateBack) {
