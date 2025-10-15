@@ -2,6 +2,7 @@ package com.android.sample.ui.signup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.map.Location
 import com.android.sample.model.user.FakeProfileRepository
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -91,9 +92,8 @@ class SignUpViewModel(private val repo: ProfileRepository = FakeProfileRepositor
       val password = s.password
       val passwordOk =
           password.length >= 8 && password.any { it.isDigit() } && password.any { it.isLetter() }
-      val addressOk = s.address.trim().isNotEmpty()
       val levelOk = s.levelOfEducation.trim().isNotEmpty()
-      val ok = nameOk && surnameOk && emailOk && passwordOk && addressOk && levelOk
+      val ok = nameOk && surnameOk && emailOk && passwordOk && levelOk
       s.copy(canSubmit = ok, error = null)
     }
   }
@@ -114,12 +114,18 @@ class SignUpViewModel(private val repo: ProfileRepository = FakeProfileRepositor
                 name = fullName,
                 email = current.email,
                 levelOfEducation = current.levelOfEducation,
-                description = current.description)
+                description = current.description,
+                location = buildLocation(current.address))
         repo.addProfile(profile)
         _state.update { it.copy(submitting = false, submitSuccess = true) }
       } catch (t: Throwable) {
         _state.update { it.copy(submitting = false, error = t.message ?: "Unknown error") }
       }
     }
+  }
+
+  // Store the entered address into Location.name. Replace with geocoding later if needed.
+  private fun buildLocation(address: String): Location {
+    return Location(name = address.trim())
   }
 }
