@@ -39,27 +39,35 @@ object HomeScreenTestTags {
 @Preview
 @Composable
 fun HomeScreen(mainPageViewModel: MainPageViewModel = viewModel()) {
-  val uiState by mainPageViewModel.uiState.collectAsState()
+    val uiState by mainPageViewModel.uiState.collectAsState()
 
-  Scaffold(
-      floatingActionButton = {
-        FloatingActionButton(
-            onClick = { mainPageViewModel.onAddTutorClicked() },
-            containerColor = PrimaryColor,
-            modifier = Modifier.testTag(HomeScreenTestTags.FAB_ADD)) {
-              Icon(Icons.Default.Add, contentDescription = "Add")
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { mainPageViewModel.onAddTutorClicked() },
+                containerColor = PrimaryColor,
+                modifier = Modifier.testTag(HomeScreenTestTags.FAB_ADD)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add")
             }
-      }) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues).fillMaxSize().background(Color.White)) {
-          Spacer(modifier = Modifier.height(10.dp))
-          GreetingSection(uiState.welcomeMessage)
-          Spacer(modifier = Modifier.height(20.dp))
-          ExploreSkills(uiState.skills)
-          Spacer(modifier = Modifier.height(20.dp))
-          TutorsSection(uiState.tutors, onBookClick = mainPageViewModel::onBookTutorClicked)
         }
-      }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+                .background(Color.White)
+        ) {
+            Spacer(modifier = Modifier.height(10.dp))
+            GreetingSection(uiState.welcomeMessage)
+            Spacer(modifier = Modifier.height(20.dp))
+            ExploreSkills(uiState.skills)
+            Spacer(modifier = Modifier.height(20.dp))
+            TutorsSection(uiState.tutors, onBookClick = mainPageViewModel::onBookTutorClicked)
+        }
+    }
 }
+
 
 @Composable
 fun GreetingSection(welcomeMessage: String) {
@@ -72,94 +80,122 @@ fun GreetingSection(welcomeMessage: String) {
 
 @Composable
 fun ExploreSkills(skills: List<Skill>) {
-  Column(
-      modifier =
-          Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.EXPLORE_SKILLS_SECTION)) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 10.dp)
+            .testTag(HomeScreenTestTags.EXPLORE_SKILLS_SECTION)
+    ) {
         Text("Explore skills", fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Spacer(modifier = Modifier.height(12.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-          items(skills) { SkillCard(skill = it) }
+            items(skills) { SkillCard(skill = it) }
         }
-      }
+    }
 }
+
 
 @Composable
 fun SkillCard(skill: Skill) {
-  val randomColor = remember {
-    Color(
-        red = Random.nextFloat(), green = Random.nextFloat(), blue = Random.nextFloat(), alpha = 1f)
-  }
-  Column(
-      modifier =
-          Modifier.background(randomColor, RoundedCornerShape(12.dp))
-              .padding(16.dp)
-              .testTag(HomeScreenTestTags.SKILL_CARD),
-      horizontalAlignment = Alignment.CenterHorizontally) {
+    val randomColor = remember {
+        Color(
+            red = Random.nextFloat(),
+            green = Random.nextFloat(),
+            blue = Random.nextFloat(),
+            alpha = 1f
+        )
+    }
+
+    Column(
+        modifier = Modifier
+            .background(randomColor, RoundedCornerShape(12.dp))
+            .padding(16.dp)
+            .testTag(HomeScreenTestTags.SKILL_CARD),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Spacer(modifier = Modifier.height(8.dp))
         Text(skill.skill, fontWeight = FontWeight.Bold, color = Color.Black)
-      }
+    }
 }
+
 
 @Composable
-fun TutorsSection(tutors: List<TutorCardUi>, onBookClick: (String) -> Unit) {
-  Column(modifier = Modifier.padding(horizontal = 10.dp)) {
-    Text(
-        text = "Top-Rated Tutors",
-        fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION))
+fun TutorsSection(
+    tutors: List<TutorCardUi>,
+    onBookClick: (String) -> Unit
+) {
+    Column(modifier = Modifier.padding(horizontal = 10.dp)) {
+        Text(
+            text = "Top-Rated Tutors",
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp,
+            modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION)
+        )
 
-    Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-    LazyColumn(
-        modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_LIST).fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          items(tutors) { TutorCard(it, onBookClick) }
+        LazyColumn(
+            modifier = Modifier
+                .testTag(HomeScreenTestTags.TUTOR_LIST)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(tutors) { TutorCard(it, onBookClick) }
         }
-  }
+    }
 }
+
 
 @Composable
 fun TutorCard(tutor: TutorCardUi, onBookClick: (String) -> Unit) {
-  Card(
-      modifier =
-          Modifier.fillMaxWidth().padding(vertical = 5.dp).testTag(HomeScreenTestTags.TUTOR_CARD),
-      shape = RoundedCornerShape(12.dp),
-      elevation = CardDefaults.cardElevation(4.dp)) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 5.dp)
+            .testTag(HomeScreenTestTags.TUTOR_CARD),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-          Surface(shape = CircleShape, color = Color.LightGray, modifier = Modifier.size(40.dp)) {}
+            Surface(shape = CircleShape, color = Color.LightGray, modifier = Modifier.size(40.dp)) {}
+            Spacer(modifier = Modifier.width(12.dp))
 
-          Spacer(modifier = Modifier.width(12.dp))
-
-          Column(modifier = Modifier.weight(1f)) {
-            Text(tutor.name, fontWeight = FontWeight.Bold)
-            Text(tutor.subject, color = SecondaryColor)
-            Row {
-              repeat(5) { i ->
-                val tint = if (i < tutor.ratingStars) Color.Black else Color.Gray
-                Icon(
-                    Icons.Default.Star,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(16.dp))
-              }
-              Text(
-                  "(${tutor.ratingCount})",
-                  fontSize = 12.sp,
-                  modifier = Modifier.padding(start = 4.dp))
-            }
-          }
-
-          Column(horizontalAlignment = Alignment.End) {
-            Text("$${tutor.hourlyRate} / hr", color = SecondaryColor, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(6.dp))
-            Button(
-                onClick = { onBookClick(tutor.name) },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_BOOK_BUTTON)) {
-                  Text("Book")
+            Column(modifier = Modifier.weight(1f)) {
+                Text(tutor.name, fontWeight = FontWeight.Bold)
+                Text(tutor.subject, color = SecondaryColor)
+                Row {
+                    repeat(5) { i ->
+                        val tint = if (i < tutor.ratingStars) Color.Black else Color.Gray
+                        Icon(
+                            Icons.Default.Star,
+                            contentDescription = null,
+                            tint = tint,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text(
+                        "(${tutor.ratingCount})",
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
                 }
-          }
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "$${"%.2f".format(tutor.hourlyRate)} / hr",  // ✅ formatted here, not in ViewModel
+                    color = SecondaryColor,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Button(
+                    onClick = { onBookClick(tutor.name) },
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_BOOK_BUTTON)
+                ) {
+                    Text("Book")
+                }
+            }
         }
-      }
+    }
 }
+

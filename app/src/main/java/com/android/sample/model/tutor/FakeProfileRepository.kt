@@ -13,6 +13,18 @@ class FakeProfileRepository {
   val tutors: List<Profile>
     get() = _tutors
 
+
+    private val _fakeUser: Profile = Profile(
+        "1",
+        "Ava S.",
+        "ava@gmail.com",
+        Location(0.0, 0.0),
+        "$0/hr",
+        "",
+        RatingInfo(4.5, 10))
+    val fakeUser: Profile
+        get() = _fakeUser
+
   init {
     loadMockData()
   }
@@ -24,7 +36,7 @@ class FakeProfileRepository {
             Profile(
                 "12",
                 "Liam P.",
-                "Piano Lessons",
+                "none1@gmail.com",
                 Location(0.0, 0.0),
                 "$25/hr",
                 "",
@@ -32,7 +44,7 @@ class FakeProfileRepository {
             Profile(
                 "13",
                 "Maria G.",
-                "Calculus & Algebra",
+                "none2@gmail.com",
                 Location(0.0, 0.0),
                 "$30/hr",
                 "",
@@ -40,7 +52,7 @@ class FakeProfileRepository {
             Profile(
                 "14",
                 "David C.",
-                "Acoustic Guitar",
+                "none3@gmail.com",
                 Location(0.0, 0.0),
                 "$20/hr",
                 "",
