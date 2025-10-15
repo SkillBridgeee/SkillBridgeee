@@ -20,7 +20,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.sample.model.listing.Listing
 import com.android.sample.model.skill.Skill
 import com.android.sample.ui.theme.PrimaryColor
 import com.android.sample.ui.theme.SecondaryColor
@@ -40,11 +39,12 @@ object HomeScreenTestTags {
 @Preview
 @Composable
 fun HomeScreen(mainPageViewModel: MainPageViewModel = viewModel()) {
+  val uiState by mainPageViewModel.uiState.collectAsState()
+
   Scaffold(
-      bottomBar = {},
       floatingActionButton = {
         FloatingActionButton(
-            onClick = { /* TODO add new tutor */},
+            onClick = { mainPageViewModel.onAddTutorClicked() },
             containerColor = PrimaryColor,
             modifier = Modifier.testTag(HomeScreenTestTags.FAB_ADD)) {
               Icon(Icons.Default.Add, contentDescription = "Add")
@@ -52,36 +52,33 @@ fun HomeScreen(mainPageViewModel: MainPageViewModel = viewModel()) {
       }) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues).fillMaxSize().background(Color.White)) {
           Spacer(modifier = Modifier.height(10.dp))
-          GreetingSection(mainPageViewModel)
+          GreetingSection(uiState.welcomeMessage)
           Spacer(modifier = Modifier.height(20.dp))
-          ExploreSkills(mainPageViewModel)
+          ExploreSkills(uiState.skills)
           Spacer(modifier = Modifier.height(20.dp))
-          TutorsSection(mainPageViewModel)
+          TutorsSection(uiState.tutors, onBookClick = mainPageViewModel::onBookTutorClicked)
         }
       }
 }
 
 @Composable
-fun GreetingSection(mainPageViewModel: MainPageViewModel = viewModel()) {
+fun GreetingSection(welcomeMessage: String) {
   Column(
       modifier = Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.WELCOME_SECTION)) {
-        Text(mainPageViewModel.welcomeMessage.value, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text(welcomeMessage, fontWeight = FontWeight.Bold, fontSize = 18.sp)
         Text("Ready to learn something new today?", color = Color.Gray, fontSize = 14.sp)
       }
 }
 
 @Composable
-fun ExploreSkills(mainPageViewModel: MainPageViewModel = viewModel()) {
-  val skills = mainPageViewModel.skills
+fun ExploreSkills(skills: List<Skill>) {
   Column(
       modifier =
           Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.EXPLORE_SKILLS_SECTION)) {
         Text("Explore skills", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-
         Spacer(modifier = Modifier.height(12.dp))
-
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-          items(skills) { s -> SkillCard(skill = s) }
+          items(skills) { SkillCard(skill = it) }
         }
       }
 }
@@ -104,12 +101,7 @@ fun SkillCard(skill: Skill) {
 }
 
 @Composable
-fun TutorsSection(
-    mainPageViewModel: MainPageViewModel = viewModel(),
-) {
-  val tutors = mainPageViewModel.tutors
-  val listings: List<Listing> = mainPageViewModel.listings
-
+fun TutorsSection(tutors: List<TutorCardUi>, onBookClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
         text = "Top-Rated Tutors",
@@ -122,14 +114,13 @@ fun TutorsSection(
     LazyColumn(
         modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_LIST).fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          items(listings) { l -> TutorCard(listing = l, mainPageViewModel = mainPageViewModel) }
+          items(tutors) { TutorCard(it, onBookClick) }
         }
   }
 }
 
 @Composable
-fun TutorCard(listing: Listing, mainPageViewModel: MainPageViewModel = viewModel()) {
-  val currentTutor = mainPageViewModel.getTutorFromId(listing.creatorUserId)
+fun TutorCard(tutor: TutorCardUi, onBookClick: (String) -> Unit) {
   Card(
       modifier =
           Modifier.fillMaxWidth().padding(vertical = 5.dp).testTag(HomeScreenTestTags.TUTOR_CARD),
@@ -141,29 +132,29 @@ fun TutorCard(listing: Listing, mainPageViewModel: MainPageViewModel = viewModel
           Spacer(modifier = Modifier.width(12.dp))
 
           Column(modifier = Modifier.weight(1f)) {
-            Text(currentTutor.name, fontWeight = FontWeight.Bold)
-            Text(listing.skill.skill, color = SecondaryColor)
+            Text(tutor.name, fontWeight = FontWeight.Bold)
+            Text(tutor.subject, color = SecondaryColor)
             Row {
-              repeat(5) {
+              repeat(5) { i ->
+                val tint = if (i < tutor.ratingStars) Color.Black else Color.Gray
                 Icon(
                     Icons.Default.Star,
                     contentDescription = null,
-                    tint = Color.Black,
+                    tint = tint,
                     modifier = Modifier.size(16.dp))
               }
               Text(
-                  "(${currentTutor.tutorRating.totalRatings})",
+                  "(${tutor.ratingCount})",
                   fontSize = 12.sp,
                   modifier = Modifier.padding(start = 4.dp))
             }
           }
 
           Column(horizontalAlignment = Alignment.End) {
-            Text(
-                "$${listing.hourlyRate} / hr", color = SecondaryColor, fontWeight = FontWeight.Bold)
+            Text("$${tutor.hourlyRate} / hr", color = SecondaryColor, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(6.dp))
             Button(
-                onClick = { mainPageViewModel.onBookTutorClicked(currentTutor) },
+                onClick = { onBookClick(tutor.name) },
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_BOOK_BUTTON)) {
                   Text("Book")

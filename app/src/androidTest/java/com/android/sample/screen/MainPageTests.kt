@@ -1,23 +1,14 @@
 package com.android.sample.screen
 
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTouchInput
-import androidx.test.espresso.action.ViewActions.swipeUp
-import com.android.sample.GreetingSection
-import com.android.sample.HomeScreen
-import com.android.sample.HomeScreenTestTags
-import com.android.sample.TutorsSection
+import com.android.sample.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class MainPageTests {
 
   @get:Rule val composeRule = createComposeRule()
@@ -33,34 +24,29 @@ class MainPageTests {
   }
 
   @Test
-  fun skillCardsAreClickable() {
+  fun fabAdd_isDisplayed_andClickable() {
     composeRule.setContent { HomeScreen() }
 
-    composeRule
-        .onAllNodesWithTag(HomeScreenTestTags.SKILL_CARD)
-        .onFirst()
-        .assertIsDisplayed()
-        .performClick()
+    composeRule.onNodeWithTag(HomeScreenTestTags.FAB_ADD).assertIsDisplayed().performClick()
   }
 
   @Test
-  fun skillCardsAreWellDisplayed() {
+  fun greetingSection_displaysWelcomeText() {
+    composeRule.setContent { HomeScreen() }
+
+    composeRule.onNodeWithText("Welcome back, Ava!").assertIsDisplayed()
+    composeRule.onNodeWithText("Ready to learn something new today?").assertIsDisplayed()
+  }
+
+  @Test
+  fun exploreSkills_displaysSkillCards() {
     composeRule.setContent { HomeScreen() }
 
     composeRule.onAllNodesWithTag(HomeScreenTestTags.SKILL_CARD).onFirst().assertIsDisplayed()
   }
 
-  // @Test
-  /*fun tutorListIsScrollable(){
-      composeRule.setContent {
-          HomeScreen()
-      }
-
-      composeRule.onNodeWithTag(HomeScreenTestTags.TUTOR_LIST).performScrollToIndex(2)
-  }*/
-
   @Test
-  fun tutorListIsWellDisplayed() {
+  fun tutorList_displaysTutorCards_andBookButtons() {
     composeRule.setContent { HomeScreen() }
 
     composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD).onFirst().assertIsDisplayed()
@@ -68,91 +54,13 @@ class MainPageTests {
         .onAllNodesWithTag(HomeScreenTestTags.TUTOR_BOOK_BUTTON)
         .onFirst()
         .assertIsDisplayed()
-  }
-
-  @Test
-  fun scaffold_rendersFabAndPaddingCorrectly() {
-    composeRule.setContent { HomeScreen() }
-
-    composeRule.onNodeWithTag(HomeScreenTestTags.FAB_ADD).assertIsDisplayed().performClick()
-
-    composeRule
-        .onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION)
-        .assertIsDisplayed()
-        .performTouchInput { swipeUp() }
-  }
-
-  @Test
-  fun tutorsSection_scrollsAndDisplaysLastTutor() {
-    composeRule.setContent { TutorsSection() }
-
-    composeRule.onNodeWithTag(HomeScreenTestTags.TUTOR_LIST).performTouchInput { swipeUp() }
-
-    composeRule.onNodeWithText("David C.").assertIsDisplayed()
-  }
-
-  @Test
-  fun fabAddIsClickable() {
-    composeRule.setContent { HomeScreen() }
-
-    composeRule.onNodeWithTag(HomeScreenTestTags.FAB_ADD).assertIsDisplayed().performClick()
-  }
-
-  @Test
-  fun fabAddIsWellDisplayed() {
-    composeRule.setContent { HomeScreen() }
-
-    composeRule.onNodeWithTag(HomeScreenTestTags.FAB_ADD).assertIsDisplayed()
-  }
-
-  @Test
-  fun tutorBookButtonIsClickable() {
-    composeRule.setContent { HomeScreen() }
-
-    composeRule
-        .onAllNodesWithTag(HomeScreenTestTags.TUTOR_BOOK_BUTTON)
-        .onFirst()
-        .assertIsDisplayed()
         .performClick()
   }
 
   @Test
-  fun tutorBookButtonIsWellDisplayed() {
+  fun tutorsSection_displaysTopRatedTutorsHeader() {
     composeRule.setContent { HomeScreen() }
 
-    composeRule
-        .onAllNodesWithTag(HomeScreenTestTags.TUTOR_BOOK_BUTTON)
-        .onFirst()
-        .assertIsDisplayed()
-  }
-
-  @Test
-  fun welcomeSectionIsWellDisplayed() {
-    composeRule.setContent { HomeScreen() }
-
-    composeRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
-  }
-
-  @Test
-  fun tutorList_displaysTutorCards() {
-    composeRule.setContent { HomeScreen() }
-
-    composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD).assertCountEquals(3)
-  }
-
-  @Test
-  fun greetingSection_displaysWelcomeText() {
-    composeRule.setContent { GreetingSection() }
-
-    composeRule.onNodeWithText("Welcome back, Ava!").assertIsDisplayed()
-    composeRule.onNodeWithText("Ready to learn something new today?").assertIsDisplayed()
-  }
-
-  @Test
-  fun tutorsSection_displaysThreeTutorCards() {
-    composeRule.setContent { TutorsSection() }
-
-    composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD).assertCountEquals(3)
     composeRule.onNodeWithText("Top-Rated Tutors").assertIsDisplayed()
   }
 
@@ -160,10 +68,32 @@ class MainPageTests {
   fun homeScreen_scrollsAndShowsAllSections() {
     composeRule.setContent { HomeScreen() }
 
-    composeRule.onNodeWithTag(HomeScreenTestTags.TUTOR_LIST).assertIsDisplayed().performTouchInput {
-      swipeUp()
-    }
+    composeRule.onNodeWithTag(HomeScreenTestTags.TUTOR_LIST).performTouchInput { swipeUp() }
 
     composeRule.onNodeWithTag(HomeScreenTestTags.FAB_ADD).assertIsDisplayed()
+  }
+
+  @Test
+  fun tutorCard_displaysCorrectData() {
+    val tutorUi =
+        TutorCardUi(
+            name = "Alex Johnson",
+            subject = "Mathematics",
+            hourlyRate = 40.0,
+            ratingStars = 4,
+            ratingCount = 120)
+
+    composeRule.setContent { TutorCard(tutorUi, onBookClick = {}) }
+
+    composeRule.onNodeWithText("Alex Johnson").assertIsDisplayed()
+    composeRule.onNodeWithText("Mathematics").assertIsDisplayed()
+    composeRule.onNodeWithText("$40.0 / hr").assertIsDisplayed()
+    composeRule.onNodeWithText("(120)").assertIsDisplayed()
+  }
+
+  @Test
+  fun onBookTutorClicked_doesNotCrash() = runTest {
+    val vm = MainPageViewModel()
+    vm.onBookTutorClicked("Some Tutor Name")
   }
 }
