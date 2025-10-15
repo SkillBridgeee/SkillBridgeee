@@ -86,7 +86,7 @@ class ListingTest {
     Assert.assertEquals(location, request.location)
     Assert.assertEquals(now, request.createdAt)
     Assert.assertTrue(request.isActive)
-    Assert.assertEquals(100.0, request.maxBudget, 0.01)
+    Assert.assertEquals(100.0, request.hourlyRate, 0.01)
   }
 
   @Test
@@ -100,7 +100,7 @@ class ListingTest {
     Assert.assertNotNull(request.location)
     Assert.assertNotNull(request.createdAt)
     Assert.assertTrue(request.isActive)
-    Assert.assertEquals(0.0, request.maxBudget, 0.01)
+    Assert.assertEquals(0.0, request.hourlyRate, 0.01)
   }
 
   @Test(expected = IllegalArgumentException::class)
@@ -113,7 +113,7 @@ class ListingTest {
     val request =
         Request("request123", "user789", Skill(), "Budget flexible", Location(), Date(), true, 0.0)
 
-    Assert.assertEquals(0.0, request.maxBudget, 0.01)
+    Assert.assertEquals(0.0, request.hourlyRate, 0.01)
   }
 
   @Test
@@ -213,7 +213,7 @@ class ListingTest {
     Assert.assertEquals("request123", updated.listingId)
     Assert.assertEquals("Updated description", updated.description)
     Assert.assertFalse(updated.isActive)
-    Assert.assertEquals(150.0, updated.maxBudget, 0.01)
+    Assert.assertEquals(150.0, updated.hourlyRate, 0.01)
   }
 
   @Test
@@ -261,6 +261,6 @@ class ListingTest {
         Request(
             "request123", "user789", Skill(), "Intensive course", Location(), Date(), true, 1000.0)
 
-    Assert.assertEquals(1000.0, request.maxBudget, 0.01)
+    Assert.assertEquals(1000.0, request.hourlyRate, 0.01)
   }
 }
