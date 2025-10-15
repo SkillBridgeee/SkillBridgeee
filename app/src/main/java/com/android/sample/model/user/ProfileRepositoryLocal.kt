@@ -1,6 +1,7 @@
 package com.android.sample.model.user
 
 import com.android.sample.model.map.Location
+import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import kotlin.String
 
@@ -76,6 +77,14 @@ class ProfileRepositoryLocal : ProfileRepository {
   }
 
   override suspend fun getSkillsForUser(userId: String): List<Skill> {
-    TODO("Not yet implemented")
+    // Fake data for local testing
+    return when (userId) {
+      "tutor-1" -> listOf(Skill("guitar", MainSubject.MUSIC), Skill("piano", MainSubject.MUSIC))
+      "tutor-2" ->
+          listOf(Skill("math", MainSubject.ACADEMICS), Skill("physics", MainSubject.ACADEMICS))
+      "test" -> listOf(Skill("coding", MainSubject.TECHNOLOGY))
+      "fake2" -> listOf(Skill("drums", MainSubject.SPORTS))
+      else -> emptyList()
+    }
   }
 }
