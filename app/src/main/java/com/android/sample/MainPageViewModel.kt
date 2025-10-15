@@ -38,7 +38,7 @@ class MainPageViewModel : ViewModel() {
   init {
     viewModelScope.launch {
       val skills = skillRepository.skills
-      val listings = listingRepository.listings
+      val listings = listingRepository.getFakeListings()
       val tutors = profileRepository.tutors
 
       val tutorCards =
