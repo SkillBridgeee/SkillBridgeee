@@ -46,55 +46,60 @@ class TutorProfileScreenTest {
       )
 
   /** Test double that satisfies the full TutorRepository contract. */
+  // inside TutorProfileScreenTest
   private class ImmediateRepo(
-      private val profile: Profile,
-      private val skills: List<Skill>,
+      private val sampleProfile: Profile,
+      private val sampleSkills: List<Skill>
   ) : ProfileRepository {
-    override suspend fun getProfileById(userId: String): Profile = profile
 
-    override suspend fun getSkillsForUser(userId: String): List<Skill> = skills
+    private val profiles = mutableMapOf<String, Profile>()
+    private val skillsByUser = mutableMapOf<String, List<Skill>>()
 
-    override fun getNewUid(): String {
-      TODO("Not yet implemented")
+    fun seed(profile: Profile, skills: List<Skill>) {
+      profiles[profile.userId] = profile
+      skillsByUser[profile.userId] = skills
     }
 
-    override suspend fun getProfile(userId: String): Profile {
-      TODO("Not yet implemented")
-    }
+    override fun getNewUid() = "fake"
 
-    // No-ops to satisfy the interface (if your interface includes writes)
+    override suspend fun getProfile(userId: String): Profile =
+        profiles[userId] ?: error("No profile $userId")
+
+    override suspend fun getProfileById(userId: String) = getProfile(userId)
+
     override suspend fun addProfile(profile: Profile) {
-      /* no-op */
+      profiles[profile.userId] = profile
     }
 
     override suspend fun updateProfile(userId: String, profile: Profile) {
-      TODO("Not yet implemented")
+      profiles[userId] = profile
     }
 
     override suspend fun deleteProfile(userId: String) {
-      TODO("Not yet implemented")
+      profiles.remove(userId)
+      skillsByUser.remove(userId)
     }
 
-    override suspend fun getAllProfiles(): List<Profile> {
-      TODO("Not yet implemented")
-    }
+    override suspend fun getAllProfiles(): List<Profile> = profiles.values.toList()
 
-    override suspend fun searchProfilesByLocation(
-        location: Location,
-        radiusKm: Double
-    ): List<Profile> {
-      TODO("Not yet implemented")
-    }
+    override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+        emptyList<Profile>()
+
+    override suspend fun getSkillsForUser(userId: String): List<Skill> =
+        skillsByUser[userId] ?: emptyList()
   }
 
   private fun launch() {
-    val vm = TutorProfileViewModel(ImmediateRepo(sampleProfile, sampleSkills))
+    val repo =
+        ImmediateRepo(sampleProfile, sampleSkills).apply {
+          seed(sampleProfile, sampleSkills) // <-- ensure "demo" is present
+        }
+    val vm = TutorProfileViewModel(repo)
     compose.setContent {
-      val navController = rememberNavController()
-      TutorProfileScreen(tutorId = "demo", vm = vm, navController = navController)
+      val nav = rememberNavController()
+      TutorProfileScreen(tutorId = "demo", vm = vm, navController = nav)
     }
-    // Wait until the VM finishes its initial load and the NAME node appears
-    compose.waitUntil(timeoutMillis = 5_000) {
+    compose.waitUntil(5_000) {
       compose
           .onAllNodesWithTag(TutorPageTestTags.NAME, useUnmergedTree = true)
           .fetchSemanticsNodes()
