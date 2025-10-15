@@ -100,7 +100,7 @@ class FakeRepositoriesTest {
               skill = skill,
               description = "need help",
               location = loc,
-              maxBudget = 20.0)
+              hourlyRate = 20.0)
 
       // Some fakes may not persist; wrap in runCatching to avoid hard failures
       runCatching { repo.addProposal(proposal) }
