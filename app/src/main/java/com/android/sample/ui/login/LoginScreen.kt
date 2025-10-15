@@ -1,5 +1,6 @@
-package com.android.sample
+package com.android.sample.ui.login
 
+import android.R
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,8 +42,9 @@ object SignInScreenTestTags {
 
 @Composable
 fun LoginScreen(
-    viewModel: AuthenticationViewModel = AuthenticationViewModel(LocalContext.current),
-    onGoogleSignIn: () -> Unit = {}
+  viewModel: AuthenticationViewModel = AuthenticationViewModel(LocalContext.current),
+  onGoogleSignIn: () -> Unit = {},
+  onGitHubSignIn: () -> Unit = {}
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val authResult by viewModel.authResult.collectAsStateWithLifecycle()
@@ -72,7 +74,12 @@ fun LoginScreen(
                 viewModel.signOut()
               })
         } else {
-          LoginForm(uiState = uiState, viewModel = viewModel, onGoogleSignIn = onGoogleSignIn)
+          LoginForm(
+            uiState = uiState,
+            viewModel = viewModel,
+            onGoogleSignIn = onGoogleSignIn,
+            onGitHubSignIn = onGitHubSignIn
+          )
         }
       }
 }
@@ -112,7 +119,8 @@ private fun SuccessCard(authResult: AuthResult?, onSignOut: () -> Unit) {
 private fun LoginForm(
     uiState: AuthenticationUiState,
     viewModel: AuthenticationViewModel,
-    onGoogleSignIn: () -> Unit
+    onGoogleSignIn: () -> Unit,
+    onGitHubSignIn: () -> Unit = {}
 ) {
   LoginHeader()
   Spacer(modifier = Modifier.height(20.dp))
@@ -138,7 +146,11 @@ private fun LoginForm(
       onClick = viewModel::signIn)
   Spacer(modifier = Modifier.height(20.dp))
 
-  AlternativeAuthSection(isLoading = uiState.isLoading, onGoogleSignIn = onGoogleSignIn)
+  AlternativeAuthSection(
+    isLoading = uiState.isLoading,
+    onGoogleSignIn = onGoogleSignIn,
+    onGitHubSignIn = onGitHubSignIn
+  )
   Spacer(modifier = Modifier.height(20.dp))
 
   SignUpLink()
@@ -212,7 +224,7 @@ private fun EmailPasswordFields(
       label = { Text("Email") },
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
       leadingIcon = {
-        Icon(painterResource(id = android.R.drawable.ic_dialog_email), contentDescription = null)
+        Icon(painterResource(id = R.drawable.ic_dialog_email), contentDescription = null)
       },
       modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT))
 
@@ -225,7 +237,7 @@ private fun EmailPasswordFields(
       visualTransformation = PasswordVisualTransformation(),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
       leadingIcon = {
-        Icon(painterResource(id = android.R.drawable.ic_lock_idle_lock), contentDescription = null)
+        Icon(painterResource(id = R.drawable.ic_lock_idle_lock), contentDescription = null)
       },
       modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.PASSWORD_INPUT))
 }
@@ -280,23 +292,28 @@ private fun SignInButton(isLoading: Boolean, isEnabled: Boolean, onClick: () -> 
 }
 
 @Composable
-private fun AlternativeAuthSection(isLoading: Boolean, onGoogleSignIn: () -> Unit) {
+private fun AlternativeAuthSection(
+  isLoading: Boolean,
+  onGoogleSignIn: () -> Unit,
+  onGitHubSignIn: () -> Unit = {}
+) {
   Text("or continue with", modifier = Modifier.testTag(SignInScreenTestTags.AUTH_SECTION))
   Spacer(modifier = Modifier.height(15.dp))
 
   Row(horizontalArrangement = Arrangement.spacedBy(15.dp)) {
     AuthProviderButton(
-        text = "Google",
-        enabled = !isLoading,
-        onClick = onGoogleSignIn,
-        testTag = SignInScreenTestTags.AUTH_GOOGLE)
+      text = "Google",
+      enabled = !isLoading,
+      onClick = onGoogleSignIn,
+      testTag = SignInScreenTestTags.AUTH_GOOGLE)
     AuthProviderButton(
-        text = "GitHub",
-        enabled = !isLoading,
-        onClick = { /* TODO: GitHub auth */},
-        testTag = SignInScreenTestTags.AUTH_GITHUB)
+      text = "GitHub",
+      enabled = !isLoading,
+      onClick = onGitHubSignIn, // This line is correct
+      testTag = SignInScreenTestTags.AUTH_GITHUB)
   }
 }
+
 
 @Composable
 private fun RowScope.AuthProviderButton(

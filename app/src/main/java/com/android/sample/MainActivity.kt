@@ -107,7 +107,10 @@ fun MainApp() {
   ) {
       paddingValues ->
     androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
-      AppNavGraph(navController = navController)
+      AppNavGraph(navController = navController,
+        bookingsViewModel,
+        profileViewModel,
+        mainPageViewModel)
     }
   }
 }

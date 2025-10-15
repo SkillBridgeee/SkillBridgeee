@@ -20,6 +20,7 @@ package com.android.sample.ui.navigation
  * 3. If it was in the bottom navigation bar, remove it from the items list in `BottomNavBar.kt`.
  */
 object NavRoutes {
+  const val LOGIN = "login"
   const val HOME = "home"
   const val PROFILE = "profile/{profileId}"
   const val SETTINGS = "settings"

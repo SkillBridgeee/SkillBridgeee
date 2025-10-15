@@ -15,7 +15,7 @@ import com.android.sample.MainPageViewModel
 import com.android.sample.ui.screens.SettingsPlaceholder
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.screens.newSkill.NewSkillScreen
-
+import com.android.sample.ui.login.LoginScreen
 
 /**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
@@ -47,7 +47,19 @@ fun AppNavGraph(
   profileViewModel: MyProfileViewModel,
   mainPageViewModel: MainPageViewModel
 ) {
-  NavHost(navController = navController, startDestination = NavRoutes.HOME) {
+  NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
+
+    composable(NavRoutes.LOGIN) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LOGIN) }
+      LoginScreen(
+        onGoogleSignIn = {}, // Add google auth here once ready
+        onGitHubSignIn = { // Temporary functionality to go to home page while auth isn't done
+          navController.navigate(NavRoutes.HOME) {
+            popUpTo(NavRoutes.LOGIN) { inclusive = true }
+          }
+        }
+      )
+    }
 
     composable(NavRoutes.PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
