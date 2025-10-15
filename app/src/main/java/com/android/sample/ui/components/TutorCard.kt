@@ -16,6 +16,7 @@ import com.android.sample.model.user.Profile
 import com.android.sample.ui.theme.TealChip
 import com.android.sample.ui.theme.White
 
+/** Test tags for the tutor card and its elements. */
 object TutorCardTestTags {
   const val CARD = "TutorCardTestTags.CARD"
   const val ACTION_BUTTON = "TutorCardTestTags.ACTION_BUTTON"
@@ -51,7 +52,7 @@ fun TutorCard(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-              // Avatar placeholder (replace later with Image if you have URLs)
+              // Avatar placeholder (replace later with Image)
               Box(
                   modifier =
                       Modifier.size(44.dp)
@@ -102,6 +103,11 @@ fun TutorCard(
       }
 }
 
+/**
+ * Row showing star rating and total number of ratings.
+ *
+ * @param rating The rating info.
+ */
 @Composable
 private fun RatingRow(rating: RatingInfo) {
   Row(verticalAlignment = Alignment.CenterVertically) {

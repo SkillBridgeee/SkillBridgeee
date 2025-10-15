@@ -15,6 +15,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+// Ai generated tests for the TutorCard composable
 class TutorCardTest {
 
   @get:Rule val composeTestRule = createComposeRule()

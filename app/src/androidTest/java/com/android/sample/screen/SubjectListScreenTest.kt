@@ -30,6 +30,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+// Ai generated tests for the SubjectListScreen composable
 @RunWith(AndroidJUnit4::class)
 class SubjectListScreenTest {
 
@@ -55,49 +56,33 @@ class SubjectListScreenTest {
   private fun makeViewModel(): SubjectListViewModel {
     val repo =
         object : ProfileRepository {
-          override fun getNewUid(): String {
-            TODO("Not yet implemented")
-          }
+          override fun getNewUid(): String = "unused"
 
-          override suspend fun getProfile(userId: String): Profile {
-            TODO("Not yet implemented")
-          }
+          override suspend fun getProfile(userId: String): Profile = error("unused")
 
-          override suspend fun addProfile(profile: Profile) {
-            TODO("Not yet implemented")
-          }
+          override suspend fun addProfile(profile: Profile) {}
 
-          override suspend fun updateProfile(userId: String, profile: Profile) {
-            TODO("Not yet implemented")
-          }
+          override suspend fun updateProfile(userId: String, profile: Profile) {}
 
-          override suspend fun deleteProfile(userId: String) {
-            TODO("Not yet implemented")
-          }
+          override suspend fun deleteProfile(userId: String) {}
 
           override suspend fun getAllProfiles(): List<Profile> {
-            // deterministic order; top 3 by rating should be p1,p2,p3
-            delay(10) // small async to exercise loading state
+            // small async to exercise loading state
+            delay(10)
             return listOf(p1, p2, p3, p4, p5)
           }
 
           override suspend fun searchProfilesByLocation(
               location: Location,
               radiusKm: Double
-          ): List<Profile> {
-            TODO("Not yet implemented")
-          }
+          ): List<Profile> = emptyList()
 
-          override suspend fun getProfileById(userId: String): Profile {
-            TODO("Not yet implemented")
-          }
+          override suspend fun getProfileById(userId: String): Profile = error("unused")
 
-          override suspend fun getSkillsForUser(userId: String): List<Skill> {
-            return allSkills[userId].orEmpty()
-          }
+          override suspend fun getSkillsForUser(userId: String): List<Skill> =
+              allSkills[userId].orEmpty()
         }
-    // pick 3 for "top" section, like production
-    return SubjectListViewModel(repository = repo, tutorsPerTopSection = 3)
+    return SubjectListViewModel(repository = repo)
   }
 
   /** ---- Helpers --------------------------------------------------------- */
@@ -114,14 +99,7 @@ class SubjectListScreenTest {
     val vm = makeViewModel()
     composeRule.setContent { MaterialTheme { SubjectListScreen(vm, onBook) } }
 
-    // Wait until top section appears
-    composeRule.waitUntil(5_000) {
-      composeRule
-          .onAllNodesWithTag(SubjectListTestTags.TOP_TUTORS_SECTION)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
-    // THEN wait until the main list has items (non-top tutors)
+    // Wait until the single list renders at least one TutorCard
     composeRule.waitUntil(5_000) {
       composeRule
           .onAllNodes(
@@ -142,55 +120,23 @@ class SubjectListScreenTest {
   }
 
   @Test
-  fun rendersTopTutorsSection_andTutorCards() {
+  fun rendersSingleList_ofTutorCards() {
     setContent()
 
-    composeRule.onNodeWithTag(SubjectListTestTags.TOP_TUTORS_SECTION).assertIsDisplayed()
-
-    // Only the cards inside the Top Tutors section
+    // All five tutors should be in the single list
     composeRule
         .onAllNodes(
             hasTestTag(SubjectListTestTags.TUTOR_CARD) and
-                hasAnyAncestor(hasTestTag(SubjectListTestTags.TOP_TUTORS_SECTION)))
-        .assertCountEquals(3)
+                hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
+        .assertCountEquals(5)
   }
-
-  //  @Test
-  //  fun rendersTutorList_excludingTopTutors() {
-  //    setContent()
-  //
-  //    // Ensure the main list has at least one card rendered
-  //    composeRule.waitUntil(5_000) {
-  //      composeRule
-  //          .onAllNodes(
-  //              hasTestTag(SubjectListTestTags.TUTOR_CARD) and
-  //                  hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)),
-  //              useUnmergedTree = true)
-  //          .fetchSemanticsNodes()
-  //          .isNotEmpty()
-  //    }
-  //
-  //    // Scroll to Nora and wait for idle
-  //    composeRule
-  //        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
-  //        .performScrollToNode(hasText("Nora Q.", substring = true, ignoreCase = false))
-  //    composeRule.waitForIdle()
-  //    composeRule.onNodeWithText("Nora Q.", useUnmergedTree = true).assertIsDisplayed()
-  //
-  //    // Scroll to Maya and wait for idle
-  //    composeRule
-  //        .onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
-  //        .performScrollToNode(hasText("Maya R.", substring = true, ignoreCase = false))
-  //    composeRule.waitForIdle()
-  //    composeRule.onNodeWithText("Maya R.", useUnmergedTree = true).assertIsDisplayed()
-  //  }
 
   @Test
   fun clickingBook_callsCallback() {
     val clicked = AtomicBoolean(false)
     setContent(onBook = { clicked.set(true) })
 
-    // First "Book" in the Top section
+    // Click first Book button in the list
     composeRule.onAllNodesWithTag(SubjectListTestTags.TUTOR_BOOK_BUTTON).onFirst().performClick()
 
     assert(clicked.get())
@@ -223,11 +169,10 @@ class SubjectListScreenTest {
 
   @Test
   fun showsLoading_thenContent() {
-    // During first few ms the LinearProgressIndicator may be visible.
-    // We assert that ultimately the content shows and no error.
     setContent()
 
-    composeRule.onNodeWithTag(SubjectListTestTags.TOP_TUTORS_SECTION).assertIsDisplayed()
+    // Assert that ultimately the content shows and no error text
+    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertIsDisplayed()
     composeRule.onNodeWithText("Unknown error").assertDoesNotExist()
   }
 }

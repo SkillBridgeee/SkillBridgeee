@@ -20,6 +20,7 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
+// Ai generated tests for the SubjectListViewModel
 class SubjectListViewModelTest {
 
   private val dispatcher = StandardTestDispatcher()
@@ -50,25 +51,15 @@ class SubjectListViewModelTest {
       private val delayMs: Long = 0,
       private val throwOnGetAll: Boolean = false
   ) : ProfileRepository {
-    override fun getNewUid(): String {
-      TODO("Not yet implemented")
-    }
+    override fun getNewUid(): String = "unused"
 
-    override suspend fun getProfile(userId: String): Profile {
-      TODO("Not yet implemented")
-    }
+    override suspend fun getProfile(userId: String): Profile = error("unused")
 
-    override suspend fun addProfile(profile: Profile) {
-      TODO("Not yet implemented")
-    }
+    override suspend fun addProfile(profile: Profile) {}
 
-    override suspend fun updateProfile(userId: String, profile: Profile) {
-      TODO("Not yet implemented")
-    }
+    override suspend fun updateProfile(userId: String, profile: Profile) {}
 
-    override suspend fun deleteProfile(userId: String) {
-      TODO("Not yet implemented")
-    }
+    override suspend fun deleteProfile(userId: String) {}
 
     override suspend fun getAllProfiles(): List<Profile> {
       if (throwOnGetAll) error("boom")
@@ -79,19 +70,15 @@ class SubjectListViewModelTest {
     override suspend fun searchProfilesByLocation(
         location: Location,
         radiusKm: Double
-    ): List<Profile> {
-      TODO("Not yet implemented")
-    }
+    ): List<Profile> = emptyList()
 
-    override suspend fun getProfileById(userId: String): Profile {
-      TODO("Not yet implemented")
-    }
+    override suspend fun getProfileById(userId: String): Profile = error("unused")
 
     override suspend fun getSkillsForUser(userId: String): List<Skill> = skills[userId].orEmpty()
   }
 
   // Seed used by most tests:
-  // Top 2 should be A(4.9) then B(4.8,20), leaving C and D in the main list.
+  // Sorted (best first) should be: A(4.9,10), B(4.8,20), C(4.8,15), D(4.2,5)
   private val A = profile("1", "Alpha", "Guitar lessons", 4.9, 10)
   private val B = profile("2", "Beta", "Piano lessons", 4.8, 20)
   private val C = profile("3", "Gamma", "Sing coach", 4.8, 15)
@@ -108,14 +95,13 @@ class SubjectListViewModelTest {
                   "4" to listOf(skill("4", "PIANO"))),
           delayMs = 1L)
 
-  private fun newVm(repo: ProfileRepository = defaultRepo, topCount: Int = 2) =
-      SubjectListViewModel(repository = repo, tutorsPerTopSection = topCount)
+  private fun newVm(repo: ProfileRepository = defaultRepo) = SubjectListViewModel(repository = repo)
 
   // ---------- Tests -------------------------------------------------------
 
   @OptIn(ExperimentalCoroutinesApi::class)
   @Test
-  fun refresh_populatesTopTutors_andExcludesThemFromList() = runTest {
+  fun refresh_populatesSingleSortedList() = runTest {
     val vm = newVm()
     vm.refresh()
     advanceUntilIdle()
@@ -124,12 +110,8 @@ class SubjectListViewModelTest {
     assertFalse(ui.isLoading)
     assertNull(ui.error)
 
-    // Top tutors are sorted by rating desc, then total ratings desc, then name
-    assertEquals(listOf(A.userId, B.userId), ui.topTutors.map { it.userId })
-
-    // Main list excludes top tutors
-    assertTrue(ui.tutors.map { it.userId }.containsAll(listOf(C.userId, D.userId)))
-    assertFalse(ui.tutors.any { it.userId in setOf(A.userId, B.userId) })
+    // Single list contains everyone, sorted by rating desc, total ratings desc, then name
+    assertEquals(listOf(A.userId, B.userId, C.userId, D.userId), ui.tutors.map { it.userId })
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -144,10 +126,10 @@ class SubjectListViewModelTest {
     var ui = vm.ui.value
     assertEquals(listOf(C.userId), ui.tutors.map { it.userId })
 
-    // "piano" matches D by description (B is top and excluded)
+    // "piano" matches B (desc) and D (desc/name) -> both shown, sorted best-first
     vm.onQueryChanged("piano")
     ui = vm.ui.value
-    assertEquals(listOf(D.userId), ui.tutors.map { it.userId })
+    assertEquals(listOf(B.userId, D.userId), ui.tutors.map { it.userId })
 
     // nonsense query -> empty list
     vm.onQueryChanged("zzz")
@@ -162,10 +144,10 @@ class SubjectListViewModelTest {
     vm.refresh()
     advanceUntilIdle()
 
-    // Only D (list) has PIANO; B also has PIANO but sits in top tutors, so excluded
+    // PIANO should return B and D (no separate top section anymore), best-first
     vm.onSkillSelected("PIANO")
     val ui = vm.ui.value
-    assertEquals(listOf(D.userId), ui.tutors.map { it.userId })
+    assertEquals(listOf(B.userId, D.userId), ui.tutors.map { it.userId })
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -175,7 +157,7 @@ class SubjectListViewModelTest {
     vm.refresh()
     advanceUntilIdle()
 
-    // D matches both query "delta" and skill "PIANO"
+    // D matches both query "del" and skill "PIANO"
     vm.onQueryChanged("Del")
     vm.onSkillSelected("PIANO")
     var ui = vm.ui.value
@@ -189,21 +171,17 @@ class SubjectListViewModelTest {
 
   @OptIn(ExperimentalCoroutinesApi::class)
   @Test
-  fun topTutors_respects_tieBreakers_and_limit() = runTest {
+  fun sorting_respects_tieBreakers() = runTest {
+    // X and Y tie on rating & totals -> name tie-breaker (Aaron before Zed)
     val X = profile("10", "Aaron", "Vocal coach", 4.8, 15)
     val Y = profile("11", "Zed", "Vocal coach", 4.8, 15)
-    val repo =
-        FakeRepo(
-            profiles =
-                listOf(A, X, Y), // A has 4.9; X and Y tie on rating & totals -> name tie-break
-            skills = emptyMap())
-    val vm = newVm(repo, topCount = 3)
+    val repo = FakeRepo(profiles = listOf(A, X, Y), skills = emptyMap())
+    val vm = newVm(repo)
     vm.refresh()
     advanceUntilIdle()
 
     val ui = vm.ui.value
-    assertEquals(listOf(A.userId, X.userId, Y.userId), ui.topTutors.map { it.userId })
-    assertTrue(ui.tutors.isEmpty()) // all promoted to top section
+    assertEquals(listOf(A.userId, X.userId, Y.userId), ui.tutors.map { it.userId })
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -217,7 +195,6 @@ class SubjectListViewModelTest {
     val ui = vm.ui.value
     assertFalse(ui.isLoading)
     assertNotNull(ui.error)
-    assertTrue(ui.topTutors.isEmpty())
     assertTrue(ui.tutors.isEmpty())
   }
 }
