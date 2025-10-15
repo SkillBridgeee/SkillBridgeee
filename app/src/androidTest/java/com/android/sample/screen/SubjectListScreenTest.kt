@@ -120,28 +120,28 @@ class SubjectListScreenTest {
     composeRule.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).assertIsDisplayed()
   }
 
-    @Test
-    fun rendersSingleList_ofTutorCards() {
-        setContent()
+  @Test
+  fun rendersSingleList_ofTutorCards() {
+    setContent()
 
-        val list = composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+    val list = composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
 
-        // Scroll to each expected name and assert it’s displayed
-        list.performScrollToNode(hasText("Liam P."))
-        composeRule.onNodeWithText("Liam P.", useUnmergedTree = true).assertIsDisplayed()
+    // Scroll to each expected name and assert it’s displayed
+    list.performScrollToNode(hasText("Liam P."))
+    composeRule.onNodeWithText("Liam P.", useUnmergedTree = true).assertIsDisplayed()
 
-        list.performScrollToNode(hasText("David B."))
-        composeRule.onNodeWithText("David B.", useUnmergedTree = true).assertIsDisplayed()
+    list.performScrollToNode(hasText("David B."))
+    composeRule.onNodeWithText("David B.", useUnmergedTree = true).assertIsDisplayed()
 
-        list.performScrollToNode(hasText("Stevie W."))
-        composeRule.onNodeWithText("Stevie W.", useUnmergedTree = true).assertIsDisplayed()
+    list.performScrollToNode(hasText("Stevie W."))
+    composeRule.onNodeWithText("Stevie W.", useUnmergedTree = true).assertIsDisplayed()
 
-        list.performScrollToNode(hasText("Nora Q."))
-        composeRule.onNodeWithText("Nora Q.", useUnmergedTree = true).assertIsDisplayed()
+    list.performScrollToNode(hasText("Nora Q."))
+    composeRule.onNodeWithText("Nora Q.", useUnmergedTree = true).assertIsDisplayed()
 
-        list.performScrollToNode(hasText("Maya R."))
-        composeRule.onNodeWithText("Maya R.", useUnmergedTree = true).assertIsDisplayed()
-    }
+    list.performScrollToNode(hasText("Maya R."))
+    composeRule.onNodeWithText("Maya R.", useUnmergedTree = true).assertIsDisplayed()
+  }
 
   @Test
   fun clickingBook_callsCallback() {
