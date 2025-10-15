@@ -10,7 +10,7 @@ allprojects {
     configurations.all {
         resolutionStrategy {
             force("org.jacoco:org.jacoco.core:0.8.11")
-            force("org.jacoco:org.jacoco.agent:0.8.11")
+            force("org.jacoco:org.jacoco.agent:0.8.11") 
             force("org.jacoco:org.jacoco.report:0.8.11")
         }
     }
