@@ -20,6 +20,14 @@ val GreenApp = Color(0xFF43EA7F)
 
 val PrimaryColor = Color(0xFF00ACC1)
 val SecondaryColor = Color(0xFF1E88E5)
-val AccentBlue = Color(0xFF4FC3F7)
-val AccentPurple = Color(0xFFBA68C8)
-val AccentGreen = Color(0xFF81C784)
+
+// Login Screen Colors
+val LoginTitleBlue = Color(0xFF1E88E5)
+val SuccessGreen = Color(0xFF4CAF50)
+val MessageGreen = Color(0xFF4CAF50)
+val UnselectedGray = Color(0xFFD3D3D3) // LightGray
+val ForgotPasswordGray = Color(0xFF808080) // Gray
+val AuthButtonBorderGray = Color(0xFF808080) // Gray
+val SignInButtonTeal = Color(0xFF00ACC1)
+val AuthProviderTextBlack = Color(0xFF000000)
+val SignUpLinkBlue = Color(0xFF2196F3) // Blue
