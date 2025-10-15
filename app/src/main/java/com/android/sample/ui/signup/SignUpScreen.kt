@@ -2,12 +2,16 @@ package com.android.sample.ui.signup
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -60,8 +64,13 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
           focusedTextColor = MaterialTheme.colorScheme.onSurface,
           unfocusedTextColor = MaterialTheme.colorScheme.onSurface)
 
+  val scrollState = rememberScrollState()
+
   Column(
-      modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 16.dp),
+      modifier =
+          Modifier.fillMaxSize()
+              .verticalScroll(scrollState)
+              .padding(horizontal = 20.dp, vertical = 16.dp),
       verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(
             "SkillBridge",
@@ -161,9 +170,25 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
 
         Spacer(Modifier.height(6.dp))
 
+        // Password requirement checklist computed from the entered password
+        val pw = state.password
+        val minLength = pw.length >= 8
+        val hasLetter = pw.any { it.isLetter() }
+        val hasDigit = pw.any { it.isDigit() }
+        val hasSpecial = Regex("[^A-Za-z0-9]").containsMatchIn(pw)
+
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+          RequirementItem(met = minLength, text = "At least 8 characters")
+          RequirementItem(met = hasLetter, text = "Contains a letter")
+          RequirementItem(met = hasDigit, text = "Contains a digit")
+          RequirementItem(met = hasSpecial, text = "Contains a special character")
+        }
+
         val gradient = Brush.horizontalGradient(listOf(TurquoiseStart, TurquoiseEnd))
         val disabledBrush = Brush.linearGradient(listOf(GrayE6, GrayE6))
-        val enabled = state.canSubmit && !state.submitting
+        // Require the ViewModel's passwordRequirements to be satisfied (includes special character)
+        val enabled =
+            state.canSubmit && minLength && hasLetter && hasDigit && hasSpecial && !state.submitting
 
         Button(
             onClick = { vm.onEvent(SignUpEvent.Submit) },
@@ -186,6 +211,26 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
                   style = MaterialTheme.typography.titleMedium,
                   fontWeight = FontWeight.Bold)
             }
+      }
+}
+
+@Composable
+private fun RequirementItem(met: Boolean, text: String) {
+  Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.Start,
+      verticalAlignment = Alignment.CenterVertically) {
+        val tint = if (met) MaterialTheme.colorScheme.primary else DisabledContent
+        Icon(
+            imageVector = Icons.Default.Check,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = if (met) MaterialTheme.colorScheme.onSurface else DisabledContent)
       }
 }
 
