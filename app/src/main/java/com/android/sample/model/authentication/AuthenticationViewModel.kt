@@ -137,33 +137,6 @@ class AuthenticationViewModel(
     }
   }
 
-  /** Send password reset email */
-  fun sendPasswordReset() {
-    val email = _uiState.value.email
-
-    if (email.isBlank()) {
-      _uiState.update { it.copy(error = "Please enter your email address") }
-      return
-    }
-
-    _uiState.update { it.copy(isLoading = true, error = null, message = null) }
-
-    viewModelScope.launch {
-      val result = repository.sendPasswordResetEmail(email)
-      result.fold(
-          onSuccess = {
-            _uiState.update {
-              it.copy(
-                  isLoading = false, message = "Password reset email sent to $email", error = null)
-            }
-          },
-          onFailure = { exception ->
-            val errorMessage = exception.message ?: "Failed to send password reset email"
-            _uiState.update { it.copy(isLoading = false, error = errorMessage, message = null) }
-          })
-    }
-  }
-
   /** Sign out the current user */
   fun signOut() {
     repository.signOut()

@@ -353,64 +353,6 @@ class AuthenticationViewModelTest {
   }
 
   @Test
-  fun sendPasswordReset_withEmptyEmail_showsError() = runTest {
-    viewModel.sendPasswordReset()
-
-    val state = viewModel.uiState.first()
-
-    assertEquals("Please enter your email address", state.error)
-    assertFalse(state.isLoading)
-  }
-
-  @Test
-  fun sendPasswordReset_withValidEmail_succeeds() = runTest {
-    viewModel.updateEmail("test@example.com")
-
-    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
-
-    viewModel.sendPasswordReset()
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    val state = viewModel.uiState.first()
-
-    assertFalse(state.isLoading)
-    assertEquals("Password reset email sent to test@example.com", state.message)
-    assertNull(state.error)
-  }
-
-  @Test
-  fun sendPasswordReset_withError_showsError() = runTest {
-    viewModel.updateEmail("test@example.com")
-
-    val exception = Exception("Failed to send email")
-    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.failure(exception)
-
-    viewModel.sendPasswordReset()
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    val state = viewModel.uiState.first()
-
-    assertFalse(state.isLoading)
-    assertEquals("Failed to send email", state.error)
-    assertNull(state.message)
-  }
-
-  @Test
-  fun sendPasswordReset_withErrorNoMessage_usesDefault() = runTest {
-    viewModel.updateEmail("test@example.com")
-
-    val exception = Exception(null as String?)
-    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.failure(exception)
-
-    viewModel.sendPasswordReset()
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    val state = viewModel.uiState.first()
-
-    assertEquals("Failed to send password reset email", state.error)
-  }
-
-  @Test
   fun signOut_clearsAuthResultAndState() = runTest {
     val mockGoogleSignInClient = mockk<GoogleSignInClient>(relaxed = true)
     every { mockCredentialHelper.getGoogleSignInClient() } returns mockGoogleSignInClient

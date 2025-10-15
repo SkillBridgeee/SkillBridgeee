@@ -39,18 +39,19 @@ object SignInScreenTestTags {
 }
 
 @Composable
-fun LoginScreen(viewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit = {}) {
+fun LoginScreen(
+    viewModel: AuthenticationViewModel = AuthenticationViewModel(LocalContext.current),
+    onGoogleSignIn: () -> Unit = {}
+) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val authResult by viewModel.authResult.collectAsStateWithLifecycle()
 
   // Handle authentication results
   LaunchedEffect(authResult) {
     when (authResult) {
-      is AuthResult.Success -> {
-        viewModel.showSuccessMessage(true)
-      }
+      is AuthResult.Success -> viewModel.showSuccessMessage(true)
       is AuthResult.Error -> {
-        // Error is handled in uiState
+        /* Error is handled in uiState */
       }
       null -> {
         /* No action needed */
@@ -62,201 +63,263 @@ fun LoginScreen(viewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit =
       modifier = Modifier.fillMaxSize().padding(20.dp),
       horizontalAlignment = Alignment.CenterHorizontally,
       verticalArrangement = Arrangement.Center) {
-
-        // Show success message if authenticated
         if (uiState.showSuccessMessage) {
-          Card(
-              modifier = Modifier.fillMaxWidth().padding(16.dp),
-              colors = CardDefaults.cardColors(containerColor = Color(0xFF4CAF50))) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally) {
-                      Text(
-                          text = "Authentication Successful!",
-                          color = Color.White,
-                          fontSize = 18.sp,
-                          fontWeight = FontWeight.Bold)
-                      Spacer(modifier = Modifier.height(8.dp))
-                      Text(
-                          text =
-                              "Welcome ${authResult?.let { (it as? AuthResult.Success)?.user?.displayName ?: "User" }}",
-                          color = Color.White,
-                          fontSize = 14.sp)
-                      Spacer(modifier = Modifier.height(16.dp))
-                      Button(
-                          onClick = {
-                            viewModel.showSuccessMessage(false)
-                            viewModel.signOut()
-                          },
-                          colors = ButtonDefaults.buttonColors(containerColor = Color.White)) {
-                            Text("Sign Out", color = Color(0xFF4CAF50))
-                          }
-                    }
-              }
+          SuccessCard(
+              authResult = authResult,
+              onSignOut = {
+                viewModel.showSuccessMessage(false)
+                viewModel.signOut()
+              })
         } else {
-          // Show login form when not showing success message
-          // App name
-          Text(
-              text = "SkillBridge",
-              fontSize = 28.sp,
-              fontWeight = FontWeight.Bold,
-              color = Color(0xFF1E88E5),
-              modifier = Modifier.testTag(SignInScreenTestTags.TITLE))
-
-          Spacer(modifier = Modifier.height(10.dp))
-          Text(
-              "Welcome back! Please sign in.",
-              modifier = Modifier.testTag(SignInScreenTestTags.SUBTITLE))
-
-          Spacer(modifier = Modifier.height(20.dp))
-
-          // Role buttons
-          Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(
-                onClick = { viewModel.updateSelectedRole(UserRole.LEARNER) },
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor =
-                            if (uiState.selectedRole == UserRole.LEARNER) Color(0xFF42A5F5)
-                            else Color.LightGray),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.testTag(SignInScreenTestTags.ROLE_LEARNER)) {
-                  Text("I'm a Learner")
-                }
-            Button(
-                onClick = { viewModel.updateSelectedRole(UserRole.TUTOR) },
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor =
-                            if (uiState.selectedRole == UserRole.TUTOR) Color(0xFF42A5F5)
-                            else Color.LightGray),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.testTag(SignInScreenTestTags.ROLE_TUTOR)) {
-                  Text("I'm a Tutor")
-                }
-          }
-
-          Spacer(modifier = Modifier.height(30.dp))
-
-          OutlinedTextField(
-              value = uiState.email,
-              onValueChange = viewModel::updateEmail,
-              label = { Text("Email") },
-              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-              leadingIcon = {
-                Icon(
-                    painterResource(id = android.R.drawable.ic_dialog_email),
-                    contentDescription = null)
-              },
-              modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT))
-
-          Spacer(modifier = Modifier.height(10.dp))
-
-          OutlinedTextField(
-              value = uiState.password,
-              onValueChange = viewModel::updatePassword,
-              label = { Text("Password") },
-              visualTransformation = PasswordVisualTransformation(),
-              keyboardOptions =
-                  KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrect = false),
-              leadingIcon = {
-                Icon(
-                    painterResource(id = android.R.drawable.ic_lock_idle_lock),
-                    contentDescription = null)
-              },
-              modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.PASSWORD_INPUT))
-
-          // Show error message if exists
-          uiState.error?.let { errorMessage ->
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(text = errorMessage, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
-          }
-
-          // Show success message for password reset
-          uiState.message?.let { message ->
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(text = message, color = Color.Green, fontSize = 14.sp)
-          }
-
-          Spacer(modifier = Modifier.height(10.dp))
-          Text(
-              "Forgot password?",
-              modifier =
-                  Modifier.align(Alignment.End)
-                      .clickable { viewModel.sendPasswordReset() }
-                      .testTag(SignInScreenTestTags.FORGOT_PASSWORD),
-              fontSize = 14.sp,
-              color = Color.Gray)
-
-          Spacer(modifier = Modifier.height(30.dp))
-
-          // Sign In Button with Firebase authentication
-          Button(
-              onClick = viewModel::signIn,
-              enabled = uiState.isSignInButtonEnabled,
-              modifier =
-                  Modifier.fillMaxWidth()
-                      .height(50.dp)
-                      .testTag(SignInScreenTestTags.SIGN_IN_BUTTON),
-              colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00ACC1)),
-              shape = RoundedCornerShape(12.dp)) {
-                if (uiState.isLoading) {
-                  CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
-                } else {
-                  Text("Sign In", fontSize = 18.sp)
-                }
-              }
-
-          Spacer(modifier = Modifier.height(20.dp))
-
-          Text("or continue with", modifier = Modifier.testTag(SignInScreenTestTags.AUTH_SECTION))
-
-          Spacer(modifier = Modifier.height(15.dp))
-
-          Row(horizontalArrangement = Arrangement.spacedBy(15.dp)) {
-            Button(
-                onClick = onGoogleSignIn,
-                enabled = !uiState.isLoading,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                shape = RoundedCornerShape(12.dp),
-                modifier =
-                    Modifier.weight(1f)
-                        .border(width = 2.dp, color = Color.Gray, shape = RoundedCornerShape(12.dp))
-                        .testTag(SignInScreenTestTags.AUTH_GOOGLE)) {
-                  Row(
-                      verticalAlignment = Alignment.CenterVertically,
-                      horizontalArrangement = Arrangement.Center) {
-                        Text("Google", color = Color.Black)
-                      }
-                }
-            Button(
-                onClick = { /* TODO: GitHub auth */},
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                shape = RoundedCornerShape(12.dp),
-                modifier =
-                    Modifier.weight(1f)
-                        .border(width = 2.dp, color = Color.Gray, shape = RoundedCornerShape(12.dp))
-                        .testTag(SignInScreenTestTags.AUTH_GITHUB)) {
-                  Text("GitHub", color = Color.Black)
-                }
-          }
-
-          Spacer(modifier = Modifier.height(20.dp))
-
-          Row {
-            Text("Don't have an account? ")
-            Text(
-                "Sign Up",
-                color = Color.Blue,
-                fontWeight = FontWeight.Bold,
-                modifier =
-                    Modifier.clickable {
-                          // TODO: Navigate to sign up when implemented
-                        }
-                        .testTag(SignInScreenTestTags.SIGNUP_LINK))
-          }
+          LoginForm(uiState = uiState, viewModel = viewModel, onGoogleSignIn = onGoogleSignIn)
         }
       }
+}
+
+@Composable
+private fun SuccessCard(authResult: AuthResult?, onSignOut: () -> Unit) {
+  Card(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      colors = CardDefaults.cardColors(containerColor = Color(0xFF4CAF50))) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally) {
+              Text(
+                  text = "Authentication Successful!",
+                  color = Color.White,
+                  fontSize = 18.sp,
+                  fontWeight = FontWeight.Bold)
+              Spacer(modifier = Modifier.height(8.dp))
+              Text(
+                  text =
+                      "Welcome ${authResult?.let { (it as? AuthResult.Success)?.user?.displayName ?: "User" }}",
+                  color = Color.White,
+                  fontSize = 14.sp)
+              Spacer(modifier = Modifier.height(16.dp))
+              Button(
+                  onClick = onSignOut,
+                  colors = ButtonDefaults.buttonColors(containerColor = Color.White)) {
+                    Text("Sign Out", color = Color(0xFF4CAF50))
+                  }
+            }
+      }
+}
+
+@Composable
+private fun LoginForm(
+    uiState: AuthenticationUiState,
+    viewModel: AuthenticationViewModel,
+    onGoogleSignIn: () -> Unit
+) {
+  LoginHeader()
+  Spacer(modifier = Modifier.height(20.dp))
+
+  RoleSelectionButtons(
+      selectedRole = uiState.selectedRole, onRoleSelected = viewModel::updateSelectedRole)
+  Spacer(modifier = Modifier.height(30.dp))
+
+  EmailPasswordFields(
+      email = uiState.email,
+      password = uiState.password,
+      onEmailChange = viewModel::updateEmail,
+      onPasswordChange = viewModel::updatePassword)
+
+  ErrorAndMessageDisplay(error = uiState.error, message = uiState.message)
+
+  ForgotPasswordLink()
+  Spacer(modifier = Modifier.height(30.dp))
+
+  SignInButton(
+      isLoading = uiState.isLoading,
+      isEnabled = uiState.isSignInButtonEnabled,
+      onClick = viewModel::signIn)
+  Spacer(modifier = Modifier.height(20.dp))
+
+  AlternativeAuthSection(isLoading = uiState.isLoading, onGoogleSignIn = onGoogleSignIn)
+  Spacer(modifier = Modifier.height(20.dp))
+
+  SignUpLink()
+}
+
+@Composable
+private fun LoginHeader() {
+  Text(
+      text = "SkillBridge",
+      fontSize = 28.sp,
+      fontWeight = FontWeight.Bold,
+      color = Color(0xFF1E88E5),
+      modifier = Modifier.testTag(SignInScreenTestTags.TITLE))
+  Spacer(modifier = Modifier.height(10.dp))
+  Text("Welcome back! Please sign in.", modifier = Modifier.testTag(SignInScreenTestTags.SUBTITLE))
+}
+
+@Composable
+private fun RoleSelectionButtons(selectedRole: UserRole, onRoleSelected: (UserRole) -> Unit) {
+  Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    RoleButton(
+        text = "I'm a Learner",
+        role = UserRole.LEARNER,
+        isSelected = selectedRole == UserRole.LEARNER,
+        onRoleSelected = onRoleSelected,
+        testTag = SignInScreenTestTags.ROLE_LEARNER)
+    RoleButton(
+        text = "I'm a Tutor",
+        role = UserRole.TUTOR,
+        isSelected = selectedRole == UserRole.TUTOR,
+        onRoleSelected = onRoleSelected,
+        testTag = SignInScreenTestTags.ROLE_TUTOR)
+  }
+}
+
+@Composable
+private fun RoleButton(
+    text: String,
+    role: UserRole,
+    isSelected: Boolean,
+    onRoleSelected: (UserRole) -> Unit,
+    testTag: String
+) {
+  Button(
+      onClick = { onRoleSelected(role) },
+      colors =
+          ButtonDefaults.buttonColors(
+              containerColor =
+                  if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray),
+      shape = RoundedCornerShape(10.dp),
+      modifier = Modifier.testTag(testTag)) {
+        Text(text)
+      }
+}
+
+@Composable
+private fun EmailPasswordFields(
+    email: String,
+    password: String,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit
+) {
+  OutlinedTextField(
+      value = email,
+      onValueChange = onEmailChange,
+      label = { Text("Email") },
+      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+      leadingIcon = {
+        Icon(painterResource(id = android.R.drawable.ic_dialog_email), contentDescription = null)
+      },
+      modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT))
+
+  Spacer(modifier = Modifier.height(10.dp))
+
+  OutlinedTextField(
+      value = password,
+      onValueChange = onPasswordChange,
+      label = { Text("Password") },
+      visualTransformation = PasswordVisualTransformation(),
+      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+      leadingIcon = {
+        Icon(painterResource(id = android.R.drawable.ic_lock_idle_lock), contentDescription = null)
+      },
+      modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.PASSWORD_INPUT))
+}
+
+@Composable
+private fun ErrorAndMessageDisplay(error: String?, message: String?) {
+  error?.let { errorMessage ->
+    Spacer(modifier = Modifier.height(10.dp))
+    Text(text = errorMessage, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
+  }
+
+  message?.let { msg ->
+    Spacer(modifier = Modifier.height(10.dp))
+    Text(text = msg, color = Color.Green, fontSize = 14.sp)
+  }
+}
+
+@Composable
+private fun ForgotPasswordLink() {
+  Spacer(modifier = Modifier.height(10.dp))
+  Text(
+      "Forgot password?",
+      modifier =
+          Modifier.fillMaxWidth()
+              .wrapContentWidth(Alignment.End)
+              .clickable { /* TODO: Implement when needed */}
+              .testTag(SignInScreenTestTags.FORGOT_PASSWORD),
+      fontSize = 14.sp,
+      color = Color.Gray)
+}
+
+@Composable
+private fun SignInButton(isLoading: Boolean, isEnabled: Boolean, onClick: () -> Unit) {
+  Button(
+      onClick = onClick,
+      enabled = isEnabled,
+      modifier = Modifier.fillMaxWidth().height(50.dp).testTag(SignInScreenTestTags.SIGN_IN_BUTTON),
+      colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00ACC1)),
+      shape = RoundedCornerShape(12.dp)) {
+        if (isLoading) {
+          CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
+        } else {
+          Text("Sign In", fontSize = 18.sp)
+        }
+      }
+}
+
+@Composable
+private fun AlternativeAuthSection(isLoading: Boolean, onGoogleSignIn: () -> Unit) {
+  Text("or continue with", modifier = Modifier.testTag(SignInScreenTestTags.AUTH_SECTION))
+  Spacer(modifier = Modifier.height(15.dp))
+
+  Row(horizontalArrangement = Arrangement.spacedBy(15.dp)) {
+    AuthProviderButton(
+        text = "Google",
+        enabled = !isLoading,
+        onClick = onGoogleSignIn,
+        testTag = SignInScreenTestTags.AUTH_GOOGLE)
+    AuthProviderButton(
+        text = "GitHub",
+        enabled = !isLoading,
+        onClick = { /* TODO: GitHub auth */},
+        testTag = SignInScreenTestTags.AUTH_GITHUB)
+  }
+}
+
+@Composable
+private fun RowScope.AuthProviderButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    testTag: String
+) {
+  Button(
+      onClick = onClick,
+      enabled = enabled,
+      colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+      shape = RoundedCornerShape(12.dp),
+      modifier =
+          Modifier.weight(1f)
+              .border(width = 2.dp, color = Color.Gray, shape = RoundedCornerShape(12.dp))
+              .testTag(testTag)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center) {
+              Text(text, color = Color.Black)
+            }
+      }
+}
+
+@Composable
+private fun SignUpLink() {
+  Row {
+    Text("Don't have an account? ")
+    Text(
+        "Sign Up",
+        color = Color.Blue,
+        fontWeight = FontWeight.Bold,
+        modifier =
+            Modifier.clickable { /* TODO: Navigate to sign up when implemented */}
+                .testTag(SignInScreenTestTags.SIGNUP_LINK))
+  }
 }
 
 // Legacy composable for backward compatibility and proper ViewModel creation
