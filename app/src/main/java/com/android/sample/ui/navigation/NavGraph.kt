@@ -5,12 +5,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.android.sample.ui.bookings.MyBookingsScreen
+import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.screens.HomePlaceholder
 import com.android.sample.ui.screens.PianoSkill2Screen
 import com.android.sample.ui.screens.PianoSkillScreen
-import com.android.sample.ui.screens.ProfilePlaceholder
 import com.android.sample.ui.screens.SettingsPlaceholder
 import com.android.sample.ui.screens.SkillsPlaceholder
+import com.android.sample.ui.profile.MyProfileScreen
 
 /**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
@@ -36,7 +39,11 @@ import com.android.sample.ui.screens.SkillsPlaceholder
  * Note: All screens automatically register with RouteStackManager for back navigation tracking
  */
 @Composable
-fun AppNavGraph(navController: NavHostController) {
+fun AppNavGraph(
+  navController: NavHostController,
+  bookingsViewModel: MyBookingsViewModel,
+  profileViewModel: MyProfileViewModel
+) {
   NavHost(navController = navController, startDestination = NavRoutes.HOME) {
     composable(NavRoutes.PIANO_SKILL) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PIANO_SKILL) }
@@ -55,8 +62,12 @@ fun AppNavGraph(navController: NavHostController) {
 
     composable(NavRoutes.PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
-      ProfilePlaceholder()
+      MyProfileScreen(
+        profileViewModel = profileViewModel,
+        profileId = "test" // Using the same hardcoded user ID from MainActivity
+      )
     }
+
 
     composable(NavRoutes.HOME) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.HOME) }
@@ -70,6 +81,7 @@ fun AppNavGraph(navController: NavHostController) {
 
     composable(NavRoutes.BOOKINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
+      MyBookingsScreen(viewModel = bookingsViewModel, navController = navController)
     }
   }
 }

@@ -21,7 +21,7 @@ package com.android.sample.ui.navigation
  */
 object NavRoutes {
   const val HOME = "home"
-  const val PROFILE = "profile"
+  const val PROFILE = "profile/{profileId}"
   const val SKILLS = "skills"
   const val SETTINGS = "settings"
 
@@ -30,4 +30,6 @@ object NavRoutes {
   const val PIANO_SKILL_2 = "skills/piano2"
   const val BOOKINGS = "bookings"
   const val MESSAGES = "messages"
+
+  fun createProfileRoute(profileId: String) = "profile/$profileId"
 }
