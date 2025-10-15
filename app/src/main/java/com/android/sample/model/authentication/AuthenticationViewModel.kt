@@ -1,221 +1,186 @@
+@file:Suppress("DEPRECATION")
+
 package com.android.sample.model.authentication
 
 import android.content.Context
+import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** ViewModel for handling authentication operations in the UI */
-class AuthenticationViewModel(context: Context) : ViewModel() {
+/**
+ * ViewModel for managing authentication state and operations. Follows MVVM architecture pattern
+ * with Credential Manager API for passwords and Google Sign-In SDK for Google authentication.
+ */
+@Suppress("CONTEXT_RECEIVER_MEMBER_IS_DEPRECATED")
+class AuthenticationViewModel(
+    @Suppress("StaticFieldLeak") private val context: Context,
+    private val repository: AuthenticationRepository = AuthenticationRepository(),
+    private val credentialHelper: CredentialAuthHelper = CredentialAuthHelper(context)
+) : ViewModel() {
 
-  private val authService = AuthenticationServiceProvider.getAuthenticationService(context)
-
-  private val _uiState = MutableStateFlow(AuthUiState())
-  val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
+  private val _uiState = MutableStateFlow(AuthenticationUiState())
+  val uiState: StateFlow<AuthenticationUiState> = _uiState.asStateFlow()
 
   private val _authResult = MutableStateFlow<AuthResult?>(null)
   val authResult: StateFlow<AuthResult?> = _authResult.asStateFlow()
 
-  init {
-    // Update sign-in button state whenever email or password changes
-    updateSignInButtonState()
-  }
-
-  /** Update email field */
+  /** Update the email field */
   fun updateEmail(email: String) {
-    _uiState.value = _uiState.value.copy(email = email)
-    updateSignInButtonState()
-    updateSignUpButtonState()
+    _uiState.update { it.copy(email = email, error = null, message = null) }
   }
 
-  /** Update password field */
+  /** Update the password field */
   fun updatePassword(password: String) {
-    _uiState.value = _uiState.value.copy(password = password)
-    updateSignInButtonState()
-    updateSignUpButtonState()
+    _uiState.update { it.copy(password = password, error = null, message = null) }
   }
 
-  /** Update selected role */
+  /** Update the selected user role */
   fun updateSelectedRole(role: UserRole) {
-    _uiState.value = _uiState.value.copy(selectedRole = role)
-  }
-
-  /** Update name field (for sign-up) */
-  fun updateName(name: String) {
-    _uiState.value = _uiState.value.copy(name = name)
-    updateSignUpButtonState()
-  }
-
-  // TODO: Add methods for other sign-up fields as needed
-  // Example:
-  // fun updateAddress(address: String) { ... }
-
-  /** Update sign-in button enabled state based on email and password */
-  private fun updateSignInButtonState() {
-    val currentState = _uiState.value
-    val isEnabled =
-        currentState.email.isNotEmpty() &&
-            currentState.password.isNotEmpty() &&
-            !currentState.isLoading
-    _uiState.value = currentState.copy(isSignInButtonEnabled = isEnabled)
-  }
-
-  /** Update sign-up button enabled state based on required fields */
-  private fun updateSignUpButtonState() {
-    val currentState = _uiState.value
-    val isEnabled =
-        currentState.name.isNotEmpty() &&
-            currentState.email.isNotEmpty() &&
-            currentState.password.isNotEmpty() &&
-            !currentState.isLoading
-    // TODO: Add validation for other required sign-up fields here
-    _uiState.value = currentState.copy(isSignUpButtonEnabled = isEnabled)
-  }
-
-  /** Show success message */
-  fun showSuccessMessage(show: Boolean) {
-    _uiState.value = _uiState.value.copy(showSuccessMessage = show)
-  }
-
-  /** Sign in with current email and password from state */
-  fun signIn() {
-    val currentState = _uiState.value
-    signInWithEmailAndPassword(currentState.email, currentState.password)
-  }
-
-  /** Send password reset email using current email from state */
-  fun sendPasswordReset() {
-    val currentState = _uiState.value
-    if (currentState.email.isNotEmpty()) {
-      sendPasswordResetEmail(currentState.email)
-    } else {
-      setError("Please enter your email address first")
-    }
-  }
-
-  /** Sign up with current form data (simplified - no confirm password) */
-  fun signUp() {
-    val currentState = _uiState.value
-    signUpWithEmailAndPassword(currentState.email, currentState.password, currentState.name)
+    _uiState.update { it.copy(selectedRole = role) }
   }
 
   /** Sign in with email and password */
-  fun signInWithEmailAndPassword(email: String, password: String) {
-    if (!isValidEmail(email) || password.length < 6) {
-      _uiState.value =
-          _uiState.value.copy(error = "Please enter a valid email and password (min 6 characters)")
-      updateSignInButtonState()
+  fun signIn() {
+    val email = _uiState.value.email
+    val password = _uiState.value.password
+
+    if (email.isBlank() || password.isBlank()) {
+      _uiState.update { it.copy(error = "Email and password cannot be empty") }
       return
     }
 
-    _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-    updateSignInButtonState()
+    _uiState.update { it.copy(isLoading = true, error = null) }
 
     viewModelScope.launch {
-      val result = authService.signInWithEmailAndPassword(email, password)
-      _authResult.value = result
-      _uiState.value =
-          _uiState.value.copy(
-              isLoading = false,
-              error = if (result is AuthResult.Error) result.exception.message else null,
-              showSuccessMessage = result is AuthResult.Success)
-      updateSignInButtonState()
+      val result = repository.signInWithEmail(email, password)
+      result.fold(
+          onSuccess = { user ->
+            _authResult.value = AuthResult.Success(user)
+            _uiState.update { it.copy(isLoading = false, error = null) }
+          },
+          onFailure = { exception ->
+            val errorMessage = exception.message ?: "Sign in failed"
+            _authResult.value = AuthResult.Error(errorMessage)
+            _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+          })
     }
   }
 
-  /** Sign up with email and password */
-  fun signUpWithEmailAndPassword(email: String, password: String, name: String) {
-    if (!isValidEmail(email) || password.length < 6 || name.isBlank()) {
-      _uiState.value =
-          _uiState.value.copy(
-              error = "Please enter valid email, password (min 6 characters), and name")
-      return
-    }
+  /** Handle Google Sign-In result from activity */
+  @Suppress("DEPRECATION")
+  fun handleGoogleSignInResult(result: ActivityResult) {
+    _uiState.update { it.copy(isLoading = true, error = null) }
 
-    _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+    try {
+      val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+      val account = task.getResult(ApiException::class.java)
 
-    viewModelScope.launch {
-      val result = authService.signUpWithEmailAndPassword(email, password, name)
-      _authResult.value = result
-      _uiState.value =
-          _uiState.value.copy(
-              isLoading = false,
-              error = if (result is AuthResult.Error) result.exception.message else null)
+      account.idToken?.let { idToken ->
+        val firebaseCredential = credentialHelper.getFirebaseCredential(idToken)
+
+        viewModelScope.launch {
+          val authResult = repository.signInWithCredential(firebaseCredential)
+          authResult.fold(
+              onSuccess = { user ->
+                _authResult.value = AuthResult.Success(user)
+                _uiState.update { it.copy(isLoading = false, error = null) }
+              },
+              onFailure = { exception ->
+                val errorMessage = exception.message ?: "Google sign in failed"
+                _authResult.value = AuthResult.Error(errorMessage)
+                _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+              })
+        }
+      }
+          ?: run {
+            _authResult.value = AuthResult.Error("No ID token received")
+            _uiState.update { it.copy(isLoading = false, error = "No ID token received") }
+          }
+    } catch (e: ApiException) {
+      val errorMessage = "Google sign in failed: ${e.message}"
+      _authResult.value = AuthResult.Error(errorMessage)
+      _uiState.update { it.copy(isLoading = false, error = errorMessage) }
     }
   }
 
-  /** Handle Google Sign-In result */
-  fun handleGoogleSignInResult(result: AuthResult) {
-    _authResult.value = result
-    _uiState.value =
-        _uiState.value.copy(
-            isLoading = false,
-            error = if (result is AuthResult.Error) result.exception.message else null)
+  /** Get GoogleSignInClient for initiating sign-in */
+  fun getGoogleSignInClient() = credentialHelper.getGoogleSignInClient()
+
+  /** Try to get saved password credential using Credential Manager */
+  fun getSavedCredential() {
+    _uiState.update { it.copy(isLoading = true, error = null) }
+
+    viewModelScope.launch {
+      val result = credentialHelper.getPasswordCredential()
+      result.fold(
+          onSuccess = { passwordCredential ->
+            // Auto-fill the email and password
+            _uiState.update {
+              it.copy(
+                  email = passwordCredential.id,
+                  password = passwordCredential.password,
+                  isLoading = false,
+                  message = "Credential loaded")
+            }
+          },
+          onFailure = { exception ->
+            // Silently fail - no saved credentials is not an error
+            _uiState.update { it.copy(isLoading = false) }
+          })
+    }
   }
 
   /** Send password reset email */
-  fun sendPasswordResetEmail(email: String) {
-    if (!isValidEmail(email)) {
-      _uiState.value = _uiState.value.copy(error = "Please enter a valid email address")
+  fun sendPasswordReset() {
+    val email = _uiState.value.email
+
+    if (email.isBlank()) {
+      _uiState.update { it.copy(error = "Please enter your email address") }
       return
     }
 
-    _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+    _uiState.update { it.copy(isLoading = true, error = null, message = null) }
 
     viewModelScope.launch {
-      val success = authService.sendPasswordResetEmail(email)
-      _uiState.value =
-          _uiState.value.copy(
-              isLoading = false,
-              error = if (!success) "Failed to send password reset email" else null,
-              message = if (success) "Password reset email sent!" else null)
+      val result = repository.sendPasswordResetEmail(email)
+      result.fold(
+          onSuccess = {
+            _uiState.update {
+              it.copy(
+                  isLoading = false, message = "Password reset email sent to $email", error = null)
+            }
+          },
+          onFailure = { exception ->
+            val errorMessage = exception.message ?: "Failed to send password reset email"
+            _uiState.update { it.copy(isLoading = false, error = errorMessage, message = null) }
+          })
     }
   }
 
-  /** Sign out current user */
+  /** Sign out the current user */
   fun signOut() {
-    viewModelScope.launch {
-      authService.signOut()
-      _authResult.value = null
-      _uiState.value = AuthUiState()
+    repository.signOut()
+    credentialHelper.getGoogleSignInClient().signOut()
+    _authResult.value = null
+    _uiState.update {
+      AuthenticationUiState() // Reset to default state
     }
   }
 
-  /** Clear error message */
-  fun clearError() {
-    _uiState.value = _uiState.value.copy(error = null)
-  }
-
-  /** Clear message */
-  fun clearMessage() {
-    _uiState.value = _uiState.value.copy(message = null)
-  }
-
-  /** Check if user is currently signed in */
-  fun isUserSignedIn(): Boolean {
-    return authService.isUserSignedIn()
-  }
-
-  /** Get current user */
-  fun getCurrentUser(): AuthUser? {
-    return authService.getCurrentUser()
-  }
-
-  /** Set error message (for UI integration) */
+  /** Set error message */
   fun setError(message: String) {
-    _uiState.value = _uiState.value.copy(error = message)
+    _uiState.update { it.copy(error = message, isLoading = false) }
   }
 
-  private fun isValidEmail(email: String): Boolean {
-    return try {
-      // Use Android's Patterns if available (production)
-      android.util.Patterns.EMAIL_ADDRESS?.matcher(email)?.matches() == true
-    } catch (e: Exception) {
-      // Fallback for unit tests where Android framework is not available
-      email.contains("@") && email.contains(".") && email.length > 5
-    }
+  /** Show or hide success message */
+  fun showSuccessMessage(show: Boolean) {
+    _uiState.update { it.copy(showSuccessMessage = show) }
   }
 }

@@ -1,20 +1,80 @@
 package com.android.sample.model.authentication
 
-/** Repository interface for authentication operations */
-interface AuthenticationRepository {
-  suspend fun signInWithEmailAndPassword(email: String, password: String): AuthResult
+import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import kotlinx.coroutines.tasks.await
 
-  suspend fun signUpWithEmailAndPassword(email: String, password: String, name: String): AuthResult
+/**
+ * Repository for handling Firebase Authentication operations. Provides methods for email/password
+ * and Google Sign-In authentication.
+ */
+class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.getInstance()) {
 
-  suspend fun signInWithGoogle(): AuthResult
+  /**
+   * Sign in with email and password
+   *
+   * @return Result containing FirebaseUser on success or Exception on failure
+   */
+  suspend fun signInWithEmail(email: String, password: String): Result<FirebaseUser> {
+    return try {
+      val result = auth.signInWithEmailAndPassword(email, password).await()
+      result.user?.let { Result.success(it) }
+          ?: Result.failure(Exception("Sign in failed: No user"))
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
+  }
 
-  suspend fun signOut()
+  /**
+   * Sign in with Google credential
+   *
+   * @return Result containing FirebaseUser on success or Exception on failure
+   */
+  suspend fun signInWithCredential(credential: AuthCredential): Result<FirebaseUser> {
+    return try {
+      val result = auth.signInWithCredential(credential).await()
+      result.user?.let { Result.success(it) }
+          ?: Result.failure(Exception("Sign in failed: No user"))
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
+  }
 
-  fun getCurrentUser(): AuthUser?
+  /**
+   * Send password reset email
+   *
+   * @return Result indicating success or failure
+   */
+  suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+    return try {
+      auth.sendPasswordResetEmail(email).await()
+      Result.success(Unit)
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
+  }
 
-  fun isUserSignedIn(): Boolean
+  /** Sign out the current user */
+  fun signOut() {
+    auth.signOut()
+  }
 
-  suspend fun sendPasswordResetEmail(email: String): Boolean
+  /**
+   * Get the current signed-in user
+   *
+   * @return FirebaseUser if signed in, null otherwise
+   */
+  fun getCurrentUser(): FirebaseUser? {
+    return auth.currentUser
+  }
 
-  suspend fun deleteAccount(): Boolean
+  /**
+   * Check if a user is currently signed in
+   *
+   * @return true if user is signed in, false otherwise
+   */
+  fun isUserSignedIn(): Boolean {
+    return auth.currentUser != null
+  }
 }

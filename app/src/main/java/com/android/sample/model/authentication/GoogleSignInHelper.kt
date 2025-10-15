@@ -1,66 +1,54 @@
+@file:Suppress("DEPRECATION")
+
 package com.android.sample.model.authentication
 
-import android.app.Activity
-import android.content.Intent
 import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.tasks.Task
-import kotlinx.coroutines.launch
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 
 /**
- * Simplified Google Sign-In Helper - closer to old project approach This removes dependency
- * injection complexity that might be causing issues
+ * Helper class for managing Google Sign-In flow. Handles the activity result launcher and Google
+ * Sign-In client configuration.
  */
 class GoogleSignInHelper(
-    private val activity: ComponentActivity,
-    private val onSignInResult: (AuthResult) -> Unit
+    activity: ComponentActivity,
+    private val onSignInResult: (ActivityResult) -> Unit
 ) {
+  private val googleSignInClient: GoogleSignInClient
+  private val signInLauncher: ActivityResultLauncher<android.content.Intent>
 
-  // Direct repository access instead of through service provider
-  private val firebaseAuthRepo = FirebaseAuthenticationRepository(activity)
+  init {
+    // Configure Google Sign-In
+    val gso =
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(
+                "1061045584009-duiljd2t9ijc3u8vc9193a4ecpk2di5f.apps.googleusercontent.com")
+            .requestEmail()
+            .build()
 
-  private val googleSignInLauncher: ActivityResultLauncher<Intent> =
-      activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result
-        ->
-        if (result.resultCode == Activity.RESULT_OK) {
-          val task: Task<GoogleSignInAccount> =
-              GoogleSignIn.getSignedInAccountFromIntent(result.data)
-          handleSignInResult(task)
-        } else {
-          onSignInResult(AuthResult.Error(Exception("Google Sign-In cancelled")))
-        }
-      }
+    googleSignInClient = GoogleSignIn.getClient(activity, gso)
 
-  /** Start Google Sign-In flow */
-  fun signInWithGoogle() {
-    try {
-      val signInIntent = firebaseAuthRepo.googleSignInClient.signInIntent
-      googleSignInLauncher.launch(signInIntent)
-    } catch (e: Exception) {
-      onSignInResult(AuthResult.Error(Exception("Failed to start Google Sign-In: ${e.message}")))
-    }
-  }
-
-  private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
-    try {
-      val account = completedTask.getResult(ApiException::class.java)
-      val idToken = account.idToken
-      if (idToken != null) {
-        // Use the simplified token-based sign-in (like your old project)
-        activity.lifecycleScope.launch {
-          val result = firebaseAuthRepo.signInWithGoogleToken(idToken)
+    // Register activity result launcher
+    signInLauncher =
+        activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            result ->
           onSignInResult(result)
         }
-      } else {
-        onSignInResult(AuthResult.Error(Exception("Failed to get ID token from Google")))
-      }
-    } catch (e: ApiException) {
-      onSignInResult(AuthResult.Error(Exception("Google Sign-In failed: ${e.message}")))
-    }
+  }
+
+  /** Launch Google Sign-In intent */
+  fun signInWithGoogle() {
+    val signInIntent = googleSignInClient.signInIntent
+    signInLauncher.launch(signInIntent)
+  }
+
+  /** This function will be used later when signout is implemented* */
+  /** Sign out from Google */
+  fun signOut() {
+    googleSignInClient.signOut()
   }
 }

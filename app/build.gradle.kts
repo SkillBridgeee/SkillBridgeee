@@ -155,6 +155,11 @@ dependencies {
     // Google Play Services for Google Sign-In
     implementation(libs.play.services.auth)
 
+    // Credential Manager
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services)
+    implementation(libs.googleid)
+
     // ------------- Jetpack Compose ------------------
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
