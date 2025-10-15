@@ -3,17 +3,19 @@ package com.android.sample.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
-import com.android.sample.ui.screens.HomePlaceholder
-import com.android.sample.ui.screens.PianoSkill2Screen
-import com.android.sample.ui.screens.PianoSkillScreen
+import com.android.sample.HomeScreen
+import com.android.sample.MainPageViewModel
 import com.android.sample.ui.screens.SettingsPlaceholder
-import com.android.sample.ui.screens.SkillsPlaceholder
 import com.android.sample.ui.profile.MyProfileScreen
+import com.android.sample.ui.screens.newSkill.NewSkillScreen
+
 
 /**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
@@ -42,23 +44,10 @@ import com.android.sample.ui.profile.MyProfileScreen
 fun AppNavGraph(
   navController: NavHostController,
   bookingsViewModel: MyBookingsViewModel,
-  profileViewModel: MyProfileViewModel
+  profileViewModel: MyProfileViewModel,
+  mainPageViewModel: MainPageViewModel
 ) {
   NavHost(navController = navController, startDestination = NavRoutes.HOME) {
-    composable(NavRoutes.PIANO_SKILL) {
-      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PIANO_SKILL) }
-      PianoSkillScreen(navController = navController)
-    }
-
-    composable(NavRoutes.PIANO_SKILL_2) {
-      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PIANO_SKILL_2) }
-      PianoSkill2Screen()
-    }
-
-    composable(NavRoutes.SKILLS) {
-      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
-      SkillsPlaceholder(navController)
-    }
 
     composable(NavRoutes.PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
@@ -68,10 +57,14 @@ fun AppNavGraph(
       )
     }
 
-
     composable(NavRoutes.HOME) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.HOME) }
-      HomePlaceholder()
+      HomeScreen(
+        mainPageViewModel = mainPageViewModel,
+        onNavigateToNewSkill = { profileId ->
+          navController.navigate(NavRoutes.createNewSkillRoute(profileId))
+        }
+      )
     }
 
     composable(NavRoutes.SETTINGS) {
@@ -82,6 +75,15 @@ fun AppNavGraph(
     composable(NavRoutes.BOOKINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
       MyBookingsScreen(viewModel = bookingsViewModel, navController = navController)
+    }
+
+    composable(
+      route = NavRoutes.NEW_SKILL,
+      arguments = listOf(navArgument("profileId") { type = NavType.StringType })
+    ) { backStackEntry ->
+      val profileId = backStackEntry.arguments?.getString("profileId") ?: ""
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.NEW_SKILL) }
+      NewSkillScreen(profileId = profileId)
     }
   }
 }

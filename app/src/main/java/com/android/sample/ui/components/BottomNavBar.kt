@@ -1,6 +1,7 @@
 package com.android.sample.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
@@ -50,8 +51,7 @@ fun BottomNavBar(navController: NavHostController) {
   val items =
       listOf(
           BottomNavItem("Home", Icons.Default.Home, NavRoutes.HOME),
-          BottomNavItem("Bookings", Icons.Default.Home, NavRoutes.BOOKINGS),
-          BottomNavItem("Skills", Icons.Default.Star, NavRoutes.SKILLS),
+          BottomNavItem("Bookings", Icons.Default.DateRange, NavRoutes.BOOKINGS),
           BottomNavItem("Profile", Icons.Default.Person, NavRoutes.PROFILE),
           BottomNavItem("Settings", Icons.Default.Settings, NavRoutes.SETTINGS))
 
