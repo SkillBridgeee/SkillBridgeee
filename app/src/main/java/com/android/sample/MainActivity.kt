@@ -91,7 +91,7 @@ fun MainApp() {
     NavRoutes.HOME,
     NavRoutes.BOOKINGS,
     NavRoutes.PROFILE,
-    NavRoutes.SETTINGS
+    NavRoutes.SKILLS
   )
 
   // Check if current route should show bottom nav

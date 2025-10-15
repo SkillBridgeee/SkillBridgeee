@@ -52,8 +52,9 @@ fun BottomNavBar(navController: NavHostController) {
       listOf(
           BottomNavItem("Home", Icons.Default.Home, NavRoutes.HOME),
           BottomNavItem("Bookings", Icons.Default.DateRange, NavRoutes.BOOKINGS),
+          BottomNavItem("Skills", Icons.Default.Star, NavRoutes.SKILLS),
           BottomNavItem("Profile", Icons.Default.Person, NavRoutes.PROFILE),
-          BottomNavItem("Settings", Icons.Default.Settings, NavRoutes.SETTINGS))
+        )
 
   NavigationBar(modifier = Modifier) {
     items.forEach { item ->

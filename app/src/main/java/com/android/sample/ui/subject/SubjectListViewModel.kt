@@ -42,6 +42,7 @@ data class SubjectListUiState(
  */
 class SubjectListViewModel(
     private val repository: ProfileRepository = ProfileRepositoryProvider.repository
+
 ) : ViewModel() {
 
   private val _ui = MutableStateFlow(SubjectListUiState())
