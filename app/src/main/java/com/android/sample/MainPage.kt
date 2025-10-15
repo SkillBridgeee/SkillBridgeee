@@ -25,6 +25,11 @@ import com.android.sample.ui.theme.PrimaryColor
 import com.android.sample.ui.theme.SecondaryColor
 import kotlin.random.Random
 
+/**
+ * Provides test tag identifiers for the HomeScreen and its child composables.
+ *
+ * These tags are used to locate UI components during automated testing.
+ */
 object HomeScreenTestTags {
   const val WELCOME_SECTION = "welcomeSection"
   const val EXPLORE_SKILLS_SECTION = "exploreSkillsSection"
@@ -36,6 +41,19 @@ object HomeScreenTestTags {
   const val FAB_ADD = "fabAdd"
 }
 
+/**
+ * The main HomeScreen composable for the SkillBridge app.
+ *
+ * Displays a scaffolded layout containing:
+ * - A Floating Action Button (FAB)
+ * - Greeting section
+ * - Skills exploration carousel
+ * - List of top-rated tutors
+ *
+ * Data is provided by the [MainPageViewModel].
+ *
+ * @param mainPageViewModel The ViewModel providing UI state and event handlers.
+ */
 @Preview
 @Composable
 fun HomeScreen(mainPageViewModel: MainPageViewModel = viewModel()) {
@@ -61,6 +79,11 @@ fun HomeScreen(mainPageViewModel: MainPageViewModel = viewModel()) {
       }
 }
 
+/**
+ * Displays a greeting message and a short subtitle encouraging user engagement.
+ *
+ * @param welcomeMessage The personalized greeting text shown to the user.
+ */
 @Composable
 fun GreetingSection(welcomeMessage: String) {
   Column(
@@ -70,6 +93,13 @@ fun GreetingSection(welcomeMessage: String) {
       }
 }
 
+/**
+ * Displays a horizontally scrollable row of skill cards.
+ *
+ * Each card represents a skill available for learning.
+ *
+ * @param skills The list of [Skill] items to display.
+ */
 @Composable
 fun ExploreSkills(skills: List<Skill>) {
   Column(
@@ -83,6 +113,11 @@ fun ExploreSkills(skills: List<Skill>) {
       }
 }
 
+/**
+ * Displays a single skill card with a randomly generated background color.
+ *
+ * @param skill The [Skill] object representing the skill to display.
+ */
 @Composable
 fun SkillCard(skill: Skill) {
   val randomColor = remember {
@@ -101,6 +136,14 @@ fun SkillCard(skill: Skill) {
       }
 }
 
+/**
+ * Displays a vertical list of top-rated tutors using a [LazyColumn].
+ *
+ * Each item in the list is rendered using [TutorCard].
+ *
+ * @param tutors The list of [TutorCardUi] objects to display.
+ * @param onBookClick The callback invoked when the "Book" button is clicked.
+ */
 @Composable
 fun TutorsSection(tutors: List<TutorCardUi>, onBookClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
@@ -120,6 +163,14 @@ fun TutorsSection(tutors: List<TutorCardUi>, onBookClick: (String) -> Unit) {
   }
 }
 
+/**
+ * Displays a tutor’s information card, including name, subject, hourly rate, and rating stars.
+ *
+ * The card includes a "Book" button that triggers [onBookClick].
+ *
+ * @param tutor The [TutorCardUi] object containing tutor data.
+ * @param onBookClick The callback executed when the "Book" button is clicked.
+ */
 @Composable
 fun TutorCard(tutor: TutorCardUi, onBookClick: (String) -> Unit) {
   Card(
@@ -152,7 +203,7 @@ fun TutorCard(tutor: TutorCardUi, onBookClick: (String) -> Unit) {
 
           Column(horizontalAlignment = Alignment.End) {
             Text(
-                "$${"%.2f".format(tutor.hourlyRate)} / hr", // ✅ formatted here, not in ViewModel
+                "$${"%.2f".format(tutor.hourlyRate)} / hr",
                 color = SecondaryColor,
                 fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(6.dp))
