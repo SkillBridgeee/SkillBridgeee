@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.map.Location
@@ -119,17 +120,28 @@ class SubjectListScreenTest {
     composeRule.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).assertIsDisplayed()
   }
 
-  @Test
-  fun rendersSingleList_ofTutorCards() {
-    setContent()
+    @Test
+    fun rendersSingleList_ofTutorCards() {
+        setContent()
 
-    // All five tutors should be in the single list
-    composeRule
-        .onAllNodes(
-            hasTestTag(SubjectListTestTags.TUTOR_CARD) and
-                hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
-        .assertCountEquals(5)
-  }
+        val list = composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+
+        // Scroll to each expected name and assert it’s displayed
+        list.performScrollToNode(hasText("Liam P."))
+        composeRule.onNodeWithText("Liam P.", useUnmergedTree = true).assertIsDisplayed()
+
+        list.performScrollToNode(hasText("David B."))
+        composeRule.onNodeWithText("David B.", useUnmergedTree = true).assertIsDisplayed()
+
+        list.performScrollToNode(hasText("Stevie W."))
+        composeRule.onNodeWithText("Stevie W.", useUnmergedTree = true).assertIsDisplayed()
+
+        list.performScrollToNode(hasText("Nora Q."))
+        composeRule.onNodeWithText("Nora Q.", useUnmergedTree = true).assertIsDisplayed()
+
+        list.performScrollToNode(hasText("Maya R."))
+        composeRule.onNodeWithText("Maya R.", useUnmergedTree = true).assertIsDisplayed()
+    }
 
   @Test
   fun clickingBook_callsCallback() {
