@@ -41,7 +41,7 @@ class TutorProfileViewModel(
   private val _state = MutableStateFlow(TutorUiState())
   val state: StateFlow<TutorUiState> = _state.asStateFlow()
 
-    private var loadJob: Job? = null
+  private var loadJob: Job? = null
 
   /**
    * Loads the tutor data for the given tutor ID. If the data is already loaded, this function does
@@ -50,28 +50,26 @@ class TutorProfileViewModel(
    * @param tutorId The ID of the tutor to load.
    */
   fun load(tutorId: String) {
-      val currentId = _state.value.profile?.userId
-      if (currentId == tutorId && !_state.value.loading) return
+    val currentId = _state.value.profile?.userId
+    if (currentId == tutorId && !_state.value.loading) return
 
-      loadJob?.cancel()
-      loadJob = viewModelScope.launch {
+    loadJob?.cancel()
+    loadJob =
+        viewModelScope.launch {
           _state.value = _state.value.copy(loading = true)
 
-          val (profile, skills) = supervisorScope {
-              val profileDeferred = async { repository.getProfile(tutorId) }
-              val skillsDeferred = async { repository.getSkillsForUser(tutorId) }
+          val (profile, skills) =
+              supervisorScope {
+                val profileDeferred = async { repository.getProfile(tutorId) }
+                val skillsDeferred = async { repository.getSkillsForUser(tutorId) }
 
-              val profile = runCatching { profileDeferred.await() }.getOrNull()
-              val skills = runCatching { skillsDeferred.await() }.getOrElse { emptyList() }
+                val profile = runCatching { profileDeferred.await() }.getOrNull()
+                val skills = runCatching { skillsDeferred.await() }.getOrElse { emptyList() }
 
-              profile to skills
-          }
+                profile to skills
+              }
 
-          _state.value = TutorUiState(
-              loading = false,
-              profile = profile,
-              skills = skills
-          )
-      }
+          _state.value = TutorUiState(loading = false, profile = profile, skills = skills)
+        }
   }
 }
