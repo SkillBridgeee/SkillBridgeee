@@ -190,6 +190,14 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
         val enabled =
             state.canSubmit && minLength && hasLetter && hasDigit && hasSpecial && !state.submitting
 
+        val buttonColors =
+            ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                contentColor = Color.White, // <-- white text when enabled
+                disabledContainerColor = Color.Transparent,
+                disabledContentColor = DisabledContent // <-- gray text when disabled
+                )
+
         Button(
             onClick = { vm.onEvent(SignUpEvent.Submit) },
             enabled = enabled,
@@ -199,12 +207,7 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
                     .clip(RoundedCornerShape(24.dp))
                     .background(if (enabled) gradient else disabledBrush, RoundedCornerShape(24.dp))
                     .testTag(SignUpScreenTestTags.SIGN_UP),
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = DisabledContent,
-                    disabledContainerColor = Color.Transparent,
-                    disabledContentColor = DisabledContent),
+            colors = buttonColors,
             contentPadding = PaddingValues(0.dp)) {
               Text(
                   if (state.submitting) "Submitting…" else "Sign Up",
