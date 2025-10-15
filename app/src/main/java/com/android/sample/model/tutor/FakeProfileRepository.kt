@@ -13,17 +13,10 @@ class FakeProfileRepository {
   val tutors: List<Profile>
     get() = _tutors
 
-
-    private val _fakeUser: Profile = Profile(
-        "1",
-        "Ava S.",
-        "ava@gmail.com",
-        Location(0.0, 0.0),
-        "$0/hr",
-        "",
-        RatingInfo(4.5, 10))
-    val fakeUser: Profile
-        get() = _fakeUser
+  private val _fakeUser: Profile =
+      Profile("1", "Ava S.", "ava@gmail.com", Location(0.0, 0.0), "$0/hr", "", RatingInfo(4.5, 10))
+  val fakeUser: Profile
+    get() = _fakeUser
 
   init {
     loadMockData()

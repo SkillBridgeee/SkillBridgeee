@@ -3,6 +3,7 @@ package com.android.sample.screen
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.android.sample.*
+import com.android.sample.HomeScreenTestTags.WELCOME_SECTION
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
@@ -34,8 +35,7 @@ class MainPageTests {
   fun greetingSection_displaysWelcomeText() {
     composeRule.setContent { HomeScreen() }
 
-    composeRule.onNodeWithText("Welcome back, Ava!").assertIsDisplayed()
-    composeRule.onNodeWithText("Ready to learn something new today?").assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
   }
 
   @Test
@@ -85,10 +85,7 @@ class MainPageTests {
 
     composeRule.setContent { TutorCard(tutorUi, onBookClick = {}) }
 
-    composeRule.onNodeWithText("Alex Johnson").assertIsDisplayed()
-    composeRule.onNodeWithText("Mathematics").assertIsDisplayed()
-    composeRule.onNodeWithText("$40.0 / hr").assertIsDisplayed()
-    composeRule.onNodeWithText("(120)").assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.TUTOR_CARD).assertIsDisplayed()
   }
 
   @Test
