@@ -13,6 +13,8 @@ sealed class Listing {
   abstract val location: Location
   abstract val createdAt: Date
   abstract val isActive: Boolean
+
+  abstract val hourlyRate: Double
 }
 
 /** Proposal - user offering to teach */
@@ -24,10 +26,10 @@ data class Proposal(
     override val location: Location = Location(),
     override val createdAt: Date = Date(),
     override val isActive: Boolean = true,
-    val hourlyRate: Double = 0.0
+    override val hourlyRate: Double = 0.0
 ) : Listing() {
   init {
-    require(hourlyRate >= 0) { "Hourly rate must be non-negative" }
+    require(hourlyRate >= 0.0) { "Hourly rate must be non-negative" }
   }
 }
 
@@ -40,9 +42,9 @@ data class Request(
     override val location: Location = Location(),
     override val createdAt: Date = Date(),
     override val isActive: Boolean = true,
-    val maxBudget: Double = 0.0
+    override val hourlyRate: Double = 0.0
 ) : Listing() {
   init {
-    require(maxBudget >= 0) { "Max budget must be non-negative" }
+    require(hourlyRate >= 0) { "Max budget must be non-negative" }
   }
 }
