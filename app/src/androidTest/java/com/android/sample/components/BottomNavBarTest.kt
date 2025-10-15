@@ -1,20 +1,20 @@
 package com.android.sample.components
 
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.navigation.compose.rememberNavController
-import com.android.sample.ui.components.BottomNavBar
-import org.junit.Rule
-import org.junit.Test
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.android.sample.MainPageViewModel
 import com.android.sample.MyViewModelFactory
 import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.profile.MyProfileViewModel
-import com.android.sample.MainPageViewModel
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.compose.runtime.getValue
+import org.junit.Rule
+import org.junit.Test
 
 class BottomNavBarTest {
 
@@ -75,11 +75,10 @@ class BottomNavBarTest {
       currentDestination = navBackStackEntry?.destination?.route
 
       AppNavGraph(
-        navController = navController,
-        bookingsViewModel = bookingsViewModel,
-        profileViewModel = profileViewModel,
-        mainPageViewModel = mainPageViewModel
-      )
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel)
       BottomNavBar(navController = navController)
     }
 

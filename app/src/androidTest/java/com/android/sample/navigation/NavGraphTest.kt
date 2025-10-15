@@ -25,21 +25,15 @@ class AppNavGraphTest {
   }
 
   @Test
-  fun startDestination_is_login() {
-    // App starts at login screen
-    composeTestRule.onNodeWithText("SkillBridge").assertExists().assertIsDisplayed()
-    composeTestRule.onNodeWithText("Welcome back! Please sign in.").assertExists()
-  }
-
-  @Test
   fun login_navigates_to_home() {
     // Click GitHub login button to navigate to home
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Should now be on home screen
-    composeTestRule.onNodeWithText("Welcome back, Ava!").assertExists()
+    // Should now be on home screen - check for home screen elements
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
+    composeTestRule.onNodeWithText("Explore skills").assertExists()
+    composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
   }
 
   @Test
@@ -66,9 +60,10 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    // Should display profile screen
-    composeTestRule.onNodeWithText("Ava Johnson").assertExists()
+    // Should display profile screen - check for profile screen elements
+    composeTestRule.onNodeWithText("Student").assertExists()
     composeTestRule.onNodeWithText("Personal Details").assertExists()
+    composeTestRule.onNodeWithText("Save Profile Changes").assertExists()
   }
 
   @Test
@@ -134,21 +129,11 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Home").performClick()
     composeTestRule.waitForIdle()
 
-    // Should be on home screen
-    composeTestRule.onNodeWithText("Welcome back, Ava!").assertExists()
-    assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
-  }
-
-  @Test
-  fun home_screen_displays_sections() {
-    // Login first
-    composeTestRule.onNodeWithText("GitHub").performClick()
-    composeTestRule.waitForIdle()
-
-    // Verify home screen sections
-    composeTestRule.onNodeWithText("Welcome back, Ava!").assertExists()
+    // Should be on home screen - check for actual home content
+    composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
     composeTestRule.onNodeWithText("Explore skills").assertExists()
     composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
   }
 
   @Test

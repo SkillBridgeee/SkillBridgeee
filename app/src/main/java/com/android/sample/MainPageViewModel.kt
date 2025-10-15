@@ -170,9 +170,7 @@ class MainPageViewModel : ViewModel() {
    * This function will be expanded in future versions to handle adding new tutors.
    */
   fun onAddTutorClicked(profileId: String) {
-    viewModelScope.launch {
-      _navigationEvent.value = profileId
-    }
+    viewModelScope.launch { _navigationEvent.value = profileId }
   }
 
   fun onNavigationHandled() {

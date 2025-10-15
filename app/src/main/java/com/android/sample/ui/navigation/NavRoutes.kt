@@ -23,18 +23,14 @@ object NavRoutes {
   const val LOGIN = "login"
   const val HOME = "home"
   const val PROFILE = "profile/{profileId}"
-  const val SETTINGS = "settings"
   const val SKILLS = "skills"
-
   const val BOOKINGS = "bookings"
 
   // Secondary pages
   const val NEW_SKILL = "new_skill/{profileId}"
-  const val PIANO_SKILL = "skills/piano"
-  const val PIANO_SKILL_2 = "skills/piano2"
   const val MESSAGES = "messages"
 
   fun createProfileRoute(profileId: String) = "profile/$profileId"
-  fun createNewSkillRoute(profileId: String) = "new_skill/$profileId"
 
+  fun createNewSkillRoute(profileId: String) = "new_skill/$profileId"
 }

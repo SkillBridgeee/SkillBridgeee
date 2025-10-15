@@ -42,9 +42,9 @@ object SignInScreenTestTags {
 
 @Composable
 fun LoginScreen(
-  viewModel: AuthenticationViewModel = AuthenticationViewModel(LocalContext.current),
-  onGoogleSignIn: () -> Unit = {},
-  onGitHubSignIn: () -> Unit = {}
+    viewModel: AuthenticationViewModel = AuthenticationViewModel(LocalContext.current),
+    onGoogleSignIn: () -> Unit = {},
+    onGitHubSignIn: () -> Unit = {}
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val authResult by viewModel.authResult.collectAsStateWithLifecycle()
@@ -75,11 +75,10 @@ fun LoginScreen(
               })
         } else {
           LoginForm(
-            uiState = uiState,
-            viewModel = viewModel,
-            onGoogleSignIn = onGoogleSignIn,
-            onGitHubSignIn = onGitHubSignIn
-          )
+              uiState = uiState,
+              viewModel = viewModel,
+              onGoogleSignIn = onGoogleSignIn,
+              onGitHubSignIn = onGitHubSignIn)
         }
       }
 }
@@ -147,10 +146,9 @@ private fun LoginForm(
   Spacer(modifier = Modifier.height(20.dp))
 
   AlternativeAuthSection(
-    isLoading = uiState.isLoading,
-    onGoogleSignIn = onGoogleSignIn,
-    onGitHubSignIn = onGitHubSignIn
-  )
+      isLoading = uiState.isLoading,
+      onGoogleSignIn = onGoogleSignIn,
+      onGitHubSignIn = onGitHubSignIn)
   Spacer(modifier = Modifier.height(20.dp))
 
   SignUpLink()
@@ -293,27 +291,26 @@ private fun SignInButton(isLoading: Boolean, isEnabled: Boolean, onClick: () -> 
 
 @Composable
 private fun AlternativeAuthSection(
-  isLoading: Boolean,
-  onGoogleSignIn: () -> Unit,
-  onGitHubSignIn: () -> Unit = {}
+    isLoading: Boolean,
+    onGoogleSignIn: () -> Unit,
+    onGitHubSignIn: () -> Unit = {}
 ) {
   Text("or continue with", modifier = Modifier.testTag(SignInScreenTestTags.AUTH_SECTION))
   Spacer(modifier = Modifier.height(15.dp))
 
   Row(horizontalArrangement = Arrangement.spacedBy(15.dp)) {
     AuthProviderButton(
-      text = "Google",
-      enabled = !isLoading,
-      onClick = onGoogleSignIn,
-      testTag = SignInScreenTestTags.AUTH_GOOGLE)
+        text = "Google",
+        enabled = !isLoading,
+        onClick = onGoogleSignIn,
+        testTag = SignInScreenTestTags.AUTH_GOOGLE)
     AuthProviderButton(
-      text = "GitHub",
-      enabled = !isLoading,
-      onClick = onGitHubSignIn, // This line is correct
-      testTag = SignInScreenTestTags.AUTH_GITHUB)
+        text = "GitHub",
+        enabled = !isLoading,
+        onClick = onGitHubSignIn, // This line is correct
+        testTag = SignInScreenTestTags.AUTH_GITHUB)
   }
 }
-
 
 @Composable
 private fun RowScope.AuthProviderButton(

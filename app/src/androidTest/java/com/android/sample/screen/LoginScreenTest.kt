@@ -10,9 +10,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.login.SignInScreenTestTags
-import com.android.sample.model.authentication.AuthenticationViewModel
 import org.junit.Rule
 import org.junit.Test
 

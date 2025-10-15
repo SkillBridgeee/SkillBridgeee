@@ -7,6 +7,8 @@ import com.android.sample.MainApp
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import androidx.compose.ui.test.performClick
+
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityTest {
@@ -25,14 +27,19 @@ class MainActivityTest {
   fun mainApp_contains_navigation_components() {
     composeTestRule.setContent { MainApp() }
 
-    // Verify bottom navigation exists by checking for navigation tabs
+    // First navigate from login to main app by clicking GitHub
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
+
+    // Now verify bottom navigation exists
     composeTestRule.onNodeWithText("Skills").assertExists()
     composeTestRule.onNodeWithText("Profile").assertExists()
-    composeTestRule.onNodeWithText("Settings").assertExists()
+    composeTestRule.onNodeWithText("Bookings").assertExists()
 
-    // Test for Home in bottom nav specifically, or use a different approach
+    // Test for Home in bottom nav specifically
     composeTestRule.onAllNodes(hasText("Home")).fetchSemanticsNodes().let { nodes ->
       assert(nodes.isNotEmpty()) // Verify at least one "Home" exists
     }
   }
+
 }

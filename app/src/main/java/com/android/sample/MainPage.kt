@@ -57,8 +57,8 @@ object HomeScreenTestTags {
 @Preview
 @Composable
 fun HomeScreen(
-  mainPageViewModel: MainPageViewModel = viewModel(),
-  onNavigateToNewSkill: (String) -> Unit = {}
+    mainPageViewModel: MainPageViewModel = viewModel(),
+    onNavigateToNewSkill: (String) -> Unit = {}
 ) {
   val uiState by mainPageViewModel.uiState.collectAsState()
   val navigationEvent by mainPageViewModel.navigationEvent.collectAsState()
