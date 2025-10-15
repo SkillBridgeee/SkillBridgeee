@@ -27,28 +27,27 @@ class SignUpScreenRobolectricTest {
     rule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP, useUnmergedTree = false).assertExists()
   }
 
-    @Test
-    fun entering_valid_form_enables_sign_up_button() {
-        val vm = SignUpViewModel()
-        rule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
+  @Test
+  fun entering_valid_form_enables_sign_up_button() {
+    val vm = SignUpViewModel()
+    rule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
 
-        rule.onNodeWithTag(SignUpScreenTestTags.NAME, useUnmergedTree = false).performTextInput("Élise")
-        rule
-            .onNodeWithTag(SignUpScreenTestTags.SURNAME, useUnmergedTree = false)
-            .performTextInput("Müller")
-        rule.onNodeWithTag(SignUpScreenTestTags.ADDRESS, useUnmergedTree = false).performTextInput("S1")
-        rule
-            .onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION, useUnmergedTree = false)
-            .performTextInput("CS")
-        rule
-            .onNodeWithTag(SignUpScreenTestTags.EMAIL, useUnmergedTree = false)
-            .performTextInput("user@mail.org")
-        // include a special character to satisfy the UI requirement
-        rule
-            .onNodeWithTag(SignUpScreenTestTags.PASSWORD, useUnmergedTree = false)
-            .performTextInput("passw0rd!")
+    rule.onNodeWithTag(SignUpScreenTestTags.NAME, useUnmergedTree = false).performTextInput("Élise")
+    rule
+        .onNodeWithTag(SignUpScreenTestTags.SURNAME, useUnmergedTree = false)
+        .performTextInput("Müller")
+    rule.onNodeWithTag(SignUpScreenTestTags.ADDRESS, useUnmergedTree = false).performTextInput("S1")
+    rule
+        .onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION, useUnmergedTree = false)
+        .performTextInput("CS")
+    rule
+        .onNodeWithTag(SignUpScreenTestTags.EMAIL, useUnmergedTree = false)
+        .performTextInput("user@mail.org")
+    // include a special character to satisfy the UI requirement
+    rule
+        .onNodeWithTag(SignUpScreenTestTags.PASSWORD, useUnmergedTree = false)
+        .performTextInput("passw0rd!")
 
-        rule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP, useUnmergedTree = false).assertIsEnabled()
-    }
-
+    rule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP, useUnmergedTree = false).assertIsEnabled()
+  }
 }
