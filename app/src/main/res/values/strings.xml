@@ -2,4 +2,6 @@
     <string name="app_name">SampleApp</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="title_activity_second">SecondActivity</string>
+    <!-- Google Sign-In Web Client ID from Firebase Console -->
+    <string name="default_web_client_id">1061045584009-duiljd2t9ijc3u8vc9193a4ecpk2di5f.apps.googleusercontent.com</string>
 </resources>

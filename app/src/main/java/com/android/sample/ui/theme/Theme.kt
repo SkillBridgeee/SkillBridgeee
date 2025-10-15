@@ -9,11 +9,31 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+
+// Extended colors for custom theming
+@Immutable
+data class ExtendedColors(
+    val loginTitleBlue: Color = LoginTitleBlue,
+    val successGreen: Color = SuccessGreen,
+    val messageGreen: Color = MessageGreen,
+    val unselectedGray: Color = UnselectedGray,
+    val forgotPasswordGray: Color = ForgotPasswordGray,
+    val authButtonBorderGray: Color = AuthButtonBorderGray,
+    val signInButtonTeal: Color = SignInButtonTeal,
+    val authProviderTextBlack: Color = AuthProviderTextBlack,
+    val signUpLinkBlue: Color = SignUpLinkBlue
+)
+
+val LocalExtendedColors = staticCompositionLocalOf { ExtendedColors() }
 
 private val DarkColorScheme =
     darkColorScheme(primary = Purple80, secondary = PurpleGrey80, tertiary = Pink80)
@@ -58,5 +78,11 @@ fun SampleAppTheme(
     }
   }
 
-  MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+  CompositionLocalProvider(LocalExtendedColors provides ExtendedColors()) {
+    MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+  }
 }
+
+// Extension property to access extended colors from MaterialTheme
+val MaterialTheme.extendedColors: ExtendedColors
+  @Composable get() = LocalExtendedColors.current
