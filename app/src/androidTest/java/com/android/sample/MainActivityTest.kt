@@ -2,13 +2,12 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.MainApp
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import androidx.compose.ui.test.performClick
-
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityTest {
@@ -41,5 +40,4 @@ class MainActivityTest {
       assert(nodes.isNotEmpty()) // Verify at least one "Home" exists
     }
   }
-
 }

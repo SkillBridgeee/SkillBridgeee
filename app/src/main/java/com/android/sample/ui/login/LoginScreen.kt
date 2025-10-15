@@ -44,7 +44,8 @@ object SignInScreenTestTags {
 fun LoginScreen(
     viewModel: AuthenticationViewModel = AuthenticationViewModel(LocalContext.current),
     onGoogleSignIn: () -> Unit = {},
-    onGitHubSignIn: () -> Unit = {}
+    onGitHubSignIn: () -> Unit = {},
+    onNavigateToSignUp: () -> Unit = {} // Add this parameter
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val authResult by viewModel.authResult.collectAsStateWithLifecycle()
@@ -78,7 +79,8 @@ fun LoginScreen(
               uiState = uiState,
               viewModel = viewModel,
               onGoogleSignIn = onGoogleSignIn,
-              onGitHubSignIn = onGitHubSignIn)
+              onGitHubSignIn = onGitHubSignIn,
+              onNavigateToSignUp)
         }
       }
 }
@@ -119,7 +121,8 @@ private fun LoginForm(
     uiState: AuthenticationUiState,
     viewModel: AuthenticationViewModel,
     onGoogleSignIn: () -> Unit,
-    onGitHubSignIn: () -> Unit = {}
+    onGitHubSignIn: () -> Unit = {},
+    onNavigateToSignUp: () -> Unit = {}
 ) {
   LoginHeader()
   Spacer(modifier = Modifier.height(20.dp))
@@ -151,7 +154,7 @@ private fun LoginForm(
       onGitHubSignIn = onGitHubSignIn)
   Spacer(modifier = Modifier.height(20.dp))
 
-  SignUpLink()
+  SignUpLink(onNavigateToSignUp = onNavigateToSignUp)
 }
 
 @Composable
@@ -342,7 +345,7 @@ private fun RowScope.AuthProviderButton(
 }
 
 @Composable
-private fun SignUpLink() {
+private fun SignUpLink(onNavigateToSignUp: () -> Unit = {}) {
   val extendedColors = MaterialTheme.extendedColors
 
   Row {
@@ -352,8 +355,7 @@ private fun SignUpLink() {
         color = extendedColors.signUpLinkBlue,
         fontWeight = FontWeight.Bold,
         modifier =
-            Modifier.clickable { /* TODO: Navigate to sign up when implemented */}
-                .testTag(SignInScreenTestTags.SIGNUP_LINK))
+            Modifier.clickable { onNavigateToSignUp() }.testTag(SignInScreenTestTags.SIGNUP_LINK))
   }
 }
 

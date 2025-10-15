@@ -19,7 +19,7 @@ package com.android.sample.ui.navigation
  *
  * Integration:
  * - Used in AppNavGraph to track all route changes via LaunchedEffect
- * - Main routes are automatically defined (HOME, SKILLS, PROFILE, SETTINGS)
+ * - Main routes are automatically defined (HOME, SKILLS, PROFILE, BOOKINGS)
  * - Works alongside NavHostController for enhanced navigation control
  *
  * Modifying main routes:
@@ -32,7 +32,7 @@ object RouteStackManager {
 
   // Set of the app's main routes (bottom nav)
   private val mainRoutes =
-      setOf(NavRoutes.HOME, NavRoutes.SKILLS, NavRoutes.PROFILE, NavRoutes.SETTINGS)
+      setOf(NavRoutes.HOME, NavRoutes.SKILLS, NavRoutes.PROFILE, NavRoutes.BOOKINGS)
 
   fun addRoute(route: String) {
     // prevent consecutive duplicates

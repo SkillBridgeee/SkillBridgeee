@@ -53,7 +53,7 @@ fun TopAppBar(navController: NavController) {
       when (currentRoute) {
         NavRoutes.HOME -> "Home"
         NavRoutes.PROFILE -> "Profile"
-        NavRoutes.SETTINGS -> "Settings"
+        NavRoutes.SKILLS -> "skills"
         NavRoutes.BOOKINGS -> "My Bookings"
         else -> "SkillBridge"
       }

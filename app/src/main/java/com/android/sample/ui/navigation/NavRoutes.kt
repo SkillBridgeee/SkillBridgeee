@@ -29,6 +29,7 @@ object NavRoutes {
   // Secondary pages
   const val NEW_SKILL = "new_skill/{profileId}"
   const val MESSAGES = "messages"
+  const val SIGNUP = "signup"
 
   fun createProfileRoute(profileId: String) = "profile/$profileId"
 
