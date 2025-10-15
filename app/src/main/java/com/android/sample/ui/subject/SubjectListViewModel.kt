@@ -1,5 +1,6 @@
 package com.android.sample.ui.subject
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.skill.MainSubject
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 
 /** UI state for the Subject List screen */
 data class SubjectListUiState(
@@ -59,14 +61,8 @@ class SubjectListViewModel(
             // 1) Load all profiles
             val allProfiles = repository.getAllProfiles()
 
-            // 2) Load skills for each profile in parallel
-            val skillsByUser: Map<String, List<Skill>> =
-                allProfiles
-                    // For each tutor start an async child coroutine that loads that user’s
-                    // skills and returns a (userId to skills) pair.
-                    .map { p -> async { p.userId to repository.getSkillsForUser(p.userId) } }
-                    .awaitAll()
-                    .toMap()
+            // 2) Load skills for each profile concurrently, but don't fail the whole refresh
+            val skillsByUser = loadSkillsForUsers(allProfiles)
 
             // 3) Update raw state, then apply current filters
             _ui.update {
@@ -76,13 +72,35 @@ class SubjectListViewModel(
                   isLoading = false,
                   error = null)
             }
-            // Apply filters to update displayed list (e.g filter by query or skill)
             applyFilters()
           } catch (t: Throwable) {
             _ui.update { it.copy(isLoading = false, error = t.message ?: "Unknown error") }
           }
         }
   }
+
+  /**
+   * Loads skills for a list of users concurrently, returning a map of userId to their skills.
+   *
+   * @param profiles The list of profiles to load skills for
+   */
+  private suspend fun loadSkillsForUsers(profiles: List<Profile>): Map<String, List<Skill>> =
+      supervisorScope {
+        profiles
+            .map { p ->
+              async {
+                val skills =
+                    runCatching { repository.getSkillsForUser(p.userId) }
+                        .onFailure { e ->
+                          Log.w("SubjectListVM", "Failed to load skills for ${p.userId}", e)
+                        }
+                        .getOrElse { emptyList() }
+                p.userId to skills
+              }
+            }
+            .awaitAll()
+            .toMap()
+      }
 
   /**
    * Called when the search query changes. Updates the query state and reapplies filters to the full
