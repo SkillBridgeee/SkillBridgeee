@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import kotlinx.coroutines.delay
@@ -49,6 +50,12 @@ private class UiRepo : ProfileRepository {
       location: com.android.sample.model.map.Location,
       radiusKm: Double
   ): List<Profile> = emptyList()
+
+  override suspend fun getProfileById(userId: String): Profile = added.first { it.userId == userId }
+
+  override suspend fun getSkillsForUser(userId: String): List<Skill> {
+    TODO("Not yet implemented")
+  }
 }
 
 private class SlowRepoUi : ProfileRepository {
@@ -70,6 +77,14 @@ private class SlowRepoUi : ProfileRepository {
       location: com.android.sample.model.map.Location,
       radiusKm: Double
   ): List<Profile> = emptyList()
+
+  override suspend fun getProfileById(userId: String): Profile {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getSkillsForUser(userId: String): List<Skill> {
+    TODO("Not yet implemented")
+  }
 }
 
 private class SlowFailRepo : ProfileRepository {
@@ -92,6 +107,14 @@ private class SlowFailRepo : ProfileRepository {
       location: com.android.sample.model.map.Location,
       radiusKm: Double
   ): List<Profile> = emptyList()
+
+  override suspend fun getProfileById(userId: String): Profile {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun getSkillsForUser(userId: String): List<Skill> {
+    TODO("Not yet implemented")
+  }
 }
 
 // ---------- tests ----------
