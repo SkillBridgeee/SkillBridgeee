@@ -126,14 +126,23 @@ fun SubjectListScreen(
       Spacer(Modifier.height(8.dp))
 
       // Top-Rated section
-      ui.topTutors.forEach { p ->
-        TutorCard(
-            profile = p,
-            pricePerHour = null,
-            onPrimaryAction = onBookTutor,
-            cardTestTag = SubjectListTestTags.TUTOR_CARD,
-            buttonTestTag = SubjectListTestTags.TUTOR_BOOK_BUTTON)
-        Spacer(Modifier.height(8.dp))
+      if (ui.topTutors.isNotEmpty()) {
+        Column(modifier = Modifier.testTag(SubjectListTestTags.TOP_TUTORS_SECTION)) {
+          Text(
+              "Top-Rated Tutors",
+              style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.SemiBold,
+              modifier = Modifier.padding(vertical = 8.dp))
+          ui.topTutors.forEach { p ->
+            TutorCard(
+                profile = p,
+                pricePerHour = null,
+                onPrimaryAction = onBookTutor,
+                cardTestTag = SubjectListTestTags.TUTOR_CARD,
+                buttonTestTag = SubjectListTestTags.TUTOR_BOOK_BUTTON)
+            Spacer(Modifier.height(8.dp))
+          }
+        }
       }
       Spacer(Modifier.height(8.dp))
 
