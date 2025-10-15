@@ -30,7 +30,7 @@ With **SkillBridge**:
 ---
 
 ## 🏗️ Tech Stack
-- **Frontend**: Mobile app (React Native or Flutter)  
+- **Frontend**: Mobile app (Kotlin)  
 - **Backend**: Google Firebase (Cloud Firestore, Authentication, Cloud Functions)  
 - **Device Features**: GPS/location services, local caching for offline support  
 

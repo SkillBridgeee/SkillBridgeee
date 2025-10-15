@@ -1,7 +1,5 @@
 package com.android.sample.model.user
-
+/** Provides a single instance of the TutorRepository (swap for a remote impl in prod/tests). */
 object ProfileRepositoryProvider {
-  private val _repository: ProfileRepository by lazy { ProfileRepositoryLocal() }
-
-  var repository: ProfileRepository = _repository
+  var repository: ProfileRepository = ProfileRepositoryLocal()
 }

@@ -1,5 +1,7 @@
 package com.android.sample.model.listing
 
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
@@ -14,11 +16,19 @@ class FakeListingRepository(private val initial: List<Listing> = emptyList()) : 
 
   override fun getNewUid(): String = UUID.randomUUID().toString()
 
+  private val fakeListings: SnapshotStateList<Proposal> = mutableStateListOf()
+
+  fun getFakeListings(): List<Proposal> = fakeListings
+
   override suspend fun getAllListings(): List<Listing> =
       synchronized(listings) { listings.values.toList() }
 
   override suspend fun getProposals(): List<Proposal> =
       synchronized(proposals) { proposals.toList() }
+
+  init {
+    loadMockData()
+  }
 
   override suspend fun getRequests(): List<Request> = synchronized(requests) { requests.toList() }
 
@@ -173,5 +183,31 @@ class FakeListingRepository(private val initial: List<Listing> = emptyList()) : 
     } catch (_: Throwable) {
       /* ignore */
     }
+  }
+
+  private fun loadMockData() {
+    fakeListings.addAll(
+        listOf(
+            Proposal(
+                "1",
+                "12",
+                Skill("1", MainSubject.MUSIC, "Piano"),
+                "Experienced piano teacher",
+                Location(37.7749, -122.4194),
+                hourlyRate = 25.0),
+            Proposal(
+                "2",
+                "13",
+                Skill("2", MainSubject.ACADEMICS, "Math"),
+                "Math tutor for high school students",
+                Location(34.0522, -118.2437),
+                hourlyRate = 30.0),
+            Proposal(
+                "3",
+                "14",
+                Skill("3", MainSubject.MUSIC, "Guitare"),
+                "Learn acoustic guitar basics",
+                Location(40.7128, -74.0060),
+                hourlyRate = 20.0)))
   }
 }
