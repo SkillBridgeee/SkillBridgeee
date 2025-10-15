@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.sample.model.authentication.*
+import com.android.sample.ui.theme.extendedColors
 
 object SignInScreenTestTags {
   const val TITLE = "title"
@@ -78,9 +79,11 @@ fun LoginScreen(
 
 @Composable
 private fun SuccessCard(authResult: AuthResult?, onSignOut: () -> Unit) {
+  val extendedColors = MaterialTheme.extendedColors
+
   Card(
       modifier = Modifier.fillMaxWidth().padding(16.dp),
-      colors = CardDefaults.cardColors(containerColor = Color(0xFF4CAF50))) {
+      colors = CardDefaults.cardColors(containerColor = extendedColors.successGreen)) {
         Column(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally) {
@@ -99,7 +102,7 @@ private fun SuccessCard(authResult: AuthResult?, onSignOut: () -> Unit) {
               Button(
                   onClick = onSignOut,
                   colors = ButtonDefaults.buttonColors(containerColor = Color.White)) {
-                    Text("Sign Out", color = Color(0xFF4CAF50))
+                    Text("Sign Out", color = extendedColors.successGreen)
                   }
             }
       }
@@ -143,11 +146,13 @@ private fun LoginForm(
 
 @Composable
 private fun LoginHeader() {
+  val extendedColors = MaterialTheme.extendedColors
+
   Text(
       text = "SkillBridge",
       fontSize = 28.sp,
       fontWeight = FontWeight.Bold,
-      color = Color(0xFF1E88E5),
+      color = extendedColors.loginTitleBlue,
       modifier = Modifier.testTag(SignInScreenTestTags.TITLE))
   Spacer(modifier = Modifier.height(10.dp))
   Text("Welcome back! Please sign in.", modifier = Modifier.testTag(SignInScreenTestTags.SUBTITLE))
@@ -179,12 +184,15 @@ private fun RoleButton(
     onRoleSelected: (UserRole) -> Unit,
     testTag: String
 ) {
+  val extendedColors = MaterialTheme.extendedColors
+
   Button(
       onClick = { onRoleSelected(role) },
       colors =
           ButtonDefaults.buttonColors(
               containerColor =
-                  if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray),
+                  if (isSelected) MaterialTheme.colorScheme.primary
+                  else extendedColors.unselectedGray),
       shape = RoundedCornerShape(10.dp),
       modifier = Modifier.testTag(testTag)) {
         Text(text)
@@ -224,6 +232,8 @@ private fun EmailPasswordFields(
 
 @Composable
 private fun ErrorAndMessageDisplay(error: String?, message: String?) {
+  val extendedColors = MaterialTheme.extendedColors
+
   error?.let { errorMessage ->
     Spacer(modifier = Modifier.height(10.dp))
     Text(text = errorMessage, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
@@ -231,12 +241,14 @@ private fun ErrorAndMessageDisplay(error: String?, message: String?) {
 
   message?.let { msg ->
     Spacer(modifier = Modifier.height(10.dp))
-    Text(text = msg, color = Color.Green, fontSize = 14.sp)
+    Text(text = msg, color = extendedColors.messageGreen, fontSize = 14.sp)
   }
 }
 
 @Composable
 private fun ForgotPasswordLink() {
+  val extendedColors = MaterialTheme.extendedColors
+
   Spacer(modifier = Modifier.height(10.dp))
   Text(
       "Forgot password?",
@@ -246,16 +258,18 @@ private fun ForgotPasswordLink() {
               .clickable { /* TODO: Implement when needed */}
               .testTag(SignInScreenTestTags.FORGOT_PASSWORD),
       fontSize = 14.sp,
-      color = Color.Gray)
+      color = extendedColors.forgotPasswordGray)
 }
 
 @Composable
 private fun SignInButton(isLoading: Boolean, isEnabled: Boolean, onClick: () -> Unit) {
+  val extendedColors = MaterialTheme.extendedColors
+
   Button(
       onClick = onClick,
       enabled = isEnabled,
       modifier = Modifier.fillMaxWidth().height(50.dp).testTag(SignInScreenTestTags.SIGN_IN_BUTTON),
-      colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00ACC1)),
+      colors = ButtonDefaults.buttonColors(containerColor = extendedColors.signInButtonTeal),
       shape = RoundedCornerShape(12.dp)) {
         if (isLoading) {
           CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp))
@@ -291,6 +305,8 @@ private fun RowScope.AuthProviderButton(
     onClick: () -> Unit,
     testTag: String
 ) {
+  val extendedColors = MaterialTheme.extendedColors
+
   Button(
       onClick = onClick,
       enabled = enabled,
@@ -298,23 +314,28 @@ private fun RowScope.AuthProviderButton(
       shape = RoundedCornerShape(12.dp),
       modifier =
           Modifier.weight(1f)
-              .border(width = 2.dp, color = Color.Gray, shape = RoundedCornerShape(12.dp))
+              .border(
+                  width = 2.dp,
+                  color = extendedColors.authButtonBorderGray,
+                  shape = RoundedCornerShape(12.dp))
               .testTag(testTag)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center) {
-              Text(text, color = Color.Black)
+              Text(text, color = extendedColors.authProviderTextBlack)
             }
       }
 }
 
 @Composable
 private fun SignUpLink() {
+  val extendedColors = MaterialTheme.extendedColors
+
   Row {
     Text("Don't have an account? ")
     Text(
         "Sign Up",
-        color = Color.Blue,
+        color = extendedColors.signUpLinkBlue,
         fontWeight = FontWeight.Bold,
         modifier =
             Modifier.clickable { /* TODO: Navigate to sign up when implemented */}
