@@ -3,6 +3,7 @@ package com.android.sample.utils
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.user.ProfileRepository
 import com.github.se.bootcamp.utils.FirebaseEmulator
 import com.google.firebase.FirebaseApp
 import org.junit.After
@@ -18,6 +19,7 @@ abstract class RepositoryTest {
   protected lateinit var bookingRepository: BookingRepository
   protected lateinit var listingRepository: ListingRepository
   protected lateinit var ratingRepository: RatingRepository
+  protected lateinit var profileRepository: ProfileRepository
   protected var testUserId = "test-user-id"
 
   @Before

@@ -19,7 +19,6 @@ import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.rating.RatingType
 import com.android.sample.model.rating.StarRating
-import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
