@@ -21,7 +21,15 @@ import com.google.firebase.auth.GoogleAuthProvider
  */
 class CredentialAuthHelper(private val context: Context) {
 
-  private val credentialManager = CredentialManager.create(context)
+  private val credentialManager by lazy {
+    try {
+      CredentialManager.create(context)
+    } catch (e: Exception) {
+      // Log error but don't crash - this can happen if Play Services isn't available
+      println("CredentialManager creation failed: ${e.message}")
+      null
+    }
+  }
 
   companion object {
     const val WEB_CLIENT_ID =
@@ -49,9 +57,13 @@ class CredentialAuthHelper(private val context: Context) {
    */
   suspend fun getPasswordCredential(): Result<PasswordCredential> {
     return try {
+      val manager = credentialManager ?: return Result.failure(
+        Exception("CredentialManager not available")
+      )
+
       val request = GetCredentialRequest.Builder().build()
 
-      val result = credentialManager.getCredential(request = request, context = context)
+      val result = manager.getCredential(request = request, context = context)
 
       handlePasswordResult(result)
     } catch (e: GetCredentialException) {

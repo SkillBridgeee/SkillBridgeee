@@ -18,6 +18,10 @@ import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.authentication.AuthResult
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.GoogleSignInHelper
+import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.components.TopAppBar
@@ -32,23 +36,40 @@ class MainActivity : ComponentActivity() {
   private lateinit var authViewModel: AuthenticationViewModel
   private lateinit var googleSignInHelper: GoogleSignInHelper
 
+  companion object {
+    // Ensure emulator is only initialized once across the entire app lifecycle
+    init {
+      try {
+        Firebase.firestore.useEmulator("10.0.2.2", 8080)
+        Firebase.auth.useEmulator("10.0.2.2", 9099)
+      } catch (_: IllegalStateException) {
+        // Emulator already initialized - this is fine
+        println("Firebase emulator already initialized")
+      } catch (e: Exception) {
+        // Other errors (network issues, etc.) - log but don't crash
+        println("Firebase emulator connection failed: ${e.message}")
+        // App will continue to work with production Firebase
+      }
+    }
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    // Initialize ALL repository providers BEFORE creating ViewModels
+    try {
+      ProfileRepositoryProvider.init(this)
+      ListingRepositoryProvider.init(this)
+      BookingRepositoryProvider.init(this)
+      RatingRepositoryProvider.init(this)
+    } catch (e: Exception) {
+      println("Repository initialization failed: ${e.message}")
+    }
 
     // Initialize authentication components
     authViewModel = AuthenticationViewModel(this)
     googleSignInHelper =
         GoogleSignInHelper(this) { result -> authViewModel.handleGoogleSignInResult(result) }
-
-    try {
-      val ctx = applicationContext
-      Firebase.firestore.useEmulator("10.0.2.2", 8080)
-      Firebase.auth.useEmulator("10.0.2.2", 9099)
-    } catch (e: Exception) {
-      // Log the error but don't crash the app
-      println("Firebase emulator connection failed: ${e.message}")
-      // App will continue to work with production Firebase
-    }
 
     setContent {
       MainApp(
@@ -58,6 +79,7 @@ class MainActivity : ComponentActivity() {
 }
 
 class MyViewModelFactory(private val userId: String) : ViewModelProvider.Factory {
+  @Suppress("UNCHECKED_CAST")
   override fun <T : ViewModel> create(modelClass: Class<T>): T {
     return when (modelClass) {
       MyBookingsViewModel::class.java -> {
