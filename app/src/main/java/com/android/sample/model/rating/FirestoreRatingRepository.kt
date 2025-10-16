@@ -32,11 +32,11 @@ class FirestoreRatingRepository(
     }
   }
 
-  override suspend fun getRating(ratingId: String): Rating {
+  override suspend fun getRating(ratingId: String): Rating? {
     try {
       val document = db.collection(RATINGS_COLLECTION_PATH).document(ratingId).get().await()
       if (!document.exists()) {
-        throw Exception("Rating with ID $ratingId not found")
+        return null
       }
       val rating =
           document.toObject(Rating::class.java)
@@ -78,7 +78,8 @@ class FirestoreRatingRepository(
     try {
       val snapshot =
           db.collection(RATINGS_COLLECTION_PATH)
-              .whereEqualTo("ratingType.listingId", listingId)
+              .whereEqualTo("ratingType", "LISTING")
+              .whereEqualTo("targetObjectId", listingId)
               .get()
               .await()
       return snapshot.toObjects(Rating::class.java)
@@ -90,7 +91,10 @@ class FirestoreRatingRepository(
   override suspend fun addRating(rating: Rating) {
     try {
       if (rating.fromUserId != currentUserId) {
-        throw Exception("Access denied: You can only add ratings for yourself.")
+        throw Exception("Access denied: You can only add ratings behalf of yourself.")
+      }
+      if (rating.toUserId == currentUserId) {
+        throw Exception("You cannot rate yourself.")
       }
       db.collection(RATINGS_COLLECTION_PATH).document(rating.ratingId).set(rating).await()
     } catch (e: Exception) {
@@ -103,8 +107,10 @@ class FirestoreRatingRepository(
       val documentRef = db.collection(RATINGS_COLLECTION_PATH).document(ratingId)
       val existingRating = getRating(ratingId) // Leverages existing access check
 
-      if (existingRating.fromUserId != currentUserId) {
-        throw Exception("Access denied: You can only update ratings you have created.")
+      if (existingRating != null) {
+        if (existingRating.fromUserId != currentUserId) {
+          throw Exception("Access denied: You can only update ratings you have created.")
+        }
       }
 
       documentRef.set(rating).await()
@@ -118,8 +124,10 @@ class FirestoreRatingRepository(
       val documentRef = db.collection(RATINGS_COLLECTION_PATH).document(ratingId)
       val rating = getRating(ratingId) // Leverages existing access check
 
-      if (rating.fromUserId != currentUserId) {
-        throw Exception("Access denied: You can only delete ratings you have created.")
+      if (rating != null) {
+        if (rating.fromUserId != currentUserId) {
+          throw Exception("Access denied: You can only delete ratings you have created.")
+        }
       }
 
       documentRef.delete().await()
@@ -133,7 +141,7 @@ class FirestoreRatingRepository(
       val snapshot =
           db.collection(RATINGS_COLLECTION_PATH)
               .whereEqualTo("toUserId", userId)
-              .whereEqualTo("ratingType.type", "Tutor")
+              .whereEqualTo("ratingType", "TUTOR")
               .get()
               .await()
       return snapshot.toObjects(Rating::class.java)
@@ -147,7 +155,7 @@ class FirestoreRatingRepository(
       val snapshot =
           db.collection(RATINGS_COLLECTION_PATH)
               .whereEqualTo("toUserId", userId)
-              .whereEqualTo("ratingType.type", "Student")
+              .whereEqualTo("ratingType", "STUDENT")
               .get()
               .await()
       return snapshot.toObjects(Rating::class.java)

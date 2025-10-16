@@ -187,7 +187,7 @@ class MyBookingsViewModelLogicTest {
 
     val listing = Proposal("L1", "t1", description = "", location = Location(), hourlyRate = 30.0)
     val prof = Profile("t1", "Alice Martin", "a@a.com")
-    val rating = Rating("r1", "s1", "t1", StarRating.FOUR, "", RatingType.Listing("L1"))
+    val rating = Rating("r1", "s1", "t1", StarRating.FOUR, "", RatingType.TUTOR)
 
     val vm =
         MyBookingsViewModel(

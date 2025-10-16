@@ -2,6 +2,7 @@ package com.android.sample.utils
 
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.rating.RatingRepository
 import com.github.se.bootcamp.utils.FirebaseEmulator
 import com.google.firebase.FirebaseApp
 import org.junit.After
@@ -16,6 +17,7 @@ abstract class RepositoryTest {
   // The repository is now a lateinit var, to be initialized by subclasses.
   protected lateinit var bookingRepository: BookingRepository
   protected lateinit var listingRepository: ListingRepository
+  protected lateinit var ratingRepository: RatingRepository
   protected var testUserId = "test-user-id"
 
   @Before
