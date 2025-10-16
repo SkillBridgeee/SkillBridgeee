@@ -41,6 +41,15 @@ class GoogleSignInHelperTest {
     mockkStatic(GoogleSignIn::class)
     mockGoogleSignInClient = mockk(relaxed = true)
 
+    // Mock signOut to return a completed task that immediately calls the listener
+    val mockSignOutTask = mockk<Task<Void>>(relaxed = true)
+    every { mockGoogleSignInClient.signOut() } returns mockSignOutTask
+    every { mockSignOutTask.addOnCompleteListener(any()) } answers {
+      val listener = firstArg<com.google.android.gms.tasks.OnCompleteListener<Void>>()
+      listener.onComplete(mockSignOutTask)
+      mockSignOutTask
+    }
+
     // Mock the getClient method to return our mock client
     every { GoogleSignIn.getClient(any(), any<GoogleSignInOptions>()) } returns
         mockGoogleSignInClient
@@ -91,7 +100,8 @@ class GoogleSignInHelperTest {
     // When: Calling signInWithGoogle
     googleSignInHelper.signInWithGoogle()
 
-    // Then: The sign-in intent should be requested
+    // Then: Should sign out first, then get the sign-in intent
+    verify { mockGoogleSignInClient.signOut() }
     verify { mockGoogleSignInClient.signInIntent }
   }
 
@@ -106,8 +116,27 @@ class GoogleSignInHelperTest {
     // When: Signing in
     googleSignInHelper.signInWithGoogle()
 
-    // Then: Verify we got the intent from the client
+    // Then: Verify we signed out first, then got the intent from the client
+    verify(exactly = 1) { mockGoogleSignInClient.signOut() }
     verify(exactly = 1) { mockGoogleSignInClient.signInIntent }
+  }
+
+  @Test
+  fun signInWithGoogle_signsOutBeforeLaunchingIntent() {
+    // Given: A configured GoogleSignInHelper
+    val mockIntent = mockk<Intent>(relaxed = true)
+    every { mockGoogleSignInClient.signInIntent } returns mockIntent
+
+    googleSignInHelper = GoogleSignInHelper(activity, onSignInResultCallback)
+
+    // When: Calling signInWithGoogle
+    googleSignInHelper.signInWithGoogle()
+
+    // Then: signOut should be called before signInIntent
+    verifyOrder {
+      mockGoogleSignInClient.signOut()
+      mockGoogleSignInClient.signInIntent
+    }
   }
 
   @Test
@@ -219,7 +248,8 @@ class GoogleSignInHelperTest {
     googleSignInHelper.signInWithGoogle()
     googleSignInHelper.signInWithGoogle()
 
-    // Then: Sign-in intent should be requested twice
+    // Then: Should sign out and get intent twice
+    verify(exactly = 2) { mockGoogleSignInClient.signOut() }
     verify(exactly = 2) { mockGoogleSignInClient.signInIntent }
   }
 
