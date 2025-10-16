@@ -12,8 +12,8 @@ import kotlinx.coroutines.tasks.await
 const val LISTINGS_COLLECTION_PATH = "listings"
 
 class FirestoreListingRepository(
-    private val db: FirebaseFirestore,
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+  private val db: FirebaseFirestore,
+  private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) : ListingRepository {
 
   private val currentUserId: String
@@ -25,11 +25,7 @@ class FirestoreListingRepository(
 
   override suspend fun getAllListings(): List<Listing> {
     return try {
-      val snapshot =
-          db.collection(LISTINGS_COLLECTION_PATH)
-              .orderBy("createdAt", Query.Direction.DESCENDING)
-              .get()
-              .await()
+      val snapshot = db.collection(LISTINGS_COLLECTION_PATH).get().await()
       snapshot.documents.mapNotNull { it.toListing() }
     } catch (e: Exception) {
       throw Exception("Failed to fetch all listings: ${e.message}")
@@ -39,11 +35,10 @@ class FirestoreListingRepository(
   override suspend fun getProposals(): List<Proposal> {
     return try {
       val snapshot =
-          db.collection(LISTINGS_COLLECTION_PATH)
-              .whereEqualTo("type", ListingType.PROPOSAL)
-              .orderBy("createdAt", Query.Direction.DESCENDING)
-              .get()
-              .await()
+        db.collection(LISTINGS_COLLECTION_PATH)
+          .whereEqualTo("type", ListingType.PROPOSAL.name)
+          .get()
+          .await()
       snapshot.toObjects(Proposal::class.java)
     } catch (e: Exception) {
       throw Exception("Failed to fetch proposals: ${e.message}")
@@ -53,34 +48,30 @@ class FirestoreListingRepository(
   override suspend fun getRequests(): List<Request> {
     return try {
       val snapshot =
-          db.collection(LISTINGS_COLLECTION_PATH)
-              .whereEqualTo("type", ListingType.REQUEST)
-              .orderBy("createdAt", Query.Direction.DESCENDING)
-              .get()
-              .await()
+        db.collection(LISTINGS_COLLECTION_PATH)
+          .whereEqualTo("type", ListingType.REQUEST.name)
+          .get()
+          .await()
       snapshot.toObjects(Request::class.java)
     } catch (e: Exception) {
       throw Exception("Failed to fetch requests: ${e.message}")
     }
   }
 
-  override suspend fun getListing(listingId: String): Listing {
+  override suspend fun getListing(listingId: String): Listing? {
     return try {
       val document = db.collection(LISTINGS_COLLECTION_PATH).document(listingId).get().await()
-      document.toListing() ?: throw Exception("Listing with ID $listingId not found")
+      document.toListing()
     } catch (e: Exception) {
-      throw Exception("Failed to get listing: ${e.message}")
+      // Return null if listing not found or another error occurs
+      null
     }
   }
 
   override suspend fun getListingsByUser(userId: String): List<Listing> {
     return try {
       val snapshot =
-          db.collection(LISTINGS_COLLECTION_PATH)
-              .whereEqualTo("creatorUserId", userId)
-              .orderBy("createdAt", Query.Direction.DESCENDING)
-              .get()
-              .await()
+        db.collection(LISTINGS_COLLECTION_PATH).whereEqualTo("creatorUserId", userId).get().await()
       snapshot.documents.mapNotNull { it.toListing() }
     } catch (e: Exception) {
       throw Exception("Failed to fetch listings for user $userId: ${e.message}")
@@ -109,7 +100,7 @@ class FirestoreListingRepository(
   override suspend fun updateListing(listingId: String, listing: Listing) {
     try {
       val docRef = db.collection(LISTINGS_COLLECTION_PATH).document(listingId)
-      val existingListing = getListing(listingId)
+      val existingListing = getListing(listingId) ?: throw Exception("Listing not found.")
 
       if (existingListing.creatorUserId != currentUserId) {
         throw Exception("Access denied: You can only update your own listings.")
@@ -123,7 +114,7 @@ class FirestoreListingRepository(
   override suspend fun deleteListing(listingId: String) {
     try {
       val docRef = db.collection(LISTINGS_COLLECTION_PATH).document(listingId)
-      val existingListing = getListing(listingId)
+      val existingListing = getListing(listingId) ?: throw Exception("Listing not found.")
 
       if (existingListing.creatorUserId != currentUserId) {
         throw Exception("Access denied: You can only delete your own listings.")
@@ -137,12 +128,12 @@ class FirestoreListingRepository(
   override suspend fun deactivateListing(listingId: String) {
     try {
       val docRef = db.collection(LISTINGS_COLLECTION_PATH).document(listingId)
-      val existingListing = getListing(listingId)
+      val existingListing = getListing(listingId) ?: throw Exception("Listing not found.")
 
       if (existingListing.creatorUserId != currentUserId) {
         throw Exception("Access denied: You can only deactivate your own listings.")
       }
-      docRef.update("active", false).await()
+      docRef.update("isActive", false).await()
     } catch (e: Exception) {
       throw Exception("Failed to deactivate listing: ${e.message}")
     }
@@ -151,11 +142,10 @@ class FirestoreListingRepository(
   override suspend fun searchBySkill(skill: Skill): List<Listing> {
     return try {
       val snapshot =
-          db.collection(LISTINGS_COLLECTION_PATH)
-              .whereEqualTo("skill.skill", skill.skill) // Simple search by skill name
-              .whereEqualTo("active", true)
-              .get()
-              .await()
+        db.collection(LISTINGS_COLLECTION_PATH)
+          .whereEqualTo("skill.skill", skill.skill)
+          .get()
+          .await()
       snapshot.documents.mapNotNull { it.toListing() }
     } catch (e: Exception) {
       throw Exception("Failed to search by skill: ${e.message}")

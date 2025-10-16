@@ -77,14 +77,7 @@ class ProfileRepositoryLocal : ProfileRepository {
   }
 
   override suspend fun getSkillsForUser(userId: String): List<Skill> {
-    // Fake data for local testing
-    return when (userId) {
-      "tutor-1" -> listOf(Skill("guitar", MainSubject.MUSIC), Skill("piano", MainSubject.MUSIC))
-      "tutor-2" ->
-          listOf(Skill("math", MainSubject.ACADEMICS), Skill("physics", MainSubject.ACADEMICS))
-      "test" -> listOf(Skill("coding", MainSubject.TECHNOLOGY))
-      "fake2" -> listOf(Skill("drums", MainSubject.SPORTS))
-      else -> emptyList()
-    }
+    TODO()
+
   }
 }

@@ -3,11 +3,10 @@ package com.android.sample
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.android.sample.model.listing.FakeListingRepository
 import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.Skill
-import com.android.sample.model.skill.SkillsFakeRepository
 import com.android.sample.model.tutor.FakeProfileRepository
 import com.android.sample.model.user.Profile
 import kotlin.math.roundToInt
@@ -55,9 +54,8 @@ data class TutorCardUi(
  */
 class MainPageViewModel : ViewModel() {
 
-  private val skillRepository = SkillsFakeRepository()
   private val profileRepository = FakeProfileRepository()
-  private val listingRepository = FakeListingRepository()
+  private val listingRepository = ListingRepositoryProvider.repository
 
   private val _uiState = MutableStateFlow(HomeUiState())
   /** The publicly exposed immutable UI state observed by the composables. */
@@ -77,8 +75,8 @@ class MainPageViewModel : ViewModel() {
    */
   suspend fun load() {
     try {
-      val skills = skillRepository.skills
-      val listings = listingRepository.getFakeListings()
+      val skills = emptyList<Skill>()
+      val listings = listingRepository.getAllListings()
       val tutors = profileRepository.tutors
 
       val tutorCards = listings.mapNotNull { buildTutorCardSafely(it, tutors) }

@@ -34,9 +34,7 @@ data class Proposal(
     override val hourlyRate: Double = 0.0,
     override val type: ListingType = ListingType.PROPOSAL
 ) : Listing() {
-  init {
-    require(hourlyRate >= 0.0) { "Hourly rate must be non-negative" }
-  }
+
 }
 
 /** Request - user looking for a tutor */
@@ -51,7 +49,5 @@ data class Request(
     override val hourlyRate: Double = 0.0,
     override val type: ListingType = ListingType.REQUEST
 ) : Listing() {
-  init {
-    require(hourlyRate >= 0) { "Max budget must be non-negative" }
-  }
+
 }

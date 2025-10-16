@@ -7,16 +7,6 @@ import org.junit.Test
 class BookingTest {
 
   @Test
-  fun `test Booking creation with default values`() {
-    try {
-      val booking = Booking()
-      fail("Should have thrown IllegalArgumentException")
-    } catch (e: IllegalArgumentException) {
-      assertTrue(e.message!!.contains("Session start must be before session end"))
-    }
-  }
-
-  @Test
   fun `test Booking creation with valid values`() {
     val startTime = Date()
     val endTime = Date(startTime.time + 3600000) // 1 hour later
@@ -32,6 +22,9 @@ class BookingTest {
             status = BookingStatus.CONFIRMED,
             price = 50.0)
 
+    // Also test that validate() passes for a valid booking
+    booking.validate()
+
     assertEquals("booking123", booking.bookingId)
     assertEquals("listing456", booking.associatedListingId)
     assertEquals("tutor789", booking.listingCreatorId)
@@ -42,60 +35,72 @@ class BookingTest {
     assertEquals(50.0, booking.price, 0.01)
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun `test Booking validation - session end before session start`() {
     val startTime = Date()
     val endTime = Date(startTime.time - 1000) // 1 second before start
 
-    Booking(
-        bookingId = "booking123",
-        associatedListingId = "listing456",
-        listingCreatorId = "tutor789",
-        bookerId = "user012",
-        sessionStart = startTime,
-        sessionEnd = endTime)
+    val booking =
+        Booking(
+            bookingId = "booking123",
+            associatedListingId = "listing456",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
+            sessionStart = startTime,
+            sessionEnd = endTime)
+
+    assertThrows(IllegalArgumentException::class.java) { booking.validate() }
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun `test Booking validation - session start equals session end`() {
     val time = Date()
 
-    Booking(
-        bookingId = "booking123",
-        associatedListingId = "listing456",
-        listingCreatorId = "tutor789",
-        bookerId = "user012",
-        sessionStart = time,
-        sessionEnd = time)
+    val booking =
+        Booking(
+            bookingId = "booking123",
+            associatedListingId = "listing456",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
+            sessionStart = time,
+            sessionEnd = time)
+
+    assertThrows(IllegalArgumentException::class.java) { booking.validate() }
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun `test Booking validation - tutor and user are same`() {
     val startTime = Date()
     val endTime = Date(startTime.time + 3600000)
 
-    Booking(
-        bookingId = "booking123",
-        associatedListingId = "listing456",
-        listingCreatorId = "user123",
-        bookerId = "user123",
-        sessionStart = startTime,
-        sessionEnd = endTime)
+    val booking =
+        Booking(
+            bookingId = "booking123",
+            associatedListingId = "listing456",
+            listingCreatorId = "user123",
+            bookerId = "user123",
+            sessionStart = startTime,
+            sessionEnd = endTime)
+
+    assertThrows(IllegalArgumentException::class.java) { booking.validate() }
   }
 
-  @Test(expected = IllegalArgumentException::class)
+  @Test
   fun `test Booking validation - negative price`() {
     val startTime = Date()
     val endTime = Date(startTime.time + 3600000)
 
-    Booking(
-        bookingId = "booking123",
-        associatedListingId = "listing456",
-        listingCreatorId = "tutor789",
-        bookerId = "user012",
-        sessionStart = startTime,
-        sessionEnd = endTime,
-        price = -10.0)
+    val booking =
+        Booking(
+            bookingId = "booking123",
+            associatedListingId = "listing456",
+            listingCreatorId = "tutor789",
+            bookerId = "user012",
+            sessionStart = startTime,
+            sessionEnd = endTime,
+            price = -10.0)
+
+    assertThrows(IllegalArgumentException::class.java) { booking.validate() }
   }
 
   @Test

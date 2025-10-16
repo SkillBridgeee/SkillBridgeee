@@ -14,6 +14,7 @@ import com.android.sample.ui.navigation.AppNavGraph
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
+import okhttp3.OkHttpClient
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {

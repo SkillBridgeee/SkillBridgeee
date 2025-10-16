@@ -43,7 +43,7 @@ class SubjectListViewModelTest {
       Profile(userId = id, name = name, description = desc, tutorRating = RatingInfo(rating, total))
 
   private fun skill(userId: String, s: String) =
-      Skill(userId = userId, mainSubject = MainSubject.MUSIC, skill = s)
+      Skill( mainSubject = MainSubject.MUSIC, skill = s)
 
   private class FakeRepo(
       private val profiles: List<Profile> = emptyList(),

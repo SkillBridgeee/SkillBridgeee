@@ -5,7 +5,7 @@ interface BookingRepository {
 
   suspend fun getAllBookings(): List<Booking>
 
-  suspend fun getBooking(bookingId: String): Booking
+  suspend fun getBooking(bookingId: String): Booking?
 
   suspend fun getBookingsByTutor(tutorId: String): List<Booking>
 

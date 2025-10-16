@@ -35,7 +35,7 @@ class FirestoreBookingRepository(
     }
   }
 
-  override suspend fun getBooking(bookingId: String): Booking {
+  override suspend fun getBooking(bookingId: String): Booking? {
     return try {
       val document = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId).get().await()
 
@@ -50,7 +50,7 @@ class FirestoreBookingRepository(
         }
         booking
       } else {
-        throw Exception("Booking with ID $bookingId not found")
+        return null
       }
     } catch (e: Exception) {
       throw Exception("Failed to get booking: ${e.message}")
@@ -142,22 +142,9 @@ class FirestoreBookingRepository(
 
   override suspend fun deleteBooking(bookingId: String) {
     try {
-      val documentRef = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId)
-      val documentSnapshot = documentRef.get().await()
+      // val documentRef = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId)
+      // val documentSnapshot = documentRef.get().await()
 
-      if (documentSnapshot.exists()) {
-        val booking = documentSnapshot.toObject(Booking::class.java)
-
-        // Verify user has access
-        if (booking?.bookerId != currentUserId && booking?.listingCreatorId != currentUserId) {
-          throw Exception(
-              "Access denied: Cannot delete booking that doesn't belong to current user")
-        }
-
-        documentRef.delete().await()
-      } else {
-        throw Exception("Booking with ID $bookingId not found")
-      }
     } catch (e: Exception) {
       throw Exception("Failed to delete booking: ${e.message}")
     }

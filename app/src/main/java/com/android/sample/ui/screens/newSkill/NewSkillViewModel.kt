@@ -80,7 +80,6 @@ class NewSkillViewModel(
     if (state.isValid) {
       val newSkill =
           Skill(
-              userId = userId,
               mainSubject = state.subject!!,
               skill = state.title,
           )
