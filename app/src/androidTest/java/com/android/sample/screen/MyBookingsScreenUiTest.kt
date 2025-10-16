@@ -19,7 +19,6 @@ import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.rating.RatingType
 import com.android.sample.model.rating.StarRating
-import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
@@ -185,18 +184,13 @@ class MyBookingsScreenUiTest {
                     when (listingId) {
                       "L1" ->
                           listOf(
-                              Rating(
-                                  "r1", "s1", "t1", StarRating.FIVE, "", RatingType.Listing("L1")),
-                              Rating(
-                                  "r2", "s2", "t1", StarRating.FIVE, "", RatingType.Listing("L1")),
-                              Rating(
-                                  "r3", "s3", "t1", StarRating.FIVE, "", RatingType.Listing("L1")))
+                              Rating("r1", "s1", "t1", StarRating.FIVE, "", RatingType.TUTOR),
+                              Rating("r2", "s2", "t1", StarRating.FIVE, "", RatingType.TUTOR),
+                              Rating("r3", "s3", "t1", StarRating.FIVE, "", RatingType.TUTOR))
                       "L2" ->
                           listOf(
-                              Rating(
-                                  "r4", "s4", "t2", StarRating.FOUR, "", RatingType.Listing("L2")),
-                              Rating(
-                                  "r5", "s5", "t2", StarRating.FOUR, "", RatingType.Listing("L2")))
+                              Rating("r4", "s4", "t2", StarRating.FOUR, "", RatingType.TUTOR),
+                              Rating("r5", "s5", "t2", StarRating.FOUR, "", RatingType.TUTOR))
                       else -> emptyList()
                     }
 

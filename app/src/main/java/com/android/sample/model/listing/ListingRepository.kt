@@ -9,7 +9,7 @@ interface ListingRepository {
 
   suspend fun getRequests(): List<Request>
 
-  suspend fun getListing(listingId: String): Listing
+  suspend fun getListing(listingId: String): Listing?
 
   suspend fun getListingsByUser(userId: String): List<Listing>
 

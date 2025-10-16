@@ -139,6 +139,8 @@ dependencies {
     testImplementation(libs.coroutines.test)
     testImplementation(libs.arch.core.testing)
 
+    implementation(libs.okhttp)
+
     // Firebase
     implementation(libs.firebase.database.ktx)
     implementation(libs.firebase.firestore)

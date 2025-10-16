@@ -1,18 +1,40 @@
 package com.android.sample.screen
 
+import com.android.sample.model.listing.FirestoreListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.screens.newSkill.NewSkillViewModel
+import com.android.sample.utils.RepositoryTest
+import com.github.se.bootcamp.utils.FirebaseEmulator
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.FirebaseFirestore
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
-class NewSkillViewModelTest {
-
+class NewSkillViewModelTest : RepositoryTest() {
+  private lateinit var firestore: FirebaseFirestore
+  private lateinit var auth: FirebaseAuth
   private lateinit var viewModel: NewSkillViewModel
 
   @Before
   fun setup() {
-    viewModel = NewSkillViewModel()
+    super.setUp()
+    firestore = FirebaseEmulator.firestore
+
+    // Mock FirebaseAuth to bypass authentication
+    auth = mockk()
+    val mockUser = mockk<FirebaseUser>()
+    every { auth.currentUser } returns mockUser
+    every { mockUser.uid } returns testUserId // testUserId is "test-user-id" from RepositoryTest
+
+    listingRepository = FirestoreListingRepository(firestore, auth)
+    ListingRepositoryProvider.setForTests(listingRepository)
+
+    viewModel = NewSkillViewModel(listingRepository)
   }
 
   @Test

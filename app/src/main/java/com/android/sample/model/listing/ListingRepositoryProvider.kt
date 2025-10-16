@@ -1,7 +1,28 @@
 package com.android.sample.model.listing
 
-object ListingRepositoryProvider {
-  private val _repository: ListingRepository by lazy { FakeListingRepository() }
+import android.content.Context
+import com.google.firebase.FirebaseApp
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
-  var repository: ListingRepository = _repository
+object ListingRepositoryProvider {
+
+  @Volatile private var _repository: ListingRepository? = null
+
+  val repository: ListingRepository
+    get() =
+        _repository
+            ?: error(
+                "ListingRepository not initialized. Call init(...) first or setForTests(...) in tests.")
+
+  fun init(context: Context, useEmulator: Boolean = false) {
+    if (FirebaseApp.getApps(context).isEmpty()) {
+      FirebaseApp.initializeApp(context)
+    }
+    _repository = FirestoreListingRepository(Firebase.firestore)
+  }
+
+  fun setForTests(repository: ListingRepository) {
+    _repository = repository
+  }
 }
