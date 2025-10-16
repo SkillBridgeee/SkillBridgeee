@@ -56,13 +56,24 @@ object HomeScreenTestTags {
  */
 @Preview
 @Composable
-fun HomeScreen(mainPageViewModel: MainPageViewModel = viewModel()) {
+fun HomeScreen(
+    mainPageViewModel: MainPageViewModel = viewModel(),
+    onNavigateToNewSkill: (String) -> Unit = {}
+) {
   val uiState by mainPageViewModel.uiState.collectAsState()
+  val navigationEvent by mainPageViewModel.navigationEvent.collectAsState()
+
+  LaunchedEffect(navigationEvent) {
+    navigationEvent?.let { profileId ->
+      onNavigateToNewSkill(profileId)
+      mainPageViewModel.onNavigationHandled()
+    }
+  }
 
   Scaffold(
       floatingActionButton = {
         FloatingActionButton(
-            onClick = { mainPageViewModel.onAddTutorClicked() },
+            onClick = { mainPageViewModel.onAddTutorClicked("test") }, // Hardcoded user ID for now
             containerColor = PrimaryColor,
             modifier = Modifier.testTag(HomeScreenTestTags.FAB_ADD)) {
               Icon(Icons.Default.Add, contentDescription = "Add")

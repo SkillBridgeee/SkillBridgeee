@@ -25,106 +25,144 @@ class AppNavGraphTest {
   }
 
   @Test
-  fun startDestination_is_home() {
-    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertExists().assertIsDisplayed()
+  fun login_navigates_to_home() {
+    // Click GitHub login button to navigate to home
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
+
+    // Should now be on home screen - check for home screen elements
+    composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
+    composeTestRule.onNodeWithText("Explore skills").assertExists()
+    composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
   }
 
   @Test
   fun navigating_to_skills_displays_skills_screen() {
+    // First login to get to main app
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
+
+    // Navigate to skills
     composeTestRule.onNodeWithText("Skills").performClick()
-    composeTestRule
-        .onNodeWithText("💡 Skills Screen Placeholder")
-        .assertExists()
-        .assertIsDisplayed()
+    composeTestRule.waitForIdle()
+
+    // Should display skills screen content
+    composeTestRule.onNodeWithText("Find a tutor about...").assertExists()
   }
 
   @Test
   fun navigating_to_profile_displays_profile_screen() {
+    // Login first
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
+
+    // Navigate to profile
     composeTestRule.onNodeWithText("Profile").performClick()
-    composeTestRule
-        .onNodeWithText("👤 Profile Screen Placeholder")
-        .assertExists()
-        .assertIsDisplayed()
+    composeTestRule.waitForIdle()
+
+    // Should display profile screen - check for profile screen elements
+    composeTestRule.onNodeWithText("Student").assertExists()
+    composeTestRule.onNodeWithText("Personal Details").assertExists()
+    composeTestRule.onNodeWithText("Save Profile Changes").assertExists()
   }
 
   @Test
-  fun navigating_to_settings_displays_settings_screen() {
-    composeTestRule.onNodeWithText("Settings").performClick()
-    composeTestRule
-        .onNodeWithText("⚙️ Settings Screen Placeholder")
-        .assertExists()
-        .assertIsDisplayed()
+  fun navigating_to_bookings_displays_bookings_screen() {
+    // Login first
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
+
+    // Navigate to bookings
+    composeTestRule.onNodeWithText("Bookings").performClick()
+    composeTestRule.waitForIdle()
+
+    // Should display bookings screen
+    composeTestRule.onNodeWithText("My Bookings").assertExists()
   }
 
   @Test
-  fun navigating_to_piano_and_piano2_screens_displays_correct_content() {
-    // Navigate to Skills
-    composeTestRule.onNodeWithText("Skills").performClick()
-    composeTestRule.onNodeWithText("💡 Skills Screen Placeholder").assertIsDisplayed()
+  fun navigating_to_new_skill_from_home() {
+    // Login first
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
 
-    // Click button -> Go to Piano
-    composeTestRule.onNodeWithText("Go to Piano").performClick()
-    composeTestRule.onNodeWithText("Piano Screen").assertIsDisplayed()
+    // Click the add skill button on home screen (FAB)
+    composeTestRule.onNodeWithContentDescription("Add").performClick()
+    composeTestRule.waitForIdle()
 
-    // Click button -> Go to Piano 2
-    composeTestRule.onNodeWithText("Go to Piano 2").performClick()
-    composeTestRule.onNodeWithText("Piano 2 Screen").assertIsDisplayed()
+    // Should navigate to new skill screen
+    composeTestRule.onNodeWithText("Create Your Lessons !").assertExists()
   }
 
   @Test
   fun routeStackManager_updates_on_navigation() {
+    // Login
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
+
+    // Navigate to skills
     composeTestRule.onNodeWithText("Skills").performClick()
     composeTestRule.waitForIdle()
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
 
-    composeTestRule.onNodeWithText("Go to Piano").performClick()
-    composeTestRule.waitForIdle()
-    assert(RouteStackManager.getCurrentRoute() == NavRoutes.PIANO_SKILL)
-
-    composeTestRule.onNodeWithText("Go to Piano 2").performClick()
-    composeTestRule.waitForIdle()
-    assert(RouteStackManager.getCurrentRoute() == NavRoutes.PIANO_SKILL_2)
-  }
-
-  @Test
-  fun back_navigation_from_piano2_returns_to_piano_then_skills_then_home() {
-    // Skills -> Piano -> Piano 2
-    composeTestRule.onNodeWithText("Skills").performClick()
-    composeTestRule.onNodeWithText("Go to Piano").performClick()
-    composeTestRule.onNodeWithText("Go to Piano 2").performClick()
-
-    // Verify on Piano 2
-    composeTestRule.onNodeWithText("Piano 2 Screen").assertIsDisplayed()
-
-    // Back → Piano
-    composeTestRule.onNodeWithContentDescription("Back").performClick()
-    composeTestRule.onNodeWithText("Piano Screen").assertIsDisplayed()
-
-    // Back → Skills
-    composeTestRule.onNodeWithContentDescription("Back").performClick()
-    composeTestRule.onNodeWithText("💡 Skills Screen Placeholder").assertIsDisplayed()
-
-    // Back → Home
-    composeTestRule.onNodeWithContentDescription("Back").performClick()
-    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
-  }
-
-  @Test
-  fun navigating_between_main_tabs_resets_stack_correctly() {
-    // Go to multiple main tabs
+    // Navigate to profile
     composeTestRule.onNodeWithText("Profile").performClick()
-    composeTestRule.onNodeWithText("👤 Profile Screen Placeholder").assertIsDisplayed()
+    composeTestRule.waitForIdle()
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE)
+  }
 
-    composeTestRule.onNodeWithText("Settings").performClick()
-    composeTestRule.onNodeWithText("⚙️ Settings Screen Placeholder").assertIsDisplayed()
+  @Test
+  fun bottom_nav_resets_stack_correctly() {
+    // Login
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
 
-    // Back from Settings -> should go Home
-    composeTestRule.onNodeWithContentDescription("Back").performClick()
-    composeTestRule.onNodeWithText("🏠 Home Screen Placeholder").assertIsDisplayed()
+    // Navigate to skills then profile
+    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.waitForIdle()
 
-    // Stack should only contain HOME now
-    val routes = RouteStackManager.getAllRoutes()
-    assert(routes.lastOrNull() == NavRoutes.HOME)
-    assert(!routes.contains(NavRoutes.SETTINGS))
+    composeTestRule.onNodeWithText("Profile").performClick()
+    composeTestRule.waitForIdle()
+
+    // Navigate back to home via bottom nav
+    composeTestRule.onNodeWithText("Home").performClick()
+    composeTestRule.waitForIdle()
+
+    // Should be on home screen - check for actual home content
+    composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
+    composeTestRule.onNodeWithText("Explore skills").assertExists()
+    composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
+  }
+
+  @Test
+  fun skills_screen_has_search_and_category() {
+    // Login and navigate to skills
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.waitForIdle()
+
+    // Verify skills screen components
+    composeTestRule.onNodeWithText("Find a tutor about...").assertExists()
+    composeTestRule.onNodeWithText("Category").assertExists()
+  }
+
+  @Test
+  fun profile_screen_has_form_fields() {
+    // Login and navigate to profile
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onNodeWithText("Profile").performClick()
+    composeTestRule.waitForIdle()
+
+    // Verify profile form fields exist
+    composeTestRule.onNodeWithText("Name").assertExists()
+    composeTestRule.onNodeWithText("Email").assertExists()
+    composeTestRule.onNodeWithText("Location / Campus").assertExists()
+    composeTestRule.onNodeWithText("Description").assertExists()
   }
 }

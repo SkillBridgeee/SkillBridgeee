@@ -57,6 +57,9 @@ class MainPageViewModel : ViewModel() {
   private val profileRepository = FakeProfileRepository()
   private val listingRepository = ListingRepositoryProvider.repository
 
+  private val _navigationEvent = MutableStateFlow<String?>(null)
+  val navigationEvent: StateFlow<String?> = _navigationEvent.asStateFlow()
+
   private val _uiState = MutableStateFlow(HomeUiState())
   /** The publicly exposed immutable UI state observed by the composables. */
   val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -164,9 +167,11 @@ class MainPageViewModel : ViewModel() {
    *
    * This function will be expanded in future versions to handle adding new tutors.
    */
-  fun onAddTutorClicked() {
-    viewModelScope.launch {
-      // TODO handle add tutor
-    }
+  fun onAddTutorClicked(profileId: String) {
+    viewModelScope.launch { _navigationEvent.value = profileId }
+  }
+
+  fun onNavigationHandled() {
+    _navigationEvent.value = null
   }
 }
