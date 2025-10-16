@@ -52,9 +52,8 @@ fun TopAppBar(navController: NavController) {
   val title =
       when (currentRoute) {
         NavRoutes.HOME -> "Home"
-        NavRoutes.SKILLS -> "Skills"
         NavRoutes.PROFILE -> "Profile"
-        NavRoutes.SETTINGS -> "Settings"
+        NavRoutes.SKILLS -> "skills"
         NavRoutes.BOOKINGS -> "My Bookings"
         else -> "SkillBridge"
       }

@@ -93,7 +93,7 @@ class RouteStackManagerTest {
   @Test
   fun clear_removes_all_routes() {
     RouteStackManager.addRoute(NavRoutes.HOME)
-    RouteStackManager.addRoute(NavRoutes.SETTINGS)
+    RouteStackManager.addRoute(NavRoutes.BOOKINGS)
 
     RouteStackManager.clear()
 
@@ -102,7 +102,7 @@ class RouteStackManagerTest {
 
   @Test
   fun isMainRoute_returns_true_for_main_routes() {
-    listOf(NavRoutes.HOME, NavRoutes.PROFILE, NavRoutes.SKILLS, NavRoutes.SETTINGS).forEach { route
+    listOf(NavRoutes.HOME, NavRoutes.PROFILE, NavRoutes.SKILLS, NavRoutes.BOOKINGS).forEach { route
       ->
       assertTrue("$route should be a main route", RouteStackManager.isMainRoute(route))
     }

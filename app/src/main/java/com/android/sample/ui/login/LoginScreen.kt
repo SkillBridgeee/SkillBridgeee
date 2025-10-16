@@ -1,5 +1,6 @@
-package com.android.sample
+package com.android.sample.ui.login
 
+import android.R
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,7 +43,9 @@ object SignInScreenTestTags {
 @Composable
 fun LoginScreen(
     viewModel: AuthenticationViewModel = AuthenticationViewModel(LocalContext.current),
-    onGoogleSignIn: () -> Unit = {}
+    onGoogleSignIn: () -> Unit = {},
+    onGitHubSignIn: () -> Unit = {},
+    onNavigateToSignUp: () -> Unit = {} // Add this parameter
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val authResult by viewModel.authResult.collectAsStateWithLifecycle()
@@ -72,7 +75,12 @@ fun LoginScreen(
                 viewModel.signOut()
               })
         } else {
-          LoginForm(uiState = uiState, viewModel = viewModel, onGoogleSignIn = onGoogleSignIn)
+          LoginForm(
+              uiState = uiState,
+              viewModel = viewModel,
+              onGoogleSignIn = onGoogleSignIn,
+              onGitHubSignIn = onGitHubSignIn,
+              onNavigateToSignUp)
         }
       }
 }
@@ -112,7 +120,9 @@ private fun SuccessCard(authResult: AuthResult?, onSignOut: () -> Unit) {
 private fun LoginForm(
     uiState: AuthenticationUiState,
     viewModel: AuthenticationViewModel,
-    onGoogleSignIn: () -> Unit
+    onGoogleSignIn: () -> Unit,
+    onGitHubSignIn: () -> Unit = {},
+    onNavigateToSignUp: () -> Unit = {}
 ) {
   LoginHeader()
   Spacer(modifier = Modifier.height(20.dp))
@@ -138,10 +148,13 @@ private fun LoginForm(
       onClick = viewModel::signIn)
   Spacer(modifier = Modifier.height(20.dp))
 
-  AlternativeAuthSection(isLoading = uiState.isLoading, onGoogleSignIn = onGoogleSignIn)
+  AlternativeAuthSection(
+      isLoading = uiState.isLoading,
+      onGoogleSignIn = onGoogleSignIn,
+      onGitHubSignIn = onGitHubSignIn)
   Spacer(modifier = Modifier.height(20.dp))
 
-  SignUpLink()
+  SignUpLink(onNavigateToSignUp = onNavigateToSignUp)
 }
 
 @Composable
@@ -212,7 +225,7 @@ private fun EmailPasswordFields(
       label = { Text("Email") },
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
       leadingIcon = {
-        Icon(painterResource(id = android.R.drawable.ic_dialog_email), contentDescription = null)
+        Icon(painterResource(id = R.drawable.ic_dialog_email), contentDescription = null)
       },
       modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT))
 
@@ -225,7 +238,7 @@ private fun EmailPasswordFields(
       visualTransformation = PasswordVisualTransformation(),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
       leadingIcon = {
-        Icon(painterResource(id = android.R.drawable.ic_lock_idle_lock), contentDescription = null)
+        Icon(painterResource(id = R.drawable.ic_lock_idle_lock), contentDescription = null)
       },
       modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.PASSWORD_INPUT))
 }
@@ -280,7 +293,11 @@ private fun SignInButton(isLoading: Boolean, isEnabled: Boolean, onClick: () -> 
 }
 
 @Composable
-private fun AlternativeAuthSection(isLoading: Boolean, onGoogleSignIn: () -> Unit) {
+private fun AlternativeAuthSection(
+    isLoading: Boolean,
+    onGoogleSignIn: () -> Unit,
+    onGitHubSignIn: () -> Unit = {}
+) {
   Text("or continue with", modifier = Modifier.testTag(SignInScreenTestTags.AUTH_SECTION))
   Spacer(modifier = Modifier.height(15.dp))
 
@@ -293,7 +310,7 @@ private fun AlternativeAuthSection(isLoading: Boolean, onGoogleSignIn: () -> Uni
     AuthProviderButton(
         text = "GitHub",
         enabled = !isLoading,
-        onClick = { /* TODO: GitHub auth */},
+        onClick = onGitHubSignIn, // This line is correct
         testTag = SignInScreenTestTags.AUTH_GITHUB)
   }
 }
@@ -328,7 +345,7 @@ private fun RowScope.AuthProviderButton(
 }
 
 @Composable
-private fun SignUpLink() {
+private fun SignUpLink(onNavigateToSignUp: () -> Unit = {}) {
   val extendedColors = MaterialTheme.extendedColors
 
   Row {
@@ -338,8 +355,7 @@ private fun SignUpLink() {
         color = extendedColors.signUpLinkBlue,
         fontWeight = FontWeight.Bold,
         modifier =
-            Modifier.clickable { /* TODO: Navigate to sign up when implemented */}
-                .testTag(SignInScreenTestTags.SIGNUP_LINK))
+            Modifier.clickable { onNavigateToSignUp() }.testTag(SignInScreenTestTags.SIGNUP_LINK))
   }
 }
 
