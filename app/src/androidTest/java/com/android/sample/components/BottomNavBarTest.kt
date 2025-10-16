@@ -2,7 +2,7 @@ package com.android.sample.components
 
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -13,6 +13,7 @@ import com.android.sample.MyViewModelFactory
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomNavBar
+import com.android.sample.ui.components.BottomNavBarTestTags
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.profile.MyProfileViewModel
 import org.junit.Rule
@@ -29,10 +30,10 @@ class BottomNavBarTest {
       BottomNavBar(navController = navController)
     }
 
-    composeTestRule.onNodeWithText("Home").assertExists()
-    composeTestRule.onNodeWithText("Bookings").assertExists()
-    composeTestRule.onNodeWithText("Skills").assertExists()
-    composeTestRule.onNodeWithText("Profile").assertExists()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_HOME).assertExists()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_BOOKINGS).assertExists()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_SKILLS).assertExists()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_PROFILE).assertExists()
   }
 
   @Test
@@ -42,7 +43,7 @@ class BottomNavBarTest {
       BottomNavBar(navController = navController)
     }
 
-    composeTestRule.onNodeWithText("Home").assertExists()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_HOME).assertExists()
   }
 
   @Test
@@ -53,10 +54,10 @@ class BottomNavBarTest {
     }
 
     // Should have exactly 4 navigation items
-    composeTestRule.onNodeWithText("Home").assertExists()
-    composeTestRule.onNodeWithText("Bookings").assertExists()
-    composeTestRule.onNodeWithText("Skills").assertExists()
-    composeTestRule.onNodeWithText("Profile").assertExists()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_HOME).assertExists()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_BOOKINGS).assertExists()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_SKILLS).assertExists()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_PROFILE).assertExists()
   }
 
   @Test
@@ -88,22 +89,22 @@ class BottomNavBarTest {
     }
 
     // Start at login, navigate to home first
-    composeTestRule.onNodeWithText("Home").performClick()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_HOME).performClick()
     composeTestRule.waitForIdle()
     assert(currentDestination == "home")
 
     // Test Skills navigation
-    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_SKILLS).performClick()
     composeTestRule.waitForIdle()
     assert(currentDestination == "skills")
 
     // Test Bookings navigation
-    composeTestRule.onNodeWithText("Bookings").performClick()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_BOOKINGS).performClick()
     composeTestRule.waitForIdle()
     assert(currentDestination == "bookings")
 
     // Test Profile navigation
-    composeTestRule.onNodeWithText("Profile").performClick()
+    composeTestRule.onNodeWithTag(BottomNavBarTestTags.NAV_PROFILE).performClick()
     composeTestRule.waitForIdle()
     assert(currentDestination == "profile/{profileId}")
   }
