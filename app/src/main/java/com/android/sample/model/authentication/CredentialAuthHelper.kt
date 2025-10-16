@@ -57,9 +57,8 @@ class CredentialAuthHelper(private val context: Context) {
    */
   suspend fun getPasswordCredential(): Result<PasswordCredential> {
     return try {
-      val manager = credentialManager ?: return Result.failure(
-        Exception("CredentialManager not available")
-      )
+      val manager =
+          credentialManager ?: return Result.failure(Exception("CredentialManager not available"))
 
       val request = GetCredentialRequest.Builder().build()
 
