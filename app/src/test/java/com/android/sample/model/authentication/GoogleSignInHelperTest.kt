@@ -44,11 +44,12 @@ class GoogleSignInHelperTest {
     // Mock signOut to return a completed task that immediately calls the listener
     val mockSignOutTask = mockk<Task<Void>>(relaxed = true)
     every { mockGoogleSignInClient.signOut() } returns mockSignOutTask
-    every { mockSignOutTask.addOnCompleteListener(any()) } answers {
-      val listener = firstArg<com.google.android.gms.tasks.OnCompleteListener<Void>>()
-      listener.onComplete(mockSignOutTask)
-      mockSignOutTask
-    }
+    every { mockSignOutTask.addOnCompleteListener(any()) } answers
+        {
+          val listener = firstArg<com.google.android.gms.tasks.OnCompleteListener<Void>>()
+          listener.onComplete(mockSignOutTask)
+          mockSignOutTask
+        }
 
     // Mock the getClient method to return our mock client
     every { GoogleSignIn.getClient(any(), any<GoogleSignInOptions>()) } returns
