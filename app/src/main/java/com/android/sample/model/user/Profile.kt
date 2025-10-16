@@ -5,7 +5,7 @@ import com.android.sample.model.rating.RatingInfo
 
 data class Profile(
     val userId: String = "",
-    val name: String = "",
+    val name: String? = "",
     val email: String = "",
     val location: Location = Location(),
     val hourlyRate: String = "",

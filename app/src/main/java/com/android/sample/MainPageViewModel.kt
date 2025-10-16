@@ -7,8 +7,8 @@ import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.Skill
-import com.android.sample.model.tutor.FakeProfileRepository
 import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -54,7 +54,7 @@ data class TutorCardUi(
  */
 class MainPageViewModel : ViewModel() {
 
-  private val profileRepository = FakeProfileRepository()
+  private val profileRepository = ProfileRepositoryProvider.repository
   private val listingRepository = ListingRepositoryProvider.repository
 
   private val _uiState = MutableStateFlow(HomeUiState())
@@ -77,10 +77,10 @@ class MainPageViewModel : ViewModel() {
     try {
       val skills = emptyList<Skill>()
       val listings = listingRepository.getAllListings()
-      val tutors = profileRepository.tutors
+      val tutors = profileRepository.getAllProfiles()
 
       val tutorCards = listings.mapNotNull { buildTutorCardSafely(it, tutors) }
-      val userName = profileRepository.fakeUser.name
+      val userName = ""
 
       _uiState.value =
           HomeUiState(
@@ -106,7 +106,7 @@ class MainPageViewModel : ViewModel() {
       val tutor = tutors.find { it.userId == listing.creatorUserId } ?: return null
 
       TutorCardUi(
-          name = tutor.name,
+          name = tutor.name ?: "Unknown",
           subject = listing.skill.skill,
           hourlyRate = formatPrice(listing.hourlyRate),
           ratingStars = computeAvgStars(tutor.tutorRating),

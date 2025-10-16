@@ -137,7 +137,7 @@ class SubjectListViewModel(
           val matchesQuery =
               // Match if query is blank, or name or description contains the query
               state.query.isBlank() ||
-                  profile.name.contains(state.query, ignoreCase = true) ||
+                  profile.name?.contains(state.query, ignoreCase = true) == true ||
                   profile.description.contains(state.query, ignoreCase = true)
 
           val matchesSkill =

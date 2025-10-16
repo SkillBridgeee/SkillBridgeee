@@ -21,11 +21,13 @@ class FirestoreProfileRepository(
     return UUID.randomUUID().toString()
   }
 
-  override suspend fun getProfile(userId: String): Profile {
+  override suspend fun getProfile(userId: String): Profile? {
     return try {
       val document = db.collection(PROFILES_COLLECTION_PATH).document(userId).get().await()
+      if (!document.exists()) {
+        return null
+      }
       document.toObject(Profile::class.java)
-          ?: throw Exception("Profile with ID $userId not found or failed to parse")
     } catch (e: Exception) {
       throw Exception("Failed to get profile for user $userId: ${e.message}")
     }
@@ -83,7 +85,7 @@ class FirestoreProfileRepository(
     throw NotImplementedError("Geo-search is not implemented.")
   }
 
-  override suspend fun getProfileById(userId: String): Profile {
+  override suspend fun getProfileById(userId: String): Profile? {
     return getProfile(userId)
   }
 

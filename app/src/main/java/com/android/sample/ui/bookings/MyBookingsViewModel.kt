@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 data class BookingCardUi(
     val id: String,
     val tutorId: String,
-    val tutorName: String,
+    val tutorName: String?,
     val subject: String,
     val pricePerHourLabel: String,
     val durationLabel: String,
@@ -92,10 +92,10 @@ class MyBookingsViewModel(
   private fun buildCard(
       b: Booking,
       listing: Listing?,
-      profile: Profile,
+      profile: Profile?,
       ratings: List<Rating>
   ): BookingCardUi {
-    val tutorName = profile.name
+    val tutorName = profile?.name
     val subject = listing?.skill?.mainSubject.toString()
     val pricePerHourLabel = String.format(locale, "$%.1f/hr", b.price)
     val durationLabel = formatDuration(b.sessionStart, b.sessionEnd)

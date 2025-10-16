@@ -15,10 +15,10 @@ import kotlinx.coroutines.launch
 
 /** UI state for the MyProfile screen. Holds all data needed to edit a profile */
 data class MyProfileUIState(
-    val name: String = "",
-    val email: String = "",
+    val name: String? = "",
+    val email: String? = "",
     val location: Location? = Location(name = ""),
-    val description: String = "",
+    val description: String? = "",
     val invalidNameMsg: String? = null,
     val invalidEmailMsg: String? = null,
     val invalidLocationMsg: String? = null,
@@ -31,10 +31,10 @@ data class MyProfileUIState(
             invalidEmailMsg == null &&
             invalidLocationMsg == null &&
             invalidDescMsg == null &&
-            name.isNotBlank() &&
-            email.isNotBlank() &&
+            name?.isNotBlank() == true &&
+            email?.isNotBlank() == true &&
             location != null &&
-            description.isNotBlank()
+            description?.isNotBlank() == true
 }
 
 // ViewModel to manage profile editing logic and state
@@ -57,10 +57,10 @@ class MyProfileViewModel(
         val profile = repository.getProfile(userId = userId)
         _uiState.value =
             MyProfileUIState(
-                name = profile.name,
-                email = profile.email,
-                location = profile.location,
-                description = profile.description)
+                name = profile?.name,
+                email = profile?.email,
+                location = profile?.location,
+                description = profile?.description)
       }
     } catch (e: Exception) {
       Log.e("MyProfileViewModel", "Error loading ToDo by ID: $userId", e)
@@ -82,10 +82,10 @@ class MyProfileViewModel(
     val profile =
         Profile(
             userId = userId,
-            name = state.name,
-            email = state.email,
+            name = state?.name ?: "",
+            email = state?.email ?: "",
             location = state.location ?: Location(name = ""),
-            description = state.description)
+            description = state?.description ?: "")
 
     editProfileToRepository(userId = userId, profile = profile)
   }
@@ -110,10 +110,13 @@ class MyProfileViewModel(
   fun setError() {
     _uiState.update { currentState ->
       currentState.copy(
-          invalidNameMsg = if (currentState.name.isBlank()) nameMsgError else null,
-          invalidEmailMsg = if (currentState.email.isBlank()) emailMsgError else null,
+          invalidNameMsg =
+              currentState.name?.let { if (it?.isBlank() == true) nameMsgError else null },
+          invalidEmailMsg =
+              currentState.email?.let { if (it?.isBlank() == true) emailMsgError else null },
           invalidLocationMsg = if (currentState.location == null) locationMsgError else null,
-          invalidDescMsg = if (currentState.description.isBlank()) descMsgError else null)
+          invalidDescMsg =
+              currentState.description?.let { if (it?.isBlank() == true) descMsgError else null })
     }
   }
 
