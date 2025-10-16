@@ -33,9 +33,7 @@ data class Proposal(
     override val isActive: Boolean = true,
     override val hourlyRate: Double = 0.0,
     override val type: ListingType = ListingType.PROPOSAL
-) : Listing() {
-
-}
+) : Listing() {}
 
 /** Request - user looking for a tutor */
 data class Request(
@@ -48,6 +46,4 @@ data class Request(
     override val isActive: Boolean = true,
     override val hourlyRate: Double = 0.0,
     override val type: ListingType = ListingType.REQUEST
-) : Listing() {
-
-}
+) : Listing() {}

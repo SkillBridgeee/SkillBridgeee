@@ -1,4 +1,4 @@
-package com.android.sample.screens
+package com.android.sample.screen
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
@@ -9,17 +9,47 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import com.android.sample.model.listing.FirestoreListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.screens.newSkill.NewSkillScreen
 import com.android.sample.ui.screens.newSkill.NewSkillScreenTestTag
 import com.android.sample.ui.screens.newSkill.NewSkillViewModel
-import org.junit.Assert.assertEquals
+import com.android.sample.utils.RepositoryTest
+import com.github.se.bootcamp.utils.FirebaseEmulator
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.FirebaseFirestore
+import io.mockk.every
+import io.mockk.mockk
+import org.junit.Assert
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-class NewSkillScreenTest {
-
+class NewSkillScreenTest : RepositoryTest() {
   @get:Rule val composeTestRule = createComposeRule()
+
+  private lateinit var firestore: FirebaseFirestore
+  private lateinit var auth: FirebaseAuth
+  private lateinit var viewModel: NewSkillViewModel
+
+  @Before
+  fun setup() {
+    super.setUp()
+    firestore = FirebaseEmulator.firestore
+
+    // Mock FirebaseAuth to bypass authentication
+    auth = mockk(relaxed = true)
+    val mockUser = mockk<FirebaseUser>()
+    every { auth.currentUser } returns mockUser
+    every { mockUser.uid } returns testUserId // testUserId is from RepositoryTest
+
+    listingRepository = FirestoreListingRepository(firestore, auth)
+    ListingRepositoryProvider.setForTests(listingRepository)
+
+    viewModel = NewSkillViewModel(listingRepository)
+  }
 
   @Test
   fun saveButton_isDisplayed_andClickable() {
@@ -67,7 +97,7 @@ class NewSkillScreenTest {
         composeTestRule
             .onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)
             .fetchSemanticsNodes()
-    assertEquals(MainSubject.entries.size, itemsDisplay.size)
+    Assert.assertEquals(MainSubject.entries.size, itemsDisplay.size)
   }
 
   @Test

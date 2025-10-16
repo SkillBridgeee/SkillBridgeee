@@ -1,16 +1,16 @@
-package com.android.sample.screen
+ package com.android.sample.screen
 
-import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
-import com.android.sample.*
-import com.android.sample.HomeScreenTestTags.WELCOME_SECTION
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
+ import androidx.compose.ui.test.*
+ import androidx.compose.ui.test.junit4.createComposeRule
+ import com.android.sample.*
+ import com.android.sample.HomeScreenTestTags.WELCOME_SECTION
+ import kotlinx.coroutines.ExperimentalCoroutinesApi
+ import kotlinx.coroutines.test.runTest
+ import org.junit.Rule
+ import org.junit.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
-class MainPageTests {
+ @OptIn(ExperimentalCoroutinesApi::class)
+ class MainPageTests {
 
   @get:Rule val composeRule = createComposeRule()
 
@@ -93,4 +93,4 @@ class MainPageTests {
     val vm = MainPageViewModel()
     vm.onBookTutorClicked("Some Tutor Name")
   }
-}
+ }

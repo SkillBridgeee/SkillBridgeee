@@ -1,7 +1,6 @@
 package com.android.sample.model.user
 
 import com.android.sample.model.map.Location
-import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import kotlin.String
 
@@ -78,6 +77,5 @@ class ProfileRepositoryLocal : ProfileRepository {
 
   override suspend fun getSkillsForUser(userId: String): List<Skill> {
     TODO()
-
   }
 }

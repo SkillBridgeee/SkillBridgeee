@@ -9,7 +9,6 @@ class SkillTest {
   fun `test Skill creation with default values`() {
     val skill = Skill()
 
-
     assertEquals(MainSubject.ACADEMICS, skill.mainSubject)
     assertEquals("", skill.skill)
     assertEquals(0.0, skill.skillTime, 0.01)
@@ -42,7 +41,7 @@ class SkillTest {
 
   @Test
   fun `test Skill with zero skill time`() {
-    val skill = Skill( skillTime = 0.0)
+    val skill = Skill(skillTime = 0.0)
     assertEquals(0.0, skill.skillTime, 0.01)
   }
 

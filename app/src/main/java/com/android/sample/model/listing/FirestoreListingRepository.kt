@@ -5,15 +5,14 @@ import com.android.sample.model.skill.Skill
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import java.util.UUID
 import kotlinx.coroutines.tasks.await
 
 const val LISTINGS_COLLECTION_PATH = "listings"
 
 class FirestoreListingRepository(
-  private val db: FirebaseFirestore,
-  private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val db: FirebaseFirestore,
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) : ListingRepository {
 
   private val currentUserId: String
@@ -35,10 +34,10 @@ class FirestoreListingRepository(
   override suspend fun getProposals(): List<Proposal> {
     return try {
       val snapshot =
-        db.collection(LISTINGS_COLLECTION_PATH)
-          .whereEqualTo("type", ListingType.PROPOSAL.name)
-          .get()
-          .await()
+          db.collection(LISTINGS_COLLECTION_PATH)
+              .whereEqualTo("type", ListingType.PROPOSAL.name)
+              .get()
+              .await()
       snapshot.toObjects(Proposal::class.java)
     } catch (e: Exception) {
       throw Exception("Failed to fetch proposals: ${e.message}")
@@ -48,10 +47,10 @@ class FirestoreListingRepository(
   override suspend fun getRequests(): List<Request> {
     return try {
       val snapshot =
-        db.collection(LISTINGS_COLLECTION_PATH)
-          .whereEqualTo("type", ListingType.REQUEST.name)
-          .get()
-          .await()
+          db.collection(LISTINGS_COLLECTION_PATH)
+              .whereEqualTo("type", ListingType.REQUEST.name)
+              .get()
+              .await()
       snapshot.toObjects(Request::class.java)
     } catch (e: Exception) {
       throw Exception("Failed to fetch requests: ${e.message}")
@@ -71,7 +70,10 @@ class FirestoreListingRepository(
   override suspend fun getListingsByUser(userId: String): List<Listing> {
     return try {
       val snapshot =
-        db.collection(LISTINGS_COLLECTION_PATH).whereEqualTo("creatorUserId", userId).get().await()
+          db.collection(LISTINGS_COLLECTION_PATH)
+              .whereEqualTo("creatorUserId", userId)
+              .get()
+              .await()
       snapshot.documents.mapNotNull { it.toListing() }
     } catch (e: Exception) {
       throw Exception("Failed to fetch listings for user $userId: ${e.message}")
@@ -142,10 +144,10 @@ class FirestoreListingRepository(
   override suspend fun searchBySkill(skill: Skill): List<Listing> {
     return try {
       val snapshot =
-        db.collection(LISTINGS_COLLECTION_PATH)
-          .whereEqualTo("skill.skill", skill.skill)
-          .get()
-          .await()
+          db.collection(LISTINGS_COLLECTION_PATH)
+              .whereEqualTo("skill.skill", skill.skill)
+              .get()
+              .await()
       snapshot.documents.mapNotNull { it.toListing() }
     } catch (e: Exception) {
       throw Exception("Failed to search by skill: ${e.message}")
