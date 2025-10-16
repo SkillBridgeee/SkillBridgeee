@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
     // Initialize authentication components
     authViewModel = AuthenticationViewModel(this)
     googleSignInHelper =
-      GoogleSignInHelper(this) { result -> authViewModel.handleGoogleSignInResult(result) }
+        GoogleSignInHelper(this) { result -> authViewModel.handleGoogleSignInResult(result) }
 
     try {
       Firebase.firestore.useEmulator("10.0.2.2", 8080)
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
 
     setContent {
       MainApp(
-        authViewModel = authViewModel, onGoogleSignIn = { googleSignInHelper.signInWithGoogle() })
+          authViewModel = authViewModel, onGoogleSignIn = { googleSignInHelper.signInWithGoogle() })
     }
   }
 }
@@ -112,26 +112,26 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
 
   // Define main screens that should show bottom nav
   val mainScreenRoutes =
-    listOf(NavRoutes.HOME, NavRoutes.BOOKINGS, NavRoutes.PROFILE, NavRoutes.SKILLS)
+      listOf(NavRoutes.HOME, NavRoutes.BOOKINGS, NavRoutes.PROFILE, NavRoutes.SKILLS)
 
   // Check if current route should show bottom nav
   val showBottomNav = mainScreenRoutes.contains(currentRoute)
 
   Scaffold(
-    topBar = { TopAppBar(navController) },
-    bottomBar = {
-      if (showBottomNav) {
-        BottomNavBar(navController)
+      topBar = { TopAppBar(navController) },
+      bottomBar = {
+        if (showBottomNav) {
+          BottomNavBar(navController)
+        }
+      }) { paddingValues ->
+        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
+          AppNavGraph(
+              navController = navController,
+              bookingsViewModel,
+              profileViewModel,
+              mainPageViewModel,
+              authViewModel = authViewModel,
+              onGoogleSignIn = onGoogleSignIn)
+        }
       }
-    }) { paddingValues ->
-    androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
-      AppNavGraph(
-        navController = navController,
-        bookingsViewModel,
-        profileViewModel,
-        mainPageViewModel,
-        authViewModel = authViewModel,
-        onGoogleSignIn = onGoogleSignIn)
-    }
-  }
 }

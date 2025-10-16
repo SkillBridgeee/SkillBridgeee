@@ -7,8 +7,10 @@ import androidx.compose.ui.test.performClick
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.MainPageViewModel
 import com.android.sample.MyViewModelFactory
+import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.navigation.AppNavGraph
@@ -78,7 +80,10 @@ class BottomNavBarTest {
           navController = navController,
           bookingsViewModel = bookingsViewModel,
           profileViewModel = profileViewModel,
-          mainPageViewModel = mainPageViewModel)
+          mainPageViewModel = mainPageViewModel,
+          authViewModel =
+              AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
+          onGoogleSignIn = {})
       BottomNavBar(navController = navController)
     }
 

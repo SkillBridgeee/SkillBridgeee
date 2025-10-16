@@ -4,7 +4,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.MainApp
+import com.android.sample.model.authentication.AuthenticationViewModel
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +18,12 @@ class MainActivityTest {
 
   @Test
   fun mainApp_composable_renders_without_crashing() {
-    composeTestRule.setContent { MainApp() }
+    composeTestRule.setContent {
+      MainApp(
+          authViewModel =
+              AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
+          onGoogleSignIn = {})
+    }
 
     // Verify that the main app structure is rendered
     composeTestRule.onRoot().assertExists()
@@ -24,7 +31,12 @@ class MainActivityTest {
 
   @Test
   fun mainApp_contains_navigation_components() {
-    composeTestRule.setContent { MainApp() }
+    composeTestRule.setContent {
+      MainApp(
+          authViewModel =
+              AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
+          onGoogleSignIn = {})
+    }
 
     // First navigate from login to main app by clicking GitHub
     composeTestRule.onNodeWithText("GitHub").performClick()

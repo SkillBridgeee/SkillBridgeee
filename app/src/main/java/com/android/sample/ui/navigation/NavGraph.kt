@@ -46,54 +46,54 @@ import com.android.sample.ui.subject.SubjectListViewModel
  */
 @Composable
 fun AppNavGraph(
-  navController: NavHostController,
-  bookingsViewModel: MyBookingsViewModel,
-  profileViewModel: MyProfileViewModel,
-  mainPageViewModel: MainPageViewModel,
-  authViewModel: AuthenticationViewModel,
-  onGoogleSignIn: () -> Unit
+    navController: NavHostController,
+    bookingsViewModel: MyBookingsViewModel,
+    profileViewModel: MyProfileViewModel,
+    mainPageViewModel: MainPageViewModel,
+    authViewModel: AuthenticationViewModel,
+    onGoogleSignIn: () -> Unit
 ) {
   NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
     composable(NavRoutes.LOGIN) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LOGIN) }
       LoginScreen(
-        viewModel = authViewModel,
-        onGoogleSignIn = onGoogleSignIn,
-        onGitHubSignIn = { // Temporary functionality to go to home page while GitHub auth isn't
-          // implemented
-          navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
-        },
-        onNavigateToSignUp = { // Add this navigation callback
-          navController.navigate(NavRoutes.SIGNUP)
-        })
+          viewModel = authViewModel,
+          onGoogleSignIn = onGoogleSignIn,
+          onGitHubSignIn = { // Temporary functionality to go to home page while GitHub auth isn't
+            // implemented
+            navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+          },
+          onNavigateToSignUp = { // Add this navigation callback
+            navController.navigate(NavRoutes.SIGNUP)
+          })
     }
 
     composable(NavRoutes.PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
       MyProfileScreen(
-        profileViewModel = profileViewModel,
-        profileId = "test" // Using the same hardcoded user ID from MainActivity for the demo
-      )
+          profileViewModel = profileViewModel,
+          profileId = "test" // Using the same hardcoded user ID from MainActivity for the demo
+          )
     }
 
     composable(NavRoutes.HOME) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.HOME) }
       HomeScreen(
-        mainPageViewModel = mainPageViewModel,
-        onNavigateToNewSkill = { profileId ->
-          navController.navigate(NavRoutes.createNewSkillRoute(profileId))
-        })
+          mainPageViewModel = mainPageViewModel,
+          onNavigateToNewSkill = { profileId ->
+            navController.navigate(NavRoutes.createNewSkillRoute(profileId))
+          })
     }
 
     composable(NavRoutes.SKILLS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
       SubjectListScreen(
-        viewModel =
-          SubjectListViewModel(), // You may need to provide this through dependency injection
-        onBookTutor = { profile ->
-          // Navigate to booking or profile screen when tutor is booked
-          // Example: navController.navigate("booking/${profile.uid}")
-        })
+          viewModel =
+              SubjectListViewModel(), // You may need to provide this through dependency injection
+          onBookTutor = { profile ->
+            // Navigate to booking or profile screen when tutor is booked
+            // Example: navController.navigate("booking/${profile.uid}")
+          })
     }
 
     composable(NavRoutes.BOOKINGS) {
@@ -102,24 +102,24 @@ fun AppNavGraph(
     }
 
     composable(
-      route = NavRoutes.NEW_SKILL,
-      arguments = listOf(navArgument("profileId") { type = NavType.StringType })) { backStackEntry
-      ->
-      val profileId = backStackEntry.arguments?.getString("profileId") ?: ""
-      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.NEW_SKILL) }
-      NewSkillScreen(profileId = profileId)
-    }
+        route = NavRoutes.NEW_SKILL,
+        arguments = listOf(navArgument("profileId") { type = NavType.StringType })) { backStackEntry
+          ->
+          val profileId = backStackEntry.arguments?.getString("profileId") ?: ""
+          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.NEW_SKILL) }
+          NewSkillScreen(profileId = profileId)
+        }
 
     composable(NavRoutes.SIGNUP) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SIGNUP) }
       SignUpScreen(
-        vm = SignUpViewModel(),
-        onSubmitSuccess = {
-          // Navigate to home or login after successful signup
-          navController.navigate(NavRoutes.HOME) {
-            popUpTo(NavRoutes.SIGNUP) { inclusive = true }
-          }
-        })
+          vm = SignUpViewModel(),
+          onSubmitSuccess = {
+            // Navigate to home or login after successful signup
+            navController.navigate(NavRoutes.HOME) {
+              popUpTo(NavRoutes.SIGNUP) { inclusive = true }
+            }
+          })
     }
   }
 }
