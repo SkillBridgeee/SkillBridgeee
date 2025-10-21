@@ -191,7 +191,7 @@ class MyProfileViewModelTest {
 
     val ui = vm.uiState.value
     assertEquals("Name cannot be empty", ui.invalidNameMsg)
-    assertEquals("Email is not in the right format", ui.invalidEmailMsg)
+    assertEquals("Email cannot be empty", ui.invalidEmailMsg)
     assertEquals("Location cannot be empty", ui.invalidLocationMsg)
     assertEquals("Description cannot be empty", ui.invalidDescMsg)
   }

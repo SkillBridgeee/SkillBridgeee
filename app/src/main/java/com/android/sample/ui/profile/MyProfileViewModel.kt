@@ -46,7 +46,8 @@ class MyProfileViewModel(
   val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
 
   private val nameMsgError = "Name cannot be empty"
-  private val emailMsgError = "Email is not in the right format"
+  private val emailEmptyMsgError = "Email cannot be empty"
+  private val emailInvalidMsgError = "Email is not in the right format"
   private val locationMsgError = "Location cannot be empty"
   private val descMsgError = "Description cannot be empty"
 
@@ -111,7 +112,7 @@ class MyProfileViewModel(
     _uiState.update { currentState ->
       currentState.copy(
           invalidNameMsg = currentState.name?.let { if (it.isBlank()) nameMsgError else null },
-          invalidEmailMsg = currentState.email?.let { if (it.isBlank()) emailMsgError else null },
+          invalidEmailMsg = validateEmail(currentState.email ?: ""),
           invalidLocationMsg =
               currentState.location?.let { if (it.name.isBlank()) locationMsgError else null },
           invalidDescMsg =
@@ -128,12 +129,7 @@ class MyProfileViewModel(
 
   // Updates the email and validates it
   fun setEmail(email: String) {
-    _uiState.value =
-        _uiState.value.copy(
-            email = email,
-            invalidEmailMsg =
-                if (email.isBlank()) "Email cannot be empty"
-                else if (!isValidEmail(email)) emailMsgError else null)
+    _uiState.value = _uiState.value.copy(email = email, invalidEmailMsg = validateEmail(email))
   }
 
   // Updates the location and validates it
@@ -155,5 +151,14 @@ class MyProfileViewModel(
   private fun isValidEmail(email: String): Boolean {
     val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
     return email.matches(emailRegex.toRegex())
+  }
+
+  // Return the good error message corresponding of the given input
+  private fun validateEmail(email: String): String? {
+    return when {
+      email.isBlank() -> emailEmptyMsgError
+      !isValidEmail(email) -> emailInvalidMsgError
+      else -> null
+    }
   }
 }
