@@ -59,7 +59,7 @@ fun NewSkillScreen(skillViewModel: NewSkillViewModel = NewSkillViewModel(), prof
       floatingActionButton = {
         AppButton(
             text = "Save New Skill",
-            onClick = { skillViewModel.addProfile(userId = profileId) },
+            onClick = { skillViewModel.addSkill(userId = profileId) },
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center,
@@ -207,10 +207,4 @@ fun SubjectMenu(
               }
             }
       }
-}
-
-@Preview(showBackground = true, widthDp = 320)
-@Composable
-fun NewSkillPreview() {
-  NewSkillScreen(profileId = "")
 }

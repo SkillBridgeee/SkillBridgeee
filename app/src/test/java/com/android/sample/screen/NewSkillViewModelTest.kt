@@ -140,7 +140,7 @@ class NewSkillViewModelTest : RepositoryTest() {
   fun `addProfile withInvallid data`() {
     viewModel.setTitle("T")
 
-    viewModel.addProfile(userId = "")
+    viewModel.addSkill(userId = "")
 
     assertEquals("Description cannot be empty", viewModel.uiState.value.invalidDescMsg)
     assertEquals("Price cannot be empty", viewModel.uiState.value.invalidPriceMsg)
