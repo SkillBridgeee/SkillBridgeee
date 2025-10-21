@@ -112,7 +112,8 @@ class MyProfileViewModel(
       currentState.copy(
           invalidNameMsg = currentState.name?.let { if (it.isBlank()) nameMsgError else null },
           invalidEmailMsg = currentState.email?.let { if (it.isBlank()) emailMsgError else null },
-          invalidLocationMsg = if (currentState.location == null) locationMsgError else null,
+          invalidLocationMsg =
+              currentState.location?.let { if (it.name.isBlank()) locationMsgError else null },
           invalidDescMsg =
               currentState.description?.let { if (it.isBlank()) descMsgError else null })
     }
