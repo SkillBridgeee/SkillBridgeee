@@ -82,10 +82,10 @@ class MyProfileViewModel(
     val profile =
         Profile(
             userId = userId,
-            name = state?.name ?: "",
-            email = state?.email ?: "",
+            name = state.name ?: "",
+            email = state.email ?: "",
             location = state.location ?: Location(name = ""),
-            description = state?.description ?: "")
+            description = state.description ?: "")
 
     editProfileToRepository(userId = userId, profile = profile)
   }
@@ -110,13 +110,11 @@ class MyProfileViewModel(
   fun setError() {
     _uiState.update { currentState ->
       currentState.copy(
-          invalidNameMsg =
-              currentState.name?.let { if (it?.isBlank() == true) nameMsgError else null },
-          invalidEmailMsg =
-              currentState.email?.let { if (it?.isBlank() == true) emailMsgError else null },
+          invalidNameMsg = currentState.name?.let { if (it.isBlank()) nameMsgError else null },
+          invalidEmailMsg = currentState.email?.let { if (it.isBlank()) emailMsgError else null },
           invalidLocationMsg = if (currentState.location == null) locationMsgError else null,
           invalidDescMsg =
-              currentState.description?.let { if (it?.isBlank() == true) descMsgError else null })
+              currentState.description?.let { if (it.isBlank()) descMsgError else null })
     }
   }
 
