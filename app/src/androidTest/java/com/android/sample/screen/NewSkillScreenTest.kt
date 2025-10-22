@@ -183,4 +183,10 @@ class NewSkillScreenTest {
         .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
         .fetchSemanticsNodes()
   }
+
+  // Test button save skill
+  @Test
+  fun clickOnSaveSkillButton() {
+    compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+  }
 }
