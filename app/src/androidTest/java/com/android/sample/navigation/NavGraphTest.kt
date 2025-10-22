@@ -10,11 +10,11 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
-* AppNavGraphTest
-*
-* Instrumentation tests for verifying that AppNavGraph correctly maps routes to screens. These
-* tests confirm that navigating between destinations renders the correct composables.
-*/
+ * AppNavGraphTest
+ *
+ * Instrumentation tests for verifying that AppNavGraph correctly maps routes to screens. These
+ * tests confirm that navigating between destinations renders the correct composables.
+ */
 class AppNavGraphTest {
 
   @get:Rule val composeTestRule = createAndroidComposeRule<MainActivity>()

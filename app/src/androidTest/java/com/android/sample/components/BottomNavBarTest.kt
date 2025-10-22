@@ -11,17 +11,36 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.MainPageViewModel
 import com.android.sample.MyViewModelFactory
 import com.android.sample.model.authentication.AuthenticationViewModel
+import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.profile.MyProfileViewModel
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-
 
 class BottomNavBarTest {
 
   @get:Rule val composeTestRule = createComposeRule()
+
+  @Before
+  fun initRepositories() {
+    val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+    try {
+      ProfileRepositoryProvider.init(ctx)
+      ListingRepositoryProvider.init(ctx)
+      BookingRepositoryProvider.init(
+          ctx) // prevents IllegalStateException in ViewModel construction
+      RatingRepositoryProvider.init(ctx)
+    } catch (e: Exception) {
+      // Initialization may fail in some CI/emulator setups; log and continue
+      println("Repository init failed: ${e.message}")
+    }
+  }
 
   @Test
   fun bottomNavBar_displays_all_navigation_items() {
@@ -107,5 +126,5 @@ class BottomNavBarTest {
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
     assert(currentDestination == "profile/{profileId}")
-    }
+  }
 }
