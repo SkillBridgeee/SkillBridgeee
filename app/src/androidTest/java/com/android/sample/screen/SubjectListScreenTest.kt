@@ -94,7 +94,7 @@ class SubjectListScreenTest {
           description = description,
           tutorRating = RatingInfo(averageRating = rating, totalRatings = total))
 
-  private fun skill(s: String) = Skill(userId = "", mainSubject = MainSubject.MUSIC, skill = s)
+  private fun skill(s: String) = Skill(mainSubject = MainSubject.MUSIC, skill = s)
 
   private fun setContent(onBook: (Profile) -> Unit = {}) {
     val vm = makeViewModel()

@@ -40,9 +40,9 @@ class TutorProfileScreenTest {
 
   private val sampleSkills =
       listOf(
-          Skill("demo", MainSubject.MUSIC, "SINGING", 10.0, ExpertiseLevel.EXPERT),
-          Skill("demo", MainSubject.MUSIC, "DANCING", 5.0, ExpertiseLevel.INTERMEDIATE),
-          Skill("demo", MainSubject.MUSIC, "GUITAR", 7.0, ExpertiseLevel.BEGINNER),
+          Skill(MainSubject.MUSIC, "SINGING", 10.0, ExpertiseLevel.EXPERT),
+          Skill(MainSubject.MUSIC, "DANCING", 5.0, ExpertiseLevel.INTERMEDIATE),
+          Skill(MainSubject.MUSIC, "GUITAR", 7.0, ExpertiseLevel.BEGINNER),
       )
 
   /** Test double that satisfies the full TutorRepository contract. */

@@ -15,10 +15,10 @@ import kotlinx.coroutines.launch
 
 /** UI state for the MyProfile screen. Holds all data needed to edit a profile */
 data class MyProfileUIState(
-    val name: String = "",
-    val email: String = "",
+    val name: String? = "",
+    val email: String? = "",
     val location: Location? = Location(name = ""),
-    val description: String = "",
+    val description: String? = "",
     val invalidNameMsg: String? = null,
     val invalidEmailMsg: String? = null,
     val invalidLocationMsg: String? = null,
@@ -31,10 +31,10 @@ data class MyProfileUIState(
             invalidEmailMsg == null &&
             invalidLocationMsg == null &&
             invalidDescMsg == null &&
-            name.isNotBlank() &&
-            email.isNotBlank() &&
+            name?.isNotBlank() == true &&
+            email?.isNotBlank() == true &&
             location != null &&
-            description.isNotBlank()
+            description?.isNotBlank() == true
 }
 
 // ViewModel to manage profile editing logic and state
@@ -46,7 +46,8 @@ class MyProfileViewModel(
   val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
 
   private val nameMsgError = "Name cannot be empty"
-  private val emailMsgError = "Email is not in the right format"
+  private val emailEmptyMsgError = "Email cannot be empty"
+  private val emailInvalidMsgError = "Email is not in the right format"
   private val locationMsgError = "Location cannot be empty"
   private val descMsgError = "Description cannot be empty"
 
@@ -57,10 +58,10 @@ class MyProfileViewModel(
         val profile = repository.getProfile(userId = userId)
         _uiState.value =
             MyProfileUIState(
-                name = profile.name,
-                email = profile.email,
-                location = profile.location,
-                description = profile.description)
+                name = profile?.name,
+                email = profile?.email,
+                location = profile?.location,
+                description = profile?.description)
       }
     } catch (e: Exception) {
       Log.e("MyProfileViewModel", "Error loading ToDo by ID: $userId", e)
@@ -82,10 +83,10 @@ class MyProfileViewModel(
     val profile =
         Profile(
             userId = userId,
-            name = state.name,
-            email = state.email,
+            name = state.name ?: "",
+            email = state.email ?: "",
             location = state.location ?: Location(name = ""),
-            description = state.description)
+            description = state.description ?: "")
 
     editProfileToRepository(userId = userId, profile = profile)
   }
@@ -110,10 +111,12 @@ class MyProfileViewModel(
   fun setError() {
     _uiState.update { currentState ->
       currentState.copy(
-          invalidNameMsg = if (currentState.name.isBlank()) nameMsgError else null,
-          invalidEmailMsg = if (currentState.email.isBlank()) emailMsgError else null,
-          invalidLocationMsg = if (currentState.location == null) locationMsgError else null,
-          invalidDescMsg = if (currentState.description.isBlank()) descMsgError else null)
+          invalidNameMsg = currentState.name?.let { if (it.isBlank()) nameMsgError else null },
+          invalidEmailMsg = validateEmail(currentState.email ?: ""),
+          invalidLocationMsg =
+              currentState.location?.let { if (it.name.isBlank()) locationMsgError else null },
+          invalidDescMsg =
+              currentState.description?.let { if (it.isBlank()) descMsgError else null })
     }
   }
 
@@ -126,12 +129,7 @@ class MyProfileViewModel(
 
   // Updates the email and validates it
   fun setEmail(email: String) {
-    _uiState.value =
-        _uiState.value.copy(
-            email = email,
-            invalidEmailMsg =
-                if (email.isBlank()) "Email cannot be empty"
-                else if (!isValidEmail(email)) emailMsgError else null)
+    _uiState.value = _uiState.value.copy(email = email, invalidEmailMsg = validateEmail(email))
   }
 
   // Updates the location and validates it
@@ -153,5 +151,14 @@ class MyProfileViewModel(
   private fun isValidEmail(email: String): Boolean {
     val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
     return email.matches(emailRegex.toRegex())
+  }
+
+  // Return the good error message corresponding of the given input
+  private fun validateEmail(email: String): String? {
+    return when {
+      email.isBlank() -> emailEmptyMsgError
+      !isValidEmail(email) -> emailInvalidMsgError
+      else -> null
+    }
   }
 }

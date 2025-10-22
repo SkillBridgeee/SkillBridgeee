@@ -33,6 +33,21 @@ android {
         }
     }
 
+    signingConfigs {
+        getByName("debug") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+        }
+        create("release") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -40,11 +55,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
 
         debug {
             enableUnitTestCoverage = true
             enableAndroidTestCoverage = true
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -138,6 +155,8 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.arch.core.testing)
+
+    implementation(libs.okhttp)
 
     // Firebase
     implementation(libs.firebase.database.ktx)

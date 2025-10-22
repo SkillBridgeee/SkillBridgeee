@@ -103,7 +103,7 @@ private fun BookingCard(
                       .background(Color.White, CircleShape)
                       .border(2.dp, ChipBorder, CircleShape),
               contentAlignment = Alignment.Center) {
-                val first = booking.tutorName.firstOrNull()?.uppercaseChar() ?: '—'
+                val first = booking.tutorName?.firstOrNull()?.uppercaseChar() ?: '—'
                 Text(first.toString(), fontWeight = FontWeight.Bold)
               }
 
@@ -111,7 +111,7 @@ private fun BookingCard(
 
           Column(modifier = Modifier.weight(1f)) {
             Text(
-                booking.tutorName,
+                "a",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable { onOpenTutor(booking) })

@@ -5,7 +5,7 @@ interface RatingRepository {
 
   suspend fun getAllRatings(): List<Rating>
 
-  suspend fun getRating(ratingId: String): Rating
+  suspend fun getRating(ratingId: String): Rating?
 
   suspend fun getRatingsByFromUser(fromUserId: String): List<Rating>
 

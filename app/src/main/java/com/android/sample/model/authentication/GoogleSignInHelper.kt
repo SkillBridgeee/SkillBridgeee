@@ -22,7 +22,7 @@ class GoogleSignInHelper(
   private val signInLauncher: ActivityResultLauncher<android.content.Intent>
 
   init {
-    // Configure Google Sign-In
+    // Configure Google Sign-In - force account picker to show every time
     val gso =
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(
@@ -40,10 +40,13 @@ class GoogleSignInHelper(
         }
   }
 
-  /** Launch Google Sign-In intent */
+  /** Launch Google Sign-In intent - signs out first to force account selection */
   fun signInWithGoogle() {
-    val signInIntent = googleSignInClient.signInIntent
-    signInLauncher.launch(signInIntent)
+    // Sign out first to ensure account picker is shown
+    googleSignInClient.signOut().addOnCompleteListener {
+      val signInIntent = googleSignInClient.signInIntent
+      signInLauncher.launch(signInIntent)
+    }
   }
 
   /** This function will be used later when signout is implemented* */
