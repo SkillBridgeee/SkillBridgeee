@@ -1,11 +1,14 @@
 package com.android.sample
 
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingInfo
+import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepositoryProvider
@@ -24,9 +27,20 @@ import kotlinx.coroutines.launch
  */
 data class HomeUiState(
     val welcomeMessage: String = "",
-    val skills: List<Skill> = emptyList(),
-    val tutors: List<TutorCardUi> = emptyList()
+    val subjects: List<MainSubject> = emptyList(),
+    var tutors: List<TutorCardUi> = emptyList()
 )
+
+enum class DisplaySubject {
+    ALL,
+    ACADEMICS,
+    SPORTS,
+    MUSIC,
+    ARTS,
+    TECHNOLOGY,
+    LANGUAGES,
+    CRAFTS
+}
 
 /**
  * UI representation of a tutor card displayed on the main page.
@@ -43,7 +57,9 @@ data class TutorCardUi(
     val hourlyRate: Double,
     val ratingStars: Int,
     val ratingCount: Int
-)
+){
+
+}
 
 /**
  * ViewModel responsible for managing and preparing data for the Main Page (HomeScreen).
@@ -64,6 +80,8 @@ class MainPageViewModel : ViewModel() {
   /** The publicly exposed immutable UI state observed by the composables. */
   val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+  val subjectToDisplay = mutableStateOf(DisplaySubject.ALL)
+
   init {
     // Load all initial data when the ViewModel is created.
     viewModelScope.launch { load() }
@@ -78,16 +96,16 @@ class MainPageViewModel : ViewModel() {
    */
   suspend fun load() {
     try {
-      val skills = emptyList<Skill>()
+      val subjects = MainSubject.entries.toList()
       val listings = listingRepository.getAllListings()
       val tutors = profileRepository.getAllProfiles()
 
       val tutorCards = listings.mapNotNull { buildTutorCardSafely(it, tutors) }
-      val userName = ""
+      val userName = navigationEvent.value?.let { getCurrentUserName(it) } ?: "Ava"
 
       _uiState.value =
           HomeUiState(
-              welcomeMessage = "Welcome back, $userName!", skills = skills, tutors = tutorCards)
+              welcomeMessage = "Welcome back, $userName!", subjects = subjects, tutors = tutorCards)
     } catch (e: Exception) {
       // Fallback in case of repository or mapping failure.
       _uiState.value = HomeUiState(welcomeMessage = "Welcome back, Ava!")
@@ -171,7 +189,39 @@ class MainPageViewModel : ViewModel() {
     viewModelScope.launch { _navigationEvent.value = profileId }
   }
 
+    fun onSubjectCardClicked(subject: MainSubject) {
+        viewModelScope.launch {
+            val newListings = listingRepository.getAllListings()
+                .filter { it.skill.mainSubject == subject }
+            val tutors = profileRepository.getAllProfiles()
+            val tutorCards = newListings.mapNotNull { buildTutorCardSafely(it, tutors) }
+
+            _uiState.value = _uiState.value.copy(tutors = tutorCards)
+        }
+    }
+
+
+  suspend fun getCurrentUserName(userId: String): String {
+    val profile = runCatching { profileRepository.getProfileById(userId) }.getOrNull()
+    return profile?.name ?: "User"
+  }
+
   fun onNavigationHandled() {
     _navigationEvent.value = null
   }
+
+    object SubjectColors {
+
+        fun getSubjectColor(subject: MainSubject): Color {
+            return when (subject) {
+                MainSubject.ACADEMICS -> Color.Blue
+                MainSubject.SPORTS -> Color.LightGray
+                MainSubject.MUSIC -> Color.Magenta
+                MainSubject.ARTS -> Color.Green
+                MainSubject.TECHNOLOGY -> Color.Red
+                MainSubject.LANGUAGES -> Color.Cyan
+                MainSubject.CRAFTS -> Color.Yellow
+            }
+        }
+    }
 }

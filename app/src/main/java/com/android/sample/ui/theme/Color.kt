@@ -38,3 +38,13 @@ val AuthButtonBorderGray = Color(0xFF808080) // Gray
 val SignInButtonTeal = Color(0xFF00ACC1)
 val AuthProviderTextBlack = Color(0xFF000000)
 val SignUpLinkBlue = Color(0xFF2196F3) // Blue
+
+object SubjectColors {
+    val ACADEMICS_COLOR = Color.Blue
+    val SPORTS_COLOR = Color.White
+    val MUSIC_COLOR = Color.Magenta
+    val ARTS_COLOR = Color.Green
+    val TECHNOLOGY_COLOR = Color.Red
+    val LANGUAGES_COLOR = Color.Cyan
+    val CRAFTS_COLOR = Color.Yellow
+}
