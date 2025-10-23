@@ -85,7 +85,6 @@ class ListingTest {
     assertEquals(0.0, request.hourlyRate, 0.0)
     assertEquals(ListingType.REQUEST, request.type)
 
-
     // copy and equality/hashCode
     val requestCopy = request.copy(hourlyRate = 10.0)
     assertNotEquals(request, requestCopy)
