@@ -13,7 +13,12 @@ data class Booking(
     val status: BookingStatus = BookingStatus.PENDING,
     val price: Double = 0.0
 ) {
-  init {
+  // No-argument constructor for Firestore deserialization
+  constructor() :
+      this("", "", "", "", Date(), Date(System.currentTimeMillis() + 1), BookingStatus.PENDING, 0.0)
+
+  /** Validates the booking data. Throws an [IllegalArgumentException] if the data is invalid. */
+  fun validate() {
     require(sessionStart.before(sessionEnd)) { "Session start must be before session end" }
     require(listingCreatorId != bookerId) { "Provider and receiver must be different users" }
     require(price >= 0) { "Price must be non-negative" }

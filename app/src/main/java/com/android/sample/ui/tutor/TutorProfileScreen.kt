@@ -132,7 +132,7 @@ private fun TutorContent(
                                     .testTag(TutorPageTestTags.PFP))
                           }
                       Text(
-                          profile.name,
+                          profile.name ?: "No Name",
                           style =
                               MaterialTheme.typography.titleLarge.copy(
                                   fontWeight = FontWeight.SemiBold),
@@ -171,7 +171,7 @@ private fun TutorContent(
                   Row(verticalAlignment = Alignment.CenterVertically) {
                     InstagramGlyph()
                     Spacer(Modifier.width(8.dp))
-                    val handle = "@${profile.name.replace(" ", "")}"
+                    val handle = "@${profile.name?.replace(" ", "")}"
                     Text(handle, style = MaterialTheme.typography.bodyMedium)
                   }
                 }

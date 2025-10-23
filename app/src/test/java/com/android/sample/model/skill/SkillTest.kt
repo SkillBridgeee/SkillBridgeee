@@ -9,7 +9,6 @@ class SkillTest {
   fun `test Skill creation with default values`() {
     val skill = Skill()
 
-    assertEquals("", skill.userId)
     assertEquals(MainSubject.ACADEMICS, skill.mainSubject)
     assertEquals("", skill.skill)
     assertEquals(0.0, skill.skillTime, 0.01)
@@ -20,13 +19,11 @@ class SkillTest {
   fun `test Skill creation with valid values`() {
     val skill =
         Skill(
-            userId = "user123",
             mainSubject = MainSubject.SPORTS,
             skill = "FOOTBALL",
             skillTime = 5.5,
             expertise = ExpertiseLevel.INTERMEDIATE)
 
-    assertEquals("user123", skill.userId)
     assertEquals(MainSubject.SPORTS, skill.mainSubject)
     assertEquals("FOOTBALL", skill.skill)
     assertEquals(5.5, skill.skillTime, 0.01)
@@ -36,7 +33,6 @@ class SkillTest {
   @Test(expected = IllegalArgumentException::class)
   fun `test Skill validation - negative skill time`() {
     Skill(
-        userId = "user123",
         mainSubject = MainSubject.ACADEMICS,
         skill = "MATHEMATICS",
         skillTime = -1.0,
@@ -45,7 +41,7 @@ class SkillTest {
 
   @Test
   fun `test Skill with zero skill time`() {
-    val skill = Skill(userId = "user123", skillTime = 0.0)
+    val skill = Skill(skillTime = 0.0)
     assertEquals(0.0, skill.skillTime, 0.01)
   }
 
@@ -98,7 +94,6 @@ class SkillTest {
   fun `test Skill equality and hashCode`() {
     val skill1 =
         Skill(
-            userId = "user123",
             mainSubject = MainSubject.TECHNOLOGY,
             skill = "PROGRAMMING",
             skillTime = 15.5,
@@ -106,7 +101,6 @@ class SkillTest {
 
     val skill2 =
         Skill(
-            userId = "user123",
             mainSubject = MainSubject.TECHNOLOGY,
             skill = "PROGRAMMING",
             skillTime = 15.5,
@@ -120,7 +114,6 @@ class SkillTest {
   fun `test Skill copy functionality`() {
     val originalSkill =
         Skill(
-            userId = "user123",
             mainSubject = MainSubject.MUSIC,
             skill = "PIANO",
             skillTime = 8.0,
@@ -128,7 +121,6 @@ class SkillTest {
 
     val updatedSkill = originalSkill.copy(skillTime = 12.0, expertise = ExpertiseLevel.ADVANCED)
 
-    assertEquals("user123", updatedSkill.userId)
     assertEquals(MainSubject.MUSIC, updatedSkill.mainSubject)
     assertEquals("PIANO", updatedSkill.skill)
     assertEquals(12.0, updatedSkill.skillTime, 0.01)

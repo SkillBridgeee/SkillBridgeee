@@ -5,7 +5,7 @@ import com.android.sample.model.skill.Skill
 interface ProfileRepository {
   fun getNewUid(): String
 
-  suspend fun getProfile(userId: String): Profile
+  suspend fun getProfile(userId: String): Profile?
 
   suspend fun addProfile(profile: Profile)
 
@@ -20,7 +20,7 @@ interface ProfileRepository {
       radiusKm: Double
   ): List<Profile>
 
-  suspend fun getProfileById(userId: String): Profile
+  suspend fun getProfileById(userId: String): Profile?
 
   suspend fun getSkillsForUser(userId: String): List<Skill>
 }

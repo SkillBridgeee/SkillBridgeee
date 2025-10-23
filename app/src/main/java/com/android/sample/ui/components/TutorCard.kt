@@ -63,7 +63,7 @@ fun TutorCard(
 
               Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = profile.name.ifBlank { "Tutor" },
+                    text = profile.name?.ifBlank { "Tutor" } ?: "",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,

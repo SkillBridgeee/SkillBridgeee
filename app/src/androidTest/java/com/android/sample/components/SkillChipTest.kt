@@ -18,7 +18,7 @@ class SkillChipTest {
 
   @Test
   fun chip_is_displayed() {
-    val skill = Skill("u", MainSubject.MUSIC, "PIANO", 2.0, ExpertiseLevel.INTERMEDIATE)
+    val skill = Skill(MainSubject.MUSIC, "PIANO", 2.0, ExpertiseLevel.INTERMEDIATE)
     compose.setContent { SkillChip(skill = skill) }
 
     compose.onNodeWithTag(SkillChipTestTags.CHIP, useUnmergedTree = true).assertIsDisplayed()
@@ -27,7 +27,7 @@ class SkillChipTest {
 
   @Test
   fun formats_integer_years_and_level_lowercase() {
-    val skill = Skill("u", MainSubject.MUSIC, "DATA_SCIENCE", 10.0, ExpertiseLevel.EXPERT)
+    val skill = Skill(MainSubject.MUSIC, "DATA_SCIENCE", 10.0, ExpertiseLevel.EXPERT)
     compose.setContent { SkillChip(skill = skill) }
 
     compose
@@ -37,7 +37,7 @@ class SkillChipTest {
 
   @Test
   fun formats_decimal_years_and_capitalizes_name() {
-    val skill = Skill("u", MainSubject.MUSIC, "VOCAL_TRAINING", 1.5, ExpertiseLevel.BEGINNER)
+    val skill = Skill(MainSubject.MUSIC, "VOCAL_TRAINING", 1.5, ExpertiseLevel.BEGINNER)
     compose.setContent { SkillChip(skill = skill) }
 
     compose

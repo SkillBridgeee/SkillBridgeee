@@ -29,11 +29,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.ui.components.AppButton
-import com.android.sample.ui.theme.SampleAppTheme
 
 object MyProfileScreenTestTag {
   const val PROFILE_ICON = "profileIcon"
@@ -99,7 +97,7 @@ private fun ProfileContent(
                     .testTag(MyProfileScreenTestTag.PROFILE_ICON),
             contentAlignment = Alignment.Center) {
               Text(
-                  text = profileUIState.name.firstOrNull()?.uppercase() ?: "",
+                  text = profileUIState.name?.firstOrNull()?.uppercase() ?: "",
                   style = MaterialTheme.typography.titleLarge,
                   color = Color.Black,
                   fontWeight = FontWeight.Bold)
@@ -109,7 +107,7 @@ private fun ProfileContent(
 
         // Display name
         Text(
-            text = profileUIState.name,
+            text = profileUIState.name ?: "Your Name",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.testTag(MyProfileScreenTestTag.NAME_DISPLAY))
         // Display role
@@ -142,7 +140,7 @@ private fun ProfileContent(
 
                 // Name input field
                 OutlinedTextField(
-                    value = profileUIState.name,
+                    value = profileUIState.name ?: "",
                     onValueChange = { profileViewModel.setName(it) },
                     label = { Text("Name") },
                     placeholder = { Text("Enter Your Full Name") },
@@ -161,7 +159,7 @@ private fun ProfileContent(
 
                 // Email input field
                 OutlinedTextField(
-                    value = profileUIState.email,
+                    value = profileUIState.email ?: "",
                     onValueChange = { profileViewModel.setEmail(it) },
                     label = { Text("Email") },
                     placeholder = { Text("Enter Your Email") },
@@ -200,7 +198,7 @@ private fun ProfileContent(
 
                 // Description input field
                 OutlinedTextField(
-                    value = profileUIState.description,
+                    value = profileUIState.description ?: "",
                     onValueChange = { profileViewModel.setDescription(it) },
                     label = { Text("Description") },
                     placeholder = { Text("Info About You") },
@@ -218,10 +216,4 @@ private fun ProfileContent(
               }
             }
       }
-}
-
-@Preview(showBackground = true, widthDp = 320)
-@Composable
-fun MyProfilePreview() {
-  SampleAppTheme { MyProfileScreen(profileId = "") }
 }
