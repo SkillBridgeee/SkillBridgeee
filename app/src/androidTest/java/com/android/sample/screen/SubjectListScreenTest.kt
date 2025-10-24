@@ -54,7 +54,12 @@ class SubjectListScreenTest {
           "5" to listOf(skill("DRUMS")),
       )
 
-  private fun makeViewModel(): SubjectListViewModel {
+  private fun makeViewModel(
+      fail: Boolean = false,
+      longDelay: Boolean = false,
+      customProfiles: List<Profile>? = null,
+      customSkills: Map<String, List<Skill>>? = null
+  ): SubjectListViewModel {
     val repo =
         object : ProfileRepository {
           override fun getNewUid(): String = "unused"
@@ -68,21 +73,21 @@ class SubjectListScreenTest {
           override suspend fun deleteProfile(userId: String) {}
 
           override suspend fun getAllProfiles(): List<Profile> {
-            // small async to exercise loading state
+            if (fail) error("Boom failure")
+            if (longDelay) delay(500)
             delay(10)
-            return listOf(p1, p2, p3, p4, p5)
+            return customProfiles ?: listOf(p1, p2, p3, p4, p5)
           }
 
-          override suspend fun searchProfilesByLocation(
-              location: Location,
-              radiusKm: Double
-          ): List<Profile> = emptyList()
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
 
           override suspend fun getProfileById(userId: String): Profile = error("unused")
 
           override suspend fun getSkillsForUser(userId: String): List<Skill> =
-              allSkills[userId].orEmpty()
+              (customSkills ?: allSkills)[userId].orEmpty()
         }
+
     return SubjectListViewModel(repository = repo)
   }
 
@@ -190,29 +195,7 @@ class SubjectListScreenTest {
 
   @Test
   fun showsErrorMessage_whenRepositoryFails() {
-    val repo =
-        object : ProfileRepository {
-          override fun getNewUid(): String = "unused"
-
-          override suspend fun getProfile(userId: String): Profile = error("unused")
-
-          override suspend fun addProfile(profile: Profile) {}
-
-          override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-          override suspend fun deleteProfile(userId: String) {}
-
-          override suspend fun getAllProfiles(): List<Profile> = error("Boom failure")
-
-          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
-              emptyList<Profile>()
-
-          override suspend fun getProfileById(userId: String): Profile = error("unused")
-
-          override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
-        }
-
-    val vm = SubjectListViewModel(repository = repo)
+    val vm = makeViewModel(fail = true)
     composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
 
     composeRule.waitUntil(3_000) {
@@ -223,68 +206,25 @@ class SubjectListScreenTest {
 
   @Test
   fun showsLoadingIndicator_beforeContentAppears() {
-    val repo =
-        object : ProfileRepository {
-          override fun getNewUid(): String = "unused"
-
-          override suspend fun getProfile(userId: String): Profile = error("unused")
-
-          override suspend fun addProfile(profile: Profile) {}
-
-          override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-          override suspend fun deleteProfile(userId: String) {}
-
-          override suspend fun getAllProfiles(): List<Profile> {
-            delay(500)
-            return listOf(p1)
-          }
-
-          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
-              emptyList<Profile>()
-
-          override suspend fun getProfileById(userId: String): Profile = error("unused")
-
-          override suspend fun getSkillsForUser(userId: String): List<Skill> =
-              allSkills["1"].orEmpty()
-        }
-
-    val vm = SubjectListViewModel(repository = repo)
+    val vm = makeViewModel(longDelay = true)
     composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
 
-    // The loading bar should show first
     composeRule.onNodeWithText("All music lessons").assertExists()
   }
 
   @Test
   fun categorySelector_opensMenu_andSelectsSkill() {
-    val repo =
-        object : ProfileRepository {
-          override fun getNewUid(): String = "unused"
+    val customProfiles = listOf(p1, p2, p3)
+    val customSkills =
+        mapOf(
+            "1" to listOf(skill("PIANO"), skill("SING")),
+            "2" to listOf(skill("PIANO")),
+            "3" to listOf(skill("SING")))
 
-          override suspend fun getProfile(userId: String): Profile = error("unused")
-
-          override suspend fun addProfile(profile: Profile) {}
-
-          override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-          override suspend fun deleteProfile(userId: String) {}
-
-          override suspend fun getAllProfiles(): List<Profile> = listOf(p1, p2, p3)
-
-          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
-              emptyList<Profile>()
-
-          override suspend fun getProfileById(userId: String): Profile = error("unused")
-
-          override suspend fun getSkillsForUser(userId: String): List<Skill> =
-              listOf(skill("PIANO"), skill("SING"))
-        }
-
-    val vm = SubjectListViewModel(repository = repo)
+    val vm = makeViewModel(customProfiles = customProfiles, customSkills = customSkills)
     composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
 
-    // Wait until loaded
+    // Wait until tutors load
     composeRule.waitUntil(5_000) {
       composeRule
           .onAllNodes(
@@ -294,12 +234,13 @@ class SubjectListScreenTest {
           .isNotEmpty()
     }
 
-    // Open dropdown and select options
+    // Interact with category selector
     composeRule.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).performClick()
     composeRule.onNodeWithText("All").performClick()
     composeRule.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).performClick()
     composeRule.onNodeWithText("Piano").performClick()
 
+    // Tutors list should still be displayed after selection
     composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertIsDisplayed()
   }
 }
