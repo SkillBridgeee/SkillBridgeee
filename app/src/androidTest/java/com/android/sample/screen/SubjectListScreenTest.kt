@@ -187,4 +187,119 @@ class SubjectListScreenTest {
     composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertIsDisplayed()
     composeRule.onNodeWithText("Unknown error").assertDoesNotExist()
   }
+
+  @Test
+  fun showsErrorMessage_whenRepositoryFails() {
+    val repo =
+        object : ProfileRepository {
+          override fun getNewUid(): String = "unused"
+
+          override suspend fun getProfile(userId: String): Profile = error("unused")
+
+          override suspend fun addProfile(profile: Profile) {}
+
+          override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+          override suspend fun deleteProfile(userId: String) {}
+
+          override suspend fun getAllProfiles(): List<Profile> = error("Boom failure")
+
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
+
+          override suspend fun getProfileById(userId: String): Profile = error("unused")
+
+          override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
+        }
+
+    val vm = SubjectListViewModel(repository = repo)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
+
+    composeRule.waitUntil(3_000) {
+      composeRule.onAllNodes(hasText("Boom failure")).fetchSemanticsNodes().isNotEmpty()
+    }
+    composeRule.onNodeWithText("Boom failure").assertIsDisplayed()
+  }
+
+  @Test
+  fun showsLoadingIndicator_beforeContentAppears() {
+    val repo =
+        object : ProfileRepository {
+          override fun getNewUid(): String = "unused"
+
+          override suspend fun getProfile(userId: String): Profile = error("unused")
+
+          override suspend fun addProfile(profile: Profile) {}
+
+          override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+          override suspend fun deleteProfile(userId: String) {}
+
+          override suspend fun getAllProfiles(): List<Profile> {
+            delay(500)
+            return listOf(p1)
+          }
+
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
+
+          override suspend fun getProfileById(userId: String): Profile = error("unused")
+
+          override suspend fun getSkillsForUser(userId: String): List<Skill> =
+              allSkills["1"].orEmpty()
+        }
+
+    val vm = SubjectListViewModel(repository = repo)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
+
+    // The loading bar should show first
+    composeRule.onNodeWithText("All music lessons").assertExists()
+  }
+
+  @Test
+  fun categorySelector_opensMenu_andSelectsSkill() {
+    val repo =
+        object : ProfileRepository {
+          override fun getNewUid(): String = "unused"
+
+          override suspend fun getProfile(userId: String): Profile = error("unused")
+
+          override suspend fun addProfile(profile: Profile) {}
+
+          override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+          override suspend fun deleteProfile(userId: String) {}
+
+          override suspend fun getAllProfiles(): List<Profile> = listOf(p1, p2, p3)
+
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
+
+          override suspend fun getProfileById(userId: String): Profile = error("unused")
+
+          override suspend fun getSkillsForUser(userId: String): List<Skill> =
+              listOf(skill("PIANO"), skill("SING"))
+        }
+
+    val vm = SubjectListViewModel(repository = repo)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
+
+    // Wait until loaded
+    composeRule.waitUntil(5_000) {
+      composeRule
+          .onAllNodes(
+              hasTestTag(SubjectListTestTags.TUTOR_CARD) and
+                  hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Open dropdown and select options
+    composeRule.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).performClick()
+    composeRule.onNodeWithText("All").performClick()
+    composeRule.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).performClick()
+    composeRule.onNodeWithText("Piano").performClick()
+
+    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertIsDisplayed()
+  }
 }

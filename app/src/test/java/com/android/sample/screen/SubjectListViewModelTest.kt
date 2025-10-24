@@ -196,4 +196,76 @@ class SubjectListViewModelTest {
     assertNotNull(ui.error)
     assertTrue(ui.tutors.isEmpty())
   }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Test
+  fun refresh_setsErrorState_whenRepositoryFails() = runTest {
+    val failingRepo =
+        object : ProfileRepository {
+          override fun getNewUid(): String = "unused"
+
+          override suspend fun getProfile(userId: String): Profile = error("unused")
+
+          override suspend fun addProfile(profile: Profile) {}
+
+          override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+          override suspend fun deleteProfile(userId: String) {}
+
+          override suspend fun getAllProfiles(): List<Profile> = error("Boom failure")
+
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
+
+          override suspend fun getProfileById(userId: String): Profile = error("unused")
+
+          override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
+        }
+
+    val vm = SubjectListViewModel(repository = failingRepo)
+    vm.refresh()
+    advanceUntilIdle()
+
+    val ui = vm.ui.value
+    assertFalse(ui.isLoading)
+    assertTrue(ui.error?.contains("Boom failure") == true)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Test
+  fun onSkillSelected_filtersTutorsBySkill() = runTest {
+    val p1 = profile("1", "Alice", "Guitar Lessons", 4.9, 23)
+    val p2 = profile("2", "Bob", "Piano Lessons", 4.8, 15)
+    val repo =
+        object : ProfileRepository {
+          override fun getNewUid(): String = "unused"
+
+          override suspend fun getProfile(userId: String): Profile = error("unused")
+
+          override suspend fun addProfile(profile: Profile) {}
+
+          override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+          override suspend fun deleteProfile(userId: String) {}
+
+          override suspend fun getAllProfiles(): List<Profile> = listOf(p1, p2)
+
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
+
+          override suspend fun getProfileById(userId: String): Profile = error("unused")
+
+          override suspend fun getSkillsForUser(userId: String): List<Skill> =
+              if (userId == "1") listOf(Skill(MainSubject.MUSIC, "GUITAR"))
+              else listOf(Skill(MainSubject.MUSIC, "PIANO"))
+        }
+
+    val vm = SubjectListViewModel(repo)
+    vm.refresh()
+    advanceUntilIdle()
+
+    vm.onSkillSelected("PIANO")
+    val ui = vm.ui.value
+    assertEquals(listOf("2"), ui.tutors.map { it.userId })
+  }
 }
