@@ -27,51 +27,51 @@ class NewSkillScreenTest {
     override fun getNewUid() = "fake"
 
     override suspend fun getAllListings(): List<Listing> {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun getProposals(): List<Proposal> {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun getRequests(): List<Request> {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun getListing(listingId: String): Listing? {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun getListingsByUser(userId: String): List<Listing> {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun addProposal(proposal: Proposal) {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun addRequest(request: Request) {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun updateListing(listingId: String, listing: Listing) {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun deleteListing(listingId: String) {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun deactivateListing(listingId: String) {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun searchBySkill(skill: Skill): List<Listing> {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> {
-      TODO("Not yet implemented")
+      throw NotImplementedError("Unused in this test")
     }
   }
 
@@ -179,9 +179,15 @@ class NewSkillScreenTest {
     compose
         .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
         .fetchSemanticsNodes()
+        .isNotEmpty()
     compose
         .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
         .fetchSemanticsNodes()
+        .isNotEmpty()
+    compose
+        .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
+        .fetchSemanticsNodes()
+        .isNotEmpty()
   }
 
   // Test button save skill
