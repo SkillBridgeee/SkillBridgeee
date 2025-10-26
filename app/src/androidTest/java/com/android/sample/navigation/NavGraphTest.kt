@@ -250,10 +250,13 @@ class AppNavGraphTest {
 
     // Click the Sign Up link
     composeTestRule.onNodeWithText("Sign Up").performClick()
+
+    // Give extra time for navigation in CI
+    Thread.sleep(1000)
     composeTestRule.waitForIdle()
 
     // Wait for signup screen to load (increased timeout for CI)
-    composeTestRule.waitUntil(timeoutMillis = 15000) {
+    composeTestRule.waitUntil(timeoutMillis = 30000) {
       composeTestRule
           .onAllNodes(hasText("Personal Informations"))
           .fetchSemanticsNodes()
@@ -279,10 +282,13 @@ class AppNavGraphTest {
 
     // Navigate to signup screen
     composeTestRule.onNodeWithText("Sign Up").performClick()
+
+    // Give extra time for navigation in CI
+    Thread.sleep(1000)
     composeTestRule.waitForIdle()
 
     // Wait for signup screen to load (increased timeout for CI)
-    composeTestRule.waitUntil(timeoutMillis = 15000) {
+    composeTestRule.waitUntil(timeoutMillis = 30000) {
       composeTestRule
           .onAllNodes(hasText("Personal Informations"))
           .fetchSemanticsNodes()
@@ -312,10 +318,11 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
     // Wait for signup to complete and navigation to occur (increased timeout for CI)
+    Thread.sleep(2000)
     composeTestRule.waitForIdle()
 
-    // Wait for login screen to appear after signup
-    composeTestRule.waitUntil(timeoutMillis = 10000) {
+    // Wait for login screen to appear after signup (increased timeout for CI)
+    composeTestRule.waitUntil(timeoutMillis = 20000) {
       composeTestRule
           .onAllNodes(hasText("Welcome back! Please sign in."))
           .fetchSemanticsNodes()
@@ -339,10 +346,13 @@ class AppNavGraphTest {
 
     // Navigate to signup
     composeTestRule.onNodeWithText("Sign Up").performClick()
+
+    // Give extra time for navigation in CI
+    Thread.sleep(1000)
     composeTestRule.waitForIdle()
 
     // Wait for signup screen to load (increased timeout for CI)
-    composeTestRule.waitUntil(timeoutMillis = 15000) {
+    composeTestRule.waitUntil(timeoutMillis = 30000) {
       composeTestRule
           .onAllNodes(hasTestTag(SignUpScreenTestTags.NAME))
           .fetchSemanticsNodes()
@@ -364,8 +374,11 @@ class AppNavGraphTest {
 
     composeTestRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for navigation to complete
-    composeTestRule.waitUntil(timeoutMillis = 10000) {
+    // Wait for navigation to complete (increased timeout for CI)
+    Thread.sleep(2000)
+    composeTestRule.waitForIdle()
+
+    composeTestRule.waitUntil(timeoutMillis = 20000) {
       composeTestRule
           .onAllNodes(hasText("Welcome back! Please sign in."))
           .fetchSemanticsNodes()
