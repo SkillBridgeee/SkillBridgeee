@@ -90,17 +90,20 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.TITLE).assertIsDisplayed()
     composeRule.nodeByTag(SignUpScreenTestTags.SUBTITLE).assertIsDisplayed()
 
-    composeRule.nodeByTag(SignUpScreenTestTags.NAME).assertIsDisplayed()
-    composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).assertIsDisplayed()
-    composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).assertIsDisplayed()
-    composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).assertIsDisplayed()
-    composeRule.nodeByTag(SignUpScreenTestTags.DESCRIPTION).assertIsDisplayed()
-    composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).assertIsDisplayed()
-    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.NAME).performScrollTo().assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performScrollTo().assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).performScrollTo().assertIsDisplayed()
+    composeRule
+        .nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION)
+        .performScrollTo()
+        .assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.DESCRIPTION).performScrollTo().assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performScrollTo().assertIsDisplayed()
+    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performScrollTo().assertIsDisplayed()
 
-    composeRule.nodeByTag(SignUpScreenTestTags.TUTOR).performClick()
+    composeRule.nodeByTag(SignUpScreenTestTags.TUTOR).performScrollTo().performClick()
     assertEquals(Role.TUTOR, vm.state.value.role)
-    composeRule.nodeByTag(SignUpScreenTestTags.LEARNER).performClick()
+    composeRule.nodeByTag(SignUpScreenTestTags.LEARNER).performScrollTo().performClick()
     assertEquals(Role.LEARNER, vm.state.value.role)
   }
 

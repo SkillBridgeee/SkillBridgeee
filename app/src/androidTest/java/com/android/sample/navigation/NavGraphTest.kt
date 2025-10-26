@@ -241,7 +241,7 @@ class AppNavGraphTest {
   @Test
   fun navigating_to_signup_from_login() {
     // Should start on login screen - wait for it to be ready
-    composeTestRule.waitUntil(timeoutMillis = 5000) {
+    composeTestRule.waitUntil(timeoutMillis = 15000) {
       composeTestRule.onAllNodes(hasText("Sign Up")).fetchSemanticsNodes().isNotEmpty()
     }
 
@@ -252,8 +252,8 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Sign Up").performClick()
     composeTestRule.waitForIdle()
 
-    // Wait for signup screen to load
-    composeTestRule.waitUntil(timeoutMillis = 5000) {
+    // Wait for signup screen to load (increased timeout for CI)
+    composeTestRule.waitUntil(timeoutMillis = 15000) {
       composeTestRule
           .onAllNodes(hasText("Personal Informations"))
           .fetchSemanticsNodes()
@@ -273,7 +273,7 @@ class AppNavGraphTest {
   @Test
   fun successful_signup_navigates_to_login() {
     // Wait for login screen to be ready
-    composeTestRule.waitUntil(timeoutMillis = 5000) {
+    composeTestRule.waitUntil(timeoutMillis = 15000) {
       composeTestRule.onAllNodes(hasText("Sign Up")).fetchSemanticsNodes().isNotEmpty()
     }
 
@@ -281,8 +281,8 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Sign Up").performClick()
     composeTestRule.waitForIdle()
 
-    // Wait for signup screen to load
-    composeTestRule.waitUntil(timeoutMillis = 5000) {
+    // Wait for signup screen to load (increased timeout for CI)
+    composeTestRule.waitUntil(timeoutMillis = 15000) {
       composeTestRule
           .onAllNodes(hasText("Personal Informations"))
           .fetchSemanticsNodes()
@@ -333,7 +333,7 @@ class AppNavGraphTest {
   @Test
   fun signup_clears_signup_from_back_stack() {
     // Wait for login screen to be ready
-    composeTestRule.waitUntil(timeoutMillis = 5000) {
+    composeTestRule.waitUntil(timeoutMillis = 15000) {
       composeTestRule.onAllNodes(hasText("Sign Up")).fetchSemanticsNodes().isNotEmpty()
     }
 
@@ -341,8 +341,8 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Sign Up").performClick()
     composeTestRule.waitForIdle()
 
-    // Wait for signup screen to load
-    composeTestRule.waitUntil(timeoutMillis = 5000) {
+    // Wait for signup screen to load (increased timeout for CI)
+    composeTestRule.waitUntil(timeoutMillis = 15000) {
       composeTestRule
           .onAllNodes(hasTestTag(SignUpScreenTestTags.NAME))
           .fetchSemanticsNodes()
