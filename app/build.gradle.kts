@@ -13,7 +13,14 @@ configurations.all {
         force("org.jacoco:org.jacoco.core:0.8.11")
         force("org.jacoco:org.jacoco.agent:0.8.11")
         force("org.jacoco:org.jacoco.report:0.8.11")
+        force("com.google.protobuf:protobuf-javalite:3.21.12")
     }
+}
+
+configurations.matching {
+    it.name.contains("androidTest", ignoreCase = true)
+}.all {
+    exclude(group = "com.google.protobuf", module = "protobuf-lite")
 }
 
 android {
@@ -33,6 +40,21 @@ android {
         }
     }
 
+    signingConfigs {
+        getByName("debug") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+        }
+        create("release") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -40,11 +62,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
 
         debug {
             enableUnitTestCoverage = true
             enableAndroidTestCoverage = true
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -152,6 +176,10 @@ dependencies {
     testImplementation("com.google.firebase:firebase-auth:22.3.0")
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.test:core:1.5.0")
+
+    implementation("com.google.protobuf:protobuf-javalite:3.21.12")
+    testImplementation("com.google.protobuf:protobuf-javalite:3.21.12")
+    androidTestImplementation("com.google.protobuf:protobuf-javalite:3.21.12")
 
     // Google Play Services for Google Sign-In
     implementation(libs.play.services.auth)

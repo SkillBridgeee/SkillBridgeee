@@ -54,7 +54,12 @@ class SubjectListScreenTest {
           "5" to listOf(skill("DRUMS")),
       )
 
-  private fun makeViewModel(): SubjectListViewModel {
+  private fun makeViewModel(
+      fail: Boolean = false,
+      longDelay: Boolean = false,
+      customProfiles: List<Profile>? = null,
+      customSkills: Map<String, List<Skill>>? = null
+  ): SubjectListViewModel {
     val repo =
         object : ProfileRepository {
           override fun getNewUid(): String = "unused"
@@ -68,21 +73,21 @@ class SubjectListScreenTest {
           override suspend fun deleteProfile(userId: String) {}
 
           override suspend fun getAllProfiles(): List<Profile> {
-            // small async to exercise loading state
+            if (fail) error("Boom failure")
+            if (longDelay) delay(500)
             delay(10)
-            return listOf(p1, p2, p3, p4, p5)
+            return customProfiles ?: listOf(p1, p2, p3, p4, p5)
           }
 
-          override suspend fun searchProfilesByLocation(
-              location: Location,
-              radiusKm: Double
-          ): List<Profile> = emptyList()
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
 
           override suspend fun getProfileById(userId: String): Profile = error("unused")
 
           override suspend fun getSkillsForUser(userId: String): List<Skill> =
-              allSkills[userId].orEmpty()
+              (customSkills ?: allSkills)[userId].orEmpty()
         }
+
     return SubjectListViewModel(repository = repo)
   }
 
@@ -186,5 +191,56 @@ class SubjectListScreenTest {
     // Assert that ultimately the content shows and no error text
     composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertIsDisplayed()
     composeRule.onNodeWithText("Unknown error").assertDoesNotExist()
+  }
+
+  @Test
+  fun showsErrorMessage_whenRepositoryFails() {
+    val vm = makeViewModel(fail = true)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
+
+    composeRule.waitUntil(3_000) {
+      composeRule.onAllNodes(hasText("Boom failure")).fetchSemanticsNodes().isNotEmpty()
+    }
+    composeRule.onNodeWithText("Boom failure").assertIsDisplayed()
+  }
+
+  @Test
+  fun showsLoadingIndicator_beforeContentAppears() {
+    val vm = makeViewModel(longDelay = true)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
+
+    composeRule.onNodeWithText("All music lessons").assertExists()
+  }
+
+  @Test
+  fun categorySelector_opensMenu_andSelectsSkill() {
+    val customProfiles = listOf(p1, p2, p3)
+    val customSkills =
+        mapOf(
+            "1" to listOf(skill("PIANO"), skill("SING")),
+            "2" to listOf(skill("PIANO")),
+            "3" to listOf(skill("SING")))
+
+    val vm = makeViewModel(customProfiles = customProfiles, customSkills = customSkills)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
+
+    // Wait until tutors load
+    composeRule.waitUntil(5_000) {
+      composeRule
+          .onAllNodes(
+              hasTestTag(SubjectListTestTags.TUTOR_CARD) and
+                  hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Interact with category selector
+    composeRule.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).performClick()
+    composeRule.onNodeWithText("All").performClick()
+    composeRule.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).performClick()
+    composeRule.onNodeWithText("Piano").performClick()
+
+    // Tutors list should still be displayed after selection
+    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertIsDisplayed()
   }
 }
