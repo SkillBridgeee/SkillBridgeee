@@ -18,7 +18,7 @@ class NominatimLocationRepository(private val client: OkHttpClient) : LocationRe
       val lat = jsonObject.getDouble("lat")
       val lon = jsonObject.getDouble("lon")
       val name = jsonObject.getString("display_name")
-      Location(lat, lon, name)
+      Location(latitude = lat, longitude = lon, name = name)
     }
   }
 
@@ -40,10 +40,10 @@ class NominatimLocationRepository(private val client: OkHttpClient) : LocationRe
                 .url(url)
                 .header(
                     "User-Agent",
-                    // TODO je sais pas ce qu'il faut mettre
-                    "YourAppName/1.0 (your-email@example.com)") // Set a proper User-Agent
-                // TODO Mettre un referer ???
-                .header("Referer", "https://yourapp.com") // Optionally add a Referer
+                    // TODO email mettre une autre address je pense
+                    "SkillBridgeee/1.0 (nahuel.della-valle@epfl.ch)") // Set a proper User-Agent
+                // TODO trouver un referer à mettre et un site ou une ref (lien github?)
+                .header("Nahuel Della Valle", "https://yourapp.com") // Optionally add a Referer
                 .build()
 
         try {
