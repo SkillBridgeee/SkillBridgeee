@@ -102,8 +102,7 @@ class RouteStackManagerTest {
 
   @Test
   fun isMainRoute_returns_true_for_main_routes() {
-    listOf(NavRoutes.HOME, NavRoutes.PROFILE, NavRoutes.SKILLS, NavRoutes.BOOKINGS).forEach { route
-      ->
+    listOf(NavRoutes.HOME, NavRoutes.PROFILE, NavRoutes.MAP, NavRoutes.BOOKINGS).forEach { route ->
       assertTrue("$route should be a main route", RouteStackManager.isMainRoute(route))
     }
   }

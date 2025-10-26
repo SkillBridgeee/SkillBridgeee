@@ -63,7 +63,7 @@ class MainActivityTest {
     composeTestRule.waitForIdle()
 
     // Now verify bottom navigation exists
-    composeTestRule.onNodeWithText("Skills").assertExists()
+    composeTestRule.onNodeWithText("Map").assertExists()
     composeTestRule.onNodeWithText("Profile").assertExists()
     composeTestRule.onNodeWithText("Bookings").assertExists()
 

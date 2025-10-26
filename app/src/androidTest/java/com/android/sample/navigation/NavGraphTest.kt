@@ -37,17 +37,17 @@ class AppNavGraphTest {
   }
 
   @Test
-  fun navigating_to_skills_displays_skills_screen() {
+  fun navigating_to_Map_displays_map_screen() {
     // First login to get to main app
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Navigate to skills
-    composeTestRule.onNodeWithText("Skills").performClick()
+    // Navigate to map
+    composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
 
-    // Should display skills screen content
-    composeTestRule.onNodeWithText("Find a tutor about...").assertExists()
+    // Check map screen content via test tag
+    composeTestRule.onNodeWithTag("map_screen_text").assertExists()
   }
 
   @Test
@@ -102,9 +102,9 @@ class AppNavGraphTest {
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
 
     // Navigate to skills
-    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
-    assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.MAP)
 
     // Navigate to profile
     composeTestRule.onNodeWithText("Profile").performClick()
@@ -119,7 +119,7 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Navigate to skills then profile
-    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithText("Profile").performClick()
@@ -134,20 +134,6 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Explore skills").assertExists()
     composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
-  }
-
-  @Test
-  fun skills_screen_has_search_and_category() {
-    // Login and navigate to skills
-    composeTestRule.onNodeWithText("GitHub").performClick()
-    composeTestRule.waitForIdle()
-
-    composeTestRule.onNodeWithText("Skills").performClick()
-    composeTestRule.waitForIdle()
-
-    // Verify skills screen components
-    composeTestRule.onNodeWithText("Find a tutor about...").assertExists()
-    composeTestRule.onNodeWithText("Category").assertExists()
   }
 
   @Test

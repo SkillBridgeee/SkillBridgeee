@@ -2,6 +2,7 @@ package com.android.sample.components
 
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -15,9 +16,11 @@ import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.navigation.AppNavGraph
+import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.profile.MyProfileViewModel
 import org.junit.Before
 import org.junit.Rule
@@ -51,7 +54,7 @@ class BottomNavBarTest {
 
     composeTestRule.onNodeWithText("Home").assertExists()
     composeTestRule.onNodeWithText("Bookings").assertExists()
-    composeTestRule.onNodeWithText("Skills").assertExists()
+    composeTestRule.onNodeWithText("Map").assertExists()
     composeTestRule.onNodeWithText("Profile").assertExists()
   }
 
@@ -75,7 +78,7 @@ class BottomNavBarTest {
     // Should have exactly 4 navigation items
     composeTestRule.onNodeWithText("Home").assertExists()
     composeTestRule.onNodeWithText("Bookings").assertExists()
-    composeTestRule.onNodeWithText("Skills").assertExists()
+    composeTestRule.onNodeWithText("Map").assertExists()
     composeTestRule.onNodeWithText("Profile").assertExists()
   }
 
@@ -107,24 +110,21 @@ class BottomNavBarTest {
       BottomNavBar(navController = navController)
     }
 
-    // Start at login, navigate to home first
-    composeTestRule.onNodeWithText("Home").performClick()
+    // Use test tags for clicks to target the clickable NavigationBarItem (avoids touch injection)
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == "home")
+    assert(currentDestination == NavRoutes.HOME)
 
-    // Test Skills navigation
-    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == "skills")
+    assert(currentDestination == NavRoutes.MAP)
 
-    // Test Bookings navigation
-    composeTestRule.onNodeWithText("Bookings").performClick()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == "bookings")
+    assert(currentDestination == NavRoutes.BOOKINGS)
 
-    // Test Profile navigation
-    composeTestRule.onNodeWithText("Profile").performClick()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == "profile/{profileId}")
+    assert(currentDestination == NavRoutes.PROFILE)
   }
 }
