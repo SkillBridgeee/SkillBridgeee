@@ -1,13 +1,12 @@
 package com.android.sample
 
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
@@ -20,7 +19,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class MainActivityTest {
 
-  @get:Rule val composeTestRule = createComposeRule()
+  @get:Rule val composeTestRule = createAndroidComposeRule<MainActivity>()
 
   @Before
   fun initRepositories() {
@@ -38,12 +37,8 @@ class MainActivityTest {
 
   @Test
   fun mainApp_composable_renders_without_crashing() {
-    composeTestRule.setContent {
-      MainApp(
-          authViewModel =
-              AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
-          onGoogleSignIn = {})
-    }
+    // Activity is already launched by createAndroidComposeRule
+    composeTestRule.waitForIdle()
 
     // Verify that the main app structure is rendered
     composeTestRule.onRoot().assertExists()
@@ -51,16 +46,22 @@ class MainActivityTest {
 
   @Test
   fun mainApp_contains_navigation_components() {
-    composeTestRule.setContent {
-      MainApp(
-          authViewModel =
-              AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
-          onGoogleSignIn = {})
+    // Activity is already launched by createAndroidComposeRule
+    composeTestRule.waitForIdle()
+
+    // Wait for login screen to appear
+    composeTestRule.waitUntil(timeoutMillis = 5000) {
+      composeTestRule.onAllNodes(hasText("GitHub")).fetchSemanticsNodes().isNotEmpty()
     }
 
     // First navigate from login to main app by clicking GitHub
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
+
+    // Wait for home screen to load
+    composeTestRule.waitUntil(timeoutMillis = 10000) {
+      composeTestRule.onAllNodes(hasText("Skills")).fetchSemanticsNodes().isNotEmpty()
+    }
 
     // Now verify bottom navigation exists
     composeTestRule.onNodeWithText("Skills").assertExists()

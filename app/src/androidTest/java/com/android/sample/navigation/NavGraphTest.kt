@@ -38,6 +38,15 @@ class AppNavGraphTest {
 
     // Clean up any existing user
     Firebase.auth.signOut()
+
+    // Wait for login screen to be fully loaded
+    composeTestRule.waitForIdle()
+    composeTestRule.waitUntil(timeoutMillis = 10000) {
+      composeTestRule
+          .onAllNodes(hasText("Welcome back! Please sign in."))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
   }
 
   @After
@@ -126,16 +135,37 @@ class AppNavGraphTest {
     // Login
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
+
+    // Wait for home screen to fully load
+    composeTestRule.waitUntil(timeoutMillis = 10000) {
+      composeTestRule
+          .onAllNodes(hasText("Ready to learn something new today?"))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
 
     // Navigate to skills
     composeTestRule.onNodeWithText("Skills").performClick()
     composeTestRule.waitForIdle()
+
+    // Wait for skills screen to load
+    composeTestRule.waitUntil(timeoutMillis = 5000) {
+      composeTestRule
+          .onAllNodes(hasText("Find a tutor about..."))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
 
     // Navigate to profile
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
+
+    // Wait for profile screen to load (more time as it loads user data)
+    composeTestRule.waitUntil(timeoutMillis = 10000) {
+      composeTestRule.onAllNodes(hasText("Personal Details")).fetchSemanticsNodes().isNotEmpty()
+    }
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE)
   }
 
@@ -195,13 +225,25 @@ class AppNavGraphTest {
 
   @Test
   fun navigating_to_signup_from_login() {
-    // Should start on login screen
+    // Should start on login screen - wait for it to be ready
+    composeTestRule.waitUntil(timeoutMillis = 5000) {
+      composeTestRule.onAllNodes(hasText("Sign Up")).fetchSemanticsNodes().isNotEmpty()
+    }
+
     composeTestRule.onNodeWithText("Welcome back! Please sign in.").assertExists()
     composeTestRule.onNodeWithText("Sign Up").assertExists()
 
     // Click the Sign Up link
     composeTestRule.onNodeWithText("Sign Up").performClick()
     composeTestRule.waitForIdle()
+
+    // Wait for signup screen to load
+    composeTestRule.waitUntil(timeoutMillis = 5000) {
+      composeTestRule
+          .onAllNodes(hasText("Personal Informations"))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
     // Should now be on signup screen - check for unique signup screen elements
     composeTestRule.onNodeWithText("Personal Informations").assertExists()
@@ -215,9 +257,22 @@ class AppNavGraphTest {
 
   @Test
   fun successful_signup_navigates_to_login() {
+    // Wait for login screen to be ready
+    composeTestRule.waitUntil(timeoutMillis = 5000) {
+      composeTestRule.onAllNodes(hasText("Sign Up")).fetchSemanticsNodes().isNotEmpty()
+    }
+
     // Navigate to signup screen
     composeTestRule.onNodeWithText("Sign Up").performClick()
     composeTestRule.waitForIdle()
+
+    // Wait for signup screen to load
+    composeTestRule.waitUntil(timeoutMillis = 5000) {
+      composeTestRule
+          .onAllNodes(hasText("Personal Informations"))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
     // Verify we're on signup screen
     composeTestRule.onNodeWithText("Personal Informations").assertExists()
@@ -241,9 +296,16 @@ class AppNavGraphTest {
     // Click sign up button
     composeTestRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for signup to complete (increased timeout for slow emulators)
+    // Wait for signup to complete and navigation to occur (increased timeout for CI)
     composeTestRule.waitForIdle()
-    Thread.sleep(3000) // Give time for signup and navigation
+
+    // Wait for login screen to appear after signup
+    composeTestRule.waitUntil(timeoutMillis = 10000) {
+      composeTestRule
+          .onAllNodes(hasText("Welcome back! Please sign in."))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
     // Should navigate back to login screen - check for unique login screen elements
     composeTestRule.onNodeWithText("Welcome back! Please sign in.").assertExists()
@@ -255,9 +317,22 @@ class AppNavGraphTest {
 
   @Test
   fun signup_clears_signup_from_back_stack() {
+    // Wait for login screen to be ready
+    composeTestRule.waitUntil(timeoutMillis = 5000) {
+      composeTestRule.onAllNodes(hasText("Sign Up")).fetchSemanticsNodes().isNotEmpty()
+    }
+
     // Navigate to signup
     composeTestRule.onNodeWithText("Sign Up").performClick()
     composeTestRule.waitForIdle()
+
+    // Wait for signup screen to load
+    composeTestRule.waitUntil(timeoutMillis = 5000) {
+      composeTestRule
+          .onAllNodes(hasTestTag(SignUpScreenTestTags.NAME))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
     // Fill and submit signup form
     val testEmail = "backstack${System.currentTimeMillis()}@example.com"
@@ -274,8 +349,13 @@ class AppNavGraphTest {
 
     composeTestRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for navigation
-    Thread.sleep(3000)
+    // Wait for navigation to complete
+    composeTestRule.waitUntil(timeoutMillis = 10000) {
+      composeTestRule
+          .onAllNodes(hasText("Welcome back! Please sign in."))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
     // Should be on login screen
     composeTestRule.onNodeWithText("Welcome back! Please sign in.").assertExists()
