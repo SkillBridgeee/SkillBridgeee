@@ -245,10 +245,7 @@ class SignUpViewModelTest {
   fun submitting_flag_true_while_repo_is_slow() = runTest {
     // Create a slow mock repository using delay
     val mockRepo = mockk<ProfileRepository>()
-    coEvery { mockRepo.addProfile(any()) } coAnswers
-        {
-          kotlinx.coroutines.delay(200)
-        }
+    coEvery { mockRepo.addProfile(any()) } coAnswers { kotlinx.coroutines.delay(200) }
 
     val vm = SignUpViewModel(createMockAuthRepository(), mockRepo)
     vm.onEvent(SignUpEvent.NameChanged("Alan"))
