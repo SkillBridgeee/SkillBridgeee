@@ -1,6 +1,6 @@
 package com.android.sample
 
-import androidx.compose.runtime.*
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.listing.Listing
@@ -66,7 +66,17 @@ class MainPageViewModel : ViewModel() {
 
   init {
     // Load all initial data when the ViewModel is created.
-    viewModelScope.launch { load() }
+    viewModelScope.launch {
+      try {
+        load()
+      } catch (e: kotlinx.coroutines.CancellationException) {
+        // Coroutine was cancelled - re-throw to maintain cancellation contract
+        throw e
+      } catch (e: Exception) {
+        // Log other errors but don't crash
+        Log.e("MainPageViewModel", "Error in init load", e)
+      }
+    }
   }
 
   /**
@@ -88,7 +98,10 @@ class MainPageViewModel : ViewModel() {
       _uiState.value =
           HomeUiState(
               welcomeMessage = "Welcome back, $userName!", skills = skills, tutors = tutorCards)
-    } catch (e: Exception) {
+    } catch (e: kotlinx.coroutines.CancellationException) {
+      // Coroutine was cancelled - re-throw to maintain cancellation contract
+      throw e
+    } catch (_: Exception) {
       // Fallback in case of repository or mapping failure.
       _uiState.value = HomeUiState(welcomeMessage = "Welcome back, Ava!")
     }
@@ -114,7 +127,7 @@ class MainPageViewModel : ViewModel() {
           hourlyRate = formatPrice(listing.hourlyRate),
           ratingStars = computeAvgStars(tutor.tutorRating),
           ratingCount = ratingCountFor(tutor.tutorRating))
-    } catch (e: Exception) {
+    } catch (_: Exception) {
       null
     }
   }

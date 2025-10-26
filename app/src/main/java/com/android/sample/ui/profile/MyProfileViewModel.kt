@@ -53,8 +53,8 @@ class MyProfileViewModel(
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile(userId: String) {
-    try {
-      viewModelScope.launch {
+    viewModelScope.launch {
+      try {
         val profile = repository.getProfile(userId = userId)
         _uiState.value =
             MyProfileUIState(
@@ -62,9 +62,13 @@ class MyProfileViewModel(
                 email = profile?.email,
                 location = profile?.location,
                 description = profile?.description)
+      } catch (e: kotlinx.coroutines.CancellationException) {
+        // Coroutine was cancelled - this is expected when navigating away
+        throw e // Re-throw to maintain coroutine cancellation contract
+      } catch (e: Exception) {
+        Log.e("MyProfileViewModel", "Error loading profile for user: $userId", e)
+        // Keep default state on error
       }
-    } catch (e: Exception) {
-      Log.e("MyProfileViewModel", "Error loading ToDo by ID: $userId", e)
     }
   }
 

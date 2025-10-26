@@ -28,6 +28,9 @@ class FirestoreProfileRepository(
         return null
       }
       document.toObject(Profile::class.java)
+    } catch (e: kotlinx.coroutines.CancellationException) {
+      // Coroutine was cancelled - re-throw to maintain cancellation contract
+      throw e
     } catch (e: Exception) {
       throw Exception("Failed to get profile for user $userId: ${e.message}")
     }

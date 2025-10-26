@@ -70,6 +70,9 @@ class MyBookingsViewModel(
           if (card != null) result += card
         }
         _uiState.value = result
+      } catch (e: kotlinx.coroutines.CancellationException) {
+        // Coroutine was cancelled - re-throw to maintain cancellation contract
+        throw e
       } catch (e: Throwable) {
         Log.e("MyBookingsViewModel", "Error loading bookings for $userId", e)
         _uiState.value = emptyList()

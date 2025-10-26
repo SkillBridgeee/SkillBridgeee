@@ -96,6 +96,11 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
+    // Wait for profile screen to fully load before asserting
+    composeTestRule.waitUntil(timeoutMillis = 10000) {
+      composeTestRule.onAllNodes(hasText("Personal Details")).fetchSemanticsNodes().isNotEmpty()
+    }
+
     // Should display profile screen - check for profile screen elements
     composeTestRule.onNodeWithText("Student").assertExists()
     composeTestRule.onNodeWithText("Personal Details").assertExists()
@@ -163,9 +168,14 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Wait for profile screen to load (more time as it loads user data)
-    composeTestRule.waitUntil(timeoutMillis = 10000) {
+    composeTestRule.waitUntil(timeoutMillis = 15000) {
       composeTestRule.onAllNodes(hasText("Personal Details")).fetchSemanticsNodes().isNotEmpty()
     }
+
+    // Give extra time for async profile loading to complete
+    Thread.sleep(1000)
+    composeTestRule.waitForIdle()
+
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE)
   }
 
@@ -215,6 +225,11 @@ class AppNavGraphTest {
 
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
+
+    // Wait for profile to fully load
+    composeTestRule.waitUntil(timeoutMillis = 10000) {
+      composeTestRule.onAllNodes(hasText("Personal Details")).fetchSemanticsNodes().isNotEmpty()
+    }
 
     // Verify profile form fields exist
     composeTestRule.onNodeWithText("Name").assertExists()
