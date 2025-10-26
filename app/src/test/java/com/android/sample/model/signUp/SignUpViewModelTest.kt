@@ -1,15 +1,14 @@
 package com.android.sample.model.signUp
 
-import com.android.sample.model.map.Location
-import com.android.sample.model.skill.Skill
-import com.android.sample.model.user.Profile
+import com.android.sample.model.authentication.AuthenticationRepository
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.signup.Role
 import com.android.sample.ui.signup.SignUpEvent
 import com.android.sample.ui.signup.SignUpViewModel
+import com.google.firebase.auth.FirebaseUser
+import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -20,96 +19,6 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-
-private class CapturingRepo : ProfileRepository {
-  val added = mutableListOf<Profile>()
-  private var uid = 1
-
-  override fun getNewUid(): String = "test-$uid".also { uid++ }
-
-  override suspend fun getProfile(userId: String): Profile = added.first { it.userId == userId }
-
-  override suspend fun addProfile(profile: Profile) {
-    added += profile
-  }
-
-  override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-  override suspend fun deleteProfile(userId: String) {}
-
-  override suspend fun getAllProfiles(): List<Profile> = added.toList()
-
-  override suspend fun searchProfilesByLocation(
-      location: Location,
-      radiusKm: Double
-  ): List<Profile> = emptyList()
-
-  override suspend fun getProfileById(userId: String): Profile {
-    TODO("Not yet implemented")
-  }
-
-  override suspend fun getSkillsForUser(userId: String): List<Skill> {
-    TODO("Not yet implemented")
-  }
-}
-
-private class SlowRepo : ProfileRepository {
-  override fun getNewUid(): String = "slow-1"
-
-  override suspend fun getProfile(userId: String): Profile = error("unused")
-
-  override suspend fun addProfile(profile: Profile) {
-    delay(200)
-  }
-
-  override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-  override suspend fun deleteProfile(userId: String) {}
-
-  override suspend fun getAllProfiles(): List<Profile> = emptyList()
-
-  override suspend fun searchProfilesByLocation(
-      location: Location,
-      radiusKm: Double
-  ): List<Profile> = emptyList()
-
-  override suspend fun getProfileById(userId: String): Profile {
-    TODO("Not yet implemented")
-  }
-
-  override suspend fun getSkillsForUser(userId: String): List<Skill> {
-    TODO("Not yet implemented")
-  }
-}
-
-private class ThrowingRepo : ProfileRepository {
-  override fun getNewUid(): String = "x"
-
-  override suspend fun getProfile(userId: String): Profile = error("unused")
-
-  override suspend fun addProfile(profile: Profile) {
-    error("add boom")
-  }
-
-  override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-  override suspend fun deleteProfile(userId: String) {}
-
-  override suspend fun getAllProfiles(): List<Profile> = emptyList()
-
-  override suspend fun searchProfilesByLocation(
-      location: Location,
-      radiusKm: Double
-  ): List<Profile> = emptyList()
-
-  override suspend fun getProfileById(userId: String): Profile {
-    TODO("Not yet implemented")
-  }
-
-  override suspend fun getSkillsForUser(userId: String): List<Skill> {
-    TODO("Not yet implemented")
-  }
-}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SignUpViewModelTest {
@@ -124,11 +33,40 @@ class SignUpViewModelTest {
   @After
   fun tearDown() {
     Dispatchers.resetMain()
+    unmockkAll()
+  }
+
+  private fun createMockAuthRepository(
+      shouldSucceed: Boolean = true,
+      uid: String = "firebase-uid-123"
+  ): AuthenticationRepository {
+    val mockAuthRepo = mockk<AuthenticationRepository>()
+    if (shouldSucceed) {
+      val mockUser = mockk<FirebaseUser>()
+      every { mockUser.uid } returns uid
+      coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns Result.success(mockUser)
+    } else {
+      coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns
+          Result.failure(Exception("Email already in use"))
+    }
+    return mockAuthRepo
+  }
+
+  private fun createMockProfileRepository(): ProfileRepository {
+    val mockRepo = mockk<ProfileRepository>(relaxed = true)
+    coEvery { mockRepo.addProfile(any()) } returns Unit
+    return mockRepo
+  }
+
+  private fun createThrowingProfileRepository(): ProfileRepository {
+    val mockRepo = mockk<ProfileRepository>()
+    coEvery { mockRepo.addProfile(any()) } throws Exception("add boom")
+    return mockRepo
   }
 
   @Test
   fun initial_state_sane() = runTest {
-    val vm = SignUpViewModel(CapturingRepo())
+    val vm = SignUpViewModel(createMockAuthRepository(), createMockProfileRepository())
     val s = vm.state.value
     assertEquals(Role.LEARNER, s.role)
     assertFalse(s.canSubmit)
@@ -143,7 +81,7 @@ class SignUpViewModelTest {
 
   @Test
   fun name_validation_rejects_numbers_and_specials() = runTest {
-    val vm = SignUpViewModel(CapturingRepo())
+    val vm = SignUpViewModel(createMockAuthRepository(), createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("A1"))
     vm.onEvent(SignUpEvent.SurnameChanged("Doe!"))
     vm.onEvent(SignUpEvent.EmailChanged("a@b.com"))
@@ -155,7 +93,7 @@ class SignUpViewModelTest {
 
   @Test
   fun name_validation_accepts_unicode_letters_and_spaces() = runTest {
-    val vm = SignUpViewModel(CapturingRepo())
+    val vm = SignUpViewModel(createMockAuthRepository(), createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Élise"))
     vm.onEvent(SignUpEvent.SurnameChanged("Müller Schmidt"))
     vm.onEvent(SignUpEvent.EmailChanged("user@example.com"))
@@ -167,7 +105,7 @@ class SignUpViewModelTest {
 
   @Test
   fun email_validation_common_cases_and_trimming() = runTest {
-    val vm = SignUpViewModel(CapturingRepo())
+    val vm = SignUpViewModel(createMockAuthRepository(), createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
     vm.onEvent(SignUpEvent.SurnameChanged("Lovelace"))
     vm.onEvent(SignUpEvent.AddressChanged("S1"))
@@ -184,7 +122,7 @@ class SignUpViewModelTest {
 
   @Test
   fun password_requires_min_8_and_mixed_classes() = runTest {
-    val vm = SignUpViewModel(CapturingRepo())
+    val vm = SignUpViewModel(createMockAuthRepository(), createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Alan"))
     vm.onEvent(SignUpEvent.SurnameChanged("Turing"))
     vm.onEvent(SignUpEvent.AddressChanged("S2"))
@@ -201,7 +139,7 @@ class SignUpViewModelTest {
 
   @Test
   fun address_and_level_must_be_non_blank_description_optional() = runTest {
-    val vm = SignUpViewModel(CapturingRepo())
+    val vm = SignUpViewModel(createMockAuthRepository(), createMockProfileRepository())
     // everything valid except address/level
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
     vm.onEvent(SignUpEvent.SurnameChanged("Lovelace"))
@@ -218,7 +156,7 @@ class SignUpViewModelTest {
 
   @Test
   fun role_toggle_does_not_invalidate_valid_form() = runTest {
-    val vm = SignUpViewModel(CapturingRepo())
+    val vm = SignUpViewModel(createMockAuthRepository(), createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
     vm.onEvent(SignUpEvent.SurnameChanged("Lovelace"))
     vm.onEvent(SignUpEvent.AddressChanged("S1"))
@@ -234,7 +172,7 @@ class SignUpViewModelTest {
 
   @Test
   fun invalid_inputs_keep_can_submit_false_and_fixing_all_turns_true() = runTest {
-    val vm = SignUpViewModel(CapturingRepo())
+    val vm = SignUpViewModel(createMockAuthRepository(), createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("A1"))
     vm.onEvent(SignUpEvent.SurnameChanged("Doe!"))
     vm.onEvent(SignUpEvent.AddressChanged(""))
@@ -254,8 +192,12 @@ class SignUpViewModelTest {
 
   @Test
   fun full_name_is_trimmed_and_joined_with_single_space() = runTest {
-    val repo = CapturingRepo()
-    val vm = SignUpViewModel(repo)
+    // Create a capturing mock to verify the profile data
+    val mockRepo = mockk<ProfileRepository>(relaxed = true)
+    val capturedProfile = slot<com.android.sample.model.user.Profile>()
+    coEvery { mockRepo.addProfile(capture(capturedProfile)) } returns Unit
+
+    val vm = SignUpViewModel(createMockAuthRepository(), mockRepo)
     vm.onEvent(SignUpEvent.NameChanged("   Ada   "))
     vm.onEvent(SignUpEvent.SurnameChanged("  Lovelace "))
     vm.onEvent(SignUpEvent.AddressChanged("S1"))
@@ -264,13 +206,18 @@ class SignUpViewModelTest {
     vm.onEvent(SignUpEvent.PasswordChanged("abcde123"))
     vm.onEvent(SignUpEvent.Submit)
     advanceUntilIdle()
-    assertEquals("Ada Lovelace", repo.added.single().name)
+
+    assertEquals("Ada Lovelace", capturedProfile.captured.name)
   }
 
   @Test
   fun submit_shows_submitting_then_success_and_stores_profile() = runTest {
-    val repo = CapturingRepo()
-    val vm = SignUpViewModel(repo)
+    // Create a capturing mock to verify the profile data
+    val mockRepo = mockk<ProfileRepository>(relaxed = true)
+    val capturedProfile = slot<com.android.sample.model.user.Profile>()
+    coEvery { mockRepo.addProfile(capture(capturedProfile)) } returns Unit
+
+    val vm = SignUpViewModel(createMockAuthRepository(), mockRepo)
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
     vm.onEvent(SignUpEvent.SurnameChanged("Lovelace"))
     vm.onEvent(SignUpEvent.AddressChanged("Street 1"))
@@ -287,13 +234,23 @@ class SignUpViewModelTest {
     assertFalse(s.submitting)
     assertTrue(s.submitSuccess)
     assertNull(s.error)
-    assertEquals(1, repo.added.size)
-    assertEquals("ada@math.org", repo.added[0].email)
+
+    // Verify profile was added
+    coVerify { mockRepo.addProfile(any()) }
+    assertEquals("ada@math.org", capturedProfile.captured.email)
+    assertEquals("firebase-uid-123", capturedProfile.captured.userId)
   }
 
   @Test
   fun submitting_flag_true_while_repo_is_slow() = runTest {
-    val vm = SignUpViewModel(SlowRepo())
+    // Create a slow mock repository using delay
+    val mockRepo = mockk<ProfileRepository>()
+    coEvery { mockRepo.addProfile(any()) } coAnswers
+        {
+          kotlinx.coroutines.delay(200)
+        }
+
+    val vm = SignUpViewModel(createMockAuthRepository(), mockRepo)
     vm.onEvent(SignUpEvent.NameChanged("Alan"))
     vm.onEvent(SignUpEvent.SurnameChanged("Turing"))
     vm.onEvent(SignUpEvent.AddressChanged("S2"))
@@ -311,7 +268,7 @@ class SignUpViewModelTest {
 
   @Test
   fun submit_failure_surfaces_error_and_validate_clears_it() = runTest {
-    val vm = SignUpViewModel(ThrowingRepo())
+    val vm = SignUpViewModel(createMockAuthRepository(), createThrowingProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Alan"))
     vm.onEvent(SignUpEvent.SurnameChanged("Turing"))
     vm.onEvent(SignUpEvent.AddressChanged("S2"))
@@ -329,8 +286,7 @@ class SignUpViewModelTest {
 
   @Test
   fun changing_any_field_after_success_keeps_success_true_until_next_submit() = runTest {
-    val repo = CapturingRepo()
-    val vm = SignUpViewModel(repo)
+    val vm = SignUpViewModel(createMockAuthRepository(), createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
     vm.onEvent(SignUpEvent.SurnameChanged("Lovelace"))
     vm.onEvent(SignUpEvent.AddressChanged("S1"))
@@ -344,5 +300,47 @@ class SignUpViewModelTest {
     // Change a field -> validate runs, success flag remains true (until next submit call resets it)
     vm.onEvent(SignUpEvent.AddressChanged("S2"))
     assertTrue(vm.state.value.submitSuccess)
+  }
+
+  @Test
+  fun firebase_auth_failure_shows_error() = runTest {
+    val mockProfileRepo = createMockProfileRepository()
+    val vm = SignUpViewModel(createMockAuthRepository(shouldSucceed = false), mockProfileRepo)
+    vm.onEvent(SignUpEvent.NameChanged("Ada"))
+    vm.onEvent(SignUpEvent.SurnameChanged("Lovelace"))
+    vm.onEvent(SignUpEvent.AddressChanged("S1"))
+    vm.onEvent(SignUpEvent.LevelOfEducationChanged("CS"))
+    vm.onEvent(SignUpEvent.EmailChanged("existing@email.com"))
+    vm.onEvent(SignUpEvent.PasswordChanged("abcde123"))
+
+    vm.onEvent(SignUpEvent.Submit)
+    advanceUntilIdle()
+
+    assertFalse(vm.state.value.submitSuccess)
+    assertNotNull(vm.state.value.error)
+    assertTrue(
+        vm.state.value.error!!.contains("Email already in use") ||
+            vm.state.value.error!!.contains("already registered"))
+
+    // Verify profile repository was never called since auth failed
+    coVerify(exactly = 0) { mockProfileRepo.addProfile(any()) }
+  }
+
+  @Test
+  fun profile_creation_failure_after_auth_success_shows_specific_error() = runTest {
+    val vm = SignUpViewModel(createMockAuthRepository(), createThrowingProfileRepository())
+    vm.onEvent(SignUpEvent.NameChanged("Ada"))
+    vm.onEvent(SignUpEvent.SurnameChanged("Lovelace"))
+    vm.onEvent(SignUpEvent.AddressChanged("S1"))
+    vm.onEvent(SignUpEvent.LevelOfEducationChanged("CS"))
+    vm.onEvent(SignUpEvent.EmailChanged("ada@math.org"))
+    vm.onEvent(SignUpEvent.PasswordChanged("abcde123"))
+
+    vm.onEvent(SignUpEvent.Submit)
+    advanceUntilIdle()
+
+    assertFalse(vm.state.value.submitSuccess)
+    assertNotNull(vm.state.value.error)
+    assertTrue(vm.state.value.error!!.contains("Account created but profile failed"))
   }
 }

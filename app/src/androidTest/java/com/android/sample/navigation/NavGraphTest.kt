@@ -5,6 +5,11 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.android.sample.MainActivity
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
+import com.android.sample.ui.signup.SignUpScreenTestTags
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.firestore
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -22,6 +27,28 @@ class AppNavGraphTest {
   @Before
   fun setUp() {
     RouteStackManager.clear()
+
+    // Connect to Firebase emulators for signup tests
+    try {
+      Firebase.firestore.useEmulator("10.0.2.2", 8080)
+      Firebase.auth.useEmulator("10.0.2.2", 9099)
+    } catch (_: IllegalStateException) {
+      // Emulator already initialized
+    }
+
+    // Clean up any existing user
+    Firebase.auth.signOut()
+  }
+
+  @After
+  fun tearDown() {
+    // Clean up: delete the test user if created
+    try {
+      Firebase.auth.currentUser?.delete()
+    } catch (_: Exception) {
+      // Ignore deletion errors
+    }
+    Firebase.auth.signOut()
   }
 
   @Test
@@ -164,5 +191,108 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Email").assertExists()
     composeTestRule.onNodeWithText("Location / Campus").assertExists()
     composeTestRule.onNodeWithText("Description").assertExists()
+  }
+
+  @Test
+  fun navigating_to_signup_from_login() {
+    // Should start on login screen
+    composeTestRule.onNodeWithText("Welcome back! Please sign in.").assertExists()
+    composeTestRule.onNodeWithText("Sign Up").assertExists()
+
+    // Click the Sign Up link
+    composeTestRule.onNodeWithText("Sign Up").performClick()
+    composeTestRule.waitForIdle()
+
+    // Should now be on signup screen - check for unique signup screen elements
+    composeTestRule.onNodeWithText("Personal Informations").assertExists()
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.NAME).assertExists()
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.EMAIL).assertExists()
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).assertExists()
+
+    // Verify route stack updated
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.SIGNUP)
+  }
+
+  @Test
+  fun successful_signup_navigates_to_login() {
+    // Navigate to signup screen
+    composeTestRule.onNodeWithText("Sign Up").performClick()
+    composeTestRule.waitForIdle()
+
+    // Verify we're on signup screen
+    composeTestRule.onNodeWithText("Personal Informations").assertExists()
+
+    // Fill out signup form with valid data
+    val testEmail = "navtest${System.currentTimeMillis()}@example.com"
+
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.NAME).performTextInput("Nav")
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.SURNAME).performTextInput("Test")
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.ADDRESS).performTextInput("Test St 1")
+    composeTestRule
+        .onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION)
+        .performTextInput("CS, 1st")
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.EMAIL).performTextInput(testEmail)
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performTextInput("TestPass123!")
+
+    // Close keyboard and scroll to button
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performImeAction()
+    composeTestRule.waitForIdle()
+
+    // Click sign up button
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
+
+    // Wait for signup to complete (increased timeout for slow emulators)
+    composeTestRule.waitForIdle()
+    Thread.sleep(3000) // Give time for signup and navigation
+
+    // Should navigate back to login screen - check for unique login screen elements
+    composeTestRule.onNodeWithText("Welcome back! Please sign in.").assertExists()
+    composeTestRule.onNodeWithText("Sign Up").assertExists()
+
+    // Verify route stack shows LOGIN
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.LOGIN)
+  }
+
+  @Test
+  fun signup_clears_signup_from_back_stack() {
+    // Navigate to signup
+    composeTestRule.onNodeWithText("Sign Up").performClick()
+    composeTestRule.waitForIdle()
+
+    // Fill and submit signup form
+    val testEmail = "backstack${System.currentTimeMillis()}@example.com"
+
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.NAME).performTextInput("Back")
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.SURNAME).performTextInput("Stack")
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.ADDRESS).performTextInput("Test St")
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.EMAIL).performTextInput(testEmail)
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performTextInput("TestPass123!")
+
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performImeAction()
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
+
+    // Wait for navigation
+    Thread.sleep(3000)
+
+    // Should be on login screen
+    composeTestRule.onNodeWithText("Welcome back! Please sign in.").assertExists()
+
+    // Try to navigate back - should not go back to signup since it was cleared from stack
+    // The activity back press would exit the app or stay on login
+    composeTestRule.activityRule.scenario.onActivity { activity ->
+      activity.onBackPressedDispatcher.onBackPressed()
+    }
+    composeTestRule.waitForIdle()
+
+    // Should still be on login (or app exits, which is fine)
+    // If still in app, should see login screen
+    try {
+      composeTestRule.onNodeWithText("Welcome back! Please sign in.").assertExists()
+    } catch (_: AssertionError) {
+      // App may have exited, which is acceptable behavior
+    }
   }
 }

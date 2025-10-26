@@ -115,8 +115,8 @@ fun AppNavGraph(
       SignUpScreen(
           vm = SignUpViewModel(),
           onSubmitSuccess = {
-            // Navigate to home or login after successful signup
-            navController.navigate(NavRoutes.HOME) {
+            // Navigate to login after successful signup
+            navController.navigate(NavRoutes.LOGIN) {
               popUpTo(NavRoutes.SIGNUP) { inclusive = true }
             }
           })

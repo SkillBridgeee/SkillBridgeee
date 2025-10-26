@@ -27,6 +27,21 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
   }
 
   /**
+   * Create a new user with email and password
+   *
+   * @return Result containing FirebaseUser on success or Exception on failure
+   */
+  suspend fun signUpWithEmail(email: String, password: String): Result<FirebaseUser> {
+    return try {
+      val result = auth.createUserWithEmailAndPassword(email, password).await()
+      result.user?.let { Result.success(it) }
+          ?: Result.failure(Exception("Sign up failed: No user created"))
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
+  }
+
+  /**
    * Sign in with Google credential
    *
    * @return Result containing FirebaseUser on success or Exception on failure
