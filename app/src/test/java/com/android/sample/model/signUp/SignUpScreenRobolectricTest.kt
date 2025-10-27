@@ -91,4 +91,62 @@ class SignUpScreenRobolectricTest {
 
     rule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP, useUnmergedTree = false).assertIsEnabled()
   }
+
+  @Test
+  fun role_chips_are_rendered() {
+    rule.setContent {
+      SampleAppTheme {
+        val vm = SignUpViewModel()
+        SignUpScreen(vm = vm)
+      }
+    }
+
+    rule.onNodeWithTag(SignUpScreenTestTags.LEARNER, useUnmergedTree = false).assertExists()
+    rule.onNodeWithTag(SignUpScreenTestTags.TUTOR, useUnmergedTree = false).assertExists()
+  }
+
+  @Test
+  fun subtitle_is_rendered() {
+    rule.setContent {
+      SampleAppTheme {
+        val vm = SignUpViewModel()
+        SignUpScreen(vm = vm)
+      }
+    }
+
+    rule.onNodeWithTag(SignUpScreenTestTags.SUBTITLE, useUnmergedTree = false).assertExists()
+  }
+
+  @Test
+  fun description_field_is_rendered() {
+    rule.setContent {
+      SampleAppTheme {
+        val vm = SignUpViewModel()
+        SignUpScreen(vm = vm)
+      }
+    }
+
+    rule.onNodeWithTag(SignUpScreenTestTags.DESCRIPTION, useUnmergedTree = false).assertExists()
+  }
+
+  @Test
+  fun all_required_fields_are_present() {
+    rule.setContent {
+      SampleAppTheme {
+        val vm = SignUpViewModel()
+        SignUpScreen(vm = vm)
+      }
+    }
+
+    // Verify all input fields exist
+    rule.onNodeWithTag(SignUpScreenTestTags.NAME, useUnmergedTree = false).assertExists()
+    rule.onNodeWithTag(SignUpScreenTestTags.SURNAME, useUnmergedTree = false).assertExists()
+    rule.onNodeWithTag(SignUpScreenTestTags.ADDRESS, useUnmergedTree = false).assertExists()
+    rule
+        .onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION, useUnmergedTree = false)
+        .assertExists()
+    rule.onNodeWithTag(SignUpScreenTestTags.DESCRIPTION, useUnmergedTree = false).assertExists()
+    rule.onNodeWithTag(SignUpScreenTestTags.EMAIL, useUnmergedTree = false).assertExists()
+    rule.onNodeWithTag(SignUpScreenTestTags.PASSWORD, useUnmergedTree = false).assertExists()
+  }
 }

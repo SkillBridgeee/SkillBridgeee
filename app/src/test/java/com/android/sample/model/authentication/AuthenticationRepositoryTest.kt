@@ -242,4 +242,141 @@ class AuthenticationRepositoryTest {
     assertTrue(result.isFailure)
     assertEquals("Sign in failed: No user", result.exceptionOrNull()?.message)
   }
+
+  @Test
+  fun signUpWithEmail_taskCanceled_returnsFailure() = runTest {
+    val mockTask = mockk<Task<AuthResult>>()
+    val exception = Exception("Task was cancelled")
+
+    coEvery { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns mockTask
+    coEvery { mockTask.isComplete } returns true
+    coEvery { mockTask.exception } returns exception
+    coEvery { mockTask.isCanceled } returns true
+
+    val result = repository.signUpWithEmail("test@example.com", "password123")
+
+    assertTrue(result.isFailure)
+    assertEquals(exception, result.exceptionOrNull())
+  }
+
+  @Test
+  fun signInWithEmail_taskCanceled_returnsFailure() = runTest {
+    val mockTask = mockk<Task<AuthResult>>()
+    val exception = Exception("Task was cancelled")
+
+    coEvery { mockAuth.signInWithEmailAndPassword(any(), any()) } returns mockTask
+    coEvery { mockTask.isComplete } returns true
+    coEvery { mockTask.exception } returns exception
+    coEvery { mockTask.isCanceled } returns true
+
+    val result = repository.signInWithEmail("test@example.com", "password123")
+
+    assertTrue(result.isFailure)
+    assertEquals(exception, result.exceptionOrNull())
+  }
+
+  @Test
+  fun signInWithCredential_taskCanceled_returnsFailure() = runTest {
+    val mockTask = mockk<Task<AuthResult>>()
+    val mockCredential = mockk<AuthCredential>()
+    val exception = Exception("Task was cancelled")
+
+    coEvery { mockAuth.signInWithCredential(any()) } returns mockTask
+    coEvery { mockTask.isComplete } returns true
+    coEvery { mockTask.exception } returns exception
+    coEvery { mockTask.isCanceled } returns true
+
+    val result = repository.signInWithCredential(mockCredential)
+
+    assertTrue(result.isFailure)
+    assertEquals(exception, result.exceptionOrNull())
+  }
+
+  @Test
+  fun signUpWithEmail_withDifferentEmails_callsCorrectMethod() = runTest {
+    val mockUser = mockk<FirebaseUser>()
+    val mockAuthResult = mockk<AuthResult>()
+    val mockTask = mockk<Task<AuthResult>>()
+
+    every { mockAuthResult.user } returns mockUser
+    coEvery { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns mockTask
+    coEvery { mockTask.isComplete } returns true
+    coEvery { mockTask.exception } returns null
+    coEvery { mockTask.isCanceled } returns false
+    coEvery { mockTask.result } returns mockAuthResult
+
+    val email1 = "user1@example.com"
+    val password1 = "password1"
+    repository.signUpWithEmail(email1, password1)
+
+    coVerify { mockAuth.createUserWithEmailAndPassword(email1, password1) }
+
+    val email2 = "user2@example.com"
+    val password2 = "password2"
+    repository.signUpWithEmail(email2, password2)
+
+    coVerify { mockAuth.createUserWithEmailAndPassword(email2, password2) }
+  }
+
+  @Test
+  fun signInWithEmail_withDifferentCredentials_callsCorrectMethod() = runTest {
+    val mockUser = mockk<FirebaseUser>()
+    val mockAuthResult = mockk<AuthResult>()
+    val mockTask = mockk<Task<AuthResult>>()
+
+    every { mockAuthResult.user } returns mockUser
+    coEvery { mockAuth.signInWithEmailAndPassword(any(), any()) } returns mockTask
+    coEvery { mockTask.isComplete } returns true
+    coEvery { mockTask.exception } returns null
+    coEvery { mockTask.isCanceled } returns false
+    coEvery { mockTask.result } returns mockAuthResult
+
+    val email1 = "user1@example.com"
+    val password1 = "password1"
+    repository.signInWithEmail(email1, password1)
+
+    coVerify { mockAuth.signInWithEmailAndPassword(email1, password1) }
+
+    val email2 = "user2@example.com"
+    val password2 = "password2"
+    repository.signInWithEmail(email2, password2)
+
+    coVerify { mockAuth.signInWithEmailAndPassword(email2, password2) }
+  }
+
+  @Test
+  fun signOut_multipleTimesDoesNotThrow() {
+    repository.signOut()
+    repository.signOut()
+    repository.signOut()
+
+    verify(exactly = 3) { mockAuth.signOut() }
+  }
+
+  @Test
+  fun getCurrentUser_calledMultipleTimes_returnsConsistentResult() {
+    val mockUser = mockk<FirebaseUser>()
+    every { mockAuth.currentUser } returns mockUser
+
+    val result1 = repository.getCurrentUser()
+    val result2 = repository.getCurrentUser()
+    val result3 = repository.getCurrentUser()
+
+    assertEquals(mockUser, result1)
+    assertEquals(mockUser, result2)
+    assertEquals(mockUser, result3)
+  }
+
+  @Test
+  fun isUserSignedIn_afterSignOut_returnsFalse() {
+    val mockUser = mockk<FirebaseUser>()
+    every { mockAuth.currentUser } returns mockUser andThen null
+
+    val beforeSignOut = repository.isUserSignedIn()
+    repository.signOut()
+    val afterSignOut = repository.isUserSignedIn()
+
+    assertTrue(beforeSignOut)
+    assertFalse(afterSignOut)
+  }
 }

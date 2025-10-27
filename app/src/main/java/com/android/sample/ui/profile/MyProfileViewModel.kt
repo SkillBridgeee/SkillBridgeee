@@ -62,9 +62,6 @@ class MyProfileViewModel(
                 email = profile?.email,
                 location = profile?.location,
                 description = profile?.description)
-      } catch (e: kotlinx.coroutines.CancellationException) {
-        // Coroutine was cancelled - this is expected when navigating away
-        throw e // Re-throw to maintain coroutine cancellation contract
       } catch (e: Exception) {
         Log.e("MyProfileViewModel", "Error loading profile for user: $userId", e)
         // Keep default state on error
