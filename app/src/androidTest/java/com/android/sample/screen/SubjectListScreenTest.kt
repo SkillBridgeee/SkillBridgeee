@@ -245,37 +245,41 @@ class SubjectListScreenTest {
     composeRule.onNodeWithText("All Sports lessons").assertExists()
   }
 
-    @Test
-    fun showsCorrectLessonTypeMessageArts() {
-        val vm = makeViewModel(longDelay = true)
-        composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.ARTS) } }
+  @Test
+  fun showsCorrectLessonTypeMessageArts() {
+    val vm = makeViewModel(longDelay = true)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.ARTS) } }
 
-        composeRule.onNodeWithText("All Arts lessons").assertExists()
+    composeRule.onNodeWithText("All Arts lessons").assertExists()
+  }
+
+  @Test
+  fun showsCorrectLessonTypeMessageTechnology() {
+    val vm = makeViewModel(longDelay = true)
+    composeRule.setContent {
+      MaterialTheme { SubjectListScreen(vm, subject = MainSubject.TECHNOLOGY) }
     }
 
-    @Test
-    fun showsCorrectLessonTypeMessageTechnology() {
-        val vm = makeViewModel(longDelay = true)
-        composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.TECHNOLOGY) } }
+    composeRule.onNodeWithText("All Technology lessons").assertExists()
+  }
 
-        composeRule.onNodeWithText("All Technology lessons").assertExists()
+  @Test
+  fun showsCorrectLessonTypeMessageLanguage() {
+    val vm = makeViewModel(longDelay = true)
+    composeRule.setContent {
+      MaterialTheme { SubjectListScreen(vm, subject = MainSubject.LANGUAGES) }
     }
 
-    @Test
-    fun showsCorrectLessonTypeMessageLanguage() {
-        val vm = makeViewModel(longDelay = true)
-        composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.LANGUAGES) } }
+    composeRule.onNodeWithText("All Languages lessons").assertExists()
+  }
 
-        composeRule.onNodeWithText("All Languages lessons").assertExists()
-    }
+  @Test
+  fun showsCorrectLessonTypeMessageCraft() {
+    val vm = makeViewModel(longDelay = true)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.CRAFTS) } }
 
-    @Test
-    fun showsCorrectLessonTypeMessageCraft() {
-        val vm = makeViewModel(longDelay = true)
-        composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.CRAFTS) } }
-
-        composeRule.onNodeWithText("All Crafts lessons").assertExists()
-    }
+    composeRule.onNodeWithText("All Crafts lessons").assertExists()
+  }
 
   @Test
   fun categorySelector_opensMenu_andSelectsSkill() {
