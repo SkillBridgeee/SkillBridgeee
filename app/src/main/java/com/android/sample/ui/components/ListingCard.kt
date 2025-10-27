@@ -46,8 +46,7 @@ fun ListingCard(
     modifier: Modifier = Modifier,
     onOpenListing: (String) -> Unit = {},
     onBook: (String) -> Unit = {},
-    cardTestTag: String? = null,
-    bookButtonTestTag: String? = null
+    testTags: Pair<String?, String?>? = null
 ) {
   Card(
       shape = MaterialTheme.shapes.large,
@@ -55,7 +54,7 @@ fun ListingCard(
       modifier =
           modifier
               .clickable { onOpenListing(listing.listingId) }
-              .testTag(cardTestTag ?: ListingCardTestTags.CARD)) {
+              .testTag(testTags?.first ?: ListingCardTestTags.CARD)) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
           // Avatar circle with tutor initial
           Box(
@@ -125,7 +124,7 @@ fun ListingCard(
             Button(
                 onClick = { onBook(listing.listingId) },
                 shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.testTag(bookButtonTestTag ?: ListingCardTestTags.BOOK_BUTTON)) {
+                modifier = Modifier.testTag(testTags?.second ?: ListingCardTestTags.BOOK_BUTTON)) {
                   Text("Book")
                 }
           }
