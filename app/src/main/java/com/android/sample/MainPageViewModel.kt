@@ -98,7 +98,9 @@ class MainPageViewModel : ViewModel() {
       val tutors = profileRepository.getAllProfiles()
 
       val tutorCards = listings.mapNotNull { buildTutorCardSafely(it, tutors) }
-      val userName = navigationEvent.value?.let { getCurrentUserName(it) } ?: "Ava"
+      val userName = mutableStateOf<String>("")
+      navigationEvent.value?.let { getCurrentUserName("user123") { name -> userName.value = name } }
+          ?: "Ava"
 
       _uiState.value =
           HomeUiState(
@@ -186,9 +188,11 @@ class MainPageViewModel : ViewModel() {
     viewModelScope.launch { _navigationEvent.value = profileId }
   }
 
-  suspend fun getCurrentUserName(userId: String): String {
-    val profile = runCatching { profileRepository.getProfileById(userId) }.getOrNull()
-    return profile?.name ?: "User"
+  fun getCurrentUserName(userId: String, onResult: (String) -> Unit) {
+    viewModelScope.launch {
+      val profile = runCatching { profileRepository.getProfileById(userId) }.getOrNull()
+      onResult(profile?.name ?: "User")
+    }
   }
 
   fun onNavigationHandled() {
