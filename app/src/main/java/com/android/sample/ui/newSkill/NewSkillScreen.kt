@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
@@ -59,7 +58,7 @@ fun NewSkillScreen(skillViewModel: NewSkillViewModel = NewSkillViewModel(), prof
       floatingActionButton = {
         AppButton(
             text = "Save New Skill",
-            onClick = { skillViewModel.addProfile(userId = profileId) },
+            onClick = { skillViewModel.addSkill(userId = profileId) },
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center,
@@ -207,10 +206,4 @@ fun SubjectMenu(
               }
             }
       }
-}
-
-@Preview(showBackground = true, widthDp = 320)
-@Composable
-fun NewSkillPreview() {
-  NewSkillScreen(profileId = "")
 }

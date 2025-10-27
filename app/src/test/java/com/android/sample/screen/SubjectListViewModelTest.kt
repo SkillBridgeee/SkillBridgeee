@@ -45,10 +45,11 @@ class SubjectListViewModelTest {
   private fun skill(userId: String, s: String) = Skill(mainSubject = MainSubject.MUSIC, skill = s)
 
   private class FakeRepo(
-      private val profiles: List<Profile> = emptyList(),
-      private val skills: Map<String, List<Skill>> = emptyMap(),
+      val profiles: List<Profile> = emptyList(),
+      val skills: Map<String, List<Skill>> = emptyMap(),
       private val delayMs: Long = 0,
-      private val throwOnGetAll: Boolean = false
+      private val throwOnGetAll: Boolean = false,
+      private val errorMessage: String = "boom"
   ) : ProfileRepository {
     override fun getNewUid(): String = "unused"
 
@@ -61,19 +62,28 @@ class SubjectListViewModelTest {
     override suspend fun deleteProfile(userId: String) {}
 
     override suspend fun getAllProfiles(): List<Profile> {
-      if (throwOnGetAll) error("boom")
+      if (throwOnGetAll) error(errorMessage)
       if (delayMs > 0) delay(delayMs)
       return profiles
     }
 
-    override suspend fun searchProfilesByLocation(
-        location: Location,
-        radiusKm: Double
-    ): List<Profile> = emptyList()
+    override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+        emptyList<Profile>()
 
     override suspend fun getProfileById(userId: String): Profile = error("unused")
 
     override suspend fun getSkillsForUser(userId: String): List<Skill> = skills[userId].orEmpty()
+  }
+
+  private fun newVm(
+      profiles: List<Profile> = listOf(A, B, C, D),
+      skills: Map<String, List<Skill>> = defaultRepo.skills,
+      delayMs: Long = 1L,
+      throwOnGetAll: Boolean = false,
+      errorMessage: String = "boom"
+  ): SubjectListViewModel {
+    val repo = FakeRepo(profiles, skills, delayMs, throwOnGetAll, errorMessage)
+    return SubjectListViewModel(repo)
   }
 
   // Seed used by most tests:
@@ -174,8 +184,8 @@ class SubjectListViewModelTest {
     // X and Y tie on rating & totals -> name tie-breaker (Aaron before Zed)
     val X = profile("10", "Aaron", "Vocal coach", 4.8, 15)
     val Y = profile("11", "Zed", "Vocal coach", 4.8, 15)
-    val repo = FakeRepo(profiles = listOf(A, X, Y), skills = emptyMap())
-    val vm = newVm(repo)
+    val vm = newVm(profiles = listOf(A, X, Y), skills = emptyMap())
+
     vm.refresh()
     advanceUntilIdle()
 
@@ -195,5 +205,37 @@ class SubjectListViewModelTest {
     assertFalse(ui.isLoading)
     assertNotNull(ui.error)
     assertTrue(ui.tutors.isEmpty())
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Test
+  fun refresh_setsErrorState_whenRepositoryFails() = runTest {
+    val vm = newVm(throwOnGetAll = true, errorMessage = "Boom failure")
+
+    vm.refresh()
+    advanceUntilIdle()
+
+    val ui = vm.ui.value
+    assertFalse(ui.isLoading)
+    assertTrue(ui.error?.contains("Boom failure") == true)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Test
+  fun onSkillSelected_filtersTutorsBySkill() = runTest {
+    val p1 = profile("1", "Alice", "Guitar Lessons", 4.9, 23)
+    val p2 = profile("2", "Bob", "Piano Lessons", 4.8, 15)
+    val skills =
+        mapOf(
+            "1" to listOf(Skill(MainSubject.MUSIC, "GUITAR")),
+            "2" to listOf(Skill(MainSubject.MUSIC, "PIANO")))
+    val vm = newVm(profiles = listOf(p1, p2), skills = skills)
+
+    vm.refresh()
+    advanceUntilIdle()
+
+    vm.onSkillSelected("PIANO")
+    val ui = vm.ui.value
+    assertEquals(listOf("2"), ui.tutors.map { it.userId })
   }
 }
