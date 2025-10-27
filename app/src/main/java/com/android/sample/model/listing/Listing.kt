@@ -20,6 +20,10 @@ sealed class Listing {
   abstract val isActive: Boolean
   abstract val hourlyRate: Double
   abstract val type: ListingType
+
+  /** Display title: prefer description, then skill text, then main subject name */
+  fun displayTitle(): String =
+      description.ifBlank { skill.skill.ifBlank { skill.mainSubject.name } }
 }
 
 /** Proposal - user offering to teach */
