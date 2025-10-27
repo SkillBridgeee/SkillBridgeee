@@ -64,7 +64,7 @@ fun ListingCard(
                       .background(MaterialTheme.colorScheme.surfaceVariant),
               contentAlignment = Alignment.Center) {
                 Text(
-                    text = (creator?.name?.firstOrNull()?.uppercase() ?: "?"),
+                    text = (creator?.name?.firstOrNull()?.uppercase() ?: "Unknown"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold)
               }
@@ -73,10 +73,7 @@ fun ListingCard(
 
           Column(modifier = Modifier.weight(1f)) {
             // Title: description if present, else fallback to skill / subject
-            val title =
-                listing.description.ifBlank {
-                  listing.skill.skill.ifBlank { listing.skill.mainSubject.name }
-                }
+            val title = listing.displayTitle()
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
@@ -93,10 +90,12 @@ fun ListingCard(
 
             // Rating stars + (count) + Location
             Row(verticalAlignment = Alignment.CenterVertically) {
+              val ratingCountText = "(${creatorRating.totalRatings})"
+
               RatingStars(ratingOutOfFive = creatorRating.averageRating)
               Spacer(Modifier.width(6.dp))
               Text(
-                  text = "(${creatorRating.totalRatings})",
+                  text = ratingCountText,
                   style = MaterialTheme.typography.bodySmall,
                   color = MaterialTheme.colorScheme.onSurfaceVariant)
               Spacer(Modifier.width(8.dp))

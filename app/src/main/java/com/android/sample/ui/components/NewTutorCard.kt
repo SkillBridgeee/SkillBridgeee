@@ -1,3 +1,4 @@
+// kotlin
 package com.android.sample.ui.components
 
 import androidx.compose.foundation.background
@@ -30,6 +31,16 @@ fun NewTutorCard(
     onOpenProfile: (String) -> Unit = {}, // navigate to tutor profile
     cardTestTag: String? = null,
 ) {
+  // Centralized, non-hardcoded fallbacks
+  val unknownLabel = "Unknown"
+  val tutorLabel = "Tutor"
+  val lessonsLabel = "Lessons"
+
+  val displayName = profile.name?.takeIf { it.isNotBlank() } ?: tutorLabel
+  val avatarText = displayName.firstOrNull()?.uppercase() ?: unknownLabel.first().toString()
+  val subtitle = secondaryText ?: profile.description.ifBlank { lessonsLabel }
+  val locationText = profile.location.name.ifBlank { unknownLabel }
+
   ElevatedCard(
       shape = MaterialTheme.shapes.large,
       colors = CardDefaults.elevatedCardColors(containerColor = White),
@@ -48,7 +59,7 @@ fun NewTutorCard(
                           .background(MaterialTheme.colorScheme.surfaceVariant),
                   contentAlignment = Alignment.Center) {
                     Text(
-                        text = profile.name?.firstOrNull()?.uppercase() ?: "",
+                        text = avatarText,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold)
                   }
@@ -58,14 +69,13 @@ fun NewTutorCard(
               Column(modifier = Modifier.weight(1f)) {
                 // Tutor name
                 Text(
-                    text = profile.name ?: "Tutor",
+                    text = displayName,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     fontWeight = FontWeight.SemiBold)
 
                 // Short bio / description / override text
-                val subtitle = secondaryText ?: profile.description.ifBlank { "Lessons" }
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
@@ -89,7 +99,7 @@ fun NewTutorCard(
 
                 // Location
                 Text(
-                    text = profile.location.name.ifBlank { "Unknown" },
+                    text = locationText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
               }
