@@ -47,7 +47,7 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Should display skills screen content
-    composeTestRule.onNodeWithText("Find a tutor about...").assertExists()
+    composeTestRule.onNodeWithText("Find a tutor about Subjects").assertExists()
   }
 
   @Test
@@ -146,7 +146,7 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Verify skills screen components
-    composeTestRule.onNodeWithText("Find a tutor about...").assertExists()
+    composeTestRule.onNodeWithText("Find a tutor about Subjects").assertExists()
     composeTestRule.onNodeWithText("Category").assertExists()
   }
 

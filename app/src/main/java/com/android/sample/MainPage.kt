@@ -2,7 +2,6 @@ package com.android.sample
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,9 +29,6 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.ui.theme.PrimaryColor
 import com.android.sample.ui.theme.SecondaryColor
-import com.android.sample.ui.theme.SubjectColors
-import com.google.firebase.firestore.auth.User
-import kotlin.random.Random
 
 /**
  * Provides test tag identifiers for the HomeScreen and its child composables.
@@ -67,7 +64,7 @@ object HomeScreenTestTags {
 fun HomeScreen(
     mainPageViewModel: MainPageViewModel = viewModel(),
     onNavigateToNewSkill: (String) -> Unit = {},
-    profileId: String = "",
+    onNavigateToSubjectList: (MainSubject) -> Unit = {}
 ) {
   val uiState by mainPageViewModel.uiState.collectAsState()
   val navigationEvent by mainPageViewModel.navigationEvent.collectAsState()
@@ -92,7 +89,7 @@ fun HomeScreen(
           Spacer(modifier = Modifier.height(10.dp))
           GreetingSection(uiState.welcomeMessage)
           Spacer(modifier = Modifier.height(20.dp))
-          ExploreSubjects(uiState.subjects, mainPageViewModel::onSubjectCardClicked)
+          ExploreSubjects(uiState.subjects, onNavigateToSubjectList)
           Spacer(modifier = Modifier.height(20.dp))
           TutorsSection(uiState.tutors, onBookClick = mainPageViewModel::onBookTutorClicked)
         }
@@ -121,67 +118,49 @@ fun GreetingSection(welcomeMessage: String) {
  * @param skills The list of [Skill] items to display.
  */
 @Composable
-fun ExploreSubjects(
-    subjects: List<MainSubject>,
-    onSubjectCardClicked: (MainSubject) -> Unit = { }
-) {
-    Column(
-        modifier = Modifier
-            .padding(horizontal = 10.dp)
-            .testTag(HomeScreenTestTags.EXPLORE_SKILLS_SECTION)
-    ) {
-        Text(
-            text = "Explore skills",
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp
-        )
+fun ExploreSubjects(subjects: List<MainSubject>, onSubjectCardClicked: (MainSubject) -> Unit = {}) {
+  Column(
+      modifier =
+          Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.EXPLORE_SKILLS_SECTION)) {
+        Text(text = "Explore skills", fontWeight = FontWeight.Bold, fontSize = 16.sp)
 
         Spacer(modifier = Modifier.height(12.dp))
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(subjects) {
+            modifier = Modifier.fillMaxWidth()) {
+              items(subjects) {
                 val subjectColor = getSubjectColor(it)
-                SubjectCard(subject = it,
-                    color = subjectColor,
-                    onSubjectCardClicked
-                )
+                SubjectCard(subject = it, color = subjectColor, onSubjectCardClicked)
+              }
             }
-        }
-    }
+      }
 }
 
-/**
- * Displays a single subject card with its color.
- */
-
+/** Displays a single subject card with its color. */
 @Composable
 fun SubjectCard(
     subject: MainSubject,
     color: Color,
-    onSubjectCardClicked: (MainSubject) -> Unit = { }
+    onSubjectCardClicked: (MainSubject) -> Unit = {}
 ) {
-    Column(
-        modifier = Modifier
-            .width(120.dp)
-            .height(80.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(color)
-            .clickable { onSubjectCardClicked(subject) }
-            .padding(vertical = 16.dp, horizontal = 12.dp)
-            .testTag(HomeScreenTestTags.SKILL_CARD),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = subject.name,
-            fontWeight = FontWeight.Bold,
-        )
-    }
-}
+  Column(
+      modifier =
+          Modifier.width(120.dp)
+              .height(80.dp)
+              .clip(RoundedCornerShape(12.dp))
+              .background(color)
+              .clickable { onSubjectCardClicked(subject) }
+              .padding(vertical = 16.dp, horizontal = 12.dp)
+              .testTag(HomeScreenTestTags.SKILL_CARD)
+              .wrapContentSize(Alignment.Center)
+              .clickable { onSubjectCardClicked(subject) },
+  ) {
+    val textColor = if (color.luminance() > 0.5f) Color.Black else Color.White
 
+    Text(text = subject.name, color = textColor)
+  }
+}
 
 /**
  * Displays a vertical list of top-rated tutors using a [LazyColumn].

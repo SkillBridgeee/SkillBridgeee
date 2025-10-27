@@ -160,4 +160,24 @@ class SubjectListViewModel(
 
     _ui.update { it.copy(tutors = sorted) }
   }
+
+  fun subjectToString(subject: MainSubject?): String {
+    return when (subject) {
+      MainSubject.ACADEMICS -> "Academics"
+      MainSubject.SPORTS -> "Sports"
+      MainSubject.MUSIC -> "Music"
+      MainSubject.ARTS -> "Arts"
+      MainSubject.TECHNOLOGY -> "Technology"
+      MainSubject.LANGUAGES -> "Languages"
+      MainSubject.CRAFTS -> "Crafts"
+      null -> "Subjects"
+    }
+  }
+
+  fun getSkillsForSubject(mainSubject: MainSubject?): List<String> {
+    if (mainSubject == null) {
+      return emptyList()
+    }
+    return SkillsHelper.getSkillNames(mainSubject)
+  }
 }

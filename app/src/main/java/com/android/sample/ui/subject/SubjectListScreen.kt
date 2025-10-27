@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.TutorCard
 
@@ -56,9 +57,12 @@ object SubjectListTestTags {
 fun SubjectListScreen(
     viewModel: SubjectListViewModel,
     onBookTutor: (Profile) -> Unit = {},
+    subject: MainSubject?
 ) {
   val ui by viewModel.ui.collectAsState()
   LaunchedEffect(Unit) { viewModel.refresh() }
+  val skillsForSubject = viewModel.getSkillsForSubject(subject)
+  val mainSubjectString = viewModel.subjectToString(subject)
 
   Scaffold { padding ->
     Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
@@ -67,7 +71,7 @@ fun SubjectListScreen(
           value = ui.query,
           onValueChange = viewModel::onQueryChanged,
           leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-          placeholder = { Text("Find a tutor about...") },
+          placeholder = { Text("Find a tutor about $mainSubjectString") },
           singleLine = true,
           modifier =
               Modifier.fillMaxWidth().padding(top = 8.dp).testTag(SubjectListTestTags.SEARCHBAR))
@@ -82,8 +86,17 @@ fun SubjectListScreen(
           modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 readOnly = true,
-                value = ui.selectedSkill?.replace('_', ' ') ?: "e.g. instrument, sing, mix, ...",
                 onValueChange = {},
+                value =
+                    ui.selectedSkill?.replace('_', ' ')
+                        ?: buildString {
+                          append("e.g. ")
+                          skillsForSubject.take(3).forEachIndexed { index, skill ->
+                            append(skill.lowercase())
+                            if (index < skillsForSubject.take(3).lastIndex) append(", ")
+                          }
+                          append(", ...")
+                        },
                 label = { Text("Category") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                 modifier =
@@ -100,7 +113,7 @@ fun SubjectListScreen(
                     viewModel.onSkillSelected(null)
                     expanded = false
                   })
-              ui.skillsForSubject.forEach { skillName ->
+              skillsForSubject.forEach { skillName ->
                 DropdownMenuItem(
                     text = {
                       Text(
@@ -120,7 +133,7 @@ fun SubjectListScreen(
 
       // All tutors list
       Text(
-          "All ${ui.mainSubject.name.lowercase()} lessons",
+          "All $mainSubjectString lessons",
           style = MaterialTheme.typography.labelLarge,
           fontWeight = FontWeight.SemiBold)
 

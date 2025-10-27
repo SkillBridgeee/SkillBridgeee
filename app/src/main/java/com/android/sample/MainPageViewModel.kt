@@ -9,7 +9,6 @@ import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
-import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlin.math.roundToInt
@@ -32,14 +31,14 @@ data class HomeUiState(
 )
 
 enum class DisplaySubject {
-    ALL,
-    ACADEMICS,
-    SPORTS,
-    MUSIC,
-    ARTS,
-    TECHNOLOGY,
-    LANGUAGES,
-    CRAFTS
+  ALL,
+  ACADEMICS,
+  SPORTS,
+  MUSIC,
+  ARTS,
+  TECHNOLOGY,
+  LANGUAGES,
+  CRAFTS
 }
 
 /**
@@ -57,9 +56,7 @@ data class TutorCardUi(
     val hourlyRate: Double,
     val ratingStars: Int,
     val ratingCount: Int
-){
-
-}
+) {}
 
 /**
  * ViewModel responsible for managing and preparing data for the Main Page (HomeScreen).
@@ -189,18 +186,6 @@ class MainPageViewModel : ViewModel() {
     viewModelScope.launch { _navigationEvent.value = profileId }
   }
 
-    fun onSubjectCardClicked(subject: MainSubject) {
-        viewModelScope.launch {
-            val newListings = listingRepository.getAllListings()
-                .filter { it.skill.mainSubject == subject }
-            val tutors = profileRepository.getAllProfiles()
-            val tutorCards = newListings.mapNotNull { buildTutorCardSafely(it, tutors) }
-
-            _uiState.value = _uiState.value.copy(tutors = tutorCards)
-        }
-    }
-
-
   suspend fun getCurrentUserName(userId: String): String {
     val profile = runCatching { profileRepository.getProfileById(userId) }.getOrNull()
     return profile?.name ?: "User"
@@ -210,18 +195,18 @@ class MainPageViewModel : ViewModel() {
     _navigationEvent.value = null
   }
 
-    object SubjectColors {
+  object SubjectColors {
 
-        fun getSubjectColor(subject: MainSubject): Color {
-            return when (subject) {
-                MainSubject.ACADEMICS -> Color.Blue
-                MainSubject.SPORTS -> Color.LightGray
-                MainSubject.MUSIC -> Color.Magenta
-                MainSubject.ARTS -> Color.Green
-                MainSubject.TECHNOLOGY -> Color.Red
-                MainSubject.LANGUAGES -> Color.Cyan
-                MainSubject.CRAFTS -> Color.Yellow
-            }
-        }
+    fun getSubjectColor(subject: MainSubject): Color {
+      return when (subject) {
+        MainSubject.ACADEMICS -> Color.Blue
+        MainSubject.SPORTS -> Color.LightGray
+        MainSubject.MUSIC -> Color.Magenta
+        MainSubject.ARTS -> Color.Green
+        MainSubject.TECHNOLOGY -> Color.Red
+        MainSubject.LANGUAGES -> Color.Cyan
+        MainSubject.CRAFTS -> Color.Yellow
+      }
     }
+  }
 }
