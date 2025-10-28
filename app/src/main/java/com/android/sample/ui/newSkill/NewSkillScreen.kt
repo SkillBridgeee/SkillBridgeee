@@ -166,6 +166,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     locationQuery = locationQuery,
                     locationSuggestions = locationSuggestions,
                     onLocationQueryChange = { skillViewModel.setLocationQuery(it) },
+                    errorMsg = skillUIState.invalidLocationMsg,
                     onLocationSelected = { location ->
                       skillViewModel.setLocationQuery(location.name)
                       skillViewModel.setLocation(location)

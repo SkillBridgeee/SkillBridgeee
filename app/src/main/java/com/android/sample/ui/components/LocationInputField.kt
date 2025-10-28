@@ -15,13 +15,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.android.sample.model.map.Location
+import com.android.sample.ui.profile.MyProfileScreenTestTag
 
 @Composable
 fun LocationInputField(
     locationQuery: String,
+    errorMsg: String?,
     locationSuggestions: List<Location?>,
     onLocationQueryChange: (String) -> Unit,
     onLocationSelected: (Location) -> Unit,
@@ -29,6 +32,7 @@ fun LocationInputField(
 ) {
   var showDropdown by remember { mutableStateOf(false) }
 
+    val locationMsgError = "Location cannot be empty"
   Box(modifier = modifier.fillMaxWidth()) {
     OutlinedTextField(
         value = locationQuery,
@@ -38,6 +42,12 @@ fun LocationInputField(
         },
         label = { Text("Location") },
         placeholder = { Text("Enter an Address or Location") },
+        isError = errorMsg != null,
+        supportingText = {
+            errorMsg?.let {
+                Text(text = it)
+            }
+        },
         modifier = Modifier.fillMaxWidth())
 
     DropdownMenu(

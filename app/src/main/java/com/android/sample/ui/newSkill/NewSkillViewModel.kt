@@ -40,6 +40,7 @@ data class SkillUIState(
     val invalidDescMsg: String? = null,
     val invalidPriceMsg: String? = null,
     val invalidSubjectMsg: String? = null,
+    val invalidLocationMsg: String? = null
 ) {
 
   /** Indicates whether the current UI state is valid for submission. */
@@ -76,6 +77,7 @@ class NewSkillViewModel(
   private val priceEmptyMsg = "Price cannot be empty"
   private val priceInvalidMsg = "Price must be a positive number"
   private val subjectMsgError = "You must choose a subject"
+    private val locationMsgError = "You must choose a location"
 
   /**
    * Placeholder to load an existing skill.
@@ -188,7 +190,8 @@ class NewSkillViewModel(
         }
       }
     } else {
-      _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+      _uiState.value = _uiState.value.copy(locationSuggestions = emptyList(),
+          invalidLocationMsg = locationMsgError)
     }
   }
 

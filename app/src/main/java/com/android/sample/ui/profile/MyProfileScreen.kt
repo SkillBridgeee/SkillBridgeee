@@ -206,6 +206,7 @@ private fun ProfileContent(
                     locationQuery = locationQuery,
                     locationSuggestions = locationSuggestions,
                     onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
+                    errorMsg = profileUIState.invalidLocationMsg,
                     onLocationSelected = { location ->
                       profileViewModel.setLocationQuery(location.name)
                       profileViewModel.setLocation(location)

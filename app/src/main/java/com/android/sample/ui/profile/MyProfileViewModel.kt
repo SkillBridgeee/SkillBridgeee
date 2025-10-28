@@ -181,7 +181,7 @@ class MyProfileViewModel(
         }
       }
     } else {
-      _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+      _uiState.value = _uiState.value.copy(locationSuggestions = emptyList(), invalidLocationMsg = locationMsgError)
     }
   }
 }
