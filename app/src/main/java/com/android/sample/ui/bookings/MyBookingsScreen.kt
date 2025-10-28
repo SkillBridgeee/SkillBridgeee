@@ -27,7 +27,6 @@ object MyBookingsPageTestTag {
   const val BOOKING_DETAILS_BUTTON = "bookingDetailsButton"
   const val NAV_HOME = "navHome"
   const val NAV_BOOKINGS = "navBookings"
-  const val NAV_MESSAGES = "navMessages"
   const val NAV_PROFILE = "navProfile"
   const val EMPTY_BOOKINGS = "emptyBookings"
   const val NAV_MAP = "nav_map"
