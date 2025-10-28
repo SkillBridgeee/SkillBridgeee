@@ -570,10 +570,10 @@ class SignUpViewModelTest {
     val mockAuthRepo = mockk<AuthenticationRepository>()
     val mockException = mockk<FirebaseAuthException>(relaxed = true)
     every { mockException.errorCode } returns "ERROR_EMAIL_ALREADY_IN_USE"
-    every { mockException.message } returns "The email address is already in use by another account."
+    every { mockException.message } returns
+        "The email address is already in use by another account."
 
-    coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns
-        Result.failure(mockException)
+    coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns Result.failure(mockException)
 
     val vm = SignUpViewModel(mockAuthRepo, createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
@@ -597,8 +597,7 @@ class SignUpViewModelTest {
     every { mockException.errorCode } returns "ERROR_INVALID_EMAIL"
     every { mockException.message } returns "The email address is badly formatted."
 
-    coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns
-        Result.failure(mockException)
+    coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns Result.failure(mockException)
 
     val vm = SignUpViewModel(mockAuthRepo, createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
@@ -623,8 +622,7 @@ class SignUpViewModelTest {
     every { mockException.errorCode } returns "ERROR_WEAK_PASSWORD"
     every { mockException.message } returns "Password is too weak"
 
-    coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns
-        Result.failure(mockException)
+    coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns Result.failure(mockException)
 
     val vm = SignUpViewModel(mockAuthRepo, createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Ada"))

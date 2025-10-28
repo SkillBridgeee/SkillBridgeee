@@ -92,7 +92,9 @@ class MainPageViewModel : ViewModel() {
 
       _uiState.value =
           HomeUiState(
-              welcomeMessage = if (userName.isNotEmpty()) "Welcome back, $userName!" else DEFAULT_WELCOME_MESSAGE,
+              welcomeMessage =
+                  if (userName.isNotEmpty()) "Welcome back, $userName!"
+                  else DEFAULT_WELCOME_MESSAGE,
               skills = skills,
               tutors = tutorCards)
     } catch (e: Exception) {

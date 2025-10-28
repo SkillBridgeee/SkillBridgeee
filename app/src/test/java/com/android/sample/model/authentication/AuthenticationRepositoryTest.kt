@@ -371,7 +371,8 @@ class AuthenticationRepositoryTest {
     val result = repository.signUpWithEmail("test@example.com", "123")
 
     assertTrue(result.isFailure)
-    assertEquals("Password is too weak. Use at least 6 characters", result.exceptionOrNull()?.message)
+    assertEquals(
+        "Password is too weak. Use at least 6 characters", result.exceptionOrNull()?.message)
   }
 
   @Test
@@ -452,8 +453,7 @@ class AuthenticationRepositoryTest {
   @Test
   fun signInWithCredential_normalizesAccountExistsWithDifferentCredentialError() = runTest {
     val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
-    every { firebaseException.errorCode } returns
-        "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL"
+    every { firebaseException.errorCode } returns "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL"
     every { firebaseException.message } returns "An account already exists with the same email"
 
     val mockCredential = mockk<AuthCredential>()

@@ -35,7 +35,11 @@ import org.junit.Test
 // ---------- helpers ----------
 private const val DEFAULT_TIMEOUT_MS = 10_000L // Reduced from 30_000
 
-private fun waitForTag(rule: ComposeContentTestRule, tag: String, timeoutMs: Long = DEFAULT_TIMEOUT_MS) {
+private fun waitForTag(
+    rule: ComposeContentTestRule,
+    tag: String,
+    timeoutMs: Long = DEFAULT_TIMEOUT_MS
+) {
   rule.waitUntil(timeoutMs) {
     rule.onAllNodes(hasTestTag(tag), useUnmergedTree = false).fetchSemanticsNodes().isNotEmpty()
   }
@@ -45,10 +49,14 @@ private fun ComposeContentTestRule.nodeByTag(tag: String) =
     onNodeWithTag(tag, useUnmergedTree = false)
 
 /**
- * Helper function to create a user programmatically and wait for completion.
- * Returns true if successful, false if failed.
+ * Helper function to create a user programmatically and wait for completion. Returns true if
+ * successful, false if failed.
  */
-private suspend fun createUserProgrammatically(auth: FirebaseAuth, email: String, password: String): Boolean {
+private suspend fun createUserProgrammatically(
+    auth: FirebaseAuth,
+    email: String,
+    password: String
+): Boolean {
   return try {
     auth.createUserWithEmailAndPassword(email, password).await()
     true
@@ -157,9 +165,7 @@ class SignUpScreenTest {
     assertTrue("Signup should succeed", vm.state.value.submitSuccess)
 
     // Wait for Firebase Auth to be ready by checking current user
-    composeRule.waitUntil(5_000) {
-      auth.currentUser != null
-    }
+    composeRule.waitUntil(5_000) { auth.currentUser != null }
 
     // Verify Firebase Auth account was created
     assertNotNull("User should be authenticated", auth.currentUser)
@@ -199,9 +205,7 @@ class SignUpScreenTest {
     assertTrue("Signup should succeed", vm.state.value.submitSuccess)
 
     // Wait for Firebase Auth to be ready
-    composeRule.waitUntil(5_000) {
-      auth.currentUser != null
-    }
+    composeRule.waitUntil(5_000) { auth.currentUser != null }
 
     assertNotNull("User should be authenticated", auth.currentUser)
   }
@@ -217,9 +221,7 @@ class SignUpScreenTest {
       assertTrue("Programmatic user creation should succeed", created)
 
       // Wait for auth to be ready
-      composeRule.waitUntil(5_000) {
-        auth.currentUser != null
-      }
+      composeRule.waitUntil(5_000) { auth.currentUser != null }
 
       // Sign out so we can test UI signup with duplicate email
       auth.signOut()

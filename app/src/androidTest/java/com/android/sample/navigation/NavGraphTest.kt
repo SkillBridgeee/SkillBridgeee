@@ -48,10 +48,7 @@ class AppNavGraphTest {
     // RouteStackManager may not be initialized immediately
     composeTestRule.waitForIdle()
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      composeTestRule
-          .onAllNodesWithText("GitHub")
-          .fetchSemanticsNodes()
-          .isNotEmpty()
+      composeTestRule.onAllNodesWithText("GitHub").fetchSemanticsNodes().isNotEmpty()
     }
   }
 
@@ -137,14 +134,16 @@ class AppNavGraphTest {
 
     // Wait for bookings screen to render - either cards or empty state will appear
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      val hasCards = composeTestRule
-          .onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-      val hasEmptyState = composeTestRule
-          .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY_BOOKINGS)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
+      val hasCards =
+          composeTestRule
+              .onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD)
+              .fetchSemanticsNodes()
+              .isNotEmpty()
+      val hasEmptyState =
+          composeTestRule
+              .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY_BOOKINGS)
+              .fetchSemanticsNodes()
+              .isNotEmpty()
 
       // Return true when either condition is met
       hasCards || hasEmptyState
@@ -152,14 +151,16 @@ class AppNavGraphTest {
 
     // Verify we're on bookings screen - either has cards or empty state
     composeTestRule.waitForIdle()
-    val hasCards = composeTestRule
-        .onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
-    val hasEmptyState = composeTestRule
-        .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY_BOOKINGS)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+    val hasCards =
+        composeTestRule
+            .onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+    val hasEmptyState =
+        composeTestRule
+            .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY_BOOKINGS)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
 
     // Either cards or empty state should be visible
     assert(hasCards || hasEmptyState)

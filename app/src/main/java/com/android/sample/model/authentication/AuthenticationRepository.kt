@@ -34,7 +34,8 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
               "ERROR_INVALID_CREDENTIAL" -> "Invalid credentials. Please try again"
               "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL" ->
                   "An account already exists with a different sign-in method"
-              "ERROR_CREDENTIAL_ALREADY_IN_USE" -> "This credential is already associated with a different account"
+              "ERROR_CREDENTIAL_ALREADY_IN_USE" ->
+                  "This credential is already associated with a different account"
               else -> e.message ?: "Authentication failed"
             }
         Exception(message, e)
