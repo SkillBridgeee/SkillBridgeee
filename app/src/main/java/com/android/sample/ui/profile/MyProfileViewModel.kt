@@ -10,6 +10,8 @@ import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +22,7 @@ import kotlinx.coroutines.launch
 data class MyProfileUIState(
     val name: String? = "",
     val email: String? = "",
-    val selectedLocation: Location? = Location(name = ""),
+    val selectedLocation: Location? = null,
     val locationQuery: String = "",
     val locationSuggestions: List<Location> = emptyList(),
     val description: String? = "",
@@ -81,21 +83,22 @@ class MyProfileViewModel(
    * @param userId The ID of the profile to edit.
    * @return true if the update process was started, false if validation failed.
    */
-  fun editProfile(userId: String) {
+  fun editProfile() {
     val state = _uiState.value
     if (!state.isValid) {
       setError()
       return
     }
+    val currentId = Firebase.auth.currentUser?.uid ?: ""
     val profile =
         Profile(
-            userId = userId,
+            userId = currentId,
             name = state.name ?: "",
             email = state.email ?: "",
-            location = state.selectedLocation ?: Location(name = ""),
+            location = state.selectedLocation!!,
             description = state.description ?: "")
 
-    editProfileToRepository(userId = userId, profile = profile)
+    editProfileToRepository(userId = currentId, profile = profile)
   }
 
   /**
@@ -121,9 +124,7 @@ class MyProfileViewModel(
           invalidNameMsg = currentState.name?.let { if (it.isBlank()) nameMsgError else null },
           invalidEmailMsg = validateEmail(currentState.email ?: ""),
           invalidLocationMsg =
-              currentState.selectedLocation?.let {
-                if (it.name.isBlank()) locationMsgError else null
-              },
+              if (currentState.selectedLocation == null) locationMsgError else null,
           invalidDescMsg =
               currentState.description?.let { if (it.isBlank()) descMsgError else null })
     }
@@ -174,7 +175,8 @@ class MyProfileViewModel(
       viewModelScope.launch {
         try {
           val results = locationRepository.search(query)
-          _uiState.value = _uiState.value.copy(locationSuggestions = results)
+          _uiState.value =
+              _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
         } catch (_: Exception) {
           _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
         }
