@@ -22,9 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.LocationInputField
-import kotlin.compareTo
 
 object MyProfileScreenTestTag {
   const val PROFILE_ICON = "profileIcon"
@@ -89,8 +85,6 @@ private fun ProfileContent(
   val profileUIState by profileViewModel.uiState.collectAsState()
 
   val fieldSpacing = 8.dp
-
-  var showDropdown by remember { mutableStateOf(false) }
 
   val locationSuggestions = profileUIState.locationSuggestions
   val locationQuery = profileUIState.locationQuery
