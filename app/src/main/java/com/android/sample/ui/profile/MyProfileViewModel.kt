@@ -3,7 +3,10 @@ package com.android.sample.ui.profile
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.HttpClientProvider
 import com.android.sample.model.map.Location
+import com.android.sample.model.map.LocationRepository
+import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
@@ -17,7 +20,9 @@ import kotlinx.coroutines.launch
 data class MyProfileUIState(
     val name: String? = "",
     val email: String? = "",
-    val location: Location? = Location(name = ""),
+    val selectedLocation: Location? = Location(name = ""),
+    val locationQuery: String = "",
+    val locationSuggestions: List<Location> = emptyList(),
     val description: String? = "",
     val invalidNameMsg: String? = null,
     val invalidEmailMsg: String? = null,
@@ -33,13 +38,15 @@ data class MyProfileUIState(
             invalidDescMsg == null &&
             name?.isNotBlank() == true &&
             email?.isNotBlank() == true &&
-            location != null &&
+            selectedLocation != null &&
             description?.isNotBlank() == true
 }
 
 // ViewModel to manage profile editing logic and state
 class MyProfileViewModel(
-    private val repository: ProfileRepository = ProfileRepositoryProvider.repository
+    private val repository: ProfileRepository = ProfileRepositoryProvider.repository,
+    private val locationRepository: LocationRepository =
+        NominatimLocationRepository(HttpClientProvider.client)
 ) : ViewModel() {
   // Holds the current UI state
   private val _uiState = MutableStateFlow(MyProfileUIState())
@@ -60,7 +67,7 @@ class MyProfileViewModel(
             MyProfileUIState(
                 name = profile?.name,
                 email = profile?.email,
-                location = profile?.location,
+                selectedLocation = profile?.location,
                 description = profile?.description)
       }
     } catch (e: Exception) {
@@ -85,7 +92,7 @@ class MyProfileViewModel(
             userId = userId,
             name = state.name ?: "",
             email = state.email ?: "",
-            location = state.location ?: Location(name = ""),
+            location = state.selectedLocation ?: Location(name = ""),
             description = state.description ?: "")
 
     editProfileToRepository(userId = userId, profile = profile)
@@ -114,7 +121,9 @@ class MyProfileViewModel(
           invalidNameMsg = currentState.name?.let { if (it.isBlank()) nameMsgError else null },
           invalidEmailMsg = validateEmail(currentState.email ?: ""),
           invalidLocationMsg =
-              currentState.location?.let { if (it.name.isBlank()) locationMsgError else null },
+              currentState.selectedLocation?.let {
+                if (it.name.isBlank()) locationMsgError else null
+              },
           invalidDescMsg =
               currentState.description?.let { if (it.isBlank()) descMsgError else null })
     }
@@ -130,14 +139,6 @@ class MyProfileViewModel(
   // Updates the email and validates it
   fun setEmail(email: String) {
     _uiState.value = _uiState.value.copy(email = email, invalidEmailMsg = validateEmail(email))
-  }
-
-  // Updates the location and validates it
-  fun setLocation(locationName: String) {
-    _uiState.value =
-        _uiState.value.copy(
-            location = if (locationName.isBlank()) null else Location(name = locationName),
-            invalidLocationMsg = if (locationName.isBlank()) locationMsgError else null)
   }
 
   // Updates the desc and validates it
@@ -159,6 +160,28 @@ class MyProfileViewModel(
       email.isBlank() -> emailEmptyMsgError
       !isValidEmail(email) -> emailInvalidMsgError
       else -> null
+    }
+  }
+
+  fun setLocation(location: Location) {
+    _uiState.value = _uiState.value.copy(selectedLocation = location, locationQuery = location.name)
+  }
+
+  fun setLocationQuery(query: String) {
+    _uiState.value = _uiState.value.copy(locationQuery = query)
+
+    if (query.isNotEmpty()) {
+      viewModelScope.launch {
+        try {
+          val results = locationRepository.search(query)
+          _uiState.value = _uiState.value.copy(locationSuggestions = results)
+        } catch (e: Exception) {
+          Log.e("MYProfileViewModel", "Error fetching location suggestions", e)
+          _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+        }
+      }
+    } else {
+      _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
     }
   }
 }
