@@ -105,7 +105,6 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Skills").performClick()
     composeTestRule.waitForIdle()
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
-
   }
 
   @Test
