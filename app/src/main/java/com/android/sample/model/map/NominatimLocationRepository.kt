@@ -4,13 +4,17 @@ import android.util.Log
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
 
-class NominatimLocationRepository(private val client: OkHttpClient) : LocationRepository {
-  private fun parseBody(body: String): List<Location> {
+open class NominatimLocationRepository(
+    private val client: OkHttpClient,
+    private val baseUrl: String = "https://nominatim.openstreetmap.org"
+) : LocationRepository {
+  fun parseBody(body: String): List<Location> {
+
     val jsonArray = JSONArray(body)
 
     return List(jsonArray.length()) { i ->
@@ -20,15 +24,44 @@ class NominatimLocationRepository(private val client: OkHttpClient) : LocationRe
       val name = jsonObject.getString("display_name")
       Location(latitude = lat, longitude = lon, name = name)
     }
+    //      try {
+    //          val jsonArray = JSONArray(body)
+    //          Log.d("Debug", "JSONArray parsed successfully: ${jsonArray.length()} elements")
+    //          return List(jsonArray.length()) { i ->
+    //              val obj = jsonArray.getJSONObject(i)
+    //              Location(
+    //                  latitude = obj.getDouble("lat"),
+    //                  longitude = obj.getDouble("lon"),
+    //                  name = obj.getString("display_name")
+    //              )
+    //          }
+    //      } catch (e: Exception) {
+    //          Log.e("Debug", "JSONException: ${e.message}")
+    //          throw e
+    //      }
+
   }
 
   override suspend fun search(query: String): List<Location> =
       withContext(Dispatchers.IO) {
         // Using HttpUrl.Builder to properly construct the URL with query parameters.
+
+        // TODO mettre une exception si ça plante
+        //          val base = baseUrl.toHttpUrlOrNull()!!
+        //        val url =
+        //            HttpUrl.Builder()
+        //                .scheme(baseUrl.toHttpUrlOrNull()!!.scheme)
+        //                .host(baseUrl.toHttpUrlOrNull()!!.host)
+        //                .port(base.port)
+        //                .addPathSegment("search")
+        //                .addQueryParameter("q", query)
+        //                .addQueryParameter("format", "json")
+        //                .build()
+
         val url =
-            HttpUrl.Builder()
-                .scheme("https")
-                .host("nominatim.openstreetmap.org")
+            baseUrl
+                .toHttpUrlOrNull()!!
+                .newBuilder()
                 .addPathSegment("search")
                 .addQueryParameter("q", query)
                 .addQueryParameter("format", "json")
@@ -41,9 +74,8 @@ class NominatimLocationRepository(private val client: OkHttpClient) : LocationRe
                 .header(
                     "User-Agent",
                     // TODO email mettre une autre address je pense
-                    "SkillBridgeee/1.0 (nahuel.della-valle@epfl.ch)") // Set a proper User-Agent
+                    "SkillBridgeee") // Set a proper User-Agent
                 // TODO trouver un referer à mettre et un site ou une ref (lien github?)
-                .header("Nahuel Della Valle", "https://yourapp.com") // Optionally add a Referer
                 .build()
 
         try {
