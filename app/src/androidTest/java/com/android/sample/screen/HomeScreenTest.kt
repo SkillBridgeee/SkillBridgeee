@@ -1,40 +1,15 @@
-package com.android.sample.ui
+package com.android.sample.screen
 
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.lifecycle.ViewModel
 import com.android.sample.*
 import com.android.sample.model.skill.MainSubject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-
-class FakeMainPageViewModel : ViewModel() {
-  data class UiState(
-      val welcomeMessage: String = "Welcome Test User!",
-      val subjects: List<MainSubject> = listOf(MainSubject.ACADEMICS, MainSubject.MUSIC),
-      val tutors: List<TutorCardUi> =
-          listOf(TutorCardUi("Alice", "Math", 5.0, 12, 30), TutorCardUi("Bob", "Music", 4.0, 7, 25))
-  )
-
-  private val _uiState = MutableStateFlow(UiState())
-  val uiState: StateFlow<UiState> = _uiState
-
-  val navigationEvent = MutableStateFlow<MainSubject?>(null)
-
-  fun onAddTutorClicked(userId: String) {}
-
-  fun onBookTutorClicked(name: String) {}
-
-  fun onNavigationHandled() {
-    navigationEvent.value = null
-  }
-}
 
 class HomeScreenTest {
 

@@ -115,14 +115,15 @@ fun GreetingSection(welcomeMessage: String) {
  *
  * Each card represents a skill available for learning.
  *
- * @param skills The list of [Skill] items to display.
+ * @param subjects The list of [MainSubject] items to display.
+ * @param onSubjectCardClicked Callback invoked when a subject card is clicked for navigation.
  */
 @Composable
 fun ExploreSubjects(subjects: List<MainSubject>, onSubjectCardClicked: (MainSubject) -> Unit = {}) {
   Column(
       modifier =
           Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.EXPLORE_SKILLS_SECTION)) {
-        Text(text = "Explore skills", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text(text = "Explore Subjects", fontWeight = FontWeight.Bold, fontSize = 16.sp)
 
         Spacer(modifier = Modifier.height(12.dp))
 

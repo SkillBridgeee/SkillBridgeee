@@ -40,7 +40,6 @@ import com.android.sample.ui.components.TutorCard
 object SubjectListTestTags {
   const val SEARCHBAR = "SubjectListTestTags.SEARCHBAR"
   const val CATEGORY_SELECTOR = "SubjectListTestTags.CATEGORY_SELECTOR"
-  const val TOP_TUTORS_SECTION = "SubjectListTestTags.TOP_TUTORS_SECTION"
   const val TUTOR_LIST = "SubjectListTestTags.TUTOR_LIST"
   const val TUTOR_CARD = "SubjectListTestTags.TUTOR_CARD"
   const val TUTOR_BOOK_BUTTON = "SubjectListTestTags.TUTOR_BOOK_BUTTON"
@@ -91,9 +90,13 @@ fun SubjectListScreen(
                     ui.selectedSkill?.replace('_', ' ')
                         ?: buildString {
                           append("e.g. ")
-                          skillsForSubject.take(3).forEachIndexed { index, skill ->
-                            append(skill.lowercase())
-                            if (index < skillsForSubject.take(3).lastIndex) append(", ")
+                          if(skillsForSubject.isNotEmpty()) {
+                              skillsForSubject.take(3).forEachIndexed { index, skill ->
+                                  append(skill.lowercase())
+                                  if (index < skillsForSubject.take(3).lastIndex) append(", ")
+                              }
+                          }else{
+                              append("Maths, Violin, Python")
                           }
                           append(", ...")
                         },
