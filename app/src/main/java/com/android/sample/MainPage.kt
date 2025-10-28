@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.MainPageViewModel.SubjectColors.getSubjectColor
 import com.android.sample.model.skill.MainSubject
-import com.android.sample.model.skill.Skill
 import com.android.sample.ui.theme.PrimaryColor
 import com.android.sample.ui.theme.SecondaryColor
 
