@@ -77,7 +77,7 @@ class NewSkillViewModel(
   private val priceEmptyMsg = "Price cannot be empty"
   private val priceInvalidMsg = "Price must be a positive number"
   private val subjectMsgError = "You must choose a subject"
-    private val locationMsgError = "You must choose a location"
+  private val locationMsgError = "You must choose a location"
 
   /**
    * Placeholder to load an existing skill.
@@ -190,8 +190,9 @@ class NewSkillViewModel(
         }
       }
     } else {
-      _uiState.value = _uiState.value.copy(locationSuggestions = emptyList(),
-          invalidLocationMsg = locationMsgError)
+      _uiState.value =
+          _uiState.value.copy(
+              locationSuggestions = emptyList(), invalidLocationMsg = locationMsgError)
     }
   }
 
