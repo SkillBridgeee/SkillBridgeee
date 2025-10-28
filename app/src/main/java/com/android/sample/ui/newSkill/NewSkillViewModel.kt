@@ -3,9 +3,13 @@ package com.android.sample.ui.screens.newSkill
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.HttpClientProvider
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
+import com.android.sample.model.map.Location
+import com.android.sample.model.map.LocationRepository
+import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +33,9 @@ data class SkillUIState(
     val description: String = "",
     val price: String = "",
     val subject: MainSubject? = null,
+    val selectedLocation: Location? = Location(name = ""),
+    val locationQuery: String = "",
+    val locationSuggestions: List<Location> = emptyList(),
     val invalidTitleMsg: String? = null,
     val invalidDescMsg: String? = null,
     val invalidPriceMsg: String? = null,
@@ -55,7 +62,9 @@ data class SkillUIState(
  * simple validation.
  */
 class NewSkillViewModel(
-    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository
+    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
+    private val locationRepository: LocationRepository =
+        NominatimLocationRepository(HttpClientProvider.client)
 ) : ViewModel() {
   // Internal mutable UI state
   private val _uiState = MutableStateFlow(SkillUIState())
@@ -160,6 +169,28 @@ class NewSkillViewModel(
   fun setSubject(sub: MainSubject) {
     _uiState.value = _uiState.value.copy(subject = sub)
   }
+
+    fun setLocation(location: Location) {
+        _uiState.value = _uiState.value.copy(selectedLocation = location, locationQuery = location.name)
+    }
+
+    fun setLocationQuery(query: String) {
+        _uiState.value = _uiState.value.copy(locationQuery = query)
+
+        if (query.isNotEmpty()) {
+            viewModelScope.launch {
+                try {
+                    val results = locationRepository.search(query)
+                    _uiState.value = _uiState.value.copy(locationSuggestions = results)
+                } catch (e: Exception) {
+                    Log.e("NewScreenViewModel", "Error fetching location suggestions", e)
+                    _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+                }
+            }
+        } else {
+            _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+        }
+    }
 
   /** Returns true if the given string represents a non-negative number. */
   private fun isPosNumber(num: String): Boolean {

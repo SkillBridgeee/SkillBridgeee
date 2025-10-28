@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
+import com.android.sample.ui.components.LocationInputField
 
 object NewSkillScreenTestTag {
   const val BUTTON_SAVE_SKILL = "buttonSaveSkill"
@@ -72,6 +73,9 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
 
   LaunchedEffect(profileId) { skillViewModel.load() }
   val skillUIState by skillViewModel.uiState.collectAsState()
+
+    val locationSuggestions = skillUIState.locationSuggestions
+    val locationQuery = skillUIState.locationQuery
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -156,6 +160,16 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     selectedSubject = skillUIState.subject,
                     skillViewModel = skillViewModel,
                     skillUIState = skillUIState)
+
+                  // Location Input with dropdown
+                  LocationInputField(
+                      locationQuery = locationQuery,
+                      locationSuggestions = locationSuggestions,
+                      onLocationQueryChange = { skillViewModel.setLocationQuery(it) },
+                      onLocationSelected = { location ->
+                          skillViewModel.setLocationQuery(location.name)
+                          skillViewModel.setLocation(location)
+                      })
               }
             }
       }
