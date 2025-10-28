@@ -19,8 +19,6 @@ import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.screens.newSkill.NewSkillScreen
 import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpViewModel
-import com.android.sample.ui.subject.SubjectListScreen
-import com.android.sample.ui.subject.SubjectListViewModel
 
 /**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
@@ -89,17 +87,6 @@ fun AppNavGraph(
     composable(NavRoutes.MAP) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MAP) }
       MapScreen(navController = navController)
-    }
-
-    composable(NavRoutes.SKILLS) {
-      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
-      SubjectListScreen(
-          viewModel =
-              SubjectListViewModel(), // You may need to provide this through dependency injection
-          onBookTutor = { profile ->
-            // Navigate to booking or profile screen when tutor is booked
-            // Example: navController.navigate("booking/${profile.uid}")
-          })
     }
 
     composable(NavRoutes.BOOKINGS) {
