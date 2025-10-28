@@ -33,7 +33,7 @@ data class SkillUIState(
     val description: String = "",
     val price: String = "",
     val subject: MainSubject? = null,
-    val selectedLocation: Location? = Location(name = ""),
+    val selectedLocation: Location? = null,
     val locationQuery: String = "",
     val locationSuggestions: List<Location> = emptyList(),
     val invalidTitleMsg: String? = null,
@@ -50,10 +50,12 @@ data class SkillUIState(
             invalidDescMsg == null &&
             invalidPriceMsg == null &&
             invalidSubjectMsg == null &&
+            invalidLocationMsg == null &&
             title.isNotBlank() &&
             description.isNotBlank() &&
             price.isNotBlank() &&
-            subject != null
+            subject != null &&
+            selectedLocation != null
 }
 
 /**
@@ -100,7 +102,8 @@ class NewSkillViewModel(
               listingId = listingRepository.getNewUid(),
               creatorUserId = userId,
               skill = newSkill,
-              description = state.description)
+              description = state.description,
+              location = state.selectedLocation!!)
 
       addSkillToRepository(proposal = newProposal)
     } else {
@@ -127,7 +130,9 @@ class NewSkillViewModel(
           invalidPriceMsg =
               if (currentState.price.isBlank()) priceEmptyMsg
               else if (!isPosNumber(currentState.price)) priceInvalidMsg else null,
-          invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null)
+          invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null,
+          invalidLocationMsg =
+              if (currentState.selectedLocation == null) locationMsgError else null)
     }
   }
 
@@ -169,7 +174,7 @@ class NewSkillViewModel(
 
   /** Update the selected main subject. */
   fun setSubject(sub: MainSubject) {
-    _uiState.value = _uiState.value.copy(subject = sub)
+    _uiState.value = _uiState.value.copy(subject = sub, invalidSubjectMsg = null)
   }
 
   fun setLocation(location: Location) {
@@ -179,11 +184,12 @@ class NewSkillViewModel(
   fun setLocationQuery(query: String) {
     _uiState.value = _uiState.value.copy(locationQuery = query)
 
-    if (query.isNotEmpty()) {
+    if (query.isNotBlank()) {
       viewModelScope.launch {
         try {
           val results = locationRepository.search(query)
-          _uiState.value = _uiState.value.copy(locationSuggestions = results)
+          _uiState.value =
+              _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
         } catch (_: Exception) {
           _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
         }
