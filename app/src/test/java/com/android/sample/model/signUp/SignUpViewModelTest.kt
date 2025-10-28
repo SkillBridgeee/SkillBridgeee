@@ -5,6 +5,7 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.signup.Role
 import com.android.sample.ui.signup.SignUpEvent
 import com.android.sample.ui.signup.SignUpViewModel
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
@@ -567,8 +568,12 @@ class SignUpViewModelTest {
   @Test
   fun firebase_auth_error_email_already_in_use_shows_friendly_message() = runTest {
     val mockAuthRepo = mockk<AuthenticationRepository>()
+    val mockException = mockk<FirebaseAuthException>(relaxed = true)
+    every { mockException.errorCode } returns "ERROR_EMAIL_ALREADY_IN_USE"
+    every { mockException.message } returns "The email address is already in use by another account."
+
     coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns
-        Result.failure(Exception("The email address is already in use by another account."))
+        Result.failure(mockException)
 
     val vm = SignUpViewModel(mockAuthRepo, createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
@@ -588,15 +593,20 @@ class SignUpViewModelTest {
   @Test
   fun firebase_auth_error_badly_formatted_email_shows_friendly_message() = runTest {
     val mockAuthRepo = mockk<AuthenticationRepository>()
+    val mockException = mockk<FirebaseAuthException>(relaxed = true)
+    every { mockException.errorCode } returns "ERROR_INVALID_EMAIL"
+    every { mockException.message } returns "The email address is badly formatted."
+
     coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns
-        Result.failure(Exception("The email address is badly formatted."))
+        Result.failure(mockException)
 
     val vm = SignUpViewModel(mockAuthRepo, createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
     vm.onEvent(SignUpEvent.SurnameChanged("Lovelace"))
     vm.onEvent(SignUpEvent.AddressChanged("S1"))
     vm.onEvent(SignUpEvent.LevelOfEducationChanged("CS"))
-    vm.onEvent(SignUpEvent.EmailChanged("bad-email"))
+    // Use an email that passes ViewModel validation but Firebase might reject
+    vm.onEvent(SignUpEvent.EmailChanged("user@example.com"))
     vm.onEvent(SignUpEvent.PasswordChanged("abcde123"))
     vm.onEvent(SignUpEvent.Submit)
     advanceUntilIdle()
@@ -609,10 +619,12 @@ class SignUpViewModelTest {
   @Test
   fun firebase_auth_error_weak_password_shows_friendly_message() = runTest {
     val mockAuthRepo = mockk<AuthenticationRepository>()
+    val mockException = mockk<FirebaseAuthException>(relaxed = true)
+    every { mockException.errorCode } returns "ERROR_WEAK_PASSWORD"
+    every { mockException.message } returns "Password is too weak"
+
     coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns
-        Result.failure(
-            Exception(
-                "The given password is invalid. [ Password should be at least 6 characters ]"))
+        Result.failure(mockException)
 
     val vm = SignUpViewModel(mockAuthRepo, createMockProfileRepository())
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
@@ -626,11 +638,7 @@ class SignUpViewModelTest {
 
     assertFalse(vm.state.value.submitSuccess)
     assertNotNull(vm.state.value.error)
-    // The actual Firebase error message doesn't contain "weak password" so it returns the raw
-    // message
-    assertEquals(
-        "The given password is invalid. [ Password should be at least 6 characters ]",
-        vm.state.value.error)
+    assertEquals("Password is too weak", vm.state.value.error)
   }
 
   @Test
@@ -777,11 +785,8 @@ class SignUpViewModelTest {
     vm.onEvent(SignUpEvent.Submit)
     advanceUntilIdle()
 
-    // Note: The ViewModel doesn't check canSubmit before calling submit(),
-    // so the repository WILL be called even with invalid data.
-    // This test verifies the current behavior - that submit() is called regardless
-    // The UI layer should disable the submit button when canSubmit is false
-    coVerify(atLeast = 1) { mockAuthRepo.signUpWithEmail(any(), any()) }
+    // The ViewModel should check canSubmit and NOT call the repository when form is invalid
+    coVerify(exactly = 0) { mockAuthRepo.signUpWithEmail(any(), any()) }
   }
 
   @Test

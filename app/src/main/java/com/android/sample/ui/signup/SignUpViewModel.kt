@@ -7,6 +7,7 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.google.firebase.auth.FirebaseAuthException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -103,6 +104,11 @@ class SignUpViewModel(
   }
 
   private fun submit() {
+    // Early return if form validation fails
+    if (!_state.value.canSubmit) {
+      return
+    }
+
     viewModelScope.launch {
       _state.update { it.copy(submitting = true, error = null, submitSuccess = false) }
       val current = _state.value
@@ -131,8 +137,10 @@ class SignUpViewModel(
                 profileRepository.addProfile(profile)
                 _state.update { it.copy(submitting = false, submitSuccess = true) }
               } catch (e: Exception) {
-                // If profile creation fails, we should ideally delete the auth account
-                // For now, just show the error
+                // Profile creation failed after auth success.
+                // Note: The Firebase Auth user remains created. Consider calling
+                // firebaseUser.delete() to roll back, but that requires handling
+                // re-authentication complexity. For now, we leave the auth user and show error.
                 _state.update {
                   it.copy(
                       submitting = false,
@@ -141,15 +149,17 @@ class SignUpViewModel(
               }
             },
             onFailure = { exception ->
-              // Firebase Auth account creation failed
+              // Firebase Auth account creation failed - use error codes for better detection
               val errorMessage =
-                  when {
-                    exception.message?.contains("email address is already in use") == true ->
-                        "This email is already registered"
-                    exception.message?.contains("email address is badly formatted") == true ->
-                        "Invalid email format"
-                    exception.message?.contains("weak password") == true -> "Password is too weak"
-                    else -> exception.message ?: "Sign up failed"
+                  if (exception is FirebaseAuthException) {
+                    when (exception.errorCode) {
+                      "ERROR_EMAIL_ALREADY_IN_USE" -> "This email is already registered"
+                      "ERROR_INVALID_EMAIL" -> "Invalid email format"
+                      "ERROR_WEAK_PASSWORD" -> "Password is too weak"
+                      else -> exception.message ?: "Sign up failed"
+                    }
+                  } else {
+                    exception.message ?: "Sign up failed"
                   }
               _state.update { it.copy(submitting = false, error = errorMessage) }
             })

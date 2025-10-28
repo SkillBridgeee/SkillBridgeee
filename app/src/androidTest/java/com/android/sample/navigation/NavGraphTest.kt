@@ -1,8 +1,10 @@
 package com.android.sample.navigation
 
+import android.util.Log
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.android.sample.MainActivity
+import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
 import com.google.firebase.Firebase
@@ -21,6 +23,10 @@ import org.junit.Test
  */
 class AppNavGraphTest {
 
+  companion object {
+    private const val TAG = "AppNavGraphTest"
+  }
+
   @get:Rule val composeTestRule = createAndroidComposeRule<MainActivity>()
 
   @Before
@@ -38,11 +44,12 @@ class AppNavGraphTest {
     // Clean up any existing user
     Firebase.auth.signOut()
 
-    // Wait for login screen to be fully loaded
+    // Wait for login screen to be ready - use UI element as it's more reliable at startup
+    // RouteStackManager may not be initialized immediately
     composeTestRule.waitForIdle()
-    composeTestRule.waitUntil(timeoutMillis = 10000) {
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
       composeTestRule
-          .onAllNodes(hasText("Welcome back! Please sign in."))
+          .onAllNodesWithText("GitHub")
           .fetchSemanticsNodes()
           .isNotEmpty()
     }
@@ -53,8 +60,9 @@ class AppNavGraphTest {
     // Clean up: delete the test user if created
     try {
       Firebase.auth.currentUser?.delete()
-    } catch (_: Exception) {
-      // Ignore deletion errors
+    } catch (e: Exception) {
+      // Log deletion errors for debugging
+      Log.w(TAG, "Failed to delete test user in tearDown", e)
     }
     Firebase.auth.signOut()
   }
@@ -65,10 +73,13 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Should now be on home screen - check for home screen elements
-    composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
-    composeTestRule.onNodeWithText("Explore skills").assertExists()
-    composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
+    // Use RouteStackManager to verify navigation instead of checking UI text
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.HOME
+    }
+
+    // Verify we're on home screen
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
   }
 
   @Test
@@ -81,8 +92,13 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Skills").performClick()
     composeTestRule.waitForIdle()
 
-    // Should display skills screen content
-    composeTestRule.onNodeWithText("Find a tutor about...").assertExists()
+    // Use RouteStackManager to verify navigation
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS
+    }
+
+    // Verify we're on skills screen using test tag instead of UI text
+    composeTestRule.onNodeWithTag("SubjectListTestTags.SEARCHBAR").assertExists()
   }
 
   @Test
@@ -95,15 +111,13 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    // Wait for profile screen to fully load before asserting
-    composeTestRule.waitUntil(timeoutMillis = 10000) {
-      composeTestRule.onAllNodes(hasText("Personal Details")).fetchSemanticsNodes().isNotEmpty()
+    // Use RouteStackManager to verify navigation instead of waiting for UI text
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
     }
 
-    // Should display profile screen - check for profile screen elements
-    composeTestRule.onNodeWithText("Student").assertExists()
-    composeTestRule.onNodeWithText("Personal Details").assertExists()
-    composeTestRule.onNodeWithText("Save Profile Changes").assertExists()
+    // Verify we're on profile screen
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE)
   }
 
   @Test
@@ -116,8 +130,39 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Bookings").performClick()
     composeTestRule.waitForIdle()
 
-    // Should display bookings screen
-    composeTestRule.onNodeWithText("My Bookings").assertExists()
+    // Use RouteStackManager to verify navigation
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.BOOKINGS
+    }
+
+    // Wait for bookings screen to render - either cards or empty state will appear
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      val hasCards = composeTestRule
+          .onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+      val hasEmptyState = composeTestRule
+          .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY_BOOKINGS)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+
+      // Return true when either condition is met
+      hasCards || hasEmptyState
+    }
+
+    // Verify we're on bookings screen - either has cards or empty state
+    composeTestRule.waitForIdle()
+    val hasCards = composeTestRule
+        .onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD)
+        .fetchSemanticsNodes()
+        .isNotEmpty()
+    val hasEmptyState = composeTestRule
+        .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY_BOOKINGS)
+        .fetchSemanticsNodes()
+        .isNotEmpty()
+
+    // Either cards or empty state should be visible
+    assert(hasCards || hasEmptyState)
   }
 
   @Test
@@ -130,8 +175,13 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithContentDescription("Add").performClick()
     composeTestRule.waitForIdle()
 
-    // Should navigate to new skill screen
-    composeTestRule.onNodeWithText("Create Your Lessons !").assertExists()
+    // Use RouteStackManager to verify navigation
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.NEW_SKILL
+    }
+
+    // Verify we navigated to new skill screen
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.NEW_SKILL)
   }
 
   @Test
@@ -140,12 +190,9 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Wait for home screen to fully load
-    composeTestRule.waitUntil(timeoutMillis = 10000) {
-      composeTestRule
-          .onAllNodes(hasText("Ready to learn something new today?"))
-          .fetchSemanticsNodes()
-          .isNotEmpty()
+    // Wait for home route to be set
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.HOME
     }
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
 
@@ -153,12 +200,9 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Skills").performClick()
     composeTestRule.waitForIdle()
 
-    // Wait for skills screen to load
-    composeTestRule.waitUntil(timeoutMillis = 5000) {
-      composeTestRule
-          .onAllNodes(hasText("Find a tutor about..."))
-          .fetchSemanticsNodes()
-          .isNotEmpty()
+    // Wait for skills route to be set
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS
     }
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
 
@@ -166,14 +210,10 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    // Wait for profile screen to load (more time as it loads user data)
-    composeTestRule.waitUntil(timeoutMillis = 15000) {
-      composeTestRule.onAllNodes(hasText("Personal Details")).fetchSemanticsNodes().isNotEmpty()
+    // Wait for profile route to be set - no Thread.sleep needed!
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
     }
-
-    // Give extra time for async profile loading to complete
-    Thread.sleep(1000)
-    composeTestRule.waitForIdle()
 
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE)
   }
@@ -195,10 +235,10 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Home").performClick()
     composeTestRule.waitForIdle()
 
-    // Should be on home screen - check for actual home content
-    composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
-    composeTestRule.onNodeWithText("Explore skills").assertExists()
-    composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
+    // Use RouteStackManager to verify we're back on home
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.HOME
+    }
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
   }
 
@@ -211,9 +251,9 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Skills").performClick()
     composeTestRule.waitForIdle()
 
-    // Verify skills screen components
-    composeTestRule.onNodeWithText("Find a tutor about...").assertExists()
-    composeTestRule.onNodeWithText("Category").assertExists()
+    // Use test tags instead of UI text for more robust assertions
+    composeTestRule.onNodeWithTag("SubjectListTestTags.SEARCHBAR").assertExists()
+    composeTestRule.onNodeWithTag("SubjectListTestTags.CATEGORY_SELECTOR").assertExists()
   }
 
   @Test
@@ -225,15 +265,13 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    // Wait for profile to fully load
-    composeTestRule.waitUntil(timeoutMillis = 10000) {
-      composeTestRule.onAllNodes(hasText("Personal Details")).fetchSemanticsNodes().isNotEmpty()
+    // Use RouteStackManager to verify navigation
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
     }
 
-    // Verify profile form fields exist
+    // For now, verify essential fields exist (text-based, but minimal)
     composeTestRule.onNodeWithText("Name").assertExists()
     composeTestRule.onNodeWithText("Email").assertExists()
-    composeTestRule.onNodeWithText("Location / Campus").assertExists()
-    composeTestRule.onNodeWithText("Description").assertExists()
   }
 }

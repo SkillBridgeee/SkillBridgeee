@@ -262,15 +262,6 @@ class MyBookingsScreenUiTest {
       }
     }
 
-    // Wait for composition to settle and bookings to load
-    composeRule.waitForIdle()
-    composeRule.waitUntil(5_000) {
-      composeRule
-          .onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD)
-          .fetchSemanticsNodes()
-          .size == 2
-    }
-
     // From demo card 1: "$30.0/hr - 1hr"
     composeRule.onNodeWithText("$30.0/hr - 1hr").assertIsDisplayed()
   }

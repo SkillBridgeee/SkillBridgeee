@@ -1,9 +1,10 @@
 package com.android.sample.model.authentication
 
-import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
@@ -85,14 +86,10 @@ class AuthenticationRepositoryTest {
   fun signUpWithEmail_success_returnsUser() = runTest {
     val mockUser = mockk<FirebaseUser>()
     val mockAuthResult = mockk<AuthResult>()
-    val mockTask = mockk<Task<AuthResult>>()
 
     every { mockAuthResult.user } returns mockUser
-    coEvery { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns null
-    coEvery { mockTask.isCanceled } returns false
-    coEvery { mockTask.result } returns mockAuthResult
+    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
 
     val result = repository.signUpWithEmail("test@example.com", "password123")
 
@@ -102,13 +99,10 @@ class AuthenticationRepositoryTest {
 
   @Test
   fun signUpWithEmail_failure_returnsError() = runTest {
-    val mockTask = mockk<Task<AuthResult>>()
     val exception = Exception("Email already in use")
 
-    coEvery { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns exception
-    coEvery { mockTask.isCanceled } returns false
+    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(exception)
 
     val result = repository.signUpWithEmail("test@example.com", "password123")
 
@@ -119,14 +113,10 @@ class AuthenticationRepositoryTest {
   @Test
   fun signUpWithEmail_noUserReturned_returnsFailure() = runTest {
     val mockAuthResult = mockk<AuthResult>()
-    val mockTask = mockk<Task<AuthResult>>()
 
     every { mockAuthResult.user } returns null
-    coEvery { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns null
-    coEvery { mockTask.isCanceled } returns false
-    coEvery { mockTask.result } returns mockAuthResult
+    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
 
     val result = repository.signUpWithEmail("test@example.com", "password123")
 
@@ -138,14 +128,10 @@ class AuthenticationRepositoryTest {
   fun signInWithEmail_success_returnsUser() = runTest {
     val mockUser = mockk<FirebaseUser>()
     val mockAuthResult = mockk<AuthResult>()
-    val mockTask = mockk<Task<AuthResult>>()
 
     every { mockAuthResult.user } returns mockUser
-    coEvery { mockAuth.signInWithEmailAndPassword(any(), any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns null
-    coEvery { mockTask.isCanceled } returns false
-    coEvery { mockTask.result } returns mockAuthResult
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
 
     val result = repository.signInWithEmail("test@example.com", "password123")
 
@@ -155,13 +141,10 @@ class AuthenticationRepositoryTest {
 
   @Test
   fun signInWithEmail_failure_returnsError() = runTest {
-    val mockTask = mockk<Task<AuthResult>>()
     val exception = Exception("Invalid credentials")
 
-    coEvery { mockAuth.signInWithEmailAndPassword(any(), any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns exception
-    coEvery { mockTask.isCanceled } returns false
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(exception)
 
     val result = repository.signInWithEmail("test@example.com", "wrongpassword")
 
@@ -172,14 +155,10 @@ class AuthenticationRepositoryTest {
   @Test
   fun signInWithEmail_noUserReturned_returnsFailure() = runTest {
     val mockAuthResult = mockk<AuthResult>()
-    val mockTask = mockk<Task<AuthResult>>()
 
     every { mockAuthResult.user } returns null
-    coEvery { mockAuth.signInWithEmailAndPassword(any(), any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns null
-    coEvery { mockTask.isCanceled } returns false
-    coEvery { mockTask.result } returns mockAuthResult
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
 
     val result = repository.signInWithEmail("test@example.com", "password123")
 
@@ -191,15 +170,10 @@ class AuthenticationRepositoryTest {
   fun signInWithCredential_success_returnsUser() = runTest {
     val mockUser = mockk<FirebaseUser>()
     val mockAuthResult = mockk<AuthResult>()
-    val mockTask = mockk<Task<AuthResult>>()
     val mockCredential = mockk<AuthCredential>()
 
     every { mockAuthResult.user } returns mockUser
-    coEvery { mockAuth.signInWithCredential(any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns null
-    coEvery { mockTask.isCanceled } returns false
-    coEvery { mockTask.result } returns mockAuthResult
+    every { mockAuth.signInWithCredential(any()) } returns Tasks.forResult(mockAuthResult)
 
     val result = repository.signInWithCredential(mockCredential)
 
@@ -209,14 +183,10 @@ class AuthenticationRepositoryTest {
 
   @Test
   fun signInWithCredential_failure_returnsError() = runTest {
-    val mockTask = mockk<Task<AuthResult>>()
     val mockCredential = mockk<AuthCredential>()
     val exception = Exception("Credential error")
 
-    coEvery { mockAuth.signInWithCredential(any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns exception
-    coEvery { mockTask.isCanceled } returns false
+    every { mockAuth.signInWithCredential(any()) } returns Tasks.forException(exception)
 
     val result = repository.signInWithCredential(mockCredential)
 
@@ -227,15 +197,10 @@ class AuthenticationRepositoryTest {
   @Test
   fun signInWithCredential_noUserReturned_returnsFailure() = runTest {
     val mockAuthResult = mockk<AuthResult>()
-    val mockTask = mockk<Task<AuthResult>>()
     val mockCredential = mockk<AuthCredential>()
 
     every { mockAuthResult.user } returns null
-    coEvery { mockAuth.signInWithCredential(any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns null
-    coEvery { mockTask.isCanceled } returns false
-    coEvery { mockTask.result } returns mockAuthResult
+    every { mockAuth.signInWithCredential(any()) } returns Tasks.forResult(mockAuthResult)
 
     val result = repository.signInWithCredential(mockCredential)
 
@@ -245,13 +210,10 @@ class AuthenticationRepositoryTest {
 
   @Test
   fun signUpWithEmail_taskCanceled_returnsFailure() = runTest {
-    val mockTask = mockk<Task<AuthResult>>()
     val exception = Exception("Task was cancelled")
 
-    coEvery { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns exception
-    coEvery { mockTask.isCanceled } returns true
+    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(exception)
 
     val result = repository.signUpWithEmail("test@example.com", "password123")
 
@@ -261,13 +223,10 @@ class AuthenticationRepositoryTest {
 
   @Test
   fun signInWithEmail_taskCanceled_returnsFailure() = runTest {
-    val mockTask = mockk<Task<AuthResult>>()
     val exception = Exception("Task was cancelled")
 
-    coEvery { mockAuth.signInWithEmailAndPassword(any(), any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns exception
-    coEvery { mockTask.isCanceled } returns true
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(exception)
 
     val result = repository.signInWithEmail("test@example.com", "password123")
 
@@ -277,14 +236,10 @@ class AuthenticationRepositoryTest {
 
   @Test
   fun signInWithCredential_taskCanceled_returnsFailure() = runTest {
-    val mockTask = mockk<Task<AuthResult>>()
     val mockCredential = mockk<AuthCredential>()
     val exception = Exception("Task was cancelled")
 
-    coEvery { mockAuth.signInWithCredential(any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns exception
-    coEvery { mockTask.isCanceled } returns true
+    every { mockAuth.signInWithCredential(any()) } returns Tasks.forException(exception)
 
     val result = repository.signInWithCredential(mockCredential)
 
@@ -296,52 +251,44 @@ class AuthenticationRepositoryTest {
   fun signUpWithEmail_withDifferentEmails_callsCorrectMethod() = runTest {
     val mockUser = mockk<FirebaseUser>()
     val mockAuthResult = mockk<AuthResult>()
-    val mockTask = mockk<Task<AuthResult>>()
 
     every { mockAuthResult.user } returns mockUser
-    coEvery { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns null
-    coEvery { mockTask.isCanceled } returns false
-    coEvery { mockTask.result } returns mockAuthResult
+    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
 
     val email1 = "user1@example.com"
     val password1 = "password1"
     repository.signUpWithEmail(email1, password1)
 
-    coVerify { mockAuth.createUserWithEmailAndPassword(email1, password1) }
+    verify { mockAuth.createUserWithEmailAndPassword(email1, password1) }
 
     val email2 = "user2@example.com"
     val password2 = "password2"
     repository.signUpWithEmail(email2, password2)
 
-    coVerify { mockAuth.createUserWithEmailAndPassword(email2, password2) }
+    verify { mockAuth.createUserWithEmailAndPassword(email2, password2) }
   }
 
   @Test
   fun signInWithEmail_withDifferentCredentials_callsCorrectMethod() = runTest {
     val mockUser = mockk<FirebaseUser>()
     val mockAuthResult = mockk<AuthResult>()
-    val mockTask = mockk<Task<AuthResult>>()
 
     every { mockAuthResult.user } returns mockUser
-    coEvery { mockAuth.signInWithEmailAndPassword(any(), any()) } returns mockTask
-    coEvery { mockTask.isComplete } returns true
-    coEvery { mockTask.exception } returns null
-    coEvery { mockTask.isCanceled } returns false
-    coEvery { mockTask.result } returns mockAuthResult
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
 
     val email1 = "user1@example.com"
     val password1 = "password1"
     repository.signInWithEmail(email1, password1)
 
-    coVerify { mockAuth.signInWithEmailAndPassword(email1, password1) }
+    verify { mockAuth.signInWithEmailAndPassword(email1, password1) }
 
     val email2 = "user2@example.com"
     val password2 = "password2"
     repository.signInWithEmail(email2, password2)
 
-    coVerify { mockAuth.signInWithEmailAndPassword(email2, password2) }
+    verify { mockAuth.signInWithEmailAndPassword(email2, password2) }
   }
 
   @Test
@@ -378,5 +325,210 @@ class AuthenticationRepositoryTest {
 
     assertTrue(beforeSignOut)
     assertFalse(afterSignOut)
+  }
+
+  // -------- Error Normalization Tests --------------------------------------------------------
+
+  @Test
+  fun signUpWithEmail_normalizesEmailAlreadyInUseError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_EMAIL_ALREADY_IN_USE"
+    every { firebaseException.message } returns "The email address is already in use"
+
+    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(firebaseException)
+
+    val result = repository.signUpWithEmail("test@example.com", "password123")
+
+    assertTrue(result.isFailure)
+    assertEquals("This email is already registered", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signUpWithEmail_normalizesInvalidEmailError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_INVALID_EMAIL"
+    every { firebaseException.message } returns "The email address is badly formatted"
+
+    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(firebaseException)
+
+    val result = repository.signUpWithEmail("invalid-email", "password123")
+
+    assertTrue(result.isFailure)
+    assertEquals("Invalid email format", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signUpWithEmail_normalizesWeakPasswordError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_WEAK_PASSWORD"
+    every { firebaseException.message } returns "Password should be at least 6 characters"
+
+    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(firebaseException)
+
+    val result = repository.signUpWithEmail("test@example.com", "123")
+
+    assertTrue(result.isFailure)
+    assertEquals("Password is too weak. Use at least 6 characters", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signInWithEmail_normalizesWrongPasswordError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_WRONG_PASSWORD"
+    every { firebaseException.message } returns "The password is invalid"
+
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(firebaseException)
+
+    val result = repository.signInWithEmail("test@example.com", "wrongpassword")
+
+    assertTrue(result.isFailure)
+    assertEquals("Incorrect password", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signInWithEmail_normalizesUserNotFoundError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_USER_NOT_FOUND"
+    every { firebaseException.message } returns "There is no user record"
+
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(firebaseException)
+
+    val result = repository.signInWithEmail("nonexistent@example.com", "password123")
+
+    assertTrue(result.isFailure)
+    assertEquals("No account found with this email", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signInWithEmail_normalizesUserDisabledError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_USER_DISABLED"
+    every { firebaseException.message } returns "The user account has been disabled"
+
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(firebaseException)
+
+    val result = repository.signInWithEmail("test@example.com", "password123")
+
+    assertTrue(result.isFailure)
+    assertEquals("This account has been disabled", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signInWithEmail_normalizesTooManyRequestsError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_TOO_MANY_REQUESTS"
+    every { firebaseException.message } returns "Too many unsuccessful login attempts"
+
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(firebaseException)
+
+    val result = repository.signInWithEmail("test@example.com", "password123")
+
+    assertTrue(result.isFailure)
+    assertEquals("Too many attempts. Please try again later", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signInWithCredential_normalizesInvalidCredentialError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_INVALID_CREDENTIAL"
+    every { firebaseException.message } returns "The supplied auth credential is malformed"
+
+    val mockCredential = mockk<AuthCredential>()
+    every { mockAuth.signInWithCredential(any()) } returns Tasks.forException(firebaseException)
+
+    val result = repository.signInWithCredential(mockCredential)
+
+    assertTrue(result.isFailure)
+    assertEquals("Invalid credentials. Please try again", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signInWithCredential_normalizesAccountExistsWithDifferentCredentialError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns
+        "ERROR_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL"
+    every { firebaseException.message } returns "An account already exists with the same email"
+
+    val mockCredential = mockk<AuthCredential>()
+    every { mockAuth.signInWithCredential(any()) } returns Tasks.forException(firebaseException)
+
+    val result = repository.signInWithCredential(mockCredential)
+
+    assertTrue(result.isFailure)
+    assertEquals(
+        "An account already exists with a different sign-in method",
+        result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signInWithCredential_normalizesCredentialAlreadyInUseError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_CREDENTIAL_ALREADY_IN_USE"
+    every { firebaseException.message } returns "This credential is already associated"
+
+    val mockCredential = mockk<AuthCredential>()
+    every { mockAuth.signInWithCredential(any()) } returns Tasks.forException(firebaseException)
+
+    val result = repository.signInWithCredential(mockCredential)
+
+    assertTrue(result.isFailure)
+    assertEquals(
+        "This credential is already associated with a different account",
+        result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signUpWithEmail_normalizesUnknownFirebaseAuthError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_UNKNOWN"
+    every { firebaseException.message } returns "Some unknown Firebase error"
+
+    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(firebaseException)
+
+    val result = repository.signUpWithEmail("test@example.com", "password123")
+
+    assertTrue(result.isFailure)
+    // Should fall back to original message for unknown error codes
+    assertEquals("Some unknown Firebase error", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun signInWithEmail_preservesNonFirebaseExceptions() = runTest {
+    val networkException = Exception("Network timeout")
+
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(networkException)
+
+    val result = repository.signInWithEmail("test@example.com", "password123")
+
+    assertTrue(result.isFailure)
+    // Should preserve the original exception for non-Firebase errors
+    assertEquals("Network timeout", result.exceptionOrNull()?.message)
+    assertEquals(networkException, result.exceptionOrNull())
+  }
+
+  @Test
+  fun signUpWithEmail_preservesCauseInNormalizedException() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_WEAK_PASSWORD"
+    every { firebaseException.message } returns "Password too weak"
+
+    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(firebaseException)
+
+    val result = repository.signUpWithEmail("test@example.com", "weak")
+
+    assertTrue(result.isFailure)
+    // The normalized exception should preserve the original as the cause
+    assertNotNull(result.exceptionOrNull()?.cause)
+    assertEquals(firebaseException, result.exceptionOrNull()?.cause)
   }
 }

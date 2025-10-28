@@ -33,7 +33,9 @@ import org.junit.Rule
 import org.junit.Test
 
 // ---------- helpers ----------
-private fun waitForTag(rule: ComposeContentTestRule, tag: String, timeoutMs: Long = 30_000) {
+private const val DEFAULT_TIMEOUT_MS = 10_000L // Reduced from 30_000
+
+private fun waitForTag(rule: ComposeContentTestRule, tag: String, timeoutMs: Long = DEFAULT_TIMEOUT_MS) {
   rule.waitUntil(timeoutMs) {
     rule.onAllNodes(hasTestTag(tag), useUnmergedTree = false).fetchSemanticsNodes().isNotEmpty()
   }
@@ -41,6 +43,19 @@ private fun waitForTag(rule: ComposeContentTestRule, tag: String, timeoutMs: Lon
 
 private fun ComposeContentTestRule.nodeByTag(tag: String) =
     onNodeWithTag(tag, useUnmergedTree = false)
+
+/**
+ * Helper function to create a user programmatically and wait for completion.
+ * Returns true if successful, false if failed.
+ */
+private suspend fun createUserProgrammatically(auth: FirebaseAuth, email: String, password: String): Boolean {
+  return try {
+    auth.createUserWithEmailAndPassword(email, password).await()
+    true
+  } catch (_: Exception) {
+    false
+  }
+}
 
 // ---------- tests ----------
 class SignUpScreenTest {
@@ -133,14 +148,18 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for signup to complete - increased timeout for slow emulators
-    composeRule.waitUntil(30_000) { vm.state.value.submitSuccess || vm.state.value.error != null }
+    // Wait for signup to complete by observing ViewModel state
+    composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
+      vm.state.value.submitSuccess || vm.state.value.error != null
+    }
 
     // Verify success
     assertTrue("Signup should succeed", vm.state.value.submitSuccess)
 
-    // Give Firebase emulator time to process
-    Thread.sleep(1000)
+    // Wait for Firebase Auth to be ready by checking current user
+    composeRule.waitUntil(5_000) {
+      auth.currentUser != null
+    }
 
     // Verify Firebase Auth account was created
     assertNotNull("User should be authenticated", auth.currentUser)
@@ -172,25 +191,43 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for signup to complete - increased timeout for slow emulators
-    composeRule.waitUntil(30_000) { vm.state.value.submitSuccess || vm.state.value.error != null }
+    // Wait for signup to complete by observing ViewModel state
+    composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
+      vm.state.value.submitSuccess || vm.state.value.error != null
+    }
 
     assertTrue("Signup should succeed", vm.state.value.submitSuccess)
 
-    // Give Firebase emulator time to process
-    Thread.sleep(1000)
+    // Wait for Firebase Auth to be ready
+    composeRule.waitUntil(5_000) {
+      auth.currentUser != null
+    }
 
     assertNotNull("User should be authenticated", auth.currentUser)
   }
 
   @Test
   fun duplicate_email_shows_error() {
-    // Use a fixed email that we'll try to register twice
+    // Use a unique email for this test
     val duplicateEmail = "duplicate${System.currentTimeMillis()}@test.com"
 
-    // First signup - should succeed
-    val vm1 = SignUpViewModel()
-    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm1) } }
+    // First, create a user programmatically (not via UI) to ensure independence
+    runBlocking {
+      val created = createUserProgrammatically(auth, duplicateEmail, "FirstPass123!")
+      assertTrue("Programmatic user creation should succeed", created)
+
+      // Wait for auth to be ready
+      composeRule.waitUntil(5_000) {
+        auth.currentUser != null
+      }
+
+      // Sign out so we can test UI signup with duplicate email
+      auth.signOut()
+    }
+
+    // Now try to sign up via UI with the same email - should show error
+    val vm = SignUpViewModel()
+    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
     composeRule.waitForIdle()
 
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
@@ -200,65 +237,24 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).performTextInput("Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(duplicateEmail)
-    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("TestPass123!")
+    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("SecondPass123!")
 
-    // Close keyboard with IME action
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
     composeRule.waitForIdle()
 
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for first signup to complete - increased timeout
-    composeRule.waitUntil(30_000) { vm1.state.value.submitSuccess || vm1.state.value.error != null }
-    assertTrue("First signup should succeed", vm1.state.value.submitSuccess)
-
-    // Give Firebase emulator time to fully process the first signup
-    Thread.sleep(2000)
-
-    // Sign out and clean up the first user
-    auth.signOut()
-  }
-
-  @Test
-  fun duplicate_email_shows_error_second_attempt() {
-    // This test depends on duplicate_email_shows_error running first
-    // Use the same email pattern
-    val duplicateEmail = "duplicate${System.currentTimeMillis()}@test.com"
-
-    // First create the user
-    val vm1 = SignUpViewModel()
-    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm1) } }
-    composeRule.waitForIdle()
-    waitForTag(composeRule, SignUpScreenTestTags.NAME)
-
-    composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("First")
-    composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("User")
-    composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).performTextInput("Street 1")
-    composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
-    composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(duplicateEmail)
-    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("TestPass123!")
-    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
-    composeRule.waitForIdle()
-    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
-
-    composeRule.waitUntil(30_000) { vm1.state.value.submitSuccess || vm1.state.value.error != null }
-    assertTrue("First signup should succeed", vm1.state.value.submitSuccess)
-    Thread.sleep(2000)
-    auth.signOut()
-
-    // Now try to register with the same email - this should fail
-    runBlocking {
-      try {
-        auth.createUserWithEmailAndPassword(duplicateEmail, "AnotherPass123!").await()
-        // If we get here, check that we get an error
-        // We'll use the ViewModel to test this properly
-      } catch (e: Exception) {
-        // Expected - email already exists
-        assertTrue(
-            "Error should mention duplicate/already/in use",
-            e.message?.contains("already") == true || e.message?.contains("in use") == true)
-      }
+    // Wait for error to appear by observing ViewModel state
+    composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
+      vm.state.value.error != null || vm.state.value.submitSuccess
     }
+
+    // Should have an error and not be successful
+    assertTrue("Duplicate email should show error", vm.state.value.error != null)
+    assertTrue(
+        "Error should mention email already registered",
+        vm.state.value.error?.contains("already", ignoreCase = true) == true ||
+            vm.state.value.error?.contains("registered", ignoreCase = true) == true)
   }
 
   @Test
@@ -284,8 +280,8 @@ class SignUpScreenTest {
 
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for error or completion - increased timeout
-    composeRule.waitUntil(30_000) {
+    // Wait for error or completion by observing ViewModel state
+    composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
       vm.state.value.error != null || !vm.state.value.submitting || vm.state.value.submitSuccess
     }
 
