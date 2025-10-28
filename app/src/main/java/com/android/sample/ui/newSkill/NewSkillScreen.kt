@@ -74,8 +74,8 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
   LaunchedEffect(profileId) { skillViewModel.load() }
   val skillUIState by skillViewModel.uiState.collectAsState()
 
-    val locationSuggestions = skillUIState.locationSuggestions
-    val locationQuery = skillUIState.locationQuery
+  val locationSuggestions = skillUIState.locationSuggestions
+  val locationQuery = skillUIState.locationQuery
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -161,15 +161,15 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     skillViewModel = skillViewModel,
                     skillUIState = skillUIState)
 
-                  // Location Input with dropdown
-                  LocationInputField(
-                      locationQuery = locationQuery,
-                      locationSuggestions = locationSuggestions,
-                      onLocationQueryChange = { skillViewModel.setLocationQuery(it) },
-                      onLocationSelected = { location ->
-                          skillViewModel.setLocationQuery(location.name)
-                          skillViewModel.setLocation(location)
-                      })
+                // Location Input with dropdown
+                LocationInputField(
+                    locationQuery = locationQuery,
+                    locationSuggestions = locationSuggestions,
+                    onLocationQueryChange = { skillViewModel.setLocationQuery(it) },
+                    onLocationSelected = { location ->
+                      skillViewModel.setLocationQuery(location.name)
+                      skillViewModel.setLocation(location)
+                    })
               }
             }
       }

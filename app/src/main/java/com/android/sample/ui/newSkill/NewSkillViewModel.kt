@@ -170,27 +170,27 @@ class NewSkillViewModel(
     _uiState.value = _uiState.value.copy(subject = sub)
   }
 
-    fun setLocation(location: Location) {
-        _uiState.value = _uiState.value.copy(selectedLocation = location, locationQuery = location.name)
-    }
+  fun setLocation(location: Location) {
+    _uiState.value = _uiState.value.copy(selectedLocation = location, locationQuery = location.name)
+  }
 
-    fun setLocationQuery(query: String) {
-        _uiState.value = _uiState.value.copy(locationQuery = query)
+  fun setLocationQuery(query: String) {
+    _uiState.value = _uiState.value.copy(locationQuery = query)
 
-        if (query.isNotEmpty()) {
-            viewModelScope.launch {
-                try {
-                    val results = locationRepository.search(query)
-                    _uiState.value = _uiState.value.copy(locationSuggestions = results)
-                } catch (e: Exception) {
-                    Log.e("NewScreenViewModel", "Error fetching location suggestions", e)
-                    _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
-                }
-            }
-        } else {
-            _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+    if (query.isNotEmpty()) {
+      viewModelScope.launch {
+        try {
+          val results = locationRepository.search(query)
+          _uiState.value = _uiState.value.copy(locationSuggestions = results)
+        } catch (e: Exception) {
+          Log.e("NewScreenViewModel", "Error fetching location suggestions", e)
+          _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
         }
+      }
+    } else {
+      _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
     }
+  }
 
   /** Returns true if the given string represents a non-negative number. */
   private fun isPosNumber(num: String): Boolean {
