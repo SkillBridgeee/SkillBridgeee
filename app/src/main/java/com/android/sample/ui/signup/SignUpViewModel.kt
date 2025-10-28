@@ -2,10 +2,12 @@ package com.android.sample.ui.signup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.authentication.AuthenticationRepository
 import com.android.sample.model.map.Location
-import com.android.sample.model.user.FakeProfileRepository
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
+import com.google.firebase.auth.FirebaseAuthException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -51,7 +53,10 @@ sealed interface SignUpEvent {
   object Submit : SignUpEvent
 }
 
-class SignUpViewModel(private val repo: ProfileRepository = FakeProfileRepository()) : ViewModel() {
+class SignUpViewModel(
+    private val authRepository: AuthenticationRepository = AuthenticationRepository(),
+    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
+) : ViewModel() {
   private val _state = MutableStateFlow(SignUpUiState())
   val state: StateFlow<SignUpUiState> = _state
 
@@ -99,25 +104,65 @@ class SignUpViewModel(private val repo: ProfileRepository = FakeProfileRepositor
   }
 
   private fun submit() {
+    // Early return if form validation fails
+    if (!_state.value.canSubmit) {
+      return
+    }
+
     viewModelScope.launch {
       _state.update { it.copy(submitting = true, error = null, submitSuccess = false) }
       val current = _state.value
       try {
-        val newUid = repo.getNewUid()
-        val fullName =
-            listOf(current.name.trim(), current.surname.trim())
-                .filter { it.isNotEmpty() }
-                .joinToString(" ")
-        val profile =
-            Profile(
-                userId = newUid,
-                name = fullName,
-                email = current.email,
-                levelOfEducation = current.levelOfEducation,
-                description = current.description,
-                location = buildLocation(current.address))
-        repo.addProfile(profile)
-        _state.update { it.copy(submitting = false, submitSuccess = true) }
+        // Step 1: Create Firebase Authentication account
+        val authResult = authRepository.signUpWithEmail(current.email.trim(), current.password)
+
+        authResult.fold(
+            onSuccess = { firebaseUser ->
+              // Step 2: Create user profile in Firestore using the Firebase Auth UID
+              try {
+                val fullName =
+                    listOf(current.name.trim(), current.surname.trim())
+                        .filter { it.isNotEmpty() }
+                        .joinToString(" ")
+
+                val profile =
+                    Profile(
+                        userId = firebaseUser.uid, // Use Firebase Auth UID
+                        name = fullName,
+                        email = current.email.trim(),
+                        levelOfEducation = current.levelOfEducation.trim(),
+                        description = current.description.trim(),
+                        location = buildLocation(current.address))
+
+                profileRepository.addProfile(profile)
+                _state.update { it.copy(submitting = false, submitSuccess = true) }
+              } catch (e: Exception) {
+                // Profile creation failed after auth success.
+                // Note: The Firebase Auth user remains created. Consider calling
+                // firebaseUser.delete() to roll back, but that requires handling
+                // re-authentication complexity. For now, we leave the auth user and show error.
+                _state.update {
+                  it.copy(
+                      submitting = false,
+                      error = "Account created but profile failed: ${e.message}")
+                }
+              }
+            },
+            onFailure = { exception ->
+              // Firebase Auth account creation failed - use error codes for better detection
+              val errorMessage =
+                  if (exception is FirebaseAuthException) {
+                    when (exception.errorCode) {
+                      "ERROR_EMAIL_ALREADY_IN_USE" -> "This email is already registered"
+                      "ERROR_INVALID_EMAIL" -> "Invalid email format"
+                      "ERROR_WEAK_PASSWORD" -> "Password is too weak"
+                      else -> exception.message ?: "Sign up failed"
+                    }
+                  } else {
+                    exception.message ?: "Sign up failed"
+                  }
+              _state.update { it.copy(submitting = false, error = errorMessage) }
+            })
       } catch (t: Throwable) {
         _state.update { it.copy(submitting = false, error = t.message ?: "Unknown error") }
       }

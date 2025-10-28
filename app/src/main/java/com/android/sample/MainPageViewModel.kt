@@ -1,6 +1,6 @@
 package com.android.sample
 
-import androidx.compose.runtime.*
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.listing.Listing
@@ -54,6 +54,11 @@ data class TutorCardUi(
  */
 class MainPageViewModel : ViewModel() {
 
+  companion object {
+    private const val TAG = "MainPageViewModel"
+    private const val DEFAULT_WELCOME_MESSAGE = "Welcome back!"
+  }
+
   private val profileRepository = ProfileRepositoryProvider.repository
   private val listingRepository = ListingRepositoryProvider.repository
 
@@ -87,10 +92,15 @@ class MainPageViewModel : ViewModel() {
 
       _uiState.value =
           HomeUiState(
-              welcomeMessage = "Welcome back, $userName!", skills = skills, tutors = tutorCards)
+              welcomeMessage =
+                  if (userName.isNotEmpty()) "Welcome back, $userName!"
+                  else DEFAULT_WELCOME_MESSAGE,
+              skills = skills,
+              tutors = tutorCards)
     } catch (e: Exception) {
-      // Fallback in case of repository or mapping failure.
-      _uiState.value = HomeUiState(welcomeMessage = "Welcome back, Ava!")
+      // Log the error for debugging while providing a safe fallback UI state
+      Log.w(TAG, "Failed to build HomeUiState, using fallback", e)
+      _uiState.value = HomeUiState(welcomeMessage = DEFAULT_WELCOME_MESSAGE)
     }
   }
 
@@ -115,6 +125,7 @@ class MainPageViewModel : ViewModel() {
           ratingStars = computeAvgStars(tutor.tutorRating),
           ratingCount = ratingCountFor(tutor.tutorRating))
     } catch (e: Exception) {
+      Log.w(TAG, "Failed to build TutorCardUi for listing: ${listing.creatorUserId}", e)
       null
     }
   }

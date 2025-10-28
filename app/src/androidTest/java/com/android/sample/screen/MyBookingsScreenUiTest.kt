@@ -261,6 +261,7 @@ class MyBookingsScreenUiTest {
         MyBookingsScreen(viewModel = vm, navController = nav)
       }
     }
+
     // From demo card 1: "$30.0/hr - 1hr"
     composeRule.onNodeWithText("$30.0/hr - 1hr").assertIsDisplayed()
   }
