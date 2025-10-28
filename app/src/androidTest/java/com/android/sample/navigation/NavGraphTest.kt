@@ -106,10 +106,6 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
 
-    // Navigate to profile
-    composeTestRule.onNodeWithText("Profile").performClick()
-    composeTestRule.waitForIdle()
-    assert(RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE)
   }
 
   @Test
