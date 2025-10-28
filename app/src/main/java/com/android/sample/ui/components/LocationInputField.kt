@@ -4,9 +4,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Divider
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,13 +31,12 @@ fun LocationInputField(
 ) {
   var showDropdown by remember { mutableStateOf(false) }
 
-  val locationMsgError = "Location cannot be empty"
   Box(modifier = modifier.fillMaxWidth()) {
     OutlinedTextField(
         value = locationQuery,
         onValueChange = {
           onLocationQueryChange(it)
-          showDropdown = true // afficher la liste dès qu’on tape
+          showDropdown = true
         },
         label = { Text("Location") },
         placeholder = { Text("Enter an Address or Location") },
@@ -61,16 +61,7 @@ fun LocationInputField(
                   showDropdown = false
                 },
                 modifier = Modifier.padding(8.dp))
-            Divider()
-          }
-
-          if (locationSuggestions.size > 3) {
-            DropdownMenuItem(
-                text = { Text("More...") },
-                onClick = {
-                  // Optionnel : afficher plus de résultats
-                },
-                modifier = Modifier.padding(8.dp))
+            HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
           }
         }
   }

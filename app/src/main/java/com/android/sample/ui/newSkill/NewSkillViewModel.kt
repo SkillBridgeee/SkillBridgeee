@@ -184,8 +184,7 @@ class NewSkillViewModel(
         try {
           val results = locationRepository.search(query)
           _uiState.value = _uiState.value.copy(locationSuggestions = results)
-        } catch (e: Exception) {
-          Log.e("NewScreenViewModel", "Error fetching location suggestions", e)
+        } catch (_: Exception) {
           _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
         }
       }
