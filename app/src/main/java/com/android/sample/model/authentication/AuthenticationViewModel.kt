@@ -39,6 +39,21 @@ class AuthenticationViewModel(
   private val _authResult = MutableStateFlow<AuthResult?>(null)
   val authResult: StateFlow<AuthResult?> = _authResult.asStateFlow()
 
+  /** Helper function to set loading state */
+  private fun setLoading() {
+    _uiState.update { it.copy(isLoading = true, error = null) }
+  }
+
+  /** Helper function to clear loading state on success */
+  private fun clearLoading() {
+    _uiState.update { it.copy(isLoading = false, error = null) }
+  }
+
+  /** Helper function to set error state and clear loading */
+  private fun setErrorState(errorMessage: String) {
+    _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+  }
+
   /** Update the email field */
   fun updateEmail(email: String) {
     _uiState.update { it.copy(email = email, error = null, message = null) }
@@ -59,19 +74,19 @@ class AuthenticationViewModel(
       return
     }
 
-    _uiState.update { it.copy(isLoading = true, error = null) }
+    setLoading()
 
     viewModelScope.launch {
       val result = repository.signInWithEmail(email, password)
       result.fold(
           onSuccess = { user ->
             _authResult.value = AuthResult.Success(user)
-            _uiState.update { it.copy(isLoading = false, error = null) }
+            clearLoading()
           },
           onFailure = { exception ->
             val errorMessage = exception.message ?: "Sign in failed"
             _authResult.value = AuthResult.Error(errorMessage)
-            _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+            setErrorState(errorMessage)
           })
     }
   }
@@ -79,7 +94,7 @@ class AuthenticationViewModel(
   /** Handle Google Sign-In result from activity */
   @Suppress("DEPRECATION")
   fun handleGoogleSignInResult(result: ActivityResult) {
-    _uiState.update { it.copy(isLoading = true, error = null) }
+    setLoading()
 
     try {
       val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
@@ -107,28 +122,28 @@ class AuthenticationViewModel(
                       TAG,
                       "User needs sign up. Firebase email: ${user.email}, Google email: ${account.email}, Final email: $email")
                   _authResult.value = AuthResult.RequiresSignUp(email, user)
-                  _uiState.update { it.copy(isLoading = false, error = null) }
+                  clearLoading()
                 } else {
                   // Profile exists - successful login
                   _authResult.value = AuthResult.Success(user)
-                  _uiState.update { it.copy(isLoading = false, error = null) }
+                  clearLoading()
                 }
               },
               onFailure = { exception ->
                 val errorMessage = exception.message ?: "Google sign in failed"
                 _authResult.value = AuthResult.Error(errorMessage)
-                _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+                setErrorState(errorMessage)
               })
         }
       }
           ?: run {
             _authResult.value = AuthResult.Error("No ID token received")
-            _uiState.update { it.copy(isLoading = false, error = "No ID token received") }
+            setErrorState("No ID token received")
           }
     } catch (e: ApiException) {
       val errorMessage = "Google sign in failed: ${e.message}"
       _authResult.value = AuthResult.Error(errorMessage)
-      _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+      setErrorState(errorMessage)
     }
   }
 
@@ -137,7 +152,7 @@ class AuthenticationViewModel(
 
   /** Try to get saved password credential using Credential Manager */
   fun getSavedCredential() {
-    _uiState.update { it.copy(isLoading = true, error = null) }
+    setLoading()
 
     viewModelScope.launch {
       val result = credentialHelper.getPasswordCredential()

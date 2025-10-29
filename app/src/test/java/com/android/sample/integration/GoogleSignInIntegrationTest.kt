@@ -106,11 +106,13 @@ class GoogleSignInIntegrationTest {
     // Step 2: User is redirected to sign-up screen with pre-filled email
     every { mockAuthRepository.getCurrentUser() } returns mockFirebaseUser
 
+    val signUpUseCase =
+        com.android.sample.ui.signup.SignUpUseCase(mockAuthRepository, mockProfileRepository)
     val signUpViewModel =
         SignUpViewModel(
             initialEmail = "newuser@gmail.com",
             authRepository = mockAuthRepository,
-            profileRepository = mockProfileRepository)
+            signUpUseCase = signUpUseCase)
 
     // Verify: Email is pre-filled and isGoogleSignUp is true
     var state = signUpViewModel.state.first()
@@ -204,11 +206,13 @@ class GoogleSignInIntegrationTest {
     every { mockAuthRepository.getCurrentUser() } returns mockFirebaseUser
     every { mockAuthRepository.signOut() } returns Unit
 
+    val signUpUseCase1 =
+        com.android.sample.ui.signup.SignUpUseCase(mockAuthRepository, mockProfileRepository)
     val signUpViewModel =
         SignUpViewModel(
             initialEmail = "abandoner@gmail.com",
             authRepository = mockAuthRepository,
-            profileRepository = mockProfileRepository)
+            signUpUseCase = signUpUseCase1)
 
     // Verify: Email is pre-filled
     var state = signUpViewModel.state.first()
@@ -225,11 +229,13 @@ class GoogleSignInIntegrationTest {
     // (This would be tested in the AuthenticationViewModel, but we verify cleanup here)
     every { mockAuthRepository.getCurrentUser() } returns null
 
+    val signUpUseCase2 =
+        com.android.sample.ui.signup.SignUpUseCase(mockAuthRepository, mockProfileRepository)
     val signUpViewModel2 =
         SignUpViewModel(
             initialEmail = "abandoner@gmail.com",
             authRepository = mockAuthRepository,
-            profileRepository = mockProfileRepository)
+            signUpUseCase = signUpUseCase2)
 
     state = signUpViewModel2.state.first()
     // Now isGoogleSignUp should be false because user is not authenticated
@@ -242,11 +248,13 @@ class GoogleSignInIntegrationTest {
     every { mockFirebaseUser.uid } returns "protected-user"
     every { mockAuthRepository.getCurrentUser() } returns mockFirebaseUser
 
+    val signUpUseCase =
+        com.android.sample.ui.signup.SignUpUseCase(mockAuthRepository, mockProfileRepository)
     val signUpViewModel =
         SignUpViewModel(
             initialEmail = "protected@gmail.com",
             authRepository = mockAuthRepository,
-            profileRepository = mockProfileRepository)
+            signUpUseCase = signUpUseCase)
 
     val originalEmail = signUpViewModel.state.first().email
     assertEquals("protected@gmail.com", originalEmail)
@@ -267,11 +275,13 @@ class GoogleSignInIntegrationTest {
     coEvery { mockProfileRepository.addProfile(any()) } throws
         Exception("Database connection failed")
 
+    val signUpUseCase =
+        com.android.sample.ui.signup.SignUpUseCase(mockAuthRepository, mockProfileRepository)
     val signUpViewModel =
         SignUpViewModel(
             initialEmail = "failing@gmail.com",
             authRepository = mockAuthRepository,
-            profileRepository = mockProfileRepository)
+            signUpUseCase = signUpUseCase)
 
     // Fill out form
     signUpViewModel.onEvent(SignUpEvent.NameChanged("Jane"))
@@ -301,11 +311,13 @@ class GoogleSignInIntegrationTest {
     every { mockAuthRepository.getCurrentUser() } returns mockFirebaseUser
     coEvery { mockProfileRepository.addProfile(any()) } returns Unit
 
+    val signUpUseCase =
+        com.android.sample.ui.signup.SignUpUseCase(mockAuthRepository, mockProfileRepository)
     val signUpViewModel =
         SignUpViewModel(
             initialEmail = "complete@gmail.com",
             authRepository = mockAuthRepository,
-            profileRepository = mockProfileRepository)
+            signUpUseCase = signUpUseCase)
 
     // Complete signup
     signUpViewModel.onEvent(SignUpEvent.NameChanged("Complete"))

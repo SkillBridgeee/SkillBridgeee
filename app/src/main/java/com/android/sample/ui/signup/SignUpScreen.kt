@@ -175,18 +175,14 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
 
           Spacer(Modifier.height(6.dp))
 
-          // Password requirement checklist computed from the entered password
-          val pw = state.password
-          val minLength = pw.length >= 8
-          val hasLetter = pw.any { it.isLetter() }
-          val hasDigit = pw.any { it.isDigit() }
-          val hasSpecial = Regex("[^A-Za-z0-9]").containsMatchIn(pw)
+          // Password requirement checklist from ViewModel state
+          val reqs = state.passwordRequirements
 
           Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-            RequirementItem(met = minLength, text = "At least 8 characters")
-            RequirementItem(met = hasLetter, text = "Contains a letter")
-            RequirementItem(met = hasDigit, text = "Contains a digit")
-            RequirementItem(met = hasSpecial, text = "Contains a special character")
+            RequirementItem(met = reqs.minLength, text = "At least 8 characters")
+            RequirementItem(met = reqs.hasLetter, text = "Contains a letter")
+            RequirementItem(met = reqs.hasDigit, text = "Contains a digit")
+            RequirementItem(met = reqs.hasSpecial, text = "Contains a special character")
           }
         }
 
@@ -210,19 +206,8 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
             if (state.isGoogleSignUp) {
               state.canSubmit && !state.submitting
             } else {
-              // Require the ViewModel's passwordRequirements to be satisfied (includes special
-              // character)
-              val pw = state.password
-              val minLength = pw.length >= 8
-              val hasLetter = pw.any { it.isLetter() }
-              val hasDigit = pw.any { it.isDigit() }
-              val hasSpecial = Regex("[^A-Za-z0-9]").containsMatchIn(pw)
-              state.canSubmit &&
-                  minLength &&
-                  hasLetter &&
-                  hasDigit &&
-                  hasSpecial &&
-                  !state.submitting
+              // Use passwordRequirements from ViewModel state
+              state.canSubmit && state.passwordRequirements.allMet && !state.submitting
             }
 
         val buttonColors =

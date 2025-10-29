@@ -47,23 +47,6 @@ fun LoginScreen(
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val authResult by viewModel.authResult.collectAsStateWithLifecycle()
 
-  // Handle authentication results
-  LaunchedEffect(authResult) {
-    when (authResult) {
-      is AuthResult.Success -> viewModel.showSuccessMessage(true)
-      is AuthResult.RequiresSignUp -> {
-        // This will be handled by navigation in MainActivity
-        // Just clear the loading state
-      }
-      is AuthResult.Error -> {
-        /* Error is handled in uiState */
-      }
-      null -> {
-        /* No action needed */
-      }
-    }
-  }
-
   Column(
       modifier = Modifier.fillMaxSize().padding(20.dp),
       horizontalAlignment = Alignment.CenterHorizontally,
