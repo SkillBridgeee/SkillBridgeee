@@ -103,7 +103,7 @@ class SubjectListScreenTest {
 
   private fun setContent(onBook: (Profile) -> Unit = {}) {
     val vm = makeViewModel()
-    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, onBook) } }
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, onBook, null) } }
 
     // Wait until the single list renders at least one TutorCard
     composeRule.waitUntil(5_000) {
@@ -123,6 +123,31 @@ class SubjectListScreenTest {
 
     composeRule.onNodeWithTag(SubjectListTestTags.SEARCHBAR).assertIsDisplayed()
     composeRule.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).assertIsDisplayed()
+  }
+
+  @Test
+  fun displayCorrectTextInSearchBar() {
+    val customProfiles = listOf(p1, p2, p3)
+    val customSkills =
+        mapOf(
+            "1" to listOf(skill("PIANO"), skill("SING")),
+            "2" to listOf(skill("PIANO")),
+            "3" to listOf(skill("SING")))
+
+    val vm = makeViewModel(customProfiles = customProfiles, customSkills = customSkills)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.MUSIC) } }
+
+    // Wait until tutors load
+    composeRule.waitUntil(5_000) {
+      composeRule
+          .onAllNodes(
+              hasTestTag(SubjectListTestTags.TUTOR_CARD) and
+                  hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    composeRule.onNodeWithText("Find a tutor about Music").assertIsDisplayed()
   }
 
   @Test
@@ -196,7 +221,7 @@ class SubjectListScreenTest {
   @Test
   fun showsErrorMessage_whenRepositoryFails() {
     val vm = makeViewModel(fail = true)
-    composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = null) } }
 
     composeRule.waitUntil(3_000) {
       composeRule.onAllNodes(hasText("Boom failure")).fetchSemanticsNodes().isNotEmpty()
@@ -207,9 +232,53 @@ class SubjectListScreenTest {
   @Test
   fun showsLoadingIndicator_beforeContentAppears() {
     val vm = makeViewModel(longDelay = true)
-    composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.MUSIC) } }
 
-    composeRule.onNodeWithText("All music lessons").assertExists()
+    composeRule.onNodeWithText("All Music lessons").assertExists()
+  }
+
+  @Test
+  fun showsCorrectLessonTypeMessageSports() {
+    val vm = makeViewModel(longDelay = true)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.SPORTS) } }
+
+    composeRule.onNodeWithText("All Sports lessons").assertExists()
+  }
+
+  @Test
+  fun showsCorrectLessonTypeMessageArts() {
+    val vm = makeViewModel(longDelay = true)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.ARTS) } }
+
+    composeRule.onNodeWithText("All Arts lessons").assertExists()
+  }
+
+  @Test
+  fun showsCorrectLessonTypeMessageTechnology() {
+    val vm = makeViewModel(longDelay = true)
+    composeRule.setContent {
+      MaterialTheme { SubjectListScreen(vm, subject = MainSubject.TECHNOLOGY) }
+    }
+
+    composeRule.onNodeWithText("All Technology lessons").assertExists()
+  }
+
+  @Test
+  fun showsCorrectLessonTypeMessageLanguage() {
+    val vm = makeViewModel(longDelay = true)
+    composeRule.setContent {
+      MaterialTheme { SubjectListScreen(vm, subject = MainSubject.LANGUAGES) }
+    }
+
+    composeRule.onNodeWithText("All Languages lessons").assertExists()
+  }
+
+  @Test
+  fun showsCorrectLessonTypeMessageCraft() {
+    val vm = makeViewModel(longDelay = true)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.CRAFTS) } }
+
+    composeRule.onNodeWithText("All Crafts lessons").assertExists()
   }
 
   @Test
@@ -222,7 +291,7 @@ class SubjectListScreenTest {
             "3" to listOf(skill("SING")))
 
     val vm = makeViewModel(customProfiles = customProfiles, customSkills = customSkills)
-    composeRule.setContent { MaterialTheme { SubjectListScreen(vm) } }
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.MUSIC) } }
 
     // Wait until tutors load
     composeRule.waitUntil(5_000) {

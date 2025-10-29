@@ -1,7 +1,9 @@
 package com.android.sample
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -13,17 +15,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.sample.model.skill.Skill
+import com.android.sample.MainPageViewModel.SubjectColors.getSubjectColor
+import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.theme.PrimaryColor
 import com.android.sample.ui.theme.SecondaryColor
-import kotlin.random.Random
 
 /**
  * Provides test tag identifiers for the HomeScreen and its child composables.
@@ -58,7 +62,8 @@ object HomeScreenTestTags {
 @Composable
 fun HomeScreen(
     mainPageViewModel: MainPageViewModel = viewModel(),
-    onNavigateToNewSkill: (String) -> Unit = {}
+    onNavigateToNewSkill: (String) -> Unit = {},
+    onNavigateToSubjectList: (MainSubject) -> Unit = {}
 ) {
   val uiState by mainPageViewModel.uiState.collectAsState()
   val navigationEvent by mainPageViewModel.navigationEvent.collectAsState()
@@ -83,7 +88,7 @@ fun HomeScreen(
           Spacer(modifier = Modifier.height(10.dp))
           GreetingSection(uiState.welcomeMessage)
           Spacer(modifier = Modifier.height(20.dp))
-          ExploreSkills(uiState.skills)
+          ExploreSubjects(uiState.subjects, onNavigateToSubjectList)
           Spacer(modifier = Modifier.height(20.dp))
           TutorsSection(uiState.tutors, onBookClick = mainPageViewModel::onBookTutorClicked)
         }
@@ -109,42 +114,52 @@ fun GreetingSection(welcomeMessage: String) {
  *
  * Each card represents a skill available for learning.
  *
- * @param skills The list of [Skill] items to display.
+ * @param subjects The list of [MainSubject] items to display.
+ * @param onSubjectCardClicked Callback invoked when a subject card is clicked for navigation.
  */
 @Composable
-fun ExploreSkills(skills: List<Skill>) {
+fun ExploreSubjects(subjects: List<MainSubject>, onSubjectCardClicked: (MainSubject) -> Unit = {}) {
   Column(
       modifier =
           Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.EXPLORE_SKILLS_SECTION)) {
-        Text("Explore skills", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text(text = "Explore Subjects", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+
         Spacer(modifier = Modifier.height(12.dp))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-          items(skills) { SkillCard(skill = it) }
-        }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth()) {
+              items(subjects) {
+                val subjectColor = getSubjectColor(it)
+                SubjectCard(subject = it, color = subjectColor, onSubjectCardClicked)
+              }
+            }
       }
 }
 
-/**
- * Displays a single skill card with a randomly generated background color.
- *
- * @param skill The [Skill] object representing the skill to display.
- */
+/** Displays a single subject card with its color. */
 @Composable
-fun SkillCard(skill: Skill) {
-  val randomColor = remember {
-    Color(
-        red = Random.nextFloat(), green = Random.nextFloat(), blue = Random.nextFloat(), alpha = 1f)
-  }
-
+fun SubjectCard(
+    subject: MainSubject,
+    color: Color,
+    onSubjectCardClicked: (MainSubject) -> Unit = {}
+) {
   Column(
       modifier =
-          Modifier.background(randomColor, RoundedCornerShape(12.dp))
-              .padding(16.dp)
-              .testTag(HomeScreenTestTags.SKILL_CARD),
-      horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(skill.skill, fontWeight = FontWeight.Bold, color = Color.Black)
-      }
+          Modifier.width(120.dp)
+              .height(80.dp)
+              .clip(RoundedCornerShape(12.dp))
+              .background(color)
+              .clickable { onSubjectCardClicked(subject) }
+              .padding(vertical = 16.dp, horizontal = 12.dp)
+              .testTag(HomeScreenTestTags.SKILL_CARD)
+              .wrapContentSize(Alignment.Center)
+              .clickable { onSubjectCardClicked(subject) },
+  ) {
+    val textColor = if (color.luminance() > 0.5f) Color.Black else Color.White
+
+    Text(text = subject.name, color = textColor)
+  }
 }
 
 /**

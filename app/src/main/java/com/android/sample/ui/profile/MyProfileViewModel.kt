@@ -30,6 +30,9 @@ data class MyProfileUIState(
     val invalidEmailMsg: String? = null,
     val invalidLocationMsg: String? = null,
     val invalidDescMsg: String? = null,
+    val isLoading: Boolean = false,
+    val loadError: String? = null,
+    val updateError: String? = null
 ) {
   // Checks if all fields are valid
   val isValid: Boolean
@@ -51,6 +54,11 @@ class MyProfileViewModel(
         NominatimLocationRepository(HttpClientProvider.client),
     private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
+
+  companion object {
+    private const val TAG = "MyProfileViewModel"
+  }
+
   // Holds the current UI state
   private val _uiState = MutableStateFlow(MyProfileUIState())
   val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
@@ -111,10 +119,12 @@ class MyProfileViewModel(
    */
   private fun editProfileToRepository(userId: String, profile: Profile) {
     viewModelScope.launch {
+      _uiState.update { it.copy(updateError = null) }
       try {
         profileRepository.updateProfile(userId = userId, profile = profile)
       } catch (e: Exception) {
-        Log.e("MyProfileViewModel", "Error updating Profile", e)
+        Log.e(TAG, "Error updating profile for user: $userId", e)
+        _uiState.update { it.copy(updateError = "Failed to update profile. Please try again.") }
       }
     }
   }

@@ -114,6 +114,8 @@ class MyProfileViewModelTest {
     assertEquals(profile.email, ui.email)
     assertEquals(profile.location, ui.selectedLocation)
     assertEquals(profile.description, ui.description)
+    assertFalse(ui.isLoading)
+    assertNull(ui.loadError)
     assertTrue(repo.getProfileCalled)
   }
 
@@ -273,6 +275,99 @@ class MyProfileViewModelTest {
     advanceUntilIdle()
 
     assertTrue(true)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Test
+  fun loadProfile_setsLoadError_whenRepositoryFails() = runTest {
+    val repo =
+        object : ProfileRepository {
+          override fun getNewUid() = "fake"
+
+          override suspend fun getProfile(userId: String): Profile {
+            throw Exception("Network error")
+          }
+
+          override suspend fun addProfile(profile: Profile) {}
+
+          override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+          override suspend fun deleteProfile(userId: String) {}
+
+          override suspend fun getAllProfiles() = emptyList<Profile>()
+
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
+
+          override suspend fun getProfileById(userId: String) = error("not found")
+
+          override suspend fun getSkillsForUser(userId: String) =
+              emptyList<com.android.sample.model.skill.Skill>()
+        }
+
+    val vm = newVm(repo)
+
+    vm.loadProfile("123")
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertFalse(ui.isLoading)
+    assertEquals("Failed to load profile. Please try again.", ui.loadError)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Test
+  fun editProfile_setsUpdateError_whenRepositoryFails() = runTest {
+    val repo =
+        object : ProfileRepository {
+          override fun getNewUid() = "fake"
+
+          override suspend fun getProfile(userId: String) = makeProfile()
+
+          override suspend fun addProfile(profile: Profile) {}
+
+          override suspend fun updateProfile(userId: String, profile: Profile) {
+            throw Exception("Update failed")
+          }
+
+          override suspend fun deleteProfile(userId: String) {}
+
+          override suspend fun getAllProfiles() = emptyList<Profile>()
+
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
+
+          override suspend fun getProfileById(userId: String) = error("not found")
+
+          override suspend fun getSkillsForUser(userId: String) =
+              emptyList<com.android.sample.model.skill.Skill>()
+        }
+
+    val vm = newVm(repo)
+    vm.setName("Test")
+    vm.setEmail("test@mail.com")
+    vm.setLocation("Paris")
+    vm.setDescription("Teacher")
+
+    vm.editProfile("123")
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertEquals("Failed to update profile. Please try again.", ui.updateError)
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Test
+  fun loadProfile_setsLoadingStateToFalse_afterCompletion() = runTest {
+    val profile = makeProfile()
+    val repo = FakeRepo(profile)
+    val vm = newVm(repo)
+
+    vm.loadProfile(profile.userId)
+    advanceUntilIdle()
+
+    // After completion, should not be loading
+    assertFalse(vm.uiState.value.isLoading)
   }
 }
 
