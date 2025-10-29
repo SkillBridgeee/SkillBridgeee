@@ -2,6 +2,7 @@ package com.android.sample.model.map
 
 import android.util.Log
 import java.io.IOException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -11,7 +12,8 @@ import org.json.JSONArray
 
 open class NominatimLocationRepository(
     private val client: OkHttpClient,
-    private val baseUrl: String = "https://nominatim.openstreetmap.org"
+    private val baseUrl: String = "https://nominatim.openstreetmap.org",
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : LocationRepository {
   fun parseBody(body: String): List<Location> {
 
@@ -24,40 +26,10 @@ open class NominatimLocationRepository(
       val name = jsonObject.getString("name")
       Location(latitude = lat, longitude = lon, name = name)
     }
-    //      try {
-    //          val jsonArray = JSONArray(body)
-    //          Log.d("Debug", "JSONArray parsed successfully: ${jsonArray.length()} elements")
-    //          return List(jsonArray.length()) { i ->
-    //              val obj = jsonArray.getJSONObject(i)
-    //              Location(
-    //                  latitude = obj.getDouble("lat"),
-    //                  longitude = obj.getDouble("lon"),
-    //                  name = obj.getString("display_name")
-    //              )
-    //          }
-    //      } catch (e: Exception) {
-    //          Log.e("Debug", "JSONException: ${e.message}")
-    //          throw e
-    //      }
-
   }
 
   override suspend fun search(query: String): List<Location> =
-      withContext(Dispatchers.IO) {
-        // Using HttpUrl.Builder to properly construct the URL with query parameters.
-
-        // TODO mettre une exception si ça plante
-        //          val base = baseUrl.toHttpUrlOrNull()!!
-        //        val url =
-        //            HttpUrl.Builder()
-        //                .scheme(baseUrl.toHttpUrlOrNull()!!.scheme)
-        //                .host(baseUrl.toHttpUrlOrNull()!!.host)
-        //                .port(base.port)
-        //                .addPathSegment("search")
-        //                .addQueryParameter("q", query)
-        //                .addQueryParameter("format", "json")
-        //                .build()
-
+      withContext(ioDispatcher) {
         val url =
             baseUrl
                 .toHttpUrlOrNull()!!
@@ -71,11 +43,7 @@ open class NominatimLocationRepository(
         val request =
             Request.Builder()
                 .url(url)
-                .header(
-                    "User-Agent",
-                    // TODO email mettre une autre address je pense
-                    "SkillBridgeee") // Set a proper User-Agent
-                // TODO trouver un referer à mettre et un site ou une ref (lien github?)
+                .header("User-Agent", "SkillBridgeee") // Set a proper User-Agent
                 .build()
 
         try {
@@ -87,13 +55,8 @@ open class NominatimLocationRepository(
             }
 
             val body = response.body?.string()
-            if (body != null) {
-              Log.d("NominatimLocationRepository", "Body: $body")
-              return@withContext parseBody(body)
-            } else {
-              Log.d("NominatimLocationRepository", "Empty body")
-              return@withContext emptyList()
-            }
+
+            return@withContext body?.let { parseBody(it) } ?: emptyList()
           }
         } catch (e: IOException) {
           Log.e("NominatimLocationRepository", "Failed to execute request", e)
