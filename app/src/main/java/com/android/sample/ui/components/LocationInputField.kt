@@ -63,7 +63,7 @@ fun LocationInputField(
           onLocationQueryChange(it)
           showDropdown = true
         },
-        label = { Text("Location") },
+        label = { Text("Location / Campus") },
         placeholder = { Text("Enter an Address or Location") },
         isError = errorMsg != null,
         supportingText = {
