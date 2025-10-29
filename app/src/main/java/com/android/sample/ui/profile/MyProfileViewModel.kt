@@ -166,10 +166,22 @@ class MyProfileViewModel(
     }
   }
 
+  // Update the selected location and the locationQuery
   fun setLocation(location: Location) {
     _uiState.value = _uiState.value.copy(selectedLocation = location, locationQuery = location.name)
   }
 
+  /**
+   * Updates the location query in the UI state and fetches matching location suggestions.
+   *
+   * This function updates the current `locationQuery` value and triggers a search operation if the
+   * query is not empty. The search is performed asynchronously within the `viewModelScope` using
+   * the [locationRepository].
+   *
+   * @param query The new location search query entered by the user.
+   * @see locationRepository.search
+   * @see viewModelScope
+   */
   fun setLocationQuery(query: String) {
     _uiState.value = _uiState.value.copy(locationQuery = query)
 
