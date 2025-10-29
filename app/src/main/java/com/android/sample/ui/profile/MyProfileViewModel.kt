@@ -23,6 +23,9 @@ data class MyProfileUIState(
     val invalidEmailMsg: String? = null,
     val invalidLocationMsg: String? = null,
     val invalidDescMsg: String? = null,
+    val isLoading: Boolean = false,
+    val loadError: String? = null,
+    val updateError: String? = null
 ) {
   // Checks if all fields are valid
   val isValid: Boolean
@@ -41,6 +44,11 @@ data class MyProfileUIState(
 class MyProfileViewModel(
     private val repository: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
+
+  companion object {
+    private const val TAG = "MyProfileViewModel"
+  }
+
   // Holds the current UI state
   private val _uiState = MutableStateFlow(MyProfileUIState())
   val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
@@ -53,18 +61,25 @@ class MyProfileViewModel(
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile(userId: String) {
-    try {
-      viewModelScope.launch {
+    viewModelScope.launch {
+      _uiState.update { it.copy(isLoading = true, loadError = null) }
+      try {
         val profile = repository.getProfile(userId = userId)
-        _uiState.value =
-            MyProfileUIState(
-                name = profile?.name,
-                email = profile?.email,
-                location = profile?.location,
-                description = profile?.description)
+        _uiState.update {
+          it.copy(
+              name = profile?.name,
+              email = profile?.email,
+              location = profile?.location,
+              description = profile?.description,
+              isLoading = false,
+              loadError = null)
+        }
+      } catch (e: Exception) {
+        Log.e(TAG, "Error loading profile for user: $userId", e)
+        _uiState.update {
+          it.copy(isLoading = false, loadError = "Failed to load profile. Please try again.")
+        }
       }
-    } catch (e: Exception) {
-      Log.e("MyProfileViewModel", "Error loading ToDo by ID: $userId", e)
     }
   }
 
@@ -99,10 +114,13 @@ class MyProfileViewModel(
    */
   private fun editProfileToRepository(userId: String, profile: Profile) {
     viewModelScope.launch {
+      _uiState.update { it.copy(updateError = null) }
       try {
         repository.updateProfile(userId = userId, profile = profile)
+        _uiState.update { it.copy(updateError = null) }
       } catch (e: Exception) {
-        Log.e("MyProfileViewModel", "Error updating Profile", e)
+        Log.e(TAG, "Error updating profile for user: $userId", e)
+        _uiState.update { it.copy(updateError = "Failed to update profile. Please try again.") }
       }
     }
   }

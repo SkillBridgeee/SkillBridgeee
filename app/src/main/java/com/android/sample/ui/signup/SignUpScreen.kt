@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -16,8 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,15 +56,17 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
 
   LaunchedEffect(state.submitSuccess) { if (state.submitSuccess) onSubmitSuccess() }
 
+  val focusManager = LocalFocusManager.current
+
   val fieldShape = RoundedCornerShape(14.dp)
   val fieldColors =
       TextFieldDefaults.colors(
           focusedContainerColor = FieldContainer,
           unfocusedContainerColor = FieldContainer,
           disabledContainerColor = FieldContainer,
-          focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-          unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-          disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+          focusedIndicatorColor = Color.Transparent,
+          unfocusedIndicatorColor = Color.Transparent,
+          disabledIndicatorColor = Color.Transparent,
           cursorColor = MaterialTheme.colorScheme.primary,
           focusedTextColor = MaterialTheme.colorScheme.onSurface,
           unfocusedTextColor = MaterialTheme.colorScheme.onSurface)
@@ -166,7 +173,11 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
             visualTransformation = PasswordVisualTransformation(),
             shape = fieldShape,
-            colors = fieldColors)
+            colors = fieldColors,
+            keyboardOptions =
+                KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Done, keyboardType = KeyboardType.Password),
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }))
 
         Spacer(Modifier.height(6.dp))
 
@@ -183,6 +194,18 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
           RequirementItem(met = hasDigit, text = "Contains a digit")
           RequirementItem(met = hasSpecial, text = "Contains a special character")
         }
+
+        // Display error message if present
+        state.error?.let { errorMessage ->
+          Spacer(Modifier.height(8.dp))
+          Text(
+              text = errorMessage,
+              color = MaterialTheme.colorScheme.error,
+              style = MaterialTheme.typography.bodyMedium,
+              modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
+        }
+
+        Spacer(Modifier.height(6.dp))
 
         val gradient = Brush.horizontalGradient(listOf(TurquoiseStart, TurquoiseEnd))
         val disabledBrush = Brush.linearGradient(listOf(GrayE6, GrayE6))
