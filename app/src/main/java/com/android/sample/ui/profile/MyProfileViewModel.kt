@@ -61,26 +61,28 @@ class MyProfileViewModel(
   private val descMsgError = "Description cannot be empty"
 
   /** Loads the profile data (to be implemented) */
-  fun loadProfile(userId: String) {
+  fun loadProfile() {
+    val currentId = Firebase.auth.currentUser?.uid ?: ""
     try {
+
       viewModelScope.launch {
-        val profile = repository.getProfile(userId = userId)
+        val profile = repository.getProfile(userId = currentId)
         _uiState.value =
             MyProfileUIState(
                 name = profile?.name,
                 email = profile?.email,
                 selectedLocation = profile?.location,
+                locationQuery = profile?.location?.name ?: "",
                 description = profile?.description)
       }
     } catch (e: Exception) {
-      Log.e("MyProfileViewModel", "Error loading ToDo by ID: $userId", e)
+      Log.e("MyProfileViewModel", "Error loading MyProfile by ID: $currentId", e)
     }
   }
 
   /**
    * Edits a Profile.
    *
-   * @param userId The ID of the profile to edit.
    * @return true if the update process was started, false if validation failed.
    */
   fun editProfile() {

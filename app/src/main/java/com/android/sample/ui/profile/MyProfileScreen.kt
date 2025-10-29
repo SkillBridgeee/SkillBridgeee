@@ -61,7 +61,7 @@ fun MyProfileScreen(
         // Button to save profile changes
         AppButton(
             text = "Save Profile Changes",
-            onClick = { profileViewModel },
+            onClick = { profileViewModel.editProfile() },
             testTag = MyProfileScreenTestTag.SAVE_BUTTON)
       },
       floatingActionButtonPosition = FabPosition.Center,
@@ -79,7 +79,7 @@ private fun ProfileContent(
     profileViewModel: MyProfileViewModel
 ) {
 
-  LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
+  LaunchedEffect(profileId) { profileViewModel.loadProfile() }
 
   // Observe profile state to update the UI
   val profileUIState by profileViewModel.uiState.collectAsState()
