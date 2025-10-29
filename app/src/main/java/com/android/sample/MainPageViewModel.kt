@@ -1,6 +1,7 @@
 package com.android.sample
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
