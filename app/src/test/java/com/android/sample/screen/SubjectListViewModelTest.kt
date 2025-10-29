@@ -1,11 +1,15 @@
 package com.android.sample.screen
 
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
+import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.model.user.Profile
-import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.subject.SubjectListViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,18 +24,16 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
-// Ai generated tests for the SubjectListViewModel
+@OptIn(ExperimentalCoroutinesApi::class)
 class SubjectListViewModelTest {
 
   private val dispatcher = StandardTestDispatcher()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @After
   fun tearDown() {
     Dispatchers.resetMain()
@@ -39,21 +41,90 @@ class SubjectListViewModelTest {
 
   // ---------- Helpers -----------------------------------------------------
 
-  private fun profile(id: String, name: String, desc: String, rating: Double, total: Int) =
-      Profile(userId = id, name = name, description = desc, tutorRating = RatingInfo(rating, total))
+  private fun listing(
+      id: String,
+      creatorId: String,
+      desc: String,
+      subject: MainSubject = MainSubject.MUSIC,
+      skillName: String = "guitar",
+      rate: Double = 25.0
+  ) =
+      Proposal(
+          listingId = id,
+          creatorUserId = creatorId,
+          skill = Skill(subject, skillName),
+          description = desc,
+          location = Location(0.0, 0.0, "Paris"),
+          hourlyRate = rate)
 
-  private fun skill(userId: String, s: String) = Skill(mainSubject = MainSubject.MUSIC, skill = s)
+  private fun profile(id: String, name: String, rating: Double, total: Int) =
+      Profile(userId = id, name = name, tutorRating = RatingInfo(rating, total))
 
-  private class FakeRepo(
-      val profiles: List<Profile> = emptyList(),
-      val skills: Map<String, List<Skill>> = emptyMap(),
-      private val delayMs: Long = 0,
-      private val throwOnGetAll: Boolean = false,
+  private class FakeListingRepo(
+      private val listings: List<Listing>,
+      private val throwError: Boolean = false,
       private val errorMessage: String = "boom"
-  ) : ProfileRepository {
+  ) : ListingRepository {
+    override fun getNewUid(): String {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getAllListings(): List<Listing> {
+      if (throwError) error(errorMessage)
+      delay(10)
+      return listings
+    }
+
+    override suspend fun getProposals(): List<Proposal> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getRequests(): List<Request> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getListing(listingId: String): Listing? {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun addProposal(proposal: Proposal) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun addRequest(request: Request) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteListing(listingId: String) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deactivateListing(listingId: String) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun searchBySkill(skill: Skill): List<Listing> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> {
+      TODO("Not yet implemented")
+    }
+  }
+
+  private class FakeProfileRepo(private val profiles: Map<String, Profile>) :
+      com.android.sample.model.user.ProfileRepository {
     override fun getNewUid(): String = "unused"
 
-    override suspend fun getProfile(userId: String): Profile = error("unused")
+    override suspend fun getProfile(userId: String): Profile? = profiles[userId]
 
     override suspend fun addProfile(profile: Profile) {}
 
@@ -61,181 +132,166 @@ class SubjectListViewModelTest {
 
     override suspend fun deleteProfile(userId: String) {}
 
-    override suspend fun getAllProfiles(): List<Profile> {
-      if (throwOnGetAll) error(errorMessage)
-      if (delayMs > 0) delay(delayMs)
-      return profiles
-    }
+    override suspend fun getAllProfiles(): List<Profile> = profiles.values.toList()
 
     override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
         emptyList<Profile>()
 
-    override suspend fun getProfileById(userId: String): Profile = error("unused")
+    override suspend fun getProfileById(userId: String): Profile? = profiles[userId]
 
-    override suspend fun getSkillsForUser(userId: String): List<Skill> = skills[userId].orEmpty()
+    override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
   }
 
   private fun newVm(
-      profiles: List<Profile> = listOf(A, B, C, D),
-      skills: Map<String, List<Skill>> = defaultRepo.skills,
-      delayMs: Long = 1L,
-      throwOnGetAll: Boolean = false,
-      errorMessage: String = "boom"
-  ): SubjectListViewModel {
-    val repo = FakeRepo(profiles, skills, delayMs, throwOnGetAll, errorMessage)
-    return SubjectListViewModel(repo)
-  }
+      listings: List<Listing> = defaultListings,
+      profiles: Map<String, Profile> = defaultProfiles,
+      throwError: Boolean = false
+  ) =
+      SubjectListViewModel(
+          listingRepo = FakeListingRepo(listings, throwError),
+          profileRepo = FakeProfileRepo(profiles))
 
-  // Seed used by most tests:
-  // Sorted (best first) should be: A(4.9,10), B(4.8,20), C(4.8,15), D(4.2,5)
-  private val A = profile("1", "Alpha", "Guitar lessons", 4.9, 10)
-  private val B = profile("2", "Beta", "Piano lessons", 4.8, 20)
-  private val C = profile("3", "Gamma", "Sing coach", 4.8, 15)
-  private val D = profile("4", "Delta", "Piano tutor", 4.2, 5)
+  private val L1 = listing("1", "A", "Guitar class", MainSubject.MUSIC, "guitar")
+  private val L2 = listing("2", "B", "Piano class", MainSubject.MUSIC, "piano")
+  private val L3 = listing("3", "C", "Singing", MainSubject.MUSIC, "sing")
+  private val L4 = listing("4", "D", "Piano beginner", MainSubject.MUSIC, "piano")
 
-  private val defaultRepo =
-      FakeRepo(
-          profiles = listOf(A, B, C, D),
-          skills =
-              mapOf(
-                  "1" to listOf(skill("1", "GUITAR")),
-                  "2" to listOf(skill("2", "PIANO")),
-                  "3" to listOf(skill("3", "SING")),
-                  "4" to listOf(skill("4", "PIANO"))),
-          delayMs = 1L)
+  private val defaultListings = listOf(L1, L2, L3, L4)
 
-  private fun newVm(repo: ProfileRepository = defaultRepo) = SubjectListViewModel(repository = repo)
+  private val defaultProfiles =
+      mapOf(
+          "A" to profile("A", "Alice", 4.9, 10),
+          "B" to profile("B", "Bob", 4.8, 20),
+          "C" to profile("C", "Charlie", 4.8, 15),
+          "D" to profile("D", "Diana", 4.2, 5))
 
   // ---------- Tests -------------------------------------------------------
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
-  fun refresh_populatesSingleSortedList() = runTest {
+  fun refresh_populates_listings_sorted_by_rating() = runTest {
     val vm = newVm()
-    vm.refresh()
+    vm.refresh(MainSubject.MUSIC)
     advanceUntilIdle()
 
     val ui = vm.ui.value
     assertFalse(ui.isLoading)
     assertNull(ui.error)
+    assertTrue(ui.allListings.isNotEmpty())
 
-    // Single list contains everyone, sorted by rating desc, total ratings desc, then name
-    assertEquals(listOf(A.userId, B.userId, C.userId, D.userId), ui.tutors.map { it.userId })
+    val sorted = ui.listings.map { it.creator?.name }
+    assertEquals(listOf("Alice", "Bob", "Charlie", "Diana"), sorted)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
-  fun onQueryChanged_filtersByNameOrDescription_caseInsensitive() = runTest {
+  fun query_filter_works_by_description_or_name() = runTest {
     val vm = newVm()
-    vm.refresh()
+    vm.refresh(MainSubject.MUSIC)
     advanceUntilIdle()
 
-    // "gamma" matches profile C by name
-    vm.onQueryChanged("gAmMa")
-    var ui = vm.ui.value
-    assertEquals(listOf(C.userId), ui.tutors.map { it.userId })
-
-    // "piano" matches B (desc) and D (desc/name) -> both shown, sorted best-first
     vm.onQueryChanged("piano")
-    ui = vm.ui.value
-    assertEquals(listOf(B.userId, D.userId), ui.tutors.map { it.userId })
+    val ui1 = vm.ui.value
+    assertTrue(
+        ui1.listings.all {
+          it.listing.description.contains("piano", true) ||
+              it.creator?.name?.contains("piano", true) == true
+        })
 
-    // nonsense query -> empty list
-    vm.onQueryChanged("zzz")
-    ui = vm.ui.value
-    assertTrue(ui.tutors.isEmpty())
+    vm.onQueryChanged("Alice")
+    val ui2 = vm.ui.value
+    assertTrue(ui2.listings.any { it.creator?.name == "Alice" })
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
-  fun onSkillSelected_filtersByExactSkill_inCurrentMainSubject() = runTest {
+  fun skill_filter_works_correctly() = runTest {
     val vm = newVm()
-    vm.refresh()
+    vm.refresh(MainSubject.MUSIC)
     advanceUntilIdle()
 
-    // PIANO should return B and D (no separate top section anymore), best-first
-    vm.onSkillSelected("PIANO")
+    vm.onSkillSelected("piano")
     val ui = vm.ui.value
-    assertEquals(listOf(B.userId, D.userId), ui.tutors.map { it.userId })
+    assertTrue(ui.listings.all { it.listing.skill.skill.equals("piano", true) })
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
   fun combined_filters_are_ANDed() = runTest {
     val vm = newVm()
-    vm.refresh()
+    vm.refresh(MainSubject.MUSIC)
     advanceUntilIdle()
 
-    // D matches both query "del" and skill "PIANO"
-    vm.onQueryChanged("Del")
-    vm.onSkillSelected("PIANO")
-    var ui = vm.ui.value
-    assertEquals(listOf(D.userId), ui.tutors.map { it.userId })
-
-    // Change query to something that doesn't match D -> empty result
-    vm.onQueryChanged("Gamma")
-    ui = vm.ui.value
-    assertTrue(ui.tutors.isEmpty())
-  }
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  @Test
-  fun sorting_respects_tieBreakers() = runTest {
-    // X and Y tie on rating & totals -> name tie-breaker (Aaron before Zed)
-    val X = profile("10", "Aaron", "Vocal coach", 4.8, 15)
-    val Y = profile("11", "Zed", "Vocal coach", 4.8, 15)
-    val vm = newVm(profiles = listOf(A, X, Y), skills = emptyMap())
-
-    vm.refresh()
-    advanceUntilIdle()
+    vm.onQueryChanged("Diana")
+    vm.onSkillSelected("piano")
 
     val ui = vm.ui.value
-    assertEquals(listOf(A.userId, X.userId, Y.userId), ui.tutors.map { it.userId })
+    assertEquals(1, ui.listings.size)
+    assertEquals("Diana", ui.listings.first().creator?.name)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
-  fun refresh_handlesErrors_and_setsErrorMessage() = runTest {
-    val failingRepo = FakeRepo(throwOnGetAll = true)
-    val vm = newVm(failingRepo)
-    vm.refresh()
+  fun refresh_sets_error_on_failure() = runTest {
+    val vm = newVm(throwError = true)
+    vm.refresh(MainSubject.MUSIC)
     advanceUntilIdle()
 
     val ui = vm.ui.value
     assertFalse(ui.isLoading)
     assertNotNull(ui.error)
-    assertTrue(ui.tutors.isEmpty())
+    assertTrue(ui.listings.isEmpty())
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
-  fun refresh_setsErrorState_whenRepositoryFails() = runTest {
-    val vm = newVm(throwOnGetAll = true, errorMessage = "Boom failure")
-
-    vm.refresh()
+  fun sorting_respects_tie_breakers() = runTest {
+    val listings = listOf(L2, L3)
+    val profiles = mapOf("B" to profile("B", "Aaron", 4.8, 15), "C" to profile("C", "Zed", 4.8, 15))
+    val vm = newVm(listings, profiles)
+    vm.refresh(MainSubject.MUSIC)
     advanceUntilIdle()
 
-    val ui = vm.ui.value
-    assertFalse(ui.isLoading)
-    assertTrue(ui.error?.contains("Boom failure") == true)
+    val names = vm.ui.value.listings.map { it.creator?.name }
+    assertEquals(listOf("Aaron", "Zed"), names)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
+  // ---------- Additional Coverage Tests -----------------------------------
+
   @Test
-  fun onSkillSelected_filtersTutorsBySkill() = runTest {
-    val p1 = profile("1", "Alice", "Guitar Lessons", 4.9, 23)
-    val p2 = profile("2", "Bob", "Piano Lessons", 4.8, 15)
-    val skills =
-        mapOf(
-            "1" to listOf(Skill(MainSubject.MUSIC, "GUITAR")),
-            "2" to listOf(Skill(MainSubject.MUSIC, "PIANO")))
-    val vm = newVm(profiles = listOf(p1, p2), skills = skills)
+  fun subjectToString_returns_expected_labels() {
+    val vm = newVm()
+    assertEquals("Music", vm.subjectToString(MainSubject.MUSIC))
+    assertEquals("Sports", vm.subjectToString(MainSubject.SPORTS))
+    assertEquals("Languages", vm.subjectToString(MainSubject.LANGUAGES))
+    assertEquals("Subjects", vm.subjectToString(null))
+  }
 
-    vm.refresh()
+  @Test
+  fun getSkillsForSubject_returns_list_from_helper() {
+    val vm = newVm()
+    val skills = vm.getSkillsForSubject(MainSubject.MUSIC)
+    assertTrue(skills.containsAll(SkillsHelper.getSkillNames(MainSubject.MUSIC)))
+  }
+
+  @Test
+  fun onQueryChanged_triggers_filter_even_with_empty_query() = runTest {
+    val vm = newVm()
+    vm.refresh(MainSubject.MUSIC)
     advanceUntilIdle()
+    vm.onQueryChanged("")
+    assertTrue(vm.ui.value.listings.isNotEmpty())
+  }
 
-    vm.onSkillSelected("PIANO")
+  @Test
+  fun onSkillSelected_updates_selectedSkill_and_filters() = runTest {
+    val vm = newVm()
+    vm.refresh(MainSubject.MUSIC)
+    advanceUntilIdle()
+    vm.onSkillSelected("guitar")
     val ui = vm.ui.value
-    assertEquals(listOf("2"), ui.tutors.map { it.userId })
+    assertEquals("guitar", ui.selectedSkill)
+  }
+
+  @Test
+  fun refresh_with_null_subject_defaults_to_previous_mainSubject() = runTest {
+    val vm = newVm()
+    vm.refresh(null)
+    advanceUntilIdle()
+    assertEquals(MainSubject.MUSIC, vm.ui.value.mainSubject)
   }
 }
