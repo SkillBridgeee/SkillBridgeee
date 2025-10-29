@@ -75,7 +75,7 @@ class NewSkillViewModel(
    */
   fun load() {}
 
-  fun addProfile(userId: String) {
+  fun addSkill(userId: String) {
     val state = _uiState.value
     if (state.isValid) {
       val newSkill =

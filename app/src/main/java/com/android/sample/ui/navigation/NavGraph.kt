@@ -2,6 +2,8 @@ package com.android.sample.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -10,15 +12,17 @@ import androidx.navigation.navArgument
 import com.android.sample.HomeScreen
 import com.android.sample.MainPageViewModel
 import com.android.sample.model.authentication.AuthenticationViewModel
+import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
-import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.screens.newSkill.NewSkillScreen
 import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpViewModel
+import com.android.sample.ui.subject.SubjectListScreen
+import com.android.sample.ui.subject.SubjectListViewModel
 
 /**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
@@ -52,6 +56,8 @@ fun AppNavGraph(
     authViewModel: AuthenticationViewModel,
     onGoogleSignIn: () -> Unit
 ) {
+  val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
+
   NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
     composable(NavRoutes.LOGIN) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LOGIN) }
@@ -81,12 +87,23 @@ fun AppNavGraph(
           mainPageViewModel = mainPageViewModel,
           onNavigateToNewSkill = { profileId ->
             navController.navigate(NavRoutes.createNewSkillRoute(profileId))
+          },
+          onNavigateToSubjectList = { subject ->
+            academicSubject.value = subject
+            navController.navigate(NavRoutes.SKILLS)
           })
     }
 
-    composable(NavRoutes.MAP) {
-      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MAP) }
-      MapScreen(navController = navController)
+    composable(NavRoutes.SKILLS) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
+      SubjectListScreen(
+          viewModel =
+              SubjectListViewModel(), // You may need to provide this through dependency injection
+          onBookTutor = { profile ->
+            // Navigate to booking or profile screen when tutor is booked
+            // Example: navController.navigate("booking/${profile.uid}")
+          },
+          subject = academicSubject.value)
     }
 
     composable(NavRoutes.BOOKINGS) {
@@ -108,8 +125,8 @@ fun AppNavGraph(
       SignUpScreen(
           vm = SignUpViewModel(),
           onSubmitSuccess = {
-            // Navigate to home or login after successful signup
-            navController.navigate(NavRoutes.HOME) {
+            // Navigate to login after successful signup
+            navController.navigate(NavRoutes.LOGIN) {
               popUpTo(NavRoutes.SIGNUP) { inclusive = true }
             }
           })

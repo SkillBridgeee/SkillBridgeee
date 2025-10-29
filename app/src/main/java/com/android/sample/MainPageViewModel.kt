@@ -1,14 +1,25 @@
 package com.android.sample
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingInfo
-import com.android.sample.model.skill.Skill
+import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.theme.subjectColor1
+import com.android.sample.ui.theme.subjectColor2
+import com.android.sample.ui.theme.subjectColor3
+import com.android.sample.ui.theme.subjectColor4
+import com.android.sample.ui.theme.subjectColor5
+import com.android.sample.ui.theme.subjectColor6
+import com.android.sample.ui.theme.subjectColor7
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,13 +30,13 @@ import kotlinx.coroutines.launch
  * Represents the complete UI state of the Home (Main) screen.
  *
  * @property welcomeMessage A greeting message for the current user.
- * @property skills A list of skills retrieved from the local repository.
+ * @property subjects A list of subjects for the List to display.
  * @property tutors A list of tutor cards prepared for display.
  */
 data class HomeUiState(
     val welcomeMessage: String = "",
-    val skills: List<Skill> = emptyList(),
-    val tutors: List<TutorCardUi> = emptyList()
+    val subjects: List<MainSubject> = emptyList(),
+    var tutors: List<TutorCardUi> = emptyList()
 )
 
 /**
@@ -43,7 +54,7 @@ data class TutorCardUi(
     val hourlyRate: Double,
     val ratingStars: Int,
     val ratingCount: Int
-)
+) {}
 
 /**
  * ViewModel responsible for managing and preparing data for the Main Page (HomeScreen).
@@ -53,6 +64,11 @@ data class TutorCardUi(
  * tutors (currently as placeholders).
  */
 class MainPageViewModel : ViewModel() {
+
+  companion object {
+    private const val TAG = "MainPageViewModel"
+    private const val DEFAULT_WELCOME_MESSAGE = "Welcome back!"
+  }
 
   private val profileRepository = ProfileRepositoryProvider.repository
   private val listingRepository = ListingRepositoryProvider.repository
@@ -78,19 +94,22 @@ class MainPageViewModel : ViewModel() {
    */
   suspend fun load() {
     try {
-      val skills = emptyList<Skill>()
+      val subjects = MainSubject.entries.toList()
       val listings = listingRepository.getAllListings()
       val tutors = profileRepository.getAllProfiles()
 
       val tutorCards = listings.mapNotNull { buildTutorCardSafely(it, tutors) }
-      val userName = ""
+      val userName = mutableStateOf("")
+      navigationEvent.value?.let { getCurrentUserName("user123") { name -> userName.value = name } }
+          ?: "Ava"
 
       _uiState.value =
           HomeUiState(
-              welcomeMessage = "Welcome back, $userName!", skills = skills, tutors = tutorCards)
+              welcomeMessage = "Welcome back, $userName!", subjects = subjects, tutors = tutorCards)
     } catch (e: Exception) {
-      // Fallback in case of repository or mapping failure.
-      _uiState.value = HomeUiState(welcomeMessage = "Welcome back, Ava!")
+      // Log the error for debugging while providing a safe fallback UI state
+      Log.w(TAG, "Failed to build HomeUiState, using fallback", e)
+      _uiState.value = HomeUiState(welcomeMessage = DEFAULT_WELCOME_MESSAGE)
     }
   }
 
@@ -115,6 +134,7 @@ class MainPageViewModel : ViewModel() {
           ratingStars = computeAvgStars(tutor.tutorRating),
           ratingCount = ratingCountFor(tutor.tutorRating))
     } catch (e: Exception) {
+      Log.w(TAG, "Failed to build TutorCardUi for listing: ${listing.creatorUserId}", e)
       null
     }
   }
@@ -145,6 +165,7 @@ class MainPageViewModel : ViewModel() {
    * @param hourlyRate The raw hourly rate value.
    * @return The formatted hourly rate as a [Double].
    */
+  @SuppressLint("DefaultLocale")
   private fun formatPrice(hourlyRate: Double): Double {
     return String.format("%.2f", hourlyRate).toDouble()
   }
@@ -171,7 +192,29 @@ class MainPageViewModel : ViewModel() {
     viewModelScope.launch { _navigationEvent.value = profileId }
   }
 
+  fun getCurrentUserName(userId: String, onResult: (String) -> Unit) {
+    viewModelScope.launch {
+      val profile = runCatching { profileRepository.getProfileById(userId) }.getOrNull()
+      onResult(profile?.name ?: "User")
+    }
+  }
+
   fun onNavigationHandled() {
     _navigationEvent.value = null
+  }
+
+  object SubjectColors {
+
+    fun getSubjectColor(subject: MainSubject): Color {
+      return when (subject) {
+        MainSubject.ACADEMICS -> subjectColor1
+        MainSubject.SPORTS -> subjectColor2
+        MainSubject.MUSIC -> subjectColor3
+        MainSubject.ARTS -> subjectColor4
+        MainSubject.TECHNOLOGY -> subjectColor5
+        MainSubject.LANGUAGES -> subjectColor6
+        MainSubject.CRAFTS -> subjectColor7
+      }
+    }
   }
 }
