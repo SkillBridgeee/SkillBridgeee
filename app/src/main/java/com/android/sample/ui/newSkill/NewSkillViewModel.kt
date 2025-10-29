@@ -69,7 +69,8 @@ data class SkillUIState(
 class NewSkillViewModel(
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val locationRepository: LocationRepository =
-        NominatimLocationRepository(HttpClientProvider.client)
+        NominatimLocationRepository(HttpClientProvider.client),
+    private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
   // Internal mutable UI state
   private val _uiState = MutableStateFlow(SkillUIState())
@@ -92,7 +93,6 @@ class NewSkillViewModel(
 
   fun addSkill() {
     val state = _uiState.value
-    val currentId = Firebase.auth.currentUser?.uid ?: ""
     if (state.isValid) {
       val price = state.price.toDouble()
       val newSkill =
@@ -104,7 +104,7 @@ class NewSkillViewModel(
       val newProposal =
           Proposal(
               listingId = listingRepository.getNewUid(),
-              creatorUserId = currentId,
+              creatorUserId = userId,
               skill = newSkill,
               description = state.description,
               location = state.selectedLocation!!,

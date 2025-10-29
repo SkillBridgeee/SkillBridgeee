@@ -46,9 +46,10 @@ data class MyProfileUIState(
 
 // ViewModel to manage profile editing logic and state
 class MyProfileViewModel(
-    private val repository: ProfileRepository = ProfileRepositoryProvider.repository,
+    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
     private val locationRepository: LocationRepository =
-        NominatimLocationRepository(HttpClientProvider.client)
+        NominatimLocationRepository(HttpClientProvider.client),
+    private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
   // Holds the current UI state
   private val _uiState = MutableStateFlow(MyProfileUIState())
@@ -62,11 +63,10 @@ class MyProfileViewModel(
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile() {
-    val currentId = Firebase.auth.currentUser?.uid ?: ""
-    try {
-
-      viewModelScope.launch {
-        val profile = repository.getProfile(userId = currentId)
+    val currentId = userId
+    viewModelScope.launch {
+      try {
+        val profile = profileRepository.getProfile(userId = currentId)
         _uiState.value =
             MyProfileUIState(
                 name = profile?.name,
@@ -74,9 +74,9 @@ class MyProfileViewModel(
                 selectedLocation = profile?.location,
                 locationQuery = profile?.location?.name ?: "",
                 description = profile?.description)
+      } catch (e: Exception) {
+        Log.e("MyProfileViewModel", "Error loading MyProfile by ID: $currentId", e)
       }
-    } catch (e: Exception) {
-      Log.e("MyProfileViewModel", "Error loading MyProfile by ID: $currentId", e)
     }
   }
 
@@ -91,7 +91,7 @@ class MyProfileViewModel(
       setError()
       return
     }
-    val currentId = Firebase.auth.currentUser?.uid ?: ""
+    val currentId = userId
     val profile =
         Profile(
             userId = currentId,
@@ -112,7 +112,7 @@ class MyProfileViewModel(
   private fun editProfileToRepository(userId: String, profile: Profile) {
     viewModelScope.launch {
       try {
-        repository.updateProfile(userId = userId, profile = profile)
+        profileRepository.updateProfile(userId = userId, profile = profile)
       } catch (e: Exception) {
         Log.e("MyProfileViewModel", "Error updating Profile", e)
       }
