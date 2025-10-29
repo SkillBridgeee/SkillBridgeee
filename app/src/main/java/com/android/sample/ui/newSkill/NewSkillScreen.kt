@@ -59,7 +59,7 @@ fun NewSkillScreen(skillViewModel: NewSkillViewModel = NewSkillViewModel(), prof
       floatingActionButton = {
         AppButton(
             text = "Save New Skill",
-            onClick = { skillViewModel.addSkill(userId = profileId) },
+            onClick = { skillViewModel.addSkill() },
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center,

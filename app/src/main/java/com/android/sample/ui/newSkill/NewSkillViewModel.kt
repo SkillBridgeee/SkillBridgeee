@@ -12,6 +12,8 @@ import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -88,9 +90,11 @@ class NewSkillViewModel(
    */
   fun load() {}
 
-  fun addSkill(userId: String) {
+  fun addSkill() {
     val state = _uiState.value
+    val currentId = Firebase.auth.currentUser?.uid ?: ""
     if (state.isValid) {
+      val price = state.price.toDouble()
       val newSkill =
           Skill(
               mainSubject = state.subject!!,
@@ -100,10 +104,11 @@ class NewSkillViewModel(
       val newProposal =
           Proposal(
               listingId = listingRepository.getNewUid(),
-              creatorUserId = userId,
+              creatorUserId = currentId,
               skill = newSkill,
               description = state.description,
-              location = state.selectedLocation!!)
+              location = state.selectedLocation!!,
+              hourlyRate = price)
 
       addSkillToRepository(proposal = newProposal)
     } else {
