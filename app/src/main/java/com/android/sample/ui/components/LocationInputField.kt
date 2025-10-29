@@ -16,9 +16,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.android.sample.model.map.Location
+
+object LocationInputFieldTestTags {
+  const val INPUT_LOCATION = "inputLocation"
+  const val ERROR_MSG = "errorMsg"
+}
 
 /**
  * A composable input field for searching and selecting a location.
@@ -60,8 +66,10 @@ fun LocationInputField(
         label = { Text("Location") },
         placeholder = { Text("Enter an Address or Location") },
         isError = errorMsg != null,
-        supportingText = { errorMsg?.let { Text(text = it) } },
-        modifier = Modifier.fillMaxWidth())
+        supportingText = {
+          errorMsg?.let { Text(text = it, modifier.testTag(LocationInputFieldTestTags.ERROR_MSG)) }
+        },
+        modifier = Modifier.fillMaxWidth().testTag(LocationInputFieldTestTags.INPUT_LOCATION))
 
     DropdownMenu(
         expanded = showDropdown && locationSuggestions.isNotEmpty(),
