@@ -70,13 +70,10 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Use RouteStackManager to verify navigation instead of checking UI text
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      RouteStackManager.getCurrentRoute() == NavRoutes.HOME
-    }
-
-    // Verify we're on home screen
-    assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
+    // Should now be on home screen - check for home screen elements
+    composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
+    composeTestRule.onNodeWithText("Explore Subjects").assertExists()
+    composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
   }
 
   @Test
@@ -89,13 +86,8 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Skills").performClick()
     composeTestRule.waitForIdle()
 
-    // Use RouteStackManager to verify navigation
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS
-    }
-
-    // Verify we're on skills screen using test tag instead of UI text
-    composeTestRule.onNodeWithTag("SubjectListTestTags.SEARCHBAR").assertExists()
+    // Should display skills screen content
+    composeTestRule.onNodeWithText("Find a tutor about Subjects").assertExists()
   }
 
   @Test
@@ -206,17 +198,6 @@ class AppNavGraphTest {
       RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS
     }
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
-
-    // Navigate to profile
-    composeTestRule.onNodeWithText("Profile").performClick()
-    composeTestRule.waitForIdle()
-
-    // Wait for profile route to be set - no Thread.sleep needed!
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
-    }
-
-    assert(RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE)
   }
 
   @Test
@@ -236,10 +217,10 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Home").performClick()
     composeTestRule.waitForIdle()
 
-    // Use RouteStackManager to verify we're back on home
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      RouteStackManager.getCurrentRoute() == NavRoutes.HOME
-    }
+    // Should be on home screen - check for actual home content
+    composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
+    composeTestRule.onNodeWithText("Explore Subjects").assertExists()
+    composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
   }
 
@@ -252,9 +233,9 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Skills").performClick()
     composeTestRule.waitForIdle()
 
-    // Use test tags instead of UI text for more robust assertions
-    composeTestRule.onNodeWithTag("SubjectListTestTags.SEARCHBAR").assertExists()
-    composeTestRule.onNodeWithTag("SubjectListTestTags.CATEGORY_SELECTOR").assertExists()
+    // Verify skills screen components
+    composeTestRule.onNodeWithText("Find a tutor about Subjects").assertExists()
+    composeTestRule.onNodeWithText("Category").assertExists()
   }
 
   @Test

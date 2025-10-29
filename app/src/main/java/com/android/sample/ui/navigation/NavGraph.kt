@@ -3,6 +3,8 @@ package com.android.sample.ui.navigation
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -11,6 +13,7 @@ import androidx.navigation.navArgument
 import com.android.sample.HomeScreen
 import com.android.sample.MainPageViewModel
 import com.android.sample.model.authentication.AuthenticationViewModel
+import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
@@ -56,6 +59,8 @@ fun AppNavGraph(
     authViewModel: AuthenticationViewModel,
     onGoogleSignIn: () -> Unit
 ) {
+  val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
+
   NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
     composable(NavRoutes.LOGIN) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LOGIN) }
@@ -85,6 +90,10 @@ fun AppNavGraph(
           mainPageViewModel = mainPageViewModel,
           onNavigateToNewSkill = { profileId ->
             navController.navigate(NavRoutes.createNewSkillRoute(profileId))
+          },
+          onNavigateToSubjectList = { subject ->
+            academicSubject.value = subject
+            navController.navigate(NavRoutes.SKILLS)
           })
     }
 
@@ -96,7 +105,8 @@ fun AppNavGraph(
           onBookTutor = { profile ->
             // Navigate to booking or profile screen when tutor is booked
             // Example: navController.navigate("booking/${profile.uid}")
-          })
+          },
+          subject = academicSubject.value)
     }
 
     composable(NavRoutes.BOOKINGS) {
