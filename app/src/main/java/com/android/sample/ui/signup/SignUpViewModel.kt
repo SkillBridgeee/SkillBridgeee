@@ -1,5 +1,6 @@
 package com.android.sample.ui.signup
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.AuthenticationRepository
@@ -13,13 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class Role {
-  LEARNER,
-  TUTOR
-}
-
 data class SignUpUiState(
-    val role: Role = Role.LEARNER,
     val name: String = "",
     val surname: String = "",
     val address: String = "",
@@ -30,11 +25,11 @@ data class SignUpUiState(
     val submitting: Boolean = false,
     val error: String? = null,
     val canSubmit: Boolean = false,
-    val submitSuccess: Boolean = false
+    val submitSuccess: Boolean = false,
+    val isGoogleSignUp: Boolean = false // True if user is already authenticated via Google
 )
 
 sealed interface SignUpEvent {
-  data class RoleChanged(val role: Role) : SignUpEvent
 
   data class NameChanged(val value: String) : SignUpEvent
 
@@ -54,22 +49,52 @@ sealed interface SignUpEvent {
 }
 
 class SignUpViewModel(
+    initialEmail: String? = null,
     private val authRepository: AuthenticationRepository = AuthenticationRepository(),
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
+
+  companion object {
+    private const val TAG = "SignUpViewModel"
+  }
+
   private val _state = MutableStateFlow(SignUpUiState())
   val state: StateFlow<SignUpUiState> = _state
 
+  init {
+    // Check if user is already authenticated (Google Sign-In) and pre-fill email
+    if (!initialEmail.isNullOrBlank()) {
+      val isAuthenticated = authRepository.getCurrentUser() != null
+      Log.d(TAG, "Init - Email: $initialEmail, User authenticated: $isAuthenticated")
+      _state.update { it.copy(email = initialEmail, isGoogleSignUp = isAuthenticated) }
+      validate()
+    }
+  }
+
+  /** Called when user navigates away from signup without completing */
+  fun onSignUpAbandoned() {
+    // If this was a Google sign-up (user is authenticated but no profile was created)
+    // sign them out so they go through the flow again next time
+    if (_state.value.isGoogleSignUp && !_state.value.submitSuccess) {
+      Log.d(TAG, "Sign-up abandoned - signing out Google user")
+      authRepository.signOut()
+    }
+  }
+
   fun onEvent(e: SignUpEvent) {
     when (e) {
-      is SignUpEvent.RoleChanged -> _state.update { it.copy(role = e.role) }
       is SignUpEvent.NameChanged -> _state.update { it.copy(name = e.value) }
       is SignUpEvent.SurnameChanged -> _state.update { it.copy(surname = e.value) }
       is SignUpEvent.AddressChanged -> _state.update { it.copy(address = e.value) }
       is SignUpEvent.LevelOfEducationChanged ->
           _state.update { it.copy(levelOfEducation = e.value) }
       is SignUpEvent.DescriptionChanged -> _state.update { it.copy(description = e.value) }
-      is SignUpEvent.EmailChanged -> _state.update { it.copy(email = e.value) }
+      is SignUpEvent.EmailChanged -> {
+        // Don't allow email changes for Google sign-ups
+        if (!_state.value.isGoogleSignUp) {
+          _state.update { it.copy(email = e.value) }
+        }
+      }
       is SignUpEvent.PasswordChanged -> _state.update { it.copy(password = e.value) }
       SignUpEvent.Submit -> submit()
     }
@@ -95,8 +120,17 @@ class SignUpViewModel(
       }
 
       val password = s.password
+      // Check if user is already authenticated (e.g., Google Sign-In)
+      val isAuthenticated = authRepository.getCurrentUser() != null
       val passwordOk =
-          password.length >= 8 && password.any { it.isDigit() } && password.any { it.isLetter() }
+          if (isAuthenticated) {
+            // Password not required for already authenticated users
+            true
+          } else {
+            // Password required for new sign-ups
+            password.length >= 8 && password.any { it.isDigit() } && password.any { it.isLetter() }
+          }
+
       val levelOk = s.levelOfEducation.trim().isNotEmpty()
       val ok = nameOk && surnameOk && emailOk && passwordOk && levelOk
       s.copy(canSubmit = ok, error = null)
@@ -113,56 +147,85 @@ class SignUpViewModel(
       _state.update { it.copy(submitting = true, error = null, submitSuccess = false) }
       val current = _state.value
       try {
-        // Step 1: Create Firebase Authentication account
-        val authResult = authRepository.signUpWithEmail(current.email.trim(), current.password)
+        // Check if user is already authenticated (e.g., via Google Sign-In)
+        val currentUser = authRepository.getCurrentUser()
 
-        authResult.fold(
-            onSuccess = { firebaseUser ->
-              // Step 2: Create user profile in Firestore using the Firebase Auth UID
-              try {
-                val fullName =
-                    listOf(current.name.trim(), current.surname.trim())
-                        .filter { it.isNotEmpty() }
-                        .joinToString(" ")
+        if (currentUser != null) {
+          // User is already authenticated (Google Sign-In), just create profile
+          try {
+            val fullName =
+                listOf(current.name.trim(), current.surname.trim())
+                    .filter { it.isNotEmpty() }
+                    .joinToString(" ")
 
-                val profile =
-                    Profile(
-                        userId = firebaseUser.uid, // Use Firebase Auth UID
-                        name = fullName,
-                        email = current.email.trim(),
-                        levelOfEducation = current.levelOfEducation.trim(),
-                        description = current.description.trim(),
-                        location = buildLocation(current.address))
+            val profile =
+                Profile(
+                    userId = currentUser.uid,
+                    name = fullName,
+                    email = current.email.trim(),
+                    levelOfEducation = current.levelOfEducation.trim(),
+                    description = current.description.trim(),
+                    location = buildLocation(current.address))
 
-                profileRepository.addProfile(profile)
-                _state.update { it.copy(submitting = false, submitSuccess = true) }
-              } catch (e: Exception) {
-                // Profile creation failed after auth success.
-                // Note: The Firebase Auth user remains created. Consider calling
-                // firebaseUser.delete() to roll back, but that requires handling
-                // re-authentication complexity. For now, we leave the auth user and show error.
-                _state.update {
-                  it.copy(
-                      submitting = false,
-                      error = "Account created but profile failed: ${e.message}")
-                }
-              }
-            },
-            onFailure = { exception ->
-              // Firebase Auth account creation failed - use error codes for better detection
-              val errorMessage =
-                  if (exception is FirebaseAuthException) {
-                    when (exception.errorCode) {
-                      "ERROR_EMAIL_ALREADY_IN_USE" -> "This email is already registered"
-                      "ERROR_INVALID_EMAIL" -> "Invalid email format"
-                      "ERROR_WEAK_PASSWORD" -> "Password is too weak"
-                      else -> exception.message ?: "Sign up failed"
-                    }
-                  } else {
-                    exception.message ?: "Sign up failed"
+            profileRepository.addProfile(profile)
+            _state.update { it.copy(submitting = false, submitSuccess = true) }
+          } catch (e: Exception) {
+            _state.update {
+              it.copy(submitting = false, error = "Profile creation failed: ${e.message}")
+            }
+          }
+        } else {
+          // User is not authenticated, create Firebase Auth account first
+          val authResult = authRepository.signUpWithEmail(current.email.trim(), current.password)
+
+          authResult.fold(
+              onSuccess = { firebaseUser ->
+                // Step 2: Create user profile in Firestore using the Firebase Auth UID
+                try {
+                  val fullName =
+                      listOf(current.name.trim(), current.surname.trim())
+                          .filter { it.isNotEmpty() }
+                          .joinToString(" ")
+
+                  val profile =
+                      Profile(
+                          userId = firebaseUser.uid, // Use Firebase Auth UID
+                          name = fullName,
+                          email = current.email.trim(),
+                          levelOfEducation = current.levelOfEducation.trim(),
+                          description = current.description.trim(),
+                          location = buildLocation(current.address))
+
+                  profileRepository.addProfile(profile)
+                  _state.update { it.copy(submitting = false, submitSuccess = true) }
+                } catch (e: Exception) {
+                  // Profile creation failed after auth success.
+                  // Note: The Firebase Auth user remains created. Consider calling
+                  // firebaseUser.delete() to roll back, but that requires handling
+                  // re-authentication complexity. For now, we leave the auth user and show error.
+                  _state.update {
+                    it.copy(
+                        submitting = false,
+                        error = "Account created but profile failed: ${e.message}")
                   }
-              _state.update { it.copy(submitting = false, error = errorMessage) }
-            })
+                }
+              },
+              onFailure = { exception ->
+                // Firebase Auth account creation failed - use error codes for better detection
+                val errorMessage =
+                    if (exception is FirebaseAuthException) {
+                      when (exception.errorCode) {
+                        "ERROR_EMAIL_ALREADY_IN_USE" -> "This email is already registered"
+                        "ERROR_INVALID_EMAIL" -> "Invalid email format"
+                        "ERROR_WEAK_PASSWORD" -> "Password is too weak"
+                        else -> exception.message ?: "Sign up failed"
+                      }
+                    } else {
+                      exception.message ?: "Sign up failed"
+                    }
+                _state.update { it.copy(submitting = false, error = errorMessage) }
+              })
+        }
       } catch (t: Throwable) {
         _state.update { it.copy(submitting = false, error = t.message ?: "Unknown error") }
       }

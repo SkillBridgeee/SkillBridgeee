@@ -3,9 +3,12 @@
 package com.android.sample.model.authentication
 
 import android.content.Context
+import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,8 +25,13 @@ import kotlinx.coroutines.launch
 class AuthenticationViewModel(
     @Suppress("StaticFieldLeak") private val context: Context,
     private val repository: AuthenticationRepository = AuthenticationRepository(),
-    private val credentialHelper: CredentialAuthHelper = CredentialAuthHelper(context)
+    private val credentialHelper: CredentialAuthHelper = CredentialAuthHelper(context),
+    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
+
+  companion object {
+    private const val TAG = "AuthViewModel"
+  }
 
   private val _uiState = MutableStateFlow(AuthenticationUiState())
   val uiState: StateFlow<AuthenticationUiState> = _uiState.asStateFlow()
@@ -39,11 +47,6 @@ class AuthenticationViewModel(
   /** Update the password field */
   fun updatePassword(password: String) {
     _uiState.update { it.copy(password = password, error = null, message = null) }
-  }
-
-  /** Update the selected user role */
-  fun updateSelectedRole(role: UserRole) {
-    _uiState.update { it.copy(selectedRole = role) }
   }
 
   /** Sign in with email and password */
@@ -89,8 +92,27 @@ class AuthenticationViewModel(
           val authResult = repository.signInWithCredential(firebaseCredential)
           authResult.fold(
               onSuccess = { user ->
-                _authResult.value = AuthResult.Success(user)
-                _uiState.update { it.copy(isLoading = false, error = null) }
+                // Check if profile exists for this user
+                val profile =
+                    try {
+                      profileRepository.getProfile(user.uid)
+                    } catch (_: Exception) {
+                      null
+                    }
+
+                if (profile == null) {
+                  // No profile exists - user needs to sign up
+                  val email = user.email ?: account.email ?: ""
+                  Log.d(
+                      TAG,
+                      "User needs sign up. Firebase email: ${user.email}, Google email: ${account.email}, Final email: $email")
+                  _authResult.value = AuthResult.RequiresSignUp(email, user)
+                  _uiState.update { it.copy(isLoading = false, error = null) }
+                } else {
+                  // Profile exists - successful login
+                  _authResult.value = AuthResult.Success(user)
+                  _uiState.update { it.copy(isLoading = false, error = null) }
+                }
               },
               onFailure = { exception ->
                 val errorMessage = exception.message ?: "Google sign in failed"
