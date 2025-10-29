@@ -7,11 +7,11 @@ import com.android.sample.MainActivity
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
+import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import org.junit.After
-import com.android.sample.ui.signup.SignUpScreenTestTags
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -73,7 +73,6 @@ class AppNavGraphTest {
 
     // Should now be on home screen - check for home screen elements
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
-    composeTestRule.onNodeWithText("Explore skills").assertExists()
     composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
   }
 
@@ -190,15 +189,15 @@ class AppNavGraphTest {
     }
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
 
-    // Navigate to skills
+    // Navigate to Map
     composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
 
     // Wait for skills route to be set
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS
+      RouteStackManager.getCurrentRoute() == NavRoutes.MAP
     }
-    assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.MAP)
   }
 
   @Test

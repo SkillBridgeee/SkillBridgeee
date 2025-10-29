@@ -16,6 +16,7 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
+import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.screens.newSkill.NewSkillScreen
@@ -71,6 +72,11 @@ fun AppNavGraph(
           onNavigateToSignUp = { // Add this navigation callback
             navController.navigate(NavRoutes.SIGNUP)
           })
+    }
+
+    composable(NavRoutes.MAP) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MAP) }
+      MapScreen(navController = navController)
     }
 
     composable(NavRoutes.PROFILE) {

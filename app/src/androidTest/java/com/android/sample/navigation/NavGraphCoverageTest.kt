@@ -45,7 +45,6 @@ class NavGraphCoverageTest {
 
     // Home assertions
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
-    composeTestRule.onNodeWithText("Explore skills").assertExists()
 
     // Navigate using bottom nav (use test tags for reliability)
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).performClick()
