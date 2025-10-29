@@ -1,6 +1,8 @@
 package com.android.sample.navigation
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -13,8 +15,10 @@ import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
+import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
 import com.android.sample.ui.profile.MyProfileScreenTestTag
+import com.android.sample.ui.subject.SubjectListTestTags
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -67,5 +71,31 @@ class NavGraphCoverageTest {
     composeTestRule.onNodeWithContentDescription("Add").performClick()
     composeTestRule.waitForIdle()
     composeTestRule.onNodeWithText("Create Your Lessons !").assertExists()
+  }
+
+  @Test
+  fun skills_navigation_opens_subject_list() {
+    // Login to reach main app
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.waitForIdle()
+
+    // Wait until HOME route is registered
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.HOME
+    }
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
+
+    // Click the first subject card on the Home screen
+    composeTestRule.onAllNodesWithTag(HomeScreenTestTags.SKILL_CARD).onFirst().performClick()
+    composeTestRule.waitForIdle()
+
+    // Wait until SKILLS route is registered
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS
+    }
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
+
+    // Verify SubjectListScreen is displayed (search bar present)
+    composeTestRule.onNodeWithTag(SubjectListTestTags.SEARCHBAR).assertExists()
   }
 }
