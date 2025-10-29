@@ -89,16 +89,14 @@ fun SubjectListScreen(
                 value =
                     ui.selectedSkill?.replace('_', ' ')
                         ?: buildString {
-                          append("e.g. ")
-                          if (skillsForSubject.isNotEmpty()) {
-                            skillsForSubject.take(3).forEachIndexed { index, skill ->
-                              append(skill.lowercase())
-                              if (index < skillsForSubject.take(3).lastIndex) append(", ")
-                            }
-                          } else {
-                            append("Maths, Violin, Python")
-                          }
-                          append(", ...")
+                          val sampleSkills =
+                              if (skillsForSubject.isNotEmpty()) {
+                                skillsForSubject.take(3).joinToString(", ") { it.lowercase() }
+                              } else {
+                                "Maths, Violin, Python"
+                              }
+
+                          append("e.g. $sampleSkills, ...")
                         },
                 label = { Text("Category") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
