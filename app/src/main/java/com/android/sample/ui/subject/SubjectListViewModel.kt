@@ -147,7 +147,7 @@ class SubjectListViewModel(
     fun key(s: String) = s.trim().lowercase()
     val selectedSkillKey = state.selectedSkill?.let(::key)
 
-      // Apply filters to all listings
+    // Apply filters to all listings
     val filtered =
         state.allListings.filter { item ->
           val profile = item.creator
