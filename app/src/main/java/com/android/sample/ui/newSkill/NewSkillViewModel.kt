@@ -14,6 +14,8 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -76,6 +78,9 @@ class NewSkillViewModel(
   private val _uiState = MutableStateFlow(SkillUIState())
   // Public read-only state flow for the UI to observe
   val uiState: StateFlow<SkillUIState> = _uiState.asStateFlow()
+
+  private var locationSearchJob: Job? = null
+  private val locationSearchDelayTime: Long = 1000
 
   private val titleMsgError = "Title cannot be empty"
   private val descMsgError = "Description cannot be empty"
@@ -201,16 +206,20 @@ class NewSkillViewModel(
   fun setLocationQuery(query: String) {
     _uiState.value = _uiState.value.copy(locationQuery = query)
 
+    locationSearchJob?.cancel()
+
     if (query.isNotBlank()) {
-      viewModelScope.launch {
-        try {
-          val results = locationRepository.search(query)
-          _uiState.value =
-              _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
-        } catch (_: Exception) {
-          _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
-        }
-      }
+      locationSearchJob =
+          viewModelScope.launch {
+            delay(locationSearchDelayTime)
+            try {
+              val results = locationRepository.search(query)
+              _uiState.value =
+                  _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
+            } catch (_: Exception) {
+              _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+            }
+          }
     } else {
       _uiState.value =
           _uiState.value.copy(

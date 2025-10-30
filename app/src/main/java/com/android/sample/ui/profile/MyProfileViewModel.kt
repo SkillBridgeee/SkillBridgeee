@@ -12,6 +12,8 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -62,6 +64,9 @@ class MyProfileViewModel(
   // Holds the current UI state
   private val _uiState = MutableStateFlow(MyProfileUIState())
   val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
+
+  private var locationSearchJob: Job? = null
+  private val locationSearchDelayTime: Long = 1000
 
   private val nameMsgError = "Name cannot be empty"
   private val emailEmptyMsgError = "Email cannot be empty"
@@ -195,16 +200,20 @@ class MyProfileViewModel(
   fun setLocationQuery(query: String) {
     _uiState.value = _uiState.value.copy(locationQuery = query)
 
+    locationSearchJob?.cancel()
+
     if (query.isNotEmpty()) {
-      viewModelScope.launch {
-        try {
-          val results = locationRepository.search(query)
-          _uiState.value =
-              _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
-        } catch (_: Exception) {
-          _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
-        }
-      }
+      locationSearchJob =
+          viewModelScope.launch {
+            delay(locationSearchDelayTime)
+            try {
+              val results = locationRepository.search(query)
+              _uiState.value =
+                  _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
+            } catch (_: Exception) {
+              _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+            }
+          }
     } else {
       _uiState.value =
           _uiState.value.copy(
