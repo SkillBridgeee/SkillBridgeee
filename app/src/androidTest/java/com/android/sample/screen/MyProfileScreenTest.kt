@@ -9,6 +9,7 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
+import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.profile.MyProfileViewModel
@@ -80,7 +81,7 @@ class MyProfileScreenTest {
   @Before
   fun setup() {
     val repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
-    viewModel = MyProfileViewModel(repo)
+    viewModel = MyProfileViewModel(repo, userId = "demo")
 
     compose.setContent { MyProfileScreen(profileViewModel = viewModel, profileId = "demo") }
 
@@ -164,27 +165,23 @@ class MyProfileScreenTest {
   // ----------------------------------------------------------
   @Test
   fun locationField_displaysCorrectInitialValue() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_LOCATION).assertTextContains("EPFL")
+    compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).assertTextContains("EPFL")
   }
 
   @Test
   fun locationField_canBeEdited() {
     val newLocation = "Harvard University"
-    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_LOCATION).performTextClearance()
-    compose
-        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_LOCATION)
-        .performTextInput(newLocation)
-    compose
-        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_LOCATION)
-        .assertTextContains(newLocation)
+    compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).performTextClearance()
+    compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).performTextInput(newLocation)
+    compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).assertTextContains(newLocation)
   }
 
   @Test
   fun locationField_showsError_whenEmpty() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_LOCATION).performTextClearance()
-    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_LOCATION).performTextInput("")
+    compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).performTextClearance()
+    compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).performTextInput(" ")
     compose
-        .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
+        .onNodeWithTag(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
   }
 
