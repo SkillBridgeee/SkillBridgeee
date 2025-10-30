@@ -200,7 +200,7 @@ class NewSkillViewModel(
    * the [locationRepository].
    *
    * @param query The new location search query entered by the user.
-   * @see locationRepository.search
+   * @see locationRepository
    * @see viewModelScope
    */
   fun setLocationQuery(query: String) {
