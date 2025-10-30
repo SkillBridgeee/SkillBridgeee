@@ -134,8 +134,7 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
 
   // Define main screens that should show bottom nav
-  val mainScreenRoutes =
-      listOf(NavRoutes.HOME, NavRoutes.BOOKINGS, NavRoutes.PROFILE)
+  val mainScreenRoutes = listOf(NavRoutes.HOME, NavRoutes.BOOKINGS, NavRoutes.PROFILE)
 
   // Check if current route should show bottom nav
   val showBottomNav = mainScreenRoutes.contains(currentRoute)
