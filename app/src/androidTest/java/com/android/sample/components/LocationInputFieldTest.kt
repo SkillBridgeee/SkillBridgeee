@@ -31,7 +31,6 @@ class LocationInputFieldTest {
         )
 
     var latestQuery = ""
-    var selectedLocation: Location? = null
 
     composeRule.setContent {
       Box {
@@ -40,7 +39,7 @@ class LocationInputFieldTest {
             errorMsg = null,
             locationSuggestions = testSuggestions,
             onLocationQueryChange = { latestQuery = it },
-            onLocationSelected = { selectedLocation = it },
+            onLocationSelected = {},
         )
       }
     }

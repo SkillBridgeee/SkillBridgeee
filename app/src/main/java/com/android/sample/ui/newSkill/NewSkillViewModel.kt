@@ -214,7 +214,9 @@ class NewSkillViewModel(
     } else {
       _uiState.value =
           _uiState.value.copy(
-              locationSuggestions = emptyList(), invalidLocationMsg = locationMsgError)
+              locationSuggestions = emptyList(),
+              invalidLocationMsg = locationMsgError,
+              selectedLocation = null)
     }
   }
 

@@ -76,6 +76,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
 
   val locationSuggestions = skillUIState.locationSuggestions
   val locationQuery = skillUIState.locationQuery
+  val locationErrorMsg: String? = skillUIState.invalidLocationMsg
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -166,7 +167,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     locationQuery = locationQuery,
                     locationSuggestions = locationSuggestions,
                     onLocationQueryChange = { skillViewModel.setLocationQuery(it) },
-                    errorMsg = skillUIState.invalidLocationMsg,
+                    errorMsg = locationErrorMsg,
                     onLocationSelected = { location ->
                       skillViewModel.setLocationQuery(location.name)
                       skillViewModel.setLocation(location)
