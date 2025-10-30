@@ -1,8 +1,10 @@
 package com.android.sample.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -72,12 +74,10 @@ class LocationInputFieldTest {
 
     composeRule.waitForIdle()
 
-    // Vérifie que le menu est bien visible et clique sur l'item
     composeRule.onNodeWithText("Montreal").assertIsDisplayed()
 
     composeRule.onNodeWithText("Montreal").performClick()
 
-    // Vérifie que la sélection a bien été effectuée
     assert(selectedLocation?.name == "Montreal")
   }
 
@@ -112,5 +112,7 @@ class LocationInputFieldTest {
 
     // No suggestion text should appear
     composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).assertIsDisplayed()
+
+    composeRule.onAllNodesWithTag(LocationInputFieldTestTags.SUGGESTION).assertCountEquals(0)
   }
 }

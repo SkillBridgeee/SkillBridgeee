@@ -24,6 +24,8 @@ import com.android.sample.model.map.Location
 object LocationInputFieldTestTags {
   const val INPUT_LOCATION = "inputLocation"
   const val ERROR_MSG = "errorMsg"
+
+  const val SUGGESTION = "suggestLocation"
 }
 
 /**
