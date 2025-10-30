@@ -156,9 +156,7 @@ class SubjectListViewModel(
           val matchesSubject = listing.skill.mainSubject == state.mainSubject
 
           val matchesQuery =
-              state.query.isBlank() ||
-                  profile?.name?.contains(state.query, ignoreCase = true) == true ||
-                  listing.description.contains(state.query, ignoreCase = true)
+              state.query.isBlank() || listing.description.contains(state.query, ignoreCase = true)
 
           val matchesSkill =
               selectedSkillKey == null ||
