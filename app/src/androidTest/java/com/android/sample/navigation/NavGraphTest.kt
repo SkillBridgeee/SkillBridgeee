@@ -245,22 +245,37 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Description").assertExists()
   }
 
+  // kotlin
   @Test
   fun navigating_to_signup_displays_signup_and_allows_input() {
-    // From the login screen, tap the sign up action (case-insensitive match)
+    // Wait for the Sign Up trigger to appear before interacting (avoids CI race)
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+          .onAllNodes(hasText("Sign Up", substring = false, ignoreCase = true))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Click the Sign Up trigger
     composeTestRule.onNode(hasText("Sign Up", substring = false, ignoreCase = true)).performClick()
     composeTestRule.waitForIdle()
 
-    // Verify signup screen content via test tags
+    // Wait until the sign up screen title tag is present (longer timeout for CI)
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      composeTestRule
+          .onAllNodesWithTag(SignUpScreenTestTags.TITLE)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Now assert and interact with the sign up screen
     composeTestRule.onNodeWithTag(SignUpScreenTestTags.TITLE).assertExists()
     composeTestRule.onNodeWithTag(SignUpScreenTestTags.SUBTITLE).assertExists()
 
-    // Input some values into key fields
     composeTestRule.onNodeWithTag(SignUpScreenTestTags.NAME).performTextInput("Jane")
     composeTestRule.onNodeWithTag(SignUpScreenTestTags.EMAIL).performTextInput("jane@example.com")
     composeTestRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performTextInput("Abcdef1!")
 
-    // Sign up button should be present (may be disabled depending on ViewModel state)
     composeTestRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assertExists()
   }
 }
