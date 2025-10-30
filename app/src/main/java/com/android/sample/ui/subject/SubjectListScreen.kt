@@ -151,6 +151,7 @@ fun SubjectListScreen(
         Text(ui.error!!, color = MaterialTheme.colorScheme.error)
       }
 
+      // List of listings
       LazyColumn(
           modifier = Modifier.fillMaxSize().testTag(SubjectListTestTags.LISTING_LIST),
           contentPadding = PaddingValues(bottom = 24.dp)) {
@@ -159,7 +160,6 @@ fun SubjectListScreen(
                   listing = item.listing,
                   creator = item.creator,
                   creatorRating = item.creatorRating,
-                  onOpenListing = {}, // TODO: navigate to listing screen later
                   onBook = { item.creator?.let(onBookTutor) },
                   testTags =
                       SubjectListTestTags.LISTING_CARD to SubjectListTestTags.LISTING_BOOK_BUTTON)

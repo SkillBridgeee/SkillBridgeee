@@ -24,6 +24,7 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
+// AI generated test for SubjectListViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
 class SubjectListViewModelTest {
 

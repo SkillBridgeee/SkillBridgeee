@@ -20,7 +20,18 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 
-/** UI state for the Subject List screen */
+/**
+ * UI state for the Subject List screen
+ *
+ * @param mainSubject The subject to filter on
+ * @param query The search query
+ * @param selectedSkill The skill to filter on
+ * @param skillsForSubject The list of skills for the current subject
+ * @param allListings All listings fetched from the repository
+ * @param listings The filtered listings to display
+ * @param isLoading Whether the data is currently loading
+ * @param error Any error message to display
+ */
 data class SubjectListUiState(
     val mainSubject: MainSubject = MainSubject.MUSIC,
     val query: String = "",
@@ -32,14 +43,26 @@ data class SubjectListUiState(
     val error: String? = null
 )
 
-/** Combined listing + creator UI model */
+/**
+ * Ui model that combines a listing with its creator’s profile and rating information into a single
+ * object for easy display in the interface.
+ *
+ * @param listing The listing being offered
+ * @param creator The profile of the listing's creator
+ * @param creatorRating The rating information of the listing's creator
+ */
 data class ListingUiModel(
     val listing: Listing,
     val creator: Profile?,
     val creatorRating: RatingInfo
 )
 
-/** ViewModel now loads LISTINGS (still supports filtering & sorting) */
+/**
+ * ViewModel for the Subject List screen
+ *
+ * @param listingRepo Repository for listings
+ * @param profileRepo Repository for profiles
+ */
 class SubjectListViewModel(
     private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
     private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository
@@ -50,7 +73,11 @@ class SubjectListViewModel(
 
   private var loadJob: Job? = null
 
-  /** Refresh listings filtered on selected subject */
+  /**
+   * Refresh listings filtered on selected subject
+   *
+   * @param subject The subject to filter on
+   */
   fun refresh(subject: MainSubject?) {
     loadJob?.cancel()
     loadJob =
@@ -63,6 +90,7 @@ class SubjectListViewModel(
                 selectedSkill = null)
           }
 
+          // The try/catch block prevents UI crash in case a suspend function throws an exception
           try {
             val all = listingRepo.getAllListings()
 
@@ -87,13 +115,21 @@ class SubjectListViewModel(
         }
   }
 
-  /** When search query changes */
+  /**
+   * Helper to be called when the search query changes
+   *
+   * @param newQuery The new search query
+   */
   fun onQueryChanged(newQuery: String) {
     _ui.update { it.copy(query = newQuery) }
     applyFilters()
   }
 
-  /** When skill selected */
+  /**
+   * Helper to be called when the selected skill changes
+   *
+   * @param skill The new selected skill
+   */
   fun onSkillSelected(skill: String?) {
     _ui.update { it.copy(selectedSkill = skill) }
     applyFilters()
@@ -103,9 +139,15 @@ class SubjectListViewModel(
   private fun applyFilters() {
     val state = _ui.value
 
+    /**
+     * Helper to normalize skill strings for comparison
+     *
+     * @param s The skill string
+     */
     fun key(s: String) = s.trim().lowercase()
     val selectedSkillKey = state.selectedSkill?.let(::key)
 
+      // Apply filters to all listings
     val filtered =
         state.allListings.filter { item ->
           val profile = item.creator
@@ -126,7 +168,7 @@ class SubjectListViewModel(
           matchesSubject && matchesQuery && matchesSkill
         }
 
-    // Sort by creator rating → include unrated ones (0)
+    // Sort by creator rating
     val sorted =
         filtered.sortedWith(
             compareByDescending<ListingUiModel> { it.creatorRating.averageRating }
@@ -136,6 +178,11 @@ class SubjectListViewModel(
     _ui.update { it.copy(listings = sorted) }
   }
 
+  /**
+   * Helper to convert MainSubject enum to user-friendly string
+   *
+   * @param subject The main subject
+   */
   fun subjectToString(subject: MainSubject?): String =
       when (subject) {
         MainSubject.ACADEMICS -> "Academics"
@@ -148,6 +195,11 @@ class SubjectListViewModel(
         null -> "Subjects"
       }
 
+  /**
+   * Helper to get skill names for a given main subject
+   *
+   * @param mainSubject The main subject
+   */
   fun getSkillsForSubject(mainSubject: MainSubject?): List<String> {
     if (mainSubject == null) return emptyList()
     return SkillsHelper.getSkillNames(mainSubject)

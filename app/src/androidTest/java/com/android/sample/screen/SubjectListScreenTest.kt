@@ -32,6 +32,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+// AI generated test for SubjectListScreen
 @RunWith(AndroidJUnit4::class)
 class SubjectListScreenTest {
 
