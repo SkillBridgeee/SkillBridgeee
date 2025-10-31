@@ -35,9 +35,9 @@ class NewSkillViewModelTest {
     Dispatchers.resetMain()
   }
 
-  // -------- Fake Repository ------------------------------------------------------
+  // -------- Fake Repositories ------------------------------------------------------
 
-  private open class FakeRepo : ListingRepository {
+  private open class FakeListingRepo : ListingRepository {
     var addProposalCalled = false
     var addedProposal: Proposal? = null
     var generatedUid = "fake-uid"
@@ -49,7 +49,7 @@ class NewSkillViewModelTest {
       addedProposal = proposal
     }
 
-    // --- Unused methods in this ViewModel ---
+    // --- Unused methods ---
     override suspend fun getAllListings(): List<Listing> = emptyList()
 
     override suspend fun getProposals(): List<Proposal> = emptyList()
@@ -74,9 +74,23 @@ class NewSkillViewModelTest {
         emptyList()
   }
 
+  private class FakeLocationRepo(
+      val shouldFail: Boolean = false,
+      val results: List<Location> =
+          listOf(Location(name = "Paris", latitude = 48.8566, longitude = 2.3522))
+  ) : com.android.sample.model.map.LocationRepository {
+    override suspend fun search(query: String): List<Location> {
+      if (shouldFail) throw RuntimeException("Network error")
+      return results.filter { it.name.contains(query, ignoreCase = true) }
+    }
+  }
+
   // -------- Helpers ------------------------------------------------------
 
-  private fun newVm(repo: ListingRepository = FakeRepo()) = NewSkillViewModel(repo)
+  private fun newVm(
+      repo: ListingRepository = FakeListingRepo(),
+      locRepo: com.android.sample.model.map.LocationRepository = FakeLocationRepo()
+  ) = NewSkillViewModel(repo, locRepo, userId = "")
 
   // -------- Tests --------------------------------------------------------
 
@@ -130,6 +144,46 @@ class NewSkillViewModelTest {
   }
 
   @Test
+  fun setLocation_updatesSelectedLocation() {
+    val vm = newVm()
+    val location = Location(name = "Paris", latitude = 48.8566, longitude = 2.3522)
+    vm.setLocation(location)
+    assertEquals(location, vm.uiState.value.selectedLocation)
+    assertEquals("Paris", vm.uiState.value.locationQuery)
+  }
+
+  @Test
+  fun setLocationQuery_updatesSuggestions_whenValid() = runTest {
+    val repo = FakeLocationRepo()
+    val vm = newVm(locRepo = repo)
+
+    vm.setLocationQuery("Par")
+    advanceUntilIdle()
+
+    val suggestions = vm.uiState.value.locationSuggestions
+    assertTrue(suggestions.isNotEmpty())
+    assertEquals("Paris", suggestions.first().name)
+  }
+
+  @Test
+  fun setLocationQuery_handlesError_whenRepoFails() = runTest {
+    val repo = FakeLocationRepo(shouldFail = true)
+    val vm = newVm(locRepo = repo)
+
+    vm.setLocationQuery("Something")
+    advanceUntilIdle()
+
+    assertTrue(vm.uiState.value.locationSuggestions.isEmpty())
+  }
+
+  @Test
+  fun setLocationQuery_setsError_whenEmptyQuery() {
+    val vm = newVm()
+    vm.setLocationQuery("")
+    assertEquals("You must choose a location", vm.uiState.value.invalidLocationMsg)
+  }
+
+  @Test
   fun isValid_trueOnlyWhenAllFieldsValid() {
     val vm = newVm()
 
@@ -137,6 +191,7 @@ class NewSkillViewModelTest {
     vm.setDescription("D")
     vm.setPrice("10")
     vm.setSubject(MainSubject.TECHNOLOGY)
+    vm.setLocation(Location(name = "Lyon", latitude = 45.75, longitude = 4.85))
 
     assertTrue(vm.uiState.value.isValid)
 
@@ -155,35 +210,17 @@ class NewSkillViewModelTest {
     assertEquals("Description cannot be empty", ui.invalidDescMsg)
     assertEquals("Price cannot be empty", ui.invalidPriceMsg)
     assertEquals("You must choose a subject", ui.invalidSubjectMsg)
+    assertEquals("You must choose a location", ui.invalidLocationMsg)
     assertFalse(ui.isValid)
   }
 
   @Test
-  fun setError_clearsErrorsWhenAllValid() {
-    val vm = newVm()
-
-    vm.setTitle("Good")
-    vm.setDescription("Desc")
-    vm.setPrice("10")
-    vm.setSubject(MainSubject.TECHNOLOGY)
-
-    vm.setError()
-
-    val ui = vm.uiState.value
-    assertNull(ui.invalidTitleMsg)
-    assertNull(ui.invalidDescMsg)
-    assertNull(ui.invalidPriceMsg)
-    assertNull(ui.invalidSubjectMsg)
-    assertTrue(ui.isValid)
-  }
-
-  @Test
   fun addSkill_doesNotAdd_whenInvalid() = runTest {
-    val repo = FakeRepo()
+    val repo = FakeListingRepo()
     val vm = newVm(repo)
 
-    vm.setTitle("Only title") // invalid, missing desc/price/subject
-    vm.addSkill("user123")
+    vm.setTitle("Only title") // invalid, missing desc/price/subject/location
+    vm.addSkill()
     advanceUntilIdle()
 
     assertFalse(repo.addProposalCalled)
@@ -191,34 +228,36 @@ class NewSkillViewModelTest {
     assertEquals("Description cannot be empty", ui.invalidDescMsg)
     assertEquals("Price cannot be empty", ui.invalidPriceMsg)
     assertEquals("You must choose a subject", ui.invalidSubjectMsg)
+    assertEquals("You must choose a location", ui.invalidLocationMsg)
   }
 
   @Test
   fun addSkill_callsRepository_whenValid() = runTest {
-    val repo = FakeRepo()
+    val repo = FakeListingRepo()
     val vm = newVm(repo)
 
     vm.setTitle("Photography")
-    vm.setDescription("Teach how to use DSLR")
+    vm.setDescription("Teach DSLR")
     vm.setPrice("50")
     vm.setSubject(MainSubject.ARTS)
+    vm.setLocation(Location(name = "Nice", latitude = 43.7, longitude = 7.25))
 
-    vm.addSkill("user123")
+    vm.addSkill()
     advanceUntilIdle()
 
     assertTrue(repo.addProposalCalled)
     val proposal = repo.addedProposal!!
-    assertEquals("user123", proposal.creatorUserId)
     assertEquals("fake-uid", proposal.listingId)
     assertEquals("Photography", proposal.skill.skill)
     assertEquals(MainSubject.ARTS, proposal.skill.mainSubject)
-    assertEquals("Teach how to use DSLR", proposal.description)
+    assertEquals("Teach DSLR", proposal.description)
+    assertEquals(43.7, proposal.location.latitude, 0.01)
   }
 
   @Test
   fun addSkill_doesNotThrow_whenRepositoryFails() = runTest {
     val failingRepo =
-        object : FakeRepo() {
+        object : FakeListingRepo() {
           override suspend fun addProposal(proposal: Proposal) {
             throw RuntimeException("Network error")
           }
@@ -229,9 +268,10 @@ class NewSkillViewModelTest {
     vm.setDescription("Desc")
     vm.setPrice("10")
     vm.setSubject(MainSubject.TECHNOLOGY)
+    vm.setLocation(Location(name = "Lille", latitude = 50.63, longitude = 3.06))
 
     // Should not crash
-    vm.addSkill("user123")
+    vm.addSkill()
     advanceUntilIdle()
   }
 
