@@ -72,22 +72,21 @@ class AppNavGraphTest {
 
     // Should now be on home screen - check for home screen elements
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
-    composeTestRule.onNodeWithText("Explore Subjects").assertExists()
     composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
   }
 
   @Test
-  fun navigating_to_skills_displays_skills_screen() {
+  fun navigating_to_Map_displays_map_screen() {
     // First login to get to main app
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Navigate to skills
-    composeTestRule.onNodeWithText("Skills").performClick()
+    // Navigate to map
+    composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
 
-    // Should display skills screen content
-    composeTestRule.onNodeWithText("Find a tutor about Subjects").assertExists()
+    // Check map screen content via test tag
+    composeTestRule.onNodeWithTag("map_screen_text").assertExists()
   }
 
   @Test
@@ -189,15 +188,15 @@ class AppNavGraphTest {
     }
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
 
-    // Navigate to skills
-    composeTestRule.onNodeWithText("Skills").performClick()
+    // Navigate to Map
+    composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
 
     // Wait for skills route to be set
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS
+      RouteStackManager.getCurrentRoute() == NavRoutes.MAP
     }
-    assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.MAP)
   }
 
   @Test
@@ -207,7 +206,7 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Navigate to skills then profile
-    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithText("Profile").performClick()
@@ -222,20 +221,6 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Explore Subjects").assertExists()
     composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
-  }
-
-  @Test
-  fun skills_screen_has_search_and_category() {
-    // Login and navigate to skills
-    composeTestRule.onNodeWithText("GitHub").performClick()
-    composeTestRule.waitForIdle()
-
-    composeTestRule.onNodeWithText("Skills").performClick()
-    composeTestRule.waitForIdle()
-
-    // Verify skills screen components
-    composeTestRule.onNodeWithText("Find a tutor about Subjects").assertExists()
-    composeTestRule.onNodeWithText("Category").assertExists()
   }
 
   @Test
@@ -255,5 +240,7 @@ class AppNavGraphTest {
     // For now, verify essential fields exist (text-based, but minimal)
     composeTestRule.onNodeWithText("Name").assertExists()
     composeTestRule.onNodeWithText("Email").assertExists()
+    composeTestRule.onNodeWithText("Location / Campus").assertExists()
+    composeTestRule.onNodeWithText("Description").assertExists()
   }
 }

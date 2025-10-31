@@ -32,7 +32,7 @@ object RouteStackManager {
 
   // Set of the app's main routes (bottom nav)
   private val mainRoutes =
-      setOf(NavRoutes.HOME, NavRoutes.SKILLS, NavRoutes.PROFILE, NavRoutes.BOOKINGS)
+      setOf(NavRoutes.HOME, NavRoutes.MAP, NavRoutes.PROFILE, NavRoutes.BOOKINGS)
 
   fun addRoute(route: String) {
     // prevent consecutive duplicates

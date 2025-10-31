@@ -218,6 +218,8 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.8.0")
 
+    implementation("androidx.compose.material:material-icons-extended:<compose_version>")
+
 }
 
 tasks.withType<Test> {
