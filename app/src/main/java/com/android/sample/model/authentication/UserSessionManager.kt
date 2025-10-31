@@ -28,48 +28,47 @@ import kotlinx.coroutines.flow.asStateFlow
  * ```
  */
 object UserSessionManager {
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+  private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    // StateFlow to observe authentication state changes
-    private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
-    val authState: StateFlow<AuthState> = _authState.asStateFlow()
+  // StateFlow to observe authentication state changes
+  private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
+  val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    // StateFlow to observe current user
-    private val _currentUser = MutableStateFlow<FirebaseUser?>(null)
-    val currentUser: StateFlow<FirebaseUser?> = _currentUser.asStateFlow()
+  // StateFlow to observe current user
+  private val _currentUser = MutableStateFlow<FirebaseUser?>(null)
+  val currentUser: StateFlow<FirebaseUser?> = _currentUser.asStateFlow()
 
-    init {
-        // Listen to auth state changes
-        auth.addAuthStateListener { firebaseAuth ->
-            val user = firebaseAuth.currentUser
-            _currentUser.value = user
-            _authState.value = when {
-                user != null -> AuthState.Authenticated(user.uid, user.email)
-                else -> AuthState.Unauthenticated
-            }
-        }
+  init {
+    // Listen to auth state changes
+    auth.addAuthStateListener { firebaseAuth ->
+      val user = firebaseAuth.currentUser
+      _currentUser.value = user
+      _authState.value =
+          when {
+            user != null -> AuthState.Authenticated(user.uid, user.email)
+            else -> AuthState.Unauthenticated
+          }
     }
+  }
 
-    /**
-     * Get the current user's ID
-     * @return User ID if authenticated, null otherwise
-     */
-    fun getCurrentUserId(): String? {
-        return auth.currentUser?.uid
-    }
+  /**
+   * Get the current user's ID
+   *
+   * @return User ID if authenticated, null otherwise
+   */
+  fun getCurrentUserId(): String? {
+    return auth.currentUser?.uid
+  }
 }
 
-/**
- * Sealed class representing the authentication state
- */
+/** Sealed class representing the authentication state */
 sealed class AuthState {
-    /** Loading state - checking authentication status */
-    object Loading : AuthState()
+  /** Loading state - checking authentication status */
+  object Loading : AuthState()
 
-    /** User is authenticated */
-    data class Authenticated(val userId: String, val email: String?) : AuthState()
+  /** User is authenticated */
+  data class Authenticated(val userId: String, val email: String?) : AuthState()
 
-    /** User is not authenticated */
-    object Unauthenticated : AuthState()
+  /** User is not authenticated */
+  object Unauthenticated : AuthState()
 }
-

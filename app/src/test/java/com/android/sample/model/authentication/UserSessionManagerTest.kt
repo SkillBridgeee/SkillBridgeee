@@ -49,9 +49,8 @@ class UserSessionManagerTest {
     assertNotNull(authState.value)
     assertTrue(
         authState.value is AuthState.Loading ||
-        authState.value is AuthState.Authenticated ||
-        authState.value is AuthState.Unauthenticated
-    )
+            authState.value is AuthState.Authenticated ||
+            authState.value is AuthState.Unauthenticated)
   }
 
   @Test
@@ -187,13 +186,8 @@ class UserSessionManagerTest {
   @Test
   fun `AuthState Authenticated can be created with various userId formats`() {
     // Given
-    val testUserIds = listOf(
-        "simple-id",
-        "user@domain",
-        "12345",
-        "uid-with-dashes",
-        "special!chars#123"
-    )
+    val testUserIds =
+        listOf("simple-id", "user@domain", "12345", "uid-with-dashes", "special!chars#123")
 
     // When/Then
     testUserIds.forEach { userId ->
@@ -214,10 +208,3 @@ class UserSessionManagerTest {
     assertTrue(stringRepresentation.contains("test-user"))
   }
 }
-
-
-
-
-
-
-

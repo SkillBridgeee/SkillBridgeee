@@ -80,10 +80,7 @@ fun AppNavGraph(
     composable(NavRoutes.PROFILE) {
       val currentUserId = UserSessionManager.getCurrentUserId() ?: "guest"
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
-      MyProfileScreen(
-          profileViewModel = profileViewModel,
-          profileId = currentUserId
-          )
+      MyProfileScreen(profileViewModel = profileViewModel, profileId = currentUserId)
     }
 
     composable(NavRoutes.HOME) {
