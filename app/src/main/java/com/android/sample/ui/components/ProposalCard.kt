@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -15,7 +16,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.listing.Proposal
-import java.text.SimpleDateFormat
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object ProposalCardTestTags {
@@ -106,9 +108,19 @@ fun ProposalCard(
                           modifier = Modifier.testTag(ProposalCardTestTags.LOCATION))
 
                       // Created date
-                      val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                      val formatter = remember {
+                        DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
+                      }
+                      val formattedDate =
+                          remember(proposal.createdAt, formatter) {
+                            proposal.createdAt
+                                .toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                                .format(formatter)
+                          }
                       Text(
-                          text = "📅 ${dateFormat.format(proposal.createdAt)}",
+                          text = "📅 $formattedDate",
                           style = MaterialTheme.typography.bodySmall,
                           color = MaterialTheme.colorScheme.onSurfaceVariant,
                           modifier = Modifier.testTag(ProposalCardTestTags.CREATED_DATE))

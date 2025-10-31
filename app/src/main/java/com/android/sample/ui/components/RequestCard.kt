@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -14,7 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.listing.Request
-import java.text.SimpleDateFormat
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object RequestCardTestTags {
@@ -64,7 +66,9 @@ fun RequestCard(
                           color =
                               if (request.isActive) MaterialTheme.colorScheme.onSecondaryContainer
                               else MaterialTheme.colorScheme.onErrorContainer,
-                          modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                          modifier =
+                              Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                  .testTag(RequestCardTestTags.STATUS_BADGE))
                     }
 
                 // Title (skill or description)
@@ -103,9 +107,19 @@ fun RequestCard(
                           modifier = Modifier.testTag(RequestCardTestTags.LOCATION))
 
                       // Created date
-                      val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                      val formatter = remember {
+                        DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
+                      }
+                      val formattedDate =
+                          remember(request.createdAt, formatter) {
+                            request.createdAt
+                                .toInstant()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                                .format(formatter)
+                          }
                       Text(
-                          text = "📅 ${dateFormat.format(request.createdAt)}",
+                          text = "📅 $formattedDate",
                           style = MaterialTheme.typography.bodySmall,
                           color = MaterialTheme.colorScheme.onSurfaceVariant,
                           modifier = Modifier.testTag(RequestCardTestTags.CREATED_DATE))
