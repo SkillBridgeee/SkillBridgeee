@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -42,6 +43,12 @@ import com.android.sample.ui.navigation.RouteStackManager
  *
  * Note: Requires @OptIn(ExperimentalMaterial3Api::class) for TopAppBar usage
  */
+object TopAppBarTestTags {
+  const val DISPLAY_TITLE = "title"
+  const val NAVIGATE_BACK = "navigateBack"
+  const val TOP_APP_BAR = "topAppBar"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBar(navController: NavController) {
@@ -66,8 +73,13 @@ fun TopAppBar(navController: NavController) {
               RouteStackManager.getCurrentRoute() != null)
 
   TopAppBar(
-      modifier = Modifier,
-      title = { Text(text = title, fontWeight = FontWeight.SemiBold) },
+      modifier = Modifier.testTag(TopAppBarTestTags.TOP_APP_BAR),
+      title = {
+        Text(
+            text = title,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.testTag(TopAppBarTestTags.DISPLAY_TITLE))
+      },
       navigationIcon = {
         if (canNavigateBack) {
           IconButton(
@@ -97,7 +109,8 @@ fun TopAppBar(navController: NavController) {
                     navController.navigateUp()
                   }
                 }
-              }) {
+              },
+              modifier = Modifier.testTag(TopAppBarTestTags.NAVIGATE_BACK)) {
                 Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
               }
         }

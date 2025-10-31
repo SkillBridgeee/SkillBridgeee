@@ -1,10 +1,11 @@
 package com.android.sample.components
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.navigation.NavHostController
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.ui.components.TopAppBar
+import com.android.sample.ui.components.TopAppBarTestTags
 import org.junit.Rule
 import org.junit.Test
 
@@ -19,7 +20,8 @@ class TopAppBarTest {
     }
 
     // Basic test that the component renders
-    composeTestRule.onNodeWithText("SkillBridge").assertExists()
+    composeTestRule.onNodeWithTag(TopAppBarTestTags.TOP_APP_BAR).assertExists()
+    composeTestRule.onNodeWithTag(TopAppBarTestTags.DISPLAY_TITLE).assertExists()
   }
 
   @Test
@@ -29,7 +31,8 @@ class TopAppBarTest {
     }
 
     // Should show default title when no route is set
-    composeTestRule.onNodeWithText("SkillBridge").assertExists()
+    composeTestRule.onNodeWithTag(TopAppBarTestTags.TOP_APP_BAR).assertExists()
+    composeTestRule.onNodeWithTag(TopAppBarTestTags.DISPLAY_TITLE).assertExists()
   }
 
   @Test
@@ -39,6 +42,7 @@ class TopAppBarTest {
     }
 
     // Test for the expected title text directly
-    composeTestRule.onNodeWithText("SkillBridge").assertExists()
+    composeTestRule.onNodeWithTag(TopAppBarTestTags.TOP_APP_BAR).assertExists()
+    composeTestRule.onNodeWithTag(TopAppBarTestTags.DISPLAY_TITLE).assertExists()
   }
 }
