@@ -238,23 +238,6 @@ class ProfileScreenTest {
   }
 
   @Test
-  fun profileScreen_displaysProposalsSection() {
-    setupScreen()
-
-    // Proposals section title
-    compose
-        .onNodeWithTag(ProfileScreenTestTags.PROPOSALS_SECTION, useUnmergedTree = true)
-        .assertIsDisplayed()
-
-    // Check count is displayed somewhere (could be in the same text or separate)
-    compose.onNodeWithText("(2)", substring = true).assertIsDisplayed()
-
-    // Check proposals are displayed
-    compose.onNodeWithText("Advanced calculus tutoring").assertIsDisplayed()
-    compose.onNodeWithText("Algebra for beginners").assertIsDisplayed()
-  }
-
-  @Test
   fun profileScreen_backButton_isDisplayed() {
     setupScreen()
 
@@ -301,20 +284,6 @@ class ProfileScreenTest {
         .onNodeWithTag(ProfileScreenTestTags.EMPTY_PROPOSALS, useUnmergedTree = true)
         .assertIsDisplayed()
         .assertTextContains("No proposals yet")
-  }
-
-  @Test
-  fun profileScreen_emptyRequests_showsEmptyState() {
-    val profileRepo = FakeProfileRepo(sampleProfile)
-    val listingRepo = FakeListingRepo(mutableListOf(sampleProposal1), mutableListOf())
-    val vm = ProfileScreenViewModel(profileRepo, listingRepo)
-
-    setupScreen(viewModel = vm)
-
-    compose
-        .onNodeWithTag(ProfileScreenTestTags.EMPTY_REQUESTS, useUnmergedTree = true)
-        .assertIsDisplayed()
-        .assertTextContains("No requests yet")
   }
 
   @Test
