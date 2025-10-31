@@ -80,7 +80,7 @@ class NewSkillScreenTest {
   @Before
   fun setup() {
     val repo = FakeRepo().apply { seed() }
-    viewModel = NewSkillViewModel(repo)
+    viewModel = NewSkillViewModel(repo, userId = "demoUser")
     compose.setContent { NewSkillScreen(profileId = "demoUser", skillViewModel = viewModel) }
 
     compose.waitUntil(5_000) {
