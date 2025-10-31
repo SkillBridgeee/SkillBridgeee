@@ -150,7 +150,6 @@ class SubjectListViewModel(
     // Apply filters to all listings
     val filtered =
         state.allListings.filter { item ->
-          val profile = item.creator
           val listing = item.listing
 
           val matchesSubject = listing.skill.mainSubject == state.mainSubject
