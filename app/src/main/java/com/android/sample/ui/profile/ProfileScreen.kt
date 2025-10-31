@@ -70,19 +70,16 @@ fun ProfileScreen(
     onProposalClick: (String) -> Unit = {},
     onRequestClick: (String) -> Unit = {},
     viewModel: ProfileScreenViewModel = viewModel {
-        ProfileScreenViewModel(
-            profileRepository = ProfileRepositoryProvider.repository,
-            listingRepository = ListingRepositoryProvider.repository
-        )
+      ProfileScreenViewModel(
+          profileRepository = ProfileRepositoryProvider.repository,
+          listingRepository = ListingRepositoryProvider.repository)
     }
 ) {
   // Properly observe StateFlow in Compose
   val uiState by viewModel.uiState.collectAsState()
 
   // Load profile data when profileId changes
-  LaunchedEffect(profileId) {
-    viewModel.loadProfile(profileId)
-  }
+  LaunchedEffect(profileId) { viewModel.loadProfile(profileId) }
 
   Scaffold(
       modifier = Modifier.testTag(ProfileScreenTestTags.SCREEN),
