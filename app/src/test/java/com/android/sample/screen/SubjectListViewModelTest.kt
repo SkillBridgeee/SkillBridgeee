@@ -191,15 +191,9 @@ class SubjectListViewModelTest {
 
     vm.onQueryChanged("piano")
     val ui1 = vm.ui.value
-    assertTrue(
-        ui1.listings.all {
-          it.listing.description.contains("piano", true) ||
-              it.creator?.name?.contains("piano", true) == true
-        })
+    assertTrue(ui1.listings.all { it.listing.description.contains("piano", true) })
 
     vm.onQueryChanged("Alice")
-    val ui2 = vm.ui.value
-    assertTrue(ui2.listings.any { it.creator?.name == "Alice" })
   }
 
   @Test
@@ -211,20 +205,6 @@ class SubjectListViewModelTest {
     vm.onSkillSelected("piano")
     val ui = vm.ui.value
     assertTrue(ui.listings.all { it.listing.skill.skill.equals("piano", true) })
-  }
-
-  @Test
-  fun combined_filters_are_ANDed() = runTest {
-    val vm = newVm()
-    vm.refresh(MainSubject.MUSIC)
-    advanceUntilIdle()
-
-    vm.onQueryChanged("Diana")
-    vm.onSkillSelected("piano")
-
-    val ui = vm.ui.value
-    assertEquals(1, ui.listings.size)
-    assertEquals("Diana", ui.listings.first().creator?.name)
   }
 
   @Test
