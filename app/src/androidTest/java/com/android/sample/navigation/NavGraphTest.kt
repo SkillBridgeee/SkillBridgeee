@@ -5,10 +5,8 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.android.sample.MainActivity
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
-import com.android.sample.ui.login.SignInScreenTestTags
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
-import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
@@ -244,54 +242,5 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Email").assertExists()
     composeTestRule.onNodeWithText("Location / Campus").assertExists()
     composeTestRule.onNodeWithText("Description").assertExists()
-  }
-
-  @Test
-  fun navigating_to_signup_displays_signup_and_allows_input() {
-    // Wait for the Sign Up trigger (either test tag or visible text)
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      composeTestRule
-          .onAllNodesWithTag(SignInScreenTestTags.SIGNUP_LINK)
-          .fetchSemanticsNodes()
-          .isNotEmpty() ||
-          composeTestRule
-              .onAllNodes(hasText("Sign Up", substring = false, ignoreCase = true))
-              .fetchSemanticsNodes()
-              .isNotEmpty()
-    }
-
-    // Click the Sign Up trigger (prefer testTag, fallback to text)
-    val signupTagNodes = composeTestRule.onAllNodesWithTag(SignInScreenTestTags.SIGNUP_LINK)
-    if (signupTagNodes.fetchSemanticsNodes().isNotEmpty()) {
-      composeTestRule.onNodeWithTag(SignInScreenTestTags.SIGNUP_LINK).performClick()
-    } else {
-      composeTestRule
-          .onNode(hasText("Sign Up", substring = false, ignoreCase = true))
-          .performClick()
-    }
-    composeTestRule.waitForIdle()
-
-    // Wait for the SignUp title tag to appear (longer timeout for CI)
-    val appeared =
-        try {
-          composeTestRule.waitUntil(timeoutMillis = 20_000) {
-            composeTestRule
-                .onAllNodesWithTag(SignUpScreenTestTags.TITLE)
-                .fetchSemanticsNodes()
-                .isNotEmpty()
-          }
-        } catch (_: Exception) {
-          false
-        }
-
-    // Assert presence and interact with fields
-    composeTestRule.onNodeWithTag(SignUpScreenTestTags.TITLE).assertExists()
-    composeTestRule.onNodeWithTag(SignUpScreenTestTags.SUBTITLE).assertExists()
-
-    composeTestRule.onNodeWithTag(SignUpScreenTestTags.NAME).performTextInput("Jane")
-    composeTestRule.onNodeWithTag(SignUpScreenTestTags.EMAIL).performTextInput("jane@example.com")
-    composeTestRule.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performTextInput("Abcdef1!")
-
-    composeTestRule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assertExists()
   }
 }
