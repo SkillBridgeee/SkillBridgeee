@@ -67,7 +67,6 @@ class SubjectListViewModel(
     private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
     private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
-
   private val _ui = MutableStateFlow(SubjectListUiState())
   val ui: StateFlow<SubjectListUiState> = _ui
 
@@ -138,7 +137,6 @@ class SubjectListViewModel(
   /** Apply both query and skill filtering */
   private fun applyFilters() {
     val state = _ui.value
-
     /**
      * Helper to normalize skill strings for comparison
      *

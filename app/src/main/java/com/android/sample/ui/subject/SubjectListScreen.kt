@@ -59,11 +59,7 @@ fun SubjectListScreen(
     subject: MainSubject?
 ) {
   val ui by viewModel.ui.collectAsState()
-  LaunchedEffect(subject) {
-    if (subject != null) {
-      viewModel.refresh(subject)
-    }
-  }
+  LaunchedEffect(subject) { if (subject != null) viewModel.refresh(subject) }
 
   val skillsForSubject = viewModel.getSkillsForSubject(subject)
   val mainSubjectString = viewModel.subjectToString(subject)
