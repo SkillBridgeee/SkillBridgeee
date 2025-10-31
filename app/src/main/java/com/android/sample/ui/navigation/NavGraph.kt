@@ -1,5 +1,6 @@
 package com.android.sample.ui.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +25,8 @@ import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpViewModel
 import com.android.sample.ui.subject.SubjectListScreen
 import com.android.sample.ui.subject.SubjectListViewModel
+
+private const val TAG = "NavGraph"
 
 /**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
@@ -121,16 +124,32 @@ fun AppNavGraph(
           NewSkillScreen(profileId = profileId)
         }
 
-    composable(NavRoutes.SIGNUP) {
-      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SIGNUP) }
-      SignUpScreen(
-          vm = SignUpViewModel(),
-          onSubmitSuccess = {
-            // Navigate to login after successful signup
-            navController.navigate(NavRoutes.LOGIN) {
-              popUpTo(NavRoutes.SIGNUP) { inclusive = true }
-            }
-          })
-    }
+    composable(
+        route = NavRoutes.SIGNUP,
+        arguments =
+            listOf(
+                navArgument("email") {
+                  type = NavType.StringType
+                  nullable = true
+                  defaultValue = null
+                })) { backStackEntry ->
+          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SIGNUP) }
+          val email = backStackEntry.arguments?.getString("email")
+
+          // Debug logging
+          Log.d(TAG, "SignUp - Received email parameter: $email")
+
+          // Create ViewModel with email parameter so it's available immediately
+          val viewModel = SignUpViewModel(initialEmail = email)
+
+          SignUpScreen(
+              vm = viewModel,
+              onSubmitSuccess = {
+                // Navigate to login after successful signup
+                navController.navigate(NavRoutes.LOGIN) {
+                  popUpTo(NavRoutes.SIGNUP_BASE) { inclusive = true }
+                }
+              })
+        }
   }
 }

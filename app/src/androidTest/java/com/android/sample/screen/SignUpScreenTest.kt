@@ -13,7 +13,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import com.android.sample.model.user.FirestoreProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
-import com.android.sample.ui.signup.Role
 import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.android.sample.ui.signup.SignUpViewModel
@@ -103,7 +102,7 @@ class SignUpScreenTest {
   }
 
   @Test
-  fun all_fields_render_and_role_toggle() {
+  fun all_fields_render() {
     val vm = SignUpViewModel()
     composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
     composeRule.waitForIdle()
@@ -123,11 +122,6 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.DESCRIPTION).performScrollTo().assertIsDisplayed()
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performScrollTo().assertIsDisplayed()
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performScrollTo().assertIsDisplayed()
-
-    composeRule.nodeByTag(SignUpScreenTestTags.TUTOR).performScrollTo().performClick()
-    assertEquals(Role.TUTOR, vm.state.value.role)
-    composeRule.nodeByTag(SignUpScreenTestTags.LEARNER).performScrollTo().performClick()
-    assertEquals(Role.LEARNER, vm.state.value.role)
   }
 
   @Test

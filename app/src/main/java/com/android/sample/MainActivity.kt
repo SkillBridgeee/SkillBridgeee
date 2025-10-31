@@ -1,6 +1,7 @@
 package com.android.sample
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -119,10 +120,23 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val navController = rememberNavController()
   val authResult by authViewModel.authResult.collectAsStateWithLifecycle()
 
-  // Navigate to HOME when authentication is successful
+  // Navigate based on authentication result
   LaunchedEffect(authResult) {
-    if (authResult is AuthResult.Success) {
-      navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+    when (authResult) {
+      is AuthResult.Success -> {
+        navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+      }
+      is AuthResult.RequiresSignUp -> {
+        // Navigate to signup screen when Google user doesn't have a profile
+        val email = (authResult as AuthResult.RequiresSignUp).email
+        Log.d("MainActivity", "Google user requires sign up, email: $email")
+        val route = NavRoutes.createSignUpRoute(email)
+        Log.d("MainActivity", "Navigating to route: $route")
+        navController.navigate(route) { popUpTo(NavRoutes.LOGIN) { inclusive = false } }
+      }
+      else -> {
+        // No navigation for Error or null
+      }
     }
   }
 

@@ -3,9 +3,12 @@
 package com.android.sample.model.authentication
 
 import android.content.Context
+import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,14 +25,34 @@ import kotlinx.coroutines.launch
 class AuthenticationViewModel(
     @Suppress("StaticFieldLeak") private val context: Context,
     private val repository: AuthenticationRepository = AuthenticationRepository(),
-    private val credentialHelper: CredentialAuthHelper = CredentialAuthHelper(context)
+    private val credentialHelper: CredentialAuthHelper = CredentialAuthHelper(context),
+    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
+
+  companion object {
+    private const val TAG = "AuthViewModel"
+  }
 
   private val _uiState = MutableStateFlow(AuthenticationUiState())
   val uiState: StateFlow<AuthenticationUiState> = _uiState.asStateFlow()
 
   private val _authResult = MutableStateFlow<AuthResult?>(null)
   val authResult: StateFlow<AuthResult?> = _authResult.asStateFlow()
+
+  /** Helper function to set loading state */
+  private fun setLoading() {
+    _uiState.update { it.copy(isLoading = true, error = null) }
+  }
+
+  /** Helper function to clear loading state on success */
+  private fun clearLoading() {
+    _uiState.update { it.copy(isLoading = false, error = null) }
+  }
+
+  /** Helper function to set error state and clear loading */
+  private fun setErrorState(errorMessage: String) {
+    _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+  }
 
   /** Update the email field */
   fun updateEmail(email: String) {
@@ -39,11 +62,6 @@ class AuthenticationViewModel(
   /** Update the password field */
   fun updatePassword(password: String) {
     _uiState.update { it.copy(password = password, error = null, message = null) }
-  }
-
-  /** Update the selected user role */
-  fun updateSelectedRole(role: UserRole) {
-    _uiState.update { it.copy(selectedRole = role) }
   }
 
   /** Sign in with email and password */
@@ -56,19 +74,19 @@ class AuthenticationViewModel(
       return
     }
 
-    _uiState.update { it.copy(isLoading = true, error = null) }
+    setLoading()
 
     viewModelScope.launch {
       val result = repository.signInWithEmail(email, password)
       result.fold(
           onSuccess = { user ->
             _authResult.value = AuthResult.Success(user)
-            _uiState.update { it.copy(isLoading = false, error = null) }
+            clearLoading()
           },
           onFailure = { exception ->
             val errorMessage = exception.message ?: "Sign in failed"
             _authResult.value = AuthResult.Error(errorMessage)
-            _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+            setErrorState(errorMessage)
           })
     }
   }
@@ -76,7 +94,7 @@ class AuthenticationViewModel(
   /** Handle Google Sign-In result from activity */
   @Suppress("DEPRECATION")
   fun handleGoogleSignInResult(result: ActivityResult) {
-    _uiState.update { it.copy(isLoading = true, error = null) }
+    setLoading()
 
     try {
       val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
@@ -89,24 +107,43 @@ class AuthenticationViewModel(
           val authResult = repository.signInWithCredential(firebaseCredential)
           authResult.fold(
               onSuccess = { user ->
-                _authResult.value = AuthResult.Success(user)
-                _uiState.update { it.copy(isLoading = false, error = null) }
+                // Check if profile exists for this user
+                val profile =
+                    try {
+                      profileRepository.getProfile(user.uid)
+                    } catch (_: Exception) {
+                      null
+                    }
+
+                if (profile == null) {
+                  // No profile exists - user needs to sign up
+                  val email = user.email ?: account.email ?: ""
+                  Log.d(
+                      TAG,
+                      "User needs sign up. Firebase email: ${user.email}, Google email: ${account.email}, Final email: $email")
+                  _authResult.value = AuthResult.RequiresSignUp(email, user)
+                  clearLoading()
+                } else {
+                  // Profile exists - successful login
+                  _authResult.value = AuthResult.Success(user)
+                  clearLoading()
+                }
               },
               onFailure = { exception ->
                 val errorMessage = exception.message ?: "Google sign in failed"
                 _authResult.value = AuthResult.Error(errorMessage)
-                _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+                setErrorState(errorMessage)
               })
         }
       }
           ?: run {
             _authResult.value = AuthResult.Error("No ID token received")
-            _uiState.update { it.copy(isLoading = false, error = "No ID token received") }
+            setErrorState("No ID token received")
           }
     } catch (e: ApiException) {
       val errorMessage = "Google sign in failed: ${e.message}"
       _authResult.value = AuthResult.Error(errorMessage)
-      _uiState.update { it.copy(isLoading = false, error = errorMessage) }
+      setErrorState(errorMessage)
     }
   }
 
@@ -115,7 +152,7 @@ class AuthenticationViewModel(
 
   /** Try to get saved password credential using Credential Manager */
   fun getSavedCredential() {
-    _uiState.update { it.copy(isLoading = true, error = null) }
+    setLoading()
 
     viewModelScope.launch {
       val result = credentialHelper.getPasswordCredential()

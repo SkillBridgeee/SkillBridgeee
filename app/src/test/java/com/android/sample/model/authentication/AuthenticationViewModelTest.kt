@@ -37,6 +37,7 @@ class AuthenticationViewModelTest {
   private lateinit var context: Context
   private lateinit var mockRepository: AuthenticationRepository
   private lateinit var mockCredentialHelper: CredentialAuthHelper
+  private lateinit var mockProfileRepository: com.android.sample.model.user.ProfileRepository
   private lateinit var viewModel: AuthenticationViewModel
 
   @Before
@@ -46,8 +47,11 @@ class AuthenticationViewModelTest {
 
     mockRepository = mockk(relaxed = true)
     mockCredentialHelper = mockk(relaxed = true)
+    mockProfileRepository = mockk(relaxed = true)
 
-    viewModel = AuthenticationViewModel(context, mockRepository, mockCredentialHelper)
+    viewModel =
+        AuthenticationViewModel(
+            context, mockRepository, mockCredentialHelper, mockProfileRepository)
   }
 
   @After
@@ -65,7 +69,6 @@ class AuthenticationViewModelTest {
     assertNull(state.message)
     assertEquals("", state.email)
     assertEquals("", state.password)
-    assertEquals(UserRole.LEARNER, state.selectedRole)
     assertFalse(state.showSuccessMessage)
     assertFalse(state.isSignInButtonEnabled)
   }
@@ -90,15 +93,6 @@ class AuthenticationViewModelTest {
     assertEquals("password123", state.password)
     assertNull(state.error)
     assertNull(state.message)
-  }
-
-  @Test
-  fun updateSelectedRole_updatesState() = runTest {
-    viewModel.updateSelectedRole(UserRole.TUTOR)
-
-    val state = viewModel.uiState.first()
-
-    assertEquals(UserRole.TUTOR, state.selectedRole)
   }
 
   @Test
@@ -189,6 +183,7 @@ class AuthenticationViewModelTest {
     val mockActivityResult = mockk<ActivityResult>()
     val mockIntent = mockk<android.content.Intent>()
     val mockAccount = mockk<GoogleSignInAccount>()
+    val mockProfile = mockk<com.android.sample.model.user.Profile>()
 
     every { mockActivityResult.data } returns mockIntent
 
@@ -197,9 +192,11 @@ class AuthenticationViewModelTest {
       com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
     } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
     every { mockAccount.idToken } returns "test-token"
+    every { mockUser.uid } returns "test-uid"
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockUser)
+    coEvery { mockProfileRepository.getProfile("test-uid") } returns mockProfile
 
     viewModel.handleGoogleSignInResult(mockActivityResult)
     testDispatcher.scheduler.advanceUntilIdle()
@@ -403,5 +400,203 @@ class AuthenticationViewModelTest {
 
     assertEquals(mockClient, result)
     verify { mockCredentialHelper.getGoogleSignInClient() }
+  }
+
+  // Tests for Google Sign-In with Profile Check
+  @Test
+  fun handleGoogleSignInResult_withExistingProfile_returnsSuccess() = runTest {
+    // Setup mocks
+    val mockActivityResult = mockk<ActivityResult>()
+    val mockIntent = mockk<android.content.Intent>()
+    val mockAccount = mockk<GoogleSignInAccount>()
+    val mockFirebaseUser = mockk<FirebaseUser>()
+    val mockProfile = mockk<com.android.sample.model.user.Profile>()
+
+    // Mock profile repository
+    val mockProfileRepository = mockk<com.android.sample.model.user.ProfileRepository>()
+    val viewModelWithProfile =
+        AuthenticationViewModel(
+            context, mockRepository, mockCredentialHelper, mockProfileRepository)
+
+    every { mockActivityResult.data } returns mockIntent
+    mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+    every {
+      com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
+    } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
+
+    every { mockAccount.idToken } returns "test-token"
+    every { mockAccount.email } returns "test@gmail.com"
+    every { mockFirebaseUser.uid } returns "user-123"
+    every { mockFirebaseUser.email } returns "test@gmail.com"
+
+    every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
+    coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
+    coEvery { mockProfileRepository.getProfile("user-123") } returns mockProfile
+
+    viewModelWithProfile.handleGoogleSignInResult(mockActivityResult)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    val authResult = viewModelWithProfile.authResult.first()
+    val state = viewModelWithProfile.uiState.first()
+
+    assertTrue(authResult is AuthResult.Success)
+    assertEquals(mockFirebaseUser, (authResult as AuthResult.Success).user)
+    assertFalse(state.isLoading)
+    assertNull(state.error)
+  }
+
+  @Test
+  fun handleGoogleSignInResult_withoutExistingProfile_returnsRequiresSignUp() = runTest {
+    // Setup mocks
+    val mockActivityResult = mockk<ActivityResult>()
+    val mockIntent = mockk<android.content.Intent>()
+    val mockAccount = mockk<GoogleSignInAccount>()
+    val mockFirebaseUser = mockk<FirebaseUser>()
+
+    // Mock profile repository
+    val mockProfileRepository = mockk<com.android.sample.model.user.ProfileRepository>()
+    val viewModelWithProfile =
+        AuthenticationViewModel(
+            context, mockRepository, mockCredentialHelper, mockProfileRepository)
+
+    every { mockActivityResult.data } returns mockIntent
+    mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+    every {
+      com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
+    } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
+
+    every { mockAccount.idToken } returns "test-token"
+    every { mockAccount.email } returns "test@gmail.com"
+    every { mockFirebaseUser.uid } returns "user-123"
+    every { mockFirebaseUser.email } returns "test@gmail.com"
+
+    every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
+    coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
+    coEvery { mockProfileRepository.getProfile("user-123") } returns null
+
+    viewModelWithProfile.handleGoogleSignInResult(mockActivityResult)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    val authResult = viewModelWithProfile.authResult.first()
+    val state = viewModelWithProfile.uiState.first()
+
+    assertTrue(authResult is AuthResult.RequiresSignUp)
+    val requiresSignUp = authResult as AuthResult.RequiresSignUp
+    assertEquals("test@gmail.com", requiresSignUp.email)
+    assertEquals(mockFirebaseUser, requiresSignUp.user)
+    assertFalse(state.isLoading)
+    assertNull(state.error)
+  }
+
+  @Test
+  fun handleGoogleSignInResult_profileCheckThrowsException_returnsRequiresSignUp() = runTest {
+    // Setup mocks
+    val mockActivityResult = mockk<ActivityResult>()
+    val mockIntent = mockk<android.content.Intent>()
+    val mockAccount = mockk<GoogleSignInAccount>()
+    val mockFirebaseUser = mockk<FirebaseUser>()
+
+    // Mock profile repository
+    val mockProfileRepository = mockk<com.android.sample.model.user.ProfileRepository>()
+    val viewModelWithProfile =
+        AuthenticationViewModel(
+            context, mockRepository, mockCredentialHelper, mockProfileRepository)
+
+    every { mockActivityResult.data } returns mockIntent
+    mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+    every {
+      com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
+    } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
+
+    every { mockAccount.idToken } returns "test-token"
+    every { mockAccount.email } returns "test@gmail.com"
+    every { mockFirebaseUser.uid } returns "user-123"
+    every { mockFirebaseUser.email } returns "test@gmail.com"
+
+    every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
+    coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
+    coEvery { mockProfileRepository.getProfile("user-123") } throws Exception("Network error")
+
+    viewModelWithProfile.handleGoogleSignInResult(mockActivityResult)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    val authResult = viewModelWithProfile.authResult.first()
+
+    assertTrue(authResult is AuthResult.RequiresSignUp)
+    assertEquals("test@gmail.com", (authResult as AuthResult.RequiresSignUp).email)
+  }
+
+  @Test
+  fun handleGoogleSignInResult_usesGoogleEmailAsFallback() = runTest {
+    // Test when Firebase user email is null but Google account email is available
+    val mockActivityResult = mockk<ActivityResult>()
+    val mockIntent = mockk<android.content.Intent>()
+    val mockAccount = mockk<GoogleSignInAccount>()
+    val mockFirebaseUser = mockk<FirebaseUser>()
+
+    val mockProfileRepository = mockk<com.android.sample.model.user.ProfileRepository>()
+    val viewModelWithProfile =
+        AuthenticationViewModel(
+            context, mockRepository, mockCredentialHelper, mockProfileRepository)
+
+    every { mockActivityResult.data } returns mockIntent
+    mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+    every {
+      com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
+    } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
+
+    every { mockAccount.idToken } returns "test-token"
+    every { mockAccount.email } returns "google@gmail.com"
+    every { mockFirebaseUser.uid } returns "user-123"
+    every { mockFirebaseUser.email } returns null // Firebase email is null
+
+    every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
+    coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
+    coEvery { mockProfileRepository.getProfile("user-123") } returns null
+
+    viewModelWithProfile.handleGoogleSignInResult(mockActivityResult)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    val authResult = viewModelWithProfile.authResult.first()
+
+    assertTrue(authResult is AuthResult.RequiresSignUp)
+    assertEquals("google@gmail.com", (authResult as AuthResult.RequiresSignUp).email)
+  }
+
+  @Test
+  fun handleGoogleSignInResult_usesEmptyStringWhenNoEmail() = runTest {
+    // Test when both Firebase and Google emails are null
+    val mockActivityResult = mockk<ActivityResult>()
+    val mockIntent = mockk<android.content.Intent>()
+    val mockAccount = mockk<GoogleSignInAccount>()
+    val mockFirebaseUser = mockk<FirebaseUser>()
+
+    val mockProfileRepository = mockk<com.android.sample.model.user.ProfileRepository>()
+    val viewModelWithProfile =
+        AuthenticationViewModel(
+            context, mockRepository, mockCredentialHelper, mockProfileRepository)
+
+    every { mockActivityResult.data } returns mockIntent
+    mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+    every {
+      com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
+    } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
+
+    every { mockAccount.idToken } returns "test-token"
+    every { mockAccount.email } returns null
+    every { mockFirebaseUser.uid } returns "user-123"
+    every { mockFirebaseUser.email } returns null
+
+    every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
+    coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
+    coEvery { mockProfileRepository.getProfile("user-123") } returns null
+
+    viewModelWithProfile.handleGoogleSignInResult(mockActivityResult)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    val authResult = viewModelWithProfile.authResult.first()
+
+    assertTrue(authResult is AuthResult.RequiresSignUp)
+    assertEquals("", (authResult as AuthResult.RequiresSignUp).email)
   }
 }
