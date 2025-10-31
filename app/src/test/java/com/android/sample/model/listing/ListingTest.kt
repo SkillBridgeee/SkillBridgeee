@@ -32,7 +32,7 @@ class ListingTest {
             description = "teach Kotlin",
             location = location,
             createdAt = date,
-            isActive = false,
+            active = false,
             hourlyRate = 25.0,
             type = ListingType.PROPOSAL)
 
@@ -43,7 +43,7 @@ class ListingTest {
     assertEquals("teach Kotlin", proposal.description)
     assertEquals(location, proposal.location)
     assertEquals(date, proposal.createdAt)
-    assertFalse(proposal.isActive)
+    assertFalse(proposal.active)
     assertEquals(25.0, proposal.hourlyRate, 0.0)
     assertEquals(ListingType.PROPOSAL, proposal.type)
 
@@ -70,7 +70,7 @@ class ListingTest {
             description = "need help with Android",
             location = location,
             createdAt = date,
-            isActive = true,
+            active = true,
             hourlyRate = 0.0,
             type = ListingType.REQUEST)
 
@@ -81,7 +81,7 @@ class ListingTest {
     assertEquals("need help with Android", request.description)
     assertEquals(location, request.location)
     assertEquals(date, request.createdAt)
-    assertTrue(request.isActive)
+    assertTrue(request.active)
     assertEquals(0.0, request.hourlyRate, 0.0)
     assertEquals(ListingType.REQUEST, request.type)
 

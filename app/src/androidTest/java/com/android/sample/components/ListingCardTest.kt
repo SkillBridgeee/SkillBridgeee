@@ -65,7 +65,7 @@ class ListingCardTest {
         description = description,
         location = Location(name = locationName),
         createdAt = Date(),
-        isActive = true,
+        active = true,
         hourlyRate = hourlyRate,
         type = ListingType.PROPOSAL)
   }
