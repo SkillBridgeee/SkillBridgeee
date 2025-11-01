@@ -206,18 +206,15 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Navigate to skills then profile
-    composeTestRule.onNodeWithText("Skills").performClick()
-    composeTestRule.waitForIdle()
-
+    // Navigate to Profile directly (since "Skills" is no longer in bottom nav)
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    // Navigate back to home via bottom nav
+    // Navigate back to Home via bottom nav
     composeTestRule.onNodeWithText("Home").performClick()
     composeTestRule.waitForIdle()
 
-    // Should be on home screen - check for actual home content
+    // Verify Home screen content
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
     composeTestRule.onNodeWithText("Explore Subjects").assertExists()
     composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()

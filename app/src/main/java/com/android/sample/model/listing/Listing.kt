@@ -17,7 +17,7 @@ sealed class Listing {
   abstract val description: String
   abstract val location: Location
   abstract val createdAt: Date
-  abstract val isActive: Boolean
+  abstract val active: Boolean
   abstract val hourlyRate: Double
   abstract val type: ListingType
 
@@ -34,7 +34,7 @@ data class Proposal(
     override val description: String = "",
     override val location: Location = Location(),
     override val createdAt: Date = Date(),
-    override val isActive: Boolean = true,
+    override val active: Boolean = true,
     override val hourlyRate: Double = 0.0,
     override val type: ListingType = ListingType.PROPOSAL
 ) : Listing() {}
@@ -47,7 +47,7 @@ data class Request(
     override val description: String = "",
     override val location: Location = Location(),
     override val createdAt: Date = Date(),
-    override val isActive: Boolean = true,
+    override val active: Boolean = true,
     override val hourlyRate: Double = 0.0,
     override val type: ListingType = ListingType.REQUEST
 ) : Listing() {}
