@@ -599,4 +599,120 @@ class AuthenticationViewModelTest {
     assertTrue(authResult is AuthResult.RequiresSignUp)
     assertEquals("", (authResult as AuthResult.RequiresSignUp).email)
   }
+
+  @Test
+  fun `signOut clears authentication state`() = runTest {
+    // Given - user is signed in with email and password
+    viewModel.updateEmail("test@example.com")
+    viewModel.updatePassword("password123")
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Verify state has email and password
+    var uiState = viewModel.uiState.first()
+    assertEquals("test@example.com", uiState.email)
+    assertEquals("password123", uiState.password)
+
+    // When - sign out
+    viewModel.signOut()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then - state should be reset
+    uiState = viewModel.uiState.first()
+    assertEquals("", uiState.email)
+    assertEquals("", uiState.password)
+    assertFalse(uiState.isLoading)
+    assertNull(uiState.error)
+    assertNull(uiState.message)
+    assertFalse(uiState.showSuccessMessage)
+  }
+
+  @Test
+  fun `signOut clears auth result`() = runTest {
+    // Given - simulate successful authentication
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    every { mockUser.uid } returns "user-123"
+    coEvery { mockRepository.signInWithEmail(any(), any()) } returns Result.success(mockUser)
+
+    viewModel.updateEmail("test@example.com")
+    viewModel.updatePassword("password123")
+    viewModel.signIn()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Verify auth result is set
+    var authResult = viewModel.authResult.first()
+    assertTrue(authResult is AuthResult.Success)
+
+    // When - sign out
+    viewModel.signOut()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then - auth result should be null
+    authResult = viewModel.authResult.first()
+    assertNull(authResult)
+  }
+
+  @Test
+  fun `signOut calls repository signOut`() = runTest {
+    // When
+    viewModel.signOut()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    verify { mockRepository.signOut() }
+  }
+
+  @Test
+  fun `signOut calls Google SignIn client signOut`() = runTest {
+    // Given
+    val mockGoogleSignInClient = mockk<GoogleSignInClient>(relaxed = true)
+    every { mockCredentialHelper.getGoogleSignInClient() } returns mockGoogleSignInClient
+
+    // When
+    viewModel.signOut()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    verify { mockGoogleSignInClient.signOut() }
+  }
+
+  @Test
+  fun `signOut can be called multiple times without errors`() = runTest {
+    // When - calling signOut multiple times
+    viewModel.signOut()
+    viewModel.signOut()
+    viewModel.signOut()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then - no exception should be thrown and state should be reset
+    val uiState = viewModel.uiState.first()
+    assertEquals("", uiState.email)
+    assertEquals("", uiState.password)
+    assertNull(viewModel.authResult.first())
+  }
+
+  @Test
+  fun `signOut after failed login clears error state`() = runTest {
+    // Given - failed login
+    coEvery { mockRepository.signInWithEmail(any(), any()) } returns
+        Result.failure(Exception("Login failed"))
+
+    viewModel.updateEmail("test@example.com")
+    viewModel.updatePassword("wrong")
+    viewModel.signIn()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Verify error is present
+    var uiState = viewModel.uiState.first()
+    assertNotNull(uiState.error)
+
+    // When - sign out
+    viewModel.signOut()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then - error should be cleared
+    uiState = viewModel.uiState.first()
+    assertNull(uiState.error)
+    assertEquals("", uiState.email)
+    assertEquals("", uiState.password)
+  }
 }

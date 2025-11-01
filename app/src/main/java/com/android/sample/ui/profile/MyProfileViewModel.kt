@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 
 /** UI state for the MyProfile screen. Holds all data needed to edit a profile */
 data class MyProfileUIState(
+    val userId: String? = null,
     val name: String? = "",
     val email: String? = "",
     val selectedLocation: Location? = null,
@@ -75,13 +77,14 @@ class MyProfileViewModel(
   private val descMsgError = "Description cannot be empty"
 
   /** Loads the profile data (to be implemented) */
-  fun loadProfile() {
-    val currentId = userId
+  fun loadProfile(profileUserId: String? = null) {
+    val currentId = profileUserId ?: userId
     viewModelScope.launch {
       try {
         val profile = profileRepository.getProfile(userId = currentId)
         _uiState.value =
             MyProfileUIState(
+                userId = currentId,
                 name = profile?.name,
                 email = profile?.email,
                 selectedLocation = profile?.location,
@@ -104,7 +107,7 @@ class MyProfileViewModel(
       setError()
       return
     }
-    val currentId = userId
+    val currentId = state.userId ?: userId
     val profile =
         Profile(
             userId = currentId,
@@ -221,5 +224,10 @@ class MyProfileViewModel(
               invalidLocationMsg = locationMsgError,
               selectedLocation = null)
     }
+  }
+
+  /** Logs out the current user using UserSessionManager */
+  fun logout() {
+    UserSessionManager.logout()
   }
 }

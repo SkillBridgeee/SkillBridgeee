@@ -59,6 +59,20 @@ object UserSessionManager {
   fun getCurrentUserId(): String? {
     return auth.currentUser?.uid
   }
+
+  /**
+   * Log out the current user
+   *
+   * This will:
+   * - Sign out from Firebase Auth
+   * - Update the auth state to Unauthenticated
+   * - Clear the current user
+   */
+  fun logout() {
+    auth.signOut()
+    _currentUser.value = null
+    _authState.value = AuthState.Unauthenticated
+  }
 }
 
 /** Sealed class representing the authentication state */

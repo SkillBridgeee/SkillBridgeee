@@ -211,4 +211,22 @@ class MyProfileScreenTest {
         .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
   }
+
+  // ----------------------------------------------------------
+  // LOGOUT BUTTON TESTS
+  // ----------------------------------------------------------
+  @Test
+  fun logoutButton_isDisplayed() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertIsDisplayed()
+  }
+
+  @Test
+  fun logoutButton_isClickable() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertHasClickAction()
+  }
+
+  @Test
+  fun logoutButton_hasCorrectText() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertTextContains("Logout")
+  }
 }
