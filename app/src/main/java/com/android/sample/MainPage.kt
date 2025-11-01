@@ -40,7 +40,6 @@ object HomeScreenTestTags {
   const val SKILL_CARD = "skillCard"
   const val TOP_TUTOR_SECTION = "topTutorSection"
   const val TUTOR_CARD = "tutorCard"
-  const val TUTOR_BOOK_BUTTON = "tutorBookButton"
   const val TUTOR_LIST = "tutorList"
   const val FAB_ADD = "fabAdd"
 }
