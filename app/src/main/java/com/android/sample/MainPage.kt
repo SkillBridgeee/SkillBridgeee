@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -26,8 +25,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.MainPageViewModel.SubjectColors.getSubjectColor
 import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.user.Profile
+import com.android.sample.ui.components.NewTutorCard
 import com.android.sample.ui.theme.PrimaryColor
-import com.android.sample.ui.theme.SecondaryColor
 
 /**
  * Provides test tag identifiers for the HomeScreen and its child composables.
@@ -171,7 +171,7 @@ fun SubjectCard(
  * @param onBookClick The callback invoked when the "Book" button is clicked.
  */
 @Composable
-fun TutorsSection(tutors: List<TutorCardUi>, onBookClick: (String) -> Unit) {
+fun TutorsSection(tutors: List<Profile>, onBookClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
         text = "Top-Rated Tutors",
@@ -184,62 +184,12 @@ fun TutorsSection(tutors: List<TutorCardUi>, onBookClick: (String) -> Unit) {
     LazyColumn(
         modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_LIST).fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          items(tutors) { TutorCard(it, onBookClick) }
+          items(tutors) { profile ->
+            NewTutorCard(
+                profile = profile,
+                onOpenProfile = onBookClick, // TODO: receive profile.userId
+                cardTestTag = HomeScreenTestTags.TUTOR_CARD)
+          }
         }
   }
-}
-
-/**
- * Displays a tutor’s information card, including name, subject, hourly rate, and rating stars.
- *
- * The card includes a "Book" button that triggers [onBookClick].
- *
- * @param tutor The [TutorCardUi] object containing tutor data.
- * @param onBookClick The callback executed when the "Book" button is clicked.
- */
-@Composable
-fun TutorCard(tutor: TutorCardUi, onBookClick: (String) -> Unit) {
-  Card(
-      modifier =
-          Modifier.fillMaxWidth().padding(vertical = 5.dp).testTag(HomeScreenTestTags.TUTOR_CARD),
-      shape = RoundedCornerShape(12.dp),
-      elevation = CardDefaults.cardElevation(4.dp)) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-          Surface(shape = CircleShape, color = Color.LightGray, modifier = Modifier.size(40.dp)) {}
-          Spacer(modifier = Modifier.width(12.dp))
-
-          Column(modifier = Modifier.weight(1f)) {
-            Text(tutor.name, fontWeight = FontWeight.Bold)
-            Text(tutor.subject, color = SecondaryColor)
-            Row {
-              repeat(5) { i ->
-                val tint = if (i < tutor.ratingStars) Color.Black else Color.Gray
-                Icon(
-                    Icons.Default.Star,
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(16.dp))
-              }
-              Text(
-                  "(${tutor.ratingCount})",
-                  fontSize = 12.sp,
-                  modifier = Modifier.padding(start = 4.dp))
-            }
-          }
-
-          Column(horizontalAlignment = Alignment.End) {
-            Text(
-                "$${"%.2f".format(tutor.hourlyRate)} / hr",
-                color = SecondaryColor,
-                fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(6.dp))
-            Button(
-                onClick = { onBookClick(tutor.name) },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_BOOK_BUTTON)) {
-                  Text("Book")
-                }
-          }
-        }
-      }
 }

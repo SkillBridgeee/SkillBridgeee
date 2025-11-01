@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val welcomeMessage: String = "",
     val subjects: List<MainSubject> = emptyList(),
-    var tutors: List<TutorCardUi> = emptyList()
+    var tutors: List<Profile> = emptyList()
 )
 
 /**
@@ -96,16 +96,19 @@ class MainPageViewModel : ViewModel() {
     try {
       val subjects = MainSubject.entries.toList()
       val listings = listingRepository.getAllListings()
-      val tutors = profileRepository.getAllProfiles()
+      val profiles = profileRepository.getAllProfiles()
 
-      val tutorCards = listings.mapNotNull { buildTutorCardSafely(it, tutors) }
+      val tutorProfiles =
+          listings.mapNotNull { listing -> profiles.find { it.userId == listing.creatorUserId } }
       val userName = mutableStateOf("")
       navigationEvent.value?.let { getCurrentUserName("user123") { name -> userName.value = name } }
           ?: "Ava"
 
       _uiState.value =
           HomeUiState(
-              welcomeMessage = "Welcome back, $userName!", subjects = subjects, tutors = tutorCards)
+              welcomeMessage = "Welcome back, $userName!",
+              subjects = subjects,
+              tutors = tutorProfiles)
     } catch (e: Exception) {
       // Log the error for debugging while providing a safe fallback UI state
       Log.w(TAG, "Failed to build HomeUiState, using fallback", e)
@@ -177,10 +180,8 @@ class MainPageViewModel : ViewModel() {
    *
    * @param tutorName The name of the tutor being booked.
    */
-  fun onBookTutorClicked(tutorName: String) {
-    viewModelScope.launch {
-      // TODO handle booking logic
-    }
+  fun onBookTutorClicked(profileId: String) {
+    viewModelScope.launch { _navigationEvent.value = profileId }
   }
 
   /**
