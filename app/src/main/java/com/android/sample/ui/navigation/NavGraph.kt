@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -96,11 +97,11 @@ fun AppNavGraph(
           })
     }
 
-    composable(NavRoutes.SKILLS) {
+    composable(NavRoutes.SKILLS) { backStackEntry ->
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
+      val viewModel: SubjectListViewModel = viewModel(backStackEntry)
       SubjectListScreen(
-          viewModel =
-              SubjectListViewModel(), // You may need to provide this through dependency injection
+          viewModel = viewModel, // You may need to provide this through dependency injection
           onBookTutor = { profile ->
             // Navigate to booking or profile screen when tutor is booked
             // Example: navController.navigate("booking/${profile.uid}")
