@@ -2,21 +2,16 @@ package com.android.sample.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.listing.Request
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object RequestCardTestTags {
@@ -52,99 +47,48 @@ fun RequestCard(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
-              Column(modifier = Modifier.weight(1f)) {
-                // Status badge
-                Surface(
-                    color =
-                        if (request.isActive) MaterialTheme.colorScheme.secondaryContainer
-                        else MaterialTheme.colorScheme.errorContainer,
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.padding(bottom = 8.dp)) {
-                      Text(
-                          text = if (request.isActive) "Active" else "Inactive",
-                          style = MaterialTheme.typography.labelSmall,
-                          color =
-                              if (request.isActive) MaterialTheme.colorScheme.onSecondaryContainer
-                              else MaterialTheme.colorScheme.onErrorContainer,
-                          modifier =
-                              Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                  .testTag(RequestCardTestTags.STATUS_BADGE))
-                    }
-
-                // Title (skill or description)
-                Text(
-                    text = request.displayTitle(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.testTag(RequestCardTestTags.TITLE))
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Description
-                if (request.description.isNotBlank()) {
-                  Text(
-                      text = request.description,
-                      style = MaterialTheme.typography.bodySmall,
-                      color = MaterialTheme.colorScheme.onSurfaceVariant,
-                      maxLines = 2,
-                      overflow = TextOverflow.Ellipsis,
-                      modifier = Modifier.testTag(RequestCardTestTags.DESCRIPTION))
-
-                  Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                // Location and date
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
-                      // Location
-                      Text(
-                          text = "📍 ${request.location.name.ifBlank { "No location" }}",
-                          style = MaterialTheme.typography.bodySmall,
-                          color = MaterialTheme.colorScheme.onSurfaceVariant,
-                          modifier = Modifier.testTag(RequestCardTestTags.LOCATION))
-
-                      // Created date
-                      val formatter = remember {
-                        DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault())
-                      }
-                      val formattedDate =
-                          remember(request.createdAt, formatter) {
-                            request.createdAt
-                                .toInstant()
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate()
-                                .format(formatter)
-                          }
-                      Text(
-                          text = "📅 $formattedDate",
-                          style = MaterialTheme.typography.bodySmall,
-                          color = MaterialTheme.colorScheme.onSurfaceVariant,
-                          modifier = Modifier.testTag(RequestCardTestTags.CREATED_DATE))
-                    }
-              }
-
+              RequestCardContent(request = request)
               Spacer(modifier = Modifier.width(16.dp))
-
-              // Price and arrow
-              Column(
-                  horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center) {
-                    Text(
-                        text = String.format(Locale.getDefault(), "$%.2f/hr", request.hourlyRate),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.testTag(RequestCardTestTags.HOURLY_RATE))
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "View details",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                  }
+              RequestCardPriceSection(hourlyRate = request.hourlyRate)
             }
       }
+}
+
+@Composable
+private fun RowScope.RequestCardContent(request: Request) {
+  Column(modifier = Modifier.weight(1f)) {
+    StatusBadge(
+        isActive = request.isActive,
+        activeColor = MaterialTheme.colorScheme.secondaryContainer,
+        activeTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        testTag = RequestCardTestTags.STATUS_BADGE)
+
+    CardTitle(title = request.displayTitle(), testTag = RequestCardTestTags.TITLE)
+    Spacer(modifier = Modifier.height(4.dp))
+    CardDescription(description = request.description, testTag = RequestCardTestTags.DESCRIPTION)
+    LocationAndDateRow(
+        locationName = request.location.name,
+        createdAt = request.createdAt,
+        locationTestTag = RequestCardTestTags.LOCATION,
+        dateTestTag = RequestCardTestTags.CREATED_DATE)
+  }
+}
+
+@Composable
+private fun RequestCardPriceSection(hourlyRate: Double) {
+  Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center) {
+    Text(
+        text = String.format(Locale.getDefault(), "$%.2f/hr", hourlyRate),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.secondary,
+        modifier = Modifier.testTag(RequestCardTestTags.HOURLY_RATE))
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Icon(
+        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+        contentDescription = "View details",
+        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+  }
 }
