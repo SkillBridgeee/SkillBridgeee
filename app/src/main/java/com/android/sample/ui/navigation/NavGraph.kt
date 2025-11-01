@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import com.android.sample.HomeScreen
 import com.android.sample.MainPageViewModel
 import com.android.sample.model.authentication.AuthenticationViewModel
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
@@ -78,11 +79,9 @@ fun AppNavGraph(
     }
 
     composable(NavRoutes.PROFILE) {
+      val currentUserId = UserSessionManager.getCurrentUserId() ?: "guest"
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
-      MyProfileScreen(
-          profileViewModel = profileViewModel,
-          profileId = "test" // Using the same hardcoded user ID from MainActivity for the demo
-          )
+      MyProfileScreen(profileViewModel = profileViewModel, profileId = currentUserId)
     }
 
     composable(NavRoutes.HOME) {
