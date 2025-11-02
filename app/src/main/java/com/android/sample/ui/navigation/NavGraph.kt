@@ -95,7 +95,7 @@ fun AppNavGraph(
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.HOME) }
       HomeScreen(
           mainPageViewModel = mainPageViewModel,
-          onNavigateToNewSkill = { profileId ->
+          onNavigateToProfile = { profileId ->
             navController.navigate(NavRoutes.createNewSkillRoute(profileId))
           },
           onNavigateToSubjectList = { subject ->
