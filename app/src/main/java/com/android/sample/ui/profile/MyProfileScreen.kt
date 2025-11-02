@@ -221,8 +221,6 @@ private fun ProfileContent(
 
         // Logout button
         AppButton(
-            text = "Logout",
-            onClick = onLogout,
-            testTag = MyProfileScreenTestTag.LOGOUT_BUTTON)
+            text = "Logout", onClick = onLogout, testTag = MyProfileScreenTestTag.LOGOUT_BUTTON)
       }
 }

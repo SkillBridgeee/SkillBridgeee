@@ -262,7 +262,9 @@ class AppNavGraphTest {
   @Test
   fun navigating_to_signup_from_login() {
     // Click "Sign Up" link on login screen using test tag
-    composeTestRule.onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.SIGNUP_LINK).performClick()
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.SIGNUP_LINK)
+        .performClick()
     composeTestRule.waitForIdle()
 
     // Wait for signup screen to load
@@ -271,7 +273,9 @@ class AppNavGraphTest {
     }
 
     // Verify signup screen is displayed using test tag to avoid ambiguity
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.TITLE).assertExists()
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.TITLE)
+        .assertExists()
     composeTestRule.onNodeWithText("Personal Informations").assertExists()
   }
 
@@ -313,7 +317,6 @@ class AppNavGraphTest {
     // Verify login screen UI is present
     composeTestRule.onNodeWithText("Welcome back! Please sign in.").assertExists()
   }
-
 
   @Test
   fun github_login_navigates_to_home_clearing_login_from_stack() {
@@ -374,8 +377,8 @@ class AppNavGraphTest {
    * 3. Ensures UserSessionManager.authState becomes Unauthenticated after logout
    * 4. Verifies subsequent login shows the new account's profile (data isolation)
    *
-   * This test uses REAL authentication (signup/login) instead of GitHub bypass
-   * to properly test UserSessionManager state changes.
+   * This test uses REAL authentication (signup/login) instead of GitHub bypass to properly test
+   * UserSessionManager state changes.
    */
   @Test
   fun logout_integration_test_with_complete_state_verification_and_data_isolation() {
@@ -391,7 +394,9 @@ class AppNavGraphTest {
     Log.d(TAG, "PHASE 1: Creating first user account")
 
     // Navigate to signup
-    composeTestRule.onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.SIGNUP_LINK).performClick()
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.SIGNUP_LINK)
+        .performClick()
     composeTestRule.waitForIdle()
 
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
@@ -399,32 +404,42 @@ class AppNavGraphTest {
     }
 
     // Fill in signup form for first user
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.NAME)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.NAME)
         .performTextInput(firstUserName)
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SURNAME)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SURNAME)
         .performTextInput("One")
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.ADDRESS)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.ADDRESS)
         .performTextInput("Test Address 1, City")
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.LEVEL_OF_EDUCATION)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.LEVEL_OF_EDUCATION)
         .performTextInput("CS, 3rd year")
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.DESCRIPTION)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.DESCRIPTION)
         .performTextInput("Test user for integration testing")
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.EMAIL)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.EMAIL)
         .performTextInput(firstUserEmail)
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.PASSWORD)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.PASSWORD)
         .performTextInput(firstUserPassword)
 
     // Close keyboard and scroll to make Sign Up button visible
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.PASSWORD)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.PASSWORD)
         .performImeAction()
     composeTestRule.waitForIdle()
 
     // Scroll to the Sign Up button
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SIGN_UP)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SIGN_UP)
         .performScrollTo()
 
     // Submit signup
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SIGN_UP)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SIGN_UP)
         .performClick()
     composeTestRule.waitForIdle()
 
@@ -434,11 +449,14 @@ class AppNavGraphTest {
     }
 
     // Now login with the created account
-    composeTestRule.onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.EMAIL_INPUT)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.EMAIL_INPUT)
         .performTextInput(firstUserEmail)
-    composeTestRule.onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.PASSWORD_INPUT)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.PASSWORD_INPUT)
         .performTextInput(firstUserPassword)
-    composeTestRule.onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.SIGN_IN_BUTTON)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.SIGN_IN_BUTTON)
         .performClick()
     composeTestRule.waitForIdle()
 
@@ -462,8 +480,7 @@ class AppNavGraphTest {
     // ✅ Verify UserSessionManager shows authenticated state
     val authStateAfterLogin = runBlocking { UserSessionManager.authState.first() }
     Assert.assertTrue(
-        "User should be authenticated after login",
-        authStateAfterLogin is AuthState.Authenticated)
+        "User should be authenticated after login", authStateAfterLogin is AuthState.Authenticated)
 
     val firstUserId = UserSessionManager.getCurrentUserId()
     Assert.assertTrue("User ID should not be null after login", firstUserId != null)
@@ -530,7 +547,9 @@ class AppNavGraphTest {
     Log.d(TAG, "PHASE 6: Creating second user account for data isolation test")
 
     // Navigate to signup
-    composeTestRule.onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.SIGNUP_LINK).performClick()
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.SIGNUP_LINK)
+        .performClick()
     composeTestRule.waitForIdle()
 
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
@@ -538,32 +557,42 @@ class AppNavGraphTest {
     }
 
     // Fill in signup form for second user
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.NAME)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.NAME)
         .performTextInput(secondUserName)
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SURNAME)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SURNAME)
         .performTextInput("Two")
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.ADDRESS)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.ADDRESS)
         .performTextInput("Test Address 2, City")
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.LEVEL_OF_EDUCATION)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.LEVEL_OF_EDUCATION)
         .performTextInput("EE, 2nd year")
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.DESCRIPTION)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.DESCRIPTION)
         .performTextInput("Second test user for data isolation testing")
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.EMAIL)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.EMAIL)
         .performTextInput(secondUserEmail)
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.PASSWORD)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.PASSWORD)
         .performTextInput(secondUserPassword)
 
     // Close keyboard and scroll to make Sign Up button visible
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.PASSWORD)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.PASSWORD)
         .performImeAction()
     composeTestRule.waitForIdle()
 
     // Scroll to the Sign Up button
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SIGN_UP)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SIGN_UP)
         .performScrollTo()
 
     // Submit signup
-    composeTestRule.onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SIGN_UP)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.SIGN_UP)
         .performClick()
     composeTestRule.waitForIdle()
 
@@ -573,11 +602,14 @@ class AppNavGraphTest {
     }
 
     // Login with second user
-    composeTestRule.onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.EMAIL_INPUT)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.EMAIL_INPUT)
         .performTextInput(secondUserEmail)
-    composeTestRule.onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.PASSWORD_INPUT)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.PASSWORD_INPUT)
         .performTextInput(secondUserPassword)
-    composeTestRule.onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.SIGN_IN_BUTTON)
+    composeTestRule
+        .onNodeWithTag(com.android.sample.ui.login.SignInScreenTestTags.SIGN_IN_BUTTON)
         .performClick()
     composeTestRule.waitForIdle()
 
@@ -603,16 +635,13 @@ class AppNavGraphTest {
     val secondUserId = UserSessionManager.getCurrentUserId()
     Assert.assertTrue("Second user ID should not be null", secondUserId != null)
     Assert.assertNotEquals(
-        "Second user ID should be different from first user ID",
-        firstUserId,
-        secondUserId)
+        "Second user ID should be different from first user ID", firstUserId, secondUserId)
     Log.d(TAG, "Second user logged in with ID: $secondUserId")
 
     // Verify the session manager is tracking the authenticated user
     val authStateAfterRelogin = runBlocking { UserSessionManager.authState.first() }
     Assert.assertTrue(
-        "Second user should be authenticated",
-        authStateAfterRelogin is AuthState.Authenticated)
+        "Second user should be authenticated", authStateAfterRelogin is AuthState.Authenticated)
 
     // Navigate to profile to verify it loads the CURRENT user's data
     composeTestRule.onNodeWithText("Profile").performClick()

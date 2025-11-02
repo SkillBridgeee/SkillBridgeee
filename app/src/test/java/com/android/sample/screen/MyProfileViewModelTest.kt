@@ -286,7 +286,6 @@ class MyProfileViewModelTest {
     assertTrue(true)
   }
 
-
   @Test
   fun loadProfile_withUserId_loadsCorrectProfile() = runTest {
     // Given

@@ -258,7 +258,9 @@ class MyProfileScreenTest {
 
   @Test
   fun saveButton_hasCorrectText() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertTextContains("Save Profile Changes")
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON)
+        .assertTextContains("Save Profile Changes")
   }
 
   // ----------------------------------------------------------
@@ -296,4 +298,3 @@ class MyProfileScreenTest {
 
   // Edge case tests for null/empty values are in MyProfileScreenEdgeCasesTest.kt
 }
-
