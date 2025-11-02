@@ -114,37 +114,6 @@ class MainPageViewModel : ViewModel() {
   }
 
   /**
-   * Computes the average rating for a tutor and converts it to a rounded integer value.
-   *
-   * @param rating The [RatingInfo] containing average and total ratings.
-   * @return The rounded star rating, clamped between 0 and 5.
-   */
-  private fun computeAvgStars(rating: RatingInfo): Int {
-    if (rating.totalRatings == 0) return 0
-    val avg = rating.averageRating
-    return avg.roundToInt().coerceIn(0, 5)
-  }
-
-  /**
-   * Retrieves the total number of ratings for a tutor.
-   *
-   * @param rating The [RatingInfo] object.
-   * @return The total number of ratings.
-   */
-  private fun ratingCountFor(rating: RatingInfo): Int = rating.totalRatings
-
-  /**
-   * Formats the hourly rate to two decimal places for consistent display.
-   *
-   * @param hourlyRate The raw hourly rate value.
-   * @return The formatted hourly rate as a [Double].
-   */
-  @SuppressLint("DefaultLocale")
-  private fun formatPrice(hourlyRate: Double): Double {
-    return String.format("%.2f", hourlyRate).toDouble()
-  }
-
-  /**
    * Handles the "Book" button click event for a tutor.
    *
    * This function will be expanded in future versions to handle booking logic.
