@@ -207,4 +207,60 @@ class UserSessionManagerTest {
     // Then
     assertTrue(stringRepresentation.contains("test-user"))
   }
+
+  @Test
+  fun `logout executes without exception`() {
+    // Given/When/Then - verify the method can be called without throwing
+    UserSessionManager.logout()
+  }
+
+  @Test
+  fun `logout clears current user ID`() {
+    // Given - logout is called
+    UserSessionManager.logout()
+
+    // When
+    val userId = UserSessionManager.getCurrentUserId()
+
+    // Then - user ID should be null after logout
+    assertNull(userId)
+  }
+
+  @Test
+  fun `logout updates auth state`() = runTest {
+    // Given
+    UserSessionManager.logout()
+
+    // When
+    testDispatcher.scheduler.advanceUntilIdle()
+    val authState = UserSessionManager.authState.value
+
+    // Then - auth state should be Unauthenticated after logout
+    assertTrue(authState is AuthState.Unauthenticated)
+  }
+
+  @Test
+  fun `logout clears current user flow`() = runTest {
+    // Given
+    UserSessionManager.logout()
+
+    // When
+    testDispatcher.scheduler.advanceUntilIdle()
+    val currentUser = UserSessionManager.currentUser.value
+
+    // Then - current user should be null after logout
+    assertNull(currentUser)
+  }
+
+  @Test
+  fun `multiple logout calls do not cause errors`() {
+    // Given/When - calling logout multiple times
+    UserSessionManager.logout()
+    UserSessionManager.logout()
+    UserSessionManager.logout()
+
+    // Then - verify no exception is thrown and state is consistent
+    assertNull(UserSessionManager.getCurrentUserId())
+    assertTrue(UserSessionManager.authState.value is AuthState.Unauthenticated)
+  }
 }

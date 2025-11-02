@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 
 /** UI state for the MyProfile screen. Holds all data needed to edit a profile */
 data class MyProfileUIState(
+    val userId: String? = null,
     val name: String? = "",
     val email: String? = "",
     val selectedLocation: Location? = null,
@@ -75,13 +76,14 @@ class MyProfileViewModel(
   private val descMsgError = "Description cannot be empty"
 
   /** Loads the profile data (to be implemented) */
-  fun loadProfile() {
-    val currentId = userId
+  fun loadProfile(profileUserId: String? = null) {
+    val currentId = profileUserId ?: userId
     viewModelScope.launch {
       try {
         val profile = profileRepository.getProfile(userId = currentId)
         _uiState.value =
             MyProfileUIState(
+                userId = currentId,
                 name = profile?.name,
                 email = profile?.email,
                 selectedLocation = profile?.location,
@@ -104,7 +106,7 @@ class MyProfileViewModel(
       setError()
       return
     }
-    val currentId = userId
+    val currentId = state.userId ?: userId
     val profile =
         Profile(
             userId = currentId,
