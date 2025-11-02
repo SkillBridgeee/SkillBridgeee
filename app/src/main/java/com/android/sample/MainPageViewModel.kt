@@ -1,13 +1,11 @@
 package com.android.sample
 
-import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.listing.ListingRepositoryProvider
-import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepositoryProvider
@@ -18,7 +16,6 @@ import com.android.sample.ui.theme.subjectColor4
 import com.android.sample.ui.theme.subjectColor5
 import com.android.sample.ui.theme.subjectColor6
 import com.android.sample.ui.theme.subjectColor7
-import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

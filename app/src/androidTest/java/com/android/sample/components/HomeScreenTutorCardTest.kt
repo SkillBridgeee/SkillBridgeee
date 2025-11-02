@@ -29,26 +29,23 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class HomeScreenTutorCardTest {
 
-  @get:Rule
-  val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   private val sampleProfile =
-    Profile(
-      userId = "user-1",
-      name = "Ava Tutor",
-      description = "Experienced tutor",
-      location = Location(name = "Helsinki"),
-      tutorRating = RatingInfo(averageRating = 4.0, totalRatings = 12)
-    )
+      Profile(
+          userId = "user-1",
+          name = "Ava Tutor",
+          description = "Experienced tutor",
+          location = Location(name = "Helsinki"),
+          tutorRating = RatingInfo(averageRating = 4.0, totalRatings = 12))
 
   // Build a concrete Proposal (Listing is sealed; instantiate a subclass)
   private val listingForSample: Proposal =
-    Proposal(
-      listingId = "listing-1",
-      creatorUserId = "user-1",
-      skill = Skill(mainSubject = MainSubject.ACADEMICS, skill = "Academics"),
-      hourlyRate = 20.0
-    )
+      Proposal(
+          listingId = "listing-1",
+          creatorUserId = "user-1",
+          skill = Skill(mainSubject = MainSubject.ACADEMICS, skill = "Academics"),
+          hourlyRate = 20.0)
 
   @Before
   fun setupFakeRepos() {
@@ -69,8 +66,8 @@ class HomeScreenTutorCardTest {
           override suspend fun getAllProfiles(): List<Profile> = listOf(sampleProfile)
 
           override suspend fun searchProfilesByLocation(
-            location: Location,
-            radiusKm: Double
+              location: Location,
+              radiusKm: Double
           ): List<Profile> = listOf(sampleProfile)
 
           override suspend fun getProfileById(userId: String): Profile? =
@@ -109,8 +106,8 @@ class HomeScreenTutorCardTest {
           override suspend fun searchBySkill(skill: Skill): List<Listing> = listOf(listingForSample)
 
           override suspend fun searchByLocation(
-            location: Location,
-            radiusKm: Double
+              location: Location,
+              radiusKm: Double
           ): List<Listing> = listOf(listingForSample)
         }
 
@@ -141,8 +138,8 @@ class HomeScreenTutorCardTest {
     // Use composeRule.setContent to set the composable content in the test
     composeRule.setContent {
       HomeScreen(
-        mainPageViewModel = vm,
-        onNavigateToProfile = { profileId -> navigatedToProfileId = profileId })
+          mainPageViewModel = vm,
+          onNavigateToProfile = { profileId -> navigatedToProfileId = profileId })
     }
 
     // Wait for UI + coroutines to settle
