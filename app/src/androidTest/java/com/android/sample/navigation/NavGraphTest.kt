@@ -418,7 +418,7 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertExists()
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).assertExists()
     // Skills doesn't have a test tag, so use text for it
-    composeTestRule.onNodeWithText("Skills").assertExists()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).assertExists()
 
     Log.d(TAG, "All navigation routes properly configured")
   }
