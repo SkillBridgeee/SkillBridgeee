@@ -2,12 +2,10 @@ package com.android.sample
 
 import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
@@ -89,8 +87,7 @@ class MainPageViewModel : ViewModel() {
    * Loads all data required for the main page.
    *
    * Fetches data from local repositories (skills, listings, and tutors) and builds a list of
-   * [TutorCardUi] safely using [buildTutorCardSafely]. Updates the [_uiState] with a formatted
-   * welcome message and the loaded data.
+   * [TutorCardUi]. Updates the [_uiState] with a formatted welcome message and the loaded data.
    */
   suspend fun load() {
     try {
@@ -113,32 +110,6 @@ class MainPageViewModel : ViewModel() {
       // Log the error for debugging while providing a safe fallback UI state
       Log.w(TAG, "Failed to build HomeUiState, using fallback", e)
       _uiState.value = HomeUiState(welcomeMessage = DEFAULT_WELCOME_MESSAGE)
-    }
-  }
-
-  /**
-   * Safely builds a [TutorCardUi] object for the given [Listing] and tutor list.
-   *
-   * Any errors encountered during construction are caught, and null is returned to prevent one
-   * failing item from breaking the entire list rendering.
-   *
-   * @param listing The [Listing] representing a tutor's offering.
-   * @param tutors The list of available [Profile]s.
-   * @return A constructed [TutorCardUi], or null if the data is invalid.
-   */
-  private fun buildTutorCardSafely(listing: Listing, tutors: List<Profile>): TutorCardUi? {
-    return try {
-      val tutor = tutors.find { it.userId == listing.creatorUserId } ?: return null
-
-      TutorCardUi(
-          name = tutor.name ?: "Unknown",
-          subject = listing.skill.skill,
-          hourlyRate = formatPrice(listing.hourlyRate),
-          ratingStars = computeAvgStars(tutor.tutorRating),
-          ratingCount = ratingCountFor(tutor.tutorRating))
-    } catch (e: Exception) {
-      Log.w(TAG, "Failed to build TutorCardUi for listing: ${listing.creatorUserId}", e)
-      null
     }
   }
 
@@ -180,7 +151,7 @@ class MainPageViewModel : ViewModel() {
    *
    * @param tutorName The name of the tutor being booked.
    */
-  fun onBookTutorClicked(profileId: String) {
+  fun onTutorClick(profileId: String) {
     viewModelScope.launch { _navigationEvent.value = profileId }
   }
 

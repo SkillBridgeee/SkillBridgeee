@@ -19,12 +19,12 @@ import androidx.compose.ui.unit.dp
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.theme.White
 
-object NewTutorCardTestTags {
+object TutorCardTestTags {
   const val CARD = "TutorCardTestTags.CARD"
 }
 
 @Composable
-fun NewTutorCard(
+fun TutorCard(
     profile: Profile,
     modifier: Modifier = Modifier,
     secondaryText: String? = null, // optional subtitle override
@@ -47,7 +47,7 @@ fun NewTutorCard(
       modifier =
           modifier
               .clickable { onOpenProfile(profile.userId) }
-              .testTag(cardTestTag ?: NewTutorCardTestTags.CARD)) {
+              .testTag(cardTestTag ?: TutorCardTestTags.CARD)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(16.dp)) {
@@ -85,14 +85,21 @@ fun NewTutorCard(
 
                 Spacer(Modifier.height(8.dp))
 
-                // Rating row (stars + total ratings)
+                // Rating row: show stars + count when rated, otherwise a fallback label
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                  RatingStars(ratingOutOfFive = profile.tutorRating.averageRating)
-                  Spacer(Modifier.width(6.dp))
-                  Text(
-                      text = "(${profile.tutorRating.totalRatings})",
-                      style = MaterialTheme.typography.bodySmall,
-                      color = MaterialTheme.colorScheme.onSurfaceVariant)
+                  if (profile.tutorRating.totalRatings > 0) {
+                    RatingStars(ratingOutOfFive = profile.tutorRating.averageRating)
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "(${profile.tutorRating.totalRatings})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                  } else {
+                    Text(
+                        text = "No ratings yet",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                  }
                 }
 
                 Spacer(Modifier.height(4.dp))

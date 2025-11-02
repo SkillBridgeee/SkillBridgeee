@@ -46,7 +46,7 @@ class HomeScreenProfileNavigationTest {
             // Render the section and navigate to the profile route when a card is clicked
             TutorsSection(
                 tutors = listOf(profile),
-                onBookClick = { profileId ->
+                onTutorClick = { profileId ->
                   navController.navigate(NavRoutes.createProfileRoute(profileId))
                 })
           }

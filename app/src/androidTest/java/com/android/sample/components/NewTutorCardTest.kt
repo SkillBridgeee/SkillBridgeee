@@ -52,7 +52,7 @@ class NewTutorCardTest {
 
     composeRule.setContent {
       MaterialTheme {
-        NewTutorCard(
+        TutorCard(
             profile = profile,
             onOpenProfile = {},
         )
@@ -60,7 +60,7 @@ class NewTutorCardTest {
     }
 
     // Card exists with test tag
-    composeRule.onNodeWithTag(NewTutorCardTestTags.CARD).assertIsDisplayed()
+    composeRule.onNodeWithTag(TutorCardTestTags.CARD).assertIsDisplayed()
 
     // Name is shown
     composeRule.onNodeWithText("Alice Johnson").assertIsDisplayed()
@@ -87,7 +87,7 @@ class NewTutorCardTest {
 
     composeRule.setContent {
       MaterialTheme {
-        NewTutorCard(
+        TutorCard(
             profile = profileNoDesc,
             onOpenProfile = {},
         )
@@ -107,13 +107,11 @@ class NewTutorCardTest {
     var clickedUserId: String? = null
 
     composeRule.setContent {
-      MaterialTheme {
-        NewTutorCard(profile = profile, onOpenProfile = { uid -> clickedUserId = uid })
-      }
+      MaterialTheme { TutorCard(profile = profile, onOpenProfile = { uid -> clickedUserId = uid }) }
     }
 
     // Click the whole card
-    composeRule.onNodeWithTag(NewTutorCardTestTags.CARD).performClick()
+    composeRule.onNodeWithTag(TutorCardTestTags.CARD).performClick()
 
     // Verify callback got called with correct id
     assertEquals("tutor-abc", clickedUserId)
@@ -130,7 +128,7 @@ class NewTutorCardTest {
 
     composeRule.setContent {
       MaterialTheme {
-        NewTutorCard(
+        TutorCard(
             profile = profile,
             secondaryText = "Custom subtitle override",
             onOpenProfile = {},
@@ -166,7 +164,7 @@ class NewTutorCardTest {
 
     composeRule.setContent {
       MaterialTheme {
-        NewTutorCard(
+        TutorCard(
             profile = profileMissingStuff,
             onOpenProfile = {},
         )
@@ -180,7 +178,7 @@ class NewTutorCardTest {
     composeRule.onNodeWithText("Lessons").assertIsDisplayed()
 
     // Rating count fallback "(0)"
-    composeRule.onNodeWithText("(0)").assertIsDisplayed()
+    composeRule.onNodeWithText("No ratings yet").assertIsDisplayed()
 
     // Fallback location "Unknown"
     composeRule.onNodeWithText("Unknown").assertIsDisplayed()

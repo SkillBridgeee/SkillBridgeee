@@ -1,9 +1,14 @@
-package com.android.sample
+package com.android.sample.ui.components
 
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.test.*
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.sample.HomeScreen
+import com.android.sample.HomeScreenTestTags
+import com.android.sample.MainPageViewModel
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
@@ -61,16 +66,14 @@ class HomeScreenTutorCardTest {
           override suspend fun getAllProfiles(): List<Profile> = listOf(sampleProfile)
 
           override suspend fun searchProfilesByLocation(
-              location: com.android.sample.model.map.Location,
+              location: Location,
               radiusKm: Double
           ): List<Profile> = listOf(sampleProfile)
 
           override suspend fun getProfileById(userId: String): Profile? =
               if (userId == sampleProfile.userId) sampleProfile else null
 
-          override suspend fun getSkillsForUser(
-              userId: String
-          ): List<com.android.sample.model.skill.Skill> = emptyList()
+          override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
         }
 
     // Full fake ListingRepository implementation
@@ -100,12 +103,10 @@ class HomeScreenTutorCardTest {
 
           override suspend fun deactivateListing(listingId: String) {}
 
-          override suspend fun searchBySkill(
-              skill: com.android.sample.model.skill.Skill
-          ): List<Listing> = listOf(listingForSample)
+          override suspend fun searchBySkill(skill: Skill): List<Listing> = listOf(listingForSample)
 
           override suspend fun searchByLocation(
-              location: com.android.sample.model.map.Location,
+              location: Location,
               radiusKm: Double
           ): List<Listing> = listOf(listingForSample)
         }
@@ -138,7 +139,7 @@ class HomeScreenTutorCardTest {
     composeRule.setContent {
       HomeScreen(
           mainPageViewModel = vm,
-          onNavigateToNewSkill = { profileId -> navigatedToProfileId = profileId })
+          onNavigateToProfile = { profileId -> navigatedToProfileId = profileId })
     }
 
     // Wait for UI + coroutines to settle

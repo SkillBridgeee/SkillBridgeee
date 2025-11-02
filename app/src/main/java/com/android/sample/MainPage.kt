@@ -26,7 +26,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.MainPageViewModel.SubjectColors.getSubjectColor
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
-import com.android.sample.ui.components.NewTutorCard
+import com.android.sample.ui.components.TutorCard
 import com.android.sample.ui.theme.PrimaryColor
 
 /**
@@ -61,7 +61,7 @@ object HomeScreenTestTags {
 @Composable
 fun HomeScreen(
     mainPageViewModel: MainPageViewModel = viewModel(),
-    onNavigateToNewSkill: (String) -> Unit = {},
+    onNavigateToProfile: (String) -> Unit = {},
     onNavigateToSubjectList: (MainSubject) -> Unit = {}
 ) {
   val uiState by mainPageViewModel.uiState.collectAsState()
@@ -69,7 +69,7 @@ fun HomeScreen(
 
   LaunchedEffect(navigationEvent) {
     navigationEvent?.let { profileId ->
-      onNavigateToNewSkill(profileId)
+      onNavigateToProfile(profileId)
       mainPageViewModel.onNavigationHandled()
     }
   }
@@ -89,7 +89,7 @@ fun HomeScreen(
           Spacer(modifier = Modifier.height(20.dp))
           ExploreSubjects(uiState.subjects, onNavigateToSubjectList)
           Spacer(modifier = Modifier.height(20.dp))
-          TutorsSection(uiState.tutors, onBookClick = mainPageViewModel::onBookTutorClicked)
+          TutorsSection(uiState.tutors, onTutorClick = mainPageViewModel::onTutorClick)
         }
       }
 }
@@ -167,10 +167,10 @@ fun SubjectCard(
  * Each item in the list is rendered using [TutorCard].
  *
  * @param tutors The list of [TutorCardUi] objects to display.
- * @param onBookClick The callback invoked when the "Book" button is clicked.
+ * @param onTutorClick The callback invoked when the "Book" button is clicked.
  */
 @Composable
-fun TutorsSection(tutors: List<Profile>, onBookClick: (String) -> Unit) {
+fun TutorsSection(tutors: List<Profile>, onTutorClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
         text = "Top-Rated Tutors",
@@ -184,9 +184,9 @@ fun TutorsSection(tutors: List<Profile>, onBookClick: (String) -> Unit) {
         modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_LIST).fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
           items(tutors) { profile ->
-            NewTutorCard(
+            TutorCard(
                 profile = profile,
-                onOpenProfile = onBookClick, // TODO: receive profile.userId
+                onOpenProfile = onTutorClick,
                 cardTestTag = HomeScreenTestTags.TUTOR_CARD)
           }
         }

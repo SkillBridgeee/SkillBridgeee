@@ -79,7 +79,7 @@ class HomeScreenTest {
 
     val profiles = listOf(p1, p2)
 
-    composeRule.setContent { TutorsSection(profiles, onBookClick = { bookedTutor = it }) }
+    composeRule.setContent { TutorsSection(profiles, onTutorClick = { bookedTutor = it }) }
 
     composeRule.onNodeWithTag(HomeScreenTestTags.TOP_TUTOR_SECTION).assertIsDisplayed()
     composeRule.onNodeWithTag(HomeScreenTestTags.TUTOR_LIST).assertIsDisplayed()
