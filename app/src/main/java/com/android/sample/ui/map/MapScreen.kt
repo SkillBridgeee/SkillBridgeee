@@ -13,20 +13,24 @@ import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 
+object MapScreenTestTags {
+  const val MAP_SCREEN_TEXT = "map_screen_text"
+}
+
 @Composable
 fun MapScreen(
-    navController: NavHostController,
-    viewModel: MapViewModel = viewModel(),
-    modifier: Modifier = Modifier
+  navController: NavHostController,
+  viewModel: MapViewModel = viewModel(),
+  modifier: Modifier = Modifier
 ) {
   Scaffold { innerPadding ->
     Box(
-        modifier = modifier.fillMaxSize().padding(innerPadding),
-        contentAlignment = Alignment.Center) {
-          Text(
-              text = "Map",
-              modifier = Modifier.testTag("map_screen_text"),
-              style = MaterialTheme.typography.titleMedium)
-        }
+      modifier = modifier.fillMaxSize().padding(innerPadding),
+      contentAlignment = Alignment.Center) {
+      Text(
+        text = "Map",
+        modifier = Modifier.testTag(MapScreenTestTags.MAP_SCREEN_TEXT),
+        style = MaterialTheme.typography.titleMedium)
+    }
   }
 }

@@ -10,6 +10,7 @@ import com.android.sample.ui.navigation.RouteStackManager
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
+import com.android.sample.ui.map.MapScreenTestTags
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -86,7 +87,7 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Check map screen content via test tag
-    composeTestRule.onNodeWithTag("map_screen_text").assertExists()
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN_TEXT).assertExists()
   }
 
   @Test

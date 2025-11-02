@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.test.platform.app.InstrumentationRegistry
@@ -25,6 +26,7 @@ import com.android.sample.ui.profile.MyProfileViewModel
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertEquals
 
 class BottomNavBarTest {
 
@@ -36,8 +38,7 @@ class BottomNavBarTest {
     try {
       ProfileRepositoryProvider.init(ctx)
       ListingRepositoryProvider.init(ctx)
-      BookingRepositoryProvider.init(
-          ctx) // prevents IllegalStateException in ViewModel construction
+      BookingRepositoryProvider.init(ctx) // prevents IllegalStateException in ViewModel construction
       RatingRepositoryProvider.init(ctx)
     } catch (e: Exception) {
       // Initialization may fail in some CI/emulator setups; log and continue
@@ -84,10 +85,11 @@ class BottomNavBarTest {
 
   @Test
   fun bottomNavBar_navigation_changes_destination() {
-    var currentDestination: String? = null
+    var navController: NavHostController? = null
 
     composeTestRule.setContent {
-      val navController = rememberNavController()
+      val controller = rememberNavController()
+      navController = controller
       val currentUserId = "test"
       val factory = MyViewModelFactory(currentUserId)
 
@@ -95,36 +97,36 @@ class BottomNavBarTest {
       val profileViewModel: MyProfileViewModel = viewModel(factory = factory)
       val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
 
-      // Track current destination
-      val navBackStackEntry by navController.currentBackStackEntryAsState()
-      currentDestination = navBackStackEntry?.destination?.route
-
       AppNavGraph(
-          navController = navController,
-          bookingsViewModel = bookingsViewModel,
-          profileViewModel = profileViewModel,
-          mainPageViewModel = mainPageViewModel,
-          authViewModel =
-              AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
-          onGoogleSignIn = {})
-      BottomNavBar(navController = navController)
+        navController = controller,
+        bookingsViewModel = bookingsViewModel,
+        profileViewModel = profileViewModel,
+        mainPageViewModel = mainPageViewModel,
+        authViewModel =
+          AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
+        onGoogleSignIn = {})
+      BottomNavBar(navController = controller)
     }
 
     // Use test tags for clicks to target the clickable NavigationBarItem (avoids touch injection)
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == NavRoutes.HOME)
+    var route = navController?.currentBackStackEntry?.destination?.route
+    assertEquals("Expected HOME route", NavRoutes.HOME, route)
 
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == NavRoutes.MAP)
+    route = navController?.currentBackStackEntry?.destination?.route
+    assertEquals("Expected MAP route", NavRoutes.MAP, route)
 
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == NavRoutes.BOOKINGS)
+    route = navController?.currentBackStackEntry?.destination?.route
+    assertEquals("Expected BOOKINGS route", NavRoutes.BOOKINGS, route)
 
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == NavRoutes.PROFILE)
+    route = navController?.currentBackStackEntry?.destination?.route
+    assertEquals("Expected PROFILE route", NavRoutes.PROFILE, route)
   }
 }
