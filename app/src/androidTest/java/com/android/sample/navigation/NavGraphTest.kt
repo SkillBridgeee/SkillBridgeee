@@ -422,9 +422,11 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Verify bottom navigation exists (which means routes are configured)
-    composeTestRule.onNodeWithText("Home").assertExists()
-    composeTestRule.onNodeWithText("Profile").assertExists()
-    composeTestRule.onNodeWithText("Bookings").assertExists()
+    // Use test tags to avoid ambiguity with "Home" text appearing in multiple places
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).assertExists()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertExists()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).assertExists()
+    // Skills doesn't have a test tag, so use text for it
     composeTestRule.onNodeWithText("Skills").assertExists()
 
     Log.d(TAG, "All navigation routes properly configured")
