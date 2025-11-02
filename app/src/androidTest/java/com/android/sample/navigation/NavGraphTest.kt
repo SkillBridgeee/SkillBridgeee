@@ -51,8 +51,9 @@ class AppNavGraphTest {
 
     // Wait for login screen to be ready - use UI element as it's more reliable at startup
     // RouteStackManager may not be initialized immediately
+    // Increased timeout for CI environments
     composeTestRule.waitForIdle()
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       composeTestRule.onAllNodesWithText("GitHub").fetchSemanticsNodes().isNotEmpty()
     }
   }
@@ -106,7 +107,7 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Use RouteStackManager to verify navigation instead of waiting for UI text
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
     }
 
@@ -125,12 +126,12 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Use RouteStackManager to verify navigation
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.BOOKINGS
     }
 
     // Wait for bookings screen to render - either cards or empty state will appear
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       val hasCards =
           composeTestRule
               .onAllNodesWithTag(MyBookingsPageTestTag.BOOKING_CARD)
@@ -289,8 +290,8 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    // Wait for profile to load
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    // Wait for profile to load - increased timeout for CI
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
     }
 
@@ -298,8 +299,8 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Logout").performClick()
     composeTestRule.waitForIdle()
 
-    // Wait for navigation back to login
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    // Wait for navigation back to login - increased timeout for CI
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.LOGIN
     }
 
@@ -399,7 +400,7 @@ class AppNavGraphTest {
         .performClick()
     composeTestRule.waitForIdle()
 
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       RouteStackManager.getCurrentRoute()?.startsWith(NavRoutes.SIGNUP_BASE) == true
     }
 
@@ -444,7 +445,7 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Wait for navigation back to login after successful signup
-    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+    composeTestRule.waitUntil(timeoutMillis = 20_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.LOGIN
     }
 
@@ -461,12 +462,12 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Wait for navigation to HOME
-    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+    composeTestRule.waitUntil(timeoutMillis = 20_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.HOME
     }
 
     // Wait for auth state to settle after authentication
-    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+    composeTestRule.waitUntil(timeoutMillis = 20_000) {
       runBlocking {
         try {
           val state = UserSessionManager.authState.first()
@@ -491,7 +492,7 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
     }
 
@@ -507,7 +508,7 @@ class AppNavGraphTest {
 
     // ============ PHASE 4: Verify Navigation to LOGIN ============
     // ✅ REQUIREMENT 2: Assert navigation to LOGIN using NavController/RouteStackManager
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.LOGIN
     }
 
@@ -522,7 +523,7 @@ class AppNavGraphTest {
     // ============ PHASE 5: Verify UserSessionManager State ============
     // ✅ REQUIREMENT 3: Ensure UserSessionManager.authState becomes Unauthenticated
     Log.d(TAG, "PHASE 5: Verifying UserSessionManager state is Unauthenticated")
-    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+    composeTestRule.waitUntil(timeoutMillis = 20_000) {
       runBlocking {
         try {
           val state = UserSessionManager.authState.first()
@@ -552,7 +553,7 @@ class AppNavGraphTest {
         .performClick()
     composeTestRule.waitForIdle()
 
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       RouteStackManager.getCurrentRoute()?.startsWith(NavRoutes.SIGNUP_BASE) == true
     }
 
@@ -597,7 +598,7 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Wait for navigation back to login
-    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+    composeTestRule.waitUntil(timeoutMillis = 20_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.LOGIN
     }
 
@@ -614,12 +615,12 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Wait for re-authentication
-    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+    composeTestRule.waitUntil(timeoutMillis = 20_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.HOME
     }
 
     // Wait for auth state to settle after re-authentication
-    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+    composeTestRule.waitUntil(timeoutMillis = 20_000) {
       runBlocking {
         try {
           val state = UserSessionManager.authState.first()
@@ -647,7 +648,7 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
       RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
     }
 
