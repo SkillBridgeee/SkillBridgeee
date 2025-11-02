@@ -1,6 +1,7 @@
 package com.android.sample
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.authentication.AuthResult
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.GoogleSignInHelper
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
@@ -91,7 +93,7 @@ class MyViewModelFactory(private val userId: String) : ViewModelProvider.Factory
         MyBookingsViewModel(userId = userId) as T
       }
       MyProfileViewModel::class.java -> {
-        MyProfileViewModel() as T
+        MyProfileViewModel(userId = userId) as T
       }
       MainPageViewModel::class.java -> {
         MainPageViewModel() as T
@@ -119,10 +121,23 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val navController = rememberNavController()
   val authResult by authViewModel.authResult.collectAsStateWithLifecycle()
 
-  // Navigate to HOME when authentication is successful
+  // Navigate based on authentication result
   LaunchedEffect(authResult) {
-    if (authResult is AuthResult.Success) {
-      navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+    when (authResult) {
+      is AuthResult.Success -> {
+        navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+      }
+      is AuthResult.RequiresSignUp -> {
+        // Navigate to signup screen when Google user doesn't have a profile
+        val email = (authResult as AuthResult.RequiresSignUp).email
+        Log.d("MainActivity", "Google user requires sign up, email: $email")
+        val route = NavRoutes.createSignUpRoute(email)
+        Log.d("MainActivity", "Navigating to route: $route")
+        navController.navigate(route) { popUpTo(NavRoutes.LOGIN) { inclusive = false } }
+      }
+      else -> {
+        // No navigation for Error or null
+      }
     }
   }
 
@@ -130,8 +145,8 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val navBackStackEntry by navController.currentBackStackEntryAsState()
   val currentRoute = navBackStackEntry?.destination?.route
 
-  // Use hardcoded user ID from ProfileRepositoryLocal
-  val currentUserId = "test" // This matches profileFake1 in your ProfileRepositoryLocal
+  // Get current user ID from UserSessionManager
+  val currentUserId = UserSessionManager.getCurrentUserId() ?: "guest"
   val factory = MyViewModelFactory(currentUserId)
 
   val bookingsViewModel: MyBookingsViewModel = viewModel(factory = factory)

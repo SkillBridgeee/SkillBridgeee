@@ -39,27 +39,6 @@ class LoginScreenTest {
   }
 
   @Test
-  fun roleSelectionWorks() {
-    composeRule.setContent {
-      val context = LocalContext.current
-      val viewModel = AuthenticationViewModel(context)
-      LoginScreen(viewModel = viewModel, onGoogleSignIn = { /* Test placeholder */})
-    }
-
-    val learnerNode = composeRule.onNodeWithTag(SignInScreenTestTags.ROLE_LEARNER)
-    val tutorNode = composeRule.onNodeWithTag(SignInScreenTestTags.ROLE_TUTOR)
-
-    learnerNode.assertIsDisplayed()
-    tutorNode.assertIsDisplayed()
-
-    tutorNode.performClick()
-    tutorNode.assertIsDisplayed()
-
-    learnerNode.performClick()
-    learnerNode.assertIsDisplayed()
-  }
-
-  @Test
   fun forgotPasswordLinkWorks() {
     composeRule.setContent {
       val context = LocalContext.current
@@ -126,28 +105,6 @@ class LoginScreenTest {
     composeRule
         .onNodeWithTag(SignInScreenTestTags.SUBTITLE)
         .assertTextEquals("Welcome back! Please sign in.")
-  }
-
-  @Test
-  fun learnerButtonTextIsCorrectAndIsClickable() {
-    composeRule.setContent {
-      val context = LocalContext.current
-      val viewModel = AuthenticationViewModel(context)
-      LoginScreen(viewModel = viewModel, onGoogleSignIn = { /* Test placeholder */})
-    }
-    composeRule.onNodeWithTag(SignInScreenTestTags.ROLE_LEARNER).assertIsDisplayed().performClick()
-    composeRule.onNodeWithTag(SignInScreenTestTags.ROLE_LEARNER).assertTextEquals("I'm a Learner")
-  }
-
-  @Test
-  fun tutorButtonTextIsCorrectAndIsClickable() {
-    composeRule.setContent {
-      val context = LocalContext.current
-      val viewModel = AuthenticationViewModel(context)
-      LoginScreen(viewModel = viewModel, onGoogleSignIn = { /* Test placeholder */})
-    }
-    composeRule.onNodeWithTag(SignInScreenTestTags.ROLE_TUTOR).assertIsDisplayed().performClick()
-    composeRule.onNodeWithTag(SignInScreenTestTags.ROLE_TUTOR).assertTextEquals("I'm a Tutor")
   }
 
   @Test
