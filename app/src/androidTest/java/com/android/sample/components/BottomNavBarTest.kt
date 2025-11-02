@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.MainPageViewModel
@@ -23,10 +22,10 @@ import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.profile.MyProfileViewModel
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.Assert.assertEquals
 
 class BottomNavBarTest {
 
@@ -38,7 +37,8 @@ class BottomNavBarTest {
     try {
       ProfileRepositoryProvider.init(ctx)
       ListingRepositoryProvider.init(ctx)
-      BookingRepositoryProvider.init(ctx) // prevents IllegalStateException in ViewModel construction
+      BookingRepositoryProvider.init(
+          ctx) // prevents IllegalStateException in ViewModel construction
       RatingRepositoryProvider.init(ctx)
     } catch (e: Exception) {
       // Initialization may fail in some CI/emulator setups; log and continue
@@ -98,13 +98,13 @@ class BottomNavBarTest {
       val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
 
       AppNavGraph(
-        navController = controller,
-        bookingsViewModel = bookingsViewModel,
-        profileViewModel = profileViewModel,
-        mainPageViewModel = mainPageViewModel,
-        authViewModel =
-          AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
-        onGoogleSignIn = {})
+          navController = controller,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          authViewModel =
+              AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
+          onGoogleSignIn = {})
       BottomNavBar(navController = controller)
     }
 

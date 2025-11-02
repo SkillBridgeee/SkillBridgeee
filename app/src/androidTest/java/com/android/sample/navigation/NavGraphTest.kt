@@ -5,12 +5,12 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.android.sample.MainActivity
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
+import com.android.sample.ui.map.MapScreenTestTags
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
-import com.android.sample.ui.map.MapScreenTestTags
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule

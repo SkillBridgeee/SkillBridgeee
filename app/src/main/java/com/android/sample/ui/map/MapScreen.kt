@@ -19,18 +19,18 @@ object MapScreenTestTags {
 
 @Composable
 fun MapScreen(
-  navController: NavHostController,
-  viewModel: MapViewModel = viewModel(),
-  modifier: Modifier = Modifier
+    navController: NavHostController,
+    viewModel: MapViewModel = viewModel(),
+    modifier: Modifier = Modifier
 ) {
   Scaffold { innerPadding ->
     Box(
-      modifier = modifier.fillMaxSize().padding(innerPadding),
-      contentAlignment = Alignment.Center) {
-      Text(
-        text = "Map",
-        modifier = Modifier.testTag(MapScreenTestTags.MAP_SCREEN_TEXT),
-        style = MaterialTheme.typography.titleMedium)
-    }
+        modifier = modifier.fillMaxSize().padding(innerPadding),
+        contentAlignment = Alignment.Center) {
+          Text(
+              text = "Map",
+              modifier = Modifier.testTag(MapScreenTestTags.MAP_SCREEN_TEXT),
+              style = MaterialTheme.typography.titleMedium)
+        }
   }
 }

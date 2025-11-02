@@ -15,12 +15,11 @@ import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
-import com.android.sample.ui.map.MapScreen
+import com.android.sample.ui.map.MapScreenTestTags
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.subject.SubjectListTestTags
-import com.android.sample.ui.map.MapScreenTestTags
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
