@@ -31,6 +31,11 @@ import com.android.sample.ui.profile.MyProfileViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
+import okhttp3.OkHttpClient
+
+object HttpClientProvider {
+  var client: OkHttpClient = OkHttpClient()
+}
 
 class MainActivity : ComponentActivity() {
   private lateinit var authViewModel: AuthenticationViewModel

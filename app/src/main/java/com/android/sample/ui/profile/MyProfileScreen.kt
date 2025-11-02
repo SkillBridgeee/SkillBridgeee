@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.ui.components.AppButton
+import com.android.sample.ui.components.LocationInputField
 
 object MyProfileScreenTestTag {
   const val PROFILE_ICON = "profileIcon"
@@ -60,7 +61,7 @@ fun MyProfileScreen(
         // Button to save profile changes
         AppButton(
             text = "Save Profile Changes",
-            onClick = {},
+            onClick = { profileViewModel.editProfile() },
             testTag = MyProfileScreenTestTag.SAVE_BUTTON)
       },
       floatingActionButtonPosition = FabPosition.Center,
@@ -70,6 +71,7 @@ fun MyProfileScreen(
       })
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProfileContent(
     pd: PaddingValues,
@@ -77,12 +79,15 @@ private fun ProfileContent(
     profileViewModel: MyProfileViewModel
 ) {
 
-  LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
+  LaunchedEffect(profileId) { profileViewModel.loadProfile() }
 
   // Observe profile state to update the UI
   val profileUIState by profileViewModel.uiState.collectAsState()
 
   val fieldSpacing = 8.dp
+
+  val locationSuggestions = profileUIState.locationSuggestions
+  val locationQuery = profileUIState.locationQuery
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -176,26 +181,6 @@ private fun ProfileContent(
 
                 Spacer(modifier = Modifier.height(fieldSpacing))
 
-                // Location input field
-                OutlinedTextField(
-                    value = profileUIState.location?.name ?: "",
-                    onValueChange = { profileViewModel.setLocation(it) },
-                    label = { Text("Location / Campus") },
-                    placeholder = { Text("Enter Your Location or University") },
-                    isError = profileUIState.invalidLocationMsg != null,
-                    supportingText = {
-                      profileUIState.invalidLocationMsg?.let {
-                        Text(
-                            text = it,
-                            modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
-                      }
-                    },
-                    modifier =
-                        Modifier.fillMaxWidth()
-                            .testTag(MyProfileScreenTestTag.INPUT_PROFILE_LOCATION))
-
-                Spacer(modifier = Modifier.height(fieldSpacing))
-
                 // Description input field
                 OutlinedTextField(
                     value = profileUIState.description ?: "",
@@ -213,6 +198,19 @@ private fun ProfileContent(
                     minLines = 2,
                     modifier =
                         Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC))
+
+                Spacer(modifier = Modifier.height(fieldSpacing))
+
+                // Location Input with dropdown
+                LocationInputField(
+                    locationQuery = locationQuery,
+                    locationSuggestions = locationSuggestions,
+                    onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
+                    errorMsg = profileUIState.invalidLocationMsg,
+                    onLocationSelected = { location ->
+                      profileViewModel.setLocationQuery(location.name)
+                      profileViewModel.setLocation(location)
+                    })
               }
             }
       }
