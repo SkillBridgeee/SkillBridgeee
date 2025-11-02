@@ -14,6 +14,7 @@ import androidx.navigation.navArgument
 import com.android.sample.HomeScreen
 import com.android.sample.MainPageViewModel
 import com.android.sample.model.authentication.AuthenticationViewModel
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
@@ -73,16 +74,21 @@ fun AppNavGraph(
             navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
           },
           onNavigateToSignUp = { // Add this navigation callback
-            navController.navigate(NavRoutes.SIGNUP)
+            navController.navigate(NavRoutes.SIGNUP_BASE)
           })
     }
 
     composable(NavRoutes.PROFILE) {
+      val currentUserId = UserSessionManager.getCurrentUserId() ?: "guest"
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
       MyProfileScreen(
           profileViewModel = profileViewModel,
-          profileId = "test" // Using the same hardcoded user ID from MainActivity for the demo
-          )
+          profileId = currentUserId,
+          onLogout = {
+            // Clear the authentication state to reset email/password fields
+            authViewModel.signOut()
+            navController.navigate(NavRoutes.LOGIN) { popUpTo(0) { inclusive = true } }
+          })
     }
 
     composable(NavRoutes.HOME) {
