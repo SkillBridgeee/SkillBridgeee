@@ -10,19 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 
 object MapScreenTestTags {
   const val MAP_SCREEN_TEXT = "map_screen_text"
 }
 
 @Composable
-fun MapScreen(
-    navController: NavHostController,
-    viewModel: MapViewModel = viewModel(),
-    modifier: Modifier = Modifier
-) {
+fun MapScreen(modifier: Modifier = Modifier) {
   Scaffold { innerPadding ->
     Box(
         modifier = modifier.fillMaxSize().padding(innerPadding),

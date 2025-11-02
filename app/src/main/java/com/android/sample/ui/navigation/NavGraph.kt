@@ -81,7 +81,7 @@ fun AppNavGraph(
 
     composable(NavRoutes.MAP) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MAP) }
-      MapScreen(navController = navController)
+      MapScreen()
     }
 
     composable(NavRoutes.PROFILE) {
