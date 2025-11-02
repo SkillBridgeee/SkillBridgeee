@@ -1,5 +1,6 @@
 package com.android.sample.screen
 
+import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.user.Profile
@@ -15,10 +16,18 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
 class MyProfileViewModelTest {
+
+  @get:Rule val firebaseRule = FirebaseTestRule()
 
   private val dispatcher = StandardTestDispatcher()
 
@@ -275,5 +284,85 @@ class MyProfileViewModelTest {
     advanceUntilIdle()
 
     assertTrue(true)
+  }
+
+  @Test
+  fun loadProfile_withUserId_loadsCorrectProfile() = runTest {
+    // Given
+    val profile = makeProfile()
+    val repo = FakeProfileRepo(profile)
+    val vm = newVm(repo)
+
+    // When - load profile with specific userId
+    vm.loadProfile("specificUserId")
+    advanceUntilIdle()
+
+    // Then - profile should be loaded
+    val ui = vm.uiState.value
+    assertEquals(profile.name, ui.name)
+    assertEquals(profile.email, ui.email)
+    assertEquals(profile.location, ui.selectedLocation)
+    assertEquals(profile.description, ui.description)
+    assertTrue(repo.getProfileCalled)
+  }
+
+  @Test
+  fun loadProfile_storesUserIdInState() = runTest {
+    // Given
+    val profile = makeProfile()
+    val repo = FakeProfileRepo(profile)
+    val vm = newVm(repo, userId = "originalUserId")
+
+    // When - load profile with different userId
+    vm.loadProfile("differentUserId")
+    advanceUntilIdle()
+
+    // Then - UI state should have the new userId
+    val ui = vm.uiState.value
+    assertEquals("differentUserId", ui.userId)
+  }
+
+  @Test
+  fun loadProfile_withoutParameter_usesDefaultUserId() = runTest {
+    // Given
+    val profile = makeProfile()
+    val repo = FakeProfileRepo(profile)
+    val vm = newVm(repo, userId = "defaultUserId")
+
+    // When - load profile without parameter
+    vm.loadProfile()
+    advanceUntilIdle()
+
+    // Then - UI state should have the default userId
+    val ui = vm.uiState.value
+    assertEquals("defaultUserId", ui.userId)
+  }
+
+  @Test
+  fun editProfile_usesUserIdFromState() = runTest {
+    // Given
+    val profile = makeProfile()
+    val repo = FakeProfileRepo(profile)
+    val vm = newVm(repo, userId = "originalUserId")
+
+    // Load profile with different userId
+    vm.loadProfile("targetUserId")
+    advanceUntilIdle()
+
+    // Set valid data
+    vm.setName("New Name")
+    vm.setEmail("new@email.com")
+    vm.setLocation(Location(name = "New Location"))
+    vm.setDescription("New Description")
+
+    // When - edit profile
+    vm.editProfile()
+    advanceUntilIdle()
+
+    // Then - should update with userId from state, not original VM userId
+    val updated = repo.updatedProfile
+    assertNotNull(updated)
+    assertEquals("targetUserId", updated?.userId)
+    assertEquals("New Name", updated?.name)
   }
 }

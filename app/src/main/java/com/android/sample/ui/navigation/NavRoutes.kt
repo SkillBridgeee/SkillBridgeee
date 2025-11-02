@@ -1,5 +1,8 @@
 package com.android.sample.ui.navigation
 
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+
 /**
  * Defines the navigation routes for the application.
  *
@@ -30,9 +33,20 @@ object NavRoutes {
   // Secondary pages
   const val NEW_SKILL = "new_skill/{profileId}"
   const val MESSAGES = "messages"
-  const val SIGNUP = "signup"
+  const val SIGNUP = "signup?email={email}"
+  const val SIGNUP_BASE = "signup"
 
   fun createProfileRoute(profileId: String) = "profile/$profileId"
 
   fun createNewSkillRoute(profileId: String) = "new_skill/$profileId"
+
+  fun createSignUpRoute(email: String? = null): String {
+    return if (email != null) {
+      // URL encode the email to handle special characters like @
+      val encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8.toString())
+      "signup?email=$encodedEmail"
+    } else {
+      "signup"
+    }
+  }
 }

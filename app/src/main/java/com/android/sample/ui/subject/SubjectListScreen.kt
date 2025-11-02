@@ -34,15 +34,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
-import com.android.sample.ui.components.TutorCard
+import com.android.sample.ui.components.ListingCard
 
 /** Test tags for the different elements of the SubjectListScreen */
 object SubjectListTestTags {
   const val SEARCHBAR = "SubjectListTestTags.SEARCHBAR"
   const val CATEGORY_SELECTOR = "SubjectListTestTags.CATEGORY_SELECTOR"
-  const val TUTOR_LIST = "SubjectListTestTags.TUTOR_LIST"
-  const val TUTOR_CARD = "SubjectListTestTags.TUTOR_CARD"
-  const val TUTOR_BOOK_BUTTON = "SubjectListTestTags.TUTOR_BOOK_BUTTON"
+  const val LISTING_LIST = "SubjectListTestTags.LISTING_LIST"
+  const val LISTING_CARD = "SubjectListTestTags.LISTING_CARD"
+  const val LISTING_BOOK_BUTTON = "SubjectListTestTags.LISTING_BOOK_BUTTON"
 }
 
 /**
@@ -59,7 +59,8 @@ fun SubjectListScreen(
     subject: MainSubject?
 ) {
   val ui by viewModel.ui.collectAsState()
-  LaunchedEffect(Unit) { viewModel.refresh() }
+  LaunchedEffect(subject) { if (subject != null) viewModel.refresh(subject) }
+
   val skillsForSubject = viewModel.getSkillsForSubject(subject)
   val mainSubjectString = viewModel.subjectToString(subject)
 
@@ -132,7 +133,6 @@ fun SubjectListScreen(
 
       Spacer(Modifier.height(16.dp))
 
-      // All tutors list
       Text(
           "All $mainSubjectString lessons",
           style = MaterialTheme.typography.labelLarge,
@@ -147,18 +147,18 @@ fun SubjectListScreen(
         Text(ui.error!!, color = MaterialTheme.colorScheme.error)
       }
 
-      // Tutors list
+      // List of listings
       LazyColumn(
-          modifier = Modifier.fillMaxSize().testTag(SubjectListTestTags.TUTOR_LIST),
+          modifier = Modifier.fillMaxSize().testTag(SubjectListTestTags.LISTING_LIST),
           contentPadding = PaddingValues(bottom = 24.dp)) {
-            items(ui.tutors) { p ->
-              // Reuse TutorCard from components
-              TutorCard(
-                  profile = p,
-                  pricePerHour = null,
-                  onPrimaryAction = onBookTutor,
-                  cardTestTag = SubjectListTestTags.TUTOR_CARD,
-                  buttonTestTag = SubjectListTestTags.TUTOR_BOOK_BUTTON)
+            items(ui.listings) { item ->
+              ListingCard(
+                  listing = item.listing,
+                  creator = item.creator,
+                  creatorRating = item.creatorRating,
+                  onBook = { item.creator?.let(onBookTutor) },
+                  testTags =
+                      SubjectListTestTags.LISTING_CARD to SubjectListTestTags.LISTING_BOOK_BUTTON)
               Spacer(Modifier.height(16.dp))
             }
           }

@@ -44,6 +44,7 @@ object MyProfileScreenTestTag {
   const val INPUT_PROFILE_LOCATION = "inputProfileLocation"
   const val INPUT_PROFILE_DESC = "inputProfileDesc"
   const val SAVE_BUTTON = "saveButton"
+  const val LOGOUT_BUTTON = "logoutButton"
   const val ERROR_MSG = "errorMsg"
 }
 
@@ -52,6 +53,7 @@ object MyProfileScreenTestTag {
 fun MyProfileScreen(
     profileViewModel: MyProfileViewModel = viewModel(),
     profileId: String,
+    onLogout: () -> Unit = {}
 ) {
   // Scaffold structures the screen with top bar, bottom bar, and save button
   Scaffold(
@@ -67,7 +69,7 @@ fun MyProfileScreen(
       floatingActionButtonPosition = FabPosition.Center,
       content = { pd ->
         // Profile content
-        ProfileContent(pd, profileId, profileViewModel)
+        ProfileContent(pd, profileId, profileViewModel, onLogout)
       })
 }
 
@@ -76,10 +78,11 @@ fun MyProfileScreen(
 private fun ProfileContent(
     pd: PaddingValues,
     profileId: String,
-    profileViewModel: MyProfileViewModel
+    profileViewModel: MyProfileViewModel,
+    onLogout: () -> Unit
 ) {
 
-  LaunchedEffect(profileId) { profileViewModel.loadProfile() }
+  LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
 
   // Observe profile state to update the UI
   val profileUIState by profileViewModel.uiState.collectAsState()
@@ -213,5 +216,11 @@ private fun ProfileContent(
                     })
               }
             }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Logout button
+        AppButton(
+            text = "Logout", onClick = onLogout, testTag = MyProfileScreenTestTag.LOGOUT_BUTTON)
       }
 }

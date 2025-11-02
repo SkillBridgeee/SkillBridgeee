@@ -1,6 +1,5 @@
 package com.android.sample.ui.login
 
-import android.R
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,7 +26,6 @@ import com.android.sample.ui.theme.extendedColors
 
 object SignInScreenTestTags {
   const val TITLE = "title"
-  const val ROLE_LEARNER = "roleLearner"
   const val EMAIL_INPUT = "emailInput"
   const val PASSWORD_INPUT = "passwordInput"
   const val SIGN_IN_BUTTON = "signInButton"
@@ -36,7 +34,6 @@ object SignInScreenTestTags {
   const val AUTH_GITHUB = "authGitHub"
   const val FORGOT_PASSWORD = "forgotPassword"
   const val AUTH_SECTION = "authSection"
-  const val ROLE_TUTOR = "roleTutor"
   const val SUBTITLE = "subtitle"
 }
 
@@ -49,19 +46,6 @@ fun LoginScreen(
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val authResult by viewModel.authResult.collectAsStateWithLifecycle()
-
-  // Handle authentication results
-  LaunchedEffect(authResult) {
-    when (authResult) {
-      is AuthResult.Success -> viewModel.showSuccessMessage(true)
-      is AuthResult.Error -> {
-        /* Error is handled in uiState */
-      }
-      null -> {
-        /* No action needed */
-      }
-    }
-  }
 
   Column(
       modifier = Modifier.fillMaxSize().padding(20.dp),
@@ -127,10 +111,6 @@ private fun LoginForm(
   LoginHeader()
   Spacer(modifier = Modifier.height(20.dp))
 
-  RoleSelectionButtons(
-      selectedRole = uiState.selectedRole, onRoleSelected = viewModel::updateSelectedRole)
-  Spacer(modifier = Modifier.height(30.dp))
-
   EmailPasswordFields(
       email = uiState.email,
       password = uiState.password,
@@ -172,47 +152,6 @@ private fun LoginHeader() {
 }
 
 @Composable
-private fun RoleSelectionButtons(selectedRole: UserRole, onRoleSelected: (UserRole) -> Unit) {
-  Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-    RoleButton(
-        text = "I'm a Learner",
-        role = UserRole.LEARNER,
-        isSelected = selectedRole == UserRole.LEARNER,
-        onRoleSelected = onRoleSelected,
-        testTag = SignInScreenTestTags.ROLE_LEARNER)
-    RoleButton(
-        text = "I'm a Tutor",
-        role = UserRole.TUTOR,
-        isSelected = selectedRole == UserRole.TUTOR,
-        onRoleSelected = onRoleSelected,
-        testTag = SignInScreenTestTags.ROLE_TUTOR)
-  }
-}
-
-@Composable
-private fun RoleButton(
-    text: String,
-    role: UserRole,
-    isSelected: Boolean,
-    onRoleSelected: (UserRole) -> Unit,
-    testTag: String
-) {
-  val extendedColors = MaterialTheme.extendedColors
-
-  Button(
-      onClick = { onRoleSelected(role) },
-      colors =
-          ButtonDefaults.buttonColors(
-              containerColor =
-                  if (isSelected) MaterialTheme.colorScheme.primary
-                  else extendedColors.unselectedGray),
-      shape = RoundedCornerShape(10.dp),
-      modifier = Modifier.testTag(testTag)) {
-        Text(text)
-      }
-}
-
-@Composable
 private fun EmailPasswordFields(
     email: String,
     password: String,
@@ -225,7 +164,7 @@ private fun EmailPasswordFields(
       label = { Text("Email") },
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
       leadingIcon = {
-        Icon(painterResource(id = R.drawable.ic_dialog_email), contentDescription = null)
+        Icon(painterResource(id = android.R.drawable.ic_dialog_email), contentDescription = null)
       },
       modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT))
 
@@ -238,7 +177,7 @@ private fun EmailPasswordFields(
       visualTransformation = PasswordVisualTransformation(),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
       leadingIcon = {
-        Icon(painterResource(id = R.drawable.ic_lock_idle_lock), contentDescription = null)
+        Icon(painterResource(id = android.R.drawable.ic_lock_idle_lock), contentDescription = null)
       },
       modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.PASSWORD_INPUT))
 }
