@@ -7,6 +7,7 @@ import com.android.sample.MainActivity
 import com.android.sample.model.authentication.AuthState
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
+import com.android.sample.ui.map.MapScreenTestTags
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
 import com.google.firebase.Firebase
@@ -78,22 +79,21 @@ class AppNavGraphTest {
 
     // Should now be on home screen - check for home screen elements
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
-    composeTestRule.onNodeWithText("Explore Subjects").assertExists()
     composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
   }
 
   @Test
-  fun navigating_to_skills_displays_skills_screen() {
+  fun navigating_to_Map_displays_map_screen() {
     // First login to get to main app
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Navigate to skills
-    composeTestRule.onNodeWithText("Skills").performClick()
+    // Navigate to map
+    composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
 
-    // Should display skills screen content
-    composeTestRule.onNodeWithText("Find a tutor about Subjects").assertExists()
+    // Check map screen content via test tag
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN_TEXT).assertExists()
   }
 
   @Test
@@ -195,15 +195,15 @@ class AppNavGraphTest {
     }
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
 
-    // Navigate to skills
-    composeTestRule.onNodeWithText("Skills").performClick()
+    // Navigate to Map
+    composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
 
     // Wait for skills route to be set
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS
+      RouteStackManager.getCurrentRoute() == NavRoutes.MAP
     }
-    assert(RouteStackManager.getCurrentRoute() == NavRoutes.SKILLS)
+    assert(RouteStackManager.getCurrentRoute() == NavRoutes.MAP)
   }
 
   @Test
@@ -212,7 +212,10 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Navigate to Profile directly (since "Skills" is no longer in bottom nav)
+    // Navigate to skills then profile
+    composeTestRule.onNodeWithText("Map").performClick()
+    composeTestRule.waitForIdle()
+
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
@@ -225,20 +228,6 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Explore Subjects").assertExists()
     composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
-  }
-
-  @Test
-  fun skills_screen_has_search_and_category() {
-    // Login and navigate to skills
-    composeTestRule.onNodeWithText("GitHub").performClick()
-    composeTestRule.waitForIdle()
-
-    composeTestRule.onNodeWithText("Skills").performClick()
-    composeTestRule.waitForIdle()
-
-    // Verify skills screen components
-    composeTestRule.onNodeWithText("Find a tutor about Subjects").assertExists()
-    composeTestRule.onNodeWithText("Category").assertExists()
   }
 
   @Test
@@ -258,6 +247,8 @@ class AppNavGraphTest {
     // For now, verify essential fields exist (text-based, but minimal)
     composeTestRule.onNodeWithText("Name").assertExists()
     composeTestRule.onNodeWithText("Email").assertExists()
+    composeTestRule.onNodeWithText("Location / Campus").assertExists()
+    composeTestRule.onNodeWithText("Description").assertExists()
   }
 
   @Test
@@ -427,7 +418,7 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertExists()
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).assertExists()
     // Skills doesn't have a test tag, so use text for it
-    composeTestRule.onNodeWithText("Skills").assertExists()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).assertExists()
 
     Log.d(TAG, "All navigation routes properly configured")
   }

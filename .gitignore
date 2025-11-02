@@ -7,4 +7,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+ui-debug.log
 *.log
