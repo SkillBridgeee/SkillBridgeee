@@ -222,10 +222,7 @@ private fun ProfileContent(
         // Logout button
         AppButton(
             text = "Logout",
-            onClick = {
-              profileViewModel.logout()
-              onLogout()
-            },
+            onClick = onLogout,
             testTag = MyProfileScreenTestTag.LOGOUT_BUTTON)
       }
 }

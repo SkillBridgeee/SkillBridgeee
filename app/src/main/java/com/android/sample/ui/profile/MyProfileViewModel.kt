@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
-import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
@@ -224,10 +223,5 @@ class MyProfileViewModel(
               invalidLocationMsg = locationMsgError,
               selectedLocation = null)
     }
-  }
-
-  /** Logs out the current user using UserSessionManager */
-  fun logout() {
-    UserSessionManager.logout()
   }
 }

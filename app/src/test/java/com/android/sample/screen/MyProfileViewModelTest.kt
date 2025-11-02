@@ -286,16 +286,6 @@ class MyProfileViewModelTest {
     assertTrue(true)
   }
 
-  @Test
-  fun `logout executes without exception`() = runTest {
-    // Given
-    val repo = FakeProfileRepo()
-    val vm = newVm(repo)
-
-    // When/Then - verify the method can be called without throwing
-    vm.logout()
-    advanceUntilIdle()
-  }
 
   @Test
   fun loadProfile_withUserId_loadsCorrectProfile() = runTest {
