@@ -2,7 +2,6 @@ package com.android.sample
 
 import android.annotation.SuppressLint
 import android.util.Log
-import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -29,7 +28,7 @@ import kotlinx.coroutines.launch
  */
 data class HomeUiState(
     val welcomeMessage: String = "",
-    val subjects: List<MainSubject> = emptyList(),
+    val subjects: List<MainSubject> = MainSubject.entries.toList(),
     var tutors: List<TutorCardUi> = emptyList()
 )
 
@@ -62,16 +61,15 @@ class MainPageViewModel(
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository
 ) : ViewModel() {
 
-  companion object {
-    private const val TAG = "MainPageViewModel"
-    private const val DEFAULT_WELCOME_MESSAGE = "Welcome back!"
-  }
+  private val defaultWelcomeMsg = "Welcome back!"
+  private val pageTag = "MainPageViewModel"
 
+  // TODO regarder la navigation aucune idée pour l'instant
   private val _navigationEvent = MutableStateFlow<String?>(null)
   val navigationEvent: StateFlow<String?> = _navigationEvent.asStateFlow()
 
   private val _uiState = MutableStateFlow(HomeUiState())
-  /** The publicly exposed immutable UI state observed by the composables. */
+
   val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
   init {
@@ -88,7 +86,6 @@ class MainPageViewModel(
    */
   suspend fun load() {
     try {
-      val subjects = MainSubject.entries.toList()
       val listings = listingRepository.getAllListings()
       val tutors = profileRepository.getAllProfiles()
 
@@ -97,13 +94,11 @@ class MainPageViewModel(
       navigationEvent.value?.let { getCurrentUserName("user123") { name -> userName.value = name } }
           ?: "Ava"
 
-      _uiState.value =
-          HomeUiState(
-              welcomeMessage = "Welcome back, $userName!", subjects = subjects, tutors = tutorCards)
+      _uiState.value = HomeUiState(welcomeMessage = "Welcome back, $userName!", tutors = tutorCards)
     } catch (e: Exception) {
       // Log the error for debugging while providing a safe fallback UI state
-      Log.w(TAG, "Failed to build HomeUiState, using fallback", e)
-      _uiState.value = HomeUiState(welcomeMessage = DEFAULT_WELCOME_MESSAGE)
+      Log.w(pageTag, "Failed to build HomeUiState, using fallback", e)
+      _uiState.value = HomeUiState(welcomeMessage = defaultWelcomeMsg)
     }
   }
 
@@ -128,7 +123,7 @@ class MainPageViewModel(
           ratingStars = computeAvgStars(tutor.tutorRating),
           ratingCount = ratingCountFor(tutor.tutorRating))
     } catch (e: Exception) {
-      Log.w(TAG, "Failed to build TutorCardUi for listing: ${listing.creatorUserId}", e)
+      Log.w(pageTag, "Failed to build TutorCardUi for listing: ${listing.creatorUserId}", e)
       null
     }
   }
