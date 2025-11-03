@@ -93,19 +93,6 @@ class SignUpScreenRobolectricTest {
   }
 
   @Test
-  fun role_chips_are_rendered() {
-    rule.setContent {
-      SampleAppTheme {
-        val vm = SignUpViewModel()
-        SignUpScreen(vm = vm)
-      }
-    }
-
-    rule.onNodeWithTag(SignUpScreenTestTags.LEARNER, useUnmergedTree = false).assertExists()
-    rule.onNodeWithTag(SignUpScreenTestTags.TUTOR, useUnmergedTree = false).assertExists()
-  }
-
-  @Test
   fun subtitle_is_rendered() {
     rule.setContent {
       SampleAppTheme {

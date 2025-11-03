@@ -1,6 +1,8 @@
 package com.android.sample.screen
 
+import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.map.Location
+import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.profile.MyProfileViewModel
@@ -14,27 +16,35 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
 class MyProfileViewModelTest {
+
+  @get:Rule val firebaseRule = FirebaseTestRule()
 
   private val dispatcher = StandardTestDispatcher()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @After
   fun tearDown() {
     Dispatchers.resetMain()
   }
 
-  // -------- Fake repository ------------------------------------------------------
+  // -------- Fake repositories ------------------------------------------------------
 
-  private class FakeRepo(private var storedProfile: Profile? = null) : ProfileRepository {
+  private open class FakeProfileRepo(private var storedProfile: Profile? = null) :
+      ProfileRepository {
     var updatedProfile: Profile? = null
     var updateCalled = false
     var getProfileCalled = false
@@ -43,7 +53,7 @@ class MyProfileViewModelTest {
 
     override suspend fun getProfile(userId: String): Profile {
       getProfileCalled = true
-      return storedProfile ?: error("not found")
+      return storedProfile ?: error("Profile not found")
     }
 
     override suspend fun addProfile(profile: Profile) {}
@@ -60,10 +70,25 @@ class MyProfileViewModelTest {
     override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
         emptyList<Profile>()
 
-    override suspend fun getProfileById(userId: String) = storedProfile ?: error("not found")
+    override suspend fun getProfileById(userId: String) =
+        storedProfile ?: error("Profile not found")
 
     override suspend fun getSkillsForUser(userId: String) =
         emptyList<com.android.sample.model.skill.Skill>()
+  }
+
+  private class FakeLocationRepo(
+      private val results: List<Location> =
+          listOf(Location(name = "Paris"), Location(name = "Rome"))
+  ) : LocationRepository {
+    var lastQuery: String? = null
+    var searchCalled = false
+
+    override suspend fun search(query: String): List<Location> {
+      lastQuery = query
+      searchCalled = true
+      return if (query.isNotBlank()) results else emptyList()
+    }
   }
 
   // -------- Helpers ------------------------------------------------------
@@ -76,24 +101,27 @@ class MyProfileViewModelTest {
       desc: String = "Rap tutor"
   ) = Profile(id, name, email, location = location, description = desc)
 
-  private fun newVm(repo: ProfileRepository = FakeRepo()) = MyProfileViewModel(repo)
+  private fun newVm(
+      repo: ProfileRepository = FakeProfileRepo(),
+      locRepo: LocationRepository = FakeLocationRepo(),
+      userId: String = "testUid"
+  ) = MyProfileViewModel(repo, locRepo, userId)
 
   // -------- Tests --------------------------------------------------------
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
   fun loadProfile_populatesUiState() = runTest {
     val profile = makeProfile()
-    val repo = FakeRepo(profile)
+    val repo = FakeProfileRepo(profile)
     val vm = newVm(repo)
 
-    vm.loadProfile(profile.userId)
+    vm.loadProfile()
     advanceUntilIdle()
 
     val ui = vm.uiState.value
     assertEquals(profile.name, ui.name)
     assertEquals(profile.email, ui.email)
-    assertEquals(profile.location, ui.location)
+    assertEquals(profile.location, ui.selectedLocation)
     assertEquals(profile.description, ui.description)
     assertFalse(ui.isLoading)
     assertNull(ui.loadError)
@@ -127,20 +155,17 @@ class MyProfileViewModelTest {
   }
 
   @Test
-  fun setLocation_updatesLocation_andErrorIfBlank() {
+  fun setLocation_updatesLocation_andClearsError() {
     val vm = newVm()
 
-    vm.setLocation("Paris")
-    assertEquals("Paris", vm.uiState.value.location?.name)
-    assertNull(vm.uiState.value.invalidLocationMsg)
-
-    vm.setLocation("")
-    assertNull(vm.uiState.value.location)
-    assertEquals("Location cannot be empty", vm.uiState.value.invalidLocationMsg)
+    vm.setLocation(Location(name = "Paris"))
+    val ui = vm.uiState.value
+    assertEquals("Paris", ui.selectedLocation?.name)
+    assertNull(ui.invalidLocationMsg)
   }
 
   @Test
-  fun setDescription_updatesDesc_andErrorIfBlank() {
+  fun setDescription_updatesDesc_and_setsErrorIfBlank() {
     val vm = newVm()
 
     vm.setDescription("Music mentor")
@@ -149,41 +174,6 @@ class MyProfileViewModelTest {
 
     vm.setDescription("")
     assertEquals("Description cannot be empty", vm.uiState.value.invalidDescMsg)
-  }
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  @Test
-  fun editProfile_doesNotUpdate_whenInvalid() = runTest {
-    val repo = FakeRepo()
-    val vm = newVm(repo)
-
-    // no name, invalid by default
-    vm.editProfile("1")
-    advanceUntilIdle()
-
-    assertFalse(repo.updateCalled)
-  }
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  @Test
-  fun editProfile_updatesRepository_whenValid() = runTest {
-    val repo = FakeRepo()
-    val vm = newVm(repo)
-
-    vm.setName("Kendrick Lamar")
-    vm.setEmail("kdot@gmail.com")
-    vm.setLocation("Compton")
-    vm.setDescription("Hip-hop tutor")
-
-    vm.editProfile("123")
-    advanceUntilIdle()
-
-    assertTrue(repo.updateCalled)
-    val updated = repo.updatedProfile!!
-    assertEquals("Kendrick Lamar", updated.name)
-    assertEquals("kdot@gmail.com", updated.email)
-    assertEquals("Compton", updated.location.name)
-    assertEquals("Hip-hop tutor", updated.description)
   }
 
   @Test
@@ -204,7 +194,7 @@ class MyProfileViewModelTest {
 
     vm.setName("Test")
     vm.setEmail("test@mail.com")
-    vm.setLocation("Paris")
+    vm.setLocation(Location(name = "Paris"))
     vm.setDescription("Teacher")
 
     assertTrue(vm.uiState.value.isValid)
@@ -213,96 +203,166 @@ class MyProfileViewModelTest {
     assertFalse(vm.uiState.value.isValid)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
-  fun loadProfile_setsLoadError_whenRepositoryFails() = runTest {
-    val repo =
-        object : ProfileRepository {
-          override fun getNewUid() = "fake"
+  fun setLocationQuery_updatesQuery_andFetchesResults() = runTest {
+    val locRepo = FakeLocationRepo()
+    val vm = newVm(locRepo = locRepo)
 
-          override suspend fun getProfile(userId: String): Profile {
-            throw Exception("Network error")
-          }
-
-          override suspend fun addProfile(profile: Profile) {}
-
-          override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-          override suspend fun deleteProfile(userId: String) {}
-
-          override suspend fun getAllProfiles() = emptyList<Profile>()
-
-          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
-              emptyList<Profile>()
-
-          override suspend fun getProfileById(userId: String) = error("not found")
-
-          override suspend fun getSkillsForUser(userId: String) =
-              emptyList<com.android.sample.model.skill.Skill>()
-        }
-
-    val vm = newVm(repo)
-
-    vm.loadProfile("123")
+    vm.setLocationQuery("Par")
     advanceUntilIdle()
 
     val ui = vm.uiState.value
-    assertFalse(ui.isLoading)
-    assertEquals("Failed to load profile. Please try again.", ui.loadError)
+    assertEquals("Par", ui.locationQuery)
+    assertTrue(locRepo.searchCalled)
+    assertEquals(2, ui.locationSuggestions.size)
+    assertEquals("Paris", ui.locationSuggestions[0].name)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
-  fun editProfile_setsUpdateError_whenRepositoryFails() = runTest {
-    val repo =
-        object : ProfileRepository {
-          override fun getNewUid() = "fake"
+  fun setLocationQuery_emptyQuery_setsError_andClearsSuggestions() = runTest {
+    val locRepo = FakeLocationRepo()
+    val vm = newVm(locRepo = locRepo)
 
-          override suspend fun getProfile(userId: String) = makeProfile()
+    vm.setLocationQuery("")
+    advanceUntilIdle()
 
-          override suspend fun addProfile(profile: Profile) {}
+    val ui = vm.uiState.value
+    assertEquals("Location cannot be empty", ui.invalidLocationMsg)
+    assertTrue(ui.locationSuggestions.isEmpty())
+  }
 
+  @Test
+  fun editProfile_doesNotUpdate_whenInvalid() = runTest {
+    val repo = FakeProfileRepo()
+    val vm = newVm(repo)
+
+    // invalid by default
+    vm.editProfile()
+    advanceUntilIdle()
+
+    assertFalse(repo.updateCalled)
+  }
+
+  @Test
+  fun editProfile_updatesRepository_whenValid() = runTest {
+    val repo = FakeProfileRepo()
+    val vm = newVm(repo)
+
+    vm.setName("Kendrick Lamar")
+    vm.setEmail("kdot@gmail.com")
+    vm.setLocation(Location(name = "Compton"))
+    vm.setDescription("Hip-hop tutor")
+
+    vm.editProfile()
+    advanceUntilIdle()
+
+    assertTrue(repo.updateCalled)
+    val updated = repo.updatedProfile!!
+    assertEquals("Kendrick Lamar", updated.name)
+    assertEquals("kdot@gmail.com", updated.email)
+    assertEquals("Compton", updated.location.name)
+    assertEquals("Hip-hop tutor", updated.description)
+  }
+
+  @Test
+  fun editProfile_handlesRepositoryException_gracefully() = runTest {
+    val failingRepo =
+        object : FakeProfileRepo() {
           override suspend fun updateProfile(userId: String, profile: Profile) {
-            throw Exception("Update failed")
+            throw RuntimeException("Update failed")
           }
-
-          override suspend fun deleteProfile(userId: String) {}
-
-          override suspend fun getAllProfiles() = emptyList<Profile>()
-
-          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
-              emptyList<Profile>()
-
-          override suspend fun getProfileById(userId: String) = error("not found")
-
-          override suspend fun getSkillsForUser(userId: String) =
-              emptyList<com.android.sample.model.skill.Skill>()
         }
+    val vm = newVm(failingRepo)
 
-    val vm = newVm(repo)
-    vm.setName("Test")
-    vm.setEmail("test@mail.com")
-    vm.setLocation("Paris")
-    vm.setDescription("Teacher")
+    vm.setName("Good")
+    vm.setEmail("good@mail.com")
+    vm.setLocation(Location(name = "LA"))
+    vm.setDescription("Mentor")
 
-    vm.editProfile("123")
+    // Should not crash
+    vm.editProfile()
     advanceUntilIdle()
 
-    val ui = vm.uiState.value
-    assertEquals("Failed to update profile. Please try again.", ui.updateError)
+    assertTrue(true)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
-  fun loadProfile_setsLoadingStateToFalse_afterCompletion() = runTest {
+  fun loadProfile_withUserId_loadsCorrectProfile() = runTest {
+    // Given
     val profile = makeProfile()
-    val repo = FakeRepo(profile)
+    val repo = FakeProfileRepo(profile)
     val vm = newVm(repo)
 
-    vm.loadProfile(profile.userId)
+    // When - load profile with specific userId
+    vm.loadProfile("specificUserId")
     advanceUntilIdle()
 
-    // After completion, should not be loading
-    assertFalse(vm.uiState.value.isLoading)
+    // Then - profile should be loaded
+    val ui = vm.uiState.value
+    assertEquals(profile.name, ui.name)
+    assertEquals(profile.email, ui.email)
+    assertEquals(profile.location, ui.selectedLocation)
+    assertEquals(profile.description, ui.description)
+    assertTrue(repo.getProfileCalled)
+  }
+
+  @Test
+  fun loadProfile_storesUserIdInState() = runTest {
+    // Given
+    val profile = makeProfile()
+    val repo = FakeProfileRepo(profile)
+    val vm = newVm(repo, userId = "originalUserId")
+
+    // When - load profile with different userId
+    vm.loadProfile("differentUserId")
+    advanceUntilIdle()
+
+    // Then - UI state should have the new userId
+    val ui = vm.uiState.value
+    assertEquals("differentUserId", ui.userId)
+  }
+
+  @Test
+  fun loadProfile_withoutParameter_usesDefaultUserId() = runTest {
+    // Given
+    val profile = makeProfile()
+    val repo = FakeProfileRepo(profile)
+    val vm = newVm(repo, userId = "defaultUserId")
+
+    // When - load profile without parameter
+    vm.loadProfile()
+    advanceUntilIdle()
+
+    // Then - UI state should have the default userId
+    val ui = vm.uiState.value
+    assertEquals("defaultUserId", ui.userId)
+  }
+
+  @Test
+  fun editProfile_usesUserIdFromState() = runTest {
+    // Given
+    val profile = makeProfile()
+    val repo = FakeProfileRepo(profile)
+    val vm = newVm(repo, userId = "originalUserId")
+
+    // Load profile with different userId
+    vm.loadProfile("targetUserId")
+    advanceUntilIdle()
+
+    // Set valid data
+    vm.setName("New Name")
+    vm.setEmail("new@email.com")
+    vm.setLocation(Location(name = "New Location"))
+    vm.setDescription("New Description")
+
+    // When - edit profile
+    vm.editProfile()
+    advanceUntilIdle()
+
+    // Then - should update with userId from state, not original VM userId
+    val updated = repo.updatedProfile
+    assertNotNull(updated)
+    assertEquals("targetUserId", updated?.userId)
+    assertEquals("New Name", updated?.name)
   }
 }

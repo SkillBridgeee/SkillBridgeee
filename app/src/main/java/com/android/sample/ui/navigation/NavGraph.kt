@@ -1,9 +1,11 @@
 package com.android.sample.ui.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -12,10 +14,12 @@ import androidx.navigation.navArgument
 import com.android.sample.HomeScreen
 import com.android.sample.MainPageViewModel
 import com.android.sample.model.authentication.AuthenticationViewModel
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
+import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.screens.newSkill.NewSkillScreen
@@ -23,6 +27,8 @@ import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpViewModel
 import com.android.sample.ui.subject.SubjectListScreen
 import com.android.sample.ui.subject.SubjectListViewModel
+
+private const val TAG = "NavGraph"
 
 /**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
@@ -69,23 +75,33 @@ fun AppNavGraph(
             navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
           },
           onNavigateToSignUp = { // Add this navigation callback
-            navController.navigate(NavRoutes.SIGNUP)
+            navController.navigate(NavRoutes.SIGNUP_BASE)
           })
     }
 
+    composable(NavRoutes.MAP) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MAP) }
+      MapScreen()
+    }
+
     composable(NavRoutes.PROFILE) {
+      val currentUserId = UserSessionManager.getCurrentUserId() ?: "guest"
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.PROFILE) }
       MyProfileScreen(
           profileViewModel = profileViewModel,
-          profileId = "test" // Using the same hardcoded user ID from MainActivity for the demo
-          )
+          profileId = currentUserId,
+          onLogout = {
+            // Clear the authentication state to reset email/password fields
+            authViewModel.signOut()
+            navController.navigate(NavRoutes.LOGIN) { popUpTo(0) { inclusive = true } }
+          })
     }
 
     composable(NavRoutes.HOME) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.HOME) }
       HomeScreen(
           mainPageViewModel = mainPageViewModel,
-          onNavigateToNewSkill = { profileId ->
+          onNavigateToProfile = { profileId ->
             navController.navigate(NavRoutes.createNewSkillRoute(profileId))
           },
           onNavigateToSubjectList = { subject ->
@@ -94,11 +110,11 @@ fun AppNavGraph(
           })
     }
 
-    composable(NavRoutes.SKILLS) {
+    composable(NavRoutes.SKILLS) { backStackEntry ->
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
+      val viewModel: SubjectListViewModel = viewModel(backStackEntry)
       SubjectListScreen(
-          viewModel =
-              SubjectListViewModel(), // You may need to provide this through dependency injection
+          viewModel = viewModel, // You may need to provide this through dependency injection
           onBookTutor = { profile ->
             // Navigate to booking or profile screen when tutor is booked
             // Example: navController.navigate("booking/${profile.uid}")
@@ -120,16 +136,32 @@ fun AppNavGraph(
           NewSkillScreen(profileId = profileId)
         }
 
-    composable(NavRoutes.SIGNUP) {
-      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SIGNUP) }
-      SignUpScreen(
-          vm = SignUpViewModel(),
-          onSubmitSuccess = {
-            // Navigate to login after successful signup
-            navController.navigate(NavRoutes.LOGIN) {
-              popUpTo(NavRoutes.SIGNUP) { inclusive = true }
-            }
-          })
-    }
+    composable(
+        route = NavRoutes.SIGNUP,
+        arguments =
+            listOf(
+                navArgument("email") {
+                  type = NavType.StringType
+                  nullable = true
+                  defaultValue = null
+                })) { backStackEntry ->
+          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SIGNUP) }
+          val email = backStackEntry.arguments?.getString("email")
+
+          // Debug logging
+          Log.d(TAG, "SignUp - Received email parameter: $email")
+
+          // Create ViewModel with email parameter so it's available immediately
+          val viewModel = SignUpViewModel(initialEmail = email)
+
+          SignUpScreen(
+              vm = viewModel,
+              onSubmitSuccess = {
+                // Navigate to login after successful signup
+                navController.navigate(NavRoutes.LOGIN) {
+                  popUpTo(NavRoutes.SIGNUP_BASE) { inclusive = true }
+                }
+              })
+        }
   }
 }

@@ -1,134 +1,186 @@
-package com.android.sample.components
+package com.android.sample.ui.components
 
+import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.user.Profile
-import com.android.sample.ui.components.TutorCard
-import com.android.sample.ui.components.TutorCardTestTags
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-// Ai generated tests for the TutorCard composable
 class TutorCardTest {
 
-  @get:Rule val composeTestRule = createComposeRule()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-  private fun fakeProfile(
-      name: String = "Alice Martin",
-      description: String = "Tutor 1",
-      rating: RatingInfo = RatingInfo(averageRating = 4.5, totalRatings = 23)
-  ) =
-      Profile(
-          userId = "tutor-1",
-          name = name,
-          email = "alice@epfl.ch",
-          location = Location(0.0, 0.0, "EPFL"),
-          description = description,
-          tutorRating = rating)
+  /** Helper to build a normal Profile for most tests. */
+  private fun sampleProfile(
+      name: String = "Alice Johnson",
+      description: String = "Friendly math tutor",
+      locationName: String = "Campus East",
+      avgRating: Double = 4.0,
+      totalRatings: Int = 27,
+      userId: String = "tutor-123"
+  ): Profile {
+    return Profile(
+        userId = userId,
+        name = name,
+        email = "alice@example.com",
+        levelOfEducation = "BSc Math",
+        location = Location(name = locationName),
+        hourlyRate = "25",
+        description = description,
+        tutorRating = RatingInfo(averageRating = avgRating, totalRatings = totalRatings),
+        studentRating = RatingInfo())
+  }
 
   @Test
-  fun card_showsNameSubtitlePriceAndButton() {
-    val p = fakeProfile()
+  fun newTutorCard_displaysNameSubtitleRatingAndLocation() {
+    val profile =
+        sampleProfile(
+            name = "Alice Johnson",
+            description = "Friendly math tutor",
+            locationName = "Campus East",
+            avgRating = 4.0,
+            totalRatings = 27,
+            userId = "tutor-123")
 
-    composeTestRule.setContent {
+    composeRule.setContent {
       MaterialTheme {
         TutorCard(
-            profile = p,
-            pricePerHour = "$25/hr",
-            onPrimaryAction = {},
+            profile = profile,
+            onOpenProfile = {},
         )
       }
     }
 
-    composeTestRule.onNodeWithTag(TutorCardTestTags.CARD).assertIsDisplayed()
-    composeTestRule.onNodeWithText("Alice Martin").assertIsDisplayed()
-    composeTestRule.onNodeWithText("Tutor 1").assertIsDisplayed()
-    composeTestRule.onNodeWithText("$25/hr").assertIsDisplayed()
-    composeTestRule.onNodeWithTag(TutorCardTestTags.ACTION_BUTTON).assertIsDisplayed()
-    composeTestRule.onNodeWithText("Book").assertIsDisplayed()
-    // rating count text e.g. "(23)"
-    composeTestRule.onNodeWithText("(23)").assertIsDisplayed()
+    // Card exists with test tag
+    composeRule.onNodeWithTag(TutorCardTestTags.CARD).assertIsDisplayed()
+
+    // Name is shown
+    composeRule.onNodeWithText("Alice Johnson").assertIsDisplayed()
+
+    // Subtitle from profile.description
+    composeRule.onNodeWithText("Friendly math tutor").assertIsDisplayed()
+
+    // Rating count "(27)"
+    composeRule.onNodeWithText("(27)").assertIsDisplayed()
+
+    // Location is rendered
+    composeRule.onNodeWithText("Campus East").assertIsDisplayed()
   }
 
   @Test
-  fun card_usesPlaceholderPriceWhenNull() {
-    val p = fakeProfile()
+  fun newTutorCard_usesLessonsFallbackWhenDescriptionBlank() {
+    val profileNoDesc =
+        sampleProfile(
+            description = "",
+            locationName = "Main Building",
+            avgRating = 3.5,
+            totalRatings = 12,
+            userId = "tutor-456")
 
-    composeTestRule.setContent {
+    composeRule.setContent {
       MaterialTheme {
         TutorCard(
-            profile = p,
-            pricePerHour = null,
-            onPrimaryAction = {},
+            profile = profileNoDesc,
+            onOpenProfile = {},
         )
       }
     }
 
-    composeTestRule.onNodeWithText("—/hr").assertIsDisplayed()
+    // When description is blank, card shows "Lessons"
+    composeRule.onNodeWithText("Lessons").assertIsDisplayed()
+
+    // Location still shows
+    composeRule.onNodeWithText("Main Building").assertIsDisplayed()
   }
 
   @Test
-  fun button_clickInvokesCallback() {
-    val p = fakeProfile()
-    var clicked = false
+  fun newTutorCard_callsOnOpenProfileWhenClicked() {
+    val profile = sampleProfile(userId = "tutor-abc", avgRating = 4.5, totalRatings = 99)
+    var clickedUserId: String? = null
 
-    composeTestRule.setContent {
+    composeRule.setContent {
+      MaterialTheme { TutorCard(profile = profile, onOpenProfile = { uid -> clickedUserId = uid }) }
+    }
+
+    // Click the whole card
+    composeRule.onNodeWithTag(TutorCardTestTags.CARD).performClick()
+
+    // Verify callback got called with correct id
+    assertEquals("tutor-abc", clickedUserId)
+  }
+
+  @Test
+  fun newTutorCard_allowsSecondaryTextOverride() {
+    val profile =
+        sampleProfile(
+            description = "This will be overridden",
+            avgRating = 5.0,
+            totalRatings = 100,
+            userId = "tutor-777")
+
+    composeRule.setContent {
       MaterialTheme {
         TutorCard(
-            profile = p,
-            onPrimaryAction = { clicked = true },
+            profile = profile,
+            secondaryText = "Custom subtitle override",
+            onOpenProfile = {},
         )
       }
     }
 
-    composeTestRule.onNodeWithTag(TutorCardTestTags.ACTION_BUTTON).performClick()
-    composeTestRule.runOnIdle { assertTrue(clicked) }
+    // Override subtitle is shown
+    composeRule.onNodeWithText("Custom subtitle override").assertIsDisplayed()
+
+    // And rating count still shows
+    composeRule.onNodeWithText("(100)").assertIsDisplayed()
   }
 
   @Test
-  fun customTags_areApplied() {
-    val p = fakeProfile()
+  fun newTutorCard_fallbacksWhenNameAndLocationMissing() {
+    // Build a profile that triggers:
+    // - name = null      -> card should show "Tutor"
+    // - description = "" -> subtitle "Lessons"
+    // - location.name="" -> "Unknown"
+    // - totalRatings = 0 -> shows "(0)"
+    val profileMissingStuff =
+        Profile(
+            userId = "anon-id",
+            name = null,
+            email = "no-name@example.com",
+            levelOfEducation = "",
+            location = Location(name = ""),
+            hourlyRate = "0",
+            description = "",
+            tutorRating = RatingInfo(averageRating = 0.0, totalRatings = 0),
+            studentRating = RatingInfo())
 
-    val customCardTag = "CustomCardTag"
-    val customButtonTag = "CustomButtonTag"
-
-    composeTestRule.setContent {
+    composeRule.setContent {
       MaterialTheme {
         TutorCard(
-            profile = p,
-            pricePerHour = "$10/hr",
-            onPrimaryAction = {},
-            cardTestTag = customCardTag,
-            buttonTestTag = customButtonTag)
-      }
-    }
-
-    composeTestRule.onNodeWithTag(customCardTag).assertIsDisplayed()
-    composeTestRule.onNodeWithTag(customButtonTag).assertIsDisplayed()
-  }
-
-  @Test
-  fun customButtonLabel_isShown() {
-    val p = fakeProfile()
-
-    composeTestRule.setContent {
-      MaterialTheme {
-        TutorCard(
-            profile = p,
-            pricePerHour = "$40/hr",
-            buttonLabel = "Contact",
-            onPrimaryAction = {},
+            profile = profileMissingStuff,
+            onOpenProfile = {},
         )
       }
     }
 
-    composeTestRule.onNodeWithText("Contact").assertIsDisplayed()
+    // Fallback name
+    composeRule.onNodeWithText("Tutor").assertIsDisplayed()
+
+    // Fallback subtitle
+    composeRule.onNodeWithText("Lessons").assertIsDisplayed()
+
+    // Rating count fallback "(0)"
+    composeRule.onNodeWithText("No ratings yet").assertIsDisplayed()
+
+    // Fallback location "Unknown"
+    composeRule.onNodeWithText("Unknown").assertIsDisplayed()
   }
 }
