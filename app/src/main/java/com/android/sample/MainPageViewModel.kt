@@ -4,22 +4,16 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
-import com.android.sample.ui.theme.subjectColor1
-import com.android.sample.ui.theme.subjectColor2
-import com.android.sample.ui.theme.subjectColor3
-import com.android.sample.ui.theme.subjectColor4
-import com.android.sample.ui.theme.subjectColor5
-import com.android.sample.ui.theme.subjectColor6
-import com.android.sample.ui.theme.subjectColor7
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -63,15 +57,15 @@ data class TutorCardUi(
  * unified [HomeUiState] via a [StateFlow]. It also handles user actions such as booking and adding
  * tutors (currently as placeholders).
  */
-class MainPageViewModel : ViewModel() {
+class MainPageViewModel(
+    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
+    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository
+) : ViewModel() {
 
   companion object {
     private const val TAG = "MainPageViewModel"
     private const val DEFAULT_WELCOME_MESSAGE = "Welcome back!"
   }
-
-  private val profileRepository = ProfileRepositoryProvider.repository
-  private val listingRepository = ListingRepositoryProvider.repository
 
   private val _navigationEvent = MutableStateFlow<String?>(null)
   val navigationEvent: StateFlow<String?> = _navigationEvent.asStateFlow()
@@ -201,20 +195,5 @@ class MainPageViewModel : ViewModel() {
 
   fun onNavigationHandled() {
     _navigationEvent.value = null
-  }
-
-  object SubjectColors {
-
-    fun getSubjectColor(subject: MainSubject): Color {
-      return when (subject) {
-        MainSubject.ACADEMICS -> subjectColor1
-        MainSubject.SPORTS -> subjectColor2
-        MainSubject.MUSIC -> subjectColor3
-        MainSubject.ARTS -> subjectColor4
-        MainSubject.TECHNOLOGY -> subjectColor5
-        MainSubject.LANGUAGES -> subjectColor6
-        MainSubject.CRAFTS -> subjectColor7
-      }
-    }
   }
 }

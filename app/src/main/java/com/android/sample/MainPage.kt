@@ -24,8 +24,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.sample.MainPageViewModel.SubjectColors.getSubjectColor
 import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.ui.theme.PrimaryColor
 import com.android.sample.ui.theme.SecondaryColor
 
@@ -130,7 +130,7 @@ fun ExploreSubjects(subjects: List<MainSubject>, onSubjectCardClicked: (MainSubj
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth()) {
               items(subjects) {
-                val subjectColor = getSubjectColor(it)
+                val subjectColor = SkillsHelper.getColorForSubject(it)
                 SubjectCard(subject = it, color = subjectColor, onSubjectCardClicked)
               }
             }

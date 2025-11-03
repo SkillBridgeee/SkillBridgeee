@@ -1,5 +1,14 @@
 package com.android.sample.model.skill
 
+import androidx.compose.ui.graphics.Color
+import com.android.sample.ui.theme.subjectColor1
+import com.android.sample.ui.theme.subjectColor2
+import com.android.sample.ui.theme.subjectColor3
+import com.android.sample.ui.theme.subjectColor4
+import com.android.sample.ui.theme.subjectColor5
+import com.android.sample.ui.theme.subjectColor6
+import com.android.sample.ui.theme.subjectColor7
+
 /** Enum representing main subject categories */
 enum class MainSubject {
   ACADEMICS,
@@ -146,5 +155,18 @@ object SkillsHelper {
 
   fun getSkillNames(mainSubject: MainSubject): List<String> {
     return getSkillsForSubject(mainSubject).map { it.name }
+  }
+
+  // TODO faire la doc de cette fonction et changer les noms de couleur de golmon
+  fun getColorForSubject(subject: MainSubject): Color {
+    return when (subject) {
+      MainSubject.ACADEMICS -> subjectColor1
+      MainSubject.SPORTS -> subjectColor2
+      MainSubject.MUSIC -> subjectColor3
+      MainSubject.ARTS -> subjectColor4
+      MainSubject.TECHNOLOGY -> subjectColor5
+      MainSubject.LANGUAGES -> subjectColor6
+      MainSubject.CRAFTS -> subjectColor7
+    }
   }
 }
