@@ -2,10 +2,11 @@ package com.android.sample.components
 
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.MainPageViewModel
@@ -15,10 +16,13 @@ import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.navigation.AppNavGraph
+import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.profile.MyProfileViewModel
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -51,7 +55,7 @@ class BottomNavBarTest {
 
     composeTestRule.onNodeWithText("Home").assertExists()
     composeTestRule.onNodeWithText("Bookings").assertExists()
-    composeTestRule.onNodeWithText("Skills").assertExists()
+    composeTestRule.onNodeWithText("Map").assertExists()
     composeTestRule.onNodeWithText("Profile").assertExists()
   }
 
@@ -75,16 +79,17 @@ class BottomNavBarTest {
     // Should have exactly 4 navigation items
     composeTestRule.onNodeWithText("Home").assertExists()
     composeTestRule.onNodeWithText("Bookings").assertExists()
-    composeTestRule.onNodeWithText("Skills").assertExists()
+    composeTestRule.onNodeWithText("Map").assertExists()
     composeTestRule.onNodeWithText("Profile").assertExists()
   }
 
   @Test
   fun bottomNavBar_navigation_changes_destination() {
-    var currentDestination: String? = null
+    var navController: NavHostController? = null
 
     composeTestRule.setContent {
-      val navController = rememberNavController()
+      val controller = rememberNavController()
+      navController = controller
       val currentUserId = "test"
       val factory = MyViewModelFactory(currentUserId)
 
@@ -92,39 +97,36 @@ class BottomNavBarTest {
       val profileViewModel: MyProfileViewModel = viewModel(factory = factory)
       val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
 
-      // Track current destination
-      val navBackStackEntry by navController.currentBackStackEntryAsState()
-      currentDestination = navBackStackEntry?.destination?.route
-
       AppNavGraph(
-          navController = navController,
+          navController = controller,
           bookingsViewModel = bookingsViewModel,
           profileViewModel = profileViewModel,
           mainPageViewModel = mainPageViewModel,
           authViewModel =
               AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
           onGoogleSignIn = {})
-      BottomNavBar(navController = navController)
+      BottomNavBar(navController = controller)
     }
 
-    // Start at login, navigate to home first
-    composeTestRule.onNodeWithText("Home").performClick()
+    // Use test tags for clicks to target the clickable NavigationBarItem (avoids touch injection)
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == "home")
+    var route = navController?.currentBackStackEntry?.destination?.route
+    assertEquals("Expected HOME route", NavRoutes.HOME, route)
 
-    // Test Skills navigation
-    composeTestRule.onNodeWithText("Skills").performClick()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == "skills")
+    route = navController?.currentBackStackEntry?.destination?.route
+    assertEquals("Expected MAP route", NavRoutes.MAP, route)
 
-    // Test Bookings navigation
-    composeTestRule.onNodeWithText("Bookings").performClick()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == "bookings")
+    route = navController?.currentBackStackEntry?.destination?.route
+    assertEquals("Expected BOOKINGS route", NavRoutes.BOOKINGS, route)
 
-    // Test Profile navigation
-    composeTestRule.onNodeWithText("Profile").performClick()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).performClick()
     composeTestRule.waitForIdle()
-    assert(currentDestination == "profile/{profileId}")
+    route = navController?.currentBackStackEntry?.destination?.route
+    assertEquals("Expected PROFILE route", NavRoutes.PROFILE, route)
   }
 }

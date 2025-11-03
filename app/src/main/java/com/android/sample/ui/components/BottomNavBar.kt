@@ -3,8 +3,8 @@ package com.android.sample.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,7 +51,7 @@ fun BottomNavBar(navController: NavHostController) {
       listOf(
           BottomNavItem("Home", Icons.Default.Home, NavRoutes.HOME),
           BottomNavItem("Bookings", Icons.Default.DateRange, NavRoutes.BOOKINGS),
-          BottomNavItem("Skills", Icons.Default.Star, NavRoutes.SKILLS),
+          BottomNavItem("Map", Icons.Default.Map, NavRoutes.MAP),
           BottomNavItem("Profile", Icons.Default.Person, NavRoutes.PROFILE),
       )
 
@@ -62,7 +62,7 @@ fun BottomNavBar(navController: NavHostController) {
             NavRoutes.HOME -> Modifier.testTag(MyBookingsPageTestTag.NAV_HOME)
             NavRoutes.BOOKINGS -> Modifier.testTag(MyBookingsPageTestTag.NAV_BOOKINGS)
             NavRoutes.PROFILE -> Modifier.testTag(MyBookingsPageTestTag.NAV_PROFILE)
-            NavRoutes.MESSAGES -> Modifier.testTag(MyBookingsPageTestTag.NAV_MESSAGES)
+            NavRoutes.MAP -> Modifier.testTag(MyBookingsPageTestTag.NAV_MAP)
 
             // Add NAV_MESSAGES mapping here if needed
             else -> Modifier

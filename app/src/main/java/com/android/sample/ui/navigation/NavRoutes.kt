@@ -28,6 +28,7 @@ object NavRoutes {
   const val PROFILE = "profile/{profileId}"
   const val SKILLS = "skills"
   const val BOOKINGS = "bookings"
+  const val MAP = "map"
 
   // Secondary pages
   const val NEW_SKILL = "new_skill/{profileId}"

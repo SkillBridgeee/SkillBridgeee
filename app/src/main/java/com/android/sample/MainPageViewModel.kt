@@ -1,6 +1,5 @@
 package com.android.sample
 
-import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -8,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
-import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -81,15 +79,15 @@ class MainPageViewModel(
    * Loads all data required for the main page.
    *
    * Fetches data from local repositories (skills, listings, and tutors) and builds a list of
-   * [TutorCardUi] safely using [buildTutorCardSafely]. Updates the [_uiState] with a formatted
-   * welcome message and the loaded data.
+   * [TutorCardUi]. Updates the [_uiState] with a formatted welcome message and the loaded data.
    */
   suspend fun load() {
     try {
       val listings = listingRepository.getAllListings()
-      val tutors = profileRepository.getAllProfiles()
+      val profiles = profileRepository.getAllProfiles()
 
-      val tutorCards = listings.mapNotNull { buildTutorCardSafely(it, tutors) }
+      val tutorProfiles =
+          listings.mapNotNull { listing -> profiles.find { it.userId == listing.creatorUserId } }
       val userName = mutableStateOf("")
       navigationEvent.value?.let { getCurrentUserName("user123") { name -> userName.value = name } }
           ?: "Ava"
@@ -103,73 +101,14 @@ class MainPageViewModel(
   }
 
   /**
-   * Safely builds a [TutorCardUi] object for the given [Listing] and tutor list.
-   *
-   * Any errors encountered during construction are caught, and null is returned to prevent one
-   * failing item from breaking the entire list rendering.
-   *
-   * @param listing The [Listing] representing a tutor's offering.
-   * @param tutors The list of available [Profile]s.
-   * @return A constructed [TutorCardUi], or null if the data is invalid.
-   */
-  private fun buildTutorCardSafely(listing: Listing, tutors: List<Profile>): TutorCardUi? {
-    return try {
-      val tutor = tutors.find { it.userId == listing.creatorUserId } ?: return null
-
-      TutorCardUi(
-          name = tutor.name ?: "Unknown",
-          subject = listing.skill.skill,
-          hourlyRate = formatPrice(listing.hourlyRate),
-          ratingStars = computeAvgStars(tutor.tutorRating),
-          ratingCount = ratingCountFor(tutor.tutorRating))
-    } catch (e: Exception) {
-      Log.w(pageTag, "Failed to build TutorCardUi for listing: ${listing.creatorUserId}", e)
-      null
-    }
-  }
-
-  /**
-   * Computes the average rating for a tutor and converts it to a rounded integer value.
-   *
-   * @param rating The [RatingInfo] containing average and total ratings.
-   * @return The rounded star rating, clamped between 0 and 5.
-   */
-  private fun computeAvgStars(rating: RatingInfo): Int {
-    if (rating.totalRatings == 0) return 0
-    val avg = rating.averageRating
-    return avg.roundToInt().coerceIn(0, 5)
-  }
-
-  /**
-   * Retrieves the total number of ratings for a tutor.
-   *
-   * @param rating The [RatingInfo] object.
-   * @return The total number of ratings.
-   */
-  private fun ratingCountFor(rating: RatingInfo): Int = rating.totalRatings
-
-  /**
-   * Formats the hourly rate to two decimal places for consistent display.
-   *
-   * @param hourlyRate The raw hourly rate value.
-   * @return The formatted hourly rate as a [Double].
-   */
-  @SuppressLint("DefaultLocale")
-  private fun formatPrice(hourlyRate: Double): Double {
-    return String.format("%.2f", hourlyRate).toDouble()
-  }
-
-  /**
    * Handles the "Book" button click event for a tutor.
    *
    * This function will be expanded in future versions to handle booking logic.
    *
    * @param tutorName The name of the tutor being booked.
    */
-  fun onBookTutorClicked(tutorName: String) {
-    viewModelScope.launch {
-      // TODO handle booking logic
-    }
+  fun onTutorClick(profileId: String) {
+    viewModelScope.launch { _navigationEvent.value = profileId }
   }
 
   /**
