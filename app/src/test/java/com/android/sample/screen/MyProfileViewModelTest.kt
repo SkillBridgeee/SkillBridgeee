@@ -1,6 +1,11 @@
+// kotlin
 package com.android.sample.screen
 
 import com.android.sample.model.authentication.FirebaseTestRule
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.user.Profile
@@ -91,6 +96,37 @@ class MyProfileViewModelTest {
     }
   }
 
+  // Minimal fake ListingRepository to satisfy the ViewModel dependency
+  private class FakeListingRepo : ListingRepository {
+    override fun getNewUid(): String = "fake-listing-id"
+
+    override suspend fun getAllListings(): List<Listing> = emptyList()
+
+    override suspend fun getProposals(): List<Proposal> = emptyList()
+
+    override suspend fun getRequests(): List<Request> = emptyList()
+
+    override suspend fun getListing(listingId: String): Listing? = null
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> = emptyList()
+
+    override suspend fun addProposal(proposal: Proposal) {}
+
+    override suspend fun addRequest(request: Request) {}
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill): List<Listing> =
+        emptyList()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> =
+        emptyList()
+  }
+
   // -------- Helpers ------------------------------------------------------
 
   private fun makeProfile(
@@ -104,8 +140,9 @@ class MyProfileViewModelTest {
   private fun newVm(
       repo: ProfileRepository = FakeProfileRepo(),
       locRepo: LocationRepository = FakeLocationRepo(),
+      listingRepo: ListingRepository = FakeListingRepo(),
       userId: String = "testUid"
-  ) = MyProfileViewModel(repo, locRepo, userId)
+  ) = MyProfileViewModel(repo, locRepo, listingRepo, userId)
 
   // -------- Tests --------------------------------------------------------
 

@@ -4,6 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
@@ -35,7 +38,8 @@ data class MyProfileUIState(
     val invalidDescMsg: String? = null,
     val isLoading: Boolean = false,
     val loadError: String? = null,
-    val updateError: String? = null
+    val updateError: String? = null,
+    val listings: List<Listing> = emptyList()
 ) {
   // Checks if all fields are valid
   val isValid: Boolean
@@ -55,6 +59,7 @@ class MyProfileViewModel(
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
     private val locationRepository: LocationRepository =
         NominatimLocationRepository(HttpClientProvider.client),
+    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
 
@@ -89,8 +94,24 @@ class MyProfileViewModel(
                 selectedLocation = profile?.location,
                 locationQuery = profile?.location?.name ?: "",
                 description = profile?.description)
+        loadUserListings(currentId)
       } catch (e: Exception) {
         Log.e("MyProfileViewModel", "Error loading MyProfile by ID: $currentId", e)
+      }
+    }
+  }
+
+  fun loadUserListings(ownerId: String = _uiState.value.userId ?: userId) {
+    viewModelScope.launch {
+      try {
+        val items =
+            listingRepository.getListingsByUser(ownerId).sortedByDescending {
+              it.createdAt
+            } // client-side sort
+        _uiState.update { it.copy(listings = items) }
+      } catch (e: Exception) {
+        Log.e(TAG, "Error loading listings for user: $ownerId", e)
+        // optional: set an error field if you want to show it in UI
       }
     }
   }

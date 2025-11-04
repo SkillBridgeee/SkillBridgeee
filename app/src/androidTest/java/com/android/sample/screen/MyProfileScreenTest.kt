@@ -4,6 +4,8 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performTextInput
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
@@ -77,12 +79,45 @@ class MyProfileScreenTest {
         skillsByUser[userId] ?: emptyList()
   }
 
+  // Minimal Fake ListingRepository to avoid initializing real Firebase/Firestore in android tests
+  private class FakeListingRepo : ListingRepository {
+    override fun getNewUid(): String = "fake-listing-id"
+
+    override suspend fun getAllListings(): List<Listing> = emptyList()
+
+    override suspend fun getProposals(): List<com.android.sample.model.listing.Proposal> =
+        emptyList()
+
+    override suspend fun getRequests(): List<com.android.sample.model.listing.Request> = emptyList()
+
+    override suspend fun getListing(listingId: String): Listing? = null
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> = emptyList()
+
+    override suspend fun addProposal(proposal: com.android.sample.model.listing.Proposal) {}
+
+    override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill): List<Listing> =
+        emptyList()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> =
+        emptyList()
+  }
+
   private lateinit var viewModel: MyProfileViewModel
 
   @Before
   fun setup() {
     val repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
-    viewModel = MyProfileViewModel(repo, userId = "demo")
+    // Inject the fake listing repo to prevent Firebase/Firestore initialization in tests
+    viewModel = MyProfileViewModel(repo, listingRepository = FakeListingRepo(), userId = "demo")
 
     compose.setContent { MyProfileScreen(profileViewModel = viewModel, profileId = "demo") }
 
