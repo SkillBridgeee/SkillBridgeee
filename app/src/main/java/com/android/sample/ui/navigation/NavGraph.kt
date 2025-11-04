@@ -107,7 +107,8 @@ fun AppNavGraph(
           onNavigateToSubjectList = { subject ->
             academicSubject.value = subject
             navController.navigate(NavRoutes.SKILLS)
-          })
+          },
+          onNavigateToAddNewListing = { navController.navigate(NavRoutes.NEW_SKILL) })
     }
 
     composable(NavRoutes.SKILLS) { backStackEntry ->
