@@ -1,4 +1,4 @@
-package com.android.sample
+package com.android.sample.ui.HomePage
 
 import android.util.Log
 import androidx.lifecycle.ViewModel

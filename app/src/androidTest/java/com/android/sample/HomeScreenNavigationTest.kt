@@ -14,11 +14,11 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.android.sample.HomeScreenTestTags
-import com.android.sample.TutorsSection
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.user.Profile
+import com.android.sample.ui.HomePage.HomeScreenTestTags
+import com.android.sample.ui.HomePage.TutorsSection
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.profile.ProfileScreenTestTags
 import org.junit.Rule

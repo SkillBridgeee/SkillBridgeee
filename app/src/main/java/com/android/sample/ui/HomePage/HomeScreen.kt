@@ -1,4 +1,4 @@
-package com.android.sample
+package com.android.sample.ui.HomePage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +21,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.model.user.Profile
@@ -43,7 +42,6 @@ object HomeScreenTestTags {
   const val FAB_ADD = "fabAdd"
 }
 
-// todo rename la classe mettre screen dans le nom et mettre dans un package avec le view model
 /**
  * The main HomeScreen composable for the SkillBridge app.
  *
@@ -59,7 +57,7 @@ object HomeScreenTestTags {
  */
 @Composable
 fun HomeScreen(
-    mainPageViewModel: MainPageViewModel = viewModel(),
+    mainPageViewModel: MainPageViewModel = MainPageViewModel(),
     onNavigateToProfile: (String) -> Unit = {},
     onNavigateToSubjectList: (MainSubject) -> Unit = {},
     onNavigateToAddNewListing: () -> Unit
