@@ -40,10 +40,6 @@ class MainPageViewModel(
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository
 ) : ViewModel() {
 
-  // TODO regarder la navigation aucune idée pour l'instant
-  private val _navigationEvent = MutableStateFlow<String?>(null)
-  val navigationEvent: StateFlow<String?> = _navigationEvent.asStateFlow()
-
   private val _uiState = MutableStateFlow(HomeUiState())
 
   val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
