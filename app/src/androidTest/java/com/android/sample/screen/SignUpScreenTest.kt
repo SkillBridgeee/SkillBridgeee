@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import com.android.sample.model.user.FirestoreProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.android.sample.ui.signup.SignUpViewModel
@@ -137,7 +138,7 @@ class SignUpScreenTest {
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Ada")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Lovelace")
-    composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).performTextInput("London Street 1")
+    composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true).performTextInput("London Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS, 3rd year")
     composeRule.nodeByTag(SignUpScreenTestTags.DESCRIPTION).performTextInput("Loves mathematics")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(testEmail)
@@ -179,7 +180,7 @@ class SignUpScreenTest {
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Élise")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Müller")
-    composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).performTextInput("S1")
+    composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true).performTextInput("S1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput("  $testEmail ")
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("passw0rd!")
@@ -230,7 +231,7 @@ class SignUpScreenTest {
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("John")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Doe")
-    composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).performTextInput("Street 1")
+    composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true).performTextInput("Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(duplicateEmail)
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("SecondPass123!")
@@ -265,25 +266,25 @@ class SignUpScreenTest {
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Test")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("User")
-    composeRule.nodeByTag(SignUpScreenTestTags.ADDRESS).performTextInput("Street 1")
+    composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true).performTextInput("Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(testEmail)
+    // Password "123!" is too short (< 8 chars) and missing a letter
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("123!")
 
     // Close keyboard with IME action
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
     composeRule.waitForIdle()
 
-    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
+    // With a weak password, the sign up button should remain disabled
+    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo()
 
-    // Wait for error or completion by observing ViewModel state
-    composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
-      vm.state.value.error != null || !vm.state.value.submitting || vm.state.value.submitSuccess
-    }
+    // Wait a moment for validation to complete
+    composeRule.waitForIdle()
 
-    // Should either have an error or not have succeeded
+    // Verify the form validation failed and button is not enabled
     assertTrue(
-        "Weak password should either error or not succeed",
-        vm.state.value.error != null || !vm.state.value.submitSuccess)
+        "Weak password should prevent form submission",
+        !vm.state.value.canSubmit)
   }
 }
