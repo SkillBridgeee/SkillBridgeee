@@ -139,7 +139,8 @@ class HomeScreenTutorCardTest {
     composeRule.setContent {
       HomeScreen(
           mainPageViewModel = vm,
-          onNavigateToProfile = { profileId -> navigatedToProfileId = profileId })
+          onNavigateToProfile = { profileId -> navigatedToProfileId = profileId },
+          onNavigateToAddNewListing = {})
     }
 
     // Wait for UI + coroutines to settle

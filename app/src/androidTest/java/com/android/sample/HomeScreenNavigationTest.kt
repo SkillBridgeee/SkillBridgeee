@@ -1,19 +1,19 @@
 package com.android.sample.screen
 
+import android.annotation.SuppressLint
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.android.sample.HomeScreenTestTags
 import com.android.sample.TutorsSection
 import com.android.sample.model.map.Location
@@ -28,6 +28,7 @@ class HomeScreenProfileNavigationTest {
 
   @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
+  @SuppressLint("UnrememberedMutableState")
   @Test
   fun tutorCard_click_navigatesToProfileScreen() {
     val profile =
@@ -41,25 +42,24 @@ class HomeScreenProfileNavigationTest {
     composeRule.setContent {
       MaterialTheme {
         val navController = rememberNavController()
+        val profileID = mutableStateOf("")
         NavHost(navController = navController, startDestination = "home") {
           composable("home") {
             // Render the section and navigate to the profile route when a card is clicked
             TutorsSection(
                 tutors = listOf(profile),
                 onTutorClick = { profileId ->
-                  navController.navigate(NavRoutes.createProfileRoute(profileId))
+                  profileID.value = profileId
+                  navController.navigate(NavRoutes.OTHERS_PROFILE)
                 })
           }
 
-          composable(
-              route = NavRoutes.PROFILE,
-              arguments = listOf(navArgument("profileId") { type = NavType.StringType })) {
-                  backStackEntry ->
-                // Minimal profile destination for test verification (uses same test tag)
-                Box(modifier = Modifier.fillMaxSize().testTag(ProfileScreenTestTags.SCREEN)) {
-                  Text(text = "Profile")
-                }
-              }
+          composable(route = NavRoutes.OTHERS_PROFILE) { backStackEntry ->
+            // Minimal profile destination for test verification (uses same test tag)
+            Box(modifier = Modifier.fillMaxSize().testTag(ProfileScreenTestTags.SCREEN)) {
+              Text(text = "Profile")
+            }
+          }
         }
       }
     }
