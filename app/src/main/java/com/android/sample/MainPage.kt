@@ -77,7 +77,9 @@ fun HomeScreen(
   Scaffold(
       floatingActionButton = {
         FloatingActionButton(
-            onClick = { mainPageViewModel.onAddTutorClicked("test") }, // Hardcoded user ID for now
+            onClick = {
+              mainPageViewModel.onAddTutorClicked("test")
+            }, // todo Hardcoded user ID for now
             containerColor = PrimaryColor,
             modifier = Modifier.testTag(HomeScreenTestTags.FAB_ADD)) {
               Icon(Icons.Default.Add, contentDescription = "Add")
@@ -89,7 +91,7 @@ fun HomeScreen(
           Spacer(modifier = Modifier.height(20.dp))
           ExploreSubjects(uiState.subjects, onNavigateToSubjectList)
           Spacer(modifier = Modifier.height(20.dp))
-          TutorsSection(uiState.tutors, onTutorClick = mainPageViewModel::onTutorClick)
+          TutorsSection(uiState.tutors, onTutorClick = { /* todo */})
         }
       }
 }
@@ -153,6 +155,7 @@ fun SubjectCard(
               .padding(vertical = 16.dp, horizontal = 12.dp)
               .testTag(HomeScreenTestTags.SKILL_CARD)
               .wrapContentSize(Alignment.Center)
+              // todo pourquoi le truc est déclaré une deuxième fois
               .clickable { onSubjectCardClicked(subject) },
   ) {
     val textColor = if (color.luminance() > 0.5f) Color.Black else Color.White
@@ -161,14 +164,7 @@ fun SubjectCard(
   }
 }
 
-/**
- * Displays a vertical list of top-rated tutors using a [LazyColumn].
- *
- * Each item in the list is rendered using [TutorCard].
- *
- * @param tutors The list of [TutorCardUi] objects to display.
- * @param onTutorClick The callback invoked when the "Book" button is clicked.
- */
+// todo commentaire de focnitn
 @Composable
 fun TutorsSection(tutors: List<Profile>, onTutorClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
