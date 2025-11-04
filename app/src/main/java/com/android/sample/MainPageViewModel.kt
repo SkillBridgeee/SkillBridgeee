@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
  * @property tutors A list of tutor cards prepared for display.
  */
 data class HomeUiState(
-    val welcomeMessage: String = "",
+    val welcomeMessage: String = "Welcome back!",
     val subjects: List<MainSubject> = MainSubject.entries.toList(),
     var tutors: List<Profile> = emptyList()
 )
@@ -65,7 +65,14 @@ class MainPageViewModel(
       val tutorProfiles =
           listings.mapNotNull { listing -> profiles.find { it.userId == listing.creatorUserId } }
 
-      val userName: String? = getUserName()
+      val userName: String? =
+          try {
+            getUserName()
+          } catch (e: Exception) {
+            Log.w("HomePageViewModel", "Could not fetch user name", e)
+            null // fallback : on continue sans userName
+          }
+
       val welcomeMsg = if (userName != null) "Welcome back, $userName!" else "Welcome back!"
 
       _uiState.value = HomeUiState(welcomeMessage = welcomeMsg, tutors = tutorProfiles)
@@ -85,13 +92,14 @@ class MainPageViewModel(
    * safely returns null if an error occurs.
    */
   // todo peut etre mettre en private
-  suspend fun getUserName(): String? {
-    return try {
-      val userId = UserSessionManager.getCurrentUserId() ?: return null
-      profileRepository.getProfile(userId)?.name
-    } catch (e: Exception) {
-      Log.w("HomePageViewModel", "Failed to get current profile", e)
-      null
-    }
+  private suspend fun getUserName(): String? {
+    return runCatching {
+          val userId = UserSessionManager.getCurrentUserId() // si throw, catch gère
+          if (userId != null) {
+            profileRepository.getProfile(userId)?.name
+          } else null
+        }
+        .onFailure { Log.w("HomePageViewModel", "Failed to get current profile", it) }
+        .getOrNull()
   }
 }
