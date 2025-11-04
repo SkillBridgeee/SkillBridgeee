@@ -42,6 +42,7 @@ object MyProfileScreenTestTag {
   const val INPUT_PROFILE_LOCATION = "inputProfileLocation"
   const val INPUT_PROFILE_DESC = "inputProfileDesc"
   const val SAVE_BUTTON = "saveButton"
+  const val ROOT_LIST = "profile_list"
   const val LOGOUT_BUTTON = "logoutButton"
   const val ERROR_MSG = "errorMsg"
 }
@@ -118,188 +119,193 @@ private fun ProfileContent(
   val locationSuggestions = ui.locationSuggestions
   val locationQuery = ui.locationQuery
 
-  LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = pd) {
-    // --------------------------
-    // 1) Header: avatar + name + role
-    // --------------------------
-    item {
-      Column(
-          modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-          horizontalAlignment = Alignment.CenterHorizontally) {
-            // Circle with first initial
-            Box(
-                modifier =
-                    Modifier.size(50.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                        .border(2.dp, Color.Blue, CircleShape)
-                        .testTag(MyProfileScreenTestTag.PROFILE_ICON),
-                contentAlignment = Alignment.Center) {
-                  Text(
-                      text = ui.name?.firstOrNull()?.uppercase() ?: "",
-                      style = MaterialTheme.typography.titleLarge,
-                      color = Color.Black,
-                      fontWeight = FontWeight.Bold)
-                }
+  LazyColumn(
+      modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST), // <-- add
+      contentPadding = pd) {
+        // --------------------------
+        // 1) Header: avatar + name + role
+        // --------------------------
+        item {
+          Column(
+              modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+              horizontalAlignment = Alignment.CenterHorizontally) {
+                // Circle with first initial
+                Box(
+                    modifier =
+                        Modifier.size(50.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .border(2.dp, Color.Blue, CircleShape)
+                            .testTag(MyProfileScreenTestTag.PROFILE_ICON),
+                    contentAlignment = Alignment.Center) {
+                      Text(
+                          text = ui.name?.firstOrNull()?.uppercase() ?: "",
+                          style = MaterialTheme.typography.titleLarge,
+                          color = Color.Black,
+                          fontWeight = FontWeight.Bold)
+                    }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
+                Text(
+                    text = ui.name ?: "Your Name",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.testTag(MyProfileScreenTestTag.NAME_DISPLAY))
+                Text(
+                    text = "Student",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    modifier = Modifier.testTag(MyProfileScreenTestTag.ROLE_BADGE))
+              }
+        }
+
+        // --------------------------
+        // 2) Profile form
+        // --------------------------
+        item {
+          Spacer(modifier = Modifier.height(12.dp))
+
+          Row(
+              modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+              horizontalArrangement = Arrangement.Center) {
+                Box(
+                    modifier =
+                        Modifier.widthIn(max = 300.dp)
+                            .background(
+                                MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
+                            .border(
+                                width = 1.dp,
+                                brush =
+                                    Brush.linearGradient(
+                                        colors = listOf(Color.Gray, Color.LightGray)),
+                                shape = MaterialTheme.shapes.medium)
+                            .padding(16.dp)) {
+                      Column {
+                        Text(
+                            text = "Personal Details",
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.testTag(MyProfileScreenTestTag.CARD_TITLE))
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Name
+                        OutlinedTextField(
+                            value = ui.name ?: "",
+                            onValueChange = { profileViewModel.setName(it) },
+                            label = { Text("Name") },
+                            placeholder = { Text("Enter Your Full Name") },
+                            isError = ui.invalidNameMsg != null,
+                            supportingText = {
+                              ui.invalidNameMsg?.let {
+                                Text(
+                                    text = it,
+                                    modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
+                              }
+                            },
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .testTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME))
+
+                        Spacer(modifier = Modifier.height(fieldSpacing))
+
+                        // Email
+                        OutlinedTextField(
+                            value = ui.email ?: "",
+                            onValueChange = { profileViewModel.setEmail(it) },
+                            label = { Text("Email") },
+                            placeholder = { Text("Enter Your Email") },
+                            isError = ui.invalidEmailMsg != null,
+                            supportingText = {
+                              ui.invalidEmailMsg?.let {
+                                Text(
+                                    text = it,
+                                    modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
+                              }
+                            },
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .testTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL))
+
+                        Spacer(modifier = Modifier.height(fieldSpacing))
+
+                        // Description
+                        OutlinedTextField(
+                            value = ui.description ?: "",
+                            onValueChange = { profileViewModel.setDescription(it) },
+                            label = { Text("Description") },
+                            placeholder = { Text("Info About You") },
+                            isError = ui.invalidDescMsg != null,
+                            supportingText = {
+                              ui.invalidDescMsg?.let {
+                                Text(
+                                    text = it,
+                                    modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
+                              }
+                            },
+                            minLines = 2,
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .testTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC))
+
+                        Spacer(modifier = Modifier.height(fieldSpacing))
+
+                        // Location with suggestions dropdown
+                        LocationInputField(
+                            locationQuery = locationQuery,
+                            locationSuggestions = locationSuggestions,
+                            onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
+                            errorMsg = ui.invalidLocationMsg,
+                            onLocationSelected = { location ->
+                              profileViewModel.setLocationQuery(location.name)
+                              profileViewModel.setLocation(location)
+                            })
+                      }
+                    }
+              }
+        }
+
+        // --------------------------
+        // 3) Listings
+        // --------------------------
+        item {
+          Spacer(modifier = Modifier.height(16.dp))
+          Text(
+              text = "Your Listings",
+              style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.Bold,
+              modifier = Modifier.padding(horizontal = 16.dp))
+          Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        if (ui.listings.isEmpty()) {
+          item {
             Text(
-                text = ui.name ?: "Your Name",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.testTag(MyProfileScreenTestTag.NAME_DISPLAY))
-            Text(
-                text = "Student",
+                text = "You don’t have any listings yet.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                modifier = Modifier.testTag(MyProfileScreenTestTag.ROLE_BADGE))
+                modifier = Modifier.padding(horizontal = 16.dp))
           }
-    }
-
-    // --------------------------
-    // 2) Profile form
-    // --------------------------
-    item {
-      Spacer(modifier = Modifier.height(12.dp))
-
-      Row(
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-          horizontalArrangement = Arrangement.Center) {
-            Box(
-                modifier =
-                    Modifier.widthIn(max = 300.dp)
-                        .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
-                        .border(
-                            width = 1.dp,
-                            brush =
-                                Brush.linearGradient(colors = listOf(Color.Gray, Color.LightGray)),
-                            shape = MaterialTheme.shapes.medium)
-                        .padding(16.dp)) {
-                  Column {
-                    Text(
-                        text = "Personal Details",
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.testTag(MyProfileScreenTestTag.CARD_TITLE))
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Name
-                    OutlinedTextField(
-                        value = ui.name ?: "",
-                        onValueChange = { profileViewModel.setName(it) },
-                        label = { Text("Name") },
-                        placeholder = { Text("Enter Your Full Name") },
-                        isError = ui.invalidNameMsg != null,
-                        supportingText = {
-                          ui.invalidNameMsg?.let {
-                            Text(
-                                text = it,
-                                modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
-                          }
-                        },
-                        modifier =
-                            Modifier.fillMaxWidth()
-                                .testTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME))
-
-                    Spacer(modifier = Modifier.height(fieldSpacing))
-
-                    // Email
-                    OutlinedTextField(
-                        value = ui.email ?: "",
-                        onValueChange = { profileViewModel.setEmail(it) },
-                        label = { Text("Email") },
-                        placeholder = { Text("Enter Your Email") },
-                        isError = ui.invalidEmailMsg != null,
-                        supportingText = {
-                          ui.invalidEmailMsg?.let {
-                            Text(
-                                text = it,
-                                modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
-                          }
-                        },
-                        modifier =
-                            Modifier.fillMaxWidth()
-                                .testTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL))
-
-                    Spacer(modifier = Modifier.height(fieldSpacing))
-
-                    // Description
-                    OutlinedTextField(
-                        value = ui.description ?: "",
-                        onValueChange = { profileViewModel.setDescription(it) },
-                        label = { Text("Description") },
-                        placeholder = { Text("Info About You") },
-                        isError = ui.invalidDescMsg != null,
-                        supportingText = {
-                          ui.invalidDescMsg?.let {
-                            Text(
-                                text = it,
-                                modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
-                          }
-                        },
-                        minLines = 2,
-                        modifier =
-                            Modifier.fillMaxWidth()
-                                .testTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC))
-
-                    Spacer(modifier = Modifier.height(fieldSpacing))
-
-                    // Location with suggestions dropdown
-                    LocationInputField(
-                        locationQuery = locationQuery,
-                        locationSuggestions = locationSuggestions,
-                        onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
-                        errorMsg = ui.invalidLocationMsg,
-                        onLocationSelected = { location ->
-                          profileViewModel.setLocationQuery(location.name)
-                          profileViewModel.setLocation(location)
-                        })
-                  }
-                }
+        } else {
+          items(items = ui.listings, key = { it.listingId }) { listing ->
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+              // Reusable card for both requests and proposals
+              ListingCard(
+                  listing = listing,
+                  creator = creatorProfile,
+                  onOpenListing = {}, // intentionally no-op (navigation wired elsewhere)
+                  onBook = {})
+              Spacer(Modifier.height(8.dp))
+            }
           }
-    }
+        }
 
-    // --------------------------
-    // 3) Listings
-    // --------------------------
-    item {
-      Spacer(modifier = Modifier.height(16.dp))
-      Text(
-          text = "Your Listings",
-          style = MaterialTheme.typography.titleMedium,
-          fontWeight = FontWeight.Bold,
-          modifier = Modifier.padding(horizontal = 16.dp))
-      Spacer(modifier = Modifier.height(8.dp))
-    }
-
-    if (ui.listings.isEmpty()) {
-      item {
-        Text(
-            text = "You don’t have any listings yet.",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(horizontal = 16.dp))
-      }
-    } else {
-      items(items = ui.listings, key = { it.listingId }) { listing ->
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-          // Reusable card for both requests and proposals
-          ListingCard(
-              listing = listing,
-              creator = creatorProfile,
-              onOpenListing = {}, // intentionally no-op (navigation wired elsewhere)
-              onBook = {})
-          Spacer(Modifier.height(8.dp))
+        // --------------------------
+        // 4) Logout
+        // --------------------------
+        item {
+          Spacer(modifier = Modifier.height(16.dp))
+          AppButton(
+              text = "Logout", onClick = onLogout, testTag = MyProfileScreenTestTag.LOGOUT_BUTTON)
+          Spacer(modifier = Modifier.height(80.dp)) // spacing above FAB
         }
       }
-    }
-
-    // --------------------------
-    // 4) Logout
-    // --------------------------
-    item {
-      Spacer(modifier = Modifier.height(16.dp))
-      AppButton(text = "Logout", onClick = onLogout, testTag = MyProfileScreenTestTag.LOGOUT_BUTTON)
-      Spacer(modifier = Modifier.height(80.dp)) // spacing above FAB
-    }
-  }
 }

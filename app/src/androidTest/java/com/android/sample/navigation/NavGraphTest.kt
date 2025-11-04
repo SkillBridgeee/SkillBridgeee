@@ -2,6 +2,7 @@ package com.android.sample.navigation
 
 import android.util.Log
 import androidx.compose.ui.test.*
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.android.sample.MainActivity
 import com.android.sample.model.authentication.AuthState
@@ -10,6 +11,7 @@ import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.map.MapScreenTestTags
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
+import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
@@ -271,20 +273,39 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("Personal Informations").assertExists()
   }
 
-  @Test
-  fun profile_screen_has_logout_button() {
-    // Login first
+  private fun navigateToProfileAndWait() {
+    // Trigger login + navigate to profile
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
-
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    // Scroll to logout button
-    composeTestRule.onNodeWithTag("logoutButton", useUnmergedTree = true).performScrollTo()
+    // Wait until the nav route is PROFILE
+    composeTestRule.waitUntil(timeoutMillis = 15_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
+    }
 
-    composeTestRule.onNodeWithTag("logoutButton").assertExists()
-    composeTestRule.onNodeWithTag("logoutButton").assertHasClickAction()
+    // Wait until the LazyColumn with ROOT_LIST is present in the semantics tree
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+  }
+
+  @Test
+  fun profile_screen_has_logout_button() {
+    composeTestRule.onNodeWithText("GitHub").performClick()
+    composeTestRule.onNodeWithText("Profile").performClick()
+
+    // Scroll the LazyColumn to the logout button
+    composeTestRule
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST)
+        .performScrollToNode(hasTestTag(MyProfileScreenTestTag.LOGOUT_BUTTON))
+
+    composeTestRule.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertExists()
+    composeTestRule.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertHasClickAction()
   }
 
   @Test
@@ -376,15 +397,14 @@ class AppNavGraphTest {
   @Test
   fun profile_logout_button_integration() {
     composeTestRule.onNodeWithText("GitHub").performClick()
-    composeTestRule.waitForIdle()
-
     composeTestRule.onNodeWithText("Profile").performClick()
-    composeTestRule.waitForIdle()
 
-    composeTestRule.onNodeWithTag("logoutButton", useUnmergedTree = true).performScrollTo()
+    composeTestRule
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST)
+        .performScrollToNode(hasTestTag(MyProfileScreenTestTag.LOGOUT_BUTTON))
 
-    composeTestRule.onNodeWithTag("logoutButton").assertExists()
-    composeTestRule.onNodeWithTag("logoutButton").assertHasClickAction()
+    composeTestRule.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertExists()
+    composeTestRule.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertHasClickAction()
   }
 
   /**
