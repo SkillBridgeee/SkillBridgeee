@@ -22,6 +22,7 @@ import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileViewModel
+import com.android.sample.ui.profile.ProfileScreen
 import com.android.sample.ui.screens.newSkill.NewSkillScreen
 import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpViewModel
@@ -63,6 +64,7 @@ fun AppNavGraph(
     onGoogleSignIn: () -> Unit
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
+  val profileID = remember { mutableStateOf("") }
 
   NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
     composable(NavRoutes.LOGIN) {
@@ -102,7 +104,8 @@ fun AppNavGraph(
       HomeScreen(
           mainPageViewModel = mainPageViewModel,
           onNavigateToProfile = { profileId ->
-            navController.navigate(NavRoutes.createNewSkillRoute(profileId))
+            profileID.value = profileId
+            navController.navigate(NavRoutes.OTHERS_PROFILE)
           },
           onNavigateToSubjectList = { subject ->
             academicSubject.value = subject
@@ -164,5 +167,10 @@ fun AppNavGraph(
                 }
               })
         }
+    composable(route = NavRoutes.OTHERS_PROFILE) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
+      // todo add other parameters
+      ProfileScreen(profileId = profileID.value)
+    }
   }
 }

@@ -43,6 +43,7 @@ object HomeScreenTestTags {
   const val FAB_ADD = "fabAdd"
 }
 
+// todo rename la classe mettre screen dans le nom et mettre dans un package avec le view model
 /**
  * The main HomeScreen composable for the SkillBridge app.
  *
@@ -64,12 +65,6 @@ fun HomeScreen(
     onNavigateToAddNewListing: () -> Unit
 ) {
   val uiState by mainPageViewModel.uiState.collectAsState()
-  val navigationEvent by mainPageViewModel.navigationEvent.collectAsState()
-
-  // todo gros c'est uqoi ça
-  LaunchedEffect(navigationEvent) {
-    navigationEvent?.let { profileId -> onNavigateToProfile(profileId) }
-  }
 
   LaunchedEffect(Unit) { mainPageViewModel.load() }
 
@@ -88,7 +83,8 @@ fun HomeScreen(
           Spacer(modifier = Modifier.height(20.dp))
           ExploreSubjects(uiState.subjects, onNavigateToSubjectList)
           Spacer(modifier = Modifier.height(20.dp))
-          TutorsSection(uiState.tutors, onTutorClick = { /* todo */})
+          TutorsSection(
+              tutors = uiState.tutors, onTutorClick = { userId -> onNavigateToProfile(userId) })
         }
       }
 }
@@ -177,7 +173,7 @@ fun TutorsSection(tutors: List<Profile>, onTutorClick: (String) -> Unit) {
           items(tutors) { profile ->
             TutorCard(
                 profile = profile,
-                onOpenProfile = onTutorClick,
+                onOpenProfile = { onTutorClick(profile.userId) },
                 cardTestTag = HomeScreenTestTags.TUTOR_CARD)
           }
         }
