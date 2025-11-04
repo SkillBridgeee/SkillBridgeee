@@ -138,7 +138,6 @@ fun SubjectCard(
     color: Color,
     onSubjectCardClicked: (MainSubject) -> Unit = {}
 ) {
-  // todo je sais pas si c'est très smart de faire ça avec une column
   Column(
       modifier =
           Modifier.width(120.dp)
@@ -155,7 +154,12 @@ fun SubjectCard(
       }
 }
 
-// todo commentaire de focnitn
+/**
+ * Displays a list of top-rated tutors.
+ *
+ * Shows a section title and a scrollable list of tutor cards. When a tutor card is clicked,
+ * triggers a callback with the tutor's user ID so the caller can navigate to the tutor’s profile.
+ */
 @Composable
 fun TutorsSection(tutors: List<Profile>, onTutorClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {

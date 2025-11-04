@@ -41,7 +41,6 @@ class MainPageViewModel(
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(HomeUiState())
-
   val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
   init {
@@ -49,12 +48,20 @@ class MainPageViewModel(
     viewModelScope.launch { load() }
   }
 
+  /**
+   * Loads all data required for the Home screen.
+   * - Fetches all listings and profiles
+   * - Matches listings with their creator profiles to build the tutor list
+   * - Retrieves the current user's name and builds a welcome message
+   * - Updates the UI state with the prepared data
+   *
+   * In case of failure, logs the error and falls back to a default UI state.
+   */
   suspend fun load() {
     try {
       val listings = listingRepository.getAllListings()
       val profiles = profileRepository.getAllProfiles()
 
-      // todo jsp
       val tutorProfiles =
           listings.mapNotNull { listing -> profiles.find { it.userId == listing.creatorUserId } }
 
@@ -69,6 +76,15 @@ class MainPageViewModel(
     }
   }
 
+  /**
+   * Retrieves the current user's name.
+   * - Gets the logged-in user's ID from the session manager
+   * - Fetches the user's profile and returns their name
+   *
+   * Returns null if no user is logged in or if the profile cannot be retrieved. Logs a warning and
+   * safely returns null if an error occurs.
+   */
+  // todo peut etre mettre en private
   suspend fun getUserName(): String? {
     return try {
       val userId = UserSessionManager.getCurrentUserId() ?: return null
