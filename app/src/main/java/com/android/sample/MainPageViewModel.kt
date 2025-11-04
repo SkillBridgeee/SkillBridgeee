@@ -3,6 +3,7 @@ package com.android.sample
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.skill.MainSubject
@@ -61,15 +62,24 @@ class MainPageViewModel(
       val tutorProfiles =
           listings.mapNotNull { listing -> profiles.find { it.userId == listing.creatorUserId } }
 
-      // todo comprendre userSessionUser Manager
-      val userName = "aaaaaaaaaaaaaaaaa"
+      val userName: String? = getUserName()
+      val welcomeMsg = if (userName != null) "Welcome back, $userName!" else "Welcome back!"
 
-      _uiState.value =
-          HomeUiState(welcomeMessage = "Welcome back, $userName!", tutors = tutorProfiles)
+      _uiState.value = HomeUiState(welcomeMessage = welcomeMsg, tutors = tutorProfiles)
     } catch (e: Exception) {
       // Log the error for debugging while providing a safe fallback UI state
       Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
       _uiState.value = HomeUiState()
+    }
+  }
+
+  suspend fun getUserName(): String? {
+    return try {
+      val userId = UserSessionManager.getCurrentUserId() ?: return null
+      profileRepository.getProfile(userId)?.name
+    } catch (e: Exception) {
+      Log.w("HomePageViewModel", "Failed to get current profile", e)
+      null
     }
   }
 

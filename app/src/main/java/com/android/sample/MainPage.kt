@@ -74,6 +74,8 @@ fun HomeScreen(
     }
   }
 
+  LaunchedEffect(Unit) { mainPageViewModel.load() }
+
   Scaffold(
       floatingActionButton = {
         FloatingActionButton(
