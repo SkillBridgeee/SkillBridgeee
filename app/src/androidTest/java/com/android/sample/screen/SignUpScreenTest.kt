@@ -138,7 +138,9 @@ class SignUpScreenTest {
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Ada")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Lovelace")
-    composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true).performTextInput("London Street 1")
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .performTextInput("London Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS, 3rd year")
     composeRule.nodeByTag(SignUpScreenTestTags.DESCRIPTION).performTextInput("Loves mathematics")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(testEmail)
@@ -180,7 +182,9 @@ class SignUpScreenTest {
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Élise")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Müller")
-    composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true).performTextInput("S1")
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .performTextInput("S1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput("  $testEmail ")
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("passw0rd!")
@@ -231,7 +235,9 @@ class SignUpScreenTest {
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("John")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Doe")
-    composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true).performTextInput("Street 1")
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .performTextInput("Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(duplicateEmail)
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("SecondPass123!")
@@ -266,7 +272,9 @@ class SignUpScreenTest {
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Test")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("User")
-    composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true).performTextInput("Street 1")
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .performTextInput("Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(testEmail)
     // Password "123!" is too short (< 8 chars) and missing a letter
@@ -283,8 +291,6 @@ class SignUpScreenTest {
     composeRule.waitForIdle()
 
     // Verify the form validation failed and button is not enabled
-    assertTrue(
-        "Weak password should prevent form submission",
-        !vm.state.value.canSubmit)
+    assertTrue("Weak password should prevent form submission", !vm.state.value.canSubmit)
   }
 }
