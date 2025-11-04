@@ -118,7 +118,6 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
               locationQuery = state.locationQuery,
               locationSuggestions = state.locationSuggestions,
               onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },
-              errorMsg = null,
               onLocationSelected = { location ->
                 vm.onEvent(SignUpEvent.LocationSelected(location))
               },

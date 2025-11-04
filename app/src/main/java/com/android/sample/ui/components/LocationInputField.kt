@@ -114,7 +114,6 @@ fun LocationInputField(
  * item from the dropdown triggers [onLocationSelected] and closes the menu.
  *
  * @param locationQuery The current text value of the location input field.
- * @param errorMsg An optional error message to display below the text field.
  * @param locationSuggestions A list of suggested [Location] objects based on the current query.
  * @param onLocationQueryChange Callback invoked when the user updates the query text.
  * @param onLocationSelected Callback invoked when the user selects a suggested location.
@@ -127,7 +126,6 @@ fun LocationInputField(
 @Composable
 fun LocationInputFieldStyled(
     locationQuery: String,
-    errorMsg: String?,
     locationSuggestions: List<Location?>,
     onLocationQueryChange: (String) -> Unit,
     onLocationSelected: (Location) -> Unit,

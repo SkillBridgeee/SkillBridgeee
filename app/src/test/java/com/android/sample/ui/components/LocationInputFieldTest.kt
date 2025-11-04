@@ -209,7 +209,6 @@ class LocationInputFieldTest {
     composeTestRule.setContent {
       LocationInputFieldStyled(
           locationQuery = "",
-          errorMsg = null,
           locationSuggestions = emptyList(),
           onLocationQueryChange = {},
           onLocationSelected = {},
@@ -227,7 +226,6 @@ class LocationInputFieldTest {
     composeTestRule.setContent {
       LocationInputFieldStyled(
           locationQuery = "",
-          errorMsg = null,
           locationSuggestions = emptyList(),
           onLocationQueryChange = {},
           onLocationSelected = {})
@@ -244,7 +242,6 @@ class LocationInputFieldTest {
     composeTestRule.setContent {
       LocationInputFieldStyled(
           locationQuery = "",
-          errorMsg = null,
           locationSuggestions = emptyList(),
           onLocationQueryChange = { capturedQuery = it },
           onLocationSelected = {})
@@ -265,7 +262,6 @@ class LocationInputFieldTest {
     composeTestRule.setContent {
       LocationInputFieldStyled(
           locationQuery = "Test",
-          errorMsg = null,
           locationSuggestions = testLocations,
           onLocationQueryChange = {},
           onLocationSelected = {})
@@ -288,7 +284,6 @@ class LocationInputFieldTest {
     composeTestRule.setContent {
       LocationInputFieldStyled(
           locationQuery = "Test",
-          errorMsg = null,
           locationSuggestions = testLocations,
           onLocationQueryChange = {},
           onLocationSelected = { selectedLocation = it })

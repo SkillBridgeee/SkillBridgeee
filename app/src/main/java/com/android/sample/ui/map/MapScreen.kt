@@ -66,13 +66,7 @@ fun MapScreen(
   Scaffold(modifier = modifier.testTag(MapScreenTestTags.MAP_SCREEN)) { innerPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
       // Google Map
-      MapView(
-          profiles = uiState.profiles,
-          centerLocation = uiState.userLocation,
-          onMarkerClick = { profile ->
-            viewModel.selectProfile(profile)
-            true // Consume the click
-          })
+      MapView(centerLocation = uiState.userLocation)
 
       // Loading indicator
       if (uiState.isLoading) {
@@ -103,7 +97,6 @@ fun MapScreen(
         ProfileInfoCard(
             profile = profile,
             onProfileClick = { onProfileClick(profile.userId) },
-            onDismiss = { viewModel.selectProfile(null) },
             modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp))
       }
     }
@@ -112,11 +105,7 @@ fun MapScreen(
 
 /** Displays the Google Map centered on a location (no markers). */
 @Composable
-private fun MapView(
-    profiles: List<Profile>,
-    centerLocation: LatLng,
-    onMarkerClick: (Profile) -> Boolean
-) {
+private fun MapView(centerLocation: LatLng) {
   // Camera position state
   val cameraPositionState = rememberCameraPositionState {
     position = CameraPosition.fromLatLngZoom(centerLocation, 12f)
@@ -150,7 +139,6 @@ private fun MapView(
 private fun ProfileInfoCard(
     profile: Profile,
     onProfileClick: () -> Unit,
-    onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
   Card(
