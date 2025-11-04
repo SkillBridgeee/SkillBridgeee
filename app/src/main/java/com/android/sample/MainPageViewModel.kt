@@ -82,19 +82,4 @@ class MainPageViewModel(
       null
     }
   }
-
-  /**
-   * Handles the "Add Tutor" button click event.
-   *
-   * This function will be expanded in future versions to handle adding new tutors.
-   */
-  // todo bro jsp ce que ce'st que ce truc
-  fun onAddTutorClicked(profileId: String) {
-    viewModelScope.launch { _navigationEvent.value = profileId }
-  }
-
-  // todo jsp nn plus
-  fun onNavigationHandled() {
-    _navigationEvent.value = null
-  }
 }

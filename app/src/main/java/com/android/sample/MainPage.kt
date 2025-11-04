@@ -66,11 +66,9 @@ fun HomeScreen(
   val uiState by mainPageViewModel.uiState.collectAsState()
   val navigationEvent by mainPageViewModel.navigationEvent.collectAsState()
 
+  // todo gros c'est uqoi ça
   LaunchedEffect(navigationEvent) {
-    navigationEvent?.let { profileId ->
-      onNavigateToProfile(profileId)
-      // mainPageViewModel.onNavigationHandled()
-    }
+    navigationEvent?.let { profileId -> onNavigateToProfile(profileId) }
   }
 
   LaunchedEffect(Unit) { mainPageViewModel.load() }
@@ -144,6 +142,7 @@ fun SubjectCard(
     color: Color,
     onSubjectCardClicked: (MainSubject) -> Unit = {}
 ) {
+  // todo je sais pas si c'est très smart de faire ça avec une column
   Column(
       modifier =
           Modifier.width(120.dp)
@@ -153,14 +152,11 @@ fun SubjectCard(
               .clickable { onSubjectCardClicked(subject) }
               .padding(vertical = 16.dp, horizontal = 12.dp)
               .testTag(HomeScreenTestTags.SKILL_CARD)
-              .wrapContentSize(Alignment.Center)
-              // todo pourquoi le truc est déclaré une deuxième fois
-              .clickable { onSubjectCardClicked(subject) },
-  ) {
-    val textColor = if (color.luminance() > 0.5f) Color.Black else Color.White
+              .wrapContentSize(Alignment.Center)) {
+        val textColor = if (color.luminance() > 0.5f) Color.Black else Color.White
 
-    Text(text = subject.name, color = textColor)
-  }
+        Text(text = subject.name, color = textColor)
+      }
 }
 
 // todo commentaire de focnitn
