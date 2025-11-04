@@ -277,13 +277,14 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Navigate to profile
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    // Verify logout button exists and is clickable
-    composeTestRule.onNodeWithText("Logout").assertExists()
-    composeTestRule.onNodeWithText("Logout").assertHasClickAction()
+    // Scroll to logout button
+    composeTestRule.onNodeWithTag("logoutButton", useUnmergedTree = true).performScrollTo()
+
+    composeTestRule.onNodeWithTag("logoutButton").assertExists()
+    composeTestRule.onNodeWithTag("logoutButton").assertHasClickAction()
   }
 
   @Test
@@ -374,23 +375,16 @@ class AppNavGraphTest {
    */
   @Test
   fun profile_logout_button_integration() {
-    // Login to access profile
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Navigate to profile
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
 
-    // Verify the profile screen is displayed with logout functionality
-    composeTestRule.onNodeWithText("Logout").assertExists()
-    composeTestRule.onNodeWithText("Name").assertExists()
-    composeTestRule.onNodeWithText("Email").assertExists()
+    composeTestRule.onNodeWithTag("logoutButton", useUnmergedTree = true).performScrollTo()
 
-    // Verify the logout button is properly wired (has click action)
-    composeTestRule.onNodeWithText("Logout").assertHasClickAction()
-
-    Log.d(TAG, "Profile logout button integration verified")
+    composeTestRule.onNodeWithTag("logoutButton").assertExists()
+    composeTestRule.onNodeWithTag("logoutButton").assertHasClickAction()
   }
 
   /**

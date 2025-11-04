@@ -31,6 +31,7 @@ import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.ListingCard
 import com.android.sample.ui.components.LocationInputField
 
+/** Test tags for UI automation and screenshot tests on the My Profile screen. */
 object MyProfileScreenTestTag {
   const val PROFILE_ICON = "profileIcon"
   const val NAME_DISPLAY = "nameDisplay"
@@ -45,6 +46,17 @@ object MyProfileScreenTestTag {
   const val ERROR_MSG = "errorMsg"
 }
 
+/**
+ * Top-level My Profile screen.
+ *
+ * Responsibilities:
+ * - Hosts the profile editor and the user's listings.
+ * - Exposes a floating action button to save profile changes.
+ *
+ * @param profileViewModel ViewModel providing profile state and actions.
+ * @param profileId ID of the profile being viewed/edited (can be current user or another).
+ * @param onLogout callback when the user taps "Logout".
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyProfileScreen(
@@ -56,6 +68,7 @@ fun MyProfileScreen(
       topBar = {},
       bottomBar = {},
       floatingActionButton = {
+        // Save profile edits
         AppButton(
             text = "Save Profile Changes",
             onClick = { profileViewModel.editProfile() },
@@ -66,6 +79,17 @@ fun MyProfileScreen(
       }
 }
 
+/**
+ * Actual content of the profile screen.
+ *
+ * Layout:
+ * 1) Header (avatar, name, role)
+ * 2) Profile form (name, email, description, location)
+ * 3) "Your Listings" section showing the user's listings
+ * 4) Logout button
+ *
+ * Uses a [LazyColumn] so the page scrolls comfortably on small screens.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProfileContent(
@@ -74,10 +98,13 @@ private fun ProfileContent(
     profileViewModel: MyProfileViewModel,
     onLogout: () -> Unit
 ) {
+  // Load profile and associated listings whenever the target ID changes.
   LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
 
+  // Observe UI state from the ViewModel
   val ui by profileViewModel.uiState.collectAsState()
 
+  // Lightweight "creator" profile for ListingCard display (avatar/name/location)
   val creatorProfile =
       Profile(
           userId = ui.userId ?: "",
@@ -86,16 +113,20 @@ private fun ProfileContent(
           location = ui.selectedLocation ?: Location(),
           description = ui.description ?: "")
 
+  // Form helpers
   val fieldSpacing = 8.dp
   val locationSuggestions = ui.locationSuggestions
   val locationQuery = ui.locationQuery
 
   LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = pd) {
-    // Header: avatar + name + role
+    // --------------------------
+    // 1) Header: avatar + name + role
+    // --------------------------
     item {
       Column(
           modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
           horizontalAlignment = Alignment.CenterHorizontally) {
+            // Circle with first initial
             Box(
                 modifier =
                     Modifier.size(50.dp)
@@ -125,7 +156,9 @@ private fun ProfileContent(
           }
     }
 
-    // Form box (centered)
+    // --------------------------
+    // 2) Profile form
+    // --------------------------
     item {
       Spacer(modifier = Modifier.height(12.dp))
 
@@ -150,6 +183,7 @@ private fun ProfileContent(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
+                    // Name
                     OutlinedTextField(
                         value = ui.name ?: "",
                         onValueChange = { profileViewModel.setName(it) },
@@ -169,6 +203,7 @@ private fun ProfileContent(
 
                     Spacer(modifier = Modifier.height(fieldSpacing))
 
+                    // Email
                     OutlinedTextField(
                         value = ui.email ?: "",
                         onValueChange = { profileViewModel.setEmail(it) },
@@ -188,6 +223,7 @@ private fun ProfileContent(
 
                     Spacer(modifier = Modifier.height(fieldSpacing))
 
+                    // Description
                     OutlinedTextField(
                         value = ui.description ?: "",
                         onValueChange = { profileViewModel.setDescription(it) },
@@ -208,6 +244,7 @@ private fun ProfileContent(
 
                     Spacer(modifier = Modifier.height(fieldSpacing))
 
+                    // Location with suggestions dropdown
                     LocationInputField(
                         locationQuery = locationQuery,
                         locationSuggestions = locationSuggestions,
@@ -222,7 +259,9 @@ private fun ProfileContent(
           }
     }
 
-    // Listings header
+    // --------------------------
+    // 3) Listings
+    // --------------------------
     item {
       Spacer(modifier = Modifier.height(16.dp))
       Text(
@@ -233,7 +272,6 @@ private fun ProfileContent(
       Spacer(modifier = Modifier.height(8.dp))
     }
 
-    // Listings – empty state or items
     if (ui.listings.isEmpty()) {
       item {
         Text(
@@ -244,21 +282,24 @@ private fun ProfileContent(
     } else {
       items(items = ui.listings, key = { it.listingId }) { listing ->
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+          // Reusable card for both requests and proposals
           ListingCard(
               listing = listing,
               creator = creatorProfile,
-              onOpenListing = {}, // no-op to satisfy static analysis
+              onOpenListing = {}, // intentionally no-op (navigation wired elsewhere)
               onBook = {})
           Spacer(Modifier.height(8.dp))
         }
       }
     }
 
-    // Logout button at the bottom
+    // --------------------------
+    // 4) Logout
+    // --------------------------
     item {
       Spacer(modifier = Modifier.height(16.dp))
       AppButton(text = "Logout", onClick = onLogout, testTag = MyProfileScreenTestTag.LOGOUT_BUTTON)
-      Spacer(modifier = Modifier.height(80.dp)) // room above FAB
+      Spacer(modifier = Modifier.height(80.dp)) // spacing above FAB
     }
   }
 }
