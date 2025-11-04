@@ -70,7 +70,7 @@ fun HomeScreen(
   LaunchedEffect(navigationEvent) {
     navigationEvent?.let { profileId ->
       onNavigateToProfile(profileId)
-      mainPageViewModel.onNavigationHandled()
+      // mainPageViewModel.onNavigationHandled()
     }
   }
 
@@ -78,7 +78,7 @@ fun HomeScreen(
       floatingActionButton = {
         FloatingActionButton(
             onClick = {
-              mainPageViewModel.onAddTutorClicked("test")
+              // mainPageViewModel.onAddTutorClicked("test")
             }, // todo Hardcoded user ID for now
             containerColor = PrimaryColor,
             modifier = Modifier.testTag(HomeScreenTestTags.FAB_ADD)) {
