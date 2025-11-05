@@ -95,7 +95,7 @@ class AppNavGraphTest {
     composeTestRule.waitForIdle()
 
     // Check map screen content via test tag
-    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN_TEXT).assertExists()
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).assertExists()
   }
 
   @Test

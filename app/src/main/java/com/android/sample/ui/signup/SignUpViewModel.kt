@@ -3,8 +3,14 @@ package com.android.sample.ui.signup
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.HttpClientProvider
 import com.android.sample.model.authentication.AuthenticationRepository
+import com.android.sample.model.map.Location
+import com.android.sample.model.map.LocationRepository
+import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -26,6 +32,9 @@ data class SignUpUiState(
     val name: String = "",
     val surname: String = "",
     val address: String = "",
+    val selectedLocation: Location? = null,
+    val locationQuery: String = "",
+    val locationSuggestions: List<Location> = emptyList(),
     val levelOfEducation: String = "",
     val description: String = "",
     val email: String = "",
@@ -46,6 +55,10 @@ sealed interface SignUpEvent {
 
   data class AddressChanged(val value: String) : SignUpEvent
 
+  data class LocationQueryChanged(val value: String) : SignUpEvent
+
+  data class LocationSelected(val location: Location) : SignUpEvent
+
   data class LevelOfEducationChanged(val value: String) : SignUpEvent
 
   data class DescriptionChanged(val value: String) : SignUpEvent
@@ -61,7 +74,9 @@ class SignUpViewModel(
     initialEmail: String? = null,
     private val authRepository: AuthenticationRepository = AuthenticationRepository(),
     private val signUpUseCase: SignUpUseCase =
-        SignUpUseCase(AuthenticationRepository(), ProfileRepositoryProvider.repository)
+        SignUpUseCase(AuthenticationRepository(), ProfileRepositoryProvider.repository),
+    private val locationRepository: LocationRepository =
+        NominatimLocationRepository(HttpClientProvider.client)
 ) : ViewModel() {
 
   companion object {
@@ -70,6 +85,9 @@ class SignUpViewModel(
 
   private val _state = MutableStateFlow(SignUpUiState())
   val state: StateFlow<SignUpUiState> = _state
+
+  private var locationSearchJob: Job? = null
+  private val locationSearchDelayTime: Long = 1000
 
   /**
    * Validates password and returns individual requirement states. Extracted to a helper function to
@@ -108,6 +126,8 @@ class SignUpViewModel(
       is SignUpEvent.NameChanged -> _state.update { it.copy(name = e.value) }
       is SignUpEvent.SurnameChanged -> _state.update { it.copy(surname = e.value) }
       is SignUpEvent.AddressChanged -> _state.update { it.copy(address = e.value) }
+      is SignUpEvent.LocationQueryChanged -> setLocationQuery(e.value)
+      is SignUpEvent.LocationSelected -> setLocation(e.location)
       is SignUpEvent.LevelOfEducationChanged ->
           _state.update { it.copy(levelOfEducation = e.value) }
       is SignUpEvent.DescriptionChanged -> _state.update { it.copy(description = e.value) }
@@ -172,6 +192,7 @@ class SignUpViewModel(
       val current = _state.value
 
       // Create request object from current state
+      val selectedLoc = current.selectedLocation
       val request =
           SignUpRequest(
               name = current.name,
@@ -180,7 +201,8 @@ class SignUpViewModel(
               password = current.password,
               levelOfEducation = current.levelOfEducation,
               description = current.description,
-              address = current.address)
+              address = current.address,
+              location = selectedLoc)
 
       // Execute sign-up through use case
       val result = signUpUseCase.execute(request)
@@ -194,6 +216,47 @@ class SignUpViewModel(
           _state.update { it.copy(submitting = false, error = result.message) }
         }
       }
+    }
+  }
+
+  /**
+   * Updates the location query in the UI state and fetches matching location suggestions.
+   *
+   * This function updates the current `locationQuery` value and triggers a search operation if the
+   * query is not empty. The search is performed asynchronously within the `viewModelScope` using
+   * the [locationRepository].
+   *
+   * @param query The new location search query entered by the user.
+   */
+  private fun setLocationQuery(query: String) {
+    _state.update { it.copy(locationQuery = query, address = query) }
+
+    locationSearchJob?.cancel()
+
+    if (query.isNotEmpty()) {
+      locationSearchJob =
+          viewModelScope.launch {
+            delay(locationSearchDelayTime)
+            try {
+              val results = locationRepository.search(query)
+              _state.update { it.copy(locationSuggestions = results) }
+            } catch (_: Exception) {
+              _state.update { it.copy(locationSuggestions = emptyList()) }
+            }
+          }
+    } else {
+      _state.update { it.copy(locationSuggestions = emptyList(), selectedLocation = null) }
+    }
+  }
+
+  /**
+   * Updates the selected location and the locationQuery.
+   *
+   * @param location The selected location object.
+   */
+  private fun setLocation(location: Location) {
+    _state.update {
+      it.copy(selectedLocation = location, locationQuery = location.name, address = location.name)
     }
   }
 }
