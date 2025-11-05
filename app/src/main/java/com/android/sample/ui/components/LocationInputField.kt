@@ -84,7 +84,8 @@ fun LocationInputField(
         onDismissRequest = { showDropdown = false },
         properties = PopupProperties(focusable = false),
         modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)) {
-          locationSuggestions.filterNotNull().take(3).forEach { location ->
+          val filteredLocations = locationSuggestions.filterNotNull().take(3)
+          filteredLocations.forEachIndexed { index, location ->
             DropdownMenuItem(
                 text = {
                   Text(
@@ -96,7 +97,9 @@ fun LocationInputField(
                   showDropdown = false
                 },
                 modifier = Modifier.padding(8.dp).testTag(LocationInputFieldTestTags.SUGGESTION))
-            HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
+            if (index < filteredLocations.size - 1) {
+              HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
+            }
           }
         }
   }
@@ -124,7 +127,7 @@ fun LocationInputField(
  * @see DropdownMenu
  */
 @Composable
-fun LocationInputFieldStyled(
+fun RoundEdgedLocationInputField(
     locationQuery: String,
     locationSuggestions: List<Location?>,
     onLocationQueryChange: (String) -> Unit,
@@ -153,7 +156,8 @@ fun LocationInputFieldStyled(
         onDismissRequest = { showDropdown = false },
         properties = PopupProperties(focusable = false),
         modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)) {
-          locationSuggestions.filterNotNull().take(3).forEach { location ->
+          val filteredLocations = locationSuggestions.filterNotNull().take(3)
+          filteredLocations.forEachIndexed { index, location ->
             DropdownMenuItem(
                 text = {
                   Text(
@@ -165,7 +169,9 @@ fun LocationInputFieldStyled(
                   showDropdown = false
                 },
                 modifier = Modifier.padding(8.dp).testTag(LocationInputFieldTestTags.SUGGESTION))
-            HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
+            if (index < filteredLocations.size - 1) {
+              HorizontalDivider(Modifier, DividerDefaults.Thickness, DividerDefaults.color)
+            }
           }
         }
   }

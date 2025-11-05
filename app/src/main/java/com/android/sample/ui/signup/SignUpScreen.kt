@@ -27,7 +27,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.android.sample.ui.components.LocationInputFieldStyled
+import com.android.sample.ui.components.RoundEdgedLocationInputField
 import com.android.sample.ui.theme.DisabledContent
 import com.android.sample.ui.theme.FieldContainer
 import com.android.sample.ui.theme.GrayE6
@@ -114,7 +114,7 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
 
         // Location input with Nominatim search and dropdown
         Box(modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.ADDRESS)) {
-          LocationInputFieldStyled(
+          RoundEdgedLocationInputField(
               locationQuery = state.locationQuery,
               locationSuggestions = state.locationSuggestions,
               onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },

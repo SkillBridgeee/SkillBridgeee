@@ -204,10 +204,10 @@ class LocationInputFieldTest {
   }
 
   @Test
-  fun locationInputFieldStyled_displaysCorrectly() {
+  fun roundEdgedLocationInputField_displaysCorrectly() {
     // Given
     composeTestRule.setContent {
-      LocationInputFieldStyled(
+      RoundEdgedLocationInputField(
           locationQuery = "",
           locationSuggestions = emptyList(),
           onLocationQueryChange = {},
@@ -221,10 +221,10 @@ class LocationInputFieldTest {
   }
 
   @Test
-  fun locationInputFieldStyled_displaysPlaceholder() {
+  fun roundEdgedLocationInputField_displaysPlaceholder() {
     // Given
     composeTestRule.setContent {
-      LocationInputFieldStyled(
+      RoundEdgedLocationInputField(
           locationQuery = "",
           locationSuggestions = emptyList(),
           onLocationQueryChange = {},
@@ -236,11 +236,11 @@ class LocationInputFieldTest {
   }
 
   @Test
-  fun locationInputFieldStyled_callsOnQueryChange() {
+  fun roundEdgedLocationInputField_callsOnQueryChange() {
     // Given
     var capturedQuery = ""
     composeTestRule.setContent {
-      LocationInputFieldStyled(
+      RoundEdgedLocationInputField(
           locationQuery = "",
           locationSuggestions = emptyList(),
           onLocationQueryChange = { capturedQuery = it },
@@ -257,10 +257,10 @@ class LocationInputFieldTest {
   }
 
   @Test
-  fun locationInputFieldStyled_displaysSuggestions() {
+  fun roundEdgedLocationInputField_displaysSuggestions() {
     // Given
     composeTestRule.setContent {
-      LocationInputFieldStyled(
+      RoundEdgedLocationInputField(
           locationQuery = "Test",
           locationSuggestions = testLocations,
           onLocationQueryChange = {},
@@ -278,11 +278,11 @@ class LocationInputFieldTest {
   }
 
   @Test
-  fun locationInputFieldStyled_callsOnSelectedWhenClicked() {
+  fun roundEdgedLocationInputField_callsOnSelectedWhenClicked() {
     // Given
     var selectedLocation: Location? = null
     composeTestRule.setContent {
-      LocationInputFieldStyled(
+      RoundEdgedLocationInputField(
           locationQuery = "Test",
           locationSuggestions = testLocations,
           onLocationQueryChange = {},

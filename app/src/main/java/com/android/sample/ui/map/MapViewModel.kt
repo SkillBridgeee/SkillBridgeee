@@ -1,6 +1,5 @@
 package com.android.sample.ui.map
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.map.Location
@@ -40,10 +39,6 @@ class MapViewModel(
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
 
-  companion object {
-    private const val TAG = "MapViewModel"
-  }
-
   private val _uiState = MutableStateFlow(MapUiState())
   val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
@@ -58,8 +53,7 @@ class MapViewModel(
       try {
         val profiles = profileRepository.getAllProfiles()
         _uiState.value = _uiState.value.copy(profiles = profiles, isLoading = false)
-      } catch (e: Exception) {
-        Log.e(TAG, "Error loading profiles for map", e)
+      } catch (_: Exception) {
         _uiState.value =
             _uiState.value.copy(isLoading = false, errorMessage = "Failed to load user locations")
       }
