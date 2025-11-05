@@ -59,11 +59,11 @@ class MainPageViewModel(
    */
   suspend fun load() {
     try {
-      val listings = listingRepository.getAllListings()
+      val proposals = listingRepository.getProposals()
       val profiles = profileRepository.getAllProfiles()
 
       val tutorProfiles =
-          listings.mapNotNull { listing -> profiles.find { it.userId == listing.creatorUserId } }
+          proposals.mapNotNull { proposal -> profiles.find { it.userId == proposal.creatorUserId } }
 
       val userName: String? =
           try {
@@ -91,7 +91,6 @@ class MainPageViewModel(
    * Returns null if no user is logged in or if the profile cannot be retrieved. Logs a warning and
    * safely returns null if an error occurs.
    */
-  // todo peut etre mettre en private
   private suspend fun getUserName(): String? {
     return runCatching {
           val userId = UserSessionManager.getCurrentUserId() // si throw, catch gère

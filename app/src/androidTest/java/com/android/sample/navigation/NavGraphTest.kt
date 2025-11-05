@@ -79,7 +79,7 @@ class AppNavGraphTest {
 
     // Should now be on home screen - check for home screen elements
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
-    composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
+    composeTestRule.onNodeWithText("All Tutors").assertExists()
   }
 
   @Test
@@ -226,7 +226,7 @@ class AppNavGraphTest {
     // Verify Home screen content
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
     composeTestRule.onNodeWithText("Explore Subjects").assertExists()
-    composeTestRule.onNodeWithText("Top-Rated Tutors").assertExists()
+    composeTestRule.onNodeWithText("All Tutors").assertExists()
     assert(RouteStackManager.getCurrentRoute() == NavRoutes.HOME)
   }
 

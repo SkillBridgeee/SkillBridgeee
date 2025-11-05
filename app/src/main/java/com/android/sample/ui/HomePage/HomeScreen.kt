@@ -153,7 +153,7 @@ fun SubjectCard(
 }
 
 /**
- * Displays a list of top-rated tutors.
+ * Displays a list of all tutors.
  *
  * Shows a section title and a scrollable list of tutor cards. When a tutor card is clicked,
  * triggers a callback with the tutor's user ID so the caller can navigate to the tutor’s profile.
@@ -162,7 +162,7 @@ fun SubjectCard(
 fun TutorsSection(tutors: List<Profile>, onTutorClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
-        text = "Top-Rated Tutors",
+        text = "All Tutors",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
         modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION))
