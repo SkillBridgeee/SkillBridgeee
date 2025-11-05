@@ -17,6 +17,8 @@ import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.text.set
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
