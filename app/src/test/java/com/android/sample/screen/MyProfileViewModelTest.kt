@@ -21,6 +21,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.android.sample.model.map.GpsLocationProvider
+import androidx.test.core.app.ApplicationProvider
+
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -91,6 +94,20 @@ class MyProfileViewModelTest {
     }
   }
 
+  private class SuccessGpsProvider(
+    private val lat: Double = 12.34,
+    private val lon: Double = 56.78
+  ) : com.android.sample.model.map.GpsLocationProvider(
+    androidx.test.core.app.ApplicationProvider.getApplicationContext()
+  ) {
+    override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
+      val loc = android.location.Location("test")
+      loc.latitude = lat
+      loc.longitude = lon
+      return loc
+    }
+  }
+
   // -------- Helpers ------------------------------------------------------
 
   private fun makeProfile(
@@ -107,6 +124,21 @@ class MyProfileViewModelTest {
       userId: String = "testUid"
   ) = MyProfileViewModel(repo, locRepo, userId)
 
+  private class NullGpsProvider :
+    com.android.sample.model.map.GpsLocationProvider(
+      androidx.test.core.app.ApplicationProvider.getApplicationContext()
+    ) {
+    override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? = null
+  }
+
+  private class SecurityExceptionGpsProvider :
+    com.android.sample.model.map.GpsLocationProvider(
+      androidx.test.core.app.ApplicationProvider.getApplicationContext()
+    ) {
+    override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
+      throw SecurityException("Permission denied")
+    }
+  }
   // -------- Tests --------------------------------------------------------
 
   @Test
@@ -364,5 +396,45 @@ class MyProfileViewModelTest {
     assertNotNull(updated)
     assertEquals("targetUserId", updated?.userId)
     assertEquals("New Name", updated?.name)
+  }
+
+  @Test
+  fun fetchLocationFromGps_success_updatesSelectedLocation_andClearsError() = runTest {
+    val vm = newVm()
+    val provider = SuccessGpsProvider(12.34, 56.78)
+
+    vm.fetchLocationFromGps(provider)
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    // use non-null assertion because the test expects a location to be set
+    assertEquals(12.34, ui.selectedLocation!!.latitude, 0.0001)
+    assertEquals(56.78, ui.selectedLocation!!.longitude, 0.0001)
+    assertEquals("12.34, 56.78", ui.locationQuery)
+    assertNull(ui.invalidLocationMsg)
+  }
+
+  @Test
+  fun fetchLocationFromGps_nullResult_setsFailedToObtainError() = runTest {
+    val vm = newVm()
+    val provider = NullGpsProvider()
+
+    vm.fetchLocationFromGps(provider)
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertEquals("Failed to obtain GPS location", ui.invalidLocationMsg)
+  }
+
+  @Test
+  fun fetchLocationFromGps_securityException_setsPermissionDeniedError() = runTest {
+    val vm = newVm()
+    val provider = SecurityExceptionGpsProvider()
+
+    vm.fetchLocationFromGps(provider)
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertEquals("Location permission denied", ui.invalidLocationMsg)
   }
 }
