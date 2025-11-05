@@ -1,8 +1,5 @@
 package com.android.sample.ui.map
 
-import android.Manifest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,8 +45,7 @@ object MapScreenTestTags {
   const val PROFILE_NAME = "profile_name"
   const val PROFILE_LOCATION = "profile_location"
 
-    const val BOOKING_MARKER_PREFIX = "booking_marker_"
-
+  const val BOOKING_MARKER_PREFIX = "booking_marker_"
 }
 
 /**
@@ -76,15 +72,14 @@ fun MapScreen(
   Scaffold(modifier = modifier.testTag(MapScreenTestTags.MAP_SCREEN)) { innerPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
       // Google Map
-        val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
-        val myProfile = uiState.profiles.firstOrNull { it.userId == uid }
+      val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+      val myProfile = uiState.profiles.firstOrNull { it.userId == uid }
 
-        MapView(
-            centerLocation = uiState.userLocation,
-            bookingPins = uiState.bookingPins,
-            myProfile = myProfile,
-            onBookingClicked = { pin -> pin.profile?.let { viewModel.selectProfile(it) } }
-        )
+      MapView(
+          centerLocation = uiState.userLocation,
+          bookingPins = uiState.bookingPins,
+          myProfile = myProfile,
+          onBookingClicked = { pin -> pin.profile?.let { viewModel.selectProfile(it) } })
 
       // Loading indicator
       if (uiState.isLoading) {
@@ -130,19 +125,21 @@ private fun MapView(
     onBookingClicked: (BookingPin) -> Unit
 ) {
   // Camera position state
-    val cameraPositionState = rememberCameraPositionState()
+  val cameraPositionState = rememberCameraPositionState()
 
-    val profileLatLng = myProfile?.location
-        ?.takeIf { it.latitude != 0.0 || it.longitude != 0.0 }
-        ?.let { LatLng(it.latitude, it.longitude) }
+  val profileLatLng =
+      myProfile
+          ?.location
+          ?.takeIf { it.latitude != 0.0 || it.longitude != 0.0 }
+          ?.let { LatLng(it.latitude, it.longitude) }
 
-    val target = profileLatLng ?: centerLocation
+  val target = profileLatLng ?: centerLocation
 
-    LaunchedEffect(target) {
-        if (cameraPositionState.position.target != target) {
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(target, 12f)
-        }
+  LaunchedEffect(target) {
+    if (cameraPositionState.position.target != target) {
+      cameraPositionState.position = CameraPosition.fromLatLngZoom(target, 12f)
     }
+  }
 
   // Map settings
   val mapUiSettings =
@@ -153,35 +150,31 @@ private fun MapView(
           rotationGesturesEnabled = true,
           tiltGesturesEnabled = true)
 
-    val mapProperties = MapProperties(isMyLocationEnabled = false)
+  val mapProperties = MapProperties(isMyLocationEnabled = false)
 
-    GoogleMap(
+  GoogleMap(
       modifier = Modifier.fillMaxSize().testTag(MapScreenTestTags.MAP_VIEW),
       cameraPositionState = cameraPositionState,
       uiSettings = mapUiSettings,
       properties = mapProperties) {
         bookingPins.forEach { pin ->
-            Marker(
-                state = MarkerState(position = pin.position),
-                title = pin.title,
-                snippet = pin.snippet,
-                onClick = {
-                    onBookingClicked(pin)
-                    false // keep default info window behavior
-                },
-                tag = BOOKING_MARKER_PREFIX + pin.bookingId
-            )
+          Marker(
+              state = MarkerState(position = pin.position),
+              title = pin.title,
+              snippet = pin.snippet,
+              onClick = {
+                onBookingClicked(pin)
+                false // keep default info window behavior
+              },
+              tag = BOOKING_MARKER_PREFIX + pin.bookingId)
         }
         myProfile?.location?.let { loc ->
-            if (loc.latitude != 0.0 || loc.longitude != 0.0) {
-                Marker(
-                    state = MarkerState(
-                        position = LatLng(loc.latitude, loc.longitude)
-                    ),
-                    title = myProfile.name ?: "Me",
-                    snippet = loc.name
-                )
-            }
+          if (loc.latitude != 0.0 || loc.longitude != 0.0) {
+            Marker(
+                state = MarkerState(position = LatLng(loc.latitude, loc.longitude)),
+                title = myProfile.name ?: "Me",
+                snippet = loc.name)
+          }
         }
       }
 }

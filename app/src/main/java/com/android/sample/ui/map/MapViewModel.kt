@@ -9,6 +9,7 @@ import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,7 +41,6 @@ data class BookingPin(
     val profile: Profile? = null
 )
 
-
 /**
  * ViewModel for the Map screen.
  *
@@ -57,7 +57,7 @@ class MapViewModel(
 
   init {
     loadProfiles()
-      loadBookings()
+    loadBookings()
   }
 
   /** Loads all user profiles from the repository and updates the map state. */
@@ -67,15 +67,12 @@ class MapViewModel(
       try {
         val profiles = profileRepository.getAllProfiles()
         _uiState.value = _uiState.value.copy(profiles = profiles, isLoading = false)
-          val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
-          val me = profiles.firstOrNull { it.userId == uid }
-          val loc = me?.location
-          if (loc != null && (loc.latitude != 0.0 || loc.longitude != 0.0)) {
-              _uiState.value = _uiState.value.copy(
-                  userLocation = LatLng(loc.latitude, loc.longitude)
-              )
-          }
-
+        val uid = runCatching { FirebaseAuth.getInstance().currentUser?.uid }.getOrNull()
+        val me = profiles.firstOrNull { it.userId == uid }
+        val loc = me?.location
+        if (loc != null && (loc.latitude != 0.0 || loc.longitude != 0.0)) {
+          _uiState.value = _uiState.value.copy(userLocation = LatLng(loc.latitude, loc.longitude))
+        }
       } catch (_: Exception) {
         _uiState.value =
             _uiState.value.copy(isLoading = false, errorMessage = "Failed to load user locations")
@@ -83,32 +80,35 @@ class MapViewModel(
     }
   }
 
-
-    fun loadBookings() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            try {
-                val bookings = bookingRepository.getAllBookings()
-                val pins = bookings.mapNotNull { booking ->
-                    val tutor = profileRepository.getProfileById(booking.listingCreatorId)
-                    val loc = tutor?.location ?: return@mapNotNull null
-                    BookingPin(
-                        bookingId = booking.bookingId,
-                        position = LatLng(loc.latitude, loc.longitude),
-                        title = tutor.name ?: "Session",
-                        snippet = tutor.description.takeIf { !it.isNullOrBlank() },
-                        profile = tutor
-                    )
-                }
-                _uiState.value = _uiState.value.copy(bookingPins = pins, isLoading = false)
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = e.message)
+  fun loadBookings() {
+    viewModelScope.launch {
+      try {
+        val bookings = bookingRepository.getAllBookings()
+        val pins =
+            bookings.mapNotNull { booking ->
+              val tutor = profileRepository.getProfileById(booking.listingCreatorId)
+              val loc = tutor?.location
+              if (loc != null && (loc.latitude != 0.0 || loc.longitude != 0.0)) {
+                BookingPin(
+                    bookingId = booking.bookingId,
+                    position = LatLng(loc.latitude, loc.longitude),
+                    title = tutor.name ?: "Session",
+                    snippet = tutor.description.takeIf { it.isNotBlank() },
+                    profile = tutor)
+              } else null
             }
+        _uiState.value = _uiState.value.copy(bookingPins = pins)
+      } catch (e: Exception) {
+        if (_uiState.value.errorMessage == null) {
+          _uiState.value = _uiState.value.copy(errorMessage = e.message)
         }
+      } finally {
+        _uiState.value = _uiState.value.copy(isLoading = false)
+      }
     }
+  }
 
-
-    /**
+  /**
    * Updates the selected profile when a marker is clicked.
    *
    * @param profile The profile to select, or null to deselect
