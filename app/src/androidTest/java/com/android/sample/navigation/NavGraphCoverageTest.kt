@@ -54,7 +54,7 @@ class NavGraphCoverageTest {
     // Navigate using bottom nav (use test tags for reliability)
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).performClick()
     composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN_TEXT).assertExists()
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).assertExists()
 
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).performClick()
     composeTestRule.waitForIdle()
