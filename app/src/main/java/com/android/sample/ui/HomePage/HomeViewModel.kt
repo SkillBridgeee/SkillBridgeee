@@ -57,29 +57,33 @@ class MainPageViewModel(
    *
    * In case of failure, logs the error and falls back to a default UI state.
    */
-  suspend fun load() {
-    try {
-      val proposals = listingRepository.getProposals()
-      val profiles = profileRepository.getAllProfiles()
+  fun load() {
+    viewModelScope.launch {
+      try {
+        val proposals = listingRepository.getProposals()
+        val profiles = profileRepository.getAllProfiles()
 
-      val tutorProfiles =
-          proposals.mapNotNull { proposal -> profiles.find { it.userId == proposal.creatorUserId } }
+        val tutorProfiles =
+            proposals.mapNotNull { proposal ->
+              profiles.find { it.userId == proposal.creatorUserId }
+            }
 
-      val userName: String? =
-          try {
-            getUserName()
-          } catch (e: Exception) {
-            Log.w("HomePageViewModel", "Could not fetch user name", e)
-            null // fallback : on continue sans userName
-          }
+        val userName: String? =
+            try {
+              getUserName()
+            } catch (e: Exception) {
+              Log.w("HomePageViewModel", "Could not fetch user name", e)
+              null // fallback : on continue sans userName
+            }
 
-      val welcomeMsg = if (userName != null) "Welcome back, $userName!" else "Welcome back!"
+        val welcomeMsg = if (userName != null) "Welcome back, $userName!" else "Welcome back!"
 
-      _uiState.value = HomeUiState(welcomeMessage = welcomeMsg, tutors = tutorProfiles)
-    } catch (e: Exception) {
-      // Log the error for debugging while providing a safe fallback UI state
-      Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-      _uiState.value = HomeUiState()
+        _uiState.value = HomeUiState(welcomeMessage = welcomeMsg, tutors = tutorProfiles)
+      } catch (e: Exception) {
+        // Log the error for debugging while providing a safe fallback UI state
+        Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
+        _uiState.value = HomeUiState()
+      }
     }
   }
 
