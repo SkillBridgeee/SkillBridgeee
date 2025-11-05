@@ -1,13 +1,13 @@
 package com.android.sample.model.skill
 
 import com.android.sample.model.skill.SkillsHelper.getColorForSubject
-import com.android.sample.ui.theme.subjectColor1
-import com.android.sample.ui.theme.subjectColor2
-import com.android.sample.ui.theme.subjectColor3
-import com.android.sample.ui.theme.subjectColor4
-import com.android.sample.ui.theme.subjectColor5
-import com.android.sample.ui.theme.subjectColor6
-import com.android.sample.ui.theme.subjectColor7
+import com.android.sample.ui.theme.academicsColor
+import com.android.sample.ui.theme.artsColor
+import com.android.sample.ui.theme.craftsColor
+import com.android.sample.ui.theme.languagesColor
+import com.android.sample.ui.theme.musicColor
+import com.android.sample.ui.theme.sportsColor
+import com.android.sample.ui.theme.technologyColor
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -341,13 +341,13 @@ class EnumTest {
   fun `test getColorForSubject mapping for all MainSubject values`() {
     val expectedColors =
         mapOf(
-            MainSubject.ACADEMICS to subjectColor1,
-            MainSubject.SPORTS to subjectColor2,
-            MainSubject.MUSIC to subjectColor3,
-            MainSubject.ARTS to subjectColor4,
-            MainSubject.TECHNOLOGY to subjectColor5,
-            MainSubject.LANGUAGES to subjectColor6,
-            MainSubject.CRAFTS to subjectColor7)
+            MainSubject.ACADEMICS to academicsColor,
+            MainSubject.SPORTS to sportsColor,
+            MainSubject.MUSIC to musicColor,
+            MainSubject.ARTS to artsColor,
+            MainSubject.TECHNOLOGY to technologyColor,
+            MainSubject.LANGUAGES to languagesColor,
+            MainSubject.CRAFTS to craftsColor)
 
     MainSubject.values().forEach { subject ->
       val expected = expectedColors[subject]

@@ -1,13 +1,13 @@
 package com.android.sample.model.skill
 
 import androidx.compose.ui.graphics.Color
-import com.android.sample.ui.theme.subjectColor1
-import com.android.sample.ui.theme.subjectColor2
-import com.android.sample.ui.theme.subjectColor3
-import com.android.sample.ui.theme.subjectColor4
-import com.android.sample.ui.theme.subjectColor5
-import com.android.sample.ui.theme.subjectColor6
-import com.android.sample.ui.theme.subjectColor7
+import com.android.sample.ui.theme.academicsColor
+import com.android.sample.ui.theme.artsColor
+import com.android.sample.ui.theme.craftsColor
+import com.android.sample.ui.theme.languagesColor
+import com.android.sample.ui.theme.musicColor
+import com.android.sample.ui.theme.sportsColor
+import com.android.sample.ui.theme.technologyColor
 
 /** Enum representing main subject categories */
 enum class MainSubject {
@@ -157,16 +157,24 @@ object SkillsHelper {
     return getSkillsForSubject(mainSubject).map { it.name }
   }
 
-  // TODO faire la doc de cette fonction et changer les noms de couleur de golmon
+  /**
+   * Returns the color associated with a given main subject.
+   *
+   * This function maps each value of the [MainSubject] enum to a predefined color used in the
+   * application's theme.
+   *
+   * @param subject The subject for which the corresponding color is requested.
+   * @return The [Color] associated with the specified subject.
+   */
   fun getColorForSubject(subject: MainSubject): Color {
     return when (subject) {
-      MainSubject.ACADEMICS -> subjectColor1
-      MainSubject.SPORTS -> subjectColor2
-      MainSubject.MUSIC -> subjectColor3
-      MainSubject.ARTS -> subjectColor4
-      MainSubject.TECHNOLOGY -> subjectColor5
-      MainSubject.LANGUAGES -> subjectColor6
-      MainSubject.CRAFTS -> subjectColor7
+      MainSubject.ACADEMICS -> academicsColor
+      MainSubject.SPORTS -> sportsColor
+      MainSubject.MUSIC -> musicColor
+      MainSubject.ARTS -> artsColor
+      MainSubject.TECHNOLOGY -> technologyColor
+      MainSubject.LANGUAGES -> languagesColor
+      MainSubject.CRAFTS -> craftsColor
     }
   }
 }
