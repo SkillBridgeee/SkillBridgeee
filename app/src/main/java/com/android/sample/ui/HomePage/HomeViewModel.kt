@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.listing.Proposal
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -60,23 +61,11 @@ class MainPageViewModel(
   fun load() {
     viewModelScope.launch {
       try {
-        val proposals = listingRepository.getProposals()
-        val profiles = profileRepository.getAllProfiles()
+        val allProposals = listingRepository.getProposals()
+        val allProfiles = profileRepository.getAllProfiles()
 
-        val tutorProfiles =
-            proposals.mapNotNull { proposal ->
-              profiles.find { it.userId == proposal.creatorUserId }
-            }
-
-        val userName: String? =
-            try {
-              getUserName()
-            } catch (e: Exception) {
-              Log.w("HomePageViewModel", "Could not fetch user name", e)
-              null // fallback : on continue sans userName
-            }
-
-        val welcomeMsg = if (userName != null) "Welcome back, $userName!" else "Welcome back!"
+        val tutorProfiles = getTutors(allProposals, allProfiles)
+        val welcomeMsg = getWelcomeMsg()
 
         _uiState.value = HomeUiState(welcomeMessage = welcomeMsg, tutors = tutorProfiles)
       } catch (e: Exception) {
@@ -97,12 +86,40 @@ class MainPageViewModel(
    */
   private suspend fun getUserName(): String? {
     return runCatching {
-          val userId = UserSessionManager.getCurrentUserId() // si throw, catch gère
+          val userId = UserSessionManager.getCurrentUserId()
           if (userId != null) {
             profileRepository.getProfile(userId)?.name
           } else null
         }
         .onFailure { Log.w("HomePageViewModel", "Failed to get current profile", it) }
         .getOrNull()
+  }
+
+  /**
+   * Get all Profile that propose courses.
+   *
+   * @param proposals List of proposals submitted by users.
+   * @param profiles List of all available user profiles.
+   * @return A list of profiles corresponding to the creators of the given proposals.
+   */
+  private fun getTutors(proposals: List<Proposal>, profiles: List<Profile>): List<Profile> {
+    // TODO: Add sorting logic for tutors based on rating here.
+    return proposals.mapNotNull { proposal ->
+      profiles.find { it.userId == proposal.creatorUserId }
+    }
+  }
+
+  /**
+   * Builds the welcome message displayed to the user.
+   *
+   * This function attempts to retrieve the current user's name and returns a personalized welcome
+   * message if the name is available. If the username cannot be fetched, it falls back to a generic
+   * welcome message.
+   *
+   * @return A welcome message string, personalized when possible.
+   */
+  private suspend fun getWelcomeMsg(): String {
+    val userName = runCatching { getUserName() }.getOrNull()
+    return if (userName != null) "Welcome back, $userName!" else "Welcome back!"
   }
 }
