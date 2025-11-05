@@ -25,19 +25,19 @@ class MyProfileScreenTest {
   @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
   private val sampleProfile =
-    Profile(
-      userId = "demo",
-      name = "Kendrick Lamar",
-      email = "kendrick@gmail.com",
-      description = "Performer and mentor",
-      location = Location(name = "EPFL", longitude = 0.0, latitude = 0.0))
+      Profile(
+          userId = "demo",
+          name = "Kendrick Lamar",
+          email = "kendrick@gmail.com",
+          description = "Performer and mentor",
+          location = Location(name = "EPFL", longitude = 0.0, latitude = 0.0))
 
   private val sampleSkills =
-    listOf(
-      Skill(MainSubject.MUSIC, "SINGING", 10.0, ExpertiseLevel.EXPERT),
-      Skill(MainSubject.MUSIC, "DANCING", 5.0, ExpertiseLevel.INTERMEDIATE),
-      Skill(MainSubject.MUSIC, "GUITAR", 7.0, ExpertiseLevel.BEGINNER),
-    )
+      listOf(
+          Skill(MainSubject.MUSIC, "SINGING", 10.0, ExpertiseLevel.EXPERT),
+          Skill(MainSubject.MUSIC, "DANCING", 5.0, ExpertiseLevel.INTERMEDIATE),
+          Skill(MainSubject.MUSIC, "GUITAR", 7.0, ExpertiseLevel.BEGINNER),
+      )
 
   /** Fake repository for testing ViewModel logic */
   private class FakeRepo() : ProfileRepository {
@@ -57,7 +57,7 @@ class MyProfileScreenTest {
     override fun getNewUid() = "fake"
 
     override suspend fun getProfile(userId: String): Profile =
-      profiles[userId] ?: error("No profile $userId")
+        profiles[userId] ?: error("No profile $userId")
 
     override suspend fun getProfileById(userId: String) = getProfile(userId)
 
@@ -79,10 +79,10 @@ class MyProfileScreenTest {
     override suspend fun getAllProfiles(): List<Profile> = profiles.values.toList()
 
     override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
-      emptyList<Profile>()
+        emptyList<Profile>()
 
     override suspend fun getSkillsForUser(userId: String): List<Skill> =
-      skillsByUser[userId] ?: emptyList()
+        skillsByUser[userId] ?: emptyList()
   }
 
   private lateinit var viewModel: MyProfileViewModel
@@ -97,9 +97,9 @@ class MyProfileScreenTest {
 
     compose.waitUntil(5_000) {
       compose
-        .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+          .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
   }
 
@@ -109,9 +109,9 @@ class MyProfileScreenTest {
   fun profileInfo_isDisplayedCorrectly() {
     compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
-      .assertIsDisplayed()
-      .assertTextContains("Kendrick Lamar")
+        .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
+        .assertIsDisplayed()
+        .assertTextContains("Kendrick Lamar")
     compose.onNodeWithTag(MyProfileScreenTestTag.ROLE_BADGE).assertTextEquals("Student")
   }
 
@@ -121,8 +121,8 @@ class MyProfileScreenTest {
   @Test
   fun nameField_displaysCorrectInitialValue() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME)
-      .assertTextContains("Kendrick Lamar")
+        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME)
+        .assertTextContains("Kendrick Lamar")
   }
 
   @Test
@@ -138,8 +138,8 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME).performTextClearance()
     compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME).performTextInput("")
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
-      .assertIsDisplayed()
+        .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
   // ----------------------------------------------------------
   // EMAIL FIELD TESTS
@@ -147,8 +147,8 @@ class MyProfileScreenTest {
   @Test
   fun emailField_displaysCorrectInitialValue() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL)
-      .assertTextContains("kendrick@gmail.com")
+        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL)
+        .assertTextContains("kendrick@gmail.com")
   }
 
   @Test
@@ -163,11 +163,11 @@ class MyProfileScreenTest {
   fun emailField_showsError_whenInvalid() {
     compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL).performTextClearance()
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL)
-      .performTextInput("invalidEmail")
+        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL)
+        .performTextInput("invalidEmail")
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
-      .assertIsDisplayed()
+        .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   // ----------------------------------------------------------
@@ -191,8 +191,8 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).performTextClearance()
     compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).performTextInput(" ")
     compose
-      .onNodeWithTag(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
-      .assertIsDisplayed()
+        .onNodeWithTag(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   // ----------------------------------------------------------
@@ -201,8 +201,8 @@ class MyProfileScreenTest {
   @Test
   fun descriptionField_displaysCorrectInitialValue() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
-      .assertTextContains("Performer and mentor")
+        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
+        .assertTextContains("Performer and mentor")
   }
 
   @Test
@@ -218,8 +218,8 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC).performTextClearance()
     compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC).performTextInput("")
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
-      .assertIsDisplayed()
+        .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   // ----------------------------------------------------------
@@ -291,8 +291,8 @@ class MyProfileScreenTest {
   @Test
   fun saveButton_hasCorrectText() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON)
-      .assertTextContains("Save Profile Changes")
+        .onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON)
+        .assertTextContains("Save Profile Changes")
   }
 
   // ----------------------------------------------------------
@@ -309,9 +309,9 @@ class MyProfileScreenTest {
   @Test
   fun cardTitle_isDisplayed() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.CARD_TITLE)
-      .assertIsDisplayed()
-      .assertTextEquals("Personal Details")
+        .onNodeWithTag(MyProfileScreenTestTag.CARD_TITLE)
+        .assertIsDisplayed()
+        .assertTextEquals("Personal Details")
   }
 
   // ----------------------------------------------------------
@@ -320,8 +320,8 @@ class MyProfileScreenTest {
   @Test
   fun roleBadge_displaysStudent() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.ROLE_BADGE)
-      .assertIsDisplayed()
-      .assertTextEquals("Student")
+        .onNodeWithTag(MyProfileScreenTestTag.ROLE_BADGE)
+        .assertIsDisplayed()
+        .assertTextEquals("Student")
   }
 }

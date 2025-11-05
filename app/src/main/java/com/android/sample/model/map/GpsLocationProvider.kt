@@ -5,9 +5,9 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 open class GpsLocationProvider(private val context: Context) {
   /**
@@ -15,48 +15,55 @@ open class GpsLocationProvider(private val context: Context) {
    * first fix arrives. May throw SecurityException if permission is missing.
    */
   open suspend fun getCurrentLocation(timeoutMs: Long = 10_000): Location? =
-    suspendCancellableCoroutine { cont ->
-      val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+      suspendCancellableCoroutine { cont ->
+        val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-      // Try last known
-      try {
-        val last = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-        if (last != null) {
-          cont.resume(last)
+        // Try last known
+        try {
+          val last = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+          if (last != null) {
+            cont.resume(last)
+            return@suspendCancellableCoroutine
+          }
+        } catch (_: SecurityException) {
+          cont.resume(null)
+          return@suspendCancellableCoroutine
+        } catch (_: Exception) {
+          // continue to request updates
+        }
+
+        val listener =
+            object : LocationListener {
+              override fun onLocationChanged(location: Location) {
+                if (cont.isActive) {
+                  cont.resume(location)
+                  try {
+                    lm.removeUpdates(this)
+                  } catch (_: Exception) {}
+                }
+              }
+
+              override fun onProviderEnabled(provider: String) {}
+
+              override fun onProviderDisabled(provider: String) {}
+
+              override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
+            }
+
+        try {
+          lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, listener)
+        } catch (e: SecurityException) {
+          cont.resumeWithException(e)
+          return@suspendCancellableCoroutine
+        } catch (e: Exception) {
+          cont.resumeWithException(e)
           return@suspendCancellableCoroutine
         }
-      } catch (_: SecurityException) {
-        cont.resume(null)
-        return@suspendCancellableCoroutine
-      } catch (_: Exception) {
-        // continue to request updates
-      }
 
-      val listener = object : LocationListener {
-        override fun onLocationChanged(location: Location) {
-          if (cont.isActive) {
-            cont.resume(location)
-            try { lm.removeUpdates(this) } catch (_: Exception) {}
-          }
+        cont.invokeOnCancellation {
+          try {
+            lm.removeUpdates(listener)
+          } catch (_: Exception) {}
         }
-
-        override fun onProviderEnabled(provider: String) {}
-        override fun onProviderDisabled(provider: String) {}
-        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
       }
-
-      try {
-        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, listener)
-      } catch (e: SecurityException) {
-        cont.resumeWithException(e)
-        return@suspendCancellableCoroutine
-      } catch (e: Exception) {
-        cont.resumeWithException(e)
-        return@suspendCancellableCoroutine
-      }
-
-      cont.invokeOnCancellation {
-        try { lm.removeUpdates(listener) } catch (_: Exception) {}
-      }
-    }
 }

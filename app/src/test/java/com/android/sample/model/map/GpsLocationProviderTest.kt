@@ -8,7 +8,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.*
 import org.robolectric.RobolectricTestRunner
 
@@ -21,10 +20,11 @@ class GpsLocationProviderTest {
     val lm = mock(LocationManager::class.java)
     `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(lm)
 
-    val last = Location(LocationManager.GPS_PROVIDER).apply {
-      latitude = 12.34
-      longitude = 56.78
-    }
+    val last =
+        Location(LocationManager.GPS_PROVIDER).apply {
+          latitude = 12.34
+          longitude = 56.78
+        }
     `when`(lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)).thenReturn(last)
 
     val provider = GpsLocationProvider(context)
@@ -41,21 +41,24 @@ class GpsLocationProviderTest {
     `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(lm)
     `when`(lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)).thenReturn(null)
 
-    // When requestLocationUpdates is called, immediately invoke the supplied listener with a Location.
+    // When requestLocationUpdates is called, immediately invoke the supplied listener with a
+    // Location.
     doAnswer { invocation ->
-      val listener = invocation.arguments[3] as LocationListener
-      val loc = Location(LocationManager.GPS_PROVIDER).apply {
-        latitude = -1.23
-        longitude = 4.56
-      }
-      listener.onLocationChanged(loc)
-      null
-    }.`when`(lm).requestLocationUpdates(
-      eq(LocationManager.GPS_PROVIDER),
-      anyLong(),
-      anyFloat(),
-      any(LocationListener::class.java)
-    )
+          val listener = invocation.arguments[3] as LocationListener
+          val loc =
+              Location(LocationManager.GPS_PROVIDER).apply {
+                latitude = -1.23
+                longitude = 4.56
+              }
+          listener.onLocationChanged(loc)
+          null
+        }
+        .`when`(lm)
+        .requestLocationUpdates(
+            eq(LocationManager.GPS_PROVIDER),
+            anyLong(),
+            anyFloat(),
+            any(LocationListener::class.java))
 
     val provider = GpsLocationProvider(context)
     val result = provider.getCurrentLocation()
@@ -71,12 +74,13 @@ class GpsLocationProviderTest {
     `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(lm)
     `when`(lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)).thenReturn(null)
 
-    doThrow(SecurityException::class.java).`when`(lm).requestLocationUpdates(
-      eq(LocationManager.GPS_PROVIDER),
-      anyLong(),
-      anyFloat(),
-      any(LocationListener::class.java)
-    )
+    doThrow(SecurityException::class.java)
+        .`when`(lm)
+        .requestLocationUpdates(
+            eq(LocationManager.GPS_PROVIDER),
+            anyLong(),
+            anyFloat(),
+            any(LocationListener::class.java))
 
     val provider = GpsLocationProvider(context)
     try {
@@ -88,21 +92,20 @@ class GpsLocationProviderTest {
   }
 
   @Test
-  fun `getCurrentLocation returns null when getLastKnownLocation throws SecurityException`() = runBlocking {
-    val context = mock(Context::class.java)
-    val lm = mock(LocationManager::class.java)
-    `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(lm)
-    `when`(lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)).thenThrow(SecurityException::class.java)
+  fun `getCurrentLocation returns null when getLastKnownLocation throws SecurityException`() =
+      runBlocking {
+        val context = mock(Context::class.java)
+        val lm = mock(LocationManager::class.java)
+        `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(lm)
+        `when`(lm.getLastKnownLocation(LocationManager.GPS_PROVIDER))
+            .thenThrow(SecurityException::class.java)
 
-    val provider = GpsLocationProvider(context)
-    val result = provider.getCurrentLocation()
-    assertNull(result)
-    // ensure requestLocationUpdates was not attempted (optional verification)
-    verify(lm, never()).requestLocationUpdates(
-      anyString(),
-      anyLong(),
-      anyFloat(),
-      any(LocationListener::class.java)
-    )
-  }
+        val provider = GpsLocationProvider(context)
+        val result = provider.getCurrentLocation()
+        assertNull(result)
+        // ensure requestLocationUpdates was not attempted (optional verification)
+        verify(lm, never())
+            .requestLocationUpdates(
+                anyString(), anyLong(), anyFloat(), any(LocationListener::class.java))
+      }
 }

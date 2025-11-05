@@ -23,40 +23,40 @@ import kotlinx.coroutines.launch
 
 /** UI state for the MyProfile screen. Holds all data needed to edit a profile */
 data class MyProfileUIState(
-  val userId: String? = null,
-  val name: String? = "",
-  val email: String? = "",
-  val selectedLocation: Location? = null,
-  val locationQuery: String = "",
-  val locationSuggestions: List<Location> = emptyList(),
-  val description: String? = "",
-  val invalidNameMsg: String? = null,
-  val invalidEmailMsg: String? = null,
-  val invalidLocationMsg: String? = null,
-  val invalidDescMsg: String? = null,
-  val isLoading: Boolean = false,
-  val loadError: String? = null,
-  val updateError: String? = null
+    val userId: String? = null,
+    val name: String? = "",
+    val email: String? = "",
+    val selectedLocation: Location? = null,
+    val locationQuery: String = "",
+    val locationSuggestions: List<Location> = emptyList(),
+    val description: String? = "",
+    val invalidNameMsg: String? = null,
+    val invalidEmailMsg: String? = null,
+    val invalidLocationMsg: String? = null,
+    val invalidDescMsg: String? = null,
+    val isLoading: Boolean = false,
+    val loadError: String? = null,
+    val updateError: String? = null
 ) {
   // Checks if all fields are valid
   val isValid: Boolean
     get() =
-      invalidNameMsg == null &&
-          invalidEmailMsg == null &&
-          invalidLocationMsg == null &&
-          invalidDescMsg == null &&
-          name?.isNotBlank() == true &&
-          email?.isNotBlank() == true &&
-          selectedLocation != null &&
-          description?.isNotBlank() == true
+        invalidNameMsg == null &&
+            invalidEmailMsg == null &&
+            invalidLocationMsg == null &&
+            invalidDescMsg == null &&
+            name?.isNotBlank() == true &&
+            email?.isNotBlank() == true &&
+            selectedLocation != null &&
+            description?.isNotBlank() == true
 }
 
 // ViewModel to manage profile editing logic and state
 class MyProfileViewModel(
-  private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
-  private val locationRepository: LocationRepository =
-    NominatimLocationRepository(HttpClientProvider.client),
-  private val userId: String = Firebase.auth.currentUser?.uid ?: ""
+    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
+    private val locationRepository: LocationRepository =
+        NominatimLocationRepository(HttpClientProvider.client),
+    private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
 
   companion object {
@@ -83,13 +83,13 @@ class MyProfileViewModel(
       try {
         val profile = profileRepository.getProfile(userId = currentId)
         _uiState.value =
-          MyProfileUIState(
-            userId = currentId,
-            name = profile?.name,
-            email = profile?.email,
-            selectedLocation = profile?.location,
-            locationQuery = profile?.location?.name ?: "",
-            description = profile?.description)
+            MyProfileUIState(
+                userId = currentId,
+                name = profile?.name,
+                email = profile?.email,
+                selectedLocation = profile?.location,
+                locationQuery = profile?.location?.name ?: "",
+                description = profile?.description)
       } catch (e: Exception) {
         Log.e("MyProfileViewModel", "Error loading MyProfile by ID: $currentId", e)
       }
@@ -109,12 +109,12 @@ class MyProfileViewModel(
     }
     val currentId = state.userId ?: userId
     val profile =
-      Profile(
-        userId = currentId,
-        name = state.name ?: "",
-        email = state.email ?: "",
-        location = state.selectedLocation!!,
-        description = state.description ?: "")
+        Profile(
+            userId = currentId,
+            name = state.name ?: "",
+            email = state.email ?: "",
+            location = state.selectedLocation!!,
+            description = state.description ?: "")
 
     editProfileToRepository(userId = currentId, profile = profile)
   }
@@ -141,20 +141,20 @@ class MyProfileViewModel(
   fun setError() {
     _uiState.update { currentState ->
       currentState.copy(
-        invalidNameMsg = currentState.name?.let { if (it.isBlank()) nameMsgError else null },
-        invalidEmailMsg = validateEmail(currentState.email ?: ""),
-        invalidLocationMsg =
-          if (currentState.selectedLocation == null) locationMsgError else null,
-        invalidDescMsg =
-          currentState.description?.let { if (it.isBlank()) descMsgError else null })
+          invalidNameMsg = currentState.name?.let { if (it.isBlank()) nameMsgError else null },
+          invalidEmailMsg = validateEmail(currentState.email ?: ""),
+          invalidLocationMsg =
+              if (currentState.selectedLocation == null) locationMsgError else null,
+          invalidDescMsg =
+              currentState.description?.let { if (it.isBlank()) descMsgError else null })
     }
   }
 
   // Updates the name and validates it
   fun setName(name: String) {
     _uiState.value =
-      _uiState.value.copy(
-        name = name, invalidNameMsg = if (name.isBlank()) nameMsgError else null)
+        _uiState.value.copy(
+            name = name, invalidNameMsg = if (name.isBlank()) nameMsgError else null)
   }
 
   // Updates the email and validates it
@@ -165,8 +165,8 @@ class MyProfileViewModel(
   // Updates the desc and validates it
   fun setDescription(desc: String) {
     _uiState.value =
-      _uiState.value.copy(
-        description = desc, invalidDescMsg = if (desc.isBlank()) descMsgError else null)
+        _uiState.value.copy(
+            description = desc, invalidDescMsg = if (desc.isBlank()) descMsgError else null)
   }
 
   // Checks if the email format is valid
@@ -207,47 +207,47 @@ class MyProfileViewModel(
 
     if (query.isNotEmpty()) {
       locationSearchJob =
-        viewModelScope.launch {
-          delay(locationSearchDelayTime)
-          try {
-            val results = locationRepository.search(query)
-            _uiState.value =
-              _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
-          } catch (_: Exception) {
-            _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+          viewModelScope.launch {
+            delay(locationSearchDelayTime)
+            try {
+              val results = locationRepository.search(query)
+              _uiState.value =
+                  _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
+            } catch (_: Exception) {
+              _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+            }
           }
-        }
     } else {
       _uiState.value =
-        _uiState.value.copy(
-          locationSuggestions = emptyList(),
-          invalidLocationMsg = locationMsgError,
-          selectedLocation = null)
+          _uiState.value.copy(
+              locationSuggestions = emptyList(),
+              invalidLocationMsg = locationMsgError,
+              selectedLocation = null)
     }
   }
 
   /**
    * Fetch a GPS fix using the provided [GpsLocationProvider]. Updates the UI state with a simple
-   * lat,lng string in `locationQuery` on success and sets an appropriate `invalidLocationMsg`
-   * on failure (permission/error).
+   * lat,lng string in `locationQuery` on success and sets an appropriate `invalidLocationMsg` on
+   * failure (permission/error).
    */
   fun fetchLocationFromGps(provider: GpsLocationProvider) {
     viewModelScope.launch {
       try {
-        // attempt to get a location (provider may block) — consider adding a timeout here if desired
+        // attempt to get a location (provider may block) — consider adding a timeout here if
+        // desired
         val androidLoc = provider.getCurrentLocation()
         if (androidLoc != null) {
-          val mapLocation = com.android.sample.model.map.Location(
-            latitude = androidLoc.latitude,
-            longitude = androidLoc.longitude,
-            name = "${androidLoc.latitude}, ${androidLoc.longitude}"
-          )
+          val mapLocation =
+              com.android.sample.model.map.Location(
+                  latitude = androidLoc.latitude,
+                  longitude = androidLoc.longitude,
+                  name = "${androidLoc.latitude}, ${androidLoc.longitude}")
           _uiState.update {
             it.copy(
-              selectedLocation = mapLocation,
-              locationQuery = mapLocation.name,
-              invalidLocationMsg = null
-            )
+                selectedLocation = mapLocation,
+                locationQuery = mapLocation.name,
+                invalidLocationMsg = null)
           }
         } else {
           _uiState.update { it.copy(invalidLocationMsg = "Failed to obtain GPS location") }
