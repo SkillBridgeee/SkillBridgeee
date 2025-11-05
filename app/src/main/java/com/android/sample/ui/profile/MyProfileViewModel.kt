@@ -259,4 +259,8 @@ class MyProfileViewModel(
       }
     }
   }
+
+  fun onLocationPermissionDenied() {
+    _uiState.update { it.copy(invalidLocationMsg = "Location permission denied") }
+  }
 }

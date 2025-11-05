@@ -236,7 +236,7 @@ private fun ProfileContent(
                           profileViewModel.fetchLocationFromGps(provider)
                         } else {
                           // let ViewModel set the denied message via SecurityException handling
-                          profileViewModel.fetchLocationFromGps(provider)
+                          profileViewModel.onLocationPermissionDenied()
                         }
                       }
 
