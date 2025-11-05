@@ -2,6 +2,8 @@ package com.android.sample.ui.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -26,8 +28,18 @@ data class MapUiState(
     val profiles: List<Profile> = emptyList(),
     val selectedProfile: Profile? = null,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val bookingPins: List<BookingPin> = emptyList(),
 )
+
+data class BookingPin(
+    val bookingId: String,
+    val position: LatLng,
+    val title: String,
+    val snippet: String? = null,
+    val profile: Profile? = null
+)
+
 
 /**
  * ViewModel for the Map screen.
@@ -36,7 +48,8 @@ data class MapUiState(
  * profiles from the repository and displays them on the map.
  */
 class MapViewModel(
-    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
+    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
+    private val bookingRepository: BookingRepository = BookingRepositoryProvider.repository
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(MapUiState())
@@ -44,6 +57,7 @@ class MapViewModel(
 
   init {
     loadProfiles()
+      loadBookings()
   }
 
   /** Loads all user profiles from the repository and updates the map state. */
@@ -53,6 +67,15 @@ class MapViewModel(
       try {
         val profiles = profileRepository.getAllProfiles()
         _uiState.value = _uiState.value.copy(profiles = profiles, isLoading = false)
+          val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+          val me = profiles.firstOrNull { it.userId == uid }
+          val loc = me?.location
+          if (loc != null && (loc.latitude != 0.0 || loc.longitude != 0.0)) {
+              _uiState.value = _uiState.value.copy(
+                  userLocation = LatLng(loc.latitude, loc.longitude)
+              )
+          }
+
       } catch (_: Exception) {
         _uiState.value =
             _uiState.value.copy(isLoading = false, errorMessage = "Failed to load user locations")
@@ -60,7 +83,32 @@ class MapViewModel(
     }
   }
 
-  /**
+
+    fun loadBookings() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            try {
+                val bookings = bookingRepository.getAllBookings()
+                val pins = bookings.mapNotNull { booking ->
+                    val tutor = profileRepository.getProfileById(booking.listingCreatorId)
+                    val loc = tutor?.location ?: return@mapNotNull null
+                    BookingPin(
+                        bookingId = booking.bookingId,
+                        position = LatLng(loc.latitude, loc.longitude),
+                        title = tutor.name ?: "Session",
+                        snippet = tutor.description.takeIf { !it.isNullOrBlank() },
+                        profile = tutor
+                    )
+                }
+                _uiState.value = _uiState.value.copy(bookingPins = pins, isLoading = false)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = e.message)
+            }
+        }
+    }
+
+
+    /**
    * Updates the selected profile when a marker is clicked.
    *
    * @param profile The profile to select, or null to deselect
