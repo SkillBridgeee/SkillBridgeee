@@ -16,6 +16,7 @@ import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.profile.MyProfileViewModel
+import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -79,7 +80,7 @@ class MyProfileScreenTest {
         skillsByUser[userId] ?: emptyList()
   }
 
-  // Minimal Fake ListingRepository to avoid initializing real Firebase/Firestore in android tests
+  // Minimal Fake ListingRepository to avoid initializing real Firebase/Firestore in tests
   private class FakeListingRepo : ListingRepository {
     override fun getNewUid(): String = "fake-listing-id"
 
@@ -112,18 +113,50 @@ class MyProfileScreenTest {
   }
 
   private lateinit var viewModel: MyProfileViewModel
+  private val logoutClicked = AtomicBoolean(false)
 
   @Before
   fun setup() {
     val repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
-    // Inject the fake listing repo to prevent Firebase/Firestore initialization in tests
     viewModel = MyProfileViewModel(repo, listingRepository = FakeListingRepo(), userId = "demo")
 
-    compose.setContent { MyProfileScreen(profileViewModel = viewModel, profileId = "demo") }
+    // reset flag before each test and set content once per test
+    logoutClicked.set(false)
+    compose.setContent {
+      MyProfileScreen(
+          profileViewModel = viewModel,
+          profileId = "demo",
+          onLogout = { logoutClicked.set(true) } // single callback wired once
+          )
+    }
 
     compose.waitUntil(5_000) {
       compose
           .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+  }
+
+  // Helper: wait for the LazyColumn to appear and scroll it so the logout button becomes visible
+  private fun ensureLogoutVisible() {
+    // Wait until the LazyColumn (root list) is present in unmerged tree
+    compose.waitUntil(timeoutMillis = 5_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Scroll the LazyColumn to the logout button using the unmerged tree (targets LazyColumn)
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+        .performScrollToNode(hasTestTag(MyProfileScreenTestTag.LOGOUT_BUTTON))
+
+    // Wait for the merged tree to expose the logout button
+    compose.waitUntil(timeoutMillis = 2_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON)
           .fetchSemanticsNodes()
           .isNotEmpty()
     }
@@ -253,29 +286,28 @@ class MyProfileScreenTest {
   // ----------------------------------------------------------
   @Test
   fun logoutButton_isDisplayed() {
+    ensureLogoutVisible()
     compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertIsDisplayed()
   }
 
   @Test
   fun logoutButton_isClickable() {
+    ensureLogoutVisible()
     compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertHasClickAction()
   }
 
   @Test
   fun logoutButton_hasCorrectText() {
+    ensureLogoutVisible()
     compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertTextContains("Logout")
   }
 
   @Test
   fun logoutButton_triggersCallback() {
-    // Note: This test verifies that clicking the logout button would trigger the callback
-    // Since we can't call setContent twice, we verify the button exists and is clickable
-    // The actual callback triggering is tested in integration tests
-    compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertExists()
-    compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertHasClickAction()
-
-    // The callback integration is tested through navigation tests
-    // Here we just verify the button is wired correctly for user interaction
+    ensureLogoutVisible()
+    compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).performClick()
+    compose.waitForIdle()
+    assert(logoutClicked.get())
   }
 
   // ----------------------------------------------------------
