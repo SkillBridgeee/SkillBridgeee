@@ -43,7 +43,9 @@ data class MyProfileUIState(
     val isLoading: Boolean = false,
     val loadError: String? = null,
     val updateError: String? = null,
-    val listings: List<Listing> = emptyList() // user's listings displayed on profile
+    val listings: List<Listing> = emptyList(),
+    val listingsLoading: Boolean = false,
+    val listingsLoadError: String? = null
 ) {
   /** True if all required fields are valid */
   val isValid: Boolean
@@ -123,19 +125,25 @@ class MyProfileViewModel(
   /**
    * Loads listings created by the given user and updates UI state.
    *
-   * @param ownerId ID of the listing owner (defaults to current profile user)
+   * Uses a dedicated `listingsLoading` flag so the rest of the screen can remain visible.
    */
   fun loadUserListings(ownerId: String = _uiState.value.userId ?: userId) {
     viewModelScope.launch {
+      // set listings loading state (does not affect full-screen isLoading)
+      _uiState.update { it.copy(listingsLoading = true, listingsLoadError = null) }
       try {
-        val items =
-            listingRepository.getListingsByUser(ownerId).sortedByDescending {
-              it.createdAt
-            } // newest first
-
-        _uiState.update { it.copy(listings = items) }
+        val items = listingRepository.getListingsByUser(ownerId).sortedByDescending { it.createdAt }
+        _uiState.update {
+          it.copy(listings = items, listingsLoading = false, listingsLoadError = null)
+        }
       } catch (e: Exception) {
         Log.e(TAG, "Error loading listings for user: $ownerId", e)
+        _uiState.update {
+          it.copy(
+              listings = emptyList(),
+              listingsLoading = false,
+              listingsLoadError = "Failed to load listings.")
+        }
       }
     }
   }

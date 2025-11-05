@@ -4,14 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -23,15 +17,19 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
-import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.ListingCard
 import com.android.sample.ui.components.LocationInputField
 
-/** Test tags for UI automation and screenshot tests on the My Profile screen. */
+/**
+ * Test tags used by UI tests and screenshot tests on the My Profile screen.
+ *
+ * Keep these stable — tests rely on the exact string constants below.
+ */
 object MyProfileScreenTestTag {
   const val PROFILE_ICON = "profileIcon"
   const val NAME_DISPLAY = "nameDisplay"
@@ -47,19 +45,18 @@ object MyProfileScreenTestTag {
   const val ERROR_MSG = "errorMsg"
 }
 
-/**
- * Top-level My Profile screen.
- *
- * Responsibilities:
- * - Hosts the profile editor and the user's listings.
- * - Exposes a floating action button to save profile changes.
- *
- * @param profileViewModel ViewModel providing profile state and actions.
- * @param profileId ID of the profile being viewed/edited (can be current user or another).
- * @param onLogout callback when the user taps "Logout".
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+/**
+ * Top-level composable for the My Profile screen.
+ *
+ * This sets up the Scaffold (including the floating Save button) and hosts the screen content.
+ *
+ * @param profileViewModel ViewModel providing UI state and actions. Defaults to `viewModel()`.
+ * @param profileId Optional profile id to load (used when viewing other users). Passed to the
+ *   content loader.
+ * @param onLogout Callback invoked when the user taps the logout button.
+ */
 fun MyProfileScreen(
     profileViewModel: MyProfileViewModel = viewModel(),
     profileId: String,
@@ -70,242 +67,328 @@ fun MyProfileScreen(
       bottomBar = {},
       floatingActionButton = {
         // Save profile edits
-        AppButton(
-            text = "Save Profile Changes",
+        Button(
             onClick = { profileViewModel.editProfile() },
-            testTag = MyProfileScreenTestTag.SAVE_BUTTON)
+            modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON)) {
+              Text("Save Profile Changes")
+            }
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
         ProfileContent(pd, profileId, profileViewModel, onLogout)
       }
 }
 
-/**
- * Actual content of the profile screen.
- *
- * Layout:
- * 1) Header (avatar, name, role)
- * 2) Profile form (name, email, description, location)
- * 3) "Your Listings" section showing the user's listings
- * 4) Logout button
- *
- * Uses a [LazyColumn] so the page scrolls comfortably on small screens.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+/**
+ * Internal content host for the My Profile screen.
+ *
+ * Loads the profile when `profileId` changes, observes the `uiState` from the `profileViewModel`,
+ * and composes the header, form, listings and logout sections inside a `LazyColumn`.
+ *
+ * @param pd Content padding from the parent Scaffold.
+ * @param profileId Profile id to load.
+ * @param profileViewModel ViewModel that exposes UI state and actions.
+ * @param onLogout Callback invoked by the logout UI.
+ */
 private fun ProfileContent(
     pd: PaddingValues,
     profileId: String,
     profileViewModel: MyProfileViewModel,
     onLogout: () -> Unit
 ) {
-  // Load profile and associated listings whenever the target ID changes.
   LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
-
-  // Observe UI state from the ViewModel
   val ui by profileViewModel.uiState.collectAsState()
-
-  // Lightweight "creator" profile for ListingCard display (avatar/name/location)
-  val creatorProfile =
-      Profile(
-          userId = ui.userId ?: "",
-          name = ui.name,
-          email = ui.email ?: "",
-          location = ui.selectedLocation ?: Location(),
-          description = ui.description ?: "")
-
-  // Form helpers
   val fieldSpacing = 8.dp
   val locationSuggestions = ui.locationSuggestions
   val locationQuery = ui.locationQuery
 
   LazyColumn(
-      modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST), // <-- add
+      modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
       contentPadding = pd) {
-        // --------------------------
-        // 1) Header: avatar + name + role
-        // --------------------------
-        item {
-          Column(
-              modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-              horizontalAlignment = Alignment.CenterHorizontally) {
-                // Circle with first initial
-                Box(
-                    modifier =
-                        Modifier.size(50.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .border(2.dp, Color.Blue, CircleShape)
-                            .testTag(MyProfileScreenTestTag.PROFILE_ICON),
-                    contentAlignment = Alignment.Center) {
-                      Text(
-                          text = ui.name?.firstOrNull()?.uppercase() ?: "",
-                          style = MaterialTheme.typography.titleLarge,
-                          color = Color.Black,
-                          fontWeight = FontWeight.Bold)
-                    }
+        item { ProfileHeader(name = ui.name) }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = ui.name ?: "Your Name",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.testTag(MyProfileScreenTestTag.NAME_DISPLAY))
-                Text(
-                    text = "Student",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
-                    modifier = Modifier.testTag(MyProfileScreenTestTag.ROLE_BADGE))
-              }
-        }
-
-        // --------------------------
-        // 2) Profile form
-        // --------------------------
         item {
           Spacer(modifier = Modifier.height(12.dp))
-
-          Row(
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-              horizontalArrangement = Arrangement.Center) {
-                Box(
-                    modifier =
-                        Modifier.widthIn(max = 300.dp)
-                            .background(
-                                MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
-                            .border(
-                                width = 1.dp,
-                                brush =
-                                    Brush.linearGradient(
-                                        colors = listOf(Color.Gray, Color.LightGray)),
-                                shape = MaterialTheme.shapes.medium)
-                            .padding(16.dp)) {
-                      Column {
-                        Text(
-                            text = "Personal Details",
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.testTag(MyProfileScreenTestTag.CARD_TITLE))
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Name
-                        OutlinedTextField(
-                            value = ui.name ?: "",
-                            onValueChange = { profileViewModel.setName(it) },
-                            label = { Text("Name") },
-                            placeholder = { Text("Enter Your Full Name") },
-                            isError = ui.invalidNameMsg != null,
-                            supportingText = {
-                              ui.invalidNameMsg?.let {
-                                Text(
-                                    text = it,
-                                    modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
-                              }
-                            },
-                            modifier =
-                                Modifier.fillMaxWidth()
-                                    .testTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME))
-
-                        Spacer(modifier = Modifier.height(fieldSpacing))
-
-                        // Email
-                        OutlinedTextField(
-                            value = ui.email ?: "",
-                            onValueChange = { profileViewModel.setEmail(it) },
-                            label = { Text("Email") },
-                            placeholder = { Text("Enter Your Email") },
-                            isError = ui.invalidEmailMsg != null,
-                            supportingText = {
-                              ui.invalidEmailMsg?.let {
-                                Text(
-                                    text = it,
-                                    modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
-                              }
-                            },
-                            modifier =
-                                Modifier.fillMaxWidth()
-                                    .testTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL))
-
-                        Spacer(modifier = Modifier.height(fieldSpacing))
-
-                        // Description
-                        OutlinedTextField(
-                            value = ui.description ?: "",
-                            onValueChange = { profileViewModel.setDescription(it) },
-                            label = { Text("Description") },
-                            placeholder = { Text("Info About You") },
-                            isError = ui.invalidDescMsg != null,
-                            supportingText = {
-                              ui.invalidDescMsg?.let {
-                                Text(
-                                    text = it,
-                                    modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
-                              }
-                            },
-                            minLines = 2,
-                            modifier =
-                                Modifier.fillMaxWidth()
-                                    .testTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC))
-
-                        Spacer(modifier = Modifier.height(fieldSpacing))
-
-                        // Location with suggestions dropdown
-                        LocationInputField(
-                            locationQuery = locationQuery,
-                            locationSuggestions = locationSuggestions,
-                            onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
-                            errorMsg = ui.invalidLocationMsg,
-                            onLocationSelected = { location ->
-                              profileViewModel.setLocationQuery(location.name)
-                              profileViewModel.setLocation(location)
-                            })
-                      }
-                    }
-              }
+          ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
         }
 
-        // --------------------------
-        // 3) Listings
-        // --------------------------
-        item {
-          Spacer(modifier = Modifier.height(16.dp))
-          Text(
-              text = "Your Listings",
-              style = MaterialTheme.typography.titleMedium,
-              fontWeight = FontWeight.Bold,
-              modifier = Modifier.padding(horizontal = 16.dp))
-          Spacer(modifier = Modifier.height(8.dp))
-        }
+        item { ProfileListings(ui = ui) }
 
-        if (ui.listings.isEmpty()) {
-          item {
-            Text(
-                text = "You don’t have any listings yet.",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp))
-          }
-        } else {
-          items(items = ui.listings, key = { it.listingId }) { listing ->
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-              // Reusable card for both requests and proposals
-              ListingCard(
-                  listing = listing,
-                  creator = creatorProfile,
-                  onOpenListing = {}, // intentionally no-op (navigation wired elsewhere)
-                  onBook = {})
-              Spacer(Modifier.height(8.dp))
+        item { ProfileLogout(onLogout = onLogout) }
+      }
+}
+
+/* ------- Small private composables kept inside the same file ------- */
+
+@Composable
+/**
+ * Small header composable showing avatar initial, display name, and role badge.
+ *
+ * @param name Display name to show. The avatar shows the first character uppercased or empty if
+ *   `null`.
+ */
+private fun ProfileHeader(name: String?) {
+  Column(
+      modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+      horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier =
+                Modifier.size(50.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .border(2.dp, Color.Blue, CircleShape)
+                    .testTag(MyProfileScreenTestTag.PROFILE_ICON),
+            contentAlignment = Alignment.Center) {
+              Text(
+                  text = name?.firstOrNull()?.uppercase() ?: "",
+                  style = MaterialTheme.typography.titleLarge,
+                  color = Color.Black,
+                  fontWeight = FontWeight.Bold)
             }
-          }
-        }
 
-        // --------------------------
-        // 4) Logout
-        // --------------------------
-        item {
-          Spacer(modifier = Modifier.height(16.dp))
-          AppButton(
-              text = "Logout", onClick = onLogout, testTag = MyProfileScreenTestTag.LOGOUT_BUTTON)
-          Spacer(modifier = Modifier.height(80.dp)) // spacing above FAB
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = name ?: "Your Name",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.testTag(MyProfileScreenTestTag.NAME_DISPLAY))
+        Text(
+            text = "Student",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray,
+            modifier = Modifier.testTag(MyProfileScreenTestTag.ROLE_BADGE))
+      }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+/**
+ * Reusable small wrapper around `OutlinedTextField` used in this screen.
+ *
+ * Adds consistent `testTag` and supporting error text handling.
+ *
+ * @param value Current input value.
+ * @param onValueChange Change callback.
+ * @param label Label text.
+ * @param placeholder Placeholder text.
+ * @param isError True when field is invalid.
+ * @param errorMsg Optional supporting error message to display.
+ * @param testTag Test tag applied to the field root for UI tests.
+ * @param modifier Modifier applied to the field.
+ * @param minLines Minimum visible lines for the field.
+ */
+private fun ProfileTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    isError: Boolean = false,
+    errorMsg: String? = null,
+    testTag: String,
+    modifier: Modifier = Modifier,
+    minLines: Int = 1
+) {
+  OutlinedTextField(
+      value = value,
+      onValueChange = onValueChange,
+      label = { Text(label) },
+      placeholder = { Text(placeholder) },
+      isError = isError,
+      supportingText = {
+        errorMsg?.let {
+          Text(text = it, modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
+        }
+      },
+      modifier = modifier.testTag(testTag),
+      minLines = minLines)
+}
+
+@Composable
+/**
+ * Small reusable card-like container used for form sections.
+ *
+ * Provides consistent width, background, border and inner padding, and exposes a `Column` content
+ * slot so callers can place fields inside.
+ *
+ * @param title Section title shown at the top of the card.
+ * @param titleTestTag Optional test tag applied to the title `Text` for UI tests.
+ * @param modifier Optional `Modifier` applied to the root container.
+ * @param content Column-scoped composable content placed below the title.
+ */
+private fun SectionCard(
+    title: String,
+    titleTestTag: String? = null,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+  Box(
+      modifier =
+          modifier
+              .widthIn(max = 300.dp)
+              .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
+              .border(
+                  width = 1.dp,
+                  brush = Brush.linearGradient(colors = listOf(Color.Gray, Color.LightGray)),
+                  shape = MaterialTheme.shapes.medium)
+              .padding(16.dp)) {
+        Column {
+          Text(
+              text = title,
+              fontWeight = FontWeight.Bold,
+              modifier = titleTestTag?.let { Modifier.testTag(it) } ?: Modifier)
+          Spacer(modifier = Modifier.height(10.dp))
+          content()
         }
       }
+}
+
+@Composable
+/**
+ * The editable profile form containing name, email, description and location inputs.
+ *
+ * Uses [SectionCard] to reduce duplication for the card styling.
+ *
+ * @param ui Current UI state from the view model.
+ * @param profileViewModel ViewModel instance used to update form fields.
+ * @param fieldSpacing Vertical spacing between fields.
+ */
+private fun ProfileForm(
+    ui: MyProfileUIState,
+    profileViewModel: MyProfileViewModel,
+    fieldSpacing: Dp = 8.dp
+) {
+  Row(
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+      horizontalArrangement = Arrangement.Center) {
+        SectionCard(title = "Personal Details", titleTestTag = MyProfileScreenTestTag.CARD_TITLE) {
+          ProfileTextField(
+              value = ui.name ?: "",
+              onValueChange = { profileViewModel.setName(it) },
+              label = "Name",
+              placeholder = "Enter Your Full Name",
+              isError = ui.invalidNameMsg != null,
+              errorMsg = ui.invalidNameMsg,
+              testTag = MyProfileScreenTestTag.INPUT_PROFILE_NAME,
+              modifier = Modifier.fillMaxWidth())
+
+          Spacer(modifier = Modifier.height(fieldSpacing))
+
+          ProfileTextField(
+              value = ui.email ?: "",
+              onValueChange = { profileViewModel.setEmail(it) },
+              label = "Email",
+              placeholder = "Enter Your Email",
+              isError = ui.invalidEmailMsg != null,
+              errorMsg = ui.invalidEmailMsg,
+              testTag = MyProfileScreenTestTag.INPUT_PROFILE_EMAIL,
+              modifier = Modifier.fillMaxWidth())
+
+          Spacer(modifier = Modifier.height(fieldSpacing))
+
+          ProfileTextField(
+              value = ui.description ?: "",
+              onValueChange = { profileViewModel.setDescription(it) },
+              label = "Description",
+              placeholder = "Info About You",
+              isError = ui.invalidDescMsg != null,
+              errorMsg = ui.invalidDescMsg,
+              testTag = MyProfileScreenTestTag.INPUT_PROFILE_DESC,
+              modifier = Modifier.fillMaxWidth(),
+              minLines = 2)
+
+          Spacer(modifier = Modifier.height(fieldSpacing))
+
+          LocationInputField(
+              locationQuery = ui.locationQuery,
+              locationSuggestions = ui.locationSuggestions,
+              onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
+              errorMsg = ui.invalidLocationMsg,
+              onLocationSelected = { location ->
+                profileViewModel.setLocationQuery(location.name)
+                profileViewModel.setLocation(location)
+              })
+        }
+      }
+}
+
+@Composable
+/**
+ * Listings section showing the user's created listings.
+ *
+ * Shows a localized loading UI while listings are being fetched so the rest of the profile remains
+ * visible.
+ *
+ * @param ui Current UI state providing listings and profile data for the creator.
+ */
+private fun ProfileListings(ui: MyProfileUIState) {
+  Spacer(modifier = Modifier.height(16.dp))
+  Text(
+      text = "Your Listings",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold,
+      modifier = Modifier.padding(horizontal = 16.dp))
+  Spacer(modifier = Modifier.height(8.dp))
+
+  when {
+    ui.listingsLoading -> {
+      Box(
+          modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+          contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+          }
+    }
+    ui.listingsLoadError != null -> {
+      Text(
+          text = ui.listingsLoadError ?: "Failed to load listings.",
+          style = MaterialTheme.typography.bodyMedium,
+          color = Color.Red,
+          modifier = Modifier.padding(horizontal = 16.dp))
+    }
+    ui.listings.isEmpty() -> {
+      Text(
+          text = "You don’t have any listings yet.",
+          style = MaterialTheme.typography.bodyMedium,
+          modifier = Modifier.padding(horizontal = 16.dp))
+    }
+    else -> {
+      val creatorProfile =
+          Profile(
+              userId = ui.userId ?: "",
+              name = ui.name ?: "",
+              email = ui.email ?: "",
+              location = ui.selectedLocation ?: Location(),
+              description = ui.description ?: "")
+      ui.listings.forEach { listing ->
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+          ListingCard(listing = listing, creator = creatorProfile, onOpenListing = {}, onBook = {})
+          Spacer(Modifier.height(8.dp))
+        }
+      }
+    }
+  }
+}
+
+@Composable
+/**
+ * Logout section — presents a full-width logout button that triggers `onLogout`.
+ *
+ * The button includes a test tag so tests can find and click it.
+ *
+ * @param onLogout Callback invoked when the button is clicked.
+ */
+private fun ProfileLogout(onLogout: () -> Unit) {
+  Spacer(modifier = Modifier.height(16.dp))
+
+  // Use a Button here and attach the testTag to the clickable element so tests can find it.
+  Button(
+      onClick = onLogout,
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(horizontal = 16.dp)
+              .testTag(MyProfileScreenTestTag.LOGOUT_BUTTON)) {
+        Text("Logout")
+      }
+
+  Spacer(modifier = Modifier.height(80.dp))
 }
