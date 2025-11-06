@@ -104,9 +104,9 @@ class MainPageViewModel(
    */
   private fun getTutors(proposals: List<Proposal>, profiles: List<Profile>): List<Profile> {
     // TODO: Add sorting logic for tutors based on rating here.
-    return proposals.mapNotNull { proposal ->
-      profiles.find { it.userId == proposal.creatorUserId }
-    }
+    return proposals
+        .mapNotNull { proposal -> profiles.find { it.userId == proposal.creatorUserId } }
+        .distinctBy { it.userId }
   }
 
   /**
