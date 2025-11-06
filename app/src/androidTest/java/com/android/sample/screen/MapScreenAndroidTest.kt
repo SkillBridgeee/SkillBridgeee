@@ -1,8 +1,9 @@
-package com.android.sample.model.map
+package com.android.sample.screen
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.map.BookingPin
 import com.android.sample.ui.map.MapScreen
