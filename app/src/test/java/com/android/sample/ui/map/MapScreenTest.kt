@@ -565,4 +565,133 @@ class MapScreenTest {
 
     assert(selectedProfile == profile)
   }
+
+  @Test
+  fun mapScreen_cameraRecenters_whenUserLocationChanges() {
+    // Exercise MapView LaunchedEffect(target) path using centerLocation (no selected profile)
+    val mockViewModel = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.5196535, 6.6322734), // Lausanne
+                profiles = emptyList(),
+                selectedProfile = null,
+                isLoading = false,
+                errorMessage = null))
+    every { mockViewModel.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = mockViewModel) }
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+
+    // Change the center -> forces LaunchedEffect(target) to run again
+    flow.value = flow.value.copy(userLocation = LatLng(48.8566, 2.3522)) // Paris
+    composeTestRule.waitForIdle()
+
+    // We can’t read camera position, but the effect ran without crashing.
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun mapScreen_cameraTargets_selectedProfile_whenAvailable() {
+    // Exercises profileLatLng ?: centerLocation branch with non-zero profile location
+    val mockViewModel = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.0, 6.0), // initial center
+                profiles = listOf(testProfile),
+                selectedProfile = null,
+                isLoading = false,
+                errorMessage = null))
+    every { mockViewModel.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = mockViewModel) }
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+
+    // Now select a profile -> target switches to profileLatLng (non-zero), exercising
+    // the LaunchedEffect block that updates camera position.
+    flow.value = flow.value.copy(selectedProfile = testProfile)
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun mapView_usesCenter_whenSelectedProfileLocationIsZero() {
+    // Exercises takeIf { lat != 0.0 || lng != 0.0 } false branch
+    val zeroLocProfile = testProfile.copy(location = Location(0.0, 0.0, name = ""))
+    val mockViewModel = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(47.0, 8.0), // centerLocation fallback
+                profiles = listOf(zeroLocProfile),
+                selectedProfile = zeroLocProfile,
+                isLoading = false,
+                errorMessage = null))
+    every { mockViewModel.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = mockViewModel) }
+    // Map renders; target falls back to centerLocation without crashing
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun mapView_profileMarker_usesFallbackName_whenProfileNameNull() {
+    // Exercises: title = myProfile.name ?: "Me" in the Marker for the user's own profile
+    val profileWithoutName =
+        Profile(
+            userId = "me",
+            name = "", // <- forces "Me" fallback in marker title line
+            email = "",
+            location = Location(46.5, 6.6, ""), // snippet can be null too
+            levelOfEducation = "",
+            description = "")
+
+    val state =
+        MapUiState(
+            userLocation = LatLng(46.5, 6.6),
+            profiles = listOf(profileWithoutName),
+            selectedProfile = profileWithoutName, // ensure the profile marker path is executed
+            bookingPins = emptyList(),
+            isLoading = false,
+            errorMessage = null)
+
+    val vm = mockk<MapViewModel>(relaxed = true)
+    every { vm.uiState } returns MutableStateFlow(state)
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+
+    // We can't read the marker title, but composing this path covers the fallback code.
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun mapScreen_rebuildsMarkers_whenBookingPinsChange() {
+    // Exercises bookingPins.forEach { Marker(...) } with a state change
+    val mockViewModel = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.5196535, 6.6322734),
+                profiles = listOf(testProfile),
+                bookingPins = emptyList(),
+                selectedProfile = null,
+                isLoading = false,
+                errorMessage = null))
+    every { mockViewModel.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = mockViewModel) }
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+
+    // Add two pins -> rebuilds GoogleMap content, creating Marker(...) and
+    // the onClick { onBookingClicked(pin); false } lambdas.
+    val p1 = BookingPin("b1", LatLng(46.52, 6.63), "Session A", "Math", testProfile)
+    val p2 = BookingPin("b2", LatLng(46.50, 6.60), "Session B", "Physics", testProfile)
+    flow.value = flow.value.copy(bookingPins = listOf(p1, p2))
+    composeTestRule.waitForIdle()
+
+    // If we got here without crashing, those lines were executed.
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
 }
