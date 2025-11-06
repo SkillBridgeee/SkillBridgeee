@@ -216,7 +216,10 @@ class MyProfileScreenTest {
     compose.waitForIdle()
 
     // Click the pin - with permission granted the onClick should take the 'granted' branch.
-    compose.onNodeWithContentDescription("Use my location").assertExists().performClick()
+    compose
+        .onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC)
+        .assertExists()
+        .performClick()
 
     // No crash + the branch was executed. Basic assertion to ensure UI still shows expected info.
     compose.onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY).assertExists()
@@ -254,7 +257,10 @@ class MyProfileScreenTest {
   // ----------------------------------------------------------
   @Test
   fun pinButton_isDisplayed_and_clickable() {
-    compose.onNodeWithContentDescription("Use my location").assertExists().assertHasClickAction()
+    compose
+        .onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC)
+        .assertExists()
+        .assertHasClickAction()
   }
 
   @Test

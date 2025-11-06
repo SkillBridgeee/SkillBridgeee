@@ -21,6 +21,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+// Message constants (kept at file start so tests can reference exact text)
+const val NAME_EMPTY_MSG = "Name cannot be empty"
+const val EMAIL_EMPTY_MSG = "Email cannot be empty"
+const val EMAIL_INVALID_MSG = "Email is not in the right format"
+const val LOCATION_EMPTY_MSG = "Location cannot be empty"
+const val DESC_EMPTY_MSG = "Description cannot be empty"
+const val GPS_FAILED_MSG = "Failed to obtain GPS location"
+const val LOCATION_PERMISSION_DENIED_MSG = "Location permission denied"
+const val UPDATE_PROFILE_FAILED_MSG = "Failed to update profile. Please try again."
+
 /** UI state for the MyProfile screen. Holds all data needed to edit a profile */
 data class MyProfileUIState(
     val userId: String? = null,
@@ -70,12 +80,6 @@ class MyProfileViewModel(
   private var locationSearchJob: Job? = null
   private val locationSearchDelayTime: Long = 1000
 
-  private val nameMsgError = "Name cannot be empty"
-  private val emailEmptyMsgError = "Email cannot be empty"
-  private val emailInvalidMsgError = "Email is not in the right format"
-  private val locationMsgError = "Location cannot be empty"
-  private val descMsgError = "Description cannot be empty"
-
   /** Loads the profile data (to be implemented) */
   fun loadProfile(profileUserId: String? = null) {
     val currentId = profileUserId ?: userId
@@ -91,7 +95,7 @@ class MyProfileViewModel(
                 locationQuery = profile?.location?.name ?: "",
                 description = profile?.description)
       } catch (e: Exception) {
-        Log.e("MyProfileViewModel", "Error loading MyProfile by ID: $currentId", e)
+        Log.e(TAG, "Error loading MyProfile by ID: $currentId", e)
       }
     }
   }
@@ -132,7 +136,7 @@ class MyProfileViewModel(
         profileRepository.updateProfile(userId = userId, profile = profile)
       } catch (e: Exception) {
         Log.e(TAG, "Error updating profile for user: $userId", e)
-        _uiState.update { it.copy(updateError = "Failed to update profile. Please try again.") }
+        _uiState.update { it.copy(updateError = UPDATE_PROFILE_FAILED_MSG) }
       }
     }
   }
@@ -141,12 +145,12 @@ class MyProfileViewModel(
   fun setError() {
     _uiState.update { currentState ->
       currentState.copy(
-          invalidNameMsg = currentState.name?.let { if (it.isBlank()) nameMsgError else null },
+          invalidNameMsg = currentState.name?.let { if (it.isBlank()) NAME_EMPTY_MSG else null },
           invalidEmailMsg = validateEmail(currentState.email ?: ""),
           invalidLocationMsg =
-              if (currentState.selectedLocation == null) locationMsgError else null,
+              if (currentState.selectedLocation == null) LOCATION_EMPTY_MSG else null,
           invalidDescMsg =
-              currentState.description?.let { if (it.isBlank()) descMsgError else null })
+              currentState.description?.let { if (it.isBlank()) DESC_EMPTY_MSG else null })
     }
   }
 
@@ -154,7 +158,7 @@ class MyProfileViewModel(
   fun setName(name: String) {
     _uiState.value =
         _uiState.value.copy(
-            name = name, invalidNameMsg = if (name.isBlank()) nameMsgError else null)
+            name = name, invalidNameMsg = if (name.isBlank()) NAME_EMPTY_MSG else null)
   }
 
   // Updates the email and validates it
@@ -166,7 +170,7 @@ class MyProfileViewModel(
   fun setDescription(desc: String) {
     _uiState.value =
         _uiState.value.copy(
-            description = desc, invalidDescMsg = if (desc.isBlank()) descMsgError else null)
+            description = desc, invalidDescMsg = if (desc.isBlank()) DESC_EMPTY_MSG else null)
   }
 
   // Checks if the email format is valid
@@ -178,8 +182,8 @@ class MyProfileViewModel(
   // Return the good error message corresponding of the given input
   private fun validateEmail(email: String): String? {
     return when {
-      email.isBlank() -> emailEmptyMsgError
-      !isValidEmail(email) -> emailInvalidMsgError
+      email.isBlank() -> EMAIL_EMPTY_MSG
+      !isValidEmail(email) -> EMAIL_INVALID_MSG
       else -> null
     }
   }
@@ -221,7 +225,7 @@ class MyProfileViewModel(
       _uiState.value =
           _uiState.value.copy(
               locationSuggestions = emptyList(),
-              invalidLocationMsg = locationMsgError,
+              invalidLocationMsg = LOCATION_EMPTY_MSG,
               selectedLocation = null)
     }
   }
@@ -250,17 +254,17 @@ class MyProfileViewModel(
                 invalidLocationMsg = null)
           }
         } else {
-          _uiState.update { it.copy(invalidLocationMsg = "Failed to obtain GPS location") }
+          _uiState.update { it.copy(invalidLocationMsg = GPS_FAILED_MSG) }
         }
       } catch (se: SecurityException) {
-        _uiState.update { it.copy(invalidLocationMsg = "Location permission denied") }
+        _uiState.update { it.copy(invalidLocationMsg = LOCATION_PERMISSION_DENIED_MSG) }
       } catch (e: Exception) {
-        _uiState.update { it.copy(invalidLocationMsg = "Failed to obtain GPS location") }
+        _uiState.update { it.copy(invalidLocationMsg = GPS_FAILED_MSG) }
       }
     }
   }
 
   fun onLocationPermissionDenied() {
-    _uiState.update { it.copy(invalidLocationMsg = "Location permission denied") }
+    _uiState.update { it.copy(invalidLocationMsg = LOCATION_PERMISSION_DENIED_MSG) }
   }
 }

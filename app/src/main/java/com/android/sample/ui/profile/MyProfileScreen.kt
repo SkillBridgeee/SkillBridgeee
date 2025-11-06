@@ -43,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.LocationInputField
+import com.android.sample.ui.profile.MyProfileScreenTestTag.PIN_CONTENT_DESC
 
 object MyProfileScreenTestTag {
   const val PROFILE_ICON = "profileIcon"
@@ -56,6 +57,7 @@ object MyProfileScreenTestTag {
   const val SAVE_BUTTON = "saveButton"
   const val LOGOUT_BUTTON = "logoutButton"
   const val ERROR_MSG = "errorMsg"
+  const val PIN_CONTENT_DESC = "Use my location"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -254,7 +256,7 @@ private fun ProfileContent(
                       modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
                         Icon(
                             imageVector = Icons.Filled.MyLocation,
-                            contentDescription = "Use my location",
+                            contentDescription = PIN_CONTENT_DESC,
                             tint = MaterialTheme.colorScheme.primary)
                       }
                 }

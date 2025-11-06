@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,7 +32,7 @@ class GpsLocationProviderTest {
     `when`(lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)).thenReturn(last)
 
     val provider = GpsLocationProvider(context)
-    val result = provider.getCurrentLocation()
+    val result = withTimeout(1000L) { provider.getCurrentLocation(1000L) }
     assertNotNull(result)
     assertEquals(12.34, result!!.latitude, 0.0001)
     assertEquals(56.78, result.longitude, 0.0001)
@@ -64,7 +65,7 @@ class GpsLocationProviderTest {
             any(LocationListener::class.java))
 
     val provider = GpsLocationProvider(context)
-    val result = provider.getCurrentLocation()
+    val result = withTimeout(1000L) { provider.getCurrentLocation(1000L) }
     assertNotNull(result)
     assertEquals(-1.23, result!!.latitude, 0.0001)
     assertEquals(4.56, result.longitude, 0.0001)
@@ -87,7 +88,7 @@ class GpsLocationProviderTest {
 
     val provider = GpsLocationProvider(context)
     try {
-      runBlocking { provider.getCurrentLocation() }
+      runBlocking { withTimeout(1000L) { provider.getCurrentLocation(1000L) } }
       fail("Expected SecurityException to be thrown")
     } catch (se: SecurityException) {
       // expected
@@ -104,7 +105,7 @@ class GpsLocationProviderTest {
             .thenThrow(SecurityException::class.java)
 
         val provider = GpsLocationProvider(context)
-        val result = provider.getCurrentLocation()
+        val result = withTimeout(1000L) { provider.getCurrentLocation(1000L) }
         assertNull(result)
         // ensure requestLocationUpdates was not attempted
         verify(lm, never())
@@ -141,7 +142,7 @@ class GpsLocationProviderTest {
                 any(LocationListener::class.java))
 
         val provider = GpsLocationProvider(context)
-        val result = provider.getCurrentLocation()
+        val result = withTimeout(1000L) { provider.getCurrentLocation(1000L) }
         assertNotNull(result)
         assertEquals(7.89, result!!.latitude, 0.0001)
         assertEquals(1.23, result.longitude, 0.0001)
@@ -164,7 +165,7 @@ class GpsLocationProviderTest {
 
     val provider = GpsLocationProvider(context)
     try {
-      runBlocking { provider.getCurrentLocation() }
+      runBlocking { withTimeout(1000L) { provider.getCurrentLocation(1000L) } }
       fail("Expected RuntimeException to be thrown")
     } catch (re: RuntimeException) {
       // expected
@@ -195,8 +196,8 @@ class GpsLocationProviderTest {
     val provider = GpsLocationProvider(context)
 
     val job = launch {
-      // call provider and suspend until cancellation
-      provider.getCurrentLocation()
+      // call provider and suspend until cancellation (use a bounded timeout to avoid CI hangs)
+      withTimeout(5000L) { provider.getCurrentLocation(5000L) }
     }
 
     // Give the provider some time to register the listener
