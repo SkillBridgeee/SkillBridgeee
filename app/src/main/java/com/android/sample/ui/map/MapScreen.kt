@@ -117,12 +117,14 @@ fun MapScreen(
   }
 }
 
-/** Displays the Google Map centered on the users location.
+/**
+ * Displays the Google Map centered on the users location.
+ *
  * @param centerLocation The default center location of the map.
  * @param bookingPins List of booking pins to display on the map.
  * @param myProfile The current user's profile to show on the map.
  * @param onBookingClicked Callback when a booking pin is clicked.
- * */
+ */
 @Composable
 private fun MapView(
     centerLocation: LatLng,
@@ -163,7 +165,7 @@ private fun MapView(
       cameraPositionState = cameraPositionState,
       uiSettings = mapUiSettings,
       properties = mapProperties) {
-      // Booking markers
+        // Booking markers
         bookingPins.forEach { pin ->
           Marker(
               state = MarkerState(position = pin.position),
@@ -186,11 +188,13 @@ private fun MapView(
       }
 }
 
-/** Displays information about the selected profile.
+/**
+ * Displays information about the selected profile.
+ *
  * @param profile The profile to display.
  * @param onProfileClick Callback when the profile card is clicked.
  * @param modifier Modifier for the profile card.
- * */
+ */
 @Composable
 private fun ProfileInfoCard(
     profile: Profile,

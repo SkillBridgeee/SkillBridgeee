@@ -55,6 +55,7 @@ data class BookingPin(
  *
  * Manages the state of the map, including user locations and profile markers. Loads all user
  * profiles from the repository and displays them on the map.
+ *
  * @param profileRepository The repository used to fetch user profiles.
  * @param bookingRepository The repository used to fetch bookings.
  */
@@ -91,7 +92,7 @@ class MapViewModel(
     }
   }
 
-    /** Loads all bookings from the repository and updates the map state with booking pins. */
+  /** Loads all bookings from the repository and updates the map state with booking pins. */
   fun loadBookings() {
     viewModelScope.launch {
       try {
