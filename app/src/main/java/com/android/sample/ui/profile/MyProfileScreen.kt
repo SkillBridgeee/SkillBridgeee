@@ -57,276 +57,276 @@ object MyProfileScreenTestTag {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyProfileScreen(
-  profileViewModel: MyProfileViewModel = viewModel(),
-  profileId: String,
-  onLogout: () -> Unit = {}
+    profileViewModel: MyProfileViewModel = viewModel(),
+    profileId: String,
+    onLogout: () -> Unit = {}
 ) {
   Scaffold(
-    topBar = {},
-    bottomBar = {},
-    floatingActionButton = {
-      Button(
-        onClick = { profileViewModel.editProfile() },
-        modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON)) {
-        Text("Save Profile Changes")
+      topBar = {},
+      bottomBar = {},
+      floatingActionButton = {
+        Button(
+            onClick = { profileViewModel.editProfile() },
+            modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON)) {
+              Text("Save Profile Changes")
+            }
+      },
+      floatingActionButtonPosition = FabPosition.Center) { pd ->
+        ProfileContent(pd, profileId, profileViewModel, onLogout)
       }
-    },
-    floatingActionButtonPosition = FabPosition.Center) { pd ->
-    ProfileContent(pd, profileId, profileViewModel, onLogout)
-  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProfileContent(
-  pd: PaddingValues,
-  profileId: String,
-  profileViewModel: MyProfileViewModel,
-  onLogout: () -> Unit
+    pd: PaddingValues,
+    profileId: String,
+    profileViewModel: MyProfileViewModel,
+    onLogout: () -> Unit
 ) {
   LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
   val ui by profileViewModel.uiState.collectAsState()
   val fieldSpacing = 8.dp
 
   LazyColumn(
-    modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
-    contentPadding = pd) {
-    item { ProfileHeader(name = ui.name) }
+      modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
+      contentPadding = pd) {
+        item { ProfileHeader(name = ui.name) }
 
-    item {
-      Spacer(modifier = Modifier.height(12.dp))
-      ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
-    }
+        item {
+          Spacer(modifier = Modifier.height(12.dp))
+          ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
+        }
 
-    item { ProfileListings(ui = ui) }
+        item { ProfileListings(ui = ui) }
 
-    item { ProfileLogout(onLogout = onLogout) }
-  }
+        item { ProfileLogout(onLogout = onLogout) }
+      }
 }
 
 @Composable
 private fun ProfileHeader(name: String?) {
   Column(
-    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-    horizontalAlignment = Alignment.CenterHorizontally) {
-    Box(
-      modifier =
-        Modifier.size(50.dp)
-          .clip(CircleShape)
-          .background(Color.White)
-          .border(2.dp, Color.Blue, CircleShape)
-          .testTag(MyProfileScreenTestTag.PROFILE_ICON),
-      contentAlignment = Alignment.Center) {
-      Text(
-        text = name?.firstOrNull()?.uppercase() ?: "",
-        style = MaterialTheme.typography.titleLarge,
-        color = Color.Black,
-        fontWeight = FontWeight.Bold)
-    }
+      modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+      horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier =
+                Modifier.size(50.dp)
+                    .clip(CircleShape)
+                    .background(Color.White)
+                    .border(2.dp, Color.Blue, CircleShape)
+                    .testTag(MyProfileScreenTestTag.PROFILE_ICON),
+            contentAlignment = Alignment.Center) {
+              Text(
+                  text = name?.firstOrNull()?.uppercase() ?: "",
+                  style = MaterialTheme.typography.titleLarge,
+                  color = Color.Black,
+                  fontWeight = FontWeight.Bold)
+            }
 
-    Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-    Text(
-      text = name ?: "Your Name",
-      style = MaterialTheme.typography.titleLarge,
-      modifier = Modifier.testTag(MyProfileScreenTestTag.NAME_DISPLAY))
-    Text(
-      text = "Student",
-      style = MaterialTheme.typography.bodyMedium,
-      color = Color.Gray,
-      modifier = Modifier.testTag(MyProfileScreenTestTag.ROLE_BADGE))
-  }
+        Text(
+            text = name ?: "Your Name",
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.testTag(MyProfileScreenTestTag.NAME_DISPLAY))
+        Text(
+            text = "Student",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Gray,
+            modifier = Modifier.testTag(MyProfileScreenTestTag.ROLE_BADGE))
+      }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProfileTextField(
-  value: String,
-  onValueChange: (String) -> Unit,
-  label: String,
-  placeholder: String,
-  isError: Boolean = false,
-  errorMsg: String? = null,
-  testTag: String,
-  modifier: Modifier = Modifier,
-  minLines: Int = 1
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    isError: Boolean = false,
+    errorMsg: String? = null,
+    testTag: String,
+    modifier: Modifier = Modifier,
+    minLines: Int = 1
 ) {
   OutlinedTextField(
-    value = value,
-    onValueChange = onValueChange,
-    label = { Text(label) },
-    placeholder = { Text(placeholder) },
-    isError = isError,
-    supportingText = {
-      errorMsg?.let {
-        Text(text = it, modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
-      }
-    },
-    modifier = modifier.testTag(testTag),
-    minLines = minLines)
+      value = value,
+      onValueChange = onValueChange,
+      label = { Text(label) },
+      placeholder = { Text(placeholder) },
+      isError = isError,
+      supportingText = {
+        errorMsg?.let {
+          Text(text = it, modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
+        }
+      },
+      modifier = modifier.testTag(testTag),
+      minLines = minLines)
 }
 
 @Composable
 private fun SectionCard(
-  title: String,
-  titleTestTag: String? = null,
-  modifier: Modifier = Modifier,
-  content: @Composable ColumnScope.() -> Unit
+    title: String,
+    titleTestTag: String? = null,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
 ) {
   Box(
-    modifier =
-      modifier
-        .widthIn(max = 300.dp)
-        .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
-        .border(
-          width = 1.dp,
-          brush = Brush.linearGradient(colors = listOf(Color.Gray, Color.LightGray)),
-          shape = MaterialTheme.shapes.medium)
-        .padding(16.dp)) {
-    Column {
-      Text(
-        text = title,
-        fontWeight = FontWeight.Bold,
-        modifier = titleTestTag?.let { Modifier.testTag(it) } ?: Modifier)
-      Spacer(modifier = Modifier.height(10.dp))
-      content()
-    }
-  }
+      modifier =
+          modifier
+              .widthIn(max = 300.dp)
+              .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
+              .border(
+                  width = 1.dp,
+                  brush = Brush.linearGradient(colors = listOf(Color.Gray, Color.LightGray)),
+                  shape = MaterialTheme.shapes.medium)
+              .padding(16.dp)) {
+        Column {
+          Text(
+              text = title,
+              fontWeight = FontWeight.Bold,
+              modifier = titleTestTag?.let { Modifier.testTag(it) } ?: Modifier)
+          Spacer(modifier = Modifier.height(10.dp))
+          content()
+        }
+      }
 }
 
 @Composable
 private fun ProfileForm(
-  ui: MyProfileUIState,
-  profileViewModel: MyProfileViewModel,
-  fieldSpacing: Dp = 8.dp
+    ui: MyProfileUIState,
+    profileViewModel: MyProfileViewModel,
+    fieldSpacing: Dp = 8.dp
 ) {
   val context = LocalContext.current
   val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
   val permissionLauncher =
-    rememberLauncherForActivityResult(RequestPermission()) { granted ->
-      val provider = GpsLocationProvider(context)
-      if (granted) {
-        profileViewModel.fetchLocationFromGps(provider)
-      } else {
-        profileViewModel.onLocationPermissionDenied()
-      }
-    }
-
-  Row(
-    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-    horizontalArrangement = Arrangement.Center) {
-    SectionCard(title = "Personal Details", titleTestTag = MyProfileScreenTestTag.CARD_TITLE) {
-      ProfileTextField(
-        value = ui.name ?: "",
-        onValueChange = { profileViewModel.setName(it) },
-        label = "Name",
-        placeholder = "Enter Your Full Name",
-        isError = ui.invalidNameMsg != null,
-        errorMsg = ui.invalidNameMsg,
-        testTag = MyProfileScreenTestTag.INPUT_PROFILE_NAME,
-        modifier = Modifier.fillMaxWidth())
-
-      Spacer(modifier = Modifier.height(fieldSpacing))
-
-      ProfileTextField(
-        value = ui.email ?: "",
-        onValueChange = { profileViewModel.setEmail(it) },
-        label = "Email",
-        placeholder = "Enter Your Email",
-        isError = ui.invalidEmailMsg != null,
-        errorMsg = ui.invalidEmailMsg,
-        testTag = MyProfileScreenTestTag.INPUT_PROFILE_EMAIL,
-        modifier = Modifier.fillMaxWidth())
-
-      Spacer(modifier = Modifier.height(fieldSpacing))
-
-      ProfileTextField(
-        value = ui.description ?: "",
-        onValueChange = { profileViewModel.setDescription(it) },
-        label = "Description",
-        placeholder = "Info About You",
-        isError = ui.invalidDescMsg != null,
-        errorMsg = ui.invalidDescMsg,
-        testTag = MyProfileScreenTestTag.INPUT_PROFILE_DESC,
-        modifier = Modifier.fillMaxWidth(),
-        minLines = 2)
-
-      Spacer(modifier = Modifier.height(fieldSpacing))
-
-      // Location input + pin icon overlay
-      Box(modifier = Modifier.fillMaxWidth()) {
-        LocationInputField(
-          locationQuery = ui.locationQuery,
-          locationSuggestions = ui.locationSuggestions,
-          onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
-          errorMsg = ui.invalidLocationMsg,
-          onLocationSelected = { location ->
-            profileViewModel.setLocationQuery(location.name)
-            profileViewModel.setLocation(location)
-          },
-          modifier = Modifier.fillMaxWidth())
-
-        IconButton(
-          onClick = {
-            val granted =
-              ContextCompat.checkSelfPermission(context, permission) ==
-                  PackageManager.PERMISSION_GRANTED
-            if (granted) {
-              profileViewModel.fetchLocationFromGps(GpsLocationProvider(context))
-            } else {
-              permissionLauncher.launch(permission)
-            }
-          },
-          modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
-          Icon(
-            imageVector = Icons.Filled.MyLocation,
-            contentDescription = MyProfileScreenTestTag.PIN_CONTENT_DESC,
-            tint = MaterialTheme.colorScheme.primary)
+      rememberLauncherForActivityResult(RequestPermission()) { granted ->
+        val provider = GpsLocationProvider(context)
+        if (granted) {
+          profileViewModel.fetchLocationFromGps(provider)
+        } else {
+          profileViewModel.onLocationPermissionDenied()
         }
       }
-    }
-  }
+
+  Row(
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+      horizontalArrangement = Arrangement.Center) {
+        SectionCard(title = "Personal Details", titleTestTag = MyProfileScreenTestTag.CARD_TITLE) {
+          ProfileTextField(
+              value = ui.name ?: "",
+              onValueChange = { profileViewModel.setName(it) },
+              label = "Name",
+              placeholder = "Enter Your Full Name",
+              isError = ui.invalidNameMsg != null,
+              errorMsg = ui.invalidNameMsg,
+              testTag = MyProfileScreenTestTag.INPUT_PROFILE_NAME,
+              modifier = Modifier.fillMaxWidth())
+
+          Spacer(modifier = Modifier.height(fieldSpacing))
+
+          ProfileTextField(
+              value = ui.email ?: "",
+              onValueChange = { profileViewModel.setEmail(it) },
+              label = "Email",
+              placeholder = "Enter Your Email",
+              isError = ui.invalidEmailMsg != null,
+              errorMsg = ui.invalidEmailMsg,
+              testTag = MyProfileScreenTestTag.INPUT_PROFILE_EMAIL,
+              modifier = Modifier.fillMaxWidth())
+
+          Spacer(modifier = Modifier.height(fieldSpacing))
+
+          ProfileTextField(
+              value = ui.description ?: "",
+              onValueChange = { profileViewModel.setDescription(it) },
+              label = "Description",
+              placeholder = "Info About You",
+              isError = ui.invalidDescMsg != null,
+              errorMsg = ui.invalidDescMsg,
+              testTag = MyProfileScreenTestTag.INPUT_PROFILE_DESC,
+              modifier = Modifier.fillMaxWidth(),
+              minLines = 2)
+
+          Spacer(modifier = Modifier.height(fieldSpacing))
+
+          // Location input + pin icon overlay
+          Box(modifier = Modifier.fillMaxWidth()) {
+            LocationInputField(
+                locationQuery = ui.locationQuery,
+                locationSuggestions = ui.locationSuggestions,
+                onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
+                errorMsg = ui.invalidLocationMsg,
+                onLocationSelected = { location ->
+                  profileViewModel.setLocationQuery(location.name)
+                  profileViewModel.setLocation(location)
+                },
+                modifier = Modifier.fillMaxWidth())
+
+            IconButton(
+                onClick = {
+                  val granted =
+                      ContextCompat.checkSelfPermission(context, permission) ==
+                          PackageManager.PERMISSION_GRANTED
+                  if (granted) {
+                    profileViewModel.fetchLocationFromGps(GpsLocationProvider(context))
+                  } else {
+                    permissionLauncher.launch(permission)
+                  }
+                },
+                modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
+                  Icon(
+                      imageVector = Icons.Filled.MyLocation,
+                      contentDescription = MyProfileScreenTestTag.PIN_CONTENT_DESC,
+                      tint = MaterialTheme.colorScheme.primary)
+                }
+          }
+        }
+      }
 }
 
 @Composable
 private fun ProfileListings(ui: MyProfileUIState) {
   Spacer(modifier = Modifier.height(16.dp))
   Text(
-    text = "Your Listings",
-    style = MaterialTheme.typography.titleMedium,
-    fontWeight = FontWeight.Bold,
-    modifier = Modifier.padding(horizontal = 16.dp))
+      text = "Your Listings",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold,
+      modifier = Modifier.padding(horizontal = 16.dp))
   Spacer(modifier = Modifier.height(8.dp))
 
   when {
     ui.listingsLoading -> {
       Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-        contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
-      }
+          modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+          contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+          }
     }
     ui.listingsLoadError != null -> {
       Text(
-        text = ui.listingsLoadError ?: "Failed to load listings.",
-        style = MaterialTheme.typography.bodyMedium,
-        color = Color.Red,
-        modifier = Modifier.padding(horizontal = 16.dp))
+          text = ui.listingsLoadError ?: "Failed to load listings.",
+          style = MaterialTheme.typography.bodyMedium,
+          color = Color.Red,
+          modifier = Modifier.padding(horizontal = 16.dp))
     }
     ui.listings.isEmpty() -> {
       Text(
-        text = "You don’t have any listings yet.",
-        style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.padding(horizontal = 16.dp))
+          text = "You don’t have any listings yet.",
+          style = MaterialTheme.typography.bodyMedium,
+          modifier = Modifier.padding(horizontal = 16.dp))
     }
     else -> {
       val creatorProfile =
-        Profile(
-          userId = ui.userId ?: "",
-          name = ui.name ?: "",
-          email = ui.email ?: "",
-          location = ui.selectedLocation ?: Location(),
-          description = ui.description ?: "")
+          Profile(
+              userId = ui.userId ?: "",
+              name = ui.name ?: "",
+              email = ui.email ?: "",
+              location = ui.selectedLocation ?: Location(),
+              description = ui.description ?: "")
       ui.listings.forEach { listing ->
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
           ListingCard(listing = listing, creator = creatorProfile, onOpenListing = {}, onBook = {})
@@ -341,12 +341,12 @@ private fun ProfileListings(ui: MyProfileUIState) {
 private fun ProfileLogout(onLogout: () -> Unit) {
   Spacer(modifier = Modifier.height(16.dp))
   Button(
-    onClick = onLogout,
-    modifier =
-      Modifier.fillMaxWidth()
-        .padding(horizontal = 16.dp)
-        .testTag(MyProfileScreenTestTag.LOGOUT_BUTTON)) {
-    Text("Logout")
-  }
+      onClick = onLogout,
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(horizontal = 16.dp)
+              .testTag(MyProfileScreenTestTag.LOGOUT_BUTTON)) {
+        Text("Logout")
+      }
   Spacer(modifier = Modifier.height(80.dp))
 }

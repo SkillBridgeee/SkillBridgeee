@@ -1,13 +1,14 @@
 package com.android.sample.screen
 
+import android.Manifest
 import android.app.UiAutomation
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performTextInput
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
-import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
@@ -26,7 +27,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.util.jar.Manifest
 
 class MyProfileScreenTest {
 
@@ -131,7 +131,7 @@ class MyProfileScreenTest {
 
   @Before
   fun setup() {
-    val repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
     viewModel = MyProfileViewModel(repo, listingRepository = FakeListingRepo(), userId = "demo")
 
     // reset flag before each test and set content once per test

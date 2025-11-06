@@ -2,11 +2,11 @@ package com.android.sample.screen
 
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.FirebaseTestRule
-import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
+import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.user.Profile
@@ -482,11 +482,11 @@ class MyProfileViewModelTest {
   fun loadUserListings_handlesRepositoryException_setsListingsError() = runTest {
     // Listing repo that throws to exercise the catch branch
     val failingListingRepo =
-      object : ListingRepository by FakeListingRepo() {
-        override suspend fun getListingsByUser(userId: String): List<Listing> {
-          throw RuntimeException("Listings fetch failed")
+        object : ListingRepository by FakeListingRepo() {
+          override suspend fun getListingsByUser(userId: String): List<Listing> {
+            throw RuntimeException("Listings fetch failed")
+          }
         }
-      }
 
     val repo = FakeProfileRepo(makeProfile())
     val vm = newVm(repo = repo, listingRepo = failingListingRepo)

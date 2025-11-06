@@ -4,10 +4,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
-import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
@@ -142,9 +142,9 @@ class MyProfileViewModel(
         Log.e(TAG, "Error loading listings for user: $ownerId", e)
         _uiState.update {
           it.copy(
-            listings = emptyList(),
-            listingsLoading = false,
-            listingsLoadError = "Failed to load listings.")
+              listings = emptyList(),
+              listingsLoading = false,
+              listingsLoadError = "Failed to load listings.")
         }
       }
     }
