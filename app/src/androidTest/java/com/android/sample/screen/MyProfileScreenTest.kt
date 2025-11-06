@@ -4,6 +4,8 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performTextInput
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
@@ -14,6 +16,9 @@ import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.profile.MyProfileViewModel
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.text.set
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -77,18 +82,83 @@ class MyProfileScreenTest {
         skillsByUser[userId] ?: emptyList()
   }
 
+  // Minimal Fake ListingRepository to avoid initializing real Firebase/Firestore in tests
+  private class FakeListingRepo : ListingRepository {
+    override fun getNewUid(): String = "fake-listing-id"
+
+    override suspend fun getAllListings(): List<Listing> = emptyList()
+
+    override suspend fun getProposals(): List<com.android.sample.model.listing.Proposal> =
+        emptyList()
+
+    override suspend fun getRequests(): List<com.android.sample.model.listing.Request> = emptyList()
+
+    override suspend fun getListing(listingId: String): Listing? = null
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> = emptyList()
+
+    override suspend fun addProposal(proposal: com.android.sample.model.listing.Proposal) {}
+
+    override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill): List<Listing> =
+        emptyList()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> =
+        emptyList()
+  }
+
   private lateinit var viewModel: MyProfileViewModel
+  private val logoutClicked = AtomicBoolean(false)
 
   @Before
   fun setup() {
     val repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
-    viewModel = MyProfileViewModel(repo, userId = "demo")
+    viewModel = MyProfileViewModel(repo, listingRepository = FakeListingRepo(), userId = "demo")
 
-    compose.setContent { MyProfileScreen(profileViewModel = viewModel, profileId = "demo") }
+    // reset flag before each test and set content once per test
+    logoutClicked.set(false)
+    compose.setContent {
+      MyProfileScreen(
+          profileViewModel = viewModel,
+          profileId = "demo",
+          onLogout = { logoutClicked.set(true) } // single callback wired once
+          )
+    }
 
     compose.waitUntil(5_000) {
       compose
           .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+  }
+
+  // Helper: wait for the LazyColumn to appear and scroll it so the logout button becomes visible
+  private fun ensureLogoutVisible() {
+    // Wait until the LazyColumn (root list) is present in unmerged tree
+    compose.waitUntil(timeoutMillis = 5_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Scroll the LazyColumn to the logout button using the unmerged tree (targets LazyColumn)
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+        .performScrollToNode(hasTestTag(MyProfileScreenTestTag.LOGOUT_BUTTON))
+
+    // Wait for the merged tree to expose the logout button
+    compose.waitUntil(timeoutMillis = 2_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON)
           .fetchSemanticsNodes()
           .isNotEmpty()
     }
@@ -218,29 +288,28 @@ class MyProfileScreenTest {
   // ----------------------------------------------------------
   @Test
   fun logoutButton_isDisplayed() {
+    ensureLogoutVisible()
     compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertIsDisplayed()
   }
 
   @Test
   fun logoutButton_isClickable() {
+    ensureLogoutVisible()
     compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertHasClickAction()
   }
 
   @Test
   fun logoutButton_hasCorrectText() {
+    ensureLogoutVisible()
     compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertTextContains("Logout")
   }
 
   @Test
   fun logoutButton_triggersCallback() {
-    // Note: This test verifies that clicking the logout button would trigger the callback
-    // Since we can't call setContent twice, we verify the button exists and is clickable
-    // The actual callback triggering is tested in integration tests
-    compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertExists()
-    compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).assertHasClickAction()
-
-    // The callback integration is tested through navigation tests
-    // Here we just verify the button is wired correctly for user interaction
+    ensureLogoutVisible()
+    compose.onNodeWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON).performClick()
+    compose.waitForIdle()
+    assert(logoutClicked.get())
   }
 
   // ----------------------------------------------------------

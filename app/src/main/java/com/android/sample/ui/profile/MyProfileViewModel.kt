@@ -4,6 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
@@ -20,7 +23,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** UI state for the MyProfile screen. Holds all data needed to edit a profile */
+/**
+ * UI state for the MyProfile screen.
+ *
+ * Holds all fields needed for profile display + editing and the user's created listings.
+ */
 data class MyProfileUIState(
     val userId: String? = null,
     val name: String? = "",
@@ -35,26 +42,38 @@ data class MyProfileUIState(
     val invalidDescMsg: String? = null,
     val isLoading: Boolean = false,
     val loadError: String? = null,
-    val updateError: String? = null
+    val updateError: String? = null,
+    val listings: List<Listing> = emptyList(),
+    val listingsLoading: Boolean = false,
+    val listingsLoadError: String? = null
 ) {
-  // Checks if all fields are valid
+  /** True if all required fields are valid */
   val isValid: Boolean
     get() =
         invalidNameMsg == null &&
             invalidEmailMsg == null &&
             invalidLocationMsg == null &&
             invalidDescMsg == null &&
-            name?.isNotBlank() == true &&
-            email?.isNotBlank() == true &&
+            !name.isNullOrBlank() &&
+            !email.isNullOrBlank() &&
             selectedLocation != null &&
-            description?.isNotBlank() == true
+            !description.isNullOrBlank()
 }
 
-// ViewModel to manage profile editing logic and state
+/**
+ * ViewModel controlling the profile screen.
+ *
+ * Responsibilities:
+ * - Load user profile data
+ * - Update profile fields
+ * - Validate input
+ * - Fetch user-created listings to show on profile
+ */
 class MyProfileViewModel(
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
     private val locationRepository: LocationRepository =
         NominatimLocationRepository(HttpClientProvider.client),
+    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
 
@@ -62,7 +81,7 @@ class MyProfileViewModel(
     private const val TAG = "MyProfileViewModel"
   }
 
-  // Holds the current UI state
+  /** Holds current profile UI state */
   private val _uiState = MutableStateFlow(MyProfileUIState())
   val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
 
@@ -75,12 +94,17 @@ class MyProfileViewModel(
   private val locationMsgError = "Location cannot be empty"
   private val descMsgError = "Description cannot be empty"
 
-  /** Loads the profile data (to be implemented) */
+  /**
+   * Loads profile information and user's own listings.
+   *
+   * @param profileUserId Optional — used when viewing another user's profile.
+   */
   fun loadProfile(profileUserId: String? = null) {
     val currentId = profileUserId ?: userId
     viewModelScope.launch {
       try {
         val profile = profileRepository.getProfile(userId = currentId)
+
         _uiState.value =
             MyProfileUIState(
                 userId = currentId,
@@ -89,16 +113,45 @@ class MyProfileViewModel(
                 selectedLocation = profile?.location,
                 locationQuery = profile?.location?.name ?: "",
                 description = profile?.description)
+
+        // Load listings created by this user
+        loadUserListings(currentId)
       } catch (e: Exception) {
-        Log.e("MyProfileViewModel", "Error loading MyProfile by ID: $currentId", e)
+        Log.e(TAG, "Error loading MyProfile by ID: $currentId", e)
       }
     }
   }
 
   /**
-   * Edits a Profile.
+   * Loads listings created by the given user and updates UI state.
    *
-   * @return true if the update process was started, false if validation failed.
+   * Uses a dedicated `listingsLoading` flag so the rest of the screen can remain visible.
+   */
+  fun loadUserListings(ownerId: String = _uiState.value.userId ?: userId) {
+    viewModelScope.launch {
+      // set listings loading state (does not affect full-screen isLoading)
+      _uiState.update { it.copy(listingsLoading = true, listingsLoadError = null) }
+      try {
+        val items = listingRepository.getListingsByUser(ownerId).sortedByDescending { it.createdAt }
+        _uiState.update {
+          it.copy(listings = items, listingsLoading = false, listingsLoadError = null)
+        }
+      } catch (e: Exception) {
+        Log.e(TAG, "Error loading listings for user: $ownerId", e)
+        _uiState.update {
+          it.copy(
+              listings = emptyList(),
+              listingsLoading = false,
+              listingsLoadError = "Failed to load listings.")
+        }
+      }
+    }
+  }
+
+  /**
+   * Attempts to update the profile.
+   *
+   * If data is invalid, sets validation messages instead.
    */
   fun editProfile() {
     val state = _uiState.value
@@ -106,6 +159,7 @@ class MyProfileViewModel(
       setError()
       return
     }
+
     val currentId = state.userId ?: userId
     val profile =
         Profile(
@@ -115,15 +169,10 @@ class MyProfileViewModel(
             location = state.selectedLocation!!,
             description = state.description ?: "")
 
-    editProfileToRepository(userId = currentId, profile = profile)
+    editProfileToRepository(currentId, profile)
   }
 
-  /**
-   * Edits a Profile in the repository.
-   *
-   * @param userId The ID of the profile to be edited.
-   * @param profile The Profile object containing the new values.
-   */
+  /** Saves updated profile to repository */
   private fun editProfileToRepository(userId: String, profile: Profile) {
     viewModelScope.launch {
       _uiState.update { it.copy(updateError = null) }
@@ -136,72 +185,55 @@ class MyProfileViewModel(
     }
   }
 
-  // Set all messages error, if invalid field
+  /** Fills all validation messages if user tries to save invalid input */
   fun setError() {
-    _uiState.update { currentState ->
-      currentState.copy(
-          invalidNameMsg = currentState.name?.let { if (it.isBlank()) nameMsgError else null },
-          invalidEmailMsg = validateEmail(currentState.email ?: ""),
-          invalidLocationMsg =
-              if (currentState.selectedLocation == null) locationMsgError else null,
-          invalidDescMsg =
-              currentState.description?.let { if (it.isBlank()) descMsgError else null })
+    _uiState.update {
+      it.copy(
+          invalidNameMsg = if (it.name.isNullOrBlank()) nameMsgError else null,
+          invalidEmailMsg = validateEmail(it.email ?: ""),
+          invalidLocationMsg = if (it.selectedLocation == null) locationMsgError else null,
+          invalidDescMsg = if (it.description.isNullOrBlank()) descMsgError else null)
     }
   }
 
-  // Updates the name and validates it
+  /** Input field setters + validation */
   fun setName(name: String) {
     _uiState.value =
         _uiState.value.copy(
             name = name, invalidNameMsg = if (name.isBlank()) nameMsgError else null)
   }
 
-  // Updates the email and validates it
   fun setEmail(email: String) {
     _uiState.value = _uiState.value.copy(email = email, invalidEmailMsg = validateEmail(email))
   }
 
-  // Updates the desc and validates it
   fun setDescription(desc: String) {
     _uiState.value =
         _uiState.value.copy(
             description = desc, invalidDescMsg = if (desc.isBlank()) descMsgError else null)
   }
 
-  // Checks if the email format is valid
+  /** Validates email format */
   private fun isValidEmail(email: String): Boolean {
     val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
     return email.matches(emailRegex.toRegex())
   }
 
-  // Return the good error message corresponding of the given input
-  private fun validateEmail(email: String): String? {
-    return when {
-      email.isBlank() -> emailEmptyMsgError
-      !isValidEmail(email) -> emailInvalidMsgError
-      else -> null
-    }
-  }
+  private fun validateEmail(email: String): String? =
+      when {
+        email.isBlank() -> emailEmptyMsgError
+        !isValidEmail(email) -> emailInvalidMsgError
+        else -> null
+      }
 
-  // Update the selected location and the locationQuery
+  /** Selects a location from suggestions */
   fun setLocation(location: Location) {
     _uiState.value = _uiState.value.copy(selectedLocation = location, locationQuery = location.name)
   }
 
-  /**
-   * Updates the location query in the UI state and fetches matching location suggestions.
-   *
-   * This function updates the current `locationQuery` value and triggers a search operation if the
-   * query is not empty. The search is performed asynchronously within the `viewModelScope` using
-   * the [locationRepository].
-   *
-   * @param query The new location search query entered by the user.
-   * @see locationRepository
-   * @see viewModelScope
-   */
+  /** Updates location query and performs delayed search for suggestions. */
   fun setLocationQuery(query: String) {
     _uiState.value = _uiState.value.copy(locationQuery = query)
-
     locationSearchJob?.cancel()
 
     if (query.isNotEmpty()) {

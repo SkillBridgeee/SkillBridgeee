@@ -21,8 +21,9 @@ open class NominatimLocationRepository(
 
     return List(jsonArray.length()) { i ->
       val jsonObject = jsonArray.getJSONObject(i)
-      val lat = jsonObject.getDouble("lat")
-      val lon = jsonObject.getDouble("lon")
+      // Nominatim returns lat/lon as strings, so we get them as strings and convert to Double
+      val lat = jsonObject.getString("lat").toDouble()
+      val lon = jsonObject.getString("lon").toDouble()
       val name = jsonObject.getString("name")
       Location(latitude = lat, longitude = lon, name = name)
     }
