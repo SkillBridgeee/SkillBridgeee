@@ -33,6 +33,15 @@ data class MapUiState(
     val bookingPins: List<BookingPin> = emptyList(),
 )
 
+/**
+ * Represents a booking pin on the map.
+ *
+ * @param bookingId The ID of the booking
+ * @param position The geographical position of the pin
+ * @param title The title to display on the pin
+ * @param snippet An optional snippet to display on the pin
+ * @param profile The associated user profile for the booking
+ */
 data class BookingPin(
     val bookingId: String,
     val position: LatLng,
@@ -46,6 +55,8 @@ data class BookingPin(
  *
  * Manages the state of the map, including user locations and profile markers. Loads all user
  * profiles from the repository and displays them on the map.
+ * @param profileRepository The repository used to fetch user profiles.
+ * @param bookingRepository The repository used to fetch bookings.
  */
 class MapViewModel(
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
@@ -80,6 +91,7 @@ class MapViewModel(
     }
   }
 
+    /** Loads all bookings from the repository and updates the map state with booking pins. */
   fun loadBookings() {
     viewModelScope.launch {
       try {

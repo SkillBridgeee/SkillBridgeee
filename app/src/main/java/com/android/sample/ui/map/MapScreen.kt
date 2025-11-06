@@ -29,6 +29,7 @@ import com.android.sample.model.user.Profile
 import com.android.sample.ui.map.MapScreenTestTags.BOOKING_MARKER_PREFIX
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.auth.FirebaseAuth
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
@@ -72,7 +73,7 @@ fun MapScreen(
   Scaffold(modifier = modifier.testTag(MapScreenTestTags.MAP_SCREEN)) { innerPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
       // Google Map
-      val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+      val uid = FirebaseAuth.getInstance().currentUser?.uid
       val myProfile = uiState.profiles.firstOrNull { it.userId == uid }
 
       MapView(
@@ -116,7 +117,12 @@ fun MapScreen(
   }
 }
 
-/** Displays the Google Map centered on a location (no markers). */
+/** Displays the Google Map centered on the users location.
+ * @param centerLocation The default center location of the map.
+ * @param bookingPins List of booking pins to display on the map.
+ * @param myProfile The current user's profile to show on the map.
+ * @param onBookingClicked Callback when a booking pin is clicked.
+ * */
 @Composable
 private fun MapView(
     centerLocation: LatLng,
@@ -157,6 +163,7 @@ private fun MapView(
       cameraPositionState = cameraPositionState,
       uiSettings = mapUiSettings,
       properties = mapProperties) {
+      // Booking markers
         bookingPins.forEach { pin ->
           Marker(
               state = MarkerState(position = pin.position),
@@ -164,7 +171,7 @@ private fun MapView(
               snippet = pin.snippet,
               onClick = {
                 onBookingClicked(pin)
-                false // keep default info window behavior
+                false
               },
               tag = BOOKING_MARKER_PREFIX + pin.bookingId)
         }
@@ -179,7 +186,11 @@ private fun MapView(
       }
 }
 
-/** Displays information about the selected profile. */
+/** Displays information about the selected profile.
+ * @param profile The profile to display.
+ * @param onProfileClick Callback when the profile card is clicked.
+ * @param modifier Modifier for the profile card.
+ * */
 @Composable
 private fun ProfileInfoCard(
     profile: Profile,
