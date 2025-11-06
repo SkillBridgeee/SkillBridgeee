@@ -125,6 +125,32 @@ class MyProfileViewModel(
   }
 
   /**
+   * Loads listings created by the given user and updates UI state.
+   *
+   * Uses a dedicated `listingsLoading` flag so the rest of the screen can remain visible.
+   */
+  fun loadUserListings(ownerId: String = _uiState.value.userId ?: userId) {
+    viewModelScope.launch {
+      // set listings loading state (does not affect full-screen isLoading)
+      _uiState.update { it.copy(listingsLoading = true, listingsLoadError = null) }
+      try {
+        val items = listingRepository.getListingsByUser(ownerId).sortedByDescending { it.createdAt }
+        _uiState.update {
+          it.copy(listings = items, listingsLoading = false, listingsLoadError = null)
+        }
+      } catch (e: Exception) {
+        Log.e(TAG, "Error loading listings for user: $ownerId", e)
+        _uiState.update {
+          it.copy(
+            listings = emptyList(),
+            listingsLoading = false,
+            listingsLoadError = "Failed to load listings.")
+        }
+      }
+    }
+  }
+
+  /**
    * Edits a Profile.
    *
    * @return true if the update process was started, false if validation failed.
