@@ -3,6 +3,10 @@ package com.android.sample.screen
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.map.GpsLocationProvider
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.user.Profile
@@ -100,6 +104,37 @@ class MyProfileViewModelTest {
     }
   }
 
+  // Minimal fake ListingRepository to satisfy the ViewModel dependency
+  private class FakeListingRepo : ListingRepository {
+    override fun getNewUid(): String = "fake-listing-id"
+
+    override suspend fun getAllListings(): List<Listing> = emptyList()
+
+    override suspend fun getProposals(): List<Proposal> = emptyList()
+
+    override suspend fun getRequests(): List<Request> = emptyList()
+
+    override suspend fun getListing(listingId: String): Listing? = null
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> = emptyList()
+
+    override suspend fun addProposal(proposal: Proposal) {}
+
+    override suspend fun addRequest(request: Request) {}
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill): List<Listing> =
+        emptyList()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> =
+        emptyList()
+  }
+
   private class SuccessGpsProvider(
       private val lat: Double = 12.34,
       private val lon: Double = 56.78
@@ -127,8 +162,9 @@ class MyProfileViewModelTest {
   private fun newVm(
       repo: ProfileRepository = FakeProfileRepo(),
       locRepo: LocationRepository = FakeLocationRepo(),
+      listingRepo: ListingRepository = FakeListingRepo(),
       userId: String = "testUid"
-  ) = MyProfileViewModel(repo, locRepo, userId)
+  ) = MyProfileViewModel(repo, locRepo, listingRepo, userId)
 
   private class NullGpsProvider :
       com.android.sample.model.map.GpsLocationProvider(
@@ -440,5 +476,61 @@ class MyProfileViewModelTest {
 
     val ui = vm.uiState.value
     assertEquals(LOCATION_PERMISSION_DENIED_MSG, ui.invalidLocationMsg)
+  }
+
+  @Test
+  fun loadUserListings_handlesRepositoryException_setsListingsError() = runTest {
+    // Listing repo that throws to exercise the catch branch
+    val failingListingRepo =
+      object : ListingRepository by FakeListingRepo() {
+        override suspend fun getListingsByUser(userId: String): List<Listing> {
+          throw RuntimeException("Listings fetch failed")
+        }
+      }
+
+    val repo = FakeProfileRepo(makeProfile())
+    val vm = newVm(repo = repo, listingRepo = failingListingRepo)
+
+    // Trigger listings load
+    vm.loadUserListings("ownerId")
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertTrue(ui.listings.isEmpty())
+    assertFalse(ui.listingsLoading)
+    assertEquals("Failed to load listings.", ui.listingsLoadError)
+  }
+
+  @Test
+  fun setError_setsEmailFormatError_whenEmailMalformed_and_setsOtherErrors() {
+    val vm = newVm()
+
+    // Set malformed email and leave other fields empty
+    vm.setEmail("not-an-email")
+    vm.setError()
+
+    val ui = vm.uiState.value
+    assertEquals("Email is not in the right format", ui.invalidEmailMsg)
+    assertEquals("Name cannot be empty", ui.invalidNameMsg)
+    assertEquals("Location cannot be empty", ui.invalidLocationMsg)
+    assertEquals("Description cannot be empty", ui.invalidDescMsg)
+  }
+
+  @Test
+  fun isValid_false_whenMissingLocationOrDescription_and_true_afterSettingBoth() {
+    val vm = newVm()
+
+    vm.setName("Test")
+    vm.setEmail("test@mail.com")
+    // no location, no description -> invalid
+    assertFalse(vm.uiState.value.isValid)
+
+    vm.setDescription("Teacher")
+    // still missing location -> invalid
+    assertFalse(vm.uiState.value.isValid)
+
+    vm.setLocation(Location(name = "Paris"))
+    // now all required fields present and valid -> valid
+    assertTrue(vm.uiState.value.isValid)
   }
 }

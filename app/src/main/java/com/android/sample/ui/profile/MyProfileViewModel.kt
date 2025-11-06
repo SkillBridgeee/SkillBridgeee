@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
 import com.android.sample.model.map.GpsLocationProvider
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
@@ -46,26 +49,38 @@ data class MyProfileUIState(
     val invalidDescMsg: String? = null,
     val isLoading: Boolean = false,
     val loadError: String? = null,
-    val updateError: String? = null
+    val updateError: String? = null,
+    val listings: List<Listing> = emptyList(),
+    val listingsLoading: Boolean = false,
+    val listingsLoadError: String? = null
 ) {
-  // Checks if all fields are valid
+  /** True if all required fields are valid */
   val isValid: Boolean
     get() =
         invalidNameMsg == null &&
             invalidEmailMsg == null &&
             invalidLocationMsg == null &&
             invalidDescMsg == null &&
-            name?.isNotBlank() == true &&
-            email?.isNotBlank() == true &&
+            !name.isNullOrBlank() &&
+            !email.isNullOrBlank() &&
             selectedLocation != null &&
-            description?.isNotBlank() == true
+            !description.isNullOrBlank()
 }
 
-// ViewModel to manage profile editing logic and state
+/**
+ * ViewModel controlling the profile screen.
+ *
+ * Responsibilities:
+ * - Load user profile data
+ * - Update profile fields
+ * - Validate input
+ * - Fetch user-created listings to show on profile
+ */
 class MyProfileViewModel(
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
     private val locationRepository: LocationRepository =
         NominatimLocationRepository(HttpClientProvider.client),
+    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
 
@@ -73,12 +88,18 @@ class MyProfileViewModel(
     private const val TAG = "MyProfileViewModel"
   }
 
-  // Holds the current UI state
+  /** Holds current profile UI state */
   private val _uiState = MutableStateFlow(MyProfileUIState())
   val uiState: StateFlow<MyProfileUIState> = _uiState.asStateFlow()
 
   private var locationSearchJob: Job? = null
   private val locationSearchDelayTime: Long = 1000
+
+  private val nameMsgError = "Name cannot be empty"
+  private val emailEmptyMsgError = "Email cannot be empty"
+  private val emailInvalidMsgError = "Email is not in the right format"
+  private val locationMsgError = "Location cannot be empty"
+  private val descMsgError = "Description cannot be empty"
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile(profileUserId: String? = null) {
@@ -94,6 +115,9 @@ class MyProfileViewModel(
                 selectedLocation = profile?.location,
                 locationQuery = profile?.location?.name ?: "",
                 description = profile?.description)
+
+        // Load listings created by this user
+        loadUserListings(currentId)
       } catch (e: Exception) {
         Log.e(TAG, "Error loading MyProfile by ID: $currentId", e)
       }
@@ -120,7 +144,7 @@ class MyProfileViewModel(
             location = state.selectedLocation!!,
             description = state.description ?: "")
 
-    editProfileToRepository(userId = currentId, profile = profile)
+    editProfileToRepository(currentId, profile)
   }
 
   /**
@@ -143,14 +167,12 @@ class MyProfileViewModel(
 
   // Set all messages error, if invalid field
   fun setError() {
-    _uiState.update { currentState ->
-      currentState.copy(
-          invalidNameMsg = currentState.name?.let { if (it.isBlank()) NAME_EMPTY_MSG else null },
-          invalidEmailMsg = validateEmail(currentState.email ?: ""),
-          invalidLocationMsg =
-              if (currentState.selectedLocation == null) LOCATION_EMPTY_MSG else null,
-          invalidDescMsg =
-              currentState.description?.let { if (it.isBlank()) DESC_EMPTY_MSG else null })
+    _uiState.update {
+      it.copy(
+          invalidNameMsg = if (it.name.isNullOrBlank()) nameMsgError else null,
+          invalidEmailMsg = validateEmail(it.email ?: ""),
+          invalidLocationMsg = if (it.selectedLocation == null) locationMsgError else null,
+          invalidDescMsg = if (it.description.isNullOrBlank()) descMsgError else null)
     }
   }
 
@@ -173,7 +195,7 @@ class MyProfileViewModel(
             description = desc, invalidDescMsg = if (desc.isBlank()) DESC_EMPTY_MSG else null)
   }
 
-  // Checks if the email format is valid
+  /** Validates email format */
   private fun isValidEmail(email: String): Boolean {
     val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
     return email.matches(emailRegex.toRegex())

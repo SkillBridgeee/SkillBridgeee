@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
@@ -5,6 +7,13 @@ plugins {
     alias(libs.plugins.sonar)
     id("jacoco")
     id("com.google.gms.google-services")
+}
+
+// Load local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 // Force JaCoCo version to support Java 21
@@ -38,6 +47,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Inject Google Maps API Key from local.properties
+        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: "DEFAULT_API_KEY"
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     signingConfigs {
@@ -162,6 +175,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.arch.core.testing)
+    testImplementation(libs.mockwebserver)
 
     implementation(libs.okhttp)
 
@@ -183,6 +197,10 @@ dependencies {
 
     // Google Play Services for Google Sign-In
     implementation(libs.play.services.auth)
+
+    // Google Maps
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
 
     // Credential Manager
     implementation(libs.androidx.credentials)
