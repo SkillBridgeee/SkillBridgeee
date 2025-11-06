@@ -24,12 +24,11 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class MapScreenAndroidTest {
 
-  @get:Rule
-  val composeRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   @Before
   fun stubFirebaseAuth() {
-      mockkStatic(FirebaseAuth::class)
+    mockkStatic(FirebaseAuth::class)
     val auth = mockk<FirebaseAuth>(relaxed = true)
     every { FirebaseAuth.getInstance() } returns auth
     every { auth.currentUser } returns null
@@ -37,7 +36,7 @@ class MapScreenAndroidTest {
 
   @After
   fun unstubFirebaseAuth() {
-      unmockkStatic(FirebaseAuth::class)
+    unmockkStatic(FirebaseAuth::class)
   }
 
   private val testProfile =
@@ -47,8 +46,7 @@ class MapScreenAndroidTest {
           email = "john@test.com",
           location = Location(46.5196535, 6.6322734, "Lausanne"),
           levelOfEducation = "CS, 3rd year",
-          description = "Test user"
-      )
+          description = "Test user")
 
   @Test
   fun covers_bookingPins_and_profileMarker_lines() {
@@ -59,8 +57,7 @@ class MapScreenAndroidTest {
             position = LatLng(46.52, 6.63),
             title = "Session X",
             snippet = "Algebra",
-            profile = testProfile
-        )
+            profile = testProfile)
     val state =
         MutableStateFlow(
             MapUiState(
@@ -69,9 +66,7 @@ class MapScreenAndroidTest {
                 bookingPins = listOf(pin),
                 selectedProfile = null,
                 isLoading = false,
-                errorMessage = null
-            )
-        )
+                errorMessage = null))
     every { vm.uiState } returns state
 
     composeRule.setContent { MapScreen(viewModel = vm) }
@@ -89,9 +84,7 @@ class MapScreenAndroidTest {
                 bookingPins = emptyList(),
                 selectedProfile = null,
                 isLoading = false,
-                errorMessage = null
-            )
-        )
+                errorMessage = null))
     every { vm.uiState } returns flow
 
     composeRule.setContent { MapScreen(viewModel = vm) }
