@@ -1,6 +1,5 @@
 package com.android.sample.components
 
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -9,13 +8,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.sample.MainPageViewModel
 import com.android.sample.MyViewModelFactory
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomNavBar
