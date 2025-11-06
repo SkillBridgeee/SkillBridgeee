@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
-import androidx.compose.material3.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -60,8 +59,8 @@ object MyProfileScreenTestTag {
 }
 
 enum class ProfileTab {
-    INFO,
-    RANKING
+  INFO,
+  RANKING
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,40 +80,33 @@ fun MyProfileScreen(
     profileId: String,
     onLogout: () -> Unit = {}
 ) {
-    val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
+  val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
   Scaffold(
       topBar = {},
       bottomBar = {},
       floatingActionButton = {
         // Save profile edits
-        //todo change the button and don't make it floating the rendering is very ugly
-          if( selectedTab.value == ProfileTab.INFO){
-              Button(
-                  onClick = { profileViewModel.editProfile() },
-                  modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON)) {
-                  Text("Save Profile Changes")
+        // todo change the button and don't make it floating the rendering is very ugly
+        if (selectedTab.value == ProfileTab.INFO) {
+          Button(
+              onClick = { profileViewModel.editProfile() },
+              modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON)) {
+                Text("Save Profile Changes")
               }
-
-          }
+        }
       },
-      floatingActionButtonPosition = FabPosition.Center
-  ) { pd ->
-      Column(){
+      floatingActionButtonPosition = FabPosition.Center) { pd ->
+        Column() {
           InfoToRankingRow(selectedTab)
-          Spacer( modifier = Modifier.height(16.dp))
+          Spacer(modifier = Modifier.height(16.dp))
 
-          if(selectedTab.value == ProfileTab.INFO) {
-              ProfileContent(pd, profileId, profileViewModel, onLogout)
+          if (selectedTab.value == ProfileTab.INFO) {
+            ProfileContent(pd, profileId, profileViewModel, onLogout)
+          } else {
+            RankingContent(pd, profileId, profileViewModel)
           }
-          else {
-              RankingContent(pd, profileId, profileViewModel)
-          }
-
-
-
+        }
       }
-
-  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -435,68 +427,62 @@ private fun ProfileLogout(onLogout: () -> Unit) {
 @Composable
 fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
 
-    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val halfWidth = screenWidth / 2
+  val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+  val halfWidth = screenWidth / 2
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .testTag(MyProfileScreenTestTag.INFO_RANKING_BAR)) {
-            Box(
-                modifier = Modifier
-                    .width(halfWidth)
-                    .clickable { selectedTab.value = ProfileTab.INFO }
-                    .padding(vertical = 12.dp)
-                    .testTag(MyProfileScreenTestTag.INFO_TAB),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Info",
-                    fontWeight = if (selectedTab.value == ProfileTab.INFO) FontWeight.Bold else FontWeight.Normal,
-                    color = if (selectedTab.value == ProfileTab.INFO)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
+  Column(modifier = Modifier.fillMaxWidth()) {
+    Row(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INFO_RANKING_BAR)) {
+      Box(
+          modifier =
+              Modifier.width(halfWidth)
+                  .clickable { selectedTab.value = ProfileTab.INFO }
+                  .padding(vertical = 12.dp)
+                  .testTag(MyProfileScreenTestTag.INFO_TAB),
+          contentAlignment = Alignment.Center) {
+            Text(
+                text = "Info",
+                fontWeight =
+                    if (selectedTab.value == ProfileTab.INFO) FontWeight.Bold
+                    else FontWeight.Normal,
+                color =
+                    if (selectedTab.value == ProfileTab.INFO) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+          }
 
-            Box(
-                modifier = Modifier
-                    .width(halfWidth)
-                    .clickable { selectedTab.value = ProfileTab.RANKING }
-                    .padding(vertical = 12.dp)
-                    .testTag(MyProfileScreenTestTag.RANKING_TAB),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Ranking",
-                    fontWeight = if (selectedTab.value == ProfileTab.RANKING) FontWeight.Bold else FontWeight.Normal,
-                    color = if (selectedTab.value == ProfileTab.RANKING)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-            }
-        }
-
-        val offsetX by animateDpAsState(
-            targetValue = if (selectedTab.value == ProfileTab.INFO) 0.dp else halfWidth,
-            label = "tabIndicatorOffset"
-        )
-
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Box(
-                modifier = Modifier
-                    .offset(x = offsetX)
-                    .width(halfWidth)
-                    .height(3.dp)
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
+      Box(
+          modifier =
+              Modifier.width(halfWidth)
+                  .clickable { selectedTab.value = ProfileTab.RANKING }
+                  .padding(vertical = 12.dp)
+                  .testTag(MyProfileScreenTestTag.RANKING_TAB),
+          contentAlignment = Alignment.Center) {
+            Text(
+                text = "Ranking",
+                fontWeight =
+                    if (selectedTab.value == ProfileTab.RANKING) FontWeight.Bold
+                    else FontWeight.Normal,
+                color =
+                    if (selectedTab.value == ProfileTab.RANKING) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+          }
     }
+
+    val offsetX by
+        animateDpAsState(
+            targetValue = if (selectedTab.value == ProfileTab.INFO) 0.dp else halfWidth,
+            label = "tabIndicatorOffset")
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+      Box(
+          modifier =
+              Modifier.offset(x = offsetX)
+                  .width(halfWidth)
+                  .height(3.dp)
+                  .background(MaterialTheme.colorScheme.primary))
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+  }
 }
 
 @Composable
@@ -505,24 +491,20 @@ private fun RankingContent(
     profileId: String,
     profileViewModel: MyProfileViewModel,
 ) {
-    LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
-    val ui by profileViewModel.uiState.collectAsState()
+  LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
+  val ui by profileViewModel.uiState.collectAsState()
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(pd)
-            .padding(16.dp)
-            .testTag(MyProfileScreenTestTag.RANKING_COMING_SOON_TEXT),
-        contentAlignment = Alignment.Center
-    ) {
+  Box(
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(pd)
+              .padding(16.dp)
+              .testTag(MyProfileScreenTestTag.RANKING_COMING_SOON_TEXT),
+      contentAlignment = Alignment.Center) {
         Text(
             text = "Ranking Feature Coming Soon!",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
-    }
+      }
 }
-
-
-

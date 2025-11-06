@@ -367,74 +367,54 @@ class MyProfileScreenTest {
 
   @Test
   fun infoRankingBarIsDisplayed() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RANKING_BAR)
-        .assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RANKING_BAR).assertIsDisplayed()
   }
 
   @Test
   fun rankingTabIsDisplayed() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB)
-        .assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertIsDisplayed()
   }
 
   @Test
   fun infoTabIsDisplayed() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB)
-        .assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed()
   }
 
   @Test
   fun rankingTabIsClickable() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB)
-        .assertHasClickAction()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertHasClickAction()
   }
 
   @Test
-    fun infoTabIsClickable() {
-        compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB)
-            .assertHasClickAction()
-    }
+  fun infoTabIsClickable() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertHasClickAction()
+  }
 
   @Test
-    fun rankingTabToRankings() {
-        // Initially, the Ranking tab content should be displayed
-        compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB)
-            .assertIsDisplayed()
-            .performClick()
+  fun rankingTabToRankings() {
+    // Initially, the Ranking tab content should be displayed
+    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertIsDisplayed().performClick()
 
-        compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_COMING_SOON_TEXT)
-            .assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_COMING_SOON_TEXT).assertIsDisplayed()
+  }
 
+  @Test
+  fun infoRankingBarInRankings() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertIsDisplayed().performClick()
 
-    }
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RANKING_BAR).assertIsDisplayed()
+  }
 
-    @Test
-    fun infoRankingBarInRankings(){
-        compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB)
-            .assertIsDisplayed()
-            .performClick()
+  @Test
+  fun rankingToInfo_SwitchesContent() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertIsDisplayed().performClick()
 
-        compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RANKING_BAR)
-            .assertIsDisplayed()
-    }
+    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_COMING_SOON_TEXT).assertIsDisplayed()
 
-    @Test
-    fun rankingToInfo_SwitchesContent() {
-        compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB)
-            .assertIsDisplayed()
-            .performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed().performClick()
 
-        compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_COMING_SOON_TEXT)
-            .assertIsDisplayed()
-
-        compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB)
-            .assertIsDisplayed()
-            .performClick()
-
-        compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON)
-            .assertIsDisplayed()
-    }
-
+    compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
+  }
 
   // Edge case tests for null/empty values are in MyProfileScreenEdgeCasesTest.kt
 }
