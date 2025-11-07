@@ -1,6 +1,5 @@
 package com.android.sample.ui.components
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,8 +36,18 @@ import com.android.sample.model.booking.color
 import com.android.sample.model.booking.dateString
 import com.android.sample.model.booking.name
 import java.util.Date
+import java.util.Locale
 
-@SuppressLint("DefaultLocale")
+object BookingCardTestTag {
+  const val CARD = "booking_card"
+  const val AVATAR = "booking_card_avatar"
+  const val LISTING_TITLE = "booking_card_listing_title"
+  const val TUTOR_NAME = "booking_card_tutor_name"
+  const val STATUS = "booking_card_status"
+  const val DATE = "booking_card_date"
+  const val PRICE = "booking_card_price"
+}
+
 @Composable
 fun BookingCard(
     modifier: Modifier = Modifier,
@@ -46,13 +55,12 @@ fun BookingCard(
     listingTitle: String,
     listingHourlyRate: Double,
     tutorName: String,
-    onOpenBooking: (String) -> Unit = {},
-    testTags: Pair<String?, String?>? = null
+    onClickBookingCard: (String) -> Unit = {}
 ) {
 
   val statusString = booking.status.name()
   val statusColor = booking.status.color()
-  val priceString = String.format("$%.2f / hr", listingHourlyRate)
+  val priceString = String.format(Locale.getDefault(), "$%.2f / hr", listingHourlyRate)
   val bookingDate = booking.dateString()
 
   Card(
@@ -61,15 +69,17 @@ fun BookingCard(
       border = BorderStroke(0.5.dp, Color.Gray),
       modifier =
           modifier
-              .clickable { onOpenBooking(booking.bookingId) }
-              .testTag(testTags?.first ?: ListingCardTestTags.CARD)) {
+              .clickable { onClickBookingCard(booking.bookingId) }
+              .testTag(BookingCardTestTag.CARD)) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+
           // Avatar circle with tutor initial
           Box(
               modifier =
                   Modifier.size(48.dp)
                       .clip(MaterialTheme.shapes.extraLarge)
-                      .background(MaterialTheme.colorScheme.surfaceVariant),
+                      .background(MaterialTheme.colorScheme.surfaceVariant)
+                      .testTag(BookingCardTestTag.AVATAR),
               contentAlignment = Alignment.Center) {
                 Text(
                     text = tutorName.first().toString(),
@@ -80,12 +90,14 @@ fun BookingCard(
           Spacer(Modifier.width(12.dp))
 
           Column(modifier = Modifier.weight(1f)) {
+            // Listing title
             Text(
                 text = listingTitle,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis)
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag(BookingCardTestTag.LISTING_TITLE))
 
             // Tutor name
             Text(
@@ -93,7 +105,8 @@ fun BookingCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis)
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag(BookingCardTestTag.TUTOR_NAME))
 
             Spacer(Modifier.height(8.dp))
 
@@ -106,7 +119,8 @@ fun BookingCard(
                 modifier =
                     Modifier.border(
                             width = 1.dp, color = statusColor, shape = RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 6.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .testTag(BookingCardTestTag.STATUS))
           }
 
           Spacer(Modifier.width(12.dp))
@@ -117,7 +131,8 @@ fun BookingCard(
             Text(
                 text = bookingDate,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold)
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.testTag(BookingCardTestTag.DATE))
 
             Spacer(Modifier.height(8.dp))
 
@@ -125,7 +140,8 @@ fun BookingCard(
             Text(
                 text = priceString,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold)
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.testTag(BookingCardTestTag.PRICE))
           }
         }
       }
@@ -142,7 +158,7 @@ fun BookingCardPreview() {
         listingTitle = "titre du coursaaaaaaaaaaaaammmmmmmmmmmmmmmmmmmmmmmm",
         listingHourlyRate = 12.0,
         tutorName = "jean mich",
-        onOpenBooking = { println("Open listing $it") },
+        onClickBookingCard = { println("Open listing $it") },
         booking = booking)
 
     val booking1 = Booking(status = BookingStatus.CONFIRMED, sessionStart = Date())
@@ -151,7 +167,7 @@ fun BookingCardPreview() {
         listingTitle = "mm",
         listingHourlyRate = 12.22222,
         tutorName = "asdfasdvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvbbbbbvvbbvbf",
-        onOpenBooking = { println("Open listing $it") },
+        onClickBookingCard = { println("Open listing $it") },
         booking = booking1)
 
     val booking2 = Booking(status = BookingStatus.COMPLETED, sessionStart = Date())
@@ -160,7 +176,7 @@ fun BookingCardPreview() {
         listingTitle = "asdfasdfasdfs",
         listingHourlyRate = 0.33,
         tutorName = "bg ultime",
-        onOpenBooking = { println("Open listing $it") },
+        onClickBookingCard = { println("Open listing $it") },
         booking = booking2)
 
     val booking3 = Booking(status = BookingStatus.CANCELLED, sessionStart = Date())
@@ -169,7 +185,7 @@ fun BookingCardPreview() {
         listingTitle = "bookkke",
         listingHourlyRate = 12.0,
         tutorName = "jean mich",
-        onOpenBooking = { println("Open listing $it") },
+        onClickBookingCard = { println("Open listing $it") },
         booking = booking3)
   }
 }
