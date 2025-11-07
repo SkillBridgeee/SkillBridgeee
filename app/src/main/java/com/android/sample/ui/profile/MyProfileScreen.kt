@@ -522,17 +522,18 @@ fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
           }
         }
 
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .height(indicatorHeight)
-        .testTag(MyProfileScreenTestTag.TAB_INDICATOR)) {
-      Box(
-          modifier =
-              Modifier.offset(x = offsetX)
-                  .width((LocalConfiguration.current.screenWidthDp / tabCount).dp)
-                  .height(indicatorHeight)
-                  .background(MaterialTheme.colorScheme.primary))
-    }
+    Box(
+        modifier =
+            Modifier.fillMaxWidth()
+                .height(indicatorHeight)
+                .testTag(MyProfileScreenTestTag.TAB_INDICATOR)) {
+          Box(
+              modifier =
+                  Modifier.offset(x = offsetX)
+                      .width((LocalConfiguration.current.screenWidthDp / tabCount).dp)
+                      .height(indicatorHeight)
+                      .background(MaterialTheme.colorScheme.primary))
+        }
 
     Spacer(modifier = Modifier.height(16.dp))
   }
