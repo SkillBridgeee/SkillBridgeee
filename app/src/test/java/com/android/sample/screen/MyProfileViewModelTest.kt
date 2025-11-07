@@ -1,15 +1,24 @@
 package com.android.sample.screen
 
+import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
+import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
+import com.android.sample.ui.profile.DESC_EMPTY_MSG
+import com.android.sample.ui.profile.EMAIL_EMPTY_MSG
+import com.android.sample.ui.profile.EMAIL_INVALID_MSG
+import com.android.sample.ui.profile.GPS_FAILED_MSG
+import com.android.sample.ui.profile.LOCATION_EMPTY_MSG
+import com.android.sample.ui.profile.LOCATION_PERMISSION_DENIED_MSG
 import com.android.sample.ui.profile.MyProfileViewModel
+import com.android.sample.ui.profile.NAME_EMPTY_MSG
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -126,6 +135,20 @@ class MyProfileViewModelTest {
         emptyList()
   }
 
+  private class SuccessGpsProvider(
+      private val lat: Double = 12.34,
+      private val lon: Double = 56.78
+  ) :
+      com.android.sample.model.map.GpsLocationProvider(
+          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+    override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
+      val loc = android.location.Location("test")
+      loc.latitude = lat
+      loc.longitude = lon
+      return loc
+    }
+  }
+
   // -------- Helpers ------------------------------------------------------
 
   private fun makeProfile(
@@ -143,6 +166,19 @@ class MyProfileViewModelTest {
       userId: String = "testUid"
   ) = MyProfileViewModel(repo, locRepo, listingRepo, userId)
 
+  private class NullGpsProvider :
+      com.android.sample.model.map.GpsLocationProvider(
+          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+    override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? = null
+  }
+
+  private class SecurityExceptionGpsProvider :
+      com.android.sample.model.map.GpsLocationProvider(
+          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+    override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
+      throw SecurityException("Permission denied")
+    }
+  }
   // -------- Tests --------------------------------------------------------
 
   @Test
@@ -173,7 +209,7 @@ class MyProfileViewModelTest {
     assertNull(vm.uiState.value.invalidNameMsg)
 
     vm.setName("")
-    assertEquals("Name cannot be empty", vm.uiState.value.invalidNameMsg)
+    assertEquals(NAME_EMPTY_MSG, vm.uiState.value.invalidNameMsg)
   }
 
   @Test
@@ -181,10 +217,10 @@ class MyProfileViewModelTest {
     val vm = newVm()
 
     vm.setEmail("")
-    assertEquals("Email cannot be empty", vm.uiState.value.invalidEmailMsg)
+    assertEquals(EMAIL_EMPTY_MSG, vm.uiState.value.invalidEmailMsg)
 
     vm.setEmail("invalid-email")
-    assertEquals("Email is not in the right format", vm.uiState.value.invalidEmailMsg)
+    assertEquals(EMAIL_INVALID_MSG, vm.uiState.value.invalidEmailMsg)
 
     vm.setEmail("good@mail.com")
     assertNull(vm.uiState.value.invalidEmailMsg)
@@ -209,7 +245,7 @@ class MyProfileViewModelTest {
     assertNull(vm.uiState.value.invalidDescMsg)
 
     vm.setDescription("")
-    assertEquals("Description cannot be empty", vm.uiState.value.invalidDescMsg)
+    assertEquals(DESC_EMPTY_MSG, vm.uiState.value.invalidDescMsg)
   }
 
   @Test
@@ -218,10 +254,10 @@ class MyProfileViewModelTest {
     vm.setError()
 
     val ui = vm.uiState.value
-    assertEquals("Name cannot be empty", ui.invalidNameMsg)
-    assertEquals("Email cannot be empty", ui.invalidEmailMsg)
-    assertEquals("Location cannot be empty", ui.invalidLocationMsg)
-    assertEquals("Description cannot be empty", ui.invalidDescMsg)
+    assertEquals(NAME_EMPTY_MSG, ui.invalidNameMsg)
+    assertEquals(EMAIL_EMPTY_MSG, ui.invalidEmailMsg)
+    assertEquals(LOCATION_EMPTY_MSG, ui.invalidLocationMsg)
+    assertEquals(DESC_EMPTY_MSG, ui.invalidDescMsg)
   }
 
   @Test
@@ -263,7 +299,7 @@ class MyProfileViewModelTest {
     advanceUntilIdle()
 
     val ui = vm.uiState.value
-    assertEquals("Location cannot be empty", ui.invalidLocationMsg)
+    assertEquals(LOCATION_EMPTY_MSG, ui.invalidLocationMsg)
     assertTrue(ui.locationSuggestions.isEmpty())
   }
 
@@ -400,6 +436,46 @@ class MyProfileViewModelTest {
     assertNotNull(updated)
     assertEquals("targetUserId", updated?.userId)
     assertEquals("New Name", updated?.name)
+  }
+
+  @Test
+  fun fetchLocationFromGps_success_updatesSelectedLocation_andClearsError() = runTest {
+    val vm = newVm()
+    val provider = SuccessGpsProvider(12.34, 56.78)
+
+    vm.fetchLocationFromGps(provider)
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    // use non-null assertion because the test expects a location to be set
+    assertEquals(12.34, ui.selectedLocation!!.latitude, 0.0001)
+    assertEquals(56.78, ui.selectedLocation!!.longitude, 0.0001)
+    assertEquals("12.34, 56.78", ui.locationQuery)
+    assertNull(ui.invalidLocationMsg)
+  }
+
+  @Test
+  fun fetchLocationFromGps_nullResult_setsFailedToObtainError() = runTest {
+    val vm = newVm()
+    val provider = NullGpsProvider()
+
+    vm.fetchLocationFromGps(provider)
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertEquals(GPS_FAILED_MSG, ui.invalidLocationMsg)
+  }
+
+  @Test
+  fun fetchLocationFromGps_securityException_setsPermissionDeniedError() = runTest {
+    val vm = newVm()
+    val provider = SecurityExceptionGpsProvider()
+
+    vm.fetchLocationFromGps(provider)
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertEquals(LOCATION_PERMISSION_DENIED_MSG, ui.invalidLocationMsg)
   }
 
   @Test

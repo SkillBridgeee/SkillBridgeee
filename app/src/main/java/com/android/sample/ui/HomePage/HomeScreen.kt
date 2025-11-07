@@ -1,4 +1,4 @@
-package com.android.sample
+package com.android.sample.ui.HomePage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,12 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.sample.MainPageViewModel.SubjectColors.getSubjectColor
 import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.TutorCard
 import com.android.sample.ui.theme.PrimaryColor
@@ -57,27 +55,21 @@ object HomeScreenTestTags {
  *
  * @param mainPageViewModel The ViewModel providing UI state and event handlers.
  */
-@Preview
 @Composable
 fun HomeScreen(
-    mainPageViewModel: MainPageViewModel = viewModel(),
+    mainPageViewModel: MainPageViewModel = MainPageViewModel(),
     onNavigateToProfile: (String) -> Unit = {},
-    onNavigateToSubjectList: (MainSubject) -> Unit = {}
+    onNavigateToSubjectList: (MainSubject) -> Unit = {},
+    onNavigateToAddNewListing: () -> Unit
 ) {
   val uiState by mainPageViewModel.uiState.collectAsState()
-  val navigationEvent by mainPageViewModel.navigationEvent.collectAsState()
 
-  LaunchedEffect(navigationEvent) {
-    navigationEvent?.let { profileId ->
-      onNavigateToProfile(profileId)
-      mainPageViewModel.onNavigationHandled()
-    }
-  }
+  LaunchedEffect(Unit) { mainPageViewModel.load() }
 
   Scaffold(
       floatingActionButton = {
         FloatingActionButton(
-            onClick = { mainPageViewModel.onAddTutorClicked("test") }, // Hardcoded user ID for now
+            onClick = { onNavigateToAddNewListing() },
             containerColor = PrimaryColor,
             modifier = Modifier.testTag(HomeScreenTestTags.FAB_ADD)) {
               Icon(Icons.Default.Add, contentDescription = "Add")
@@ -89,7 +81,8 @@ fun HomeScreen(
           Spacer(modifier = Modifier.height(20.dp))
           ExploreSubjects(uiState.subjects, onNavigateToSubjectList)
           Spacer(modifier = Modifier.height(20.dp))
-          TutorsSection(uiState.tutors, onTutorClick = mainPageViewModel::onTutorClick)
+          TutorsSection(
+              tutors = uiState.tutors, onTutorClick = { userId -> onNavigateToProfile(userId) })
         }
       }
 }
@@ -129,7 +122,7 @@ fun ExploreSubjects(subjects: List<MainSubject>, onSubjectCardClicked: (MainSubj
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxWidth()) {
               items(subjects) {
-                val subjectColor = getSubjectColor(it)
+                val subjectColor = SkillsHelper.getColorForSubject(it)
                 SubjectCard(subject = it, color = subjectColor, onSubjectCardClicked)
               }
             }
@@ -152,28 +145,24 @@ fun SubjectCard(
               .clickable { onSubjectCardClicked(subject) }
               .padding(vertical = 16.dp, horizontal = 12.dp)
               .testTag(HomeScreenTestTags.SKILL_CARD)
-              .wrapContentSize(Alignment.Center)
-              .clickable { onSubjectCardClicked(subject) },
-  ) {
-    val textColor = if (color.luminance() > 0.5f) Color.Black else Color.White
+              .wrapContentSize(Alignment.Center)) {
+        val textColor = if (color.luminance() > 0.5f) Color.Black else Color.White
 
-    Text(text = subject.name, color = textColor)
-  }
+        Text(text = subject.name, color = textColor)
+      }
 }
 
 /**
- * Displays a vertical list of top-rated tutors using a [LazyColumn].
+ * Displays a list of all tutors.
  *
- * Each item in the list is rendered using [TutorCard].
- *
- * @param tutors The list of [TutorCardUi] objects to display.
- * @param onTutorClick The callback invoked when the "Book" button is clicked.
+ * Shows a section title and a scrollable list of tutor cards. When a tutor card is clicked,
+ * triggers a callback with the tutor's user ID so the caller can navigate to the tutor’s profile.
  */
 @Composable
 fun TutorsSection(tutors: List<Profile>, onTutorClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
-        text = "Top-Rated Tutors",
+        text = "All Tutors",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
         modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION))
@@ -186,7 +175,7 @@ fun TutorsSection(tutors: List<Profile>, onTutorClick: (String) -> Unit) {
           items(tutors) { profile ->
             TutorCard(
                 profile = profile,
-                onOpenProfile = onTutorClick,
+                onOpenProfile = { onTutorClick(profile.userId) },
                 cardTestTag = HomeScreenTestTags.TUTOR_CARD)
           }
         }

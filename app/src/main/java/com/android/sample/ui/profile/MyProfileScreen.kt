@@ -1,10 +1,15 @@
 package com.android.sample.ui.profile
 
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,11 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.ListingCard
@@ -43,20 +51,11 @@ object MyProfileScreenTestTag {
   const val ROOT_LIST = "profile_list"
   const val LOGOUT_BUTTON = "logoutButton"
   const val ERROR_MSG = "errorMsg"
+  const val PIN_CONTENT_DESC = "Use my location"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-/**
- * Top-level composable for the My Profile screen.
- *
- * This sets up the Scaffold (including the floating Save button) and hosts the screen content.
- *
- * @param profileViewModel ViewModel providing UI state and actions. Defaults to `viewModel()`.
- * @param profileId Optional profile id to load (used when viewing other users). Passed to the
- *   content loader.
- * @param onLogout Callback invoked when the user taps the logout button.
- */
 fun MyProfileScreen(
     profileViewModel: MyProfileViewModel = viewModel(),
     profileId: String,
@@ -66,7 +65,6 @@ fun MyProfileScreen(
       topBar = {},
       bottomBar = {},
       floatingActionButton = {
-        // Save profile edits
         Button(
             onClick = { profileViewModel.editProfile() },
             modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON)) {
@@ -80,17 +78,6 @@ fun MyProfileScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-/**
- * Internal content host for the My Profile screen.
- *
- * Loads the profile when `profileId` changes, observes the `uiState` from the `profileViewModel`,
- * and composes the header, form, listings and logout sections inside a `LazyColumn`.
- *
- * @param pd Content padding from the parent Scaffold.
- * @param profileId Profile id to load.
- * @param profileViewModel ViewModel that exposes UI state and actions.
- * @param onLogout Callback invoked by the logout UI.
- */
 private fun ProfileContent(
     pd: PaddingValues,
     profileId: String,
@@ -100,8 +87,6 @@ private fun ProfileContent(
   LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
   val ui by profileViewModel.uiState.collectAsState()
   val fieldSpacing = 8.dp
-  val locationSuggestions = ui.locationSuggestions
-  val locationQuery = ui.locationQuery
 
   LazyColumn(
       modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
@@ -119,15 +104,7 @@ private fun ProfileContent(
       }
 }
 
-/* ------- Small private composables kept inside the same file ------- */
-
 @Composable
-/**
- * Small header composable showing avatar initial, display name, and role badge.
- *
- * @param name Display name to show. The avatar shows the first character uppercased or empty if
- *   `null`.
- */
 private fun ProfileHeader(name: String?) {
   Column(
       modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
@@ -163,21 +140,6 @@ private fun ProfileHeader(name: String?) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-/**
- * Reusable small wrapper around `OutlinedTextField` used in this screen.
- *
- * Adds consistent `testTag` and supporting error text handling.
- *
- * @param value Current input value.
- * @param onValueChange Change callback.
- * @param label Label text.
- * @param placeholder Placeholder text.
- * @param isError True when field is invalid.
- * @param errorMsg Optional supporting error message to display.
- * @param testTag Test tag applied to the field root for UI tests.
- * @param modifier Modifier applied to the field.
- * @param minLines Minimum visible lines for the field.
- */
 private fun ProfileTextField(
     value: String,
     onValueChange: (String) -> Unit,
@@ -205,17 +167,6 @@ private fun ProfileTextField(
 }
 
 @Composable
-/**
- * Small reusable card-like container used for form sections.
- *
- * Provides consistent width, background, border and inner padding, and exposes a `Column` content
- * slot so callers can place fields inside.
- *
- * @param title Section title shown at the top of the card.
- * @param titleTestTag Optional test tag applied to the title `Text` for UI tests.
- * @param modifier Optional `Modifier` applied to the root container.
- * @param content Column-scoped composable content placed below the title.
- */
 private fun SectionCard(
     title: String,
     titleTestTag: String? = null,
@@ -244,20 +195,23 @@ private fun SectionCard(
 }
 
 @Composable
-/**
- * The editable profile form containing name, email, description and location inputs.
- *
- * Uses [SectionCard] to reduce duplication for the card styling.
- *
- * @param ui Current UI state from the view model.
- * @param profileViewModel ViewModel instance used to update form fields.
- * @param fieldSpacing Vertical spacing between fields.
- */
 private fun ProfileForm(
     ui: MyProfileUIState,
     profileViewModel: MyProfileViewModel,
     fieldSpacing: Dp = 8.dp
 ) {
+  val context = LocalContext.current
+  val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
+  val permissionLauncher =
+      rememberLauncherForActivityResult(RequestPermission()) { granted ->
+        val provider = GpsLocationProvider(context)
+        if (granted) {
+          profileViewModel.fetchLocationFromGps(provider)
+        } else {
+          profileViewModel.onLocationPermissionDenied()
+        }
+      }
+
   Row(
       modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
       horizontalArrangement = Arrangement.Center) {
@@ -299,28 +253,42 @@ private fun ProfileForm(
 
           Spacer(modifier = Modifier.height(fieldSpacing))
 
-          LocationInputField(
-              locationQuery = ui.locationQuery,
-              locationSuggestions = ui.locationSuggestions,
-              onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
-              errorMsg = ui.invalidLocationMsg,
-              onLocationSelected = { location ->
-                profileViewModel.setLocationQuery(location.name)
-                profileViewModel.setLocation(location)
-              })
+          // Location input + pin icon overlay
+          Box(modifier = Modifier.fillMaxWidth()) {
+            LocationInputField(
+                locationQuery = ui.locationQuery,
+                locationSuggestions = ui.locationSuggestions,
+                onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
+                errorMsg = ui.invalidLocationMsg,
+                onLocationSelected = { location ->
+                  profileViewModel.setLocationQuery(location.name)
+                  profileViewModel.setLocation(location)
+                },
+                modifier = Modifier.fillMaxWidth())
+
+            IconButton(
+                onClick = {
+                  val granted =
+                      ContextCompat.checkSelfPermission(context, permission) ==
+                          PackageManager.PERMISSION_GRANTED
+                  if (granted) {
+                    profileViewModel.fetchLocationFromGps(GpsLocationProvider(context))
+                  } else {
+                    permissionLauncher.launch(permission)
+                  }
+                },
+                modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
+                  Icon(
+                      imageVector = Icons.Filled.MyLocation,
+                      contentDescription = MyProfileScreenTestTag.PIN_CONTENT_DESC,
+                      tint = MaterialTheme.colorScheme.primary)
+                }
+          }
         }
       }
 }
 
 @Composable
-/**
- * Listings section showing the user's created listings.
- *
- * Shows a localized loading UI while listings are being fetched so the rest of the profile remains
- * visible.
- *
- * @param ui Current UI state providing listings and profile data for the creator.
- */
 private fun ProfileListings(ui: MyProfileUIState) {
   Spacer(modifier = Modifier.height(16.dp))
   Text(
@@ -370,17 +338,8 @@ private fun ProfileListings(ui: MyProfileUIState) {
 }
 
 @Composable
-/**
- * Logout section — presents a full-width logout button that triggers `onLogout`.
- *
- * The button includes a test tag so tests can find and click it.
- *
- * @param onLogout Callback invoked when the button is clicked.
- */
 private fun ProfileLogout(onLogout: () -> Unit) {
   Spacer(modifier = Modifier.height(16.dp))
-
-  // Use a Button here and attach the testTag to the clickable element so tests can find it.
   Button(
       onClick = onLogout,
       modifier =
@@ -389,6 +348,5 @@ private fun ProfileLogout(onLogout: () -> Unit) {
               .testTag(MyProfileScreenTestTag.LOGOUT_BUTTON)) {
         Text("Logout")
       }
-
   Spacer(modifier = Modifier.height(80.dp))
 }
