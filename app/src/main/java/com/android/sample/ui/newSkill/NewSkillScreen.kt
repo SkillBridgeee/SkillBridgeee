@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.sample.model.listing.ListingType
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.LocationInputField
@@ -49,17 +51,27 @@ object NewSkillScreenTestTag {
   const val SUBJECT_DROPDOWN = "subjectDropdown"
   const val SUBJECT_DROPDOWN_ITEM_PREFIX = "subjectItem"
   const val INVALID_SUBJECT_MSG = "invalidSubjectMsg"
+  const val LISTING_TYPE_FIELD = "listingTypeField"
+  const val LISTING_TYPE_DROPDOWN = "listingTypeDropdown"
+  const val LISTING_TYPE_DROPDOWN_ITEM_PREFIX = "listingTypeItem"
+  const val INVALID_LISTING_TYPE_MSG = "invalidListingTypeMsg"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewSkillScreen(skillViewModel: NewSkillViewModel = NewSkillViewModel(), profileId: String) {
+fun NewSkillScreen(skillViewModel: NewSkillViewModel = viewModel(), profileId: String) {
+  val skillUIState by skillViewModel.uiState.collectAsState()
+  val buttonText = when (skillUIState.listingType) {
+    ListingType.PROPOSAL -> "Create Proposal"
+    ListingType.REQUEST -> "Create Request"
+    null -> "Create Listing"
+  }
 
   Scaffold(
       floatingActionButton = {
         AppButton(
-            text = "Save New Skill",
-            onClick = { skillViewModel.addSkill() },
+            text = buttonText,
+            onClick = { skillViewModel.addListing() },
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center,
@@ -95,11 +107,19 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     .padding(16.dp)) {
               Column {
                 Text(
-                    text = "Create Your Lessons !",
+                    text = "Create Your Listing",
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.testTag(NewSkillScreenTestTag.CREATE_LESSONS_TITLE))
 
                 Spacer(modifier = Modifier.height(10.dp))
+
+                // Listing Type Selector
+                ListingTypeMenu(
+                    selectedListingType = skillUIState.listingType,
+                    skillViewModel = skillViewModel,
+                    skillUIState = skillUIState)
+
+                Spacer(modifier = Modifier.height(textSpace))
 
                 // Title Input
                 OutlinedTextField(
@@ -223,3 +243,54 @@ fun SubjectMenu(
             }
       }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ListingTypeMenu(
+    selectedListingType: ListingType?,
+    skillViewModel: NewSkillViewModel,
+    skillUIState: SkillUIState
+) {
+  var expanded by remember { mutableStateOf(false) }
+  val listingTypes = ListingType.entries.toTypedArray()
+
+  ExposedDropdownMenuBox(
+      expanded = expanded,
+      onExpandedChange = { expanded = it },
+      modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = selectedListingType?.name ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Listing Type") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            isError = skillUIState.invalidListingTypeMsg != null,
+            supportingText = {
+              skillUIState.invalidListingTypeMsg?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_LISTING_TYPE_MSG))
+              }
+            },
+            modifier =
+                Modifier.menuAnchor()
+                    .fillMaxWidth()
+                    .testTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD))
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.testTag(NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN)) {
+              listingTypes.forEach { listingType ->
+                DropdownMenuItem(
+                    text = { Text(listingType.name) },
+                    onClick = {
+                      skillViewModel.setListingType(listingType)
+                      expanded = false
+                    },
+                    modifier =
+                        Modifier.testTag(NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX))
+              }
+            }
+      }
+}
+
