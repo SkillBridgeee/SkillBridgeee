@@ -522,7 +522,10 @@ fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
           }
         }
 
-    Box(modifier = Modifier.fillMaxWidth().height(indicatorHeight)) {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .height(indicatorHeight)
+        .testTag(MyProfileScreenTestTag.TAB_INDICATOR)) {
       Box(
           modifier =
               Modifier.offset(x = offsetX)
