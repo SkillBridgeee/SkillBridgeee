@@ -438,12 +438,12 @@ class MyProfileScreenTest {
 
   @Test
   fun infoRankingBarIsDisplayed() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RANKING_BAR).assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RATING_BAR).assertIsDisplayed()
   }
 
   @Test
   fun rankingTabIsDisplayed() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed()
   }
 
   @Test
@@ -453,7 +453,7 @@ class MyProfileScreenTest {
 
   @Test
   fun rankingTabIsClickable() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertHasClickAction()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertHasClickAction()
   }
 
   @Test
@@ -464,23 +464,23 @@ class MyProfileScreenTest {
   @Test
   fun rankingTabToRankings() {
 
-    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertIsDisplayed().performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
 
-    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_COMING_SOON_TEXT).assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_COMING_SOON_TEXT).assertIsDisplayed()
   }
 
   @Test
   fun infoRankingBarInRankings() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertIsDisplayed().performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
 
-    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RANKING_BAR).assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RATING_BAR).assertIsDisplayed()
   }
 
   @Test
   fun rankingToInfo_SwitchesContent() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertIsDisplayed().performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
 
-    compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_COMING_SOON_TEXT).assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_COMING_SOON_TEXT).assertIsDisplayed()
 
     compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed().performClick()
 

@@ -1,10 +1,10 @@
 package com.android.sample.ui.profile
 
-import android.R.attr.maxWidth
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -63,17 +62,17 @@ object MyProfileScreenTestTag {
   const val ERROR_MSG = "errorMsg"
   const val PIN_CONTENT_DESC = "Use my location"
 
-  const val INFO_RANKING_BAR = "infoRankingBar"
+  const val INFO_RATING_BAR = "infoRankingBar"
   const val INFO_TAB = "infoTab"
-  const val RANKING_TAB = "rankingTab"
+  const val RATING_TAB = "rankingTab"
 
-  const val RANKING_COMING_SOON_TEXT = "rankingComingSoonText"
+  const val RATING_COMING_SOON_TEXT = "rankingComingSoonText"
   const val TAB_INDICATOR = "tabIndicator"
 }
 
 enum class ProfileTab {
   INFO,
-  RANKING
+  RATING
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,7 +118,7 @@ fun MyProfileScreen(
           if (selectedTab.value == ProfileTab.INFO) {
             ProfileContent(pd, ui, profileViewModel, onLogout)
           } else {
-            RankingContent(pd, ui)
+            RatingContent(pd, ui)
           }
         }
       }
@@ -470,11 +469,13 @@ private fun ProfileLogout(onLogout: () -> Unit) {
 
 @Composable
 fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
-
-  val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+  val tabCount = 2
+  val indicatorHeight = 3.dp
 
   Column(modifier = Modifier.fillMaxWidth()) {
-    Row(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INFO_RANKING_BAR)) {
+    // --- Tabs Row ---
+    Row(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INFO_RATING_BAR)) {
+      // Info tab
       Box(
           modifier =
               Modifier.weight(1f)
@@ -492,38 +493,42 @@ fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
           }
 
+      // Ratings tab
       Box(
           modifier =
               Modifier.weight(1f)
-                  .clickable { selectedTab.value = ProfileTab.RANKING }
+                  .clickable { selectedTab.value = ProfileTab.RATING }
                   .padding(vertical = 12.dp)
-                  .testTag(MyProfileScreenTestTag.RANKING_TAB),
+                  .testTag(MyProfileScreenTestTag.RATING_TAB),
           contentAlignment = Alignment.Center) {
             Text(
-                text = "Ranking",
+                text = "Ratings",
                 fontWeight =
-                    if (selectedTab.value == ProfileTab.RANKING) FontWeight.Bold
+                    if (selectedTab.value == ProfileTab.RATING) FontWeight.Bold
                     else FontWeight.Normal,
                 color =
-                    if (selectedTab.value == ProfileTab.RANKING) MaterialTheme.colorScheme.primary
+                    if (selectedTab.value == ProfileTab.RATING) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
           }
     }
 
-    val offsetFraction by
-        animateFloatAsState(
-            targetValue = if (selectedTab.value == ProfileTab.INFO) 0f else 0.5f,
-            label = "tabIndicatorOffset")
+    // --- Indicator Animation ---
+    val transition = updateTransition(targetState = selectedTab.value, label = "tabIndicator")
+    val offsetX by
+        transition.animateDp(label = "tabIndicatorOffset") { tab ->
+          when (tab) {
+            ProfileTab.INFO -> 0.dp
+            ProfileTab.RATING -> 0.5f.dp * LocalConfiguration.current.screenWidthDp
+          }
+        }
 
-    Box(modifier = Modifier.fillMaxWidth().height(3.dp).background(Color.Transparent)) {
+    Box(modifier = Modifier.fillMaxWidth().height(indicatorHeight)) {
       Box(
           modifier =
-              Modifier.fillMaxWidth(0.5f)
-                  .align(Alignment.BottomStart)
-                  .offset(x = with(LocalDensity.current) { (offsetFraction * (maxWidth.toDp())) })
-                  .height(3.dp)
-                  .background(MaterialTheme.colorScheme.primary)
-                  .testTag(MyProfileScreenTestTag.TAB_INDICATOR))
+              Modifier.offset(x = offsetX)
+                  .width((LocalConfiguration.current.screenWidthDp / tabCount).dp)
+                  .height(indicatorHeight)
+                  .background(MaterialTheme.colorScheme.primary))
     }
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -531,7 +536,7 @@ fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
 }
 
 @Composable
-private fun RankingContent(
+private fun RatingContent(
     pd: PaddingValues,
     ui: MyProfileUIState,
 ) {
@@ -541,10 +546,10 @@ private fun RankingContent(
           Modifier.fillMaxWidth()
               .padding(pd)
               .padding(16.dp)
-              .testTag(MyProfileScreenTestTag.RANKING_COMING_SOON_TEXT),
+              .testTag(MyProfileScreenTestTag.RATING_COMING_SOON_TEXT),
       contentAlignment = Alignment.Center) {
         Text(
-            text = "Ranking Feature Coming Soon!",
+            text = "Ratings Feature Coming Soon!",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
