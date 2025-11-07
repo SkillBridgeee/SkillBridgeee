@@ -5,11 +5,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import com.android.sample.*
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
+import com.android.sample.ui.HomePage.ExploreSubjects
+import com.android.sample.ui.HomePage.GreetingSection
+import com.android.sample.ui.HomePage.HomeScreenTestTags
+import com.android.sample.ui.HomePage.SubjectCard
+import com.android.sample.ui.HomePage.TutorsSection
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

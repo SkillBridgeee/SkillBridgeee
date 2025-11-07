@@ -2,12 +2,17 @@ package com.android.sample.ui.profile
 
 import android.R.attr.maxWidth
 import androidx.compose.animation.core.animateFloatAsState
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,14 +27,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.unit.times
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.ListingCard
@@ -53,6 +61,7 @@ object MyProfileScreenTestTag {
   const val ROOT_LIST = "profile_list"
   const val LOGOUT_BUTTON = "logoutButton"
   const val ERROR_MSG = "errorMsg"
+  const val PIN_CONTENT_DESC = "Use my location"
 
   const val INFO_RANKING_BAR = "infoRankingBar"
   const val INFO_TAB = "infoTab"
@@ -138,8 +147,6 @@ private fun ProfileContent(
   val profileId = ui.userId ?: ""
   LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
   val fieldSpacing = 8.dp
-  val locationSuggestions = ui.locationSuggestions
-  val locationQuery = ui.locationQuery
 
   LazyColumn(
       modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
@@ -156,8 +163,6 @@ private fun ProfileContent(
         item { ProfileLogout(onLogout = onLogout) }
       }
 }
-
-/* ------- Small private composables kept inside the same file ------- */
 
 @Composable
 /**
@@ -296,6 +301,18 @@ private fun ProfileForm(
     profileViewModel: MyProfileViewModel,
     fieldSpacing: Dp = 8.dp
 ) {
+  val context = LocalContext.current
+  val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
+  val permissionLauncher =
+      rememberLauncherForActivityResult(RequestPermission()) { granted ->
+        val provider = GpsLocationProvider(context)
+        if (granted) {
+          profileViewModel.fetchLocationFromGps(provider)
+        } else {
+          profileViewModel.onLocationPermissionDenied()
+        }
+      }
+
   Row(
       modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
       horizontalArrangement = Arrangement.Center) {
@@ -337,15 +354,37 @@ private fun ProfileForm(
 
           Spacer(modifier = Modifier.height(fieldSpacing))
 
-          LocationInputField(
-              locationQuery = ui.locationQuery,
-              locationSuggestions = ui.locationSuggestions,
-              onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
-              errorMsg = ui.invalidLocationMsg,
-              onLocationSelected = { location ->
-                profileViewModel.setLocationQuery(location.name)
-                profileViewModel.setLocation(location)
-              })
+          // Location input + pin icon overlay
+          Box(modifier = Modifier.fillMaxWidth()) {
+            LocationInputField(
+                locationQuery = ui.locationQuery,
+                locationSuggestions = ui.locationSuggestions,
+                onLocationQueryChange = { profileViewModel.setLocationQuery(it) },
+                errorMsg = ui.invalidLocationMsg,
+                onLocationSelected = { location ->
+                  profileViewModel.setLocationQuery(location.name)
+                  profileViewModel.setLocation(location)
+                },
+                modifier = Modifier.fillMaxWidth())
+
+            IconButton(
+                onClick = {
+                  val granted =
+                      ContextCompat.checkSelfPermission(context, permission) ==
+                          PackageManager.PERMISSION_GRANTED
+                  if (granted) {
+                    profileViewModel.fetchLocationFromGps(GpsLocationProvider(context))
+                  } else {
+                    permissionLauncher.launch(permission)
+                  }
+                },
+                modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
+                  Icon(
+                      imageVector = Icons.Filled.MyLocation,
+                      contentDescription = MyProfileScreenTestTag.PIN_CONTENT_DESC,
+                      tint = MaterialTheme.colorScheme.primary)
+                }
+          }
         }
       }
 }
@@ -417,8 +456,6 @@ private fun ProfileListings(ui: MyProfileUIState) {
  */
 private fun ProfileLogout(onLogout: () -> Unit) {
   Spacer(modifier = Modifier.height(16.dp))
-
-  // Use a Button here and attach the testTag to the clickable element so tests can find it.
   Button(
       onClick = onLogout,
       modifier =

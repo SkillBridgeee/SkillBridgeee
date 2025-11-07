@@ -7,6 +7,7 @@ import com.android.sample.HttpClientProvider
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
@@ -23,11 +24,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * UI state for the MyProfile screen.
- *
- * Holds all fields needed for profile display + editing and the user's created listings.
- */
+// Message constants (kept at file start so tests can reference exact text)
+const val NAME_EMPTY_MSG = "Name cannot be empty"
+const val EMAIL_EMPTY_MSG = "Email cannot be empty"
+const val EMAIL_INVALID_MSG = "Email is not in the right format"
+const val LOCATION_EMPTY_MSG = "Location cannot be empty"
+const val DESC_EMPTY_MSG = "Description cannot be empty"
+const val GPS_FAILED_MSG = "Failed to obtain GPS location"
+const val LOCATION_PERMISSION_DENIED_MSG = "Location permission denied"
+const val UPDATE_PROFILE_FAILED_MSG = "Failed to update profile. Please try again."
+
+/** UI state for the MyProfile screen. Holds all data needed to edit a profile */
 data class MyProfileUIState(
     val userId: String? = null,
     val name: String? = "",
@@ -94,17 +101,12 @@ class MyProfileViewModel(
   private val locationMsgError = "Location cannot be empty"
   private val descMsgError = "Description cannot be empty"
 
-  /**
-   * Loads profile information and user's own listings.
-   *
-   * @param profileUserId Optional — used when viewing another user's profile.
-   */
+  /** Loads the profile data (to be implemented) */
   fun loadProfile(profileUserId: String? = null) {
     val currentId = profileUserId ?: userId
     viewModelScope.launch {
       try {
         val profile = profileRepository.getProfile(userId = currentId)
-
         _uiState.value =
             MyProfileUIState(
                 userId = currentId,
@@ -149,9 +151,9 @@ class MyProfileViewModel(
   }
 
   /**
-   * Attempts to update the profile.
+   * Edits a Profile.
    *
-   * If data is invalid, sets validation messages instead.
+   * @return true if the update process was started, false if validation failed.
    */
   fun editProfile() {
     val state = _uiState.value
@@ -159,7 +161,6 @@ class MyProfileViewModel(
       setError()
       return
     }
-
     val currentId = state.userId ?: userId
     val profile =
         Profile(
@@ -172,7 +173,12 @@ class MyProfileViewModel(
     editProfileToRepository(currentId, profile)
   }
 
-  /** Saves updated profile to repository */
+  /**
+   * Edits a Profile in the repository.
+   *
+   * @param userId The ID of the profile to be edited.
+   * @param profile The Profile object containing the new values.
+   */
   private fun editProfileToRepository(userId: String, profile: Profile) {
     viewModelScope.launch {
       _uiState.update { it.copy(updateError = null) }
@@ -180,12 +186,12 @@ class MyProfileViewModel(
         profileRepository.updateProfile(userId = userId, profile = profile)
       } catch (e: Exception) {
         Log.e(TAG, "Error updating profile for user: $userId", e)
-        _uiState.update { it.copy(updateError = "Failed to update profile. Please try again.") }
+        _uiState.update { it.copy(updateError = UPDATE_PROFILE_FAILED_MSG) }
       }
     }
   }
 
-  /** Fills all validation messages if user tries to save invalid input */
+  // Set all messages error, if invalid field
   fun setError() {
     _uiState.update {
       it.copy(
@@ -196,21 +202,23 @@ class MyProfileViewModel(
     }
   }
 
-  /** Input field setters + validation */
+  // Updates the name and validates it
   fun setName(name: String) {
     _uiState.value =
         _uiState.value.copy(
-            name = name, invalidNameMsg = if (name.isBlank()) nameMsgError else null)
+            name = name, invalidNameMsg = if (name.isBlank()) NAME_EMPTY_MSG else null)
   }
 
+  // Updates the email and validates it
   fun setEmail(email: String) {
     _uiState.value = _uiState.value.copy(email = email, invalidEmailMsg = validateEmail(email))
   }
 
+  // Updates the desc and validates it
   fun setDescription(desc: String) {
     _uiState.value =
         _uiState.value.copy(
-            description = desc, invalidDescMsg = if (desc.isBlank()) descMsgError else null)
+            description = desc, invalidDescMsg = if (desc.isBlank()) DESC_EMPTY_MSG else null)
   }
 
   /** Validates email format */
@@ -219,21 +227,34 @@ class MyProfileViewModel(
     return email.matches(emailRegex.toRegex())
   }
 
-  private fun validateEmail(email: String): String? =
-      when {
-        email.isBlank() -> emailEmptyMsgError
-        !isValidEmail(email) -> emailInvalidMsgError
-        else -> null
-      }
+  // Return the good error message corresponding of the given input
+  private fun validateEmail(email: String): String? {
+    return when {
+      email.isBlank() -> EMAIL_EMPTY_MSG
+      !isValidEmail(email) -> EMAIL_INVALID_MSG
+      else -> null
+    }
+  }
 
-  /** Selects a location from suggestions */
+  // Update the selected location and the locationQuery
   fun setLocation(location: Location) {
     _uiState.value = _uiState.value.copy(selectedLocation = location, locationQuery = location.name)
   }
 
-  /** Updates location query and performs delayed search for suggestions. */
+  /**
+   * Updates the location query in the UI state and fetches matching location suggestions.
+   *
+   * This function updates the current `locationQuery` value and triggers a search operation if the
+   * query is not empty. The search is performed asynchronously within the `viewModelScope` using
+   * the [locationRepository].
+   *
+   * @param query The new location search query entered by the user.
+   * @see locationRepository
+   * @see viewModelScope
+   */
   fun setLocationQuery(query: String) {
     _uiState.value = _uiState.value.copy(locationQuery = query)
+
     locationSearchJob?.cancel()
 
     if (query.isNotEmpty()) {
@@ -252,8 +273,46 @@ class MyProfileViewModel(
       _uiState.value =
           _uiState.value.copy(
               locationSuggestions = emptyList(),
-              invalidLocationMsg = locationMsgError,
+              invalidLocationMsg = LOCATION_EMPTY_MSG,
               selectedLocation = null)
     }
+  }
+
+  /**
+   * Fetch a GPS fix using the provided [GpsLocationProvider]. Updates the UI state with a simple
+   * lat,lng string in `locationQuery` on success and sets an appropriate `invalidLocationMsg` on
+   * failure (permission/error).
+   */
+  fun fetchLocationFromGps(provider: GpsLocationProvider) {
+    viewModelScope.launch {
+      try {
+        // attempt to get a location (provider may block) — consider adding a timeout here if
+        // desired
+        val androidLoc = provider.getCurrentLocation()
+        if (androidLoc != null) {
+          val mapLocation =
+              com.android.sample.model.map.Location(
+                  latitude = androidLoc.latitude,
+                  longitude = androidLoc.longitude,
+                  name = "${androidLoc.latitude}, ${androidLoc.longitude}")
+          _uiState.update {
+            it.copy(
+                selectedLocation = mapLocation,
+                locationQuery = mapLocation.name,
+                invalidLocationMsg = null)
+          }
+        } else {
+          _uiState.update { it.copy(invalidLocationMsg = GPS_FAILED_MSG) }
+        }
+      } catch (se: SecurityException) {
+        _uiState.update { it.copy(invalidLocationMsg = LOCATION_PERMISSION_DENIED_MSG) }
+      } catch (e: Exception) {
+        _uiState.update { it.copy(invalidLocationMsg = GPS_FAILED_MSG) }
+      }
+    }
+  }
+
+  fun onLocationPermissionDenied() {
+    _uiState.update { it.copy(invalidLocationMsg = LOCATION_PERMISSION_DENIED_MSG) }
   }
 }
