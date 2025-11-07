@@ -20,6 +20,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,8 +76,9 @@ fun BookingCard(
 
   val statusString = booking.status.name()
   val statusColor = booking.status.color()
-  val priceString = String.format(Locale.getDefault(), "$%.2f / hr", listingHourlyRate)
   val bookingDate = booking.dateString()
+  val priceString =
+      remember(listingHourlyRate) { String.format(Locale.ROOT, "$%.2f / hr", listingHourlyRate) }
 
   Card(
       shape = MaterialTheme.shapes.large,
@@ -142,7 +144,7 @@ fun BookingCard(
 
           Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center) {
 
-            // date
+            // Date
             Text(
                 text = bookingDate,
                 style = MaterialTheme.typography.bodyLarge,
