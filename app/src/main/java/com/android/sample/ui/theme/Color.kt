@@ -46,3 +46,8 @@ val artsColor = Color(0xFF59E6BE)
 val technologyColor = Color(0xFF50E9A9)
 val languagesColor = Color(0xFF47EA92)
 val craftsColor = Color(0xFF43EA7F)
+
+val bkgPendingColor = Color(0xFF2196F3)
+val bkgConfirmedColor = Color(0xFF43EA7F)
+val bkgCompletedColor = Color(0xFF808080)
+val bkgCancelledColor = Color(0xFFF44336)
