@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.user.FakeProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.android.sample.ui.signup.SignUpViewModel
@@ -73,11 +74,19 @@ class SignUpScreenRobolectricTest {
       }
     }
 
+    // Wait for composition
+    rule.waitForIdle()
+
     rule.onNodeWithTag(SignUpScreenTestTags.NAME, useUnmergedTree = false).performTextInput("Élise")
     rule
         .onNodeWithTag(SignUpScreenTestTags.SURNAME, useUnmergedTree = false)
         .performTextInput("Müller")
-    rule.onNodeWithTag(SignUpScreenTestTags.ADDRESS, useUnmergedTree = false).performTextInput("S1")
+
+    // For the LocationInputField, we need to target the actual TextField inside it
+    rule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .performTextInput("S1")
+
     rule
         .onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION, useUnmergedTree = false)
         .performTextInput("CS")
@@ -88,6 +97,9 @@ class SignUpScreenRobolectricTest {
     rule
         .onNodeWithTag(SignUpScreenTestTags.PASSWORD, useUnmergedTree = false)
         .performTextInput("passw0rd!")
+
+    // Wait for validation
+    rule.waitForIdle()
 
     rule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP, useUnmergedTree = false).assertIsEnabled()
   }

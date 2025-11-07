@@ -11,17 +11,18 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.android.sample.HomeScreen
-import com.android.sample.MainPageViewModel
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.skill.MainSubject
+import com.android.sample.ui.HomePage.HomeScreen
+import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileViewModel
+import com.android.sample.ui.profile.ProfileScreen
 import com.android.sample.ui.screens.newSkill.NewSkillScreen
 import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpViewModel
@@ -63,6 +64,7 @@ fun AppNavGraph(
     onGoogleSignIn: () -> Unit
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
+  val profileID = remember { mutableStateOf("") }
 
   NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
     composable(NavRoutes.LOGIN) {
@@ -81,7 +83,10 @@ fun AppNavGraph(
 
     composable(NavRoutes.MAP) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MAP) }
-      MapScreen()
+      MapScreen(
+          onProfileClick = { profileId ->
+            navController.navigate(NavRoutes.createProfileRoute(profileId))
+          })
     }
 
     composable(NavRoutes.PROFILE) {
@@ -102,12 +107,14 @@ fun AppNavGraph(
       HomeScreen(
           mainPageViewModel = mainPageViewModel,
           onNavigateToProfile = { profileId ->
-            navController.navigate(NavRoutes.createNewSkillRoute(profileId))
+            profileID.value = profileId
+            navController.navigate(NavRoutes.OTHERS_PROFILE)
           },
           onNavigateToSubjectList = { subject ->
             academicSubject.value = subject
             navController.navigate(NavRoutes.SKILLS)
-          })
+          },
+          onNavigateToAddNewListing = { navController.navigate(NavRoutes.NEW_SKILL) })
     }
 
     composable(NavRoutes.SKILLS) { backStackEntry ->
@@ -163,5 +170,10 @@ fun AppNavGraph(
                 }
               })
         }
+    composable(route = NavRoutes.OTHERS_PROFILE) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
+      // todo add other parameters
+      ProfileScreen(profileId = profileID.value)
+    }
   }
 }

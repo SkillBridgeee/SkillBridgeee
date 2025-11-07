@@ -72,6 +72,17 @@ jobs:
         run: |
           chmod +x ./gradlew
 
+      - name: Create local.properties
+        env:
+          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
+        run: |
+          if [ -n "$LOCAL_PROPERTIES" ]; then
+            echo "$LOCAL_PROPERTIES" > ./local.properties
+          else
+            echo "::warning::LOCAL_PROPERTIES secret not set. Creating default local.properties."
+            echo "MAPS_API_KEY=DEFAULT_API_KEY" > ./local.properties
+          fi
+
       - name: Decode google-services.json
         env:
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}

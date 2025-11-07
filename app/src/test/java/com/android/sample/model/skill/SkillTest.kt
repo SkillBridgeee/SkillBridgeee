@@ -1,5 +1,13 @@
 package com.android.sample.model.skill
 
+import com.android.sample.model.skill.SkillsHelper.getColorForSubject
+import com.android.sample.ui.theme.academicsColor
+import com.android.sample.ui.theme.artsColor
+import com.android.sample.ui.theme.craftsColor
+import com.android.sample.ui.theme.languagesColor
+import com.android.sample.ui.theme.musicColor
+import com.android.sample.ui.theme.sportsColor
+import com.android.sample.ui.theme.technologyColor
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -327,5 +335,26 @@ class EnumTest {
 
     assertEquals("ACADEMICS", MainSubject.ACADEMICS.name)
     assertEquals("SPORTS", MainSubject.SPORTS.name)
+  }
+
+  @Test
+  fun `test getColorForSubject mapping for all MainSubject values`() {
+    val expectedColors =
+        mapOf(
+            MainSubject.ACADEMICS to academicsColor,
+            MainSubject.SPORTS to sportsColor,
+            MainSubject.MUSIC to musicColor,
+            MainSubject.ARTS to artsColor,
+            MainSubject.TECHNOLOGY to technologyColor,
+            MainSubject.LANGUAGES to languagesColor,
+            MainSubject.CRAFTS to craftsColor)
+
+    MainSubject.values().forEach { subject ->
+      val expected = expectedColors[subject]
+      val actual = getColorForSubject(subject)
+
+      assertEquals("Color mismatch for subject $subject", expected, actual)
+      assertNotNull("Color should not be null for $subject", actual)
+    }
   }
 }

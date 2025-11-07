@@ -14,7 +14,8 @@ data class SignUpRequest(
     val password: String,
     val levelOfEducation: String,
     val description: String,
-    val address: String
+    val address: String,
+    val location: Location? = null
 )
 
 /** Sealed class representing the result of a sign-up operation. */
@@ -110,13 +111,17 @@ class SignUpUseCase(
             .filter { it.isNotEmpty() }
             .joinToString(" ")
 
+    // Use the selected location if available, otherwise create a Location with just the address
+    // name
+    val location = request.location ?: Location(name = request.address.trim())
+
     return Profile(
         userId = userId,
         name = fullName,
         email = request.email.trim(),
         levelOfEducation = request.levelOfEducation.trim(),
         description = request.description.trim(),
-        location = Location(name = request.address.trim()))
+        location = location)
   }
 
   /** Maps Firebase authentication exceptions to user-friendly error messages. */

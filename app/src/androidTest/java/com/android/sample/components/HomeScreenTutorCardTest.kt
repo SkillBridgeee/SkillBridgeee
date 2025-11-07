@@ -6,9 +6,6 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.sample.HomeScreen
-import com.android.sample.HomeScreenTestTags
-import com.android.sample.MainPageViewModel
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
@@ -21,6 +18,9 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.HomePage.HomeScreen
+import com.android.sample.ui.HomePage.HomeScreenTestTags
+import com.android.sample.ui.HomePage.MainPageViewModel
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -139,7 +139,8 @@ class HomeScreenTutorCardTest {
     composeRule.setContent {
       HomeScreen(
           mainPageViewModel = vm,
-          onNavigateToProfile = { profileId -> navigatedToProfileId = profileId })
+          onNavigateToProfile = { profileId -> navigatedToProfileId = profileId },
+          onNavigateToAddNewListing = {})
     }
 
     // Wait for UI + coroutines to settle
