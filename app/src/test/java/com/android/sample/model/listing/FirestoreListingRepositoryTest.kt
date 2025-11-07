@@ -9,6 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import io.mockk.every
 import io.mockk.mockk
 import java.util.Date
+import kotlin.text.set
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
@@ -74,6 +75,191 @@ class FirestoreListingRepositoryTest : RepositoryTest() {
     repository.addProposal(testProposal)
     val retrieved = repository.getListing("proposal1")
     assertEquals(testProposal, retrieved)
+  }
+
+  @Test
+  fun getNewUidReturnsUniqueIds() {
+    val uid1 = repository.getNewUid()
+    val uid2 = repository.getNewUid()
+    assertNotNull(uid1)
+    assertNotNull(uid2)
+    assertTrue(uid1 != uid2)
+  }
+
+  @Test
+  fun getAllListingsReturnsEmptyListWhenNoListings() = runTest {
+    val listings = repository.getAllListings()
+    assertEquals(0, listings.size)
+  }
+
+  @Test
+  fun getProposalsReturnsEmptyListWhenNoProposals() = runTest {
+    repository.addRequest(testRequest)
+    val proposals = repository.getProposals()
+    assertEquals(0, proposals.size)
+  }
+
+  @Test
+  fun getRequestsReturnsEmptyListWhenNoRequests() = runTest {
+    repository.addProposal(testProposal)
+    val requests = repository.getRequests()
+    assertEquals(0, requests.size)
+  }
+
+  @Test
+  fun getListingsByUserReturnsEmptyListWhenNoListings() = runTest {
+    val listings = repository.getListingsByUser(testUserId)
+    assertEquals(0, listings.size)
+  }
+
+  @Test
+  fun updateNonExistentListingThrowsException() {
+    val updatedProposal = testProposal.copy(description = "Updated")
+    assertThrows(Exception::class.java) {
+      runTest { repository.updateListing("non-existent", updatedProposal) }
+    }
+  }
+
+  @Test
+  fun updateListingOfAnotherUserThrowsException() = runTest {
+    // Add a listing as another user
+    every { auth.currentUser?.uid } returns "another-user"
+    repository.addProposal(testProposal.copy(creatorUserId = "another-user", listingId = "p1"))
+
+    // Switch back to the main test user and try to update it
+    every { auth.currentUser?.uid } returns testUserId
+    val updatedProposal = testProposal.copy(listingId = "p1", description = "Hacked")
+    assertThrows(Exception::class.java) {
+      runTest { repository.updateListing("p1", updatedProposal) }
+    }
+  }
+
+  @Test
+  fun deleteNonExistentListingThrowsException() {
+    assertThrows(Exception::class.java) { runTest { repository.deleteListing("non-existent") } }
+  }
+
+  @Test
+  fun deactivateNonExistentListingThrowsException() {
+    assertThrows(Exception::class.java) { runTest { repository.deactivateListing("non-existent") } }
+  }
+
+  @Test
+  fun deactivateListingOfAnotherUserThrowsException() = runTest {
+    // Add a listing as another user
+    every { auth.currentUser?.uid } returns "another-user"
+    repository.addProposal(testProposal.copy(creatorUserId = "another-user", listingId = "p1"))
+
+    // Switch back to the main test user and try to deactivate it
+    every { auth.currentUser?.uid } returns testUserId
+    assertThrows(Exception::class.java) { runTest { repository.deactivateListing("p1") } }
+  }
+
+  @Test
+  fun searchBySkillReturnsEmptyListWhenNoMatches() = runTest {
+    repository.addProposal(testProposal)
+    val results = repository.searchBySkill(Skill(skill = "Python"))
+    assertEquals(0, results.size)
+  }
+
+  @Test
+  fun searchBySkillReturnsMultipleMatches() = runTest {
+    val proposal1 = testProposal.copy(listingId = "p1")
+    val proposal2 = testProposal.copy(listingId = "p2")
+    repository.addProposal(proposal1)
+    repository.addProposal(proposal2)
+
+    val results = repository.searchBySkill(Skill(skill = "Android"))
+    assertEquals(2, results.size)
+  }
+
+  @Test
+  fun searchByLocationThrowsNotImplementedException() {
+    assertThrows(NotImplementedError::class.java) {
+      runTest {
+        repository.searchByLocation(com.android.sample.model.map.Location(0.0, 0.0, "Test"), 10.0)
+      }
+    }
+  }
+
+  @Test
+  fun addProposalThrowsExceptionWhenUserNotAuthenticated() {
+    every { auth.currentUser } returns null
+
+    assertThrows(Exception::class.java) { runTest { repository.addProposal(testProposal) } }
+  }
+
+  @Test
+  fun addRequestThrowsExceptionWhenUserNotAuthenticated() {
+    every { auth.currentUser } returns null
+
+    assertThrows(Exception::class.java) { runTest { repository.addRequest(testRequest) } }
+  }
+
+  @Test
+  fun getListingsHandlesInvalidTypeInDatabase() = runTest {
+    // Manually insert a document with an invalid type
+    firestore
+        .collection(LISTINGS_COLLECTION_PATH)
+        .document("invalid1")
+        .set(
+            mapOf(
+                "listingId" to "invalid1",
+                "creatorUserId" to testUserId,
+                "type" to "INVALID_TYPE",
+                "description" to "Invalid"))
+        .await()
+
+    val listings = repository.getAllListings()
+    // The invalid listing should be filtered out
+    assertEquals(0, listings.size)
+  }
+
+  @Test
+  fun getListingsHandlesMissingTypeField() = runTest {
+    // Manually insert a document without a type field
+    firestore
+        .collection(LISTINGS_COLLECTION_PATH)
+        .document("notype1")
+        .set(
+            mapOf(
+                "listingId" to "notype1",
+                "creatorUserId" to testUserId,
+                "description" to "No type"))
+        .await()
+
+    val listings = repository.getAllListings()
+    // The document without type should be filtered out
+    assertEquals(0, listings.size)
+  }
+
+  @Test
+  fun getListingsByUserWithMultipleListings() = runTest {
+    val proposal1 = testProposal.copy(listingId = "p1")
+    val proposal2 = testProposal.copy(listingId = "p2")
+    val request1 = testRequest.copy(listingId = "r1")
+
+    repository.addProposal(proposal1)
+    repository.addProposal(proposal2)
+    repository.addRequest(request1)
+
+    val userListings = repository.getListingsByUser(testUserId)
+    assertEquals(3, userListings.size)
+  }
+
+  @Test
+  fun updateListingPreservesListingId() = runTest {
+    repository.addProposal(testProposal)
+    val updatedProposal =
+        testProposal.copy(
+            listingId = "different-id", // Try to change ID
+            description = "Updated")
+    repository.updateListing("proposal1", updatedProposal)
+
+    // Original ID should still exist
+    val retrieved = repository.getListing("proposal1")
+    assertNotNull(retrieved)
+    assertEquals("Updated", retrieved?.description)
   }
 
   @Test

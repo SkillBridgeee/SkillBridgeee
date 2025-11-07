@@ -7,6 +7,8 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import io.mockk.every
 import io.mockk.mockk
+import kotlin.collections.get
+import kotlin.text.set
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
@@ -107,6 +109,189 @@ class FirestoreRatingRepositoryTest : RepositoryTest() {
     val allRatings = ratingRepository.getAllRatings()
     assertEquals(1, allRatings.size)
     assertEquals("rating1", allRatings[0].ratingId)
+  }
+
+  @Test
+  fun `addRating throws when fromUserId is not current user`() = runTest {
+    val rating =
+        Rating(
+            ratingId = "rating1",
+            fromUserId = otherUserId, // not current user
+            toUserId = testUserId,
+            ratingType = RatingType.TUTOR,
+            targetObjectId = "listing1")
+
+    val exception =
+        assertThrows(Exception::class.java) { runBlocking { ratingRepository.addRating(rating) } }
+    assertTrue(exception.message?.contains("Access denied") == true)
+  }
+
+  @Test
+  fun `addRating throws when rating yourself`() = runTest {
+    val rating =
+        Rating(
+            ratingId = "rating1",
+            fromUserId = testUserId,
+            toUserId = testUserId, // rating yourself
+            ratingType = RatingType.TUTOR,
+            targetObjectId = "listing1")
+
+    val exception =
+        assertThrows(Exception::class.java) { runBlocking { ratingRepository.addRating(rating) } }
+    assertTrue(exception.message?.contains("cannot rate yourself") == true)
+  }
+
+  @Test
+  fun `getRating throws when user has no access to rating`() = runTest {
+    val rating =
+        Rating(
+            ratingId = "rating1",
+            fromUserId = otherUserId,
+            toUserId = "third-user-id",
+            ratingType = RatingType.TUTOR,
+            targetObjectId = "listing1")
+    // Add directly to firestore bypassing repository
+    firestore.collection("ratings").document(rating.ratingId).set(rating).await()
+
+    val exception =
+        assertThrows(Exception::class.java) {
+          runBlocking { ratingRepository.getRating("rating1") }
+        }
+    assertTrue(exception.message?.contains("Access denied") == true)
+  }
+
+  @Test
+  fun `updateRating throws when updating rating not created by current user`() = runTest {
+    val rating =
+        Rating(
+            ratingId = "rating1",
+            fromUserId = otherUserId,
+            toUserId = testUserId,
+            ratingType = RatingType.STUDENT,
+            targetObjectId = "listing1")
+    // Add directly to firestore
+    firestore.collection("ratings").document(rating.ratingId).set(rating).await()
+
+    val updatedRating = rating.copy(starRating = StarRating.FIVE)
+    val exception =
+        assertThrows(Exception::class.java) {
+          runBlocking { ratingRepository.updateRating("rating1", updatedRating) }
+        }
+    assertTrue(exception.message?.contains("Access denied") == true)
+  }
+
+  @Test
+  fun `deleteRating throws when deleting rating not created by current user`() = runTest {
+    val rating =
+        Rating(
+            ratingId = "rating1",
+            fromUserId = otherUserId,
+            toUserId = testUserId,
+            ratingType = RatingType.STUDENT,
+            targetObjectId = "listing1")
+    // Add directly to firestore
+    firestore.collection("ratings").document(rating.ratingId).set(rating).await()
+
+    val exception =
+        assertThrows(Exception::class.java) {
+          runBlocking { ratingRepository.deleteRating("rating1") }
+        }
+    assertTrue(exception.message?.contains("Access denied") == true)
+  }
+
+  @Test
+  fun `getTutorRatingsOfUser returns only tutor ratings`() = runTest {
+    val rating1 =
+        Rating(
+            ratingId = "rating1",
+            fromUserId = otherUserId,
+            toUserId = testUserId,
+            ratingType = RatingType.TUTOR,
+            targetObjectId = testUserId)
+    val rating2 =
+        Rating(
+            ratingId = "rating2",
+            fromUserId = otherUserId,
+            toUserId = testUserId,
+            ratingType = RatingType.STUDENT,
+            targetObjectId = testUserId)
+    // Add directly
+    firestore.collection("ratings").document(rating1.ratingId).set(rating1).await()
+    firestore.collection("ratings").document(rating2.ratingId).set(rating2).await()
+
+    val tutorRatings = ratingRepository.getTutorRatingsOfUser(testUserId)
+    assertEquals(1, tutorRatings.size)
+    assertEquals(RatingType.TUTOR, tutorRatings[0].ratingType)
+  }
+
+  @Test
+  fun `getStudentRatingsOfUser returns only student ratings`() = runTest {
+    val rating1 =
+        Rating(
+            ratingId = "rating1",
+            fromUserId = otherUserId,
+            toUserId = testUserId,
+            ratingType = RatingType.STUDENT,
+            targetObjectId = testUserId)
+    val rating2 =
+        Rating(
+            ratingId = "rating2",
+            fromUserId = otherUserId,
+            toUserId = testUserId,
+            ratingType = RatingType.TUTOR,
+            targetObjectId = testUserId)
+    // Add directly
+    firestore.collection("ratings").document(rating1.ratingId).set(rating1).await()
+    firestore.collection("ratings").document(rating2.ratingId).set(rating2).await()
+
+    val studentRatings = ratingRepository.getStudentRatingsOfUser(testUserId)
+    assertEquals(1, studentRatings.size)
+    assertEquals(RatingType.STUDENT, studentRatings[0].ratingType)
+  }
+
+  @Test
+  fun `currentUserId throws when user not authenticated`() {
+    val authNoUser = mockk<FirebaseAuth>()
+    every { authNoUser.currentUser } returns null
+    val repo = FirestoreRatingRepository(firestore, authNoUser)
+
+    val exception = assertThrows(Exception::class.java) { runBlocking { repo.getAllRatings() } }
+    assertTrue(exception.message?.contains("not authenticated") == true)
+  }
+
+  @Test
+  fun `updateRating works when rating exists and user has access`() = runTest {
+    val rating =
+        Rating(
+            ratingId = "rating1",
+            fromUserId = testUserId,
+            toUserId = otherUserId,
+            starRating = StarRating.TWO,
+            ratingType = RatingType.LISTING,
+            targetObjectId = "listing1")
+    ratingRepository.addRating(rating)
+
+    val updated = rating.copy(starRating = StarRating.FIVE)
+    ratingRepository.updateRating("rating1", updated)
+
+    val retrieved = ratingRepository.getRating("rating1")
+    assertEquals(StarRating.FIVE, retrieved?.starRating)
+  }
+
+  @Test
+  fun `deleteRating works when rating exists and user has access`() = runTest {
+    val rating =
+        Rating(
+            ratingId = "rating1",
+            fromUserId = testUserId,
+            toUserId = otherUserId,
+            ratingType = RatingType.LISTING,
+            targetObjectId = "listing1")
+    ratingRepository.addRating(rating)
+
+    ratingRepository.deleteRating("rating1")
+    val retrieved = ratingRepository.getRating("rating1")
+    assertNull(retrieved)
   }
 
   @Test

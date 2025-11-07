@@ -3,11 +3,19 @@ package com.android.sample.ui.screens.newSkill
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.HttpClientProvider
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
+import com.android.sample.model.map.Location
+import com.android.sample.model.map.LocationRepository
+import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,10 +37,14 @@ data class SkillUIState(
     val description: String = "",
     val price: String = "",
     val subject: MainSubject? = null,
+    val selectedLocation: Location? = null,
+    val locationQuery: String = "",
+    val locationSuggestions: List<Location> = emptyList(),
     val invalidTitleMsg: String? = null,
     val invalidDescMsg: String? = null,
     val invalidPriceMsg: String? = null,
     val invalidSubjectMsg: String? = null,
+    val invalidLocationMsg: String? = null
 ) {
 
   /** Indicates whether the current UI state is valid for submission. */
@@ -42,10 +54,12 @@ data class SkillUIState(
             invalidDescMsg == null &&
             invalidPriceMsg == null &&
             invalidSubjectMsg == null &&
+            invalidLocationMsg == null &&
             title.isNotBlank() &&
             description.isNotBlank() &&
             price.isNotBlank() &&
-            subject != null
+            subject != null &&
+            selectedLocation != null
 }
 
 /**
@@ -55,18 +69,25 @@ data class SkillUIState(
  * simple validation.
  */
 class NewSkillViewModel(
-    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository
+    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
+    private val locationRepository: LocationRepository =
+        NominatimLocationRepository(HttpClientProvider.client),
+    private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
   // Internal mutable UI state
   private val _uiState = MutableStateFlow(SkillUIState())
   // Public read-only state flow for the UI to observe
   val uiState: StateFlow<SkillUIState> = _uiState.asStateFlow()
 
+  private var locationSearchJob: Job? = null
+  private val locationSearchDelayTime: Long = 1000
+
   private val titleMsgError = "Title cannot be empty"
   private val descMsgError = "Description cannot be empty"
   private val priceEmptyMsg = "Price cannot be empty"
   private val priceInvalidMsg = "Price must be a positive number"
   private val subjectMsgError = "You must choose a subject"
+  private val locationMsgError = "You must choose a location"
 
   /**
    * Placeholder to load an existing skill.
@@ -75,9 +96,10 @@ class NewSkillViewModel(
    */
   fun load() {}
 
-  fun addProfile(userId: String) {
+  fun addSkill() {
     val state = _uiState.value
     if (state.isValid) {
+      val price = state.price.toDouble()
       val newSkill =
           Skill(
               mainSubject = state.subject!!,
@@ -89,7 +111,9 @@ class NewSkillViewModel(
               listingId = listingRepository.getNewUid(),
               creatorUserId = userId,
               skill = newSkill,
-              description = state.description)
+              description = state.description,
+              location = state.selectedLocation!!,
+              hourlyRate = price)
 
       addSkillToRepository(proposal = newProposal)
     } else {
@@ -116,7 +140,9 @@ class NewSkillViewModel(
           invalidPriceMsg =
               if (currentState.price.isBlank()) priceEmptyMsg
               else if (!isPosNumber(currentState.price)) priceInvalidMsg else null,
-          invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null)
+          invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null,
+          invalidLocationMsg =
+              if (currentState.selectedLocation == null) locationMsgError else null)
     }
   }
 
@@ -158,7 +184,49 @@ class NewSkillViewModel(
 
   /** Update the selected main subject. */
   fun setSubject(sub: MainSubject) {
-    _uiState.value = _uiState.value.copy(subject = sub)
+    _uiState.value = _uiState.value.copy(subject = sub, invalidSubjectMsg = null)
+  }
+
+  // Update the selected location and the locationQuery
+  fun setLocation(location: Location) {
+    _uiState.value = _uiState.value.copy(selectedLocation = location, locationQuery = location.name)
+  }
+
+  /**
+   * Updates the location query in the UI state and fetches matching location suggestions.
+   *
+   * This function updates the current `locationQuery` value and triggers a search operation if the
+   * query is not empty. The search is performed asynchronously within the `viewModelScope` using
+   * the [locationRepository].
+   *
+   * @param query The new location search query entered by the user.
+   * @see locationRepository
+   * @see viewModelScope
+   */
+  fun setLocationQuery(query: String) {
+    _uiState.value = _uiState.value.copy(locationQuery = query)
+
+    locationSearchJob?.cancel()
+
+    if (query.isNotBlank()) {
+      locationSearchJob =
+          viewModelScope.launch {
+            delay(locationSearchDelayTime)
+            try {
+              val results = locationRepository.search(query)
+              _uiState.value =
+                  _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
+            } catch (_: Exception) {
+              _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+            }
+          }
+    } else {
+      _uiState.value =
+          _uiState.value.copy(
+              locationSuggestions = emptyList(),
+              invalidLocationMsg = locationMsgError,
+              selectedLocation = null)
+    }
   }
 
   /** Returns true if the given string represents a non-negative number. */

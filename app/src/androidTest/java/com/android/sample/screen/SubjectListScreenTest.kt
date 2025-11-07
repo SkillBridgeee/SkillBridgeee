@@ -2,7 +2,6 @@ package com.android.sample.screen
 
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
@@ -13,9 +12,11 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
@@ -31,35 +32,105 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-// Ai generated tests for the SubjectListScreen composable
+// AI generated test for SubjectListScreen
 @RunWith(AndroidJUnit4::class)
 class SubjectListScreenTest {
 
   @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-  /** ---- Fake data + repo ------------------------------------------------ */
-  private val p1 = profile("1", "Liam P.", "Guitar Lessons", 4.9, 23)
-  private val p2 = profile("2", "David B.", "Sing Lessons", 4.8, 12)
-  private val p3 = profile("3", "Stevie W.", "Piano Lessons", 4.7, 15)
-  private val p4 = profile("4", "Nora Q.", "Violin Lessons", 4.5, 8)
-  private val p5 = profile("5", "Maya R.", "Drum Lessons", 4.2, 5)
+  /** ---- Fake data ------------------------------------------------ */
+  private val profile1 =
+      Profile(
+          userId = "debugUser1",
+          name = "Liam P.",
+          description = "Guitar Lessons",
+          tutorRating = RatingInfo(4.9, 23))
+  private val profile2 =
+      Profile(
+          userId = "debugUser2",
+          name = "Nora Q.",
+          description = "Piano Lessons",
+          tutorRating = RatingInfo(4.8, 15))
 
-  // Simple skills so category filtering can work if we need it later
-  private val allSkills =
-      mapOf(
-          "1" to listOf(skill("GUITARE")),
-          "2" to listOf(skill("SING")),
-          "3" to listOf(skill("PIANO")),
-          "4" to listOf(skill("VIOLIN")),
-          "5" to listOf(skill("DRUMS")),
-      )
+  private val debugListings =
+      listOf(
+          Proposal(
+              listingId = "sample1",
+              creatorUserId = "debugUser1",
+              skill = Skill(MainSubject.MUSIC, "guitar"),
+              description = "Debug Guitar Lessons",
+              location = Location(48.8566, 2.3522, "Paris"),
+              hourlyRate = 30.0),
+          Proposal(
+              listingId = "sample2",
+              creatorUserId = "debugUser2",
+              skill = Skill(MainSubject.MUSIC, "piano"),
+              description = "Debug Piano Coaching",
+              location = Location(45.7640, 4.8357, "Lyon"),
+              hourlyRate = 35.0))
 
-  private fun makeViewModel(): SubjectListViewModel {
-    val repo =
+  /** ---- Fake repositories ---------------------------------------- */
+  private fun makeViewModel(
+      fail: Boolean = false,
+      longDelay: Boolean = false
+  ): SubjectListViewModel {
+    val listingRepo =
+        object : ListingRepository {
+          override fun getNewUid(): String {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getAllListings(): List<Listing> {
+            if (fail) error("Boom failure")
+            if (longDelay) delay(200)
+            delay(10)
+            return debugListings
+          }
+
+          override suspend fun getProposals(): List<Proposal> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getRequests(): List<Request> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getListing(listingId: String): Listing? {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getListingsByUser(userId: String): List<Listing> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun addProposal(proposal: Proposal) {}
+
+          override suspend fun addRequest(request: Request) {}
+
+          override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+          override suspend fun deleteListing(listingId: String) {}
+
+          override suspend fun deactivateListing(listingId: String) {}
+
+          override suspend fun searchBySkill(skill: Skill): List<Listing> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun searchByLocation(
+              location: Location,
+              radiusKm: Double
+          ): List<Listing> {
+            TODO("Not yet implemented")
+          }
+        }
+
+    val profileRepo =
         object : ProfileRepository {
           override fun getNewUid(): String = "unused"
 
-          override suspend fun getProfile(userId: String): Profile = error("unused")
+          override suspend fun getProfile(userId: String): Profile =
+              if (userId == "debugUser1") profile1 else profile2
 
           override suspend fun addProfile(profile: Profile) {}
 
@@ -67,124 +138,84 @@ class SubjectListScreenTest {
 
           override suspend fun deleteProfile(userId: String) {}
 
-          override suspend fun getAllProfiles(): List<Profile> {
-            // small async to exercise loading state
-            delay(10)
-            return listOf(p1, p2, p3, p4, p5)
-          }
+          override suspend fun getAllProfiles(): List<Profile> = listOf(profile1, profile2)
 
-          override suspend fun searchProfilesByLocation(
-              location: Location,
-              radiusKm: Double
-          ): List<Profile> = emptyList()
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
 
-          override suspend fun getProfileById(userId: String): Profile = error("unused")
+          override suspend fun getProfileById(userId: String): Profile = profile1
 
-          override suspend fun getSkillsForUser(userId: String): List<Skill> =
-              allSkills[userId].orEmpty()
+          override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
         }
-    return SubjectListViewModel(repository = repo)
+
+    return SubjectListViewModel(listingRepo = listingRepo, profileRepo = profileRepo)
   }
 
-  /** ---- Helpers --------------------------------------------------------- */
-  private fun profile(id: String, name: String, description: String, rating: Double, total: Int) =
-      Profile(
-          userId = id,
-          name = name,
-          description = description,
-          tutorRating = RatingInfo(averageRating = rating, totalRatings = total))
-
-  private fun skill(s: String) = Skill(mainSubject = MainSubject.MUSIC, skill = s)
-
-  private fun setContent(onBook: (Profile) -> Unit = {}) {
-    val vm = makeViewModel()
-    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, onBook) } }
-
-    // Wait until the single list renders at least one TutorCard
-    composeRule.waitUntil(5_000) {
-      composeRule
-          .onAllNodes(
-              hasTestTag(SubjectListTestTags.TUTOR_CARD) and
-                  hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
-  }
-
-  /** ---- Tests ----------------------------------------------------------- */
+  /** ---- Tests ---------------------------------------------------- */
   @Test
   fun showsSearchbarAndCategorySelector() {
-    setContent()
+    val vm = makeViewModel()
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.MUSIC) } }
 
     composeRule.onNodeWithTag(SubjectListTestTags.SEARCHBAR).assertIsDisplayed()
     composeRule.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).assertIsDisplayed()
   }
 
   @Test
-  fun rendersSingleList_ofTutorCards() {
-    setContent()
+  fun displaysListings_afterLoading() {
+    val vm = makeViewModel()
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.MUSIC) } }
 
-    val list = composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST)
+    composeRule.waitUntil(5_000) {
+      composeRule
+          .onAllNodes(
+              hasTestTag(SubjectListTestTags.LISTING_CARD) and
+                  hasAnyAncestor(hasTestTag(SubjectListTestTags.LISTING_LIST)))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
-    // Scroll to each expected name and assert it’s displayed
-    list.performScrollToNode(hasText("Liam P."))
-    composeRule.onNodeWithText("Liam P.", useUnmergedTree = true).assertIsDisplayed()
-
-    list.performScrollToNode(hasText("David B."))
-    composeRule.onNodeWithText("David B.", useUnmergedTree = true).assertIsDisplayed()
-
-    list.performScrollToNode(hasText("Stevie W."))
-    composeRule.onNodeWithText("Stevie W.", useUnmergedTree = true).assertIsDisplayed()
-
-    list.performScrollToNode(hasText("Nora Q."))
-    composeRule.onNodeWithText("Nora Q.", useUnmergedTree = true).assertIsDisplayed()
-
-    list.performScrollToNode(hasText("Maya R."))
-    composeRule.onNodeWithText("Maya R.", useUnmergedTree = true).assertIsDisplayed()
+    composeRule.onNodeWithText("Debug Guitar Lessons").assertIsDisplayed()
+    composeRule.onNodeWithText("Debug Piano Coaching").assertIsDisplayed()
   }
 
   @Test
   fun clickingBook_callsCallback() {
     val clicked = AtomicBoolean(false)
-    setContent(onBook = { clicked.set(true) })
+    val vm = makeViewModel()
+    composeRule.setContent {
+      MaterialTheme {
+        SubjectListScreen(vm, onBookTutor = { clicked.set(true) }, subject = MainSubject.MUSIC)
+      }
+    }
 
-    // Click first Book button in the list
-    composeRule.onAllNodesWithTag(SubjectListTestTags.TUTOR_BOOK_BUTTON).onFirst().performClick()
+    composeRule.waitUntil(3_000) {
+      composeRule
+          .onAllNodesWithTag(SubjectListTestTags.LISTING_BOOK_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
+    composeRule.onAllNodesWithTag(SubjectListTestTags.LISTING_BOOK_BUTTON).onFirst().performClick()
     assert(clicked.get())
   }
 
   @Test
-  fun searchFiltersList_visually() {
-    setContent()
+  fun showsErrorMessage_whenRepositoryFails() {
+    val vm = makeViewModel(fail = true)
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.MUSIC) } }
 
-    composeRule.onNodeWithTag(SubjectListTestTags.SEARCHBAR).performTextInput("Nora")
-
-    // Wait until filtered result appears
     composeRule.waitUntil(3_000) {
-      composeRule.onAllNodes(hasText("Nora Q.")).fetchSemanticsNodes().isNotEmpty()
+      composeRule.onAllNodes(hasText("Boom failure")).fetchSemanticsNodes().isNotEmpty()
     }
-
-    // Only one tutor card remains in the main list
-    composeRule
-        .onAllNodes(
-            hasTestTag(SubjectListTestTags.TUTOR_CARD) and
-                hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
-        .assertCountEquals(1)
-
-    // “Maya R.” no longer exists in the main list subtree
-    composeRule
-        .onAllNodes(
-            hasText("Maya R.") and hasAnyAncestor(hasTestTag(SubjectListTestTags.TUTOR_LIST)))
-        .assertCountEquals(0)
+    composeRule.onNodeWithText("Boom failure").assertIsDisplayed()
   }
 
   @Test
-  fun showsLoading_thenContent() {
-    setContent()
+  fun showsCorrectLessonTypeMessageMusic() {
+    val vm = makeViewModel()
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.MUSIC) } }
 
-    // Assert that ultimately the content shows and no error text
-    composeRule.onNodeWithTag(SubjectListTestTags.TUTOR_LIST).assertIsDisplayed()
-    composeRule.onNodeWithText("Unknown error").assertDoesNotExist()
+    composeRule.onNodeWithText("All Music lessons").assertExists()
   }
 }

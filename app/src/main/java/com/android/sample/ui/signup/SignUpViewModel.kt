@@ -1,26 +1,40 @@
 package com.android.sample.ui.signup
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.HttpClientProvider
+import com.android.sample.model.authentication.AuthenticationRepository
 import com.android.sample.model.map.Location
-import com.android.sample.model.user.FakeProfileRepository
-import com.android.sample.model.user.Profile
-import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.map.LocationRepository
+import com.android.sample.model.map.NominatimLocationRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class Role {
-  LEARNER,
-  TUTOR
+/** Holds the state of individual password requirements. */
+data class PasswordRequirements(
+    val minLength: Boolean = false,
+    val hasLetter: Boolean = false,
+    val hasDigit: Boolean = false,
+    val hasSpecial: Boolean = false
+) {
+  /** Returns true if all requirements are met */
+  val allMet: Boolean
+    get() = minLength && hasLetter && hasDigit && hasSpecial
 }
 
 data class SignUpUiState(
-    val role: Role = Role.LEARNER,
     val name: String = "",
     val surname: String = "",
     val address: String = "",
+    val selectedLocation: Location? = null,
+    val locationQuery: String = "",
+    val locationSuggestions: List<Location> = emptyList(),
     val levelOfEducation: String = "",
     val description: String = "",
     val email: String = "",
@@ -28,17 +42,22 @@ data class SignUpUiState(
     val submitting: Boolean = false,
     val error: String? = null,
     val canSubmit: Boolean = false,
-    val submitSuccess: Boolean = false
+    val submitSuccess: Boolean = false,
+    val isGoogleSignUp: Boolean = false, // True if user is already authenticated via Google
+    val passwordRequirements: PasswordRequirements = PasswordRequirements()
 )
 
 sealed interface SignUpEvent {
-  data class RoleChanged(val role: Role) : SignUpEvent
 
   data class NameChanged(val value: String) : SignUpEvent
 
   data class SurnameChanged(val value: String) : SignUpEvent
 
   data class AddressChanged(val value: String) : SignUpEvent
+
+  data class LocationQueryChanged(val value: String) : SignUpEvent
+
+  data class LocationSelected(val location: Location) : SignUpEvent
 
   data class LevelOfEducationChanged(val value: String) : SignUpEvent
 
@@ -51,20 +70,73 @@ sealed interface SignUpEvent {
   object Submit : SignUpEvent
 }
 
-class SignUpViewModel(private val repo: ProfileRepository = FakeProfileRepository()) : ViewModel() {
+class SignUpViewModel(
+    initialEmail: String? = null,
+    private val authRepository: AuthenticationRepository = AuthenticationRepository(),
+    private val signUpUseCase: SignUpUseCase =
+        SignUpUseCase(AuthenticationRepository(), ProfileRepositoryProvider.repository),
+    private val locationRepository: LocationRepository =
+        NominatimLocationRepository(HttpClientProvider.client)
+) : ViewModel() {
+
+  companion object {
+    private const val TAG = "SignUpViewModel"
+  }
+
   private val _state = MutableStateFlow(SignUpUiState())
   val state: StateFlow<SignUpUiState> = _state
 
+  private var locationSearchJob: Job? = null
+  private val locationSearchDelayTime: Long = 1000
+
+  /**
+   * Validates password and returns individual requirement states. Extracted to a helper function to
+   * avoid duplication between UI and validation logic.
+   */
+  private fun validatePassword(password: String): PasswordRequirements {
+    return PasswordRequirements(
+        minLength = password.length >= 8,
+        hasLetter = password.any { it.isLetter() },
+        hasDigit = password.any { it.isDigit() },
+        hasSpecial = Regex("[^A-Za-z0-9]").containsMatchIn(password))
+  }
+
+  init {
+    // Check if user is already authenticated (Google Sign-In) and pre-fill email
+    if (!initialEmail.isNullOrBlank()) {
+      val isAuthenticated = authRepository.getCurrentUser() != null
+      Log.d(TAG, "Init - Email: $initialEmail, User authenticated: $isAuthenticated")
+      _state.update { it.copy(email = initialEmail, isGoogleSignUp = isAuthenticated) }
+      validate()
+    }
+  }
+
+  /** Called when user navigates away from signup without completing */
+  fun onSignUpAbandoned() {
+    // If this was a Google sign-up (user is authenticated but no profile was created)
+    // sign them out so they go through the flow again next time
+    if (_state.value.isGoogleSignUp && !_state.value.submitSuccess) {
+      Log.d(TAG, "Sign-up abandoned - signing out Google user")
+      authRepository.signOut()
+    }
+  }
+
   fun onEvent(e: SignUpEvent) {
     when (e) {
-      is SignUpEvent.RoleChanged -> _state.update { it.copy(role = e.role) }
       is SignUpEvent.NameChanged -> _state.update { it.copy(name = e.value) }
       is SignUpEvent.SurnameChanged -> _state.update { it.copy(surname = e.value) }
       is SignUpEvent.AddressChanged -> _state.update { it.copy(address = e.value) }
+      is SignUpEvent.LocationQueryChanged -> setLocationQuery(e.value)
+      is SignUpEvent.LocationSelected -> setLocation(e.location)
       is SignUpEvent.LevelOfEducationChanged ->
           _state.update { it.copy(levelOfEducation = e.value) }
       is SignUpEvent.DescriptionChanged -> _state.update { it.copy(description = e.value) }
-      is SignUpEvent.EmailChanged -> _state.update { it.copy(email = e.value) }
+      is SignUpEvent.EmailChanged -> {
+        // Don't allow email changes for Google sign-ups
+        if (!_state.value.isGoogleSignUp) {
+          _state.update { it.copy(email = e.value) }
+        }
+      }
       is SignUpEvent.PasswordChanged -> _state.update { it.copy(password = e.value) }
       SignUpEvent.Submit -> submit()
     }
@@ -89,43 +161,102 @@ class SignUpViewModel(private val repo: ProfileRepository = FakeProfileRepositor
         local.isNotEmpty() && domain.isNotEmpty() && domain.contains('.')
       }
 
-      val password = s.password
+      // Validate password and get requirements
+      val passwordReqs = validatePassword(s.password)
+
+      // Check if user is already authenticated (e.g., Google Sign-In)
+      val isAuthenticated = authRepository.getCurrentUser() != null
       val passwordOk =
-          password.length >= 8 && password.any { it.isDigit() } && password.any { it.isLetter() }
+          if (isAuthenticated) {
+            // Password not required for already authenticated users
+            true
+          } else {
+            // All password requirements must be met for new sign-ups
+            passwordReqs.allMet
+          }
+
       val levelOk = s.levelOfEducation.trim().isNotEmpty()
       val ok = nameOk && surnameOk && emailOk && passwordOk && levelOk
-      s.copy(canSubmit = ok, error = null)
+      s.copy(canSubmit = ok, error = null, passwordRequirements = passwordReqs)
     }
   }
 
   private fun submit() {
+    // Early return if form validation fails
+    if (!_state.value.canSubmit) {
+      return
+    }
+
     viewModelScope.launch {
       _state.update { it.copy(submitting = true, error = null, submitSuccess = false) }
       val current = _state.value
-      try {
-        val newUid = repo.getNewUid()
-        val fullName =
-            listOf(current.name.trim(), current.surname.trim())
-                .filter { it.isNotEmpty() }
-                .joinToString(" ")
-        val profile =
-            Profile(
-                userId = newUid,
-                name = fullName,
-                email = current.email,
-                levelOfEducation = current.levelOfEducation,
-                description = current.description,
-                location = buildLocation(current.address))
-        repo.addProfile(profile)
-        _state.update { it.copy(submitting = false, submitSuccess = true) }
-      } catch (t: Throwable) {
-        _state.update { it.copy(submitting = false, error = t.message ?: "Unknown error") }
+
+      // Create request object from current state
+      val selectedLoc = current.selectedLocation
+      val request =
+          SignUpRequest(
+              name = current.name,
+              surname = current.surname,
+              email = current.email,
+              password = current.password,
+              levelOfEducation = current.levelOfEducation,
+              description = current.description,
+              address = current.address,
+              location = selectedLoc)
+
+      // Execute sign-up through use case
+      val result = signUpUseCase.execute(request)
+
+      // Update UI state based on result
+      when (result) {
+        is SignUpResult.Success -> {
+          _state.update { it.copy(submitting = false, submitSuccess = true) }
+        }
+        is SignUpResult.Error -> {
+          _state.update { it.copy(submitting = false, error = result.message) }
+        }
       }
     }
   }
 
-  // Store the entered address into Location.name. Replace with geocoding later if needed.
-  private fun buildLocation(address: String): Location {
-    return Location(name = address.trim())
+  /**
+   * Updates the location query in the UI state and fetches matching location suggestions.
+   *
+   * This function updates the current `locationQuery` value and triggers a search operation if the
+   * query is not empty. The search is performed asynchronously within the `viewModelScope` using
+   * the [locationRepository].
+   *
+   * @param query The new location search query entered by the user.
+   */
+  private fun setLocationQuery(query: String) {
+    _state.update { it.copy(locationQuery = query, address = query) }
+
+    locationSearchJob?.cancel()
+
+    if (query.isNotEmpty()) {
+      locationSearchJob =
+          viewModelScope.launch {
+            delay(locationSearchDelayTime)
+            try {
+              val results = locationRepository.search(query)
+              _state.update { it.copy(locationSuggestions = results) }
+            } catch (_: Exception) {
+              _state.update { it.copy(locationSuggestions = emptyList()) }
+            }
+          }
+    } else {
+      _state.update { it.copy(locationSuggestions = emptyList(), selectedLocation = null) }
+    }
+  }
+
+  /**
+   * Updates the selected location and the locationQuery.
+   *
+   * @param location The selected location object.
+   */
+  private fun setLocation(location: Location) {
+    _state.update {
+      it.copy(selectedLocation = location, locationQuery = location.name, address = location.name)
+    }
   }
 }

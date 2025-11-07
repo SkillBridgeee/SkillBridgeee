@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
@@ -7,13 +9,27 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// Load local.properties
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 // Force JaCoCo version to support Java 21
 configurations.all {
     resolutionStrategy {
         force("org.jacoco:org.jacoco.core:0.8.11")
         force("org.jacoco:org.jacoco.agent:0.8.11")
         force("org.jacoco:org.jacoco.report:0.8.11")
+        force("com.google.protobuf:protobuf-javalite:3.21.12")
     }
+}
+
+configurations.matching {
+    it.name.contains("androidTest", ignoreCase = true)
+}.all {
+    exclude(group = "com.google.protobuf", module = "protobuf-lite")
 }
 
 android {
@@ -31,6 +47,25 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Inject Google Maps API Key from local.properties
+        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: "DEFAULT_API_KEY"
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+        }
+        create("release") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+        }
     }
 
     buildTypes {
@@ -40,11 +75,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
 
         debug {
             enableUnitTestCoverage = true
             enableAndroidTestCoverage = true
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
@@ -138,6 +175,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.arch.core.testing)
+    testImplementation(libs.mockwebserver)
 
     implementation(libs.okhttp)
 
@@ -153,8 +191,16 @@ dependencies {
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.test:core:1.5.0")
 
+    implementation("com.google.protobuf:protobuf-javalite:3.21.12")
+    testImplementation("com.google.protobuf:protobuf-javalite:3.21.12")
+    androidTestImplementation("com.google.protobuf:protobuf-javalite:3.21.12")
+
     // Google Play Services for Google Sign-In
     implementation(libs.play.services.auth)
+
+    // Google Maps
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
 
     // Credential Manager
     implementation(libs.androidx.credentials)
@@ -190,6 +236,8 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.8.0")
 
+    implementation(libs.composeMaterialIconsExtended)
+  testImplementation(kotlin("test"))
 }
 
 tasks.withType<Test> {

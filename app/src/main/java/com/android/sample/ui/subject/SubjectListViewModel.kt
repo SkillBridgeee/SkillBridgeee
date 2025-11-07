@@ -1,10 +1,12 @@
 package com.android.sample.ui.subject
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
-import com.android.sample.model.skill.Skill
 import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -18,60 +20,93 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 
-/** UI state for the Subject List screen */
+/**
+ * UI state for the Subject List screen
+ *
+ * @param mainSubject The subject to filter on
+ * @param query The search query
+ * @param selectedSkill The skill to filter on
+ * @param skillsForSubject The list of skills for the current subject
+ * @param allListings All listings fetched from the repository
+ * @param listings The filtered listings to display
+ * @param isLoading Whether the data is currently loading
+ * @param error Any error message to display
+ */
 data class SubjectListUiState(
     val mainSubject: MainSubject = MainSubject.MUSIC,
     val query: String = "",
     val selectedSkill: String? = null,
     val skillsForSubject: List<String> = SkillsHelper.getSkillNames(MainSubject.MUSIC),
-    /** Full set of tutors loaded from repo (before any filters) */
-    val allTutors: List<Profile> = emptyList(),
-    /** The currently displayed list (after filters applied) */
-    val tutors: List<Profile> = emptyList(),
-    /** Cache of each tutor's skills so filtering is non-suspending */
-    val userSkills: Map<String, List<Skill>> = emptyMap(),
+    val allListings: List<ListingUiModel> = emptyList(),
+    val listings: List<ListingUiModel> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
 
 /**
- * ViewModel for the Subject List screen. Loads and holds the list of tutors, applying search and
- * skill filters as needed.
+ * Ui model that combines a listing with its creator’s profile and rating information into a single
+ * object for easy display in the interface.
  *
- * @param repository The profile repository to load tutors from
+ * @param listing The listing being offered
+ * @param creator The profile of the listing's creator
+ * @param creatorRating The rating information of the listing's creator
+ */
+data class ListingUiModel(
+    val listing: Listing,
+    val creator: Profile?,
+    val creatorRating: RatingInfo
+)
+
+/**
+ * ViewModel for the Subject List screen
+ *
+ * @param listingRepo Repository for listings
+ * @param profileRepo Repository for profiles
  */
 class SubjectListViewModel(
-    private val repository: ProfileRepository = ProfileRepositoryProvider.repository
+    private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
+    private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
-
   private val _ui = MutableStateFlow(SubjectListUiState())
   val ui: StateFlow<SubjectListUiState> = _ui
 
   private var loadJob: Job? = null
 
-  /** Refreshes the list of tutors by loading from the repository. */
-  fun refresh() {
-    // Cancel any ongoing load
+  /**
+   * Refresh listings filtered on selected subject
+   *
+   * @param subject The subject to filter on
+   */
+  fun refresh(subject: MainSubject?) {
     loadJob?.cancel()
-    // Start a new load
     loadJob =
         viewModelScope.launch {
-          _ui.update { it.copy(isLoading = true, error = null) }
+          _ui.update {
+            it.copy(
+                isLoading = true,
+                error = null,
+                mainSubject = subject ?: it.mainSubject,
+                selectedSkill = null)
+          }
+
+          // The try/catch block prevents UI crash in case a suspend function throws an exception
           try {
-            // 1) Load all profiles
-            val allProfiles = repository.getAllProfiles()
+            val all = listingRepo.getAllListings()
 
-            // 2) Load skills for each profile concurrently, but don't fail the whole refresh
-            val skillsByUser = loadSkillsForUsers(allProfiles)
-
-            // 3) Update raw state, then apply current filters
-            _ui.update {
-              it.copy(
-                  allTutors = allProfiles,
-                  userSkills = skillsByUser,
-                  isLoading = false,
-                  error = null)
+            val uiModels = supervisorScope {
+              all.map { listing ->
+                    async {
+                      val creator = profileRepo.getProfile(listing.creatorUserId)
+                      ListingUiModel(
+                          listing = listing,
+                          creator = creator,
+                          creatorRating = creator?.tutorRating ?: RatingInfo())
+                    }
+                  }
+                  .awaitAll()
             }
+
+            _ui.update { it.copy(allListings = uiModels, isLoading = false) }
             applyFilters()
           } catch (t: Throwable) {
             _ui.update { it.copy(isLoading = false, error = t.message ?: "Unknown error") }
@@ -80,33 +115,9 @@ class SubjectListViewModel(
   }
 
   /**
-   * Loads skills for a list of users concurrently, returning a map of userId to their skills.
+   * Helper to be called when the search query changes
    *
-   * @param profiles The list of profiles to load skills for
-   */
-  private suspend fun loadSkillsForUsers(profiles: List<Profile>): Map<String, List<Skill>> =
-      supervisorScope {
-        profiles
-            .map { p ->
-              async {
-                val skills =
-                    runCatching { repository.getSkillsForUser(p.userId) }
-                        .onFailure { e ->
-                          Log.w("SubjectListVM", "Failed to load skills for ${p.userId}", e)
-                        }
-                        .getOrElse { emptyList() }
-                p.userId to skills
-              }
-            }
-            .awaitAll()
-            .toMap()
-      }
-
-  /**
-   * Called when the search query changes. Updates the query state and reapplies filters to the full
-   * list.
-   *
-   * @param newQuery The new search query string
+   * @param newQuery The new search query
    */
   fun onQueryChanged(newQuery: String) {
     _ui.update { it.copy(query = newQuery) }
@@ -114,50 +125,78 @@ class SubjectListViewModel(
   }
 
   /**
-   * Called when a skill is selected from the category dropdown. Updates the selected skill state
-   * and reapplies filters to the full list.
+   * Helper to be called when the selected skill changes
    *
-   * @param skill The selected skill, or null to clear the filter
+   * @param skill The new selected skill
    */
   fun onSkillSelected(skill: String?) {
     _ui.update { it.copy(selectedSkill = skill) }
     applyFilters()
   }
 
-  /** Applies the current search query and skill filter to the full list, then sorts by rating. */
+  /** Apply both query and skill filtering */
   private fun applyFilters() {
     val state = _ui.value
-
-    // normalize a skill key for easier matching
+    /**
+     * Helper to normalize skill strings for comparison
+     *
+     * @param s The skill string
+     */
     fun key(s: String) = s.trim().lowercase()
     val selectedSkillKey = state.selectedSkill?.let(::key)
 
+    // Apply filters to all listings
     val filtered =
-        state.allTutors.filter { profile ->
+        state.allListings.filter { item ->
+          val listing = item.listing
+
+          val matchesSubject = listing.skill.mainSubject == state.mainSubject
+
           val matchesQuery =
-              // Match if query is blank, or name or description contains the query
-              state.query.isBlank() ||
-                  profile.name?.contains(state.query, ignoreCase = true) == true ||
-                  profile.description.contains(state.query, ignoreCase = true)
+              state.query.isBlank() || listing.description.contains(state.query, ignoreCase = true)
 
           val matchesSkill =
-              // Match if no skill selected, or if user has the selected skill for this subject
               selectedSkillKey == null ||
-                  state.userSkills[profile.userId].orEmpty().any {
-                    it.mainSubject == state.mainSubject && key(it.skill) == selectedSkillKey
-                  }
-          // Include if matches both query and skill
-          matchesQuery && matchesSkill
+                  listing.skill.mainSubject == state.mainSubject &&
+                      key(listing.skill.skill) == selectedSkillKey
+
+          matchesSubject && matchesQuery && matchesSkill
         }
 
-    // Sort best-first for the single list
+    // Sort by creator rating
     val sorted =
         filtered.sortedWith(
-            // Sort by average rating (desc), then by total ratings (desc), then by name (asc)
-            compareByDescending<Profile> { it.tutorRating.averageRating }
-                .thenByDescending { it.tutorRating.totalRatings }
-                .thenBy { it.name })
+            compareByDescending<ListingUiModel> { it.creatorRating.averageRating }
+                .thenByDescending { it.creatorRating.totalRatings }
+                .thenBy { it.creator?.name })
 
-    _ui.update { it.copy(tutors = sorted) }
+    _ui.update { it.copy(listings = sorted) }
+  }
+
+  /**
+   * Helper to convert MainSubject enum to user-friendly string
+   *
+   * @param subject The main subject
+   */
+  fun subjectToString(subject: MainSubject?): String =
+      when (subject) {
+        MainSubject.ACADEMICS -> "Academics"
+        MainSubject.SPORTS -> "Sports"
+        MainSubject.MUSIC -> "Music"
+        MainSubject.ARTS -> "Arts"
+        MainSubject.TECHNOLOGY -> "Technology"
+        MainSubject.LANGUAGES -> "Languages"
+        MainSubject.CRAFTS -> "Crafts"
+        null -> "Subjects"
+      }
+
+  /**
+   * Helper to get skill names for a given main subject
+   *
+   * @param mainSubject The main subject
+   */
+  fun getSkillsForSubject(mainSubject: MainSubject?): List<String> {
+    if (mainSubject == null) return emptyList()
+    return SkillsHelper.getSkillNames(mainSubject)
   }
 }

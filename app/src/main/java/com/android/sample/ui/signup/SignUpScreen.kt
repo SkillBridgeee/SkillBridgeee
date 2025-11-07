@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -16,12 +18,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.android.sample.ui.components.RoundEdgedLocationInputField
 import com.android.sample.ui.theme.DisabledContent
 import com.android.sample.ui.theme.FieldContainer
 import com.android.sample.ui.theme.GrayE6
@@ -33,8 +39,6 @@ import com.android.sample.ui.theme.TurquoiseStart
 object SignUpScreenTestTags {
   const val TITLE = "SignUpScreenTestTags.TITLE"
   const val SUBTITLE = "SignUpScreenTestTags.SUBTITLE"
-  const val LEARNER = "SignUpScreenTestTags.LEARNER"
-  const val TUTOR = "SignUpScreenTestTags.TUTOR"
   const val NAME = "SignUpScreenTestTags.NAME"
   const val SURNAME = "SignUpScreenTestTags.SURNAME"
   const val ADDRESS = "SignUpScreenTestTags.ADDRESS"
@@ -51,15 +55,20 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
 
   LaunchedEffect(state.submitSuccess) { if (state.submitSuccess) onSubmitSuccess() }
 
+  // Clean up if user navigates away without completing signup
+  DisposableEffect(Unit) { onDispose { vm.onSignUpAbandoned() } }
+
+  val focusManager = LocalFocusManager.current
+
   val fieldShape = RoundedCornerShape(14.dp)
   val fieldColors =
       TextFieldDefaults.colors(
           focusedContainerColor = FieldContainer,
           unfocusedContainerColor = FieldContainer,
           disabledContainerColor = FieldContainer,
-          focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-          unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
-          disabledIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+          focusedIndicatorColor = Color.Transparent,
+          unfocusedIndicatorColor = Color.Transparent,
+          disabledIndicatorColor = Color.Transparent,
           cursorColor = MaterialTheme.colorScheme.primary,
           focusedTextColor = MaterialTheme.colorScheme.onSurface,
           unfocusedTextColor = MaterialTheme.colorScheme.onSurface)
@@ -85,21 +94,6 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
             modifier = Modifier.testTag(SignUpScreenTestTags.SUBTITLE),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-          FilterChip(
-              selected = state.role == Role.LEARNER,
-              onClick = { vm.onEvent(SignUpEvent.RoleChanged(Role.LEARNER)) },
-              label = { Text("I’m a Learner") },
-              modifier = Modifier.testTag(SignUpScreenTestTags.LEARNER),
-              shape = RoundedCornerShape(20.dp))
-          FilterChip(
-              selected = state.role == Role.TUTOR,
-              onClick = { vm.onEvent(SignUpEvent.RoleChanged(Role.TUTOR)) },
-              label = { Text("I’m a Tutor") },
-              modifier = Modifier.testTag(SignUpScreenTestTags.TUTOR),
-              shape = RoundedCornerShape(20.dp))
-        }
-
         TextField(
             value = state.name,
             onValueChange = { vm.onEvent(SignUpEvent.NameChanged(it)) },
@@ -118,14 +112,18 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
             shape = fieldShape,
             colors = fieldColors)
 
-        TextField(
-            value = state.address,
-            onValueChange = { vm.onEvent(SignUpEvent.AddressChanged(it)) },
-            modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.ADDRESS),
-            placeholder = { Text("Address", fontWeight = FontWeight.Bold) },
-            singleLine = true,
-            shape = fieldShape,
-            colors = fieldColors)
+        // Location input with Nominatim search and dropdown
+        Box(modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.ADDRESS)) {
+          RoundEdgedLocationInputField(
+              locationQuery = state.locationQuery,
+              locationSuggestions = state.locationSuggestions,
+              onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },
+              onLocationSelected = { location ->
+                vm.onEvent(SignUpEvent.LocationSelected(location))
+              },
+              shape = fieldShape,
+              colors = fieldColors)
+        }
 
         TextField(
             value = state.levelOfEducation,
@@ -149,46 +147,73 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
 
         TextField(
             value = state.email,
-            onValueChange = { vm.onEvent(SignUpEvent.EmailChanged(it)) },
+            onValueChange = {
+              if (!state.isGoogleSignUp) {
+                vm.onEvent(SignUpEvent.EmailChanged(it))
+              }
+            },
             modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.EMAIL),
             placeholder = { Text("Email Address", fontWeight = FontWeight.Bold) },
             singleLine = true,
             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
             shape = fieldShape,
-            colors = fieldColors)
+            colors = fieldColors,
+            enabled = !state.isGoogleSignUp, // Disable email field if pre-filled from Google
+            readOnly = state.isGoogleSignUp) // Make it read-only for Google sign-ups
 
-        TextField(
-            value = state.password,
-            onValueChange = { vm.onEvent(SignUpEvent.PasswordChanged(it)) },
-            modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.PASSWORD),
-            placeholder = { Text("Password", fontWeight = FontWeight.Bold) },
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-            visualTransformation = PasswordVisualTransformation(),
-            shape = fieldShape,
-            colors = fieldColors)
+        // Only show password field if user is not signing up via Google
+        if (!state.isGoogleSignUp) {
+          TextField(
+              value = state.password,
+              onValueChange = { vm.onEvent(SignUpEvent.PasswordChanged(it)) },
+              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.PASSWORD),
+              placeholder = { Text("Password", fontWeight = FontWeight.Bold) },
+              singleLine = true,
+              leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+              visualTransformation = PasswordVisualTransformation(),
+              shape = fieldShape,
+              colors = fieldColors,
+              keyboardOptions =
+                  KeyboardOptions.Default.copy(
+                      imeAction = ImeAction.Done, keyboardType = KeyboardType.Password),
+              keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }))
+
+          Spacer(Modifier.height(6.dp))
+
+          // Password requirement checklist from ViewModel state
+          val reqs = state.passwordRequirements
+
+          Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+            RequirementItem(met = reqs.minLength, text = "At least 8 characters")
+            RequirementItem(met = reqs.hasLetter, text = "Contains a letter")
+            RequirementItem(met = reqs.hasDigit, text = "Contains a digit")
+            RequirementItem(met = reqs.hasSpecial, text = "Contains a special character")
+          }
+        }
+
+        // Display error message if present
+        state.error?.let { errorMessage ->
+          Spacer(Modifier.height(8.dp))
+          Text(
+              text = errorMessage,
+              color = MaterialTheme.colorScheme.error,
+              style = MaterialTheme.typography.bodyMedium,
+              modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
+        }
 
         Spacer(Modifier.height(6.dp))
 
-        // Password requirement checklist computed from the entered password
-        val pw = state.password
-        val minLength = pw.length >= 8
-        val hasLetter = pw.any { it.isLetter() }
-        val hasDigit = pw.any { it.isDigit() }
-        val hasSpecial = Regex("[^A-Za-z0-9]").containsMatchIn(pw)
-
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-          RequirementItem(met = minLength, text = "At least 8 characters")
-          RequirementItem(met = hasLetter, text = "Contains a letter")
-          RequirementItem(met = hasDigit, text = "Contains a digit")
-          RequirementItem(met = hasSpecial, text = "Contains a special character")
-        }
-
         val gradient = Brush.horizontalGradient(listOf(TurquoiseStart, TurquoiseEnd))
         val disabledBrush = Brush.linearGradient(listOf(GrayE6, GrayE6))
-        // Require the ViewModel's passwordRequirements to be satisfied (includes special character)
+
+        // For Google sign-up, password requirements don't apply
         val enabled =
-            state.canSubmit && minLength && hasLetter && hasDigit && hasSpecial && !state.submitting
+            if (state.isGoogleSignUp) {
+              state.canSubmit && !state.submitting
+            } else {
+              // Use passwordRequirements from ViewModel state
+              state.canSubmit && state.passwordRequirements.allMet && !state.submitting
+            }
 
         val buttonColors =
             ButtonDefaults.buttonColors(

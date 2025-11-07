@@ -24,21 +24,11 @@ class AuthenticationModelsTest {
   }
 
   @Test
-  fun userRole_hasCorrectValues() {
-    val roles = UserRole.entries
-
-    assertEquals(2, roles.size)
-    assertTrue(roles.contains(UserRole.LEARNER))
-    assertTrue(roles.contains(UserRole.TUTOR))
-  }
-
-  @Test
   fun authenticationUiState_defaultValues() {
     val state = AuthenticationUiState()
 
     assertEquals("", state.email)
     assertEquals("", state.password)
-    assertEquals(UserRole.LEARNER, state.selectedRole)
     assertFalse(state.isLoading)
     assertNull(state.error)
     assertNull(state.message)
@@ -88,7 +78,6 @@ class AuthenticationModelsTest {
         AuthenticationUiState(
             email = "custom@example.com",
             password = "custompass",
-            selectedRole = UserRole.TUTOR,
             isLoading = true,
             error = "Custom error",
             message = "Custom message",
@@ -96,7 +85,6 @@ class AuthenticationModelsTest {
 
     assertEquals("custom@example.com", state.email)
     assertEquals("custompass", state.password)
-    assertEquals(UserRole.TUTOR, state.selectedRole)
     assertTrue(state.isLoading)
     assertEquals("Custom error", state.error)
     assertEquals("Custom message", state.message)
