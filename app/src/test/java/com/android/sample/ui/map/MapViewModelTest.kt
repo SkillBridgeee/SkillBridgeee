@@ -299,7 +299,7 @@ class MapViewModelTest {
   }
 
   @Test
-  fun `loadBookings skips bookingPins when tutor coords are zero`() = runTest {
+  fun `loadBookings includes bookingPins when tutor coords are zero but valid`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
 
@@ -330,7 +330,11 @@ class MapViewModelTest {
     val state = viewModel.uiState.first()
 
     // Then
-    assertTrue(state.bookingPins.isEmpty())
+    assertEquals(1, state.bookingPins.size)
+    val pin = state.bookingPins.first()
+    assertEquals("b2", pin.bookingId)
+    assertEquals(LatLng(0.0, 0.0), pin.position)
+    assertEquals("Tutor Zero", pin.title)
     assertFalse(state.isLoading)
     assertNull(state.errorMessage)
   }
