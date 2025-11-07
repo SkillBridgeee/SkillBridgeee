@@ -1,6 +1,7 @@
 package com.android.sample.ui.profile
 
-import androidx.compose.animation.core.animateDpAsState
+import android.R.attr.maxWidth
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,10 +23,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
@@ -56,6 +59,7 @@ object MyProfileScreenTestTag {
   const val RANKING_TAB = "rankingTab"
 
   const val RANKING_COMING_SOON_TEXT = "rankingComingSoonText"
+  const val TAB_INDICATOR = "tabIndicator"
 }
 
 enum class ProfileTab {
@@ -96,14 +100,17 @@ fun MyProfileScreen(
         }
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
+        val ui by profileViewModel.uiState.collectAsState()
+        LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
+
         Column() {
           InfoToRankingRow(selectedTab)
           Spacer(modifier = Modifier.height(16.dp))
 
           if (selectedTab.value == ProfileTab.INFO) {
-            ProfileContent(pd, profileId, profileViewModel, onLogout)
+            ProfileContent(pd, ui, profileViewModel, onLogout)
           } else {
-            RankingContent(pd, profileId, profileViewModel)
+            RankingContent(pd, ui)
           }
         }
       }
@@ -124,12 +131,12 @@ fun MyProfileScreen(
  */
 private fun ProfileContent(
     pd: PaddingValues,
-    profileId: String,
+    ui: MyProfileUIState,
     profileViewModel: MyProfileViewModel,
     onLogout: () -> Unit
 ) {
+  val profileId = ui.userId ?: ""
   LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
-  val ui by profileViewModel.uiState.collectAsState()
   val fieldSpacing = 8.dp
   val locationSuggestions = ui.locationSuggestions
   val locationQuery = ui.locationQuery
@@ -428,13 +435,12 @@ private fun ProfileLogout(onLogout: () -> Unit) {
 fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
 
   val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-  val halfWidth = screenWidth / 2
 
   Column(modifier = Modifier.fillMaxWidth()) {
     Row(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INFO_RANKING_BAR)) {
       Box(
           modifier =
-              Modifier.width(halfWidth)
+              Modifier.weight(1f)
                   .clickable { selectedTab.value = ProfileTab.INFO }
                   .padding(vertical = 12.dp)
                   .testTag(MyProfileScreenTestTag.INFO_TAB),
@@ -451,7 +457,7 @@ fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
 
       Box(
           modifier =
-              Modifier.width(halfWidth)
+              Modifier.weight(1f)
                   .clickable { selectedTab.value = ProfileTab.RANKING }
                   .padding(vertical = 12.dp)
                   .testTag(MyProfileScreenTestTag.RANKING_TAB),
@@ -467,18 +473,20 @@ fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
           }
     }
 
-    val offsetX by
-        animateDpAsState(
-            targetValue = if (selectedTab.value == ProfileTab.INFO) 0.dp else halfWidth,
+    val offsetFraction by
+        animateFloatAsState(
+            targetValue = if (selectedTab.value == ProfileTab.INFO) 0f else 0.5f,
             label = "tabIndicatorOffset")
 
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = Modifier.fillMaxWidth().height(3.dp).background(Color.Transparent)) {
       Box(
           modifier =
-              Modifier.offset(x = offsetX)
-                  .width(halfWidth)
+              Modifier.fillMaxWidth(0.5f)
+                  .align(Alignment.BottomStart)
+                  .offset(x = with(LocalDensity.current) { (offsetFraction * (maxWidth.toDp())) })
                   .height(3.dp)
-                  .background(MaterialTheme.colorScheme.primary))
+                  .background(MaterialTheme.colorScheme.primary)
+                  .testTag(MyProfileScreenTestTag.TAB_INDICATOR))
     }
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -488,11 +496,8 @@ fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
 @Composable
 private fun RankingContent(
     pd: PaddingValues,
-    profileId: String,
-    profileViewModel: MyProfileViewModel,
+    ui: MyProfileUIState,
 ) {
-  LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
-  val ui by profileViewModel.uiState.collectAsState()
 
   Box(
       modifier =

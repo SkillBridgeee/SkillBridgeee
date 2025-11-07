@@ -392,7 +392,7 @@ class MyProfileScreenTest {
 
   @Test
   fun rankingTabToRankings() {
-    // Initially, the Ranking tab content should be displayed
+
     compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_TAB).assertIsDisplayed().performClick()
 
     compose.onNodeWithTag(MyProfileScreenTestTag.RANKING_COMING_SOON_TEXT).assertIsDisplayed()
@@ -414,6 +414,11 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed().performClick()
 
     compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
+  }
+
+  @Test
+  fun tabIndicatorDisplaysCorrectly() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.TAB_INDICATOR).assertIsDisplayed()
   }
 
   // Edge case tests for null/empty values are in MyProfileScreenEdgeCasesTest.kt
