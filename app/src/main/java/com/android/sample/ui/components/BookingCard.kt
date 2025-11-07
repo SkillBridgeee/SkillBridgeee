@@ -48,6 +48,21 @@ object BookingCardTestTag {
   const val PRICE = "booking_card_price"
 }
 
+/**
+ * Displays a booking card with the main booking information.
+ *
+ * The card includes: Tutor avatar (initial), Listing title, Tutor name, Booking status, Booking
+ * date, Hourly rate
+ *
+ * The card is clickable and triggers [onClickBookingCard] with the booking ID.
+ *
+ * @param modifier Optional [Modifier] to customize the card (padding, size, etc.).
+ * @param booking The [Booking] object containing booking details.
+ * @param listingTitle The title of the listing associated with the booking.
+ * @param listingHourlyRate The hourly rate for the listing.
+ * @param tutorName The name of the tutor associated with the booking.
+ * @param onClickBookingCard Lambda called when the card is clicked, receives the booking ID.
+ */
 @Composable
 fun BookingCard(
     modifier: Modifier = Modifier,
