@@ -28,6 +28,7 @@ data class MapUiState(
     val userLocation: LatLng = LatLng(46.5196535, 6.6322734), // Default to Lausanne/EPFL
     val profiles: List<Profile> = emptyList(),
     val selectedProfile: Profile? = null,
+    val myProfile: Profile? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val bookingPins: List<BookingPin> = emptyList(),
@@ -83,7 +84,9 @@ class MapViewModel(
         val me = profiles.firstOrNull { it.userId == uid }
         val loc = me?.location
         if (loc != null && (loc.latitude != 0.0 || loc.longitude != 0.0)) {
-          _uiState.value = _uiState.value.copy(userLocation = LatLng(loc.latitude, loc.longitude))
+          _uiState.value =
+              _uiState.value.copy(
+                  myProfile = me, userLocation = LatLng(loc.latitude, loc.longitude))
         }
       } catch (_: Exception) {
         _uiState.value =
@@ -101,7 +104,7 @@ class MapViewModel(
             bookings.mapNotNull { booking ->
               val tutor = profileRepository.getProfileById(booking.listingCreatorId)
               val loc = tutor?.location
-              if (loc != null && (loc.latitude != 0.0 || loc.longitude != 0.0)) {
+              if (loc != null && isValidLatLng(loc.latitude, loc.longitude)) {
                 BookingPin(
                     bookingId = booking.bookingId,
                     position = LatLng(loc.latitude, loc.longitude),
@@ -138,5 +141,15 @@ class MapViewModel(
   fun moveToLocation(location: Location) {
     val latLng = LatLng(location.latitude, location.longitude)
     _uiState.value = _uiState.value.copy(userLocation = latLng)
+  }
+
+  /**
+   * Checks if the given latitude and longitude represent a valid geographical location.
+   *
+   * @param lat The latitude to check.
+   * @param lng The longitude to check.
+   */
+  private fun isValidLatLng(lat: Double, lng: Double): Boolean {
+    return !lat.isNaN() && !lng.isNaN() && lat in -90.0..90.0 && lng in -180.0..180.0
   }
 }

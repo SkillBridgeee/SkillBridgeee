@@ -29,7 +29,6 @@ import com.android.sample.model.user.Profile
 import com.android.sample.ui.map.MapScreenTestTags.BOOKING_MARKER_PREFIX
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.firebase.auth.FirebaseAuth
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
@@ -47,6 +46,8 @@ object MapScreenTestTags {
   const val PROFILE_LOCATION = "profile_location"
 
   const val BOOKING_MARKER_PREFIX = "booking_marker_"
+
+  const val EMPTY_STATE = "empty_state"
 }
 
 /**
@@ -73,14 +74,24 @@ fun MapScreen(
   Scaffold(modifier = modifier.testTag(MapScreenTestTags.MAP_SCREEN)) { innerPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
       // Google Map
-      val uid = FirebaseAuth.getInstance().currentUser?.uid
-      val myProfile = uiState.profiles.firstOrNull { it.userId == uid }
+      val myProfile = uiState.myProfile
 
       MapView(
           centerLocation = uiState.userLocation,
           bookingPins = uiState.bookingPins,
           myProfile = myProfile,
           onBookingClicked = { pin -> pin.profile?.let { viewModel.selectProfile(it) } })
+
+      if (uiState.bookingPins.isEmpty() && !uiState.isLoading && uiState.errorMessage == null) {
+        Text(
+            text = "No available bookings nearby.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier =
+                Modifier.align(Alignment.Center)
+                    .padding(24.dp)
+                    .testTag(MapScreenTestTags.EMPTY_STATE))
+      }
 
       // Loading indicator
       if (uiState.isLoading) {

@@ -313,4 +313,33 @@ class MapScreenTest {
     composeTestRule.onNodeWithText("Geneva").assertIsDisplayed()
     composeTestRule.onNodeWithText("John Doe").assertDoesNotExist()
   }
+
+  @Test
+  fun emptyState_displays_whenNoBookingsOrProfiles() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                profiles = emptyList(),
+                bookingPins = emptyList(),
+                isLoading = false,
+                errorMessage = null))
+
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+
+    // Verify that the placeholder text is shown
+    composeTestRule.onNodeWithTag(MapScreenTestTags.EMPTY_STATE).assertIsDisplayed()
+    composeTestRule.onNodeWithText("No available bookings nearby.").assertIsDisplayed()
+
+    // If bookings appear, placeholder should disappear
+    flow.value =
+        flow.value.copy(
+            bookingPins =
+                listOf(BookingPin("b1", LatLng(46.5, 6.6), "Session", "Description", null)))
+    composeTestRule.waitForIdle()
+    composeTestRule.onNodeWithTag(MapScreenTestTags.EMPTY_STATE).assertDoesNotExist()
+  }
 }
