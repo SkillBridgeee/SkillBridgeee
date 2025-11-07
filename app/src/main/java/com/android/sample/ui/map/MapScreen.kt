@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,11 +26,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.user.Profile
+import com.android.sample.ui.map.MapScreenTestTags.BOOKING_MARKER_PREFIX
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
 object MapScreenTestTags {
@@ -40,6 +44,10 @@ object MapScreenTestTags {
   const val PROFILE_CARD = "profile_card"
   const val PROFILE_NAME = "profile_name"
   const val PROFILE_LOCATION = "profile_location"
+
+  const val BOOKING_MARKER_PREFIX = "booking_marker_"
+
+  const val EMPTY_STATE = "empty_state"
 }
 
 /**
@@ -66,7 +74,24 @@ fun MapScreen(
   Scaffold(modifier = modifier.testTag(MapScreenTestTags.MAP_SCREEN)) { innerPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
       // Google Map
-      MapView(centerLocation = uiState.userLocation)
+      val myProfile = uiState.myProfile
+
+      MapView(
+          centerLocation = uiState.userLocation,
+          bookingPins = uiState.bookingPins,
+          myProfile = myProfile,
+          onBookingClicked = { pin -> pin.profile?.let { viewModel.selectProfile(it) } })
+
+      if (uiState.bookingPins.isEmpty() && !uiState.isLoading && uiState.errorMessage == null) {
+        Text(
+            text = "No available bookings nearby.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier =
+                Modifier.align(Alignment.Center)
+                    .padding(24.dp)
+                    .testTag(MapScreenTestTags.EMPTY_STATE))
+      }
 
       // Loading indicator
       if (uiState.isLoading) {
@@ -103,12 +128,36 @@ fun MapScreen(
   }
 }
 
-/** Displays the Google Map centered on a location (no markers). */
+/**
+ * Displays the Google Map centered on the users location.
+ *
+ * @param centerLocation The default center location of the map.
+ * @param bookingPins List of booking pins to display on the map.
+ * @param myProfile The current user's profile to show on the map.
+ * @param onBookingClicked Callback when a booking pin is clicked.
+ */
 @Composable
-private fun MapView(centerLocation: LatLng) {
+private fun MapView(
+    centerLocation: LatLng,
+    bookingPins: List<BookingPin>,
+    myProfile: Profile?,
+    onBookingClicked: (BookingPin) -> Unit
+) {
   // Camera position state
-  val cameraPositionState = rememberCameraPositionState {
-    position = CameraPosition.fromLatLngZoom(centerLocation, 12f)
+  val cameraPositionState = rememberCameraPositionState()
+
+  val profileLatLng =
+      myProfile
+          ?.location
+          ?.takeIf { it.latitude != 0.0 || it.longitude != 0.0 }
+          ?.let { LatLng(it.latitude, it.longitude) }
+
+  val target = profileLatLng ?: centerLocation
+
+  LaunchedEffect(target) {
+    if (cameraPositionState.position.target != target) {
+      cameraPositionState.position = CameraPosition.fromLatLngZoom(target, 12f)
+    }
   }
 
   // Map settings
@@ -120,21 +169,43 @@ private fun MapView(centerLocation: LatLng) {
           rotationGesturesEnabled = true,
           tiltGesturesEnabled = true)
 
-  val mapProperties =
-      MapProperties(
-          isMyLocationEnabled = false // Can be enabled with proper location permissions
-          )
+  val mapProperties = MapProperties(isMyLocationEnabled = false)
 
   GoogleMap(
       modifier = Modifier.fillMaxSize().testTag(MapScreenTestTags.MAP_VIEW),
       cameraPositionState = cameraPositionState,
       uiSettings = mapUiSettings,
       properties = mapProperties) {
-        // Map is centered on the location - no markers needed
+        // Booking markers
+        bookingPins.forEach { pin ->
+          Marker(
+              state = MarkerState(position = pin.position),
+              title = pin.title,
+              snippet = pin.snippet,
+              onClick = {
+                onBookingClicked(pin)
+                false
+              },
+              tag = BOOKING_MARKER_PREFIX + pin.bookingId)
+        }
+        myProfile?.location?.let { loc ->
+          if (loc.latitude != 0.0 || loc.longitude != 0.0) {
+            Marker(
+                state = MarkerState(position = LatLng(loc.latitude, loc.longitude)),
+                title = myProfile.name ?: "Me",
+                snippet = loc.name)
+          }
+        }
       }
 }
 
-/** Displays information about the selected profile. */
+/**
+ * Displays information about the selected profile.
+ *
+ * @param profile The profile to display.
+ * @param onProfileClick Callback when the profile card is clicked.
+ * @param modifier Modifier for the profile card.
+ */
 @Composable
 private fun ProfileInfoCard(
     profile: Profile,
