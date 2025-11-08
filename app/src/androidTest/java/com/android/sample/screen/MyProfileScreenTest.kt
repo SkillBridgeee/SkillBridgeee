@@ -500,8 +500,6 @@ class MyProfileScreenTest {
   fun listings_showsErrorMessage_whenLoadError() {
     val errorMsg = "Failed to load listings."
 
-    compose.setContent { MyProfileScreen(profileViewModel = viewModel, profileId = "testUser") }
-
     compose.runOnIdle {
       val state = viewModel.uiState.value.copy(listingsLoadError = errorMsg)
       val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
@@ -520,8 +518,6 @@ class MyProfileScreenTest {
   @Test
   @Suppress("UNCHECKED_CAST")
   fun listings_showsEmptyText_whenNoListings() {
-    compose.setContent { MyProfileScreen(profileViewModel = viewModel, profileId = "testUser") }
-
     compose.runOnIdle {
       val state = viewModel.uiState.value.copy(listings = emptyList())
       val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
