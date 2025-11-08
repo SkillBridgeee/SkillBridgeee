@@ -18,9 +18,11 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
+import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.text.set
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -493,4 +495,34 @@ class MyProfileScreenTest {
   }
 
   // Edge case tests for null/empty values are in MyProfileScreenEdgeCasesTest.kt
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun listings_showsErrorMessage_whenLoadError() {
+    val errorMsg = "Failed to load listings."
+    compose.runOnIdle {
+      val state = viewModel.uiState.value.copy(listingsLoadError = errorMsg)
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val mutable = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      mutable.value = state
+    }
+
+    compose.waitForIdle()
+    compose.onNodeWithText(errorMsg).assertIsDisplayed()
+  }
+
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun listings_showsEmptyText_whenNoListings() {
+    compose.runOnIdle {
+      val state = viewModel.uiState.value.copy(listings = emptyList())
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val mutable = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      mutable.value = state
+    }
+
+    compose.waitForIdle()
+    compose.onNodeWithText("You don’t have any listings yet.").assertIsDisplayed()
+  }
 }

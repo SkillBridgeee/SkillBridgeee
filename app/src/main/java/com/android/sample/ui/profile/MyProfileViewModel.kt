@@ -1,5 +1,6 @@
 package com.android.sample.ui.profile
 
+import android.location.Address
 import android.location.Geocoder
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -98,8 +99,6 @@ class MyProfileViewModel(
   private val locationSearchDelayTime: Long = 1000
 
   private val nameMsgError = "Name cannot be empty"
-  private val emailEmptyMsgError = "Email cannot be empty"
-  private val emailInvalidMsgError = "Email is not in the right format"
   private val locationMsgError = "Location cannot be empty"
   private val descMsgError = "Description cannot be empty"
 
@@ -299,9 +298,11 @@ class MyProfileViewModel(
         val androidLoc = provider.getCurrentLocation()
         if (androidLoc != null) {
           val geocoder = Geocoder(context, Locale.getDefault())
-          val addresses = geocoder.getFromLocation(androidLoc.latitude, androidLoc.longitude, 1)
+          val addresses: List<Address> =
+              geocoder.getFromLocation(androidLoc.latitude, androidLoc.longitude, 1)?.toList()
+                  ?: emptyList()
           val addressText =
-              if (!addresses.isNullOrEmpty()) {
+              if (addresses.isNotEmpty()) {
                 // Take the first address from the selected list which is the most relevant
                 val address = addresses[0]
                 // Build a readable address string
