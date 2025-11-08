@@ -64,7 +64,7 @@ data class SkillUIState(
             description.isNotBlank() &&
             price.isNotBlank() &&
             subject != null &&
-            // sub-skill is optional: do not require selectedSubSkill here
+            selectedSubSkill?.isNotBlank() == true &&
             selectedLocation != null
 }
 
@@ -107,8 +107,7 @@ class NewSkillViewModel(
     val state = _uiState.value
     if (state.isValid) {
       val price = state.price.toDouble()
-      val specificSkill =
-          if (state.selectedSubSkill.isNullOrBlank()) state.title else state.selectedSubSkill
+      val specificSkill = state.selectedSubSkill!!
       val newSkill =
           Skill(
               mainSubject = state.subject!!,
@@ -227,30 +226,32 @@ class NewSkillViewModel(
    * @see viewModelScope
    */
   fun setLocationQuery(query: String) {
-    _uiState.value = _uiState.value.copy(locationQuery = query)
+      _uiState.value = _uiState.value.copy(locationQuery = query)
 
-    locationSearchJob?.cancel()
+      locationSearchJob?.cancel()
 
-    if (query.isNotBlank()) {
-      locationSearchJob =
-          viewModelScope.launch {
-            delay(locationSearchDelayTime)
-            try {
-              val results = locationRepository.search(query)
-              _uiState.value =
-                  _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
-            } catch (_: Exception) {
-              _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
-            }
-          }
-    } else {
-      _uiState.value =
-          _uiState.value.copy(
-              locationSuggestions = emptyList(),
-              invalidLocationMsg = locationMsgError,
-              selectedLocation = null)
-    }
+      if (query.isNotBlank()) {
+          locationSearchJob =
+              viewModelScope.launch {
+                  delay(locationSearchDelayTime)
+                  try {
+                      val results = locationRepository.search(query)
+                      _uiState.value =
+                          _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
+                  } catch (_: Exception) {
+                      _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+                  }
+              }
+      } else {
+          _uiState.value =
+              _uiState.value.copy(
+                  locationSuggestions = emptyList(),
+                  invalidLocationMsg = locationMsgError,
+                  selectedLocation = null)
+      }
   }
+
+
 
   /** Returns true if the given string represents a non-negative number. */
   private fun isPosNumber(num: String): Boolean {
