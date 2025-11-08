@@ -500,33 +500,47 @@ class MyProfileScreenTest {
   fun listings_showsErrorMessage_whenLoadError() {
     val errorMsg = "Failed to load listings."
 
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed().performClick()
+
     compose.runOnIdle {
-      val state = viewModel.uiState.value.copy(listingsLoadError = errorMsg)
       val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
       field.isAccessible = true
       val mutable = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val state = viewModel.uiState.value.copy(listingsLoadError = errorMsg)
       mutable.value = state
     }
 
-    compose.waitForIdle()
-    compose
-        .onNodeWithTag(MyProfileScreenTestTag.LISTINGS_ERROR)
-        .assertIsDisplayed()
-        .assertTextContains(errorMsg)
+    compose.waitUntil(timeoutMillis = 5000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.LISTINGS_ERROR)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_ERROR).assertIsDisplayed()
+    compose.onNodeWithText(errorMsg).assertIsDisplayed()
   }
 
   @Test
   @Suppress("UNCHECKED_CAST")
   fun listings_showsEmptyText_whenNoListings() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed().performClick()
+
     compose.runOnIdle {
-      val state = viewModel.uiState.value.copy(listings = emptyList())
       val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
       field.isAccessible = true
       val mutable = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val state = viewModel.uiState.value.copy(listings = emptyList())
       mutable.value = state
     }
 
-    compose.waitForIdle()
+    compose.waitUntil(timeoutMillis = 5000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.LISTINGS_EMPTY)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
     compose
         .onNodeWithTag(MyProfileScreenTestTag.LISTINGS_EMPTY)
         .assertIsDisplayed()
