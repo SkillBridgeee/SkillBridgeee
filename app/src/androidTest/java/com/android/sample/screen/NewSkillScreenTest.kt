@@ -195,4 +195,117 @@ class NewSkillScreenTest {
   fun clickOnSaveSkillButton() {
     compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
   }
+
+  // ----------------------------------------------------------
+  // SUBJECT / SUB-SKILL EXTENDED TESTS
+  // ----------------------------------------------------------
+
+  @Test
+  fun subSkill_notVisible_untilSubjectSelected_thenVisible() {
+    // Initially, sub-skill picker should not be shown
+    compose
+        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD, useUnmergedTree = true)
+        .assertCountEquals(0)
+
+    // Select a subject
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN).assertIsDisplayed()
+    compose.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)[0].performClick()
+
+    // After subject selection, sub-skill field should appear
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).assertIsDisplayed()
+  }
+
+  @Test
+  fun subjectDropdown_open_selectItem_thenCloses() {
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN).assertIsDisplayed()
+
+    // Select first subject
+    compose.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)[0].performClick()
+
+    // Menu should be gone after selection
+    compose
+        .onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN, useUnmergedTree = true)
+        .assertCountEquals(0)
+  }
+
+  @Test
+  fun subSkillDropdown_open_selectItem_thenCloses() {
+    // Precondition: select a subject so sub-skill menu appears
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
+    compose.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)[0].performClick()
+
+    // Now open sub-skill dropdown
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN).assertIsDisplayed()
+
+    // Select first sub-skill option
+    compose
+        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX)[0]
+        .performClick()
+
+    // Menu should be gone after selection
+    compose
+        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN, useUnmergedTree = true)
+        .assertCountEquals(0)
+  }
+
+  @Test
+  fun showsError_whenNoSubject_onSave() {
+    // Ensure subject is empty (initial screen state), click Save
+    compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+
+    // Error helper under Subject field should be visible
+    compose
+        .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
+        .fetchSemanticsNodes()
+        .isNotEmpty()
+  }
+
+  @Test
+  fun showsError_whenSubjectChosen_butNoSubSkill_onSave() {
+    // Choose a subject
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
+    compose.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)[0].performClick()
+
+    // Sub-skill field visible now but we don't choose any sub-skill
+    // Click Save directly
+    compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+
+    // Error helper under Sub-skill field should be visible
+    compose
+        .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUB_SKILL_MSG, useUnmergedTree = true)
+        .fetchSemanticsNodes()
+        .isNotEmpty()
+  }
+
+  @Test
+  fun selectingSubject_thenSubSkill_enablesCleanSave_noErrorsShown() {
+    // Select a subject
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
+    compose.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)[0].performClick()
+
+    // Select a sub-skill
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
+    compose
+        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX)[0]
+        .performClick()
+
+    // Provide minimal valid text inputs to avoid other errors from the ViewModel
+    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE).performTextInput("T")
+    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION).performTextInput("D")
+    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("1")
+
+    // Save
+    compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+
+    // Assert no subject/sub-skill error helpers are shown
+    compose
+        .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
+        .assertCountEquals(0)
+    compose
+        .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUB_SKILL_MSG, useUnmergedTree = true)
+        .assertCountEquals(0)
+  }
 }

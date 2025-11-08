@@ -64,7 +64,7 @@ data class SkillUIState(
             description.isNotBlank() &&
             price.isNotBlank() &&
             subject != null &&
-            selectedSubSkill != null &&
+            // sub-skill is optional: do not require selectedSubSkill here
             selectedLocation != null
 }
 
@@ -107,11 +107,12 @@ class NewSkillViewModel(
     val state = _uiState.value
     if (state.isValid) {
       val price = state.price.toDouble()
-      val specificSkill = state.selectedSubSkill ?: state.title
+      val specificSkill =
+          if (state.selectedSubSkill.isNullOrBlank()) state.title else state.selectedSubSkill
       val newSkill =
           Skill(
               mainSubject = state.subject!!,
-              skill = state.title,
+              skill = specificSkill,
           )
 
       val newProposal =
@@ -149,8 +150,8 @@ class NewSkillViewModel(
               if (currentState.price.isBlank()) priceEmptyMsg
               else if (!isPosNumber(currentState.price)) priceInvalidMsg else null,
           invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null,
-          invalidSubSkillMsg =
-              if (currentState.selectedSubSkill.isNullOrBlank()) subSkillMsgError else null,
+          // Keep sub-skill optional for validation: don't set an error here
+          invalidSubSkillMsg = null,
           invalidLocationMsg =
               if (currentState.selectedLocation == null) locationMsgError else null)
     }
