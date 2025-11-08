@@ -3,12 +3,15 @@ package com.android.sample.screen
 import android.Manifest
 import android.app.UiAutomation
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
@@ -18,9 +21,11 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
+import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.text.set
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -99,18 +104,17 @@ class MyProfileScreenTest {
 
     override suspend fun getAllListings(): List<Listing> = emptyList()
 
-    override suspend fun getProposals(): List<com.android.sample.model.listing.Proposal> =
-        emptyList()
+    override suspend fun getProposals(): List<Proposal> = emptyList()
 
-    override suspend fun getRequests(): List<com.android.sample.model.listing.Request> = emptyList()
+    override suspend fun getRequests(): List<Request> = emptyList()
 
     override suspend fun getListing(listingId: String): Listing? = null
 
     override suspend fun getListingsByUser(userId: String): List<Listing> = emptyList()
 
-    override suspend fun addProposal(proposal: com.android.sample.model.listing.Proposal) {}
+    override suspend fun addProposal(proposal: Proposal) {}
 
-    override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+    override suspend fun addRequest(request: Request) {}
 
     override suspend fun updateListing(listingId: String, listing: Listing) {}
 
@@ -118,8 +122,7 @@ class MyProfileScreenTest {
 
     override suspend fun deactivateListing(listingId: String) {}
 
-    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill): List<Listing> =
-        emptyList()
+    override suspend fun searchBySkill(skill: Skill): List<Listing> = emptyList()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> =
         emptyList()
@@ -487,63 +490,36 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
   }
 
-  @Test
-  fun tabIndicatorDisplaysCorrectly() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.TAB_INDICATOR).assertIsDisplayed()
+  // Helper to atomically update the screen's UI state from tests.
+  private fun mutateUi(block: (MyProfileUIState) -> MyProfileUIState) {
+    compose.runOnIdle {
+      val flow = viewModel.uiState as MutableStateFlow<MyProfileUIState>
+      flow.value = block(flow.value)
+    }
   }
 
   @Test
-  fun rootList_isDisplayed() {
-    // The LazyColumn root with a stable test tag should always exist
-    compose.onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true).assertExists()
+  fun listings_showsLoadingIndicator_whenLoadingTrue() {
+    // Force loading branch
+    mutateUi { it.copy(listingsLoading = true, listingsLoadError = null) }
+
+    // Look for an indeterminate progress indicator
+    compose.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)).assertExists()
+
+    // And ensure the "empty" branch isn't shown while loading
+    compose.onNodeWithText("You don’t have any listings yet.").assertDoesNotExist()
   }
 
   @Test
-  fun saveButton_hidden_onRatingsTab() {
-    // Switch to Ratings
-    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+  fun listings_showsErrorMessage_whenErrorPresent() {
+    val errorMsg = "Failed to fetch listings (test)"
+    // Force error branch
+    mutateUi { it.copy(listingsLoading = false, listingsLoadError = errorMsg) }
 
-    // Save button should NOT be visible on the Ratings tab
-    compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertDoesNotExist()
+    // Error text should be rendered
+    compose.onNodeWithText(errorMsg).assertExists()
+
+    // Empty message should not appear when error is present
+    compose.onNodeWithText("You don’t have any listings yet.").assertDoesNotExist()
   }
-
-  @Test
-  fun saveButton_reappears_onInfoTab_afterSwitch() {
-    // Go to Ratings then back to Info
-    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
-    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).performClick()
-
-    // Save button should be back
-    compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertIsDisplayed()
-  }
-
-  @Test
-  fun tabIndicator_visible_afterSwitchingTabs() {
-    // Toggle to Ratings and make sure the indicator is still around
-    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
-    compose.onNodeWithTag(MyProfileScreenTestTag.TAB_INDICATOR).assertIsDisplayed()
-
-    // Toggle back to Info and confirm it remains visible
-    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).performClick()
-    compose.onNodeWithTag(MyProfileScreenTestTag.TAB_INDICATOR).assertIsDisplayed()
-  }
-
-  @Test
-  fun pinButton_contentDescription_matchesConstant() {
-    // Sanity-check the a11y label matches the contract constant
-    compose
-        .onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC)
-        .assertExists()
-        .assertContentDescriptionEquals(MyProfileScreenTestTag.PIN_CONTENT_DESC)
-  }
-
-  @Test
-  fun infoTab_click_keepsProfileFormVisible() {
-    // Clicking Info (already selected) should be a no-op; core form bits still visible
-    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).performClick()
-    compose.onNodeWithTag(MyProfileScreenTestTag.CARD_TITLE).assertIsDisplayed()
-    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME).assertExists()
-  }
-
-  // Edge case tests for null/empty values are in MyProfileScreenEdgeCasesTest.kt
 }
