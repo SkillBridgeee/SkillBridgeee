@@ -149,13 +149,15 @@ class NewSkillViewModel(
               if (currentState.price.isBlank()) priceEmptyMsg
               else if (!isPosNumber(currentState.price)) priceInvalidMsg else null,
           invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null,
-          // Keep sub-skill optional for validation: don't set an error here
-          invalidSubSkillMsg = null,
+          // Set sub-skill error only when a subject is selected but no sub-skill chosen
+          invalidSubSkillMsg =
+              if (currentState.subject != null && currentState.selectedSubSkill.isNullOrBlank())
+                  subSkillMsgError
+              else null,
           invalidLocationMsg =
               if (currentState.selectedLocation == null) locationMsgError else null)
     }
   }
-
   // --- State update helpers used by the UI ---
 
   /** Update the title and validate presence. If the title is blank, sets `invalidTitleMsg`. */
@@ -226,32 +228,30 @@ class NewSkillViewModel(
    * @see viewModelScope
    */
   fun setLocationQuery(query: String) {
-      _uiState.value = _uiState.value.copy(locationQuery = query)
+    _uiState.value = _uiState.value.copy(locationQuery = query)
 
-      locationSearchJob?.cancel()
+    locationSearchJob?.cancel()
 
-      if (query.isNotBlank()) {
-          locationSearchJob =
-              viewModelScope.launch {
-                  delay(locationSearchDelayTime)
-                  try {
-                      val results = locationRepository.search(query)
-                      _uiState.value =
-                          _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
-                  } catch (_: Exception) {
-                      _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
-                  }
-              }
-      } else {
-          _uiState.value =
-              _uiState.value.copy(
-                  locationSuggestions = emptyList(),
-                  invalidLocationMsg = locationMsgError,
-                  selectedLocation = null)
-      }
+    if (query.isNotBlank()) {
+      locationSearchJob =
+          viewModelScope.launch {
+            delay(locationSearchDelayTime)
+            try {
+              val results = locationRepository.search(query)
+              _uiState.value =
+                  _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
+            } catch (_: Exception) {
+              _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+            }
+          }
+    } else {
+      _uiState.value =
+          _uiState.value.copy(
+              locationSuggestions = emptyList(),
+              invalidLocationMsg = locationMsgError,
+              selectedLocation = null)
+    }
   }
-
-
 
   /** Returns true if the given string represents a non-negative number. */
   private fun isPosNumber(num: String): Boolean {

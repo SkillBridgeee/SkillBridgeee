@@ -71,11 +71,11 @@ class NewSkillViewModelTest {
     override suspend fun searchBySkill(skill: Skill): List<Listing> = emptyList()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> =
-      emptyList()
+        emptyList()
   }
 
   private class FakeLocationRepo(
-    // minimal fake for tests (implementation elided in excerpt)
+      // minimal fake for tests (implementation elided in excerpt)
   ) : com.android.sample.model.map.LocationRepository {
     override suspend fun search(query: String): List<Location> {
       return listOf(Location(name = "Paris", latitude = 48.8566, longitude = 2.3522))
@@ -85,8 +85,8 @@ class NewSkillViewModelTest {
   // -------- Helpers ------------------------------------------------------
 
   private fun newVm(
-    repo: ListingRepository = FakeListingRepo(),
-    locRepo: com.android.sample.model.map.LocationRepository = FakeLocationRepo()
+      repo: ListingRepository = FakeListingRepo(),
+      locRepo: com.android.sample.model.map.LocationRepository = FakeLocationRepo()
   ) = NewSkillViewModel(repo, locRepo, userId = "")
 
   // -------- Tests --------------------------------------------------------
@@ -161,7 +161,6 @@ class NewSkillViewModelTest {
     assertTrue(suggestions.isNotEmpty())
     assertEquals("Paris", suggestions.first().name)
   }
-
 
   @Test
   fun setLocationQuery_setsError_whenEmptyQuery() {
@@ -248,11 +247,11 @@ class NewSkillViewModelTest {
   @Test
   fun addSkill_doesNotThrow_whenRepositoryFails() = runTest {
     val failingRepo =
-      object : FakeListingRepo() {
-        override suspend fun addProposal(proposal: Proposal) {
-          throw RuntimeException("fail")
+        object : FakeListingRepo() {
+          override suspend fun addProposal(proposal: Proposal) {
+            throw RuntimeException("fail")
+          }
         }
-      }
 
     val vm = newVm(failingRepo)
     vm.setTitle("Valid")
@@ -303,7 +302,6 @@ class NewSkillViewModelTest {
     assertNull(ui.selectedSubSkill) // reset
     assertNotNull(ui.subSkillOptions)
   }
-
 
   @Test
   fun addSkill_usesProvidedUserId_inProposal() = runTest {
@@ -366,6 +364,7 @@ class NewSkillViewModelTest {
     // Repo that records queries and returns different results per query
     class RecordingRepo : com.android.sample.model.map.LocationRepository {
       val queries = mutableListOf<String>()
+
       override suspend fun search(query: String): List<Location> {
         queries.add(query)
         return listOf(Location(name = "Lyon", latitude = 45.75, longitude = 4.85))
