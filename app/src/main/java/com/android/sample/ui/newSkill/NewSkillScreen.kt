@@ -61,11 +61,12 @@ object NewSkillScreenTestTag {
 @Composable
 fun NewSkillScreen(skillViewModel: NewSkillViewModel = viewModel(), profileId: String) {
   val skillUIState by skillViewModel.uiState.collectAsState()
-  val buttonText = when (skillUIState.listingType) {
-    ListingType.PROPOSAL -> "Create Proposal"
-    ListingType.REQUEST -> "Create Request"
-    null -> "Create Listing"
-  }
+  val buttonText =
+      when (skillUIState.listingType) {
+        ListingType.PROPOSAL -> "Create Proposal"
+        ListingType.REQUEST -> "Create Request"
+        null -> "Create Listing"
+      }
 
   Scaffold(
       floatingActionButton = {
@@ -293,4 +294,3 @@ fun ListingTypeMenu(
             }
       }
 }
-
