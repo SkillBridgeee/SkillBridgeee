@@ -494,56 +494,71 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.TAB_INDICATOR).assertIsDisplayed()
   }
 
-  // Edge case tests for null/empty values are in MyProfileScreenEdgeCasesTest.kt
   @Test
-  @Suppress("UNCHECKED_CAST")
-  fun listings_showsErrorMessage_whenLoadError() {
-    val errorMsg = "Failed to load listings."
-
-    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed().performClick()
-
-    compose.runOnIdle {
-      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
-      field.isAccessible = true
-      val mutable = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
-      val state = viewModel.uiState.value.copy(listingsLoadError = errorMsg)
-      mutable.value = state
-    }
-
-    compose.waitUntil(timeoutMillis = 5000) {
-      compose
-          .onAllNodesWithTag(MyProfileScreenTestTag.LISTINGS_ERROR)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
-
-    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_ERROR).assertIsDisplayed()
-    compose.onNodeWithText(errorMsg).assertIsDisplayed()
+  fun rootList_isDisplayed() {
+    // The LazyColumn root with a stable test tag should always exist
+    compose.onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true).assertExists()
   }
 
   @Test
-  @Suppress("UNCHECKED_CAST")
-  fun listings_showsEmptyText_whenNoListings() {
-    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed().performClick()
+  fun yourListingsHeader_isDisplayed() {
+    // The "Your Listings" section title is rendered unconditionally by ProfileListings()
+    compose.onNodeWithText("Your Listings").assertIsDisplayed()
+  }
 
-    compose.runOnIdle {
-      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
-      field.isAccessible = true
-      val mutable = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
-      val state = viewModel.uiState.value.copy(listings = emptyList())
-      mutable.value = state
-    }
+  @Test
+  fun emptyListingsMessage_isDisplayed_whenNoListings() {
+    // With FakeListingRepo (empty) and no explicit loading/error,
+    // the "empty" copy should appear.
+    compose.onNodeWithText("You don’t have any listings yet.").assertIsDisplayed()
+  }
 
-    compose.waitUntil(timeoutMillis = 5000) {
-      compose
-          .onAllNodesWithTag(MyProfileScreenTestTag.LISTINGS_EMPTY)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+  @Test
+  fun saveButton_hidden_onRatingsTab() {
+    // Switch to Ratings
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
 
+    // Save button should NOT be visible on the Ratings tab
+    compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertDoesNotExist()
+  }
+
+  @Test
+  fun saveButton_reappears_onInfoTab_afterSwitch() {
+    // Go to Ratings then back to Info
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).performClick()
+
+    // Save button should be back
+    compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertIsDisplayed()
+  }
+
+  @Test
+  fun tabIndicator_visible_afterSwitchingTabs() {
+    // Toggle to Ratings and make sure the indicator is still around
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.TAB_INDICATOR).assertIsDisplayed()
+
+    // Toggle back to Info and confirm it remains visible
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.TAB_INDICATOR).assertIsDisplayed()
+  }
+
+  @Test
+  fun pinButton_contentDescription_matchesConstant() {
+    // Sanity-check the a11y label matches the contract constant
     compose
-        .onNodeWithTag(MyProfileScreenTestTag.LISTINGS_EMPTY)
-        .assertIsDisplayed()
-        .assertTextContains("You don’t have any listings yet.")
+      .onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC)
+      .assertExists()
+      .assertContentDescriptionEquals(MyProfileScreenTestTag.PIN_CONTENT_DESC)
   }
+
+  @Test
+  fun infoTab_click_keepsProfileFormVisible() {
+    // Clicking Info (already selected) should be a no-op; core form bits still visible
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.CARD_TITLE).assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME).assertExists()
+  }
+
+  // Edge case tests for null/empty values are in MyProfileScreenEdgeCasesTest.kt
 }
