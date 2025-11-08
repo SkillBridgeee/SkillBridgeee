@@ -508,7 +508,10 @@ class MyProfileScreenTest {
     }
 
     compose.waitForIdle()
-    compose.onNodeWithText(errorMsg).assertIsDisplayed()
+    compose
+      .onNodeWithTag(MyProfileScreenTestTag.LISTINGS_ERROR)
+      .assertIsDisplayed()
+      .assertTextContains(errorMsg)
   }
 
   @Test
@@ -523,6 +526,9 @@ class MyProfileScreenTest {
     }
 
     compose.waitForIdle()
-    compose.onNodeWithText("You don’t have any listings yet.").assertIsDisplayed()
+    compose
+      .onNodeWithTag(MyProfileScreenTestTag.LISTINGS_EMPTY)
+      .assertIsDisplayed()
+      .assertTextContains("You don’t have any listings yet.")
   }
 }
