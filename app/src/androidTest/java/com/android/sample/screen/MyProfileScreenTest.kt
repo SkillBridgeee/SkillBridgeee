@@ -500,9 +500,7 @@ class MyProfileScreenTest {
   fun listings_showsErrorMessage_whenLoadError() {
     val errorMsg = "Failed to load listings."
 
-    compose.setContent {
-      MyProfileScreen(profileViewModel = viewModel, profileId = "testUser")
-    }
+    compose.setContent { MyProfileScreen(profileViewModel = viewModel, profileId = "testUser") }
 
     compose.runOnIdle {
       val state = viewModel.uiState.value.copy(listingsLoadError = errorMsg)
@@ -514,18 +512,15 @@ class MyProfileScreenTest {
 
     compose.waitForIdle()
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.LISTINGS_ERROR)
-      .assertIsDisplayed()
-      .assertTextContains(errorMsg)
+        .onNodeWithTag(MyProfileScreenTestTag.LISTINGS_ERROR)
+        .assertIsDisplayed()
+        .assertTextContains(errorMsg)
   }
-
 
   @Test
   @Suppress("UNCHECKED_CAST")
   fun listings_showsEmptyText_whenNoListings() {
-    compose.setContent {
-      MyProfileScreen(profileViewModel = viewModel, profileId = "testUser")
-    }
+    compose.setContent { MyProfileScreen(profileViewModel = viewModel, profileId = "testUser") }
 
     compose.runOnIdle {
       val state = viewModel.uiState.value.copy(listings = emptyList())
@@ -537,9 +532,8 @@ class MyProfileScreenTest {
 
     compose.waitForIdle()
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.LISTINGS_EMPTY)
-      .assertIsDisplayed()
-      .assertTextContains("You don’t have any listings yet.")
+        .onNodeWithTag(MyProfileScreenTestTag.LISTINGS_EMPTY)
+        .assertIsDisplayed()
+        .assertTextContains("You don’t have any listings yet.")
   }
-
 }
