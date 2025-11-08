@@ -18,11 +18,9 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
-import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.text.set
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -547,9 +545,9 @@ class MyProfileScreenTest {
   fun pinButton_contentDescription_matchesConstant() {
     // Sanity-check the a11y label matches the contract constant
     compose
-      .onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC)
-      .assertExists()
-      .assertContentDescriptionEquals(MyProfileScreenTestTag.PIN_CONTENT_DESC)
+        .onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC)
+        .assertExists()
+        .assertContentDescriptionEquals(MyProfileScreenTestTag.PIN_CONTENT_DESC)
   }
 
   @Test

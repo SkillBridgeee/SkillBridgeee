@@ -68,7 +68,6 @@ object MyProfileScreenTestTag {
 
   const val RATING_COMING_SOON_TEXT = "rankingComingSoonText"
   const val TAB_INDICATOR = "tabIndicator"
-
 }
 
 enum class ProfileTab {
@@ -410,9 +409,7 @@ private fun ProfileListings(ui: MyProfileUIState) {
   when {
     ui.listingsLoading -> {
       Box(
-          modifier =
-              Modifier.fillMaxWidth()
-                  .padding(vertical = 24.dp),
+          modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
           contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
           }
@@ -422,15 +419,13 @@ private fun ProfileListings(ui: MyProfileUIState) {
           text = ui.listingsLoadError ?: "Failed to load listings.",
           style = MaterialTheme.typography.bodyMedium,
           color = Color.Red,
-          modifier =
-              Modifier.padding(horizontal = 16.dp))
+          modifier = Modifier.padding(horizontal = 16.dp))
     }
     ui.listings.isEmpty() -> {
       Text(
           text = "You don’t have any listings yet.",
           style = MaterialTheme.typography.bodyMedium,
-          modifier =
-              Modifier.padding(horizontal = 16.dp))
+          modifier = Modifier.padding(horizontal = 16.dp))
     }
     else -> {
       val creatorProfile =
