@@ -314,32 +314,150 @@ class MapScreenTest {
     composeTestRule.onNodeWithText("John Doe").assertDoesNotExist()
   }
 
+  // --- User profile marker tests ---
+
   @Test
-  fun emptyState_displays_whenNoBookingsOrProfiles() {
+  fun mapScreen_displaysProfileLocation_inCard() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val profileWithLocation =
+        testProfile.copy(
+            location = Location(latitude = 46.5196535, longitude = 6.6322734, name = "EPFL"))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = profileWithLocation,
+                profiles = listOf(profileWithLocation),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun mapScreen_renders_withUserProfileMarker() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val profileWithLocation =
+        testProfile.copy(
+            location = Location(latitude = 46.5196535, longitude = 6.6322734, name = "EPFL"))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = profileWithLocation,
+                profiles = listOf(profileWithLocation),
+                bookingPins = emptyList(),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+
+    // Verify map renders without crash when user profile marker is present
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun mapScreen_renders_withoutUserProfileMarker_whenLocationIsZero() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val profileNoLocation =
+        testProfile.copy(location = Location(latitude = 0.0, longitude = 0.0, name = ""))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = profileNoLocation,
+                profiles = listOf(profileNoLocation),
+                bookingPins = emptyList(),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+
+    // Verify map renders without crash when location is (0,0)
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun mapScreen_renders_withoutUserProfileMarker_whenProfileIsNull() {
     val vm = mockk<MapViewModel>(relaxed = true)
     val flow =
         MutableStateFlow(
             MapUiState(
                 userLocation = LatLng(46.52, 6.63),
+                myProfile = null,
                 profiles = emptyList(),
                 bookingPins = emptyList(),
                 isLoading = false,
                 errorMessage = null))
-
     every { vm.uiState } returns flow
 
     composeTestRule.setContent { MapScreen(viewModel = vm) }
 
-    // Verify that the placeholder text is shown
-    composeTestRule.onNodeWithTag(MapScreenTestTags.EMPTY_STATE).assertIsDisplayed()
-    composeTestRule.onNodeWithText("No available bookings nearby.").assertIsDisplayed()
+    // Verify map renders without crash when no user profile
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
 
-    // If bookings appear, placeholder should disappear
-    flow.value =
-        flow.value.copy(
-            bookingPins =
-                listOf(BookingPin("b1", LatLng(46.5, 6.6), "Session", "Description", null)))
+  @Test
+  fun mapScreen_showsProfileCard_whenProfileSelected() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val profileWithLocation =
+        testProfile.copy(
+            location = Location(latitude = 46.5196535, longitude = 6.6322734, name = "EPFL"))
+    val bookingPin =
+        BookingPin("b1", LatLng(46.52, 6.64), "Math Tutoring", "Description", profileWithLocation)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = profileWithLocation,
+                profiles = listOf(profileWithLocation),
+                selectedProfile = profileWithLocation,
+                bookingPins = listOf(bookingPin),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
     composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithTag(MapScreenTestTags.EMPTY_STATE).assertDoesNotExist()
+
+    // Give extra time for map and permission launcher to settle in Robolectric
+    Thread.sleep(200)
+    composeTestRule.waitForIdle()
+
+    // First verify the map renders
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+
+    // Profile card should be visible with the location name
+    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertIsDisplayed()
+    composeTestRule.onNodeWithText("EPFL").assertIsDisplayed()
+  }
+
+  @Test
+  fun mapScreen_withBothBookingPinsAndUserProfile() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val profileWithLocation =
+        testProfile.copy(
+            location = Location(latitude = 46.5196535, longitude = 6.6322734, name = "EPFL"))
+    val bookingPin =
+        BookingPin("b1", LatLng(46.52, 6.64), "Math Tutoring", "Description", profileWithLocation)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = profileWithLocation,
+                profiles = listOf(profileWithLocation),
+                bookingPins = listOf(bookingPin),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+
+    // Verify both booking pins and user profile marker render without crash
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
   }
 }

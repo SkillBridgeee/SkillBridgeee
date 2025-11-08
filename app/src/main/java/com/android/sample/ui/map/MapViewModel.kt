@@ -20,15 +20,17 @@ import kotlinx.coroutines.launch
  *
  * @param userLocation The current user's location (camera position)
  * @param profiles List of all user profiles to display on the map
- * @param selectedProfile The currently selected profile when a marker is clicked
+ * @param myProfile The current user's profile to show on the map
+ * @param selectedProfile The profile selected when clicking a booking marker
  * @param isLoading Whether data is currently being loaded
  * @param errorMessage Error message if loading fails
+ * @param bookingPins List of booking pins for the current user's bookings
  */
 data class MapUiState(
     val userLocation: LatLng = LatLng(46.5196535, 6.6322734), // Default to Lausanne/EPFL
     val profiles: List<Profile> = emptyList(),
-    val selectedProfile: Profile? = null,
     val myProfile: Profile? = null,
+    val selectedProfile: Profile? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val bookingPins: List<BookingPin> = emptyList(),
@@ -99,18 +101,38 @@ class MapViewModel(
   fun loadBookings() {
     viewModelScope.launch {
       try {
-        val bookings = bookingRepository.getAllBookings()
+        val currentUserId = runCatching { FirebaseAuth.getInstance().currentUser?.uid }.getOrNull()
+        if (currentUserId == null) {
+          _uiState.value = _uiState.value.copy(isLoading = false)
+          return@launch
+        }
+
+        val allBookings = bookingRepository.getAllBookings()
+        // Filter to only show bookings where current user is involved
+        val userBookings =
+            allBookings.filter { booking ->
+              booking.bookerId == currentUserId || booking.listingCreatorId == currentUserId
+            }
+
         val pins =
-            bookings.mapNotNull { booking ->
-              val tutor = profileRepository.getProfileById(booking.listingCreatorId)
-              val loc = tutor?.location
+            userBookings.mapNotNull { booking ->
+              // Show the location of the OTHER person in the booking
+              val otherUserId =
+                  if (booking.bookerId == currentUserId) {
+                    booking.listingCreatorId
+                  } else {
+                    booking.bookerId
+                  }
+
+              val otherProfile = profileRepository.getProfileById(otherUserId)
+              val loc = otherProfile?.location
               if (loc != null && isValidLatLng(loc.latitude, loc.longitude)) {
                 BookingPin(
                     bookingId = booking.bookingId,
                     position = LatLng(loc.latitude, loc.longitude),
-                    title = tutor.name ?: "Session",
-                    snippet = tutor.description.takeIf { it.isNotBlank() },
-                    profile = tutor)
+                    title = otherProfile.name ?: "Session",
+                    snippet = otherProfile.description.takeIf { it.isNotBlank() },
+                    profile = otherProfile)
               } else null
             }
         _uiState.value = _uiState.value.copy(bookingPins = pins)
@@ -125,7 +147,8 @@ class MapViewModel(
   }
 
   /**
-   * Updates the selected profile when a marker is clicked.
+   * Selects a profile when a booking marker is clicked. This will show the profile card at the
+   * bottom of the map.
    *
    * @param profile The profile to select, or null to deselect
    */
