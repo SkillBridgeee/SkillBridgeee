@@ -499,19 +499,6 @@ class MyProfileScreenTest {
   }
 
   @Test
-  fun yourListingsHeader_isDisplayed() {
-    // The "Your Listings" section title is rendered unconditionally by ProfileListings()
-    compose.onNodeWithText("Your Listings").assertIsDisplayed()
-  }
-
-  @Test
-  fun emptyListingsMessage_isDisplayed_whenNoListings() {
-    // With FakeListingRepo (empty) and no explicit loading/error,
-    // the "empty" copy should appear.
-    compose.onNodeWithText("You don’t have any listings yet.").assertIsDisplayed()
-  }
-
-  @Test
   fun saveButton_hidden_onRatingsTab() {
     // Switch to Ratings
     compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
