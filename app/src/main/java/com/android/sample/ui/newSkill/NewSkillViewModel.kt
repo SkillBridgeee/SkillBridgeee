@@ -12,6 +12,7 @@ import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
+import com.android.sample.model.skill.SkillsHelper
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.Job
@@ -37,6 +38,8 @@ data class SkillUIState(
     val description: String = "",
     val price: String = "",
     val subject: MainSubject? = null,
+    val selectedSubSkill: String? = null,
+    val subSkillOptions: List<String> = emptyList(),
     val selectedLocation: Location? = null,
     val locationQuery: String = "",
     val locationSuggestions: List<Location> = emptyList(),
@@ -44,6 +47,7 @@ data class SkillUIState(
     val invalidDescMsg: String? = null,
     val invalidPriceMsg: String? = null,
     val invalidSubjectMsg: String? = null,
+    val invalidSubSkillMsg: String? = null,
     val invalidLocationMsg: String? = null
 ) {
 
@@ -54,11 +58,13 @@ data class SkillUIState(
             invalidDescMsg == null &&
             invalidPriceMsg == null &&
             invalidSubjectMsg == null &&
+            invalidSubSkillMsg == null &&
             invalidLocationMsg == null &&
             title.isNotBlank() &&
             description.isNotBlank() &&
             price.isNotBlank() &&
             subject != null &&
+            selectedSubSkill != null &&
             selectedLocation != null
 }
 
@@ -87,6 +93,7 @@ class NewSkillViewModel(
   private val priceEmptyMsg = "Price cannot be empty"
   private val priceInvalidMsg = "Price must be a positive number"
   private val subjectMsgError = "You must choose a subject"
+  private val subSkillMsgError = "You must choose a sub-subject"
   private val locationMsgError = "You must choose a location"
 
   /**
@@ -100,6 +107,7 @@ class NewSkillViewModel(
     val state = _uiState.value
     if (state.isValid) {
       val price = state.price.toDouble()
+      val specificSkill = state.selectedSubSkill ?: state.title
       val newSkill =
           Skill(
               mainSubject = state.subject!!,
@@ -141,6 +149,8 @@ class NewSkillViewModel(
               if (currentState.price.isBlank()) priceEmptyMsg
               else if (!isPosNumber(currentState.price)) priceInvalidMsg else null,
           invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null,
+          invalidSubSkillMsg =
+              if (currentState.selectedSubSkill.isNullOrBlank()) subSkillMsgError else null,
           invalidLocationMsg =
               if (currentState.selectedLocation == null) locationMsgError else null)
     }
@@ -184,7 +194,19 @@ class NewSkillViewModel(
 
   /** Update the selected main subject. */
   fun setSubject(sub: MainSubject) {
-    _uiState.value = _uiState.value.copy(subject = sub, invalidSubjectMsg = null)
+    val options = SkillsHelper.getSkillNames(sub)
+    _uiState.value =
+        _uiState.value.copy(
+            subject = sub,
+            subSkillOptions = options,
+            selectedSubSkill = null,
+            invalidSubjectMsg = null,
+            invalidSubSkillMsg = null)
+  }
+
+  /** Set a chosen sub-skill string. */
+  fun setSubSkill(subSkill: String) {
+    _uiState.value = _uiState.value.copy(selectedSubSkill = subSkill, invalidSubSkillMsg = null)
   }
 
   // Update the selected location and the locationQuery

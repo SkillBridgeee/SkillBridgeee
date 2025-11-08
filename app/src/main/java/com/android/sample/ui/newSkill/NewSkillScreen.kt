@@ -49,6 +49,10 @@ object NewSkillScreenTestTag {
   const val SUBJECT_DROPDOWN = "subjectDropdown"
   const val SUBJECT_DROPDOWN_ITEM_PREFIX = "subjectItem"
   const val INVALID_SUBJECT_MSG = "invalidSubjectMsg"
+  const val SUB_SKILL_FIELD = "subSkillField"
+  const val SUB_SKILL_DROPDOWN = "subSkillDropdown"
+  const val SUB_SKILL_DROPDOWN_ITEM_PREFIX = "subSkillItem"
+  const val INVALID_SUB_SKILL_MSG = "invalidSubSkillMsg"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -162,6 +166,16 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     skillViewModel = skillViewModel,
                     skillUIState = skillUIState)
 
+                // Sub-skill dropdown, visible when a subject is selected
+                if (skillUIState.subject != null) {
+                  Spacer(modifier = Modifier.height(textSpace))
+                  SubSkillMenu(
+                      selectedSubSkill = skillUIState.selectedSubSkill,
+                      options = skillUIState.subSkillOptions,
+                      skillViewModel = skillViewModel,
+                      skillUIState = skillUIState)
+                }
+
                 // Location Input with dropdown
                 LocationInputField(
                     locationQuery = locationQuery,
@@ -219,6 +233,54 @@ fun SubjectMenu(
                       expanded = false
                     },
                     modifier = Modifier.testTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX))
+              }
+            }
+      }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SubSkillMenu(
+    selectedSubSkill: String?,
+    options: List<String>,
+    skillViewModel: NewSkillViewModel,
+    skillUIState: SkillUIState
+) {
+  var expanded by remember { mutableStateOf(false) }
+
+  ExposedDropdownMenuBox(
+      expanded = expanded,
+      onExpandedChange = { expanded = it },
+      modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = selectedSubSkill ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Sub-Subject") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            isError = skillUIState.invalidSubSkillMsg != null,
+            supportingText = {
+              skillUIState.invalidSubSkillMsg?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_SUB_SKILL_MSG))
+              }
+            },
+            modifier =
+                Modifier.menuAnchor().fillMaxWidth().testTag(NewSkillScreenTestTag.SUB_SKILL_FIELD))
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.testTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN)) {
+              options.forEach { opt ->
+                DropdownMenuItem(
+                    text = { Text(opt) },
+                    onClick = {
+                      skillViewModel.setSubSkill(opt)
+                      expanded = false
+                    },
+                    modifier =
+                        Modifier.testTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX))
               }
             }
       }
