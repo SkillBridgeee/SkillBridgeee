@@ -443,7 +443,7 @@ class MyProfileViewModelTest {
     val vm = newVm()
     val provider = SuccessGpsProvider(12.34, 56.78)
 
-    vm.fetchLocationFromGps(provider)
+    vm.fetchLocationFromGps(provider, context = ApplicationProvider.getApplicationContext())
     advanceUntilIdle()
 
     val ui = vm.uiState.value
@@ -459,7 +459,7 @@ class MyProfileViewModelTest {
     val vm = newVm()
     val provider = NullGpsProvider()
 
-    vm.fetchLocationFromGps(provider)
+    vm.fetchLocationFromGps(provider, context = ApplicationProvider.getApplicationContext())
     advanceUntilIdle()
 
     val ui = vm.uiState.value
@@ -471,7 +471,7 @@ class MyProfileViewModelTest {
     val vm = newVm()
     val provider = SecurityExceptionGpsProvider()
 
-    vm.fetchLocationFromGps(provider)
+    vm.fetchLocationFromGps(provider, context = ApplicationProvider.getApplicationContext())
     advanceUntilIdle()
 
     val ui = vm.uiState.value

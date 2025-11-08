@@ -1,5 +1,6 @@
 package com.android.sample.ui.profile
 
+import android.location.Geocoder
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +17,7 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -279,34 +281,54 @@ class MyProfileViewModel(
   }
 
   /**
-   * Fetch a GPS fix using the provided [GpsLocationProvider]. Updates the UI state with a simple
-   * lat,lng string in `locationQuery` on success and sets an appropriate `invalidLocationMsg` on
-   * failure (permission/error).
+   * Fetches the current location using GPS and updates the UI state accordingly.
+   *
+   * This function attempts to retrieve the current GPS location using the provided
+   * [GpsLocationProvider]. If successful, it uses a [Geocoder] to convert the latitude and
+   * longitude into a human-readable address. The UI state is then updated with the fetched location
+   * details. If the location cannot be obtained or if there are permission issues, appropriate
+   * error messages are set in the UI state.
+   *
+   * @param provider The [GpsLocationProvider] used to obtain the current GPS location.
+   * @param context The Android context used for geocoding.
    */
-  fun fetchLocationFromGps(provider: GpsLocationProvider) {
+  @Suppress("DEPRECATION")
+  fun fetchLocationFromGps(provider: GpsLocationProvider, context: android.content.Context) {
     viewModelScope.launch {
       try {
-        // attempt to get a location (provider may block) — consider adding a timeout here if
-        // desired
         val androidLoc = provider.getCurrentLocation()
         if (androidLoc != null) {
+          val geocoder = Geocoder(context, Locale.getDefault())
+          val addresses = geocoder.getFromLocation(androidLoc.latitude, androidLoc.longitude, 1)
+          val addressText =
+              if (!addresses.isNullOrEmpty()) {
+                // Take the first address from the selected list which is the most relevant
+                val address = addresses[0]
+                // Build a readable address string
+                listOfNotNull(address.locality, address.adminArea, address.countryName)
+                    .joinToString(", ")
+              } else {
+                "${androidLoc.latitude}, ${androidLoc.longitude}"
+              }
+
           val mapLocation =
-              com.android.sample.model.map.Location(
+              Location(
                   latitude = androidLoc.latitude,
                   longitude = androidLoc.longitude,
-                  name = "${androidLoc.latitude}, ${androidLoc.longitude}")
+                  name = addressText)
+
           _uiState.update {
             it.copy(
                 selectedLocation = mapLocation,
-                locationQuery = mapLocation.name,
+                locationQuery = addressText,
                 invalidLocationMsg = null)
           }
         } else {
           _uiState.update { it.copy(invalidLocationMsg = GPS_FAILED_MSG) }
         }
-      } catch (se: SecurityException) {
+      } catch (_: SecurityException) {
         _uiState.update { it.copy(invalidLocationMsg = LOCATION_PERMISSION_DENIED_MSG) }
-      } catch (e: Exception) {
+      } catch (_: Exception) {
         _uiState.update { it.copy(invalidLocationMsg = GPS_FAILED_MSG) }
       }
     }
