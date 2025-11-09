@@ -1,18 +1,15 @@
 package com.android.sample.ui.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -23,11 +20,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,12 +36,12 @@ import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.booking.color
 import com.android.sample.model.booking.dateString
 import com.android.sample.model.booking.name
+import com.android.sample.model.listing.ListingType
 import java.util.Date
 import java.util.Locale
 
 object BookingCardTestTag {
   const val CARD = "booking_card"
-  const val AVATAR = "booking_card_avatar"
   const val LISTING_TITLE = "booking_card_listing_title"
   const val TUTOR_NAME = "booking_card_tutor_name"
   const val STATUS = "booking_card_status"
@@ -67,6 +67,7 @@ object BookingCardTestTag {
 @Composable
 fun BookingCard(
     modifier: Modifier = Modifier,
+    listingType: ListingType,
     booking: Booking,
     listingTitle: String,
     listingHourlyRate: Double,
@@ -89,36 +90,19 @@ fun BookingCard(
               .clickable { onClickBookingCard(booking.bookingId) }
               .testTag(BookingCardTestTag.CARD)) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-
-          // Avatar circle with tutor initial
-          Box(
-              modifier =
-                  Modifier.size(48.dp)
-                      .clip(MaterialTheme.shapes.extraLarge)
-                      .background(MaterialTheme.colorScheme.surfaceVariant)
-                      .testTag(BookingCardTestTag.AVATAR),
-              contentAlignment = Alignment.Center) {
-                Text(
-                    text = tutorName.first().toString(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold)
-              }
-
           Spacer(Modifier.width(12.dp))
 
           Column(modifier = Modifier.weight(1f)) {
-            // Listing title
             Text(
-                text = listingTitle,
+                text = cardTitle(listingType, listingTitle),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.testTag(BookingCardTestTag.LISTING_TITLE))
 
             // Tutor name
             Text(
-                text = "by $tutorName",
+                text = creatorName(tutorName),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -164,6 +148,34 @@ fun BookingCard(
       }
 }
 
+@Composable
+private fun cardTitle(listingType: ListingType, listingTitle: String): AnnotatedString {
+  val tutorStudentPrefix: String =
+      when (listingType) {
+        ListingType.REQUEST -> "Tutor for "
+        ListingType.PROPOSAL -> "Student for "
+      }
+  val styledText = buildAnnotatedString {
+    withStyle(style = SpanStyle(fontSize = MaterialTheme.typography.bodySmall.fontSize)) {
+      append(tutorStudentPrefix)
+    }
+    withStyle(style = SpanStyle(fontWeight = FontWeight.SemiBold)) { append(listingTitle) }
+  }
+  return styledText
+}
+
+@Composable
+private fun creatorName(creatorName: String): AnnotatedString {
+  val creatorNamePrefix = "by "
+  val styledText = buildAnnotatedString {
+    withStyle(style = SpanStyle(fontSize = MaterialTheme.typography.bodySmall.fontSize)) {
+      append(creatorNamePrefix)
+    }
+    withStyle(style = SpanStyle(fontWeight = FontWeight.SemiBold)) { append(creatorName) }
+  }
+  return styledText
+}
+
 @Preview(showBackground = true)
 @Composable
 fun BookingCardPreview() {
@@ -172,7 +184,8 @@ fun BookingCardPreview() {
     val booking = Booking(status = BookingStatus.PENDING, sessionStart = Date())
 
     BookingCard(
-        listingTitle = "titre du coursaaaaaaaaaaaaammmmmmmmmmmmmmmmmmmmmmmm",
+        listingTitle = "Cours de pianooooooooooooooooooooooooo00000000",
+        listingType = ListingType.PROPOSAL,
         listingHourlyRate = 12.0,
         tutorName = "jean mich",
         onClickBookingCard = { println("Open listing $it") },
@@ -181,7 +194,8 @@ fun BookingCardPreview() {
     val booking1 = Booking(status = BookingStatus.CONFIRMED, sessionStart = Date())
 
     BookingCard(
-        listingTitle = "mm",
+        listingTitle = "Cours d'informatiqueeeeeeeeeeeeeeeeeeeeee",
+        listingType = ListingType.PROPOSAL,
         listingHourlyRate = 12.22222,
         tutorName = "asdfasdvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvbbbbbvvbbvbf",
         onClickBookingCard = { println("Open listing $it") },
@@ -190,7 +204,8 @@ fun BookingCardPreview() {
     val booking2 = Booking(status = BookingStatus.COMPLETED, sessionStart = Date())
 
     BookingCard(
-        listingTitle = "asdfasdfasdfs",
+        listingTitle = "Cours de jspp",
+        listingType = ListingType.REQUEST,
         listingHourlyRate = 0.33,
         tutorName = "bg ultime",
         onClickBookingCard = { println("Open listing $it") },
@@ -199,7 +214,8 @@ fun BookingCardPreview() {
     val booking3 = Booking(status = BookingStatus.CANCELLED, sessionStart = Date())
 
     BookingCard(
-        listingTitle = "bookkke",
+        listingTitle = "Aide pour maths",
+        listingType = ListingType.REQUEST,
         listingHourlyRate = 12.0,
         tutorName = "jean mich",
         onClickBookingCard = { println("Open listing $it") },
