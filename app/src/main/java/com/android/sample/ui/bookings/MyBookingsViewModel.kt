@@ -35,8 +35,6 @@ class MyBookingsViewModel(
   private val _uiState = MutableStateFlow<List<BookingCardUIV2>>(emptyList())
   val uiState: StateFlow<List<BookingCardUIV2>> = _uiState.asStateFlow()
 
-  private val userId = UserSessionManager.getCurrentUserId()!!
-
   init {
     load()
   }
@@ -44,6 +42,7 @@ class MyBookingsViewModel(
   fun load() {
     viewModelScope.launch {
       try {
+        val userId = UserSessionManager.getCurrentUserId()!!
         // Get all the bookings of the user
         val allUsersBooking = bookingRepo.getBookingsByUserId(userId)
         if (allUsersBooking.isEmpty()) {
@@ -62,7 +61,7 @@ class MyBookingsViewModel(
 
         _uiState.value = bookingsWithProfiles
       } catch (e: Exception) {
-        Log.e("BookingsListViewModel", "Error loading user bookings for $userId", e)
+        Log.e("BookingsListViewModel", "Error loading user bookings", e)
         _uiState.value = emptyList()
       }
     }
