@@ -131,7 +131,7 @@ fun AppNavGraph(
 
     composable(NavRoutes.BOOKINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
-      MyBookingsScreen(viewModel = bookingsViewModel, navController = navController)
+      MyBookingsScreen(viewModel = bookingsViewModel)
     }
 
     composable(
