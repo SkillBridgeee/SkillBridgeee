@@ -27,9 +27,7 @@ import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.text.set
 import kotlinx.coroutines.CompletableDeferred
-import org.junit.Assert.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -293,10 +291,7 @@ class MyProfileScreenTest {
 
     try {
       uiAutomation.grantRuntimePermission(packageName, Manifest.permission.ACCESS_FINE_LOCATION)
-    } catch (e: SecurityException) {
-      // In some test environments granting may fail; continue to run the test to still exercise
-      // lines.
-    }
+    } catch (_: SecurityException) {}
 
     // Wait for UI to be ready
     compose.waitForIdle()

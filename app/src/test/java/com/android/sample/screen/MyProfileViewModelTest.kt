@@ -1,5 +1,6 @@
 package com.android.sample.screen
 
+import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.listing.Listing
@@ -32,6 +33,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -532,5 +534,17 @@ class MyProfileViewModelTest {
     vm.setLocation(Location(name = "Paris"))
     // now all required fields present and valid -> valid
     assertTrue(vm.uiState.value.isValid)
+  }
+
+  @Test
+  fun fetchLocationFromGps_isCalledWithContext_whenPermissionDenied() = runTest {
+    val repo = mock<ProfileRepository>()
+    val listingRepo = mock<ListingRepository>()
+    val context = mock<Context>()
+    val provider = mock<GpsLocationProvider>()
+
+    val viewModel = MyProfileViewModel(repo, listingRepository = listingRepo, userId = "demo")
+
+    viewModel.fetchLocationFromGps(provider, context)
   }
 }
