@@ -537,14 +537,25 @@ class MyProfileViewModelTest {
   }
 
   @Test
-  fun fetchLocationFromGps_isCalledWithContext_whenPermissionDenied() = runTest {
+  fun permissionGranted_branch_executes_fetchLocationFromGps() = runTest {
     val repo = mock<ProfileRepository>()
     val listingRepo = mock<ListingRepository>()
     val context = mock<Context>()
-    val provider = mock<GpsLocationProvider>()
 
+    val provider = GpsLocationProvider(context)
     val viewModel = MyProfileViewModel(repo, listingRepository = listingRepo, userId = "demo")
 
     viewModel.fetchLocationFromGps(provider, context)
+  }
+
+  @Test
+  fun permissionDenied_branch_executes_onLocationPermissionDenied() = runTest {
+    val repo = mock<ProfileRepository>()
+    val listingRepo = mock<ListingRepository>()
+    val context = mock<Context>()
+
+    val viewModel = MyProfileViewModel(repo, listingRepository = listingRepo, userId = "demo")
+
+    viewModel.onLocationPermissionDenied()
   }
 }
