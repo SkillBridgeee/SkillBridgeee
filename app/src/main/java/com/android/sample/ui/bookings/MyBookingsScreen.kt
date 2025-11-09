@@ -27,16 +27,22 @@ object MyBookingsPageTestTag {
 @Composable
 fun MyBookingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: MyBookingsViewModel = MyBookingsViewModel()
+    viewModel: MyBookingsViewModel = MyBookingsViewModel(),
+    onBookingClick: (String) -> Unit
 ) {
   Scaffold { inner ->
     val bookings by viewModel.uiState.collectAsState(initial = emptyList())
-    BookingsList(bookings = bookings, modifier = modifier.padding(inner))
+    BookingsList(
+        bookings = bookings, onBookingClick = onBookingClick, modifier = modifier.padding(inner))
   }
 }
 
 @Composable
-fun BookingsList(bookings: List<BookingCardUIV2>, modifier: Modifier = Modifier) {
+fun BookingsList(
+    bookings: List<BookingCardUIV2>,
+    onBookingClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
   if (bookings.isEmpty()) {
     Box(
         modifier =
@@ -54,7 +60,8 @@ fun BookingsList(bookings: List<BookingCardUIV2>, modifier: Modifier = Modifier)
           BookingCard(
               booking = bookingUI.booking,
               listing = bookingUI.listing,
-              creator = bookingUI.creatorProfile)
+              creator = bookingUI.creatorProfile,
+              onClickBookingCard = { it -> onBookingClick(it) })
         }
       }
 }
