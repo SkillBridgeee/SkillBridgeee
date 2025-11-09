@@ -516,7 +516,6 @@ class MyProfileScreenTest {
         .performScrollToNode(matcher)
   }
 
-  // A listing repo that blocks until we complete the gate — keeps loading=true visible.
   private class BlockingListingRepo : ListingRepository {
     val gate = CompletableDeferred<Unit>()
 
@@ -524,21 +523,20 @@ class MyProfileScreenTest {
 
     override suspend fun getAllListings() = emptyList<Listing>()
 
-    override suspend fun getProposals() = emptyList<com.android.sample.model.listing.Proposal>()
+    override suspend fun getProposals() = emptyList<Proposal>()
 
-    override suspend fun getRequests() = emptyList<com.android.sample.model.listing.Request>()
+    override suspend fun getRequests() = emptyList<Request>()
 
     override suspend fun getListing(listingId: String) = null
 
     override suspend fun getListingsByUser(userId: String): List<Listing> {
-      // Suspend here so the ViewModel stays in 'loading' state
       gate.await()
       return emptyList()
     }
 
-    override suspend fun addProposal(proposal: com.android.sample.model.listing.Proposal) {}
+    override suspend fun addProposal(proposal: Proposal) {}
 
-    override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+    override suspend fun addRequest(request: Request) {}
 
     override suspend fun updateListing(listingId: String, listing: Listing) {}
 
@@ -546,8 +544,7 @@ class MyProfileScreenTest {
 
     override suspend fun deactivateListing(listingId: String) {}
 
-    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
-        emptyList<Listing>()
+    override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double) =
         emptyList<Listing>()
@@ -559,7 +556,6 @@ class MyProfileScreenTest {
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
     val vm = MyProfileViewModel(pRepo, listingRepository = blockingRepo, userId = "demo")
 
-    // swap content (no second setContent)
     compose.runOnIdle {
       contentSlot.value = {
         MyProfileScreen(
@@ -575,11 +571,9 @@ class MyProfileScreenTest {
           .isNotEmpty()
     }
 
-    // SCROLL the LazyColumn to the progress indicator
     val progressMatcher = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
     scrollRootTo(progressMatcher)
 
-    // now wait until it exists (unmerged tree is more reliable for nested nodes)
     compose.waitUntil(5_000) {
       compose.onAllNodes(progressMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
     }
@@ -590,15 +584,14 @@ class MyProfileScreenTest {
     compose.runOnIdle { blockingRepo.gate.complete(Unit) }
   }
 
-  // A listing repo that throws to trigger the error branch.
   private class ErrorListingRepo : ListingRepository {
     override fun getNewUid(): String = "error"
 
     override suspend fun getAllListings() = emptyList<Listing>()
 
-    override suspend fun getProposals() = emptyList<com.android.sample.model.listing.Proposal>()
+    override suspend fun getProposals() = emptyList<Proposal>()
 
-    override suspend fun getRequests() = emptyList<com.android.sample.model.listing.Request>()
+    override suspend fun getRequests() = emptyList<Request>()
 
     override suspend fun getListing(listingId: String) = null
 
@@ -606,9 +599,9 @@ class MyProfileScreenTest {
       throw RuntimeException("test listings failure")
     }
 
-    override suspend fun addProposal(proposal: com.android.sample.model.listing.Proposal) {}
+    override suspend fun addProposal(proposal: Proposal) {}
 
-    override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+    override suspend fun addRequest(request: Request) {}
 
     override suspend fun updateListing(listingId: String, listing: Listing) {}
 
@@ -616,8 +609,7 @@ class MyProfileScreenTest {
 
     override suspend fun deactivateListing(listingId: String) {}
 
-    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
-        emptyList<Listing>()
+    override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double) =
         emptyList<Listing>()
@@ -636,7 +628,6 @@ class MyProfileScreenTest {
       }
     }
 
-    // wait screen ready
     compose.waitUntil(5_000) {
       compose
           .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
@@ -644,18 +635,90 @@ class MyProfileScreenTest {
           .isNotEmpty()
     }
 
-    // your UI prints either the fallback or the message from the exception
     val fallback = hasText("Failed to load listings.", substring = false)
     val thrown = hasText("test listings failure", substring = true)
     val errorMatcher = fallback or thrown
 
-    // SCROLL the LazyColumn until the error text is materialized
     scrollRootTo(errorMatcher)
 
-    // now wait until one of the messages exists, then assert
     compose.waitUntil(5_000) {
       compose.onAllNodes(errorMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
     }
     compose.onNode(errorMatcher, useUnmergedTree = true).assertExists()
+  }
+
+  private class OneItemListingRepo(private val listing: Listing) : ListingRepository {
+    override fun getNewUid(): String = "one"
+
+    override suspend fun getAllListings() = emptyList<Listing>()
+
+    override suspend fun getProposals() = emptyList<Proposal>()
+
+    override suspend fun getRequests() = emptyList<Request>()
+
+    override suspend fun getListing(listingId: String) = null
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> = listOf(listing)
+
+    override suspend fun addProposal(proposal: Proposal) {}
+
+    override suspend fun addRequest(request: Request) {}
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double) =
+        emptyList<Listing>()
+  }
+
+  private fun makeTestListing(): Proposal =
+      Proposal(
+          listingId = "p1",
+          creatorUserId = "demo",
+          description = "Guitar Lessons",
+          skill = Skill(mainSubject = MainSubject.MUSIC, skill = "GUITAR"),
+          location = Location(name = "EPFL", latitude = 0.0, longitude = 0.0),
+          hourlyRate = 25.0,
+          isActive = true)
+
+  @Test
+  fun listings_rendersNonEmptyList_elseBranch() {
+    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    val listing = makeTestListing()
+    val oneItemRepo = OneItemListingRepo(listing)
+    val vm = MyProfileViewModel(pRepo, listingRepository = oneItemRepo, userId = "demo")
+
+    compose.runOnIdle {
+      contentSlot.value = {
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+      }
+    }
+
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    scrollRootTo(hasText("Your Listings"))
+
+    compose
+        .onNodeWithText("You don’t have any listings yet.", useUnmergedTree = true)
+        .assertDoesNotExist()
+
+    val cardMatcher = hasText("Guitar Lessons", substring = false)
+
+    scrollRootTo(cardMatcher)
+
+    compose.waitUntil(5_000) {
+      compose.onAllNodes(cardMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+    compose.onNode(cardMatcher, useUnmergedTree = true).assertExists()
   }
 }
