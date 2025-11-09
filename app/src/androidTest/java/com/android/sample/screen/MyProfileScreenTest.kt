@@ -505,13 +505,16 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
   }
 
-  // Helper to atomically update the screen's UI state from tests.
-  private fun mutateUi(block: (MyProfileUIState) -> MyProfileUIState) {
-    compose.runOnIdle {
-      val flow = viewModel.uiState as MutableStateFlow<MyProfileUIState>
-      flow.value = block(flow.value)
+  private fun scrollRootTo(matcher: SemanticsMatcher) {
+    // Ensure the LazyColumn exists
+    compose.waitUntil(5_000) {
+      compose.onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+        .fetchSemanticsNodes().isNotEmpty()
     }
+    compose.onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+      .performScrollToNode(matcher)
   }
+
 
   // A listing repo that blocks until we complete the gate — keeps loading=true visible.
   private class BlockingListingRepo : ListingRepository {
@@ -556,28 +559,35 @@ class MyProfileScreenTest {
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
     val vm = MyProfileViewModel(pRepo, listingRepository = blockingRepo, userId = "demo")
 
-    // Swap the composed content to use the blocking VM (no second setContent)
+    // swap content (no second setContent)
     compose.runOnIdle {
       contentSlot.value = {
-        MyProfileScreen(
-            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+        MyProfileScreen(profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
       }
     }
 
-    // Wait for header to ensure screen composed
+    // wait screen ready
     compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
+      compose.onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
+        .fetchSemanticsNodes().isNotEmpty()
     }
 
-    // Assert the indeterminate progress indicator is shown in the listings section
-    compose.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)).assertExists()
+    // SCROLL the LazyColumn to the progress indicator
+    val progressMatcher = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
+    scrollRootTo(progressMatcher)
 
-    // Release the gate so the ViewModel can finish loading and not hang the test
+    // now wait until it exists (unmerged tree is more reliable for nested nodes)
+    compose.waitUntil(5_000) {
+      compose.onAllNodes(progressMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    compose.onNode(progressMatcher, useUnmergedTree = true).assertExists()
+
+    // release the gate
     compose.runOnIdle { blockingRepo.gate.complete(Unit) }
   }
+
+
 
   // A listing repo that throws to trigger the error branch.
   private class ErrorListingRepo : ListingRepository {
@@ -618,22 +628,31 @@ class MyProfileScreenTest {
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
     val vm = MyProfileViewModel(pRepo, listingRepository = errorRepo, userId = "demo")
 
-    // Swap the content (still only one setContent overall)
     compose.runOnIdle {
       contentSlot.value = {
-        MyProfileScreen(
-            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+        MyProfileScreen(profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
       }
     }
 
-    // Wait for the error text to render (your UI falls back to this message)
+    // wait screen ready
     compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithText("Failed to load listings.", substring = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
+      compose.onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
+        .fetchSemanticsNodes().isNotEmpty()
     }
 
-    compose.onNodeWithText("Failed to load listings.").assertExists()
+    // your UI prints either the fallback or the message from the exception
+    val fallback = hasText("Failed to load listings.", substring = false)
+    val thrown   = hasText("test listings failure", substring = true)
+    val errorMatcher = fallback or thrown
+
+    // SCROLL the LazyColumn until the error text is materialized
+    scrollRootTo(errorMatcher)
+
+    // now wait until one of the messages exists, then assert
+    compose.waitUntil(5_000) {
+      compose.onAllNodes(errorMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+    compose.onNode(errorMatcher, useUnmergedTree = true).assertExists()
   }
+
 }
