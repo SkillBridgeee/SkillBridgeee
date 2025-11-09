@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.androidTestImplementation
 import java.util.Properties
 
 plugins {
@@ -30,6 +31,10 @@ configurations.matching {
     it.name.contains("androidTest", ignoreCase = true)
 }.all {
     exclude(group = "com.google.protobuf", module = "protobuf-lite")
+}
+configurations.matching { it.name.contains("AndroidTest", ignoreCase = true) }.all {
+    exclude(group = "org.junit.jupiter")
+    exclude(group = "org.junit.platform")
 }
 
 android {
@@ -194,6 +199,18 @@ dependencies {
     implementation("com.google.protobuf:protobuf-javalite:3.21.12")
     testImplementation("com.google.protobuf:protobuf-javalite:3.21.12")
     androidTestImplementation("com.google.protobuf:protobuf-javalite:3.21.12")
+
+    // Instrumentation
+    androidTestImplementation("io.mockk:mockk-android:1.13.11")
+
+    // Compose testing
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:<compose_version>")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:<compose_version>")
+
+    // AndroidX test libs
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+    androidTestImplementation("androidx.test:core-ktx:1.5.0")
 
     // Google Play Services for Google Sign-In
     implementation(libs.play.services.auth)
