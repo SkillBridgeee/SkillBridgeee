@@ -25,12 +25,10 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
-import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.text.set
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -508,13 +506,15 @@ class MyProfileScreenTest {
   private fun scrollRootTo(matcher: SemanticsMatcher) {
     // Ensure the LazyColumn exists
     compose.waitUntil(5_000) {
-      compose.onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
-        .fetchSemanticsNodes().isNotEmpty()
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
-    compose.onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
-      .performScrollToNode(matcher)
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+        .performScrollToNode(matcher)
   }
-
 
   // A listing repo that blocks until we complete the gate — keeps loading=true visible.
   private class BlockingListingRepo : ListingRepository {
@@ -562,14 +562,17 @@ class MyProfileScreenTest {
     // swap content (no second setContent)
     compose.runOnIdle {
       contentSlot.value = {
-        MyProfileScreen(profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
       }
     }
 
     // wait screen ready
     compose.waitUntil(5_000) {
-      compose.onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
-        .fetchSemanticsNodes().isNotEmpty()
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
 
     // SCROLL the LazyColumn to the progress indicator
@@ -586,8 +589,6 @@ class MyProfileScreenTest {
     // release the gate
     compose.runOnIdle { blockingRepo.gate.complete(Unit) }
   }
-
-
 
   // A listing repo that throws to trigger the error branch.
   private class ErrorListingRepo : ListingRepository {
@@ -630,19 +631,22 @@ class MyProfileScreenTest {
 
     compose.runOnIdle {
       contentSlot.value = {
-        MyProfileScreen(profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
       }
     }
 
     // wait screen ready
     compose.waitUntil(5_000) {
-      compose.onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
-        .fetchSemanticsNodes().isNotEmpty()
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
 
     // your UI prints either the fallback or the message from the exception
     val fallback = hasText("Failed to load listings.", substring = false)
-    val thrown   = hasText("test listings failure", substring = true)
+    val thrown = hasText("test listings failure", substring = true)
     val errorMatcher = fallback or thrown
 
     // SCROLL the LazyColumn until the error text is materialized
@@ -654,5 +658,4 @@ class MyProfileScreenTest {
     }
     compose.onNode(errorMatcher, useUnmergedTree = true).assertExists()
   }
-
 }
