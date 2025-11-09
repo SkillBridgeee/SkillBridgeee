@@ -3,6 +3,7 @@ package com.android.sample.model.signUp
 import android.content.Context
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
@@ -147,5 +148,19 @@ class SignUpScreenRobolectricTest {
     rule.onNodeWithTag(SignUpScreenTestTags.DESCRIPTION, useUnmergedTree = false).assertExists()
     rule.onNodeWithTag(SignUpScreenTestTags.EMAIL, useUnmergedTree = false).assertExists()
     rule.onNodeWithTag(SignUpScreenTestTags.PASSWORD, useUnmergedTree = false).assertExists()
+  }
+
+  @Test
+  fun pin_button_is_rendered_for_use_my_location() {
+    rule.setContent {
+      SampleAppTheme {
+        val vm = SignUpViewModel()
+        SignUpScreen(vm = vm)
+      }
+    }
+
+    rule
+        .onNodeWithContentDescription(SignUpScreenTestTags.PIN_CONTENT_DESC, useUnmergedTree = true)
+        .assertExists()
   }
 }
