@@ -117,8 +117,8 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                 // Listing Type Selector
                 ListingTypeMenu(
                     selectedListingType = skillUIState.listingType,
-                    skillViewModel = skillViewModel,
-                    skillUIState = skillUIState)
+                    onListingTypeSelected = { skillViewModel.setListingType(it) },
+                    errorMsg = skillUIState.invalidListingTypeMsg)
 
                 Spacer(modifier = Modifier.height(textSpace))
 
@@ -180,8 +180,8 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
 
                 SubjectMenu(
                     selectedSubject = skillUIState.subject,
-                    skillViewModel = skillViewModel,
-                    skillUIState = skillUIState)
+                    onSubjectSelected = { skillViewModel.setSubject(it) },
+                    errorMsg = skillUIState.invalidSubjectMsg)
 
                 // Location Input with dropdown
                 LocationInputField(
@@ -202,8 +202,8 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
 @Composable
 fun SubjectMenu(
     selectedSubject: MainSubject?,
-    skillViewModel: NewSkillViewModel,
-    skillUIState: SkillUIState
+    onSubjectSelected: (MainSubject) -> Unit,
+    errorMsg: String?
 ) {
   var expanded by remember { mutableStateOf(false) }
   val subjects = MainSubject.entries.toTypedArray()
@@ -218,9 +218,9 @@ fun SubjectMenu(
             readOnly = true,
             label = { Text("Subject") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            isError = skillUIState.invalidSubjectMsg != null,
+            isError = errorMsg != null,
             supportingText = {
-              skillUIState.invalidSubjectMsg?.let {
+              errorMsg?.let {
                 Text(
                     text = it,
                     modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG))
@@ -236,7 +236,7 @@ fun SubjectMenu(
                 DropdownMenuItem(
                     text = { Text(subject.name) },
                     onClick = {
-                      skillViewModel.setSubject(subject)
+                      onSubjectSelected(subject)
                       expanded = false
                     },
                     modifier = Modifier.testTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX))
@@ -249,8 +249,8 @@ fun SubjectMenu(
 @Composable
 fun ListingTypeMenu(
     selectedListingType: ListingType?,
-    skillViewModel: NewSkillViewModel,
-    skillUIState: SkillUIState
+    onListingTypeSelected: (ListingType) -> Unit,
+    errorMsg: String?
 ) {
   var expanded by remember { mutableStateOf(false) }
   val listingTypes = ListingType.entries.toTypedArray()
@@ -265,9 +265,9 @@ fun ListingTypeMenu(
             readOnly = true,
             label = { Text("Listing Type") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            isError = skillUIState.invalidListingTypeMsg != null,
+            isError = errorMsg != null,
             supportingText = {
-              skillUIState.invalidListingTypeMsg?.let {
+              errorMsg?.let {
                 Text(
                     text = it,
                     modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_LISTING_TYPE_MSG))
@@ -285,7 +285,7 @@ fun ListingTypeMenu(
                 DropdownMenuItem(
                     text = { Text(listingType.name) },
                     onClick = {
-                      skillViewModel.setListingType(listingType)
+                      onListingTypeSelected(listingType)
                       expanded = false
                     },
                     modifier =
