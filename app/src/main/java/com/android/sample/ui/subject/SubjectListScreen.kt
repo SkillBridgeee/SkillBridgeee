@@ -156,7 +156,10 @@ fun SubjectListScreen(
                   listing = item.listing,
                   creator = item.creator,
                   creatorRating = item.creatorRating,
-                  onBook = { item.creator?.let(onBookTutor) },
+                  onBook = {
+                    viewModel.BookListing(item)
+                    item.creator?.let(onBookTutor)
+                  },
                   testTags =
                       SubjectListTestTags.LISTING_CARD to SubjectListTestTags.LISTING_BOOK_BUTTON)
               Spacer(Modifier.height(16.dp))
