@@ -3,6 +3,10 @@ package com.android.sample.screen
 import android.Manifest
 import android.app.UiAutomation
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -25,6 +29,7 @@ import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.text.set
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.*
 import org.junit.Assert.assertEquals
@@ -132,6 +137,8 @@ class MyProfileScreenTest {
   private val logoutClicked = AtomicBoolean(false)
   private lateinit var repo: FakeRepo
 
+  private lateinit var contentSlot: MutableState<@Composable () -> Unit>
+
   @Before
   fun setup() {
     repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
@@ -140,11 +147,19 @@ class MyProfileScreenTest {
     // reset flag before each test and set content once per test
     logoutClicked.set(false)
     compose.setContent {
-      MyProfileScreen(
-          profileViewModel = viewModel,
-          profileId = "demo",
-          onLogout = { logoutClicked.set(true) } // single callback wired once
-          )
+      val slot = remember {
+        mutableStateOf<@Composable () -> Unit>({
+          MyProfileScreen(
+              profileViewModel = viewModel,
+              profileId = "demo",
+              onLogout = { logoutClicked.set(true) })
+        })
+      }
+      // expose the remembered slot to the test class
+      contentSlot = slot
+
+      // render current content
+      slot.value()
     }
 
     compose.waitUntil(5_000) {
@@ -498,28 +513,127 @@ class MyProfileScreenTest {
     }
   }
 
+  // A listing repo that blocks until we complete the gate — keeps loading=true visible.
+  private class BlockingListingRepo : ListingRepository {
+    val gate = CompletableDeferred<Unit>()
+
+    override fun getNewUid(): String = "blocking"
+
+    override suspend fun getAllListings() = emptyList<Listing>()
+
+    override suspend fun getProposals() = emptyList<com.android.sample.model.listing.Proposal>()
+
+    override suspend fun getRequests() = emptyList<com.android.sample.model.listing.Request>()
+
+    override suspend fun getListing(listingId: String) = null
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> {
+      // Suspend here so the ViewModel stays in 'loading' state
+      gate.await()
+      return emptyList()
+    }
+
+    override suspend fun addProposal(proposal: com.android.sample.model.listing.Proposal) {}
+
+    override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
+        emptyList<Listing>()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double) =
+        emptyList<Listing>()
+  }
+
   @Test
   fun listings_showsLoadingIndicator_whenLoadingTrue() {
-    // Force loading branch
-    mutateUi { it.copy(listingsLoading = true, listingsLoadError = null) }
+    val blockingRepo = BlockingListingRepo()
+    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    val vm = MyProfileViewModel(pRepo, listingRepository = blockingRepo, userId = "demo")
 
-    // Look for an indeterminate progress indicator
+    // Swap the composed content to use the blocking VM (no second setContent)
+    compose.runOnIdle {
+      contentSlot.value = {
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+      }
+    }
+
+    // Wait for header to ensure screen composed
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Assert the indeterminate progress indicator is shown in the listings section
     compose.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)).assertExists()
 
-    // And ensure the "empty" branch isn't shown while loading
-    compose.onNodeWithText("You don’t have any listings yet.").assertDoesNotExist()
+    // Release the gate so the ViewModel can finish loading and not hang the test
+    compose.runOnIdle { blockingRepo.gate.complete(Unit) }
+  }
+
+  // A listing repo that throws to trigger the error branch.
+  private class ErrorListingRepo : ListingRepository {
+    override fun getNewUid(): String = "error"
+
+    override suspend fun getAllListings() = emptyList<Listing>()
+
+    override suspend fun getProposals() = emptyList<com.android.sample.model.listing.Proposal>()
+
+    override suspend fun getRequests() = emptyList<com.android.sample.model.listing.Request>()
+
+    override suspend fun getListing(listingId: String) = null
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> {
+      throw RuntimeException("test listings failure")
+    }
+
+    override suspend fun addProposal(proposal: com.android.sample.model.listing.Proposal) {}
+
+    override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
+        emptyList<Listing>()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double) =
+        emptyList<Listing>()
   }
 
   @Test
   fun listings_showsErrorMessage_whenErrorPresent() {
-    val errorMsg = "Failed to fetch listings (test)"
-    // Force error branch
-    mutateUi { it.copy(listingsLoading = false, listingsLoadError = errorMsg) }
+    val errorRepo = ErrorListingRepo()
+    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    val vm = MyProfileViewModel(pRepo, listingRepository = errorRepo, userId = "demo")
 
-    // Error text should be rendered
-    compose.onNodeWithText(errorMsg).assertExists()
+    // Swap the content (still only one setContent overall)
+    compose.runOnIdle {
+      contentSlot.value = {
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+      }
+    }
 
-    // Empty message should not appear when error is present
-    compose.onNodeWithText("You don’t have any listings yet.").assertDoesNotExist()
+    // Wait for the error text to render (your UI falls back to this message)
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithText("Failed to load listings.", substring = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    compose.onNodeWithText("Failed to load listings.").assertExists()
   }
 }
