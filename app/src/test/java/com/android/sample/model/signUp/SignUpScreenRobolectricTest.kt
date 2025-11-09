@@ -15,7 +15,6 @@ import androidx.core.content.ContextCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.map.GpsLocationProvider
-import com.android.sample.model.map.Location
 import com.android.sample.model.user.FakeProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.components.LocationInputFieldTestTags
@@ -30,7 +29,6 @@ import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
 import kotlinx.coroutines.test.runTest
-import org.bouncycastle.util.test.SimpleTest.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -189,14 +187,12 @@ class SignUpScreenRobolectricTest {
   fun clicking_use_my_location_when_permission_granted_executes_granted_branch() {
     val context = ApplicationProvider.getApplicationContext<Context>()
 
-    // Force permission granted
-    mockkStatic(androidx.core.content.ContextCompat::class)
-    every { androidx.core.content.ContextCompat.checkSelfPermission(context, any()) } returns
+    mockkStatic(ContextCompat::class)
+    every { ContextCompat.checkSelfPermission(context, any()) } returns
         PackageManager.PERMISSION_GRANTED
 
     rule.setContent {
       SampleAppTheme {
-        // Real ViewModel; we don't assert internals, we just exercise the branch
         val vm = SignUpViewModel()
         SignUpScreen(vm = vm)
       }
@@ -204,24 +200,17 @@ class SignUpScreenRobolectricTest {
 
     rule.waitForIdle()
     waitForTag(SignUpScreenTestTags.NAME)
-
-    // Click the "Use my location" / pin icon → should hit:
-    // if (granted) { vm.fetchLocationFromGps(GpsLocationProvider(context), context) }
     rule
         .onNodeWithContentDescription(SignUpScreenTestTags.PIN_CONTENT_DESC, useUnmergedTree = true)
         .performClick()
-
-    // No assertion needed: if we reached here without crash,
-    // the granted branch (including the call site) was executed for coverage.
   }
 
   @Test
   fun clicking_use_my_location_when_permission_denied_executes_denied_branch() {
     val context = ApplicationProvider.getApplicationContext<Context>()
 
-    // Force permission denied
-    mockkStatic(androidx.core.content.ContextCompat::class)
-    every { androidx.core.content.ContextCompat.checkSelfPermission(context, any()) } returns
+    mockkStatic(ContextCompat::class)
+    every { ContextCompat.checkSelfPermission(context, any()) } returns
         PackageManager.PERMISSION_DENIED
 
     rule.setContent {
@@ -234,16 +223,9 @@ class SignUpScreenRobolectricTest {
     rule.waitForIdle()
     waitForTag(SignUpScreenTestTags.NAME)
 
-    // Click the pin icon → should hit:
-    // if (!granted) { permissionLauncher.launch(permission) }
     rule
         .onNodeWithContentDescription(SignUpScreenTestTags.PIN_CONTENT_DESC, useUnmergedTree = true)
         .performClick()
-
-    // Again, no strict verification: the goal is to execute the else-branch
-    // without blowing up, which gives line coverage for:
-    // - the denied path of the click handler
-    // - the permissionLauncher.launch(permission) call site.
   }
 
   @Test
@@ -251,7 +233,6 @@ class SignUpScreenRobolectricTest {
     val context = ApplicationProvider.getApplicationContext<Context>()
     val vm = SignUpViewModel()
 
-    // Mock the Geocoder constructor and its getFromLocation() call
     mockkConstructor(Geocoder::class)
 
     val address = mockk<Address>()
@@ -262,7 +243,6 @@ class SignUpScreenRobolectricTest {
     every { anyConstructed<Geocoder>().getFromLocation(any(), any(), any()) } returns
         listOf(address)
 
-    // Mock GPS provider to return an Android Location
     val provider = mockk<GpsLocationProvider>()
     val androidLoc =
         android.location.Location("mock").apply {
@@ -271,10 +251,8 @@ class SignUpScreenRobolectricTest {
         }
     coEvery { provider.getCurrentLocation() } returns androidLoc
 
-    // Act
     vm.fetchLocationFromGps(provider, context)
 
-    // Assert — branch executed if no exception
     assert(vm.state.value.error == null)
   }
 
@@ -283,11 +261,9 @@ class SignUpScreenRobolectricTest {
     val context = ApplicationProvider.getApplicationContext<Context>()
     val vm = SignUpViewModel()
 
-    // Mock Geocoder constructor — but don’t rely on its logic
     mockkConstructor(Geocoder::class)
     every { anyConstructed<Geocoder>().getFromLocation(any(), any(), any()) } returns emptyList()
 
-    // Mock GPS provider returning a valid Android location
     val provider = mockk<GpsLocationProvider>()
     val androidLoc =
         android.location.Location("mock").apply {
@@ -296,14 +272,9 @@ class SignUpScreenRobolectricTest {
         }
     coEvery { provider.getCurrentLocation() } returns androidLoc
 
-    // Act — run the method
     vm.fetchLocationFromGps(provider, context)
 
-    // Just print for debug visibility
     println(">>> State after fetch: ${vm.state.value}")
-
-    // Assert leniently — any non-null or non-default update is acceptable for coverage
-    // Because we only need to execute the branch
     assert(true)
   }
 
@@ -316,7 +287,6 @@ class SignUpScreenRobolectricTest {
     coEvery { provider.getCurrentLocation() } throws SecurityException()
 
     vm.fetchLocationFromGps(provider, context)
-    // covers: catch (_: SecurityException)
   }
 
   @Test
@@ -328,6 +298,5 @@ class SignUpScreenRobolectricTest {
     coEvery { provider.getCurrentLocation() } throws RuntimeException("boom")
 
     vm.fetchLocationFromGps(provider, context)
-    // covers: catch (_: Exception)
   }
 }
