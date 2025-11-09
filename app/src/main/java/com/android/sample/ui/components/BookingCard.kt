@@ -28,16 +28,15 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.sample.model.booking.Booking
-import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.booking.color
 import com.android.sample.model.booking.dateString
 import com.android.sample.model.booking.name
+import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingType
-import java.util.Date
+import com.android.sample.model.user.Profile
 import java.util.Locale
 
 object BookingCardTestTag {
@@ -49,37 +48,23 @@ object BookingCardTestTag {
   const val PRICE = "booking_card_price"
 }
 
-/**
- * Displays a booking card with the main booking information.
- *
- * The card includes: Tutor avatar (initial), Listing title, Tutor name, Booking status, Booking
- * date, Hourly rate
- *
- * The card is clickable and triggers [onClickBookingCard] with the booking ID.
- *
- * @param modifier Optional [Modifier] to customize the card (padding, size, etc.).
- * @param booking The [Booking] object containing booking details.
- * @param listingTitle The title of the listing associated with the booking.
- * @param listingHourlyRate The hourly rate for the listing.
- * @param tutorName The name of the tutor associated with the booking.
- * @param onClickBookingCard Lambda called when the card is clicked, receives the booking ID.
- */
 @Composable
 fun BookingCard(
     modifier: Modifier = Modifier,
-    listingType: ListingType,
     booking: Booking,
-    listingTitle: String,
-    listingHourlyRate: Double,
-    tutorName: String,
+    listing: Listing,
+    creator: Profile,
     onClickBookingCard: (String) -> Unit = {}
 ) {
 
   val statusString = booking.status.name()
   val statusColor = booking.status.color()
   val bookingDate = booking.dateString()
+  val listingType = listing.type
+  val listingTitle = listing.skill.skill
+  val tutorName = creator.name!!
   val priceString =
-      remember(listingHourlyRate) { String.format(Locale.ROOT, "$%.2f / hr", listingHourlyRate) }
+      remember(listing.hourlyRate) { String.format(Locale.ROOT, "$%.2f / hr", listing.hourlyRate) }
 
   Card(
       shape = MaterialTheme.shapes.large,
@@ -174,51 +159,4 @@ private fun creatorName(creatorName: String): AnnotatedString {
     withStyle(style = SpanStyle(fontWeight = FontWeight.SemiBold)) { append(creatorName) }
   }
   return styledText
-}
-
-@Preview(showBackground = true)
-@Composable
-fun BookingCardPreview() {
-
-  Column {
-    val booking = Booking(status = BookingStatus.PENDING, sessionStart = Date())
-
-    BookingCard(
-        listingTitle = "Cours de pianooooooooooooooooooooooooo00000000",
-        listingType = ListingType.PROPOSAL,
-        listingHourlyRate = 12.0,
-        tutorName = "jean mich",
-        onClickBookingCard = { println("Open listing $it") },
-        booking = booking)
-
-    val booking1 = Booking(status = BookingStatus.CONFIRMED, sessionStart = Date())
-
-    BookingCard(
-        listingTitle = "Cours d'informatiqueeeeeeeeeeeeeeeeeeeeee",
-        listingType = ListingType.PROPOSAL,
-        listingHourlyRate = 12.22222,
-        tutorName = "asdfasdvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvbbbbbvvbbvbf",
-        onClickBookingCard = { println("Open listing $it") },
-        booking = booking1)
-
-    val booking2 = Booking(status = BookingStatus.COMPLETED, sessionStart = Date())
-
-    BookingCard(
-        listingTitle = "Cours de jspp",
-        listingType = ListingType.REQUEST,
-        listingHourlyRate = 0.33,
-        tutorName = "bg ultime",
-        onClickBookingCard = { println("Open listing $it") },
-        booking = booking2)
-
-    val booking3 = Booking(status = BookingStatus.CANCELLED, sessionStart = Date())
-
-    BookingCard(
-        listingTitle = "Aide pour maths",
-        listingType = ListingType.REQUEST,
-        listingHourlyRate = 12.0,
-        tutorName = "jean mich",
-        onClickBookingCard = { println("Open listing $it") },
-        booking = booking3)
-  }
 }
