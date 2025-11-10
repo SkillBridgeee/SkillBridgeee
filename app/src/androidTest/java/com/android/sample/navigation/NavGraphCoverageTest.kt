@@ -15,7 +15,6 @@ import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.testutils.TestAuthHelpers
-import com.android.sample.testutils.TestUiHelpers
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.map.MapScreenTestTags
