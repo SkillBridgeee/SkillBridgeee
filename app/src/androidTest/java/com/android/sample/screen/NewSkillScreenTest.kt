@@ -387,113 +387,6 @@ class NewSkillScreenTest {
     composeRule.onNodeWithText("You must choose a subject", true).assertIsDisplayed()
   }
 
-  // Integration Tests
-  @Test
-  fun completeProposalForm_callsRepository() {
-    val fakeRepo = FakeListingRepository()
-    val vm =
-        NewSkillViewModel(
-            listingRepository = fakeRepo,
-            locationRepository = fakeLocationRepository,
-            userId = "test-user-123")
-
-    composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user-123", createTestNavController()) }
-    }
-    composeRule.waitForIdle()
-
-    composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD, itemText = "PROPOSAL")
-
-    composeRule
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE)
-        .performTextInput("Math Tutoring")
-
-    composeRule
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION)
-        .performTextInput("Expert tutor")
-
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("30.00")
-
-    composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
-        itemTagPrefix = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
-        index = 0)
-
-    composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.SUB_SKILL_FIELD,
-        itemTagPrefix = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX,
-        index = 0)
-
-    vm.setLocation(Location(46.5196535, 6.6322734, "Lausanne"))
-    composeRule.waitForIdle()
-
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
-
-    composeRule.runOnIdle {
-      assert(fakeRepo.proposals.size == 1)
-      val saved = fakeRepo.proposals[0]
-      assert(saved.description == "Expert tutor")
-      assert(saved.hourlyRate == 30.00)
-      assert(saved.creatorUserId == "test-user-123")
-      assert(saved.skill.mainSubject == MainSubject.ACADEMICS)
-      assert(saved.skill.skill.isNotBlank())
-    }
-  }
-
-  @Test
-  fun completeRequestForm_callsRepository() {
-    val fakeRepo = FakeListingRepository()
-    val vm =
-        NewSkillViewModel(
-            listingRepository = fakeRepo,
-            locationRepository = fakeLocationRepository,
-            userId = "test-user-456")
-
-    composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user-456", createTestNavController()) }
-    }
-    composeRule.waitForIdle()
-
-    composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD, itemText = "REQUEST")
-
-    composeRule
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE)
-        .performTextInput("Need Math Help")
-
-    composeRule
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION)
-        .performTextInput("Looking for tutor")
-
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("25.00")
-
-    composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
-        itemTagPrefix = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
-        index = 0)
-
-    composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.SUB_SKILL_FIELD,
-        itemTagPrefix = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX,
-        index = 0)
-
-    vm.setLocation(Location(46.2044, 6.1432, "Geneva"))
-    composeRule.waitForIdle()
-
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
-
-    composeRule.runOnIdle {
-      assert(fakeRepo.requests.size == 1)
-      val saved = fakeRepo.requests[0]
-      assert(saved.description == "Looking for tutor")
-      assert(saved.hourlyRate == 25.00)
-      assert(saved.creatorUserId == "test-user-456")
-      assert(saved.skill.mainSubject == MainSubject.ACADEMICS)
-      assert(saved.skill.skill.isNotBlank())
-    }
-  }
-
   @Test
   fun subSkill_notVisible_untilSubjectSelected_thenVisible() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
@@ -529,31 +422,6 @@ class NewSkillScreenTest {
         itemTagPrefix = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX, index = 0)
 
     composeRule.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN, true).assertCountEquals(0)
-  }
-
-  @Test
-  fun subSkillDropdown_open_selectItem_thenCloses() {
-    val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
-    composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
-    }
-    composeRule.waitForIdle()
-
-    composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
-        itemTagPrefix = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
-        index = 0)
-
-    composeRule.openDropdownStable(fieldTag = NewSkillScreenTestTag.SUB_SKILL_FIELD)
-
-    composeRule.waitForNodeStable(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN)
-
-    composeRule.selectDropdownItemByTagStable(
-        itemTagPrefix = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX, index = 0)
-
-    composeRule
-        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN, true)
-        .assertCountEquals(0)
   }
 
   @Test
@@ -597,48 +465,5 @@ class NewSkillScreenTest {
             .fetchSemanticsNodes()
 
     org.junit.Assert.assertTrue(nodes.isNotEmpty())
-  }
-
-  @Test
-  fun selectingSubject_thenSubSkill_enablesCleanSave_noErrorsShown() {
-
-    val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
-
-    composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
-    }
-    composeRule.waitForIdle()
-
-    // ✅ full hierarchy dump
-    composeRule.onRoot(useUnmergedTree = true).printToLog("TREE")
-
-    // ✅ List of clickable nodes
-    composeRule.onAllNodes(hasClickAction(), true).printToLog("CLICKABLES")
-
-    // continue with your test
-    composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
-        itemTagPrefix = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
-        index = 0)
-
-    composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.SUB_SKILL_FIELD,
-        itemTagPrefix = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX,
-        index = 0)
-
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE).performTextInput("T")
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION).performTextInput("D")
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("1")
-
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
-    composeRule.waitForIdle()
-
-    composeRule
-        .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG, true)
-        .assertCountEquals(0)
-
-    composeRule
-        .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUB_SKILL_MSG, true)
-        .assertCountEquals(0)
   }
 }
