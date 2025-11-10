@@ -18,10 +18,10 @@ import kotlinx.coroutines.launch
 
 @Suppress("CONTEXT_RECEIVER_MEMBER_IS_DEPRECATED")
 class AuthenticationViewModel(
-  @Suppress("StaticFieldLeak") private val context: Context,
-  private val repository: AuthenticationRepository = AuthenticationRepository(),
-  private val credentialHelper: CredentialAuthHelper = CredentialAuthHelper(context),
-  private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
+    @Suppress("StaticFieldLeak") private val context: Context,
+    private val repository: AuthenticationRepository = AuthenticationRepository(),
+    private val credentialHelper: CredentialAuthHelper = CredentialAuthHelper(context),
+    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
 
   companion object {
@@ -36,30 +36,31 @@ class AuthenticationViewModel(
 
   // Firebase auth and listener to react to programmatic sign-ins (e.g. tests)
   private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
-  private val authStateListener = FirebaseAuth.AuthStateListener { auth ->
-    val user = auth.currentUser
-    if (user == null) {
-      _authResult.value = null
-      return@AuthStateListener
-    }
-
-    viewModelScope.launch {
-      val profile =
-        try {
-          profileRepository.getProfile(user.uid)
-        } catch (_: Exception) {
-          null
+  private val authStateListener =
+      FirebaseAuth.AuthStateListener { auth ->
+        val user = auth.currentUser
+        if (user == null) {
+          _authResult.value = null
+          return@AuthStateListener
         }
 
-      if (profile == null) {
-        _authResult.value = AuthResult.RequiresSignUp(user.email ?: "", user)
-        clearLoading()
-      } else {
-        _authResult.value = AuthResult.Success(user)
-        clearLoading()
+        viewModelScope.launch {
+          val profile =
+              try {
+                profileRepository.getProfile(user.uid)
+              } catch (_: Exception) {
+                null
+              }
+
+          if (profile == null) {
+            _authResult.value = AuthResult.RequiresSignUp(user.email ?: "", user)
+            clearLoading()
+          } else {
+            _authResult.value = AuthResult.Success(user)
+            clearLoading()
+          }
+        }
       }
-    }
-  }
 
   init {
     // register listener so late sign-ins are observed
@@ -69,11 +70,11 @@ class AuthenticationViewModel(
     firebaseAuth.currentUser?.let { existingUser ->
       viewModelScope.launch {
         val profile =
-          try {
-            profileRepository.getProfile(existingUser.uid)
-          } catch (_: Exception) {
-            null
-          }
+            try {
+              profileRepository.getProfile(existingUser.uid)
+            } catch (_: Exception) {
+              null
+            }
 
         if (profile == null) {
           _authResult.value = AuthResult.RequiresSignUp(existingUser.email ?: "", existingUser)
@@ -126,15 +127,15 @@ class AuthenticationViewModel(
     viewModelScope.launch {
       val result = repository.signInWithEmail(email, password)
       result.fold(
-        onSuccess = { user ->
-          _authResult.value = AuthResult.Success(user)
-          clearLoading()
-        },
-        onFailure = { exception ->
-          val errorMessage = exception.message ?: "Sign in failed"
-          _authResult.value = AuthResult.Error(errorMessage)
-          setErrorState(errorMessage)
-        })
+          onSuccess = { user ->
+            _authResult.value = AuthResult.Success(user)
+            clearLoading()
+          },
+          onFailure = { exception ->
+            val errorMessage = exception.message ?: "Sign in failed"
+            _authResult.value = AuthResult.Error(errorMessage)
+            setErrorState(errorMessage)
+          })
     }
   }
 
@@ -152,37 +153,37 @@ class AuthenticationViewModel(
         viewModelScope.launch {
           val authResult = repository.signInWithCredential(firebaseCredential)
           authResult.fold(
-            onSuccess = { user ->
-              val profile =
-                try {
-                  profileRepository.getProfile(user.uid)
-                } catch (_: Exception) {
-                  null
-                }
+              onSuccess = { user ->
+                val profile =
+                    try {
+                      profileRepository.getProfile(user.uid)
+                    } catch (_: Exception) {
+                      null
+                    }
 
-              if (profile == null) {
-                val email = user.email ?: account.email ?: ""
-                Log.d(
-                  TAG,
-                  "User needs sign up. Firebase email: ${user.email}, Google email: ${account.email}, Final email: $email")
-                _authResult.value = AuthResult.RequiresSignUp(email, user)
-                clearLoading()
-              } else {
-                _authResult.value = AuthResult.Success(user)
-                clearLoading()
-              }
-            },
-            onFailure = { exception ->
-              val errorMessage = exception.message ?: "Google sign in failed"
-              _authResult.value = AuthResult.Error(errorMessage)
-              setErrorState(errorMessage)
-            })
+                if (profile == null) {
+                  val email = user.email ?: account.email ?: ""
+                  Log.d(
+                      TAG,
+                      "User needs sign up. Firebase email: ${user.email}, Google email: ${account.email}, Final email: $email")
+                  _authResult.value = AuthResult.RequiresSignUp(email, user)
+                  clearLoading()
+                } else {
+                  _authResult.value = AuthResult.Success(user)
+                  clearLoading()
+                }
+              },
+              onFailure = { exception ->
+                val errorMessage = exception.message ?: "Google sign in failed"
+                _authResult.value = AuthResult.Error(errorMessage)
+                setErrorState(errorMessage)
+              })
         }
       }
-        ?: run {
-          _authResult.value = AuthResult.Error("No ID token received")
-          setErrorState("No ID token received")
-        }
+          ?: run {
+            _authResult.value = AuthResult.Error("No ID token received")
+            setErrorState("No ID token received")
+          }
     } catch (e: ApiException) {
       val errorMessage = "Google sign in failed: ${e.message}"
       _authResult.value = AuthResult.Error(errorMessage)
@@ -198,18 +199,16 @@ class AuthenticationViewModel(
     viewModelScope.launch {
       val result = credentialHelper.getPasswordCredential()
       result.fold(
-        onSuccess = { passwordCredential ->
-          _uiState.update {
-            it.copy(
-              email = passwordCredential.id,
-              password = passwordCredential.password,
-              isLoading = false,
-              message = "Credential loaded")
-          }
-        },
-        onFailure = { exception ->
-          _uiState.update { it.copy(isLoading = false) }
-        })
+          onSuccess = { passwordCredential ->
+            _uiState.update {
+              it.copy(
+                  email = passwordCredential.id,
+                  password = passwordCredential.password,
+                  isLoading = false,
+                  message = "Credential loaded")
+            }
+          },
+          onFailure = { exception -> _uiState.update { it.copy(isLoading = false) } })
     }
   }
 
@@ -217,9 +216,7 @@ class AuthenticationViewModel(
     repository.signOut()
     credentialHelper.getGoogleSignInClient().signOut()
     _authResult.value = null
-    _uiState.update {
-      AuthenticationUiState()
-    }
+    _uiState.update { AuthenticationUiState() }
   }
 
   fun setError(message: String) {
@@ -230,4 +227,3 @@ class AuthenticationViewModel(
     _uiState.update { it.copy(showSuccessMessage = show) }
   }
 }
-

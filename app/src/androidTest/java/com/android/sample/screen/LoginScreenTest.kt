@@ -10,14 +10,33 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.model.authentication.AuthenticationViewModel
+import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.login.SignInScreenTestTags
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 class LoginScreenTest {
   @get:Rule val composeRule = createComposeRule()
+
+  @Before
+  fun initRepositories() {
+    val ctx = InstrumentationRegistry.getInstrumentation().targetContext
+    try {
+      ProfileRepositoryProvider.init(ctx)
+      ListingRepositoryProvider.init(ctx)
+      BookingRepositoryProvider.init(ctx)
+      RatingRepositoryProvider.init(ctx)
+    } catch (_: Exception) {
+      // keep tests resilient; failures here will surface when composing
+    }
+  }
 
   @Test
   fun allMainSectionsAreDisplayed() {
@@ -34,7 +53,6 @@ class LoginScreenTest {
     composeRule.onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_SECTION).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.SIGNUP_LINK).assertIsDisplayed()
   }
 
@@ -156,18 +174,6 @@ class LoginScreenTest {
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).assertTextEquals("Google")
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).performClick()
-  }
-
-  @Test
-  fun authGitHubButtonIsDisplayed() {
-    composeRule.setContent {
-      val context = LocalContext.current
-      val viewModel = AuthenticationViewModel(context)
-      LoginScreen(viewModel = viewModel, onGoogleSignIn = { /* Test placeholder */})
-    }
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).assertTextEquals("GitHub")
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).performClick()
   }
 
   @Test

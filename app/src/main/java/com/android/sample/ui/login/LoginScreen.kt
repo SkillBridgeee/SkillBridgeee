@@ -41,8 +41,7 @@ object SignInScreenTestTags {
 fun LoginScreen(
     viewModel: AuthenticationViewModel = AuthenticationViewModel(LocalContext.current),
     onGoogleSignIn: () -> Unit = {},
-    onGitHubSignIn: () -> Unit = {},
-    onNavigateToSignUp: () -> Unit = {} // Add this parameter
+    onNavigateToSignUp: () -> Unit = {}
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
   val authResult by viewModel.authResult.collectAsStateWithLifecycle()
@@ -63,8 +62,7 @@ fun LoginScreen(
               uiState = uiState,
               viewModel = viewModel,
               onGoogleSignIn = onGoogleSignIn,
-              onGitHubSignIn = onGitHubSignIn,
-              onNavigateToSignUp)
+              onNavigateToSignUp = onNavigateToSignUp)
         }
       }
 }
@@ -105,7 +103,6 @@ private fun LoginForm(
     uiState: AuthenticationUiState,
     viewModel: AuthenticationViewModel,
     onGoogleSignIn: () -> Unit,
-    onGitHubSignIn: () -> Unit = {},
     onNavigateToSignUp: () -> Unit = {}
 ) {
   LoginHeader()
@@ -128,10 +125,7 @@ private fun LoginForm(
       onClick = viewModel::signIn)
   Spacer(modifier = Modifier.height(20.dp))
 
-  AlternativeAuthSection(
-      isLoading = uiState.isLoading,
-      onGoogleSignIn = onGoogleSignIn,
-      onGitHubSignIn = onGitHubSignIn)
+  AlternativeAuthSection(isLoading = uiState.isLoading, onGoogleSignIn = onGoogleSignIn)
   Spacer(modifier = Modifier.height(20.dp))
 
   SignUpLink(onNavigateToSignUp = onNavigateToSignUp)
@@ -232,30 +226,21 @@ private fun SignInButton(isLoading: Boolean, isEnabled: Boolean, onClick: () -> 
 }
 
 @Composable
-private fun AlternativeAuthSection(
-    isLoading: Boolean,
-    onGoogleSignIn: () -> Unit,
-    onGitHubSignIn: () -> Unit = {}
-) {
+private fun AlternativeAuthSection(isLoading: Boolean, onGoogleSignIn: () -> Unit) {
   Text("or continue with", modifier = Modifier.testTag(SignInScreenTestTags.AUTH_SECTION))
   Spacer(modifier = Modifier.height(15.dp))
 
-  Row(horizontalArrangement = Arrangement.spacedBy(15.dp)) {
+  Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
     AuthProviderButton(
         text = "Google",
         enabled = !isLoading,
         onClick = onGoogleSignIn,
         testTag = SignInScreenTestTags.AUTH_GOOGLE)
-    AuthProviderButton(
-        text = "GitHub",
-        enabled = !isLoading,
-        onClick = onGitHubSignIn, // This line is correct
-        testTag = SignInScreenTestTags.AUTH_GITHUB)
   }
 }
 
 @Composable
-private fun RowScope.AuthProviderButton(
+private fun AuthProviderButton(
     text: String,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -269,7 +254,7 @@ private fun RowScope.AuthProviderButton(
       colors = ButtonDefaults.buttonColors(containerColor = Color.White),
       shape = RoundedCornerShape(12.dp),
       modifier =
-          Modifier.weight(1f)
+          Modifier.widthIn(min = 140.dp)
               .border(
                   width = 2.dp,
                   color = extendedColors.authButtonBorderGray,
@@ -298,7 +283,6 @@ private fun SignUpLink(onNavigateToSignUp: () -> Unit = {}) {
   }
 }
 
-// Legacy composable for backward compatibility and proper ViewModel creation
 @Preview
 @Composable
 fun LoginScreenPreview() {
@@ -306,7 +290,6 @@ fun LoginScreenPreview() {
   val activity = context as? ComponentActivity
   val viewModel: AuthenticationViewModel = remember { AuthenticationViewModel(context) }
 
-  // Google Sign-In helper setup
   val googleSignInHelper =
       remember(activity) {
         activity?.let { act ->
