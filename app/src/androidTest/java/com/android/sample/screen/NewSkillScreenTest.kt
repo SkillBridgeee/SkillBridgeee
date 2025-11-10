@@ -86,6 +86,34 @@ class FakeLocationRepository : LocationRepository {
 private fun ComposeContentTestRule.nodeByTag(tag: String, useUnmergedTree: Boolean = true) =
     onNodeWithTag(tag, useUnmergedTree = useUnmergedTree)
 
+private fun ComposeContentTestRule.openDropdownAndSelect(
+    fieldTag: String,
+    dropdownTag: String,
+    itemTag: String,
+    itemText: String? = null,
+    itemIndex: Int = 0
+) {
+  // Open the dropdown
+  onNodeWithTag(fieldTag).performClick()
+  waitForIdle()
+
+  // Assert dropdown visible in the unmerged tree
+  onNodeWithTag(dropdownTag, useUnmergedTree = true).assertIsDisplayed()
+
+  // Prefer locating by visible text (more stable); fallback to indexed tag lookup
+  val itemNode =
+      if (!itemText.isNullOrBlank()) {
+        onNodeWithText(itemText, useUnmergedTree = true)
+      } else {
+        onAllNodesWithTag(itemTag, useUnmergedTree = true)[itemIndex]
+      }
+
+  // Ensure it exists before tapping to avoid "Can't retrieve node at index" race
+  itemNode.assertExists()
+  itemNode.performClick()
+  waitForIdle()
+}
+
 // ---------- tests ----------
 class NewSkillScreenTest {
 
