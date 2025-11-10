@@ -72,7 +72,7 @@ fun BookingsList(
               booking = bookingUI.booking,
               listing = bookingUI.listing,
               creator = bookingUI.creatorProfile,
-              onClickBookingCard = { it -> onBookingClick(it) })
+              onClickBookingCard = { bookingId -> onBookingClick(bookingId) })
         }
       }
 }

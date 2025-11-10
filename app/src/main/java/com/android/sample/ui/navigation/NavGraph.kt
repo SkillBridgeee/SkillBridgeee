@@ -18,7 +18,6 @@ import com.android.sample.ui.HomePage.HomeScreen
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsScreen
 import com.android.sample.ui.bookings.MyBookingsScreen
-import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.newSkill.NewSkillScreen
@@ -58,7 +57,6 @@ private const val TAG = "NavGraph"
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
-    bookingsViewModel: MyBookingsViewModel,
     profileViewModel: MyProfileViewModel,
     mainPageViewModel: MainPageViewModel,
     authViewModel: AuthenticationViewModel,
