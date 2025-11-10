@@ -2,29 +2,9 @@ package com.android.sample.ui.newSkill
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -71,6 +51,7 @@ fun NewSkillScreen(
     navController: NavController
 ) {
   val skillUIState by skillViewModel.uiState.collectAsState()
+
   val buttonText =
       when (skillUIState.listingType) {
         ListingType.PROPOSAL -> "Create Proposal"
@@ -88,26 +69,21 @@ fun NewSkillScreen(
             },
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
-      floatingActionButtonPosition = FabPosition.Center,
-      content = { pd -> SkillsContent(pd, profileId, skillViewModel) })
+      floatingActionButtonPosition = FabPosition.Center) { pd ->
+        SkillsContent(pd = pd, profileId = profileId, skillViewModel = skillViewModel)
+      }
 }
 
 @Composable
 fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkillViewModel) {
-
-  val textSpace = 8.dp
-
-  LaunchedEffect(profileId) { skillViewModel.load() }
   val skillUIState by skillViewModel.uiState.collectAsState()
 
-  val locationSuggestions = skillUIState.locationSuggestions
-  val locationQuery = skillUIState.locationQuery
-  val locationErrorMsg: String? = skillUIState.invalidLocationMsg
+  LaunchedEffect(profileId) { skillViewModel.load() }
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
       modifier = Modifier.fillMaxWidth().padding(pd)) {
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(Modifier.height(20.dp))
 
         Box(
             modifier =
@@ -116,7 +92,7 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
                     .border(
                         width = 1.dp,
-                        brush = Brush.linearGradient(colors = listOf(Color.Gray, Color.LightGray)),
+                        brush = Brush.linearGradient(listOf(Color.Gray, Color.LightGray)),
                         shape = MaterialTheme.shapes.medium)
                     .padding(16.dp)) {
               Column {
@@ -125,20 +101,18 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.testTag(NewSkillScreenTestTag.CREATE_LESSONS_TITLE))
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(Modifier.height(10.dp))
 
-                // Listing Type Selector
                 ListingTypeMenu(
                     selectedListingType = skillUIState.listingType,
                     onListingTypeSelected = { skillViewModel.setListingType(it) },
                     errorMsg = skillUIState.invalidListingTypeMsg)
 
-                Spacer(modifier = Modifier.height(textSpace))
+                Spacer(Modifier.height(8.dp))
 
-                // Title Input
                 OutlinedTextField(
                     value = skillUIState.title,
-                    onValueChange = { skillViewModel.setTitle(it) },
+                    onValueChange = skillViewModel::setTitle,
                     label = { Text("Course Title") },
                     placeholder = { Text("Title") },
                     isError = skillUIState.invalidTitleMsg != null,
@@ -152,12 +126,11 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     modifier =
                         Modifier.fillMaxWidth().testTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE))
 
-                Spacer(modifier = Modifier.height(textSpace))
+                Spacer(Modifier.height(8.dp))
 
-                // Desc Input
                 OutlinedTextField(
                     value = skillUIState.description,
-                    onValueChange = { skillViewModel.setDescription(it) },
+                    onValueChange = skillViewModel::setDescription,
                     label = { Text("Description") },
                     placeholder = { Text("Description of the skill") },
                     isError = skillUIState.invalidDescMsg != null,
@@ -171,12 +144,11 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     modifier =
                         Modifier.fillMaxWidth().testTag(NewSkillScreenTestTag.INPUT_DESCRIPTION))
 
-                Spacer(modifier = Modifier.height(textSpace))
+                Spacer(Modifier.height(8.dp))
 
-                // Price Input
                 OutlinedTextField(
                     value = skillUIState.price,
-                    onValueChange = { skillViewModel.setPrice(it) },
+                    onValueChange = skillViewModel::setPrice,
                     label = { Text("Hourly Rate") },
                     placeholder = { Text("Price per Hour") },
                     isError = skillUIState.invalidPriceMsg != null,
@@ -189,29 +161,28 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     },
                     modifier = Modifier.fillMaxWidth().testTag(NewSkillScreenTestTag.INPUT_PRICE))
 
-                Spacer(modifier = Modifier.height(textSpace))
+                Spacer(Modifier.height(8.dp))
 
                 SubjectMenu(
                     selectedSubject = skillUIState.subject,
-                    onSubjectSelected = { skillViewModel.setSubject(it) },
+                    onSubjectSelected = skillViewModel::setSubject,
                     errorMsg = skillUIState.invalidSubjectMsg)
 
-                // Sub-skill dropdown, visible when a subject is selected
                 if (skillUIState.subject != null) {
-                  Spacer(modifier = Modifier.height(textSpace))
+                  Spacer(Modifier.height(8.dp))
+
                   SubSkillMenu(
                       selectedSubSkill = skillUIState.selectedSubSkill,
                       options = skillUIState.subSkillOptions,
-                      skillViewModel = skillViewModel,
-                      skillUIState = skillUIState)
+                      onSubSkillSelected = skillViewModel::setSubSkill,
+                      errorMsg = skillUIState.invalidSubSkillMsg)
                 }
 
-                // Location Input with dropdown
                 LocationInputField(
-                    locationQuery = locationQuery,
-                    locationSuggestions = locationSuggestions,
-                    onLocationQueryChange = { skillViewModel.setLocationQuery(it) },
-                    errorMsg = locationErrorMsg,
+                    locationQuery = skillUIState.locationQuery,
+                    locationSuggestions = skillUIState.locationSuggestions,
+                    onLocationQueryChange = skillViewModel::setLocationQuery,
+                    errorMsg = skillUIState.invalidLocationMsg,
                     onLocationSelected = { location ->
                       skillViewModel.setLocationQuery(location.name)
                       skillViewModel.setLocation(location)
@@ -229,7 +200,7 @@ fun SubjectMenu(
     errorMsg: String?
 ) {
   var expanded by remember { mutableStateOf(false) }
-  val subjects = MainSubject.entries.toTypedArray()
+  val subjects = MainSubject.entries
 
   ExposedDropdownMenuBox(
       expanded = expanded,
@@ -240,7 +211,7 @@ fun SubjectMenu(
             onValueChange = {},
             readOnly = true,
             label = { Text("Subject") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             isError = errorMsg != null,
             supportingText = {
               errorMsg?.let {
@@ -251,6 +222,7 @@ fun SubjectMenu(
             },
             modifier =
                 Modifier.menuAnchor().fillMaxWidth().testTag(NewSkillScreenTestTag.SUBJECT_FIELD))
+
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
@@ -276,7 +248,7 @@ fun ListingTypeMenu(
     errorMsg: String?
 ) {
   var expanded by remember { mutableStateOf(false) }
-  val listingTypes = ListingType.entries.toTypedArray()
+  val listingTypes = ListingType.entries
 
   ExposedDropdownMenuBox(
       expanded = expanded,
@@ -287,7 +259,7 @@ fun ListingTypeMenu(
             onValueChange = {},
             readOnly = true,
             label = { Text("Listing Type") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             isError = errorMsg != null,
             supportingText = {
               errorMsg?.let {
@@ -300,15 +272,16 @@ fun ListingTypeMenu(
                 Modifier.menuAnchor()
                     .fillMaxWidth()
                     .testTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD))
+
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier.testTag(NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN)) {
-              listingTypes.forEach { listingType ->
+              listingTypes.forEach { type ->
                 DropdownMenuItem(
-                    text = { Text(listingType.name) },
+                    text = { Text(type.name) },
                     onClick = {
-                      onListingTypeSelected(listingType)
+                      onListingTypeSelected(type)
                       expanded = false
                     },
                     modifier =
@@ -323,8 +296,8 @@ fun ListingTypeMenu(
 fun SubSkillMenu(
     selectedSubSkill: String?,
     options: List<String>,
-    skillViewModel: NewSkillViewModel,
-    skillUIState: SkillUIState
+    onSubSkillSelected: (String) -> Unit,
+    errorMsg: String?
 ) {
   var expanded by remember { mutableStateOf(false) }
 
@@ -337,10 +310,10 @@ fun SubSkillMenu(
             onValueChange = {},
             readOnly = true,
             label = { Text("Sub-Subject") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            isError = skillUIState.invalidSubSkillMsg != null,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            isError = errorMsg != null,
             supportingText = {
-              skillUIState.invalidSubSkillMsg?.let {
+              errorMsg?.let {
                 Text(
                     text = it,
                     modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_SUB_SKILL_MSG))
@@ -348,6 +321,7 @@ fun SubSkillMenu(
             },
             modifier =
                 Modifier.menuAnchor().fillMaxWidth().testTag(NewSkillScreenTestTag.SUB_SKILL_FIELD))
+
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
@@ -356,7 +330,7 @@ fun SubSkillMenu(
                 DropdownMenuItem(
                     text = { Text(opt) },
                     onClick = {
-                      skillViewModel.setSubSkill(opt)
+                      onSubSkillSelected(opt)
                       expanded = false
                     },
                     modifier =
