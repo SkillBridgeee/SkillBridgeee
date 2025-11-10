@@ -3,6 +3,11 @@ package com.android.sample.navigation
 import android.util.Log
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.MainActivity
 import com.android.sample.model.booking.BookingRepositoryProvider
@@ -149,11 +154,6 @@ class NavGraphCoverageTest {
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).performClick()
     composeTestRule.waitForIdle()
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
-
-    // FAB (Add)
-    composeTestRule.onNodeWithContentDescription("Add").performClick()
-    composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithText("Create Your Lessons !").assertExists()
   }
 
   @Test

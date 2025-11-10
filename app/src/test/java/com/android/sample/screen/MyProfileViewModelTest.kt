@@ -1,5 +1,6 @@
 package com.android.sample.screen
 
+import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.listing.Listing
@@ -32,6 +33,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -443,7 +445,7 @@ class MyProfileViewModelTest {
     val vm = newVm()
     val provider = SuccessGpsProvider(12.34, 56.78)
 
-    vm.fetchLocationFromGps(provider)
+    vm.fetchLocationFromGps(provider, context = ApplicationProvider.getApplicationContext())
     advanceUntilIdle()
 
     val ui = vm.uiState.value
@@ -459,7 +461,7 @@ class MyProfileViewModelTest {
     val vm = newVm()
     val provider = NullGpsProvider()
 
-    vm.fetchLocationFromGps(provider)
+    vm.fetchLocationFromGps(provider, context = ApplicationProvider.getApplicationContext())
     advanceUntilIdle()
 
     val ui = vm.uiState.value
@@ -471,7 +473,7 @@ class MyProfileViewModelTest {
     val vm = newVm()
     val provider = SecurityExceptionGpsProvider()
 
-    vm.fetchLocationFromGps(provider)
+    vm.fetchLocationFromGps(provider, context = ApplicationProvider.getApplicationContext())
     advanceUntilIdle()
 
     val ui = vm.uiState.value
@@ -532,5 +534,28 @@ class MyProfileViewModelTest {
     vm.setLocation(Location(name = "Paris"))
     // now all required fields present and valid -> valid
     assertTrue(vm.uiState.value.isValid)
+  }
+
+  @Test
+  fun permissionGranted_branch_executes_fetchLocationFromGps() = runTest {
+    val repo = mock<ProfileRepository>()
+    val listingRepo = mock<ListingRepository>()
+    val context = mock<Context>()
+
+    val provider = GpsLocationProvider(context)
+    val viewModel = MyProfileViewModel(repo, listingRepository = listingRepo, userId = "demo")
+
+    viewModel.fetchLocationFromGps(provider, context)
+  }
+
+  @Test
+  fun permissionDenied_branch_executes_onLocationPermissionDenied() = runTest {
+    val repo = mock<ProfileRepository>()
+    val listingRepo = mock<ListingRepository>()
+    val context = mock<Context>()
+
+    val viewModel = MyProfileViewModel(repo, listingRepository = listingRepo, userId = "demo")
+
+    viewModel.onLocationPermissionDenied()
   }
 }
