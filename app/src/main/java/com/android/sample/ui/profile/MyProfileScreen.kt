@@ -300,7 +300,7 @@ private fun ProfileForm(
       rememberLauncherForActivityResult(RequestPermission()) { granted ->
         val provider = GpsLocationProvider(context)
         if (granted) {
-          profileViewModel.fetchLocationFromGps(provider)
+          profileViewModel.fetchLocationFromGps(provider, context)
         } else {
           profileViewModel.onLocationPermissionDenied()
         }
@@ -374,7 +374,7 @@ private fun ProfileForm(
                       ContextCompat.checkSelfPermission(context, permission) ==
                           PackageManager.PERMISSION_GRANTED
                   if (granted) {
-                    profileViewModel.fetchLocationFromGps(GpsLocationProvider(context))
+                    profileViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
                   } else {
                     permissionLauncher.launch(permission)
                   }
