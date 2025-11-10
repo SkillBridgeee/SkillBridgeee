@@ -42,9 +42,9 @@ class MyBookingsViewModel(
   fun load() {
     viewModelScope.launch {
       try {
-        val userId = UserSessionManager.getCurrentUserId()!!
+        val userId = UserSessionManager.getCurrentUserId()
         // Get all the bookings of the user
-        val allUsersBooking = bookingRepo.getBookingsByUserId(userId)
+        val allUsersBooking = bookingRepo.getBookingsByUserId(userId!!)
         if (allUsersBooking.isEmpty()) {
           _uiState.value = emptyList()
           return@launch
