@@ -38,13 +38,15 @@ import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.nio.channels.spi.AsynchronousChannelProvider.provider
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
 class MyProfileViewModelTest {
 
-  @get:Rule val firebaseRule = FirebaseTestRule()
+  @get:Rule
+  val firebaseRule = FirebaseTestRule()
 
   private val dispatcher = StandardTestDispatcher()
 
@@ -61,7 +63,7 @@ class MyProfileViewModelTest {
   // -------- Fake repositories ------------------------------------------------------
 
   private open class FakeProfileRepo(private var storedProfile: Profile? = null) :
-      ProfileRepository {
+    ProfileRepository {
     var updatedProfile: Profile? = null
     var updateCalled = false
     var getProfileCalled = false
@@ -85,18 +87,18 @@ class MyProfileViewModelTest {
     override suspend fun getAllProfiles(): List<Profile> = emptyList()
 
     override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
-        emptyList<Profile>()
+      emptyList<Profile>()
 
     override suspend fun getProfileById(userId: String) =
-        storedProfile ?: error("Profile not found")
+      storedProfile ?: error("Profile not found")
 
     override suspend fun getSkillsForUser(userId: String) =
-        emptyList<com.android.sample.model.skill.Skill>()
+      emptyList<com.android.sample.model.skill.Skill>()
   }
 
   private class FakeLocationRepo(
-      private val results: List<Location> =
-          listOf(Location(name = "Paris"), Location(name = "Rome"))
+    private val results: List<Location> =
+      listOf(Location(name = "Paris"), Location(name = "Rome"))
   ) : LocationRepository {
     var lastQuery: String? = null
     var searchCalled = false
@@ -133,13 +135,13 @@ class MyProfileViewModelTest {
     override suspend fun deactivateListing(listingId: String) {}
 
     override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill): List<Listing> =
-        emptyList()
+      emptyList()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> =
-        emptyList()
+      emptyList()
   }
 
-  private class FakeRationgRepos : RatingRepository {
+  private class FakeRatingRepos : RatingRepository {
     override fun getNewUid(): String = "fake-rating-id"
 
     override suspend fun getAllRatings(): List<Rating> = emptyList()
@@ -148,7 +150,8 @@ class MyProfileViewModelTest {
 
     override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
 
-    override suspend fun getRatingsByToUser(toUserId: String): List<Rating> = emptyList()
+    override suspend fun getRatingsByToUser(toUserId: String): List<Rating> =
+      throw RuntimeException("Failed to load ratings.")
 
     override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
 
@@ -166,11 +169,12 @@ class MyProfileViewModelTest {
   }
 
   private class SuccessGpsProvider(
-      private val lat: Double = 12.34,
-      private val lon: Double = 56.78
+    private val lat: Double = 12.34,
+    private val lon: Double = 56.78
   ) :
-      com.android.sample.model.map.GpsLocationProvider(
-          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+    com.android.sample.model.map.GpsLocationProvider(
+      androidx.test.core.app.ApplicationProvider.getApplicationContext()
+    ) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
       val loc = android.location.Location("test")
       loc.latitude = lat
@@ -182,30 +186,32 @@ class MyProfileViewModelTest {
   // -------- Helpers ------------------------------------------------------
 
   private fun makeProfile(
-      id: String = "1",
-      name: String = "Kendrick",
-      email: String = "kdot@example.com",
-      location: Location = Location(name = "Compton"),
-      desc: String = "Rap tutor"
+    id: String = "1",
+    name: String = "Kendrick",
+    email: String = "kdot@example.com",
+    location: Location = Location(name = "Compton"),
+    desc: String = "Rap tutor"
   ) = Profile(id, name, email, location = location, description = desc)
 
   private fun newVm(
-      repo: ProfileRepository = FakeProfileRepo(),
-      locRepo: LocationRepository = FakeLocationRepo(),
-      listingRepo: ListingRepository = FakeListingRepo(),
-      ratingRepo: RatingRepository = FakeRationgRepos(),
-      userId: String = "testUid"
+    repo: ProfileRepository = FakeProfileRepo(),
+    locRepo: LocationRepository = FakeLocationRepo(),
+    listingRepo: ListingRepository = FakeListingRepo(),
+    ratingRepo: RatingRepository = FakeRatingRepos(),
+    userId: String = "testUid"
   ) = MyProfileViewModel(repo, locRepo, listingRepo, ratingRepo, userId = userId)
 
   private class NullGpsProvider :
-      com.android.sample.model.map.GpsLocationProvider(
-          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+    com.android.sample.model.map.GpsLocationProvider(
+      androidx.test.core.app.ApplicationProvider.getApplicationContext()
+    ) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? = null
   }
 
   private class SecurityExceptionGpsProvider :
-      com.android.sample.model.map.GpsLocationProvider(
-          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+    com.android.sample.model.map.GpsLocationProvider(
+      androidx.test.core.app.ApplicationProvider.getApplicationContext()
+    ) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
       throw SecurityException("Permission denied")
     }
@@ -370,11 +376,11 @@ class MyProfileViewModelTest {
   @Test
   fun editProfile_handlesRepositoryException_gracefully() = runTest {
     val failingRepo =
-        object : FakeProfileRepo() {
-          override suspend fun updateProfile(userId: String, profile: Profile) {
-            throw RuntimeException("Update failed")
-          }
+      object : FakeProfileRepo() {
+        override suspend fun updateProfile(userId: String, profile: Profile) {
+          throw RuntimeException("Update failed")
         }
+      }
     val vm = newVm(failingRepo)
 
     vm.setName("Good")
@@ -513,11 +519,11 @@ class MyProfileViewModelTest {
   fun loadUserListings_handlesRepositoryException_setsListingsError() = runTest {
     // Listing repo that throws to exercise the catch branch
     val failingListingRepo =
-        object : ListingRepository by FakeListingRepo() {
-          override suspend fun getListingsByUser(userId: String): List<Listing> {
-            throw RuntimeException("Listings fetch failed")
-          }
+      object : ListingRepository by FakeListingRepo() {
+        override suspend fun getListingsByUser(userId: String): List<Listing> {
+          throw RuntimeException("Listings fetch failed")
         }
+      }
 
     val repo = FakeProfileRepo(makeProfile())
     val vm = newVm(repo = repo, listingRepo = failingListingRepo)
@@ -566,7 +572,7 @@ class MyProfileViewModelTest {
   }
 
   @Test
-  fun permissionGranted_branch_executes_fetchLocationFromGps() = runTest {
+  fun permissionGranted_branch_executes_fetchLocationFromGps() {
     val repo = mock<ProfileRepository>()
     val listingRepo = mock<ListingRepository>()
     val context = mock<Context>()
@@ -574,8 +580,9 @@ class MyProfileViewModelTest {
 
     val provider = GpsLocationProvider(context)
     val viewModel =
-        MyProfileViewModel(
-            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo")
+      MyProfileViewModel(
+        repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo"
+      )
 
     viewModel.fetchLocationFromGps(provider, context)
   }
@@ -588,9 +595,35 @@ class MyProfileViewModelTest {
     val ratingRepo = mock<RatingRepository>()
 
     val viewModel =
-        MyProfileViewModel(
-            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo")
+      MyProfileViewModel(
+        repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo"
+      )
 
     viewModel.onLocationPermissionDenied()
   }
+
+  @Test
+  fun loadUserRatingFails_handlesRepositoryException_setsRatingsError() = runTest {
+
+    val failingRatingRepo =
+      object : RatingRepository by FakeRatingRepos() {
+        override suspend fun getRatingsByToUser(toUserId: String): List<Rating> {
+          throw RuntimeException("Ratings fetch failed")
+        }
+      }
+
+    val repo = FakeProfileRepo(makeProfile())
+    val vm = newVm(repo = repo, ratingRepo = failingRatingRepo)
+
+    // Trigger ratings load
+    vm.loadUserRatings("userId")
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertTrue(ui.ratings.isEmpty())
+    assertFalse(ui.ratingsLoading)
+    assertEquals("Failed to load ratings.", ui.ratingsLoadError)
+  }
+
+
 }

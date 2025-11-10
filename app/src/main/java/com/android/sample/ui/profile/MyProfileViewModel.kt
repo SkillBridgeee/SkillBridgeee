@@ -176,9 +176,9 @@ class MyProfileViewModel(
         Log.e(TAG, "Error loading ratings for user: $ownerId", e)
         _uiState.update {
           it.copy(
-              listings = emptyList(),
-              listingsLoading = false,
-              listingsLoadError = "Failed to load ratings.")
+              ratings = emptyList(),
+              ratingsLoading = false,
+              ratingsLoadError = "Failed to load ratings.")
         }
       }
     }
