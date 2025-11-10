@@ -79,56 +79,78 @@ class FakeLocationRepository : LocationRepository {
   }
 }
 
-// =====================
-// === Stable Helpers ===
-// =====================
+// =============================
+// === CI-Stable Test Helpers ===
+// =============================
 
-private fun ComposeContentTestRule.waitForNode(
+/**
+ * Advances compose time slightly so ExposedDropdownMenuBox and other animations can reach a stable
+ * state on slow CI emulators.
+ */
+private fun ComposeContentTestRule.stabilizeCompose(delayMillis: Long = 400) {
+  // Advance time manually to allow animations to finish
+  mainClock.advanceTimeBy(delayMillis)
+  waitForIdle()
+}
+
+/** Replaces waitUntil(timeout) with a longer, repeated check. */
+private fun ComposeContentTestRule.waitForNodeStable(
     tag: String,
     useUnmergedTree: Boolean = true,
-    timeoutMillis: Long = 5000
+    timeoutMillis: Long = 10_000
 ) {
   waitUntil(timeoutMillis) {
     onAllNodesWithTag(tag, useUnmergedTree).fetchSemanticsNodes().isNotEmpty()
   }
+  stabilizeCompose()
 }
 
-private fun ComposeContentTestRule.openDropdown(fieldTag: String) {
+/** Opens a dropdown and waits for it to become stable. */
+private fun ComposeContentTestRule.openDropdownStable(
+    fieldTag: String,
+    dropdownTag: String? = null
+) {
   onNodeWithTag(fieldTag, useUnmergedTree = true).performClick()
-  waitForIdle()
+  stabilizeCompose()
+
+  if (dropdownTag != null) {
+    waitForNodeStable(dropdownTag)
+  }
 }
 
-private fun ComposeContentTestRule.selectDropdownItemByText(text: String) {
+/** Select an item by visible text in a stable way. */
+private fun ComposeContentTestRule.selectDropdownItemByTextStable(text: String) {
   onNodeWithText(text, useUnmergedTree = true).assertExists().performClick()
-  waitForIdle()
+  stabilizeCompose()
 }
 
-private fun ComposeContentTestRule.selectDropdownItemByTag(
+/** Select an item by tag + index in a stable way. */
+private fun ComposeContentTestRule.selectDropdownItemByTagStable(
     itemTag: String,
     index: Int = 0,
-    timeoutMillis: Long = 5000
+    timeoutMillis: Long = 10_000
 ) {
   waitUntil(timeoutMillis) {
     onAllNodesWithTag(itemTag, useUnmergedTree = true).fetchSemanticsNodes().size > index
   }
+  stabilizeCompose()
   onAllNodesWithTag(itemTag, useUnmergedTree = true)[index].performClick()
-  waitForIdle()
+  stabilizeCompose()
 }
 
-private fun ComposeContentTestRule.openAndSelect(
+/** Combined stable helper for opening dropdown and selecting an item. */
+private fun ComposeContentTestRule.openAndSelectStable(
     fieldTag: String,
     dropdownTag: String,
     itemText: String? = null,
     itemTag: String? = null,
     index: Int = 0
 ) {
-  openDropdown(fieldTag)
-  waitForNode(dropdownTag)
+  openDropdownStable(fieldTag, dropdownTag)
 
-  if (itemText != null) {
-    selectDropdownItemByText(itemText)
-  } else if (itemTag != null) {
-    selectDropdownItemByTag(itemTag, index)
+  when {
+    itemText != null -> selectDropdownItemByTextStable(itemText)
+    itemTag != null -> selectDropdownItemByTagStable(itemTag, index)
   }
 }
 
@@ -203,13 +225,13 @@ class NewSkillScreenTest {
     composeRule.waitForIdle()
 
     composeRule.onNodeWithText("Create Listing").assertIsDisplayed()
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD,
         dropdownTag = NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN,
         itemText = "PROPOSAL")
     composeRule.onNodeWithText("Create Proposal").assertIsDisplayed()
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD,
         dropdownTag = NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN,
         itemText = "REQUEST")
@@ -289,8 +311,8 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openDropdown(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
-    composeRule.waitForNode(NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN)
+    composeRule.openDropdownStable(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
+    composeRule.waitForNodeStable(NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN)
 
     composeRule.onNodeWithText("PROPOSAL").assertIsDisplayed()
     composeRule.onNodeWithText("REQUEST").assertIsDisplayed()
@@ -307,7 +329,7 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD,
         dropdownTag = NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN,
         itemText = "PROPOSAL")
@@ -328,7 +350,7 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD,
         dropdownTag = NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN,
         itemText = "REQUEST")
@@ -349,8 +371,8 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openDropdown(NewSkillScreenTestTag.SUBJECT_FIELD)
-    composeRule.waitForNode(NewSkillScreenTestTag.SUBJECT_DROPDOWN)
+    composeRule.openDropdownStable(NewSkillScreenTestTag.SUBJECT_FIELD)
+    composeRule.waitForNodeStable(NewSkillScreenTestTag.SUBJECT_DROPDOWN)
 
     MainSubject.entries.forEach { composeRule.onNodeWithText(it.name).assertIsDisplayed() }
   }
@@ -366,7 +388,7 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
         dropdownTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN,
         itemText = "ACADEMICS")
@@ -483,7 +505,7 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD,
         dropdownTag = NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN,
         itemText = "PROPOSAL")
@@ -496,13 +518,13 @@ class NewSkillScreenTest {
         .performTextInput("Expert tutor")
     composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("30.00")
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
         dropdownTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN,
         itemTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
         index = 0)
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUB_SKILL_FIELD,
         dropdownTag = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN,
         itemTag = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX,
@@ -544,7 +566,7 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD,
         dropdownTag = NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN,
         itemText = "REQUEST")
@@ -557,13 +579,13 @@ class NewSkillScreenTest {
         .performTextInput("Looking for tutor")
     composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("25.00")
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
         dropdownTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN,
         itemTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
         index = 0)
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUB_SKILL_FIELD,
         dropdownTag = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN,
         itemTag = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX,
@@ -607,7 +629,7 @@ class NewSkillScreenTest {
         .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD, useUnmergedTree = true)
         .assertCountEquals(0)
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
         dropdownTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN,
         itemTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
@@ -627,10 +649,10 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openDropdown(NewSkillScreenTestTag.SUBJECT_FIELD)
-    composeRule.waitForNode(NewSkillScreenTestTag.SUBJECT_DROPDOWN)
+    composeRule.openDropdownStable(NewSkillScreenTestTag.SUBJECT_FIELD)
+    composeRule.waitForNodeStable(NewSkillScreenTestTag.SUBJECT_DROPDOWN)
 
-    composeRule.selectDropdownItemByTag(
+    composeRule.selectDropdownItemByTagStable(
         NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX, index = 0)
 
     composeRule
@@ -649,16 +671,16 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
         dropdownTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN,
         itemTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
         index = 0)
 
-    composeRule.openDropdown(NewSkillScreenTestTag.SUB_SKILL_FIELD)
-    composeRule.waitForNode(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN)
+    composeRule.openDropdownStable(NewSkillScreenTestTag.SUB_SKILL_FIELD)
+    composeRule.waitForNodeStable(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN)
 
-    composeRule.selectDropdownItemByTag(
+    composeRule.selectDropdownItemByTagStable(
         itemTag = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX, index = 0)
 
     composeRule
@@ -699,7 +721,7 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
         dropdownTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN,
         itemTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
@@ -727,13 +749,13 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
         dropdownTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN,
         itemTag = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
         index = 0)
 
-    composeRule.openAndSelect(
+    composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUB_SKILL_FIELD,
         dropdownTag = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN,
         itemTag = NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX,
