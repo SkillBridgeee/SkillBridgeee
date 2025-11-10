@@ -42,6 +42,7 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.ListingCard
 import com.android.sample.ui.components.LocationInputField
+import com.android.sample.ui.components.RatingCard
 
 /**
  * Test tags used by UI tests and screenshot tests on the My Profile screen.
@@ -589,10 +590,7 @@ fun SelectionRow(selectedTab: MutableState<ProfileTab>) {
 }
 
 @Composable
-private fun RatingContent(
-    pd: PaddingValues,
-    ui: MyProfileUIState,
-) {
+private fun RatingContent(ui: MyProfileUIState) {
 
   Text(
       text = "Your Ratings",

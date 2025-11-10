@@ -61,7 +61,8 @@ data class MyProfileUIState(
     val listingsLoadError: String? = null,
     val ratings: List<Rating> = emptyList(),
     val ratingsLoading: Boolean = false,
-    val ratingsLoadError: String? = null
+    val ratingsLoadError: String? = null,
+    val updateSuccess: Boolean = false
 ) {
   /** True if all required fields are valid */
   val isValid: Boolean
