@@ -894,8 +894,7 @@ class MapViewModelTest {
   @Test
   fun `loadBookings handles profile with null location`() = runTest {
     // Given
-    val profileNullLoc =
-        Profile(userId = "user1", name = "User", location = Location(0.0, 0.0, ""))
+    val profileNullLoc = Profile(userId = "user1", name = "User", location = Location(0.0, 0.0, ""))
 
     val booking =
         com.android.sample.model.booking.Booking(

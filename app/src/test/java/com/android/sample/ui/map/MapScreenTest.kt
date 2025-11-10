@@ -837,4 +837,3 @@ class MapScreenTest {
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
   }
 }
-
