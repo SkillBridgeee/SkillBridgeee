@@ -9,32 +9,14 @@ import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
-import com.android.sample.model.listing.ListingType
 import com.android.sample.model.listing.Proposal
-import com.android.sample.model.map.Location
-import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
-import java.util.Date
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-
-data class BkgDetailsUIState(
-    val creatorName: String = "",
-    val creatorMail: String = "",
-    val creatorId: String = "",
-    val courseName: String = "",
-    val type: ListingType = ListingType.PROPOSAL,
-    val location: Location = Location(),
-    val description: String = "",
-    val hourlyRate: String = "",
-    val start: Date = Date(),
-    val end: Date = Date(),
-    val subject: MainSubject = MainSubject.ACADEMICS,
-)
 
 data class BookingUIState(
     val booking: Booking = Booking(),
