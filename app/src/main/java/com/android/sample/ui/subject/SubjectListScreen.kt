@@ -57,7 +57,8 @@ object SubjectListTestTags {
 fun SubjectListScreen(
     viewModel: SubjectListViewModel,
     onBookTutor: (Profile) -> Unit = {},
-    subject: MainSubject?
+    subject: MainSubject?,
+    onListingClick: (String) -> Unit = {}
 ) {
   val ui by viewModel.ui.collectAsState()
   LaunchedEffect(subject) { if (subject != null) viewModel.refresh(subject) }
@@ -157,13 +158,13 @@ fun SubjectListScreen(
                 is com.android.sample.model.listing.Proposal -> {
                   ProposalCard(
                       proposal = listing,
-                      onClick = { /* Navigate to listing detail */ },
+                      onClick = onListingClick,
                       testTag = SubjectListTestTags.LISTING_CARD)
                 }
                 is com.android.sample.model.listing.Request -> {
                   RequestCard(
                       request = listing,
-                      onClick = { /* Navigate to listing detail */ },
+                      onClick = onListingClick,
                       testTag = SubjectListTestTags.LISTING_CARD)
                 }
               }

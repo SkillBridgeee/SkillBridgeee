@@ -82,27 +82,7 @@ fun ProfileScreen(
   LaunchedEffect(profileId) { viewModel.loadProfile(profileId) }
 
   Scaffold(
-      modifier = Modifier.testTag(ProfileScreenTestTags.SCREEN),
-      topBar = {
-        TopAppBar(
-            title = { Text("Profile") },
-            navigationIcon = {
-              IconButton(
-                  onClick = onBackClick,
-                  modifier = Modifier.testTag(ProfileScreenTestTags.BACK_BUTTON)) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back")
-                  }
-            },
-            actions = {
-              IconButton(
-                  onClick = { viewModel.refresh(profileId) },
-                  modifier = Modifier.testTag(ProfileScreenTestTags.REFRESH_BUTTON)) {
-                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
-                  }
-            })
-      }) { paddingValues ->
+      modifier = Modifier.testTag(ProfileScreenTestTags.SCREEN)) { paddingValues ->
         when {
           uiState.isLoading -> {
             Box(

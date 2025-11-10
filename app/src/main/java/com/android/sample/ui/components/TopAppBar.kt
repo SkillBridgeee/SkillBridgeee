@@ -55,6 +55,7 @@ fun TopAppBar(navController: NavController) {
         NavRoutes.PROFILE -> "Profile"
         NavRoutes.MAP -> "Map"
         NavRoutes.BOOKINGS -> "My Bookings"
+        NavRoutes.LISTING -> "Listing Details"
         else -> "SkillBridge"
       }
 
