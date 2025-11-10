@@ -87,7 +87,8 @@ enum class ProfileTab {
 fun MyProfileScreen(
     profileViewModel: MyProfileViewModel = viewModel(),
     profileId: String,
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onListingClick: (String) -> Unit = {}
 ) {
   val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
   Scaffold(
@@ -113,7 +114,7 @@ fun MyProfileScreen(
           Spacer(modifier = Modifier.height(16.dp))
 
           if (selectedTab.value == ProfileTab.INFO) {
-            ProfileContent(pd, ui, profileViewModel, onLogout)
+            ProfileContent(pd, ui, profileViewModel, onLogout, onListingClick)
           } else {
             RatingContent(pd, ui)
           }
@@ -133,12 +134,14 @@ fun MyProfileScreen(
  * @param profileId Profile id to load.
  * @param profileViewModel ViewModel that exposes UI state and actions.
  * @param onLogout Callback invoked by the logout UI.
+ * @param onListingClick Callback when a listing card is clicked.
  */
 private fun ProfileContent(
     pd: PaddingValues,
     ui: MyProfileUIState,
     profileViewModel: MyProfileViewModel,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onListingClick: (String) -> Unit
 ) {
   val profileId = ui.userId ?: ""
   LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
@@ -154,7 +157,7 @@ private fun ProfileContent(
           ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
         }
 
-        item { ProfileListings(ui = ui) }
+        item { ProfileListings(ui = ui, onListingClick = onListingClick) }
 
         item { ProfileLogout(onLogout = onLogout) }
       }
@@ -393,8 +396,9 @@ private fun ProfileForm(
  * visible.
  *
  * @param ui Current UI state providing listings and profile data for the creator.
+ * @param onListingClick Callback when a listing card is clicked.
  */
-private fun ProfileListings(ui: MyProfileUIState) {
+private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Unit = {}) {
   Spacer(modifier = Modifier.height(16.dp))
   Text(
       text = "Your Listings",
@@ -431,12 +435,12 @@ private fun ProfileListings(ui: MyProfileUIState) {
             is com.android.sample.model.listing.Proposal -> {
               ProposalCard(
                   proposal = listing,
-                  onClick = { /* Handle click */ })
+                  onClick = onListingClick)
             }
             is com.android.sample.model.listing.Request -> {
               RequestCard(
                   request = listing,
-                  onClick = { /* Handle click */ })
+                  onClick = onListingClick)
             }
           }
           Spacer(Modifier.height(8.dp))
