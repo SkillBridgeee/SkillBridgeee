@@ -99,26 +99,19 @@ private fun ComposeContentTestRule.waitForNodeStable(
 }
 
 private fun ComposeContentTestRule.openDropdownStable(fieldTag: String) {
-  val dropdownTag =
+  onNodeWithTag(fieldTag, useUnmergedTree = true).assertExists().performClick()
+
+  stabilizeCompose()
+
+  val dropdown =
       when (fieldTag) {
         NewSkillScreenTestTag.SUBJECT_FIELD -> NewSkillScreenTestTag.SUBJECT_DROPDOWN
-        NewSkillScreenTestTag.LISTING_TYPE_FIELD -> NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN
         NewSkillScreenTestTag.SUB_SKILL_FIELD -> NewSkillScreenTestTag.SUB_SKILL_DROPDOWN
-        else -> error("Unknown fieldTag: $fieldTag")
+        NewSkillScreenTestTag.LISTING_TYPE_FIELD -> NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN
+        else -> error("Unknown dropdown fieldTag")
       }
 
-  onNodeWithTag(fieldTag, useUnmergedTree = true).assertExists().performClick()
-  stabilizeCompose()
-  waitForNodeStable(dropdownTag)
-}
-
-private fun ComposeContentTestRule.selectDropdownItemByTextStable(text: String) {
-  waitUntil(STABLE_WAIT_TIMEOUT) {
-    onAllNodesWithText(text, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-  }
-  stabilizeCompose()
-  onAllNodesWithText(text, useUnmergedTree = true)[0].assertExists().performClick()
-  stabilizeCompose()
+  waitForNodeStable(dropdown)
 }
 
 private fun ComposeContentTestRule.selectDropdownItemByTagStable(
@@ -150,7 +143,10 @@ private fun ComposeContentTestRule.openAndSelectStable(
   openDropdownStable(fieldTag)
 
   when {
-    itemText != null -> selectDropdownItemByTextStable(itemText)
+    itemText != null -> {
+      onNodeWithText(itemText, useUnmergedTree = true).assertExists().performClick()
+      stabilizeCompose()
+    }
     itemTagPrefix != null -> selectDropdownItemByTagStable(itemTagPrefix, index)
   }
 
@@ -605,12 +601,21 @@ class NewSkillScreenTest {
 
   @Test
   fun selectingSubject_thenSubSkill_enablesCleanSave_noErrorsShown() {
+
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
+
     composeRule.setContent {
       SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
+    // ✅ full hierarchy dump
+    composeRule.onRoot(useUnmergedTree = true).printToLog("TREE")
+
+    // ✅ List of clickable nodes
+    composeRule.onAllNodes(hasClickAction(), true).printToLog("CLICKABLES")
+
+    // continue with your test
     composeRule.openAndSelectStable(
         fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
         itemTagPrefix = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
