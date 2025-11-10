@@ -49,9 +49,19 @@ class MyBookingsViewModel(
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true, hasError = false) }
       try {
-        val userId = UserSessionManager.getCurrentUserId()
+
+        val userId = runCatching { UserSessionManager.getCurrentUserId() }.getOrNull().orEmpty()
+
+        //        // Si userId est vide, on considère qu’il n’y a pas de session
+        //        if (userId.isBlank()) {
+        //          _uiState.update { it.copy(isLoading = false, hasError = false, bookings =
+        // emptyList()) }
+        //          return@launch
+        //        }
+
+        // val userId = UserSessionManager.getCurrentUserId() ?: ""
         // Get all the bookings of the user
-        val allUsersBooking = bookingRepo.getBookingsByUserId(userId!!)
+        val allUsersBooking = bookingRepo.getBookingsByUserId(userId)
         if (allUsersBooking.isEmpty()) {
           _uiState.update { it.copy(isLoading = false, hasError = false, bookings = emptyList()) }
           return@launch
