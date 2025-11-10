@@ -14,11 +14,17 @@ import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class BookingCardUIV2(val booking: Booking, val creatorProfile: Profile, val listing: Listing)
+data class MyBookingsUIState(
+    val isLoading: Boolean = true,
+    val hasError: Boolean = false,
+    val bookings: List<BookingCardUI> = emptyList()
+)
+
+data class BookingCardUI(val booking: Booking, val creatorProfile: Profile, val listing: Listing)
 
 /**
  * Minimal VM:
@@ -32,8 +38,8 @@ class MyBookingsViewModel(
     private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
 ) : ViewModel() {
 
-  private val _uiState = MutableStateFlow<List<BookingCardUIV2>>(emptyList())
-  val uiState: StateFlow<List<BookingCardUIV2>> = _uiState.asStateFlow()
+  private val _uiState = MutableStateFlow(MyBookingsUIState())
+  val uiState = _uiState.asStateFlow()
 
   init {
     load()
@@ -41,12 +47,13 @@ class MyBookingsViewModel(
 
   fun load() {
     viewModelScope.launch {
+      _uiState.update { it.copy(isLoading = true, hasError = false) }
       try {
         val userId = UserSessionManager.getCurrentUserId()
         // Get all the bookings of the user
         val allUsersBooking = bookingRepo.getBookingsByUserId(userId!!)
         if (allUsersBooking.isEmpty()) {
-          _uiState.value = emptyList()
+          _uiState.update { it.copy(isLoading = false, hasError = false, bookings = emptyList()) }
           return@launch
         }
 
@@ -59,10 +66,12 @@ class MyBookingsViewModel(
         val bookingsWithProfiles =
             buildBookingsWithData(allUsersBooking, creatorProfileCache, listingCache)
 
-        _uiState.value = bookingsWithProfiles
+        _uiState.update {
+          it.copy(isLoading = false, hasError = false, bookings = bookingsWithProfiles)
+        }
       } catch (e: Exception) {
         Log.e("BookingsListViewModel", "Error loading user bookings", e)
-        _uiState.value = emptyList()
+        _uiState.update { it.copy(isLoading = false, hasError = true, bookings = emptyList()) }
       }
     }
   }
@@ -92,14 +101,14 @@ class MyBookingsViewModel(
       bookings: List<Booking>,
       profileCache: Map<String, Profile>,
       listingCache: Map<String, Listing>
-  ): List<BookingCardUIV2> {
+  ): List<BookingCardUI> {
     return bookings.mapNotNull { booking ->
       val creatorProfile = profileCache[booking.listingCreatorId]
       val associatedListing = listingCache[booking.associatedListingId]
 
       // On ne retourne l'objet que si toutes les données requises sont présentes
       if (creatorProfile != null && associatedListing != null) {
-        BookingCardUIV2(
+        BookingCardUI(
             booking = booking, creatorProfile = creatorProfile, listing = associatedListing)
       } else {
         // Loguer si un élément est manquant pour le débogage

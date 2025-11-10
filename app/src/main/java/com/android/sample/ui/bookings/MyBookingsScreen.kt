@@ -7,9 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.ui.components.BookingCard
@@ -32,28 +30,29 @@ fun MyBookingsScreen(
     onBookingClick: (String) -> Unit
 ) {
   Scaffold { inner ->
-    val bookings by viewModel.uiState.collectAsState(initial = emptyList())
-    BookingsList(
-        bookings = bookings, onBookingClick = onBookingClick, modifier = modifier.padding(inner))
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.load() }
+
+    when {
+      uiState.isLoading -> CircularProgressIndicator()
+      uiState.hasError -> Text("Failed to load your bookings")
+      uiState.bookings.isEmpty() -> Text("No bookings available")
+      else ->
+          BookingsList(
+              bookings = uiState.bookings,
+              onBookingClick = onBookingClick,
+              modifier = modifier.padding(inner))
+    }
   }
 }
 
 @Composable
 fun BookingsList(
-    bookings: List<BookingCardUIV2>,
+    bookings: List<BookingCardUI>,
     onBookingClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-  if (bookings.isEmpty()) {
-    Box(
-        modifier =
-            modifier.fillMaxSize().padding(16.dp).testTag(MyBookingsPageTestTag.EMPTY_BOOKINGS),
-        contentAlignment = Alignment.Center) {
-          Text(text = "No bookings available")
-        }
-    return
-  }
-
   LazyColumn(
       modifier = modifier.fillMaxSize().padding(12.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp)) {
