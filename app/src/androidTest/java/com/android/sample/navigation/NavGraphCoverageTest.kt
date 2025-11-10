@@ -92,11 +92,22 @@ class NavGraphCoverageTest {
    * button. Wait for the app to reach HOME instead.
    */
   private fun waitForHome(timeoutMs: Long = 5_000L) {
+    // First wait for navigation graph to be set
+    composeTestRule.waitUntil(timeoutMillis = timeoutMs) {
+      try {
+        RouteStackManager.getCurrentRoute() != null
+      } catch (e: Exception) {
+        false
+      }
+    }
+
+    // Then wait for HOME route
     composeTestRule.waitUntil(timeoutMillis = timeoutMs) {
       RouteStackManager.getCurrentRoute() == NavRoutes.HOME
     }
     composeTestRule.waitForIdle()
   }
+
 
   @Test
   fun compose_all_nav_destinations_to_exercise_animated_lambdas() {
