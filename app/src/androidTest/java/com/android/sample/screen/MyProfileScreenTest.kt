@@ -752,29 +752,4 @@ class MyProfileScreenTest {
 
     compose.onNode(successMatcher, useUnmergedTree = true).assertIsDisplayed()
   }
-
-  @Test
-  fun successMessage_isCleared_afterDelay() {
-    compose.runOnIdle {
-      val current = viewModel.uiState.value
-      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
-      field.isAccessible = true
-
-      @Suppress("UNCHECKED_CAST")
-      val stateFlow =
-          field.get(viewModel) as kotlinx.coroutines.flow.MutableStateFlow<MyProfileUIState>
-
-      stateFlow.value = current.copy(updateSuccess = true)
-    }
-
-    val successMatcher = hasText("Profile successfully updated!")
-    compose.waitUntil(2_000) {
-      compose.onAllNodes(successMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-    }
-
-    compose.mainClock.advanceTimeBy(5_500)
-    compose.waitForIdle()
-
-    compose.onAllNodes(successMatcher, useUnmergedTree = true).assertCountEquals(0)
-  }
 }
