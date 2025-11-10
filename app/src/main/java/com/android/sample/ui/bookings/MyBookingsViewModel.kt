@@ -34,8 +34,8 @@ data class BookingCardUI(val booking: Booking, val creatorProfile: Profile, val 
  */
 class MyBookingsViewModel(
     private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository,
-    private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
-    private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
+    val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
+    val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(MyBookingsUIState())
@@ -52,14 +52,6 @@ class MyBookingsViewModel(
 
         val userId = runCatching { UserSessionManager.getCurrentUserId() }.getOrNull().orEmpty()
 
-        //        // Si userId est vide, on considère qu’il n’y a pas de session
-        //        if (userId.isBlank()) {
-        //          _uiState.update { it.copy(isLoading = false, hasError = false, bookings =
-        // emptyList()) }
-        //          return@launch
-        //        }
-
-        // val userId = UserSessionManager.getCurrentUserId() ?: ""
         // Get all the bookings of the user
         val allUsersBooking = bookingRepo.getBookingsByUserId(userId)
         if (allUsersBooking.isEmpty()) {

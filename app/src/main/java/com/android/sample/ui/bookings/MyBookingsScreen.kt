@@ -8,18 +8,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.ui.components.BookingCard
 
 object MyBookingsPageTestTag {
+  const val LOADING = "myBookingsLoading"
+  const val ERROR = "myBookingsError"
+  const val EMPTY = "myBookingsEmpty"
   const val BOOKING_CARD = "bookingCard"
-  const val BOOKING_DETAILS_BUTTON = "bookingDetailsButton"
   const val NAV_HOME = "navHome"
   const val NAV_BOOKINGS = "navBookings"
   const val NAV_PROFILE = "navProfile"
-  const val EMPTY_BOOKINGS = "emptyBookings"
-  const val NAV_MAP = "nav_map"
+  const val NAV_MAP = "navMap"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,9 +37,17 @@ fun MyBookingsScreen(
     LaunchedEffect(Unit) { viewModel.load() }
 
     when {
-      uiState.isLoading -> CircularProgressIndicator()
-      uiState.hasError -> Text("Failed to load your bookings")
-      uiState.bookings.isEmpty() -> Text("No bookings available")
+      uiState.isLoading ->
+          CircularProgressIndicator(modifier = Modifier.testTag(MyBookingsPageTestTag.LOADING))
+      uiState.hasError ->
+          Text(
+              text = "Failed to load your bookings",
+              modifier = Modifier.testTag(MyBookingsPageTestTag.ERROR))
+      uiState.bookings.isEmpty() ->
+          Text(
+              text = "No bookings available",
+              modifier = Modifier.testTag(MyBookingsPageTestTag.EMPTY),
+          )
       else ->
           BookingsList(
               bookings = uiState.bookings,

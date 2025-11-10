@@ -141,7 +141,7 @@ class AppNavGraphTest {
               .isNotEmpty()
       val hasEmptyState =
           composeTestRule
-              .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY_BOOKINGS)
+              .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY)
               .fetchSemanticsNodes()
               .isNotEmpty()
 
@@ -158,7 +158,7 @@ class AppNavGraphTest {
             .isNotEmpty()
     val hasEmptyState =
         composeTestRule
-            .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY_BOOKINGS)
+            .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY)
             .fetchSemanticsNodes()
             .isNotEmpty()
 
