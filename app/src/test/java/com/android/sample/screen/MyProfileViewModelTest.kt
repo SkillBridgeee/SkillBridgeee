@@ -617,4 +617,132 @@ class MyProfileViewModelTest {
     assertFalse(ui.ratingsLoading)
     assertEquals("Failed to load ratings.", ui.ratingsLoadError)
   }
+
+  @Test
+  fun clearUpdateSuccess_resetsFlag_afterSuccessfulUpdate() = runTest {
+    val repo = FakeProfileRepo()
+    val vm = newVm(repo)
+
+    vm.setName("New Name")
+    vm.setEmail("new@mail.com")
+    vm.setLocation(Location(name = "Paris"))
+    vm.setDescription("Desc")
+
+    vm.editProfile()
+    advanceUntilIdle()
+
+    assertTrue(vm.uiState.value.updateSuccess)
+
+    vm.clearUpdateSuccess()
+
+    assertFalse(vm.uiState.value.updateSuccess)
+  }
+
+  @Test
+  fun editProfile_doesNothing_whenNoFieldsChangedAfterLoad() = runTest {
+    val stored =
+        makeProfile(
+            id = "u1",
+            name = "Alice",
+            email = "alice@mail.com",
+            location = Location(name = "Lyon"),
+            desc = "Tutor")
+    val repo = FakeProfileRepo(storedProfile = stored)
+    val vm = newVm(repo)
+
+    vm.loadProfile()
+    advanceUntilIdle()
+
+    vm.editProfile()
+    advanceUntilIdle()
+
+    assertFalse(repo.updateCalled)
+  }
+
+  @Test
+  fun editProfile_updates_whenAnyFieldChanges_afterLoad() = runTest {
+    val stored =
+        makeProfile(
+            id = "u1",
+            name = "Alice",
+            email = "alice@mail.com",
+            location = Location(name = "Lyon"),
+            desc = "Tutor")
+    val repo = FakeProfileRepo(stored)
+    val vm = newVm(repo)
+
+    vm.loadProfile()
+    advanceUntilIdle()
+
+    vm.setName("Alice Cooper")
+
+    vm.editProfile()
+    advanceUntilIdle()
+
+    assertTrue(repo.updateCalled)
+    val updated = repo.updatedProfile!!
+    assertEquals("Alice Cooper", updated.name)
+    assertEquals("alice@mail.com", updated.email)
+    assertEquals("Lyon", updated.location.name)
+    assertEquals("Tutor", updated.description)
+  }
+
+  @Test
+  fun hasProfileChanged_false_whenProfilesAreIdentical() {
+    val vm = newVm()
+    val original =
+        makeProfile(
+            id = "u1",
+            name = "A",
+            email = "a@mail.com",
+            location = Location(name = "Paris", latitude = 1.0, longitude = 2.0),
+            desc = "Desc")
+    val updated = original.copy()
+
+    val m =
+        MyProfileViewModel::class
+            .java
+            .getDeclaredMethod("hasProfileChanged", Profile::class.java, Profile::class.java)
+    m.isAccessible = true
+
+    val result = m.invoke(vm, original, updated) as Boolean
+    assertFalse(result)
+  }
+
+  @Test
+  fun hasProfileChanged_true_whenAnyFieldDiffers_includingLocationFields() {
+    val vm = newVm()
+    val original =
+        makeProfile(
+            id = "u1",
+            name = "A",
+            email = "a@mail.com",
+            location = Location(name = "Paris", latitude = 1.0, longitude = 2.0),
+            desc = "Desc")
+
+    val changedName = original.copy(name = "B")
+    val changedEmail = original.copy(email = "b@mail.com")
+    val changedDesc = original.copy(description = "Other")
+    val changedLocName = original.copy(location = original.location.copy(name = "Lyon"))
+    val changedLat = original.copy(location = original.location.copy(latitude = 9.9))
+    val changedLon = original.copy(location = original.location.copy(longitude = 8.8))
+
+    val m =
+        MyProfileViewModel::class
+            .java
+            .getDeclaredMethod("hasProfileChanged", Profile::class.java, Profile::class.java)
+    m.isAccessible = true
+
+    fun assertChanged(updated: Profile) {
+      val result = m.invoke(vm, original, updated) as Boolean
+      assertTrue(result)
+    }
+
+    assertChanged(changedName)
+    assertChanged(changedEmail)
+    assertChanged(changedDesc)
+    assertChanged(changedLocName)
+    assertChanged(changedLat)
+    assertChanged(changedLon)
+  }
 }

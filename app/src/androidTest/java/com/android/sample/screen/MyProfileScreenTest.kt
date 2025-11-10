@@ -27,6 +27,7 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
+import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CompletableDeferred
@@ -726,5 +727,54 @@ class MyProfileScreenTest {
     val cardMatcher = hasText("Guitar Lessons", substring = false)
 
     compose.onNode(cardMatcher, useUnmergedTree = true).assertExists()
+  }
+
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun successMessage_isShown_whenUpdateSuccessTrue() {
+    compose.runOnIdle {
+      val current = viewModel.uiState.value
+      viewModel.clearUpdateSuccess()
+      viewModel.apply {
+        val newState = current.copy(updateSuccess = true)
+        val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+        field.isAccessible = true
+        val stateFlow =
+            field.get(this) as kotlinx.coroutines.flow.MutableStateFlow<MyProfileUIState>
+        stateFlow.value = newState
+      }
+    }
+
+    val successMatcher = hasText("Profile successfully updated!")
+    compose.waitUntil(5_000) {
+      compose.onAllNodes(successMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    compose.onNode(successMatcher, useUnmergedTree = true).assertIsDisplayed()
+  }
+
+  @Test
+  fun successMessage_isCleared_afterDelay() {
+    compose.runOnIdle {
+      val current = viewModel.uiState.value
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+
+      @Suppress("UNCHECKED_CAST")
+      val stateFlow =
+          field.get(viewModel) as kotlinx.coroutines.flow.MutableStateFlow<MyProfileUIState>
+
+      stateFlow.value = current.copy(updateSuccess = true)
+    }
+
+    val successMatcher = hasText("Profile successfully updated!")
+    compose.waitUntil(2_000) {
+      compose.onAllNodes(successMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    compose.mainClock.advanceTimeBy(5_500)
+    compose.waitForIdle()
+
+    compose.onAllNodes(successMatcher, useUnmergedTree = true).assertCountEquals(0)
   }
 }

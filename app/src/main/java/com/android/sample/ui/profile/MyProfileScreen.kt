@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
@@ -41,7 +42,6 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.ListingCard
 import com.android.sample.ui.components.LocationInputField
-import com.android.sample.ui.components.RatingCard
 
 /**
  * Test tags used by UI tests and screenshot tests on the My Profile screen.
@@ -141,6 +141,16 @@ private fun ProfileContent(
   LazyColumn(
       modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
       contentPadding = pd) {
+        if (ui.updateSuccess) {
+          item {
+            Text(
+                text = "Profile successfully updated!",
+                color = Color(0xFF2E7D32),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+          }
+        }
         item { ProfileHeader(name = ui.name) }
 
         item {
@@ -580,6 +590,7 @@ fun SelectionRow(selectedTab: MutableState<ProfileTab>) {
 
 @Composable
 private fun RatingContent(
+    pd: PaddingValues,
     ui: MyProfileUIState,
 ) {
 
