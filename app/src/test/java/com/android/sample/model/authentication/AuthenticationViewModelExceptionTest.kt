@@ -52,7 +52,8 @@ class AuthenticationViewModelExceptionTest {
 
     // Mock profile repository to throw exception
     val mockProfileRepo = mockk<com.android.sample.model.user.ProfileRepository>()
-    coEvery { mockProfileRepo.getProfile("user-123") } throws Exception("Database connection failed")
+    coEvery { mockProfileRepo.getProfile("user-123") } throws
+        Exception("Database connection failed")
 
     // Create a mock FirebaseAuth that we can control
     val mockFirebaseAuth = mockk<FirebaseAuth>(relaxed = true)
@@ -65,8 +66,7 @@ class AuthenticationViewModelExceptionTest {
 
     // Create ViewModel (this registers the listener)
     val viewModelWithException =
-      AuthenticationViewModel(
-        context, mockRepository, mockCredentialHelper, mockProfileRepo)
+        AuthenticationViewModel(context, mockRepository, mockCredentialHelper, mockProfileRepo)
 
     testDispatcher.scheduler.advanceUntilIdle()
 
@@ -84,7 +84,6 @@ class AuthenticationViewModelExceptionTest {
     assertEquals("test@example.com", (authResult as AuthResult.RequiresSignUp).email)
     assertEquals(mockUser, authResult.user)
   }
-
 
   @Test
   fun init_whenExistingUserAndProfileRepositoryThrowsException_setsRequiresSignUp() = runTest {
@@ -104,8 +103,7 @@ class AuthenticationViewModelExceptionTest {
 
     // When - ViewModel is initialized with existing user
     val viewModelWithExistingUser =
-      AuthenticationViewModel(
-        context, mockRepository, mockCredentialHelper, mockProfileRepo)
+        AuthenticationViewModel(context, mockRepository, mockCredentialHelper, mockProfileRepo)
 
     testDispatcher.scheduler.advanceUntilIdle()
 
