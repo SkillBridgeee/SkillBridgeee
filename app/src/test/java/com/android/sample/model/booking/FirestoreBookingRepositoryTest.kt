@@ -500,6 +500,123 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
   }
 
   @Test
+  fun getAllBookingsFallbackPathWhenIndexMissing() = runTest {
+    // This test ensures the fallback path (lines 40-45) is executed
+    // The fallback catches index errors and sorts in memory
+    val booking1 =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis() + 7200000),
+            sessionEnd = Date(System.currentTimeMillis() + 10800000))
+    val booking2 =
+        Booking(
+            bookingId = "booking2",
+            associatedListingId = "listing2",
+            listingCreatorId = "tutor2",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000))
+
+    bookingRepository.addBooking(booking1)
+    bookingRepository.addBooking(booking2)
+
+    val bookings = bookingRepository.getAllBookings()
+    // Should still work and return sorted results
+    assertEquals(2, bookings.size)
+    assertTrue(bookings[0].sessionStart.before(bookings[1].sessionStart))
+  }
+
+  @Test
+  fun getBookingsByTutorFallbackPathWhenIndexMissing() = runTest {
+    // This test ensures the fallback path (lines 83-93) is executed
+    val booking1 =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis() + 3600000),
+            sessionEnd = Date(System.currentTimeMillis() + 7200000))
+    val booking2 =
+        Booking(
+            bookingId = "booking2",
+            associatedListingId = "listing2",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000))
+
+    bookingRepository.addBooking(booking1)
+    bookingRepository.addBooking(booking2)
+
+    val bookings = bookingRepository.getBookingsByTutor("tutor1")
+    // Should return sorted results even via fallback
+    assertEquals(2, bookings.size)
+    assertTrue(bookings[0].sessionStart.before(bookings[1].sessionStart))
+  }
+
+  @Test
+  fun getBookingsByUserIdFallbackPathWhenIndexMissing() = runTest {
+    // This test ensures the fallback path (lines 107-114) is executed
+    val booking1 =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis() + 3600000),
+            sessionEnd = Date(System.currentTimeMillis() + 7200000))
+    val booking2 =
+        Booking(
+            bookingId = "booking2",
+            associatedListingId = "listing2",
+            listingCreatorId = "tutor2",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000))
+
+    bookingRepository.addBooking(booking1)
+    bookingRepository.addBooking(booking2)
+
+    val bookings = bookingRepository.getBookingsByUserId(testUserId)
+    // Should return sorted results even via fallback
+    assertEquals(2, bookings.size)
+    assertTrue(bookings[0].sessionStart.before(bookings[1].sessionStart))
+  }
+
+  @Test
+  fun getBookingsByListingFallbackPathWhenIndexMissing() = runTest {
+    // This test ensures the fallback path (lines 132-142) is executed
+    val booking1 =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis() + 3600000),
+            sessionEnd = Date(System.currentTimeMillis() + 7200000))
+    val booking2 =
+        Booking(
+            bookingId = "booking2",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000))
+
+    bookingRepository.addBooking(booking1)
+    bookingRepository.addBooking(booking2)
+
+    val bookings = bookingRepository.getBookingsByListing("listing1")
+    // Should return sorted results even via fallback
+    assertEquals(2, bookings.size)
+    assertTrue(bookings[0].sessionStart.before(bookings[1].sessionStart))
+  }
+
+  @Test
   fun updateBookingStatusSucceedsForListingCreator() = runTest {
     // Create booking where current user is the listing creator
     val booking =

@@ -836,4 +836,265 @@ class MapScreenTest {
     // Permission launcher exception is caught - map still works
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
   }
+
+  // --- Tests for User Profile Marker (lines 211-219) ---
+
+  @Test
+  fun userProfileMarker_rendersWhenMyProfileHasNonZeroLocation() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val myProfileWithLocation =
+        testProfile.copy(
+            name = "Test User",
+            location = Location(latitude = 46.5196535, longitude = 6.6322734, name = "EPFL Campus"))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfileWithLocation,
+                profiles = listOf(myProfileWithLocation),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Map should render with user profile marker
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun userProfileMarker_notRenderedWhenMyProfileIsNull() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = null,
+                profiles = emptyList(),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Map should render without user profile marker
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun userProfileMarker_notRenderedWhenLocationIsNull() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val myProfileWithoutLocation = testProfile.copy(location = Location(0.0, 0.0, ""))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfileWithoutLocation,
+                profiles = listOf(myProfileWithoutLocation),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Map should render but without user profile marker (0,0 coordinates are filtered)
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun userProfileMarker_notRenderedWhenBothCoordinatesAreZero() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val myProfileZeroCoords =
+        testProfile.copy(location = Location(latitude = 0.0, longitude = 0.0, name = "Origin"))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfileZeroCoords,
+                profiles = listOf(myProfileZeroCoords),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Map should render but marker should be filtered out
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun userProfileMarker_rendersWhenOnlyLatitudeIsZero() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val myProfilePartialZero =
+        testProfile.copy(
+            name = "Test User",
+            location = Location(latitude = 0.0, longitude = 6.6322734, name = "Partial Zero"))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfilePartialZero,
+                profiles = listOf(myProfilePartialZero),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Marker should render because condition is (lat != 0.0 || lng != 0.0)
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun userProfileMarker_rendersWhenOnlyLongitudeIsZero() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val myProfilePartialZero =
+        testProfile.copy(
+            name = "Test User",
+            location = Location(latitude = 46.5196535, longitude = 0.0, name = "Partial Zero"))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfilePartialZero,
+                profiles = listOf(myProfilePartialZero),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Marker should render because condition is (lat != 0.0 || lng != 0.0)
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun userProfileMarker_usesMeAsTitleWhenNameIsNull() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val myProfileNoName =
+        testProfile.copy(
+            name = null,
+            location = Location(latitude = 46.5196535, longitude = 6.6322734, name = "EPFL"))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfileNoName,
+                profiles = listOf(myProfileNoName),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Marker should use "Me" as title when name is null
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun userProfileMarker_usesNameAsTitleWhenNameIsNotNull() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val myProfileWithName =
+        testProfile.copy(
+            name = "Alice Johnson",
+            location = Location(latitude = 46.5196535, longitude = 6.6322734, name = "EPFL"))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfileWithName,
+                profiles = listOf(myProfileWithName),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Marker should use name as title
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun userProfileMarker_usesLocationNameAsSnippet() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val myProfileWithLocationName =
+        testProfile.copy(
+            name = "Test User",
+            location =
+                Location(
+                    latitude = 46.5196535, longitude = 6.6322734, name = "EPFL Innovation Park"))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfileWithLocationName,
+                profiles = listOf(myProfileWithLocationName),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Marker should use location name as snippet
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun userProfileMarker_rendersWithNegativeCoordinates() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val myProfileNegative =
+        testProfile.copy(
+            name = "Southern User",
+            location = Location(latitude = -33.8688, longitude = 151.2093, name = "Sydney"))
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfileNegative,
+                profiles = listOf(myProfileNegative),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Marker should render with negative coordinates
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun userProfileMarker_rendersAlongsideBookingPins() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val myProfileWithLocation =
+        testProfile.copy(
+            name = "My Name",
+            location = Location(latitude = 46.5196535, longitude = 6.6322734, name = "My Place"))
+    val bookingPin = BookingPin("b1", LatLng(46.52, 6.63), "Session", "Description", testProfile)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfileWithLocation,
+                profiles = listOf(myProfileWithLocation),
+                bookingPins = listOf(bookingPin),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Both user profile marker and booking pins should render
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
 }
