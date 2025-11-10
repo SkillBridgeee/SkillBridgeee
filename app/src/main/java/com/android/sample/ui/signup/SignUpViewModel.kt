@@ -1,14 +1,19 @@
 package com.android.sample.ui.signup
 
+import android.content.Context
+import android.location.Address
+import android.location.Geocoder
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
 import com.android.sample.model.authentication.AuthenticationRepository
+import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,6 +86,8 @@ class SignUpViewModel(
 
   companion object {
     private const val TAG = "SignUpViewModel"
+    private const val GPS_FAILED_MSG = "Failed to obtain GPS location"
+    private const val LOCATION_PERMISSION_DENIED_MSG = "Location permission denied"
   }
 
   private val _state = MutableStateFlow(SignUpUiState())
@@ -179,6 +186,61 @@ class SignUpViewModel(
       val ok = nameOk && surnameOk && emailOk && passwordOk && levelOk
       s.copy(canSubmit = ok, error = null, passwordRequirements = passwordReqs)
     }
+  }
+
+  /**
+   * Fetches the current location using GPS and updates the UI state.
+   *
+   * @param provider The GPS location provider to use for fetching the location.
+   * @param context The Android context used for geocoding.
+   */
+  @Suppress("DEPRECATION")
+  fun fetchLocationFromGps(provider: GpsLocationProvider, context: Context) {
+    viewModelScope.launch {
+      try {
+        val androidLoc = provider.getCurrentLocation()
+        if (androidLoc != null) {
+          val geocoder = Geocoder(context, Locale.getDefault())
+          val addresses: List<Address> =
+              geocoder.getFromLocation(androidLoc.latitude, androidLoc.longitude, 1)?.toList()
+                  ?: emptyList()
+
+          val addressText =
+              if (addresses.isNotEmpty()) {
+                val address = addresses[0]
+                listOfNotNull(address.locality, address.adminArea, address.countryName)
+                    .joinToString(", ")
+              } else {
+                "${androidLoc.latitude}, ${androidLoc.longitude}"
+              }
+
+          val mapLocation =
+              Location(
+                  latitude = androidLoc.latitude,
+                  longitude = androidLoc.longitude,
+                  name = addressText)
+
+          _state.update {
+            it.copy(
+                selectedLocation = mapLocation,
+                locationQuery = addressText,
+                address = addressText,
+                error = null)
+          }
+        } else {
+          _state.update { it.copy(error = GPS_FAILED_MSG) }
+        }
+      } catch (_: SecurityException) {
+        _state.update { it.copy(error = LOCATION_PERMISSION_DENIED_MSG) }
+      } catch (_: Exception) {
+        _state.update { it.copy(error = GPS_FAILED_MSG) }
+      }
+    }
+  }
+
+  /** Handles the scenario when location permission is denied by the user. */
+  fun onLocationPermissionDenied() {
+    _state.update { it.copy(error = LOCATION_PERMISSION_DENIED_MSG) }
   }
 
   private fun submit() {
