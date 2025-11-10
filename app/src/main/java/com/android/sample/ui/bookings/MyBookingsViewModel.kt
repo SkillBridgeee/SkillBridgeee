@@ -64,7 +64,7 @@ class MyBookingsViewModel(
         // Load all the listing of the bookings
         val listingCache = getAssociatedListingsCache(allUsersBooking)
 
-        //
+        // Match the profile to the booking
         val bookingsWithProfiles =
             buildBookingsWithData(allUsersBooking, creatorProfileCache, listingCache)
 
@@ -98,7 +98,6 @@ class MyBookingsViewModel(
     return listingCache
   }
 
-  // --- Sous-Méthode 3 : Mapper Booking + Profile + Listing ---
   private fun buildBookingsWithData(
       bookings: List<Booking>,
       profileCache: Map<String, Profile>,
@@ -108,12 +107,10 @@ class MyBookingsViewModel(
       val creatorProfile = profileCache[booking.listingCreatorId]
       val associatedListing = listingCache[booking.associatedListingId]
 
-      // On ne retourne l'objet que si toutes les données requises sont présentes
       if (creatorProfile != null && associatedListing != null) {
         BookingCardUI(
             booking = booking, creatorProfile = creatorProfile, listing = associatedListing)
       } else {
-        // Loguer si un élément est manquant pour le débogage
         Log.w("BookingsListViewModel", "Missing data for booking: ${booking.bookingId}")
         null
       }
