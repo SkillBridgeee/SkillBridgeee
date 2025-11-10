@@ -20,10 +20,10 @@ import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
+import com.android.sample.ui.newSkill.NewSkillScreen
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.profile.ProfileScreen
-import com.android.sample.ui.screens.newSkill.NewSkillScreen
 import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpViewModel
 import com.android.sample.ui.subject.SubjectListScreen
@@ -140,7 +140,7 @@ fun AppNavGraph(
           ->
           val profileId = backStackEntry.arguments?.getString("profileId") ?: ""
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.NEW_SKILL) }
-          NewSkillScreen(profileId = profileId)
+          NewSkillScreen(profileId = profileId, navController = navController)
         }
 
     composable(
