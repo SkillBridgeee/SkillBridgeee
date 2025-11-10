@@ -55,6 +55,7 @@ fun BookingsList(
 ) {
   LazyColumn(
       modifier = modifier.fillMaxSize().padding(12.dp),
+      contentPadding = PaddingValues(6.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp)) {
         items(bookings, key = { it.booking.bookingId }) { bookingUI ->
           BookingCard(
