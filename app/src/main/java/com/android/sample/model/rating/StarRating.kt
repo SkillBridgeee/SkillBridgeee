@@ -12,5 +12,8 @@ enum class StarRating(val value: Int) {
     fun fromInt(value: Int): StarRating =
         values().find { it.value == value }
             ?: throw IllegalArgumentException("Invalid star rating: $value")
+
+
+
   }
 }
