@@ -13,6 +13,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.sample.model.booking.Booking
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -26,6 +29,7 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.subject.SubjectListScreen
 import com.android.sample.ui.subject.SubjectListTestTags
 import com.android.sample.ui.subject.SubjectListViewModel
+import java.util.Date
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.delay
 import org.junit.Rule
@@ -147,8 +151,48 @@ class SubjectListScreenTest {
 
           override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
         }
+    val fakeBookingRepo =
+        object : BookingRepository {
+          override fun getNewUid() = "b1"
 
-    return SubjectListViewModel(listingRepo = listingRepo, profileRepo = profileRepo)
+          override suspend fun getBooking(bookingId: String) =
+              Booking(
+                  bookingId = bookingId,
+                  associatedListingId = "l1",
+                  listingCreatorId = "u1",
+                  price = 50.0,
+                  sessionStart = Date(1736546400000),
+                  sessionEnd = Date(1736550000000),
+                  status = BookingStatus.PENDING,
+                  bookerId = "asdf")
+
+          override suspend fun getBookingsByUserId(userId: String) = emptyList<Booking>()
+
+          override suspend fun getAllBookings() = emptyList<Booking>()
+
+          override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+          override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+          override suspend fun addBooking(booking: Booking) {}
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+          override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+          override suspend fun confirmBooking(bookingId: String) {}
+
+          override suspend fun completeBooking(bookingId: String) {}
+
+          override suspend fun cancelBooking(bookingId: String) {}
+        }
+
+    return SubjectListViewModel(
+        listingRepo = listingRepo, profileRepo = profileRepo, bookingRepo = fakeBookingRepo)
   }
 
   /** ---- Tests ---------------------------------------------------- */

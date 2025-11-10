@@ -207,16 +207,15 @@ class SubjectListViewModel(
     return SkillsHelper.getSkillNames(mainSubject)
   }
 
-  // todo à refaire déguelasse
   fun BookListing(listingUIModel: ListingUiModel) {
     viewModelScope.launch {
-      val userId = UserSessionManager.getCurrentUserId()
+      val userId = runCatching { UserSessionManager.getCurrentUserId() }.getOrNull().orEmpty()
       val newBooking =
           Booking(
               bookingId = bookingRepo.getNewUid(),
               associatedListingId = listingUIModel.listing.listingId,
               listingCreatorId = listingUIModel.listing.creatorUserId,
-              bookerId = userId!!,
+              bookerId = userId,
               sessionStart = Date(),
               sessionEnd = Date(),
               status = BookingStatus.PENDING,
