@@ -171,7 +171,6 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
         androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
           AppNavGraph(
               navController = navController,
-              bookingsViewModel,
               profileViewModel,
               mainPageViewModel,
               authViewModel = authViewModel,
