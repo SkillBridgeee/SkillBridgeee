@@ -1,10 +1,16 @@
 package com.android.sample.ui.bookings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -51,7 +57,7 @@ fun BookingDetailsContent(uiState: BkgDetailsUIState, modifier: Modifier = Modif
     HorizontalDivider()
 
     // Info about the creator
-    InfoCreator(uiState)
+    InfoCreator(uiState, {})
 
     HorizontalDivider()
 
@@ -95,19 +101,47 @@ private fun BookingHeader(uiState: BkgDetailsUIState) {
 }
 
 @Composable
-private fun InfoCreator(uiState: BkgDetailsUIState) {
+private fun InfoCreator(uiState: BkgDetailsUIState, onCreatorClick: (String) -> Unit) {
   val creatorRole =
       when (uiState.type) {
         ListingType.REQUEST -> "Student"
         ListingType.PROPOSAL -> "Tutor"
       }
 
-  Text(
-      text = "Information about the $creatorRole",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold)
+  //  Text(
+  //      text = "Information about the $creatorRole",
+  //      style = MaterialTheme.typography.titleMedium,
+  //      fontWeight = FontWeight.Bold)
 
-  DetailRow(label = "Creator Name", value = uiState.creatorName)
+  Row(
+      modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(
+            text = "Information about the $creatorRole",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold)
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier =
+                Modifier.clip(RoundedCornerShape(8.dp))
+                    .clickable {}
+                    .padding(horizontal = 6.dp, vertical = 2.dp)) {
+              Text(
+                  text = "More Info",
+                  style = MaterialTheme.typography.bodyLarge,
+                  fontWeight = FontWeight.SemiBold,
+                  color = MaterialTheme.colorScheme.primary)
+              Icon(
+                  imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                  contentDescription = "View profile",
+                  tint = MaterialTheme.colorScheme.primary,
+                  modifier = Modifier.padding(start = 4.dp).size(18.dp))
+            }
+      }
+
+  DetailRow(label = "$creatorRole Name", value = uiState.creatorName)
   DetailRow(label = "Email", value = uiState.creatorMail)
 }
 
