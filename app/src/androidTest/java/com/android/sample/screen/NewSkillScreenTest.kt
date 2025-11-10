@@ -432,16 +432,21 @@ class NewSkillScreenTest {
     composeRule.nodeByTag(NewSkillScreenTestTag.INPUT_DESCRIPTION).performTextInput("Expert tutor")
     composeRule.nodeByTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("30.00")
 
-    composeRule.nodeByTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
+    // Select subject
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
     composeRule.waitForIdle()
-    composeRule.onNodeWithText("ACADEMICS").performClick()
+    compose
+        .onAllNodesWithTag(
+            NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX, useUnmergedTree = true)[0]
+        .performClick()
     composeRule.waitForIdle()
 
     // Select a sub-skill
-    composeRule.nodeByTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
     composeRule.waitForIdle()
-    composeRule
-        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX)[0]
+    compose
+        .onAllNodesWithTag(
+            NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX, useUnmergedTree = true)[0]
         .performClick()
     composeRule.waitForIdle()
 
@@ -453,20 +458,13 @@ class NewSkillScreenTest {
     composeRule.nodeByTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
     composeRule.waitForIdle()
 
-    // Wait for main thread idle and then assert repository side-effects
     composeRule.runOnIdle {
-      // Proposal should have been added
       assert(fakeRepo.proposals.size == 1)
       val saved = fakeRepo.proposals[0]
-
-      // The ViewModel stores the chosen sub-skill in saved.skill.skill, not the title.
-      // Check the fields that actually map:
       assert(saved.description == "Expert tutor")
       assert(saved.hourlyRate == 30.00)
       assert(saved.creatorUserId == "test-user-123")
-      // Ensure the main subject matches the chosen subject
       assert(saved.skill.mainSubject == MainSubject.ACADEMICS)
-      // The specific sub-skill should be non-empty (we selected an option)
       assert(saved.skill.skill.isNotBlank())
     }
   }
@@ -499,16 +497,21 @@ class NewSkillScreenTest {
         .performTextInput("Looking for tutor")
     composeRule.nodeByTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("25.00")
 
-    composeRule.nodeByTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
+    // Select subject
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
     composeRule.waitForIdle()
-    composeRule.onNodeWithText("ACADEMICS").performClick()
+    compose
+        .onAllNodesWithTag(
+            NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX, useUnmergedTree = true)[0]
+        .performClick()
     composeRule.waitForIdle()
 
     // Select a sub-skill
-    composeRule.nodeByTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
     composeRule.waitForIdle()
-    composeRule
-        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX)[0]
+    compose
+        .onAllNodesWithTag(
+            NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX, useUnmergedTree = true)[0]
         .performClick()
     composeRule.waitForIdle()
 
@@ -520,19 +523,13 @@ class NewSkillScreenTest {
     composeRule.nodeByTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
     composeRule.waitForIdle()
 
-    // Wait for main thread idle and then assert repository side-effects
     composeRule.runOnIdle {
-      // Request should have been added
       assert(fakeRepo.requests.size == 1)
       val saved = fakeRepo.requests[0]
-
-      // Verify fields that map from the ViewModel
       assert(saved.description == "Looking for tutor")
       assert(saved.hourlyRate == 25.00)
       assert(saved.creatorUserId == "test-user-456")
-      // Ensure the main subject matches the chosen subject
       assert(saved.skill.mainSubject == MainSubject.ACADEMICS)
-      // The specific sub-skill should be non-empty (we selected an option)
       assert(saved.skill.skill.isNotBlank())
     }
   }
@@ -599,16 +596,26 @@ class NewSkillScreenTest {
 
     // Precondition: select a subject so sub-skill menu appears
     compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
-    compose.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)[0].performClick()
+    composeRule.waitForIdle()
+    compose
+        .onAllNodesWithTag(
+            NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX, useUnmergedTree = true)[0]
+        .performClick()
+    composeRule.waitForIdle()
 
     // Now open sub-skill dropdown
     compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
-    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN).assertIsDisplayed()
+    composeRule.waitForIdle()
+    compose
+        .onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN, useUnmergedTree = true)
+        .assertIsDisplayed()
 
     // Select first sub-skill option
     compose
-        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX)[0]
+        .onAllNodesWithTag(
+            NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX, useUnmergedTree = true)[0]
         .performClick()
+    composeRule.waitForIdle()
 
     // Menu should be gone after selection
     compose
@@ -679,13 +686,21 @@ class NewSkillScreenTest {
 
     // Select a subject
     compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
-    compose.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)[0].performClick()
+    composeRule.waitForIdle()
+    compose
+        .onAllNodesWithTag(
+            NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX, useUnmergedTree = true)[0]
+        .performClick()
+    composeRule.waitForIdle()
 
     // Select a sub-skill
     compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
+    composeRule.waitForIdle()
     compose
-        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX)[0]
+        .onAllNodesWithTag(
+            NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX, useUnmergedTree = true)[0]
         .performClick()
+    composeRule.waitForIdle()
 
     // Provide minimal valid text inputs to avoid other errors from the ViewModel
     compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE).performTextInput("T")
@@ -694,6 +709,7 @@ class NewSkillScreenTest {
 
     // Save
     compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.waitForIdle()
 
     // Assert no subject/sub-skill error helpers are shown
     compose
