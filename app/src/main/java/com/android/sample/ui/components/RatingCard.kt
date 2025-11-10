@@ -35,6 +35,14 @@ import java.util.Locale
 
 object RatingTestTags {
     const val CARD = "RatingCardTestTags.CARD"
+    const val STARS = "RatingCardTestTags.STARS"
+    const val COMMENT = "RatingCardTestTags.COMMENT"
+    const val CREATOR_NAME = "RatingCardTestTags.CREATOR_NAME"
+    const val CREATOR_GRADE = "RatingCardTestTags.CREATOR_GRADE"
+    const val INFO_PART = "RatingCardTestTags.INFO_PART"
+
+    const val CREATOR_IMAGE = "RatingCardTestTags.CREATOR_IMAGE"
+
 }
 
 
@@ -48,7 +56,7 @@ fun RatingCard(
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier =
-            Modifier.testTag(ListingCardTestTags.CARD)) {
+            Modifier.testTag(RatingTestTags.CARD)) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             // Avatar circle with tutor initial
             Box(
@@ -58,6 +66,7 @@ fun RatingCard(
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center) {
                 Text(
+                    modifier = Modifier.testTag(RatingTestTags.CREATOR_IMAGE),
                     text = (creator?.name?.firstOrNull()?.uppercase() ?: "U"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold)
@@ -66,26 +75,30 @@ fun RatingCard(
             Spacer(Modifier.width(6.dp))
 
             Column() {
-                Row(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
+                Row(modifier = Modifier.fillMaxWidth().padding(4.dp)
+                    .testTag(RatingTestTags.INFO_PART)) {
                     Text(
                     text = "by ${creator?.name ?: "Unknown"}",
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.testTag(RatingTestTags.CREATOR_NAME))
 
                     Spacer(modifier = Modifier.weight(1f))
 
                     val grade = rating?.starRating?.value?.toDouble() ?: 0.0
                     Text(text = "(${grade.toInt()})",
-                        modifier = Modifier.align(Alignment.CenterVertically))
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                            .testTag(RatingTestTags.CREATOR_GRADE))
                     Spacer(Modifier.width(4.dp))
-                    RatingStars(grade, Modifier)
+                    RatingStars(grade, Modifier.testTag(RatingTestTags.STARS) )
                 }
 
 
                 Spacer(Modifier.height(8.dp))
 
                 Text(
-                    text = rating?.comment ?: "No comment provided",
+                    modifier = Modifier.testTag(RatingTestTags.COMMENT),
+                    text = rating?.comment?.takeUnless { it.isEmpty() } ?: "No comment provided",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
