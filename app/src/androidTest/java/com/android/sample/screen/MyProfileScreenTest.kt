@@ -728,15 +728,15 @@ class MyProfileScreenTest {
         val newState = current.copy(updateSuccess = true)
         val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
         field.isAccessible = true
-        val stateFlow = field.get(this) as kotlinx.coroutines.flow.MutableStateFlow<MyProfileUIState>
+        val stateFlow =
+            field.get(this) as kotlinx.coroutines.flow.MutableStateFlow<MyProfileUIState>
         stateFlow.value = newState
       }
     }
 
     val successMatcher = hasText("Profile successfully updated!")
     compose.waitUntil(5_000) {
-      compose.onAllNodes(successMatcher, useUnmergedTree = true)
-        .fetchSemanticsNodes().isNotEmpty()
+      compose.onAllNodes(successMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
     }
 
     compose.onNode(successMatcher, useUnmergedTree = true).assertIsDisplayed()
@@ -751,15 +751,14 @@ class MyProfileScreenTest {
 
       @Suppress("UNCHECKED_CAST")
       val stateFlow =
-        field.get(viewModel) as kotlinx.coroutines.flow.MutableStateFlow<MyProfileUIState>
+          field.get(viewModel) as kotlinx.coroutines.flow.MutableStateFlow<MyProfileUIState>
 
       stateFlow.value = current.copy(updateSuccess = true)
     }
 
     val successMatcher = hasText("Profile successfully updated!")
     compose.waitUntil(2_000) {
-      compose.onAllNodes(successMatcher, useUnmergedTree = true)
-        .fetchSemanticsNodes().isNotEmpty()
+      compose.onAllNodes(successMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
     }
 
     compose.mainClock.advanceTimeBy(5_500)
@@ -767,6 +766,4 @@ class MyProfileScreenTest {
 
     compose.onAllNodes(successMatcher, useUnmergedTree = true).assertCountEquals(0)
   }
-
-
 }

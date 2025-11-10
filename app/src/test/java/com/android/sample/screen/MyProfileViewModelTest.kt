@@ -581,13 +581,13 @@ class MyProfileViewModelTest {
 
   @Test
   fun editProfile_doesNothing_whenNoFieldsChangedAfterLoad() = runTest {
-    val stored = makeProfile(
-      id = "u1",
-      name = "Alice",
-      email = "alice@mail.com",
-      location = Location(name = "Lyon"),
-      desc = "Tutor"
-    )
+    val stored =
+        makeProfile(
+            id = "u1",
+            name = "Alice",
+            email = "alice@mail.com",
+            location = Location(name = "Lyon"),
+            desc = "Tutor")
     val repo = FakeProfileRepo(storedProfile = stored)
     val vm = newVm(repo)
 
@@ -602,13 +602,13 @@ class MyProfileViewModelTest {
 
   @Test
   fun editProfile_updates_whenAnyFieldChanges_afterLoad() = runTest {
-    val stored = makeProfile(
-      id = "u1",
-      name = "Alice",
-      email = "alice@mail.com",
-      location = Location(name = "Lyon"),
-      desc = "Tutor"
-    )
+    val stored =
+        makeProfile(
+            id = "u1",
+            name = "Alice",
+            email = "alice@mail.com",
+            location = Location(name = "Lyon"),
+            desc = "Tutor")
     val repo = FakeProfileRepo(stored)
     val vm = newVm(repo)
 
@@ -631,16 +631,19 @@ class MyProfileViewModelTest {
   @Test
   fun hasProfileChanged_false_whenProfilesAreIdentical() {
     val vm = newVm()
-    val original = makeProfile(
-      id = "u1", name = "A", email = "a@mail.com",
-      location = Location(name = "Paris", latitude = 1.0, longitude = 2.0),
-      desc = "Desc"
-    )
+    val original =
+        makeProfile(
+            id = "u1",
+            name = "A",
+            email = "a@mail.com",
+            location = Location(name = "Paris", latitude = 1.0, longitude = 2.0),
+            desc = "Desc")
     val updated = original.copy()
 
-    val m = MyProfileViewModel::class.java.getDeclaredMethod(
-      "hasProfileChanged", Profile::class.java, Profile::class.java
-    )
+    val m =
+        MyProfileViewModel::class
+            .java
+            .getDeclaredMethod("hasProfileChanged", Profile::class.java, Profile::class.java)
     m.isAccessible = true
 
     val result = m.invoke(vm, original, updated) as Boolean
@@ -650,11 +653,13 @@ class MyProfileViewModelTest {
   @Test
   fun hasProfileChanged_true_whenAnyFieldDiffers_includingLocationFields() {
     val vm = newVm()
-    val original = makeProfile(
-      id = "u1", name = "A", email = "a@mail.com",
-      location = Location(name = "Paris", latitude = 1.0, longitude = 2.0),
-      desc = "Desc"
-    )
+    val original =
+        makeProfile(
+            id = "u1",
+            name = "A",
+            email = "a@mail.com",
+            location = Location(name = "Paris", latitude = 1.0, longitude = 2.0),
+            desc = "Desc")
 
     val changedName = original.copy(name = "B")
     val changedEmail = original.copy(email = "b@mail.com")
@@ -663,9 +668,10 @@ class MyProfileViewModelTest {
     val changedLat = original.copy(location = original.location.copy(latitude = 9.9))
     val changedLon = original.copy(location = original.location.copy(longitude = 8.8))
 
-    val m = MyProfileViewModel::class.java.getDeclaredMethod(
-      "hasProfileChanged", Profile::class.java, Profile::class.java
-    )
+    val m =
+        MyProfileViewModel::class
+            .java
+            .getDeclaredMethod("hasProfileChanged", Profile::class.java, Profile::class.java)
     m.isAccessible = true
 
     fun assertChanged(updated: Profile) {
