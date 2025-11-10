@@ -3,7 +3,6 @@ package com.android.sample.screen
 import android.Manifest
 import android.app.UiAutomation
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -28,12 +27,9 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
-import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -41,24 +37,22 @@ import org.junit.Test
 
 class MyProfileScreenTest {
 
-  @get:Rule
-  val compose = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
   private val sampleProfile =
-    Profile(
-      userId = "demo",
-      name = "Kendrick Lamar",
-      email = "kendrick@gmail.com",
-      description = "Performer and mentor",
-      location = Location(name = "EPFL", longitude = 0.0, latitude = 0.0)
-    )
+      Profile(
+          userId = "demo",
+          name = "Kendrick Lamar",
+          email = "kendrick@gmail.com",
+          description = "Performer and mentor",
+          location = Location(name = "EPFL", longitude = 0.0, latitude = 0.0))
 
   private val sampleSkills =
-    listOf(
-      Skill(MainSubject.MUSIC, "SINGING", 10.0, ExpertiseLevel.EXPERT),
-      Skill(MainSubject.MUSIC, "DANCING", 5.0, ExpertiseLevel.INTERMEDIATE),
-      Skill(MainSubject.MUSIC, "GUITAR", 7.0, ExpertiseLevel.BEGINNER),
-    )
+      listOf(
+          Skill(MainSubject.MUSIC, "SINGING", 10.0, ExpertiseLevel.EXPERT),
+          Skill(MainSubject.MUSIC, "DANCING", 5.0, ExpertiseLevel.INTERMEDIATE),
+          Skill(MainSubject.MUSIC, "GUITAR", 7.0, ExpertiseLevel.BEGINNER),
+      )
 
   /** Fake repository for testing ViewModel logic */
   private class FakeRepo() : ProfileRepository {
@@ -78,7 +72,7 @@ class MyProfileScreenTest {
     override fun getNewUid() = "fake"
 
     override suspend fun getProfile(userId: String): Profile =
-      profiles[userId] ?: error("No profile $userId")
+        profiles[userId] ?: error("No profile $userId")
 
     override suspend fun getProfileById(userId: String) = getProfile(userId)
 
@@ -100,10 +94,10 @@ class MyProfileScreenTest {
     override suspend fun getAllProfiles(): List<Profile> = profiles.values.toList()
 
     override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
-      emptyList<Profile>()
+        emptyList<Profile>()
 
     override suspend fun getSkillsForUser(userId: String): List<Skill> =
-      skillsByUser[userId] ?: emptyList()
+        skillsByUser[userId] ?: emptyList()
   }
 
   // Minimal Fake ListingRepository to avoid initializing real Firebase/Firestore in tests
@@ -133,7 +127,7 @@ class MyProfileScreenTest {
     override suspend fun searchBySkill(skill: Skill): List<Listing> = emptyList()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> =
-      emptyList()
+        emptyList()
   }
 
   private class FakeRatingRepo : RatingRepository {
@@ -172,12 +166,11 @@ class MyProfileScreenTest {
   fun setup() {
     repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
     viewModel =
-      MyProfileViewModel(
-        repo,
-        listingRepository = FakeListingRepo(),
-        ratingsRepository = FakeRatingRepo(),
-        userId = "demo"
-      )
+        MyProfileViewModel(
+            repo,
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepo(),
+            userId = "demo")
 
     // reset flag before each test and set content once per test
     logoutClicked.set(false)
@@ -185,9 +178,9 @@ class MyProfileScreenTest {
       val slot = remember {
         mutableStateOf<@Composable () -> Unit>({
           MyProfileScreen(
-            profileViewModel = viewModel,
-            profileId = "demo",
-            onLogout = { logoutClicked.set(true) })
+              profileViewModel = viewModel,
+              profileId = "demo",
+              onLogout = { logoutClicked.set(true) })
         })
       }
       // expose the remembered slot to the test class
@@ -199,9 +192,9 @@ class MyProfileScreenTest {
 
     compose.waitUntil(5_000) {
       compose
-        .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+          .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
   }
 
@@ -210,22 +203,22 @@ class MyProfileScreenTest {
     // Wait until the LazyColumn (root list) is present in unmerged tree
     compose.waitUntil(timeoutMillis = 5_000) {
       compose
-        .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
 
     // Scroll the LazyColumn to the logout button using the unmerged tree (targets LazyColumn)
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
-      .performScrollToNode(hasTestTag(MyProfileScreenTestTag.LOGOUT_BUTTON))
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+        .performScrollToNode(hasTestTag(MyProfileScreenTestTag.LOGOUT_BUTTON))
 
     // Wait for the merged tree to expose the logout button
     compose.waitUntil(timeoutMillis = 2_000) {
       compose
-        .onAllNodesWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+          .onAllNodesWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
   }
 
@@ -235,9 +228,9 @@ class MyProfileScreenTest {
   fun profileInfo_isDisplayedCorrectly() {
     compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
-      .assertIsDisplayed()
-      .assertTextContains("Kendrick Lamar")
+        .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
+        .assertIsDisplayed()
+        .assertTextContains("Kendrick Lamar")
     compose.onNodeWithTag(MyProfileScreenTestTag.ROLE_BADGE).assertTextEquals("Student")
   }
 
@@ -247,8 +240,8 @@ class MyProfileScreenTest {
   @Test
   fun nameField_displaysCorrectInitialValue() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME)
-      .assertTextContains("Kendrick Lamar")
+        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME)
+        .assertTextContains("Kendrick Lamar")
   }
 
   @Test
@@ -264,8 +257,8 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME).performTextClearance()
     compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME).performTextInput("")
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
-      .assertIsDisplayed()
+        .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   // ----------------------------------------------------------
@@ -274,8 +267,8 @@ class MyProfileScreenTest {
   @Test
   fun emailField_displaysCorrectInitialValue() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL)
-      .assertTextContains("kendrick@gmail.com")
+        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL)
+        .assertTextContains("kendrick@gmail.com")
   }
 
   @Test
@@ -290,11 +283,11 @@ class MyProfileScreenTest {
   fun emailField_showsError_whenInvalid() {
     compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL).performTextClearance()
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL)
-      .performTextInput("invalidEmail")
+        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_EMAIL)
+        .performTextInput("invalidEmail")
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
-      .assertIsDisplayed()
+        .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   // ----------------------------------------------------------
@@ -318,8 +311,8 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).performTextClearance()
     compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).performTextInput(" ")
     compose
-      .onNodeWithTag(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
-      .assertIsDisplayed()
+        .onNodeWithTag(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   @Test
@@ -331,17 +324,16 @@ class MyProfileScreenTest {
 
     try {
       uiAutomation.grantRuntimePermission(packageName, Manifest.permission.ACCESS_FINE_LOCATION)
-    } catch (_: SecurityException) {
-    }
+    } catch (_: SecurityException) {}
 
     // Wait for UI to be ready
     compose.waitForIdle()
 
     // Click the pin - with permission granted the onClick should take the 'granted' branch.
     compose
-      .onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC)
-      .assertExists()
-      .performClick()
+        .onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC)
+        .assertExists()
+        .performClick()
 
     // No crash + the branch was executed. Basic assertion to ensure UI still shows expected info.
     compose.onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY).assertExists()
@@ -353,8 +345,8 @@ class MyProfileScreenTest {
   @Test
   fun descriptionField_displaysCorrectInitialValue() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
-      .assertTextContains("Performer and mentor")
+        .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
+        .assertTextContains("Performer and mentor")
   }
 
   @Test
@@ -370,8 +362,8 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC).performTextClearance()
     compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC).performTextInput("")
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
-      .assertIsDisplayed()
+        .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   // ----------------------------------------------------------
@@ -380,9 +372,9 @@ class MyProfileScreenTest {
   @Test
   fun pinButton_isDisplayed_and_clickable() {
     compose
-      .onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC)
-      .assertExists()
-      .assertHasClickAction()
+        .onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC)
+        .assertExists()
+        .assertHasClickAction()
   }
 
   @Test
@@ -448,8 +440,8 @@ class MyProfileScreenTest {
   @Test
   fun saveButton_hasCorrectText() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON)
-      .assertTextContains("Save Profile Changes")
+        .onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON)
+        .assertTextContains("Save Profile Changes")
   }
 
   // ----------------------------------------------------------
@@ -469,9 +461,9 @@ class MyProfileScreenTest {
   @Test
   fun cardTitle_isDisplayed() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.CARD_TITLE)
-      .assertIsDisplayed()
-      .assertTextEquals("Personal Details")
+        .onNodeWithTag(MyProfileScreenTestTag.CARD_TITLE)
+        .assertIsDisplayed()
+        .assertTextEquals("Personal Details")
   }
 
   // ----------------------------------------------------------
@@ -480,9 +472,9 @@ class MyProfileScreenTest {
   @Test
   fun roleBadge_displaysStudent() {
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.ROLE_BADGE)
-      .assertIsDisplayed()
-      .assertTextEquals("Student")
+        .onNodeWithTag(MyProfileScreenTestTag.ROLE_BADGE)
+        .assertIsDisplayed()
+        .assertTextEquals("Student")
   }
 
   @Test
@@ -540,13 +532,13 @@ class MyProfileScreenTest {
     // Ensure the LazyColumn exists
     compose.waitUntil(5_000) {
       compose
-        .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
     compose
-      .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
-      .performScrollToNode(matcher)
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+        .performScrollToNode(matcher)
   }
 
   private class BlockingListingRepo : ListingRepository {
@@ -580,7 +572,7 @@ class MyProfileScreenTest {
     override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double) =
-      emptyList<Listing>()
+        emptyList<Listing>()
   }
 
   @Test
@@ -589,17 +581,16 @@ class MyProfileScreenTest {
     val ratingRepo = FakeRatingRepo()
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
     val vm =
-      MyProfileViewModel(
-        pRepo,
-        listingRepository = blockingRepo,
-        ratingsRepository = ratingRepo,
-        userId = "demo"
-      )
+        MyProfileViewModel(
+            pRepo,
+            listingRepository = blockingRepo,
+            ratingsRepository = ratingRepo,
+            userId = "demo")
 
     compose.runOnIdle {
       contentSlot.value = {
         MyProfileScreen(
-          profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
       }
     }
 
@@ -646,7 +637,7 @@ class MyProfileScreenTest {
     override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double) =
-      emptyList<Listing>()
+        emptyList<Listing>()
   }
 
   @Test
@@ -655,14 +646,13 @@ class MyProfileScreenTest {
     val ratingRepo = FakeRatingRepo()
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
     val vm =
-      MyProfileViewModel(
-        pRepo, listingRepository = errorRepo, ratingsRepository = ratingRepo, userId = "demo"
-      )
+        MyProfileViewModel(
+            pRepo, listingRepository = errorRepo, ratingsRepository = ratingRepo, userId = "demo")
 
     compose.runOnIdle {
       contentSlot.value = {
         MyProfileScreen(
-          profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
       }
     }
 
@@ -697,19 +687,18 @@ class MyProfileScreenTest {
     override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double) =
-      emptyList<Listing>()
+        emptyList<Listing>()
   }
 
   private fun makeTestListing(): Proposal =
-    Proposal(
-      listingId = "p1",
-      creatorUserId = "demo",
-      description = "Guitar Lessons",
-      skill = Skill(mainSubject = MainSubject.MUSIC, skill = "GUITAR"),
-      location = Location(name = "EPFL", latitude = 0.0, longitude = 0.0),
-      hourlyRate = 25.0,
-      isActive = true
-    )
+      Proposal(
+          listingId = "p1",
+          creatorUserId = "demo",
+          description = "Guitar Lessons",
+          skill = Skill(mainSubject = MainSubject.MUSIC, skill = "GUITAR"),
+          location = Location(name = "EPFL", latitude = 0.0, longitude = 0.0),
+          hourlyRate = 25.0,
+          isActive = true)
 
   @Test
   fun listings_rendersNonEmptyList_elseBranch() {
@@ -718,26 +707,24 @@ class MyProfileScreenTest {
     val rating = FakeRatingRepo()
     val oneItemRepo = OneItemListingRepo(listing)
     val vm =
-      MyProfileViewModel(
-        pRepo, listingRepository = oneItemRepo, ratingsRepository = rating, userId = "demo"
-      )
+        MyProfileViewModel(
+            pRepo, listingRepository = oneItemRepo, ratingsRepository = rating, userId = "demo")
 
     compose.runOnIdle {
       contentSlot.value = {
         MyProfileScreen(
-          profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
       }
     }
 
     compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
 
     compose
-      .onNodeWithText("You don’t have any listings yet.", useUnmergedTree = true)
-      .assertDoesNotExist()
+        .onNodeWithText("You don’t have any listings yet.", useUnmergedTree = true)
+        .assertDoesNotExist()
 
     val cardMatcher = hasText("Guitar Lessons", substring = false)
 
     compose.onNode(cardMatcher, useUnmergedTree = true).assertExists()
   }
 }
-
