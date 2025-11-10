@@ -98,8 +98,12 @@ fun BookingDetailsContent(
   }
 }
 
-// --- Composable pour l'en-tête (utilise AnnotatedString pour le style) ---
-
+/**
+ * Composable function that displays the header section of a booking. The skill name is displayed in
+ * bold, while the prefix uses a normal font weight.
+ *
+ * @param uiState The [BookingUIState] containing booking, listing, and creator information.
+ */
 @Composable
 private fun BookingHeader(uiState: BookingUIState) {
   val prefixText =
@@ -126,6 +130,18 @@ private fun BookingHeader(uiState: BookingUIState) {
       }
 }
 
+/**
+ * Composable function that displays the creator information section of a booking.
+ *
+ * The section includes:
+ * - A header displaying "Information about the listing creator".
+ * - A "More Info" button that triggers [onCreatorClick] with the creator's user ID.
+ * - Detail rows for the creator's name and email.
+ *
+ * @param uiState The [BookingUIState] containing booking, listing, and creator information.
+ * @param onCreatorClick Callback invoked when the "More Info" button is clicked; passes the
+ *   creator's user ID.
+ */
 @Composable
 private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Unit) {
   val creatorRole =
@@ -174,6 +190,17 @@ private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Uni
   }
 }
 
+/**
+ * Composable function that displays the listing/course information section of a booking.
+ *
+ * The section includes:
+ * - A header titled "Information about the course".
+ * - A detail row for the subject of the listing.
+ * - A detail row for the location of the listing.
+ * - A detail row for the hourly rate of the booking.
+ *
+ * @param uiState The [BookingUIState] containing the booking and listing information.
+ */
 @Composable
 private fun InfoListing(uiState: BookingUIState) {
   Column(modifier = Modifier.testTag(BookingDetailsTestTag.LISTING_SECTION)) {
@@ -187,6 +214,19 @@ private fun InfoListing(uiState: BookingUIState) {
   }
 }
 
+/**
+ * Composable function that displays the schedule section of a booking.
+ *
+ * The section includes:
+ * - A header titled "Schedule".
+ * - A detail row showing the start time of the session.
+ * - A detail row showing the end time of the session.
+ *
+ * Dates are formatted using the pattern "dd/MM/yyyy 'to' HH:mm" based on the default locale.
+ *
+ * @param uiState The [BookingUIState] containing the booking details, including session start and
+ *   end times.
+ */
 @Composable
 private fun InfoSchedule(uiState: BookingUIState) {
   Column(modifier = Modifier.testTag(BookingDetailsTestTag.SCHEDULE_SECTION)) {
@@ -205,6 +245,15 @@ private fun InfoSchedule(uiState: BookingUIState) {
   }
 }
 
+/**
+ * Composable function that displays the description section of a booking's listing.
+ *
+ * The section includes:
+ * - A header titled "Description of the listing".
+ * - The actual description text of the listing from [BookingUIState].
+ *
+ * @param uiState The [BookingUIState] containing the listing details, including the description.
+ */
 @Composable
 private fun InfoDesc(uiState: BookingUIState) {
   Column(modifier = Modifier.testTag(BookingDetailsTestTag.DESCRIPTION_SECTION)) {
@@ -216,6 +265,18 @@ private fun InfoDesc(uiState: BookingUIState) {
   }
 }
 
+/**
+ * Composable function that displays a single detail row with a label and its corresponding value.
+ *
+ * The row layout includes:
+ * - A label on the left, styled with bodyLarge and a variant surface color.
+ * - A value on the right, styled with bodyLarge and semi-bold font weight.
+ * - A spacer of 8.dp between the label and value to ensure proper spacing.
+ *
+ * @param label The text label to display on the left side of the row.
+ * @param value The text value to display on the right side of the row.
+ * @param modifier Optional [Modifier] for styling or testing, e.g., attaching a test tag.
+ */
 @Composable
 fun DetailRow(label: String, value: String, modifier: Modifier = Modifier) {
   Row(
