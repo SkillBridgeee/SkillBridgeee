@@ -108,7 +108,6 @@ class NavGraphCoverageTest {
     composeTestRule.waitForIdle()
   }
 
-
   @Test
   fun compose_all_nav_destinations_to_exercise_animated_lambdas() {
     // Ensure signed in and at home (replaces previous GitHub click)
