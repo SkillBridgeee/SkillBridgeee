@@ -23,10 +23,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 object BookingDetailsTestTag {
-  const val SCREEN = "booking_details_screen"
   const val ERROR = "booking_details_error"
-  const val CONTENT = "booking_details_content"
-
   const val HEADER = "booking_header"
   const val CREATOR_SECTION = "booking_creator_section"
   const val CREATOR_NAME = "booking_creator_name"
@@ -57,7 +54,7 @@ fun BookingDetailsScreen(
       Box(
           modifier = Modifier.fillMaxSize().padding(paddingValues),
           contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(modifier = Modifier.testTag(BookingDetailsTestTag.ERROR))
           }
     } else {
       BookingDetailsContent(

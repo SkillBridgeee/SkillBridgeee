@@ -167,4 +167,44 @@ class BookingDetailsScreenTest {
 
     assert(clickedId == "u1")
   }
+
+  private val fakeProfileRepoError =
+      object : ProfileRepository {
+        override fun getNewUid() = "u1"
+
+        override suspend fun getProfile(userId: String) = throw error("test")
+
+        override suspend fun getProfileById(userId: String) = getProfile(userId)
+
+        override suspend fun addProfile(profile: Profile) {}
+
+        override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+        override suspend fun deleteProfile(userId: String) {}
+
+        override suspend fun getAllProfiles() = emptyList<Profile>()
+
+        override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+            emptyList<Profile>()
+
+        override suspend fun getSkillsForUser(userId: String) =
+            emptyList<com.android.sample.model.skill.Skill>()
+      }
+
+  private fun fakeViewModelError() =
+      BookingDetailsViewModel(
+          bookingRepository = fakeBookingRepo,
+          listingRepository = fakeListingRepo,
+          profileRepository = fakeProfileRepoError)
+
+  @Test
+  fun bookingDetailsScreen_errorScreen() {
+    var clickedId: String? = null
+    val vm = fakeViewModelError()
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = { clickedId = it })
+    }
+
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertIsDisplayed()
+  }
 }
