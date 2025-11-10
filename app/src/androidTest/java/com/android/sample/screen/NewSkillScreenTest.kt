@@ -1,11 +1,12 @@
+// kotlin
 package com.android.sample.screen
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.ComposeNavigator
-import androidx.navigation.testing.TestNavHostController
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -154,8 +155,8 @@ class NewSkillScreenTest {
   // ----------------------------------------------------------
   // Rendering Tests
   // ----------------------------------------------------------
-  private fun createTestNavController(): TestNavHostController {
-    val navController = TestNavHostController(composeRule.activity)
+  private fun createTestNavController(): NavHostController {
+    val navController = NavHostController(composeRule.activity)
     composeRule.runOnUiThread { navController.navigatorProvider.addNavigator(ComposeNavigator()) }
     return navController
   }
@@ -170,7 +171,8 @@ class NewSkillScreenTest {
             listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -194,7 +196,8 @@ class NewSkillScreenTest {
             listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -224,7 +227,8 @@ class NewSkillScreenTest {
             listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -241,7 +245,8 @@ class NewSkillScreenTest {
             listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -258,7 +263,8 @@ class NewSkillScreenTest {
             listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -277,7 +283,8 @@ class NewSkillScreenTest {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -294,7 +301,8 @@ class NewSkillScreenTest {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -314,7 +322,8 @@ class NewSkillScreenTest {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -334,7 +343,8 @@ class NewSkillScreenTest {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -350,7 +360,8 @@ class NewSkillScreenTest {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -372,7 +383,8 @@ class NewSkillScreenTest {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -390,7 +402,8 @@ class NewSkillScreenTest {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -410,7 +423,8 @@ class NewSkillScreenTest {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -430,7 +444,8 @@ class NewSkillScreenTest {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -460,7 +475,10 @@ class NewSkillScreenTest {
 
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user-123", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm,
+            profileId = "test-user-123",
+            navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -518,7 +536,10 @@ class NewSkillScreenTest {
 
     composeRule.setContent {
       SampleAppTheme {
-        NewSkillScreen(skillViewModel = vm, profileId = "test-user-456", createTestNavController())
+        NewSkillScreen(
+            skillViewModel = vm,
+            profileId = "test-user-456",
+            navController = createTestNavController())
       }
     }
     composeRule.waitForIdle()
@@ -575,7 +596,10 @@ class NewSkillScreenTest {
         NewSkillViewModel(
             listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+      SampleAppTheme {
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
+      }
     }
     composeRule.waitForIdle()
 
@@ -596,7 +620,10 @@ class NewSkillScreenTest {
   fun subjectDropdown_open_selectItem_thenCloses() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+      SampleAppTheme {
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
+      }
     }
     composeRule.waitForIdle()
 
@@ -615,7 +642,10 @@ class NewSkillScreenTest {
   fun subSkillDropdown_open_selectItem_thenCloses() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+      SampleAppTheme {
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
+      }
     }
     composeRule.waitForIdle()
 
@@ -640,7 +670,10 @@ class NewSkillScreenTest {
   fun showsError_whenNoSubject_onSave() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+      SampleAppTheme {
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
+      }
     }
     composeRule.waitForIdle()
 
@@ -659,7 +692,10 @@ class NewSkillScreenTest {
   fun showsError_whenSubjectChosen_butNoSubSkill_onSave() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+      SampleAppTheme {
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
+      }
     }
     composeRule.waitForIdle()
 
@@ -684,7 +720,10 @@ class NewSkillScreenTest {
   fun selectingSubject_thenSubSkill_enablesCleanSave_noErrorsShown() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+      SampleAppTheme {
+        NewSkillScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
+      }
     }
     composeRule.waitForIdle()
 
