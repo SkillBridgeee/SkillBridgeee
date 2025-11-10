@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 data class BkgDetailsUIState(
     val creatorName: String = "",
     val creatorMail: String = "",
+    val creatorId: String = "",
     val courseName: String = "",
     val type: ListingType = ListingType.PROPOSAL,
     val location: Location = Location(),
@@ -80,6 +81,7 @@ class BookingDetailsViewModel(
               creatorName = creatorProfile.name!!,
               creatorMail = creatorProfile.email,
               courseName = listing.skill.skill,
+              creatorId = listing.creatorUserId,
               type = listing.type,
               location = listing.location,
               description = listing.description,

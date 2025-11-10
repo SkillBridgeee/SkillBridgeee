@@ -184,7 +184,12 @@ fun AppNavGraph(
 
     composable(route = NavRoutes.BOOKING_DETAILS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKING_DETAILS) }
-      BookingDetailsScreen(bookingId = bookingId.value)
+      BookingDetailsScreen(
+          bookingId = bookingId.value,
+          onCreatorClick = { profileId ->
+            profileID.value = profileId
+            navController.navigate(NavRoutes.OTHERS_PROFILE)
+          })
     }
   }
 }

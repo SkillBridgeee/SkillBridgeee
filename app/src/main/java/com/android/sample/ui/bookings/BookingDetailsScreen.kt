@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,7 +24,8 @@ import java.util.Locale
 @Composable
 fun BookingDetailsScreen(
     bkgViewModel: BookingDetailsViewModel = BookingDetailsViewModel(),
-    bookingId: String
+    bookingId: String,
+    onCreatorClick: (String) -> Unit,
 ) {
 
   val uiState by bkgViewModel.uiState.collectAsState()
@@ -42,13 +42,18 @@ fun BookingDetailsScreen(
     } else {
       BookingDetailsContent(
           uiState = uiState,
+          onCreatorClick = { profileId -> onCreatorClick(profileId) },
           modifier = Modifier.padding(paddingValues).fillMaxSize().padding(16.dp))
     }
   }
 }
 
 @Composable
-fun BookingDetailsContent(uiState: BkgDetailsUIState, modifier: Modifier = Modifier) {
+fun BookingDetailsContent(
+    uiState: BkgDetailsUIState,
+    onCreatorClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
     // Header
@@ -57,7 +62,7 @@ fun BookingDetailsContent(uiState: BkgDetailsUIState, modifier: Modifier = Modif
     HorizontalDivider()
 
     // Info about the creator
-    InfoCreator(uiState, {})
+    InfoCreator(uiState = uiState, onCreatorClick = onCreatorClick)
 
     HorizontalDivider()
 
@@ -126,7 +131,7 @@ private fun InfoCreator(uiState: BkgDetailsUIState, onCreatorClick: (String) -> 
             verticalAlignment = Alignment.CenterVertically,
             modifier =
                 Modifier.clip(RoundedCornerShape(8.dp))
-                    .clickable {}
+                    .clickable { onCreatorClick(uiState.creatorId) }
                     .padding(horizontal = 6.dp, vertical = 2.dp)) {
               Text(
                   text = "More Info",
@@ -176,8 +181,6 @@ private fun InfoDesc(uiState: BkgDetailsUIState) {
       text = uiState.description.ifEmpty { "No description about the lessons." },
       style = MaterialTheme.typography.bodyMedium)
 }
-
-// --- Composable réutilisable pour une ligne de détail ---
 
 @Composable
 fun DetailRow(label: String, value: String) {
