@@ -211,7 +211,7 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test:rules:1.5.0")
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
-    androidTestImplementation("androidx.navigation:navigation-testing:2.8.3")
+    androidTestImplementation(libs.androidx.navigation.testing)
 
     // Google Play Services for Google Sign-In
     implementation(libs.play.services.auth)
