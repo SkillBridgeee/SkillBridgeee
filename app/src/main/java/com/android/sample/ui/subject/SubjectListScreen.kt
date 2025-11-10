@@ -34,7 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
-import com.android.sample.ui.components.ListingCard
+import com.android.sample.ui.components.ProposalCard
+import com.android.sample.ui.components.RequestCard
 
 /** Test tags for the different elements of the SubjectListScreen */
 object SubjectListTestTags {
@@ -152,13 +153,20 @@ fun SubjectListScreen(
           modifier = Modifier.fillMaxSize().testTag(SubjectListTestTags.LISTING_LIST),
           contentPadding = PaddingValues(bottom = 24.dp)) {
             items(ui.listings) { item ->
-              ListingCard(
-                  listing = item.listing,
-                  creator = item.creator,
-                  creatorRating = item.creatorRating,
-                  onBook = { item.creator?.let(onBookTutor) },
-                  testTags =
-                      SubjectListTestTags.LISTING_CARD to SubjectListTestTags.LISTING_BOOK_BUTTON)
+              when (val listing = item.listing) {
+                is com.android.sample.model.listing.Proposal -> {
+                  ProposalCard(
+                      proposal = listing,
+                      onClick = { /* Navigate to listing detail */ },
+                      testTag = SubjectListTestTags.LISTING_CARD)
+                }
+                is com.android.sample.model.listing.Request -> {
+                  RequestCard(
+                      request = listing,
+                      onClick = { /* Navigate to listing detail */ },
+                      testTag = SubjectListTestTags.LISTING_CARD)
+                }
+              }
               Spacer(Modifier.height(16.dp))
             }
           }
