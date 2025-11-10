@@ -83,8 +83,8 @@ class FakeLocationRepository : LocationRepository {
 
 // ---------- helpers ----------
 
-private fun ComposeContentTestRule.nodeByTag(tag: String) =
-    onNodeWithTag(tag, useUnmergedTree = false)
+private fun ComposeContentTestRule.nodeByTag(tag: String, useUnmergedTree: Boolean = true) =
+    onNodeWithTag(tag, useUnmergedTree = useUnmergedTree)
 
 // ---------- tests ----------
 class NewSkillScreenTest {
@@ -594,7 +594,7 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    // Precondition: select a subject so sub-skill menu appears
+    // Precondition: select a subject
     compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
     composeRule.waitForIdle()
     compose
@@ -603,7 +603,7 @@ class NewSkillScreenTest {
         .performClick()
     composeRule.waitForIdle()
 
-    // Now open sub-skill dropdown
+    // Open sub-skill dropdown
     compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
     composeRule.waitForIdle()
     compose

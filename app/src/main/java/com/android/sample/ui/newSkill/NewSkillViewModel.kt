@@ -118,7 +118,6 @@ class NewSkillViewModel(
       return
     }
 
-    // Defensive parsing and null checks to avoid force-unwrapping
     val price = state.price.toDoubleOrNull()
     if (price == null) {
       Log.e("NewSkillViewModel", "Unexpected invalid price despite isValid")
@@ -147,11 +146,14 @@ class NewSkillViewModel(
       return
     }
 
-    val newSkill =
-        Skill(
-            mainSubject = mainSubject,
-            skill = specificSkill,
-        )
+    val selectedLocation = state.selectedLocation
+    if (selectedLocation == null) {
+      Log.e("NewSkillViewModel", "Missing selectedLocation despite isValid")
+      setError()
+      return
+    }
+
+    val newSkill = Skill(mainSubject = mainSubject, skill = specificSkill)
 
     when (listingType) {
       ListingType.PROPOSAL -> {
@@ -161,7 +163,7 @@ class NewSkillViewModel(
                 creatorUserId = userId,
                 skill = newSkill,
                 description = state.description,
-                location = state.selectedLocation!!,
+                location = selectedLocation,
                 hourlyRate = price)
         addProposalToRepository(proposal = newProposal)
       }
@@ -172,7 +174,7 @@ class NewSkillViewModel(
                 creatorUserId = userId,
                 skill = newSkill,
                 description = state.description,
-                location = state.selectedLocation!!,
+                location = selectedLocation,
                 hourlyRate = price)
         addRequestToRepository(request = newRequest)
       }
