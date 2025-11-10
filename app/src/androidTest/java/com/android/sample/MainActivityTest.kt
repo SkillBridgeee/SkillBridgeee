@@ -94,6 +94,16 @@ class MainActivityTest {
   }
 
   private fun waitForHome(timeoutMs: Long = 5_000L) {
+    // First wait for navigation graph to be set
+    composeTestRule.waitUntil(timeoutMillis = timeoutMs) {
+      try {
+        RouteStackManager.getCurrentRoute() != null
+      } catch (e: Exception) {
+        false
+      }
+    }
+
+    // Then wait for HOME route
     composeTestRule.waitUntil(timeoutMillis = timeoutMs) {
       RouteStackManager.getCurrentRoute() == NavRoutes.HOME
     }

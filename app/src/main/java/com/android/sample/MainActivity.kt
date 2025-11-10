@@ -16,10 +16,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.android.sample.model.authentication.AuthResult
+import com.android.sample.model.authentication.AuthState
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.GoogleSignInHelper
 import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.authentication.UserSessionManager.authState
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
@@ -34,6 +35,10 @@ import com.android.sample.ui.profile.MyProfileViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
+import kotlin.text.get
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 
 object HttpClientProvider {
@@ -121,26 +126,7 @@ class MyViewModelFactory(private val userId: String) : ViewModelProvider.Factory
 fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) {
   val navController = rememberNavController()
   val authResult by authViewModel.authResult.collectAsStateWithLifecycle()
-
-  // Navigate based on authentication result
-  LaunchedEffect(authResult) {
-    when (authResult) {
-      is AuthResult.Success -> {
-        navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
-      }
-      is AuthResult.RequiresSignUp -> {
-        // Navigate to signup screen when Google user doesn't have a profile
-        val email = (authResult as AuthResult.RequiresSignUp).email
-        Log.d("MainActivity", "Google user requires sign up, email: $email")
-        val route = NavRoutes.createSignUpRoute(email)
-        Log.d("MainActivity", "Navigating to route: $route")
-        navController.navigate(route) { popUpTo(NavRoutes.LOGIN) { inclusive = false } }
-      }
-      else -> {
-        // No navigation for Error or null
-      }
-    }
-  }
+  val authStateValue by authState.collectAsStateWithLifecycle()
 
   // To track the current route
   val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -176,6 +162,54 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
               mainPageViewModel,
               authViewModel = authViewModel,
               onGoogleSignIn = onGoogleSignIn)
+
+          // Navigate based on authentication result AFTER NavHost is composed
+          LaunchedEffect(authStateValue) {
+            when (val state = authStateValue) {
+              is AuthState.Authenticated -> {
+                // Check if profile exists in Firestore
+                val userId = state.userId
+                val profileExists =
+                    try {
+                      val doc =
+                          Firebase.firestore.collection("users").document(userId).get().await()
+                      doc.exists()
+                    } catch (e: Exception) {
+                      Log.e("MainActivity", "Error checking profile", e)
+                      false
+                    }
+
+                // Ensure navigation happens on the main thread
+                withContext(Dispatchers.Main) {
+                  if (profileExists) {
+                    if (currentRoute != NavRoutes.HOME) {
+                      navController.navigate(NavRoutes.HOME) {
+                        popUpTo(NavRoutes.LOGIN) { inclusive = true }
+                      }
+                    }
+                  } else {
+                    val email = state.email ?: ""
+                    val signupRoute = NavRoutes.createSignUpRoute(email)
+                    if (currentRoute?.startsWith(NavRoutes.SIGNUP_BASE) == false) {
+                      navController.navigate(signupRoute) {
+                        popUpTo(NavRoutes.LOGIN) { inclusive = true }
+                      }
+                    }
+                  }
+                }
+              }
+              is AuthState.Unauthenticated -> {
+                withContext(Dispatchers.Main) {
+                  if (currentRoute != NavRoutes.LOGIN) {
+                    navController.navigate(NavRoutes.LOGIN) { popUpTo(0) { inclusive = true } }
+                  }
+                }
+              }
+              AuthState.Loading -> {
+                /* do nothing */
+              }
+            }
+          }
         }
       }
 }

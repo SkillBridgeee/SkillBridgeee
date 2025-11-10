@@ -123,8 +123,8 @@ object TestAuthHelpers {
     // Sign in the user (now currentUser will be available to the app)
     auth.signInWithEmailAndPassword(email, dummyPassword).await()
 
-    //    // Optionally create a full app profile so the app won't route to signup
-    //    createAppProfileIfRequested(auth.currentUser, email, displayName, createAppProfile)
+    // Optionally create a full app profile so the app won't route to signup
+    createAppProfileIfRequested(auth.currentUser, email, displayName, createAppProfile)
   }
 
   /** Sign out the current test user. */
