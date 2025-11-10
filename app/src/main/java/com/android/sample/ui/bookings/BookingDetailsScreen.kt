@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -20,6 +21,24 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.listing.ListingType
 import java.text.SimpleDateFormat
 import java.util.Locale
+
+object BookingDetailsTestTag {
+  const val SCREEN = "booking_details_screen"
+  const val ERROR = "booking_details_error"
+  const val CONTENT = "booking_details_content"
+
+  const val HEADER = "booking_header"
+  const val CREATOR_SECTION = "booking_creator_section"
+  const val CREATOR_NAME = "booking_creator_name"
+  const val CREATOR_EMAIL = "booking_creator_email"
+  const val MORE_INFO_BUTTON = "booking_creator_more_info_button"
+
+  const val LISTING_SECTION = "booking_listing_section"
+  const val SCHEDULE_SECTION = "booking_schedule_section"
+  const val DESCRIPTION_SECTION = "booking_description_section"
+
+  const val ROW = "booking_detail_row"
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,10 +121,12 @@ private fun BookingHeader(uiState: BookingUIState) {
     }
   }
 
-  Column(horizontalAlignment = Alignment.Start) {
-    Text(text = styledText, style = baseStyle, maxLines = 2, overflow = TextOverflow.Ellipsis)
-    Spacer(modifier = Modifier.height(4.dp))
-  }
+  Column(
+      horizontalAlignment = Alignment.Start,
+      modifier = Modifier.testTag(BookingDetailsTestTag.HEADER)) {
+        Text(text = styledText, style = baseStyle, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Spacer(modifier = Modifier.height(4.dp))
+      }
 }
 
 @Composable
@@ -116,82 +137,101 @@ private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Uni
         ListingType.PROPOSAL -> "Tutor"
       }
 
-  //  Text(
-  //      text = "Information about the $creatorRole",
-  //      style = MaterialTheme.typography.titleMedium,
-  //      fontWeight = FontWeight.Bold)
+  Column(modifier = Modifier.testTag(BookingDetailsTestTag.CREATOR_SECTION)) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween) {
+          Text(
+              text = "Information about the $creatorRole",
+              style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.Bold)
 
-  Row(
-      modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(
-            text = "Information about the $creatorRole",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold)
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier.clip(RoundedCornerShape(8.dp))
-                    .clickable { onCreatorClick(uiState.booking.listingCreatorId) }
-                    .padding(horizontal = 6.dp, vertical = 2.dp)) {
-              Text(
-                  text = "More Info",
-                  style = MaterialTheme.typography.bodyLarge,
-                  fontWeight = FontWeight.SemiBold,
-                  color = MaterialTheme.colorScheme.primary)
-              Icon(
-                  imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                  contentDescription = "View profile",
-                  tint = MaterialTheme.colorScheme.primary,
-                  modifier = Modifier.padding(start = 4.dp).size(18.dp))
-            }
-      }
-
-  DetailRow(label = "$creatorRole Name", value = uiState.creatorProfile.name!!)
-  DetailRow(label = "Email", value = uiState.creatorProfile.email)
+          Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier =
+                  Modifier.clip(RoundedCornerShape(8.dp))
+                      .clickable { onCreatorClick(uiState.booking.listingCreatorId) }
+                      .padding(horizontal = 6.dp, vertical = 2.dp)
+                      .testTag(BookingDetailsTestTag.MORE_INFO_BUTTON)) {
+                Text(
+                    text = "More Info",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "View profile",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 4.dp).size(18.dp))
+              }
+        }
+    DetailRow(
+        label = "$creatorRole Name",
+        value = uiState.creatorProfile.name!!,
+        modifier = Modifier.testTag(BookingDetailsTestTag.CREATOR_NAME))
+    DetailRow(
+        label = "Email",
+        value = uiState.creatorProfile.email,
+        modifier = Modifier.testTag(BookingDetailsTestTag.CREATOR_EMAIL))
+  }
 }
 
 @Composable
 private fun InfoListing(uiState: BookingUIState) {
-  Text(
-      text = "Information about the course",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold)
-  DetailRow(label = "Subject", value = uiState.listing.skill.mainSubject.name.replace("_", " "))
-  DetailRow(label = "Location", value = uiState.listing.location.name)
-  DetailRow(label = "Hourly Rate", value = uiState.booking.price.toString())
+  Column(modifier = Modifier.testTag(BookingDetailsTestTag.LISTING_SECTION)) {
+    Text(
+        text = "Information about the course",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold)
+    DetailRow(label = "Subject", value = uiState.listing.skill.mainSubject.name.replace("_", " "))
+    DetailRow(label = "Location", value = uiState.listing.location.name)
+    DetailRow(label = "Hourly Rate", value = uiState.booking.price.toString())
+  }
 }
 
 @Composable
 private fun InfoSchedule(uiState: BookingUIState) {
-  Text(
-      text = "Schedule", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-  val dateFormatter = SimpleDateFormat("dd/MM/yyyy 'to' HH:mm", Locale.getDefault())
+  Column(modifier = Modifier.testTag(BookingDetailsTestTag.SCHEDULE_SECTION)) {
+    Text(
+        text = "Schedule",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold)
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy 'to' HH:mm", Locale.getDefault())
 
-  DetailRow(
-      label = "Start of the session", value = dateFormatter.format(uiState.booking.sessionStart))
-  DetailRow(label = "End of the session", value = dateFormatter.format(uiState.booking.sessionEnd))
+    DetailRow(
+        label = "Start of the session",
+        value = dateFormatter.format(uiState.booking.sessionStart),
+    )
+    DetailRow(
+        label = "End of the session", value = dateFormatter.format(uiState.booking.sessionEnd))
+  }
 }
 
 @Composable
 private fun InfoDesc(uiState: BookingUIState) {
-  Text(
-      text = "Description of the listing",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold)
-  Text(text = uiState.listing.description, style = MaterialTheme.typography.bodyMedium)
+  Column(modifier = Modifier.testTag(BookingDetailsTestTag.DESCRIPTION_SECTION)) {
+    Text(
+        text = "Description of the listing",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold)
+    Text(text = uiState.listing.description, style = MaterialTheme.typography.bodyMedium)
+  }
 }
 
 @Composable
-fun DetailRow(label: String, value: String) {
-  Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-    Text(
-        text = label,
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant)
-    Spacer(Modifier.width(8.dp))
-    Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-  }
+fun DetailRow(label: String, value: String, modifier: Modifier = Modifier) {
+  Row(
+      modifier = modifier.fillMaxWidth().testTag(BookingDetailsTestTag.ROW),
+      horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold)
+      }
 }
