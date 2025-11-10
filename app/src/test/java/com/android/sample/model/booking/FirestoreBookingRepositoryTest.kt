@@ -113,55 +113,6 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     // assertEquals(null, retrievedBooking)
   }
 
-  //  @Test
-  //  fun canGetBookingsByListing() = runTest {
-  //    val booking1 =
-  //        Booking(
-  //            bookingId = "booking1",
-  //            associatedListingId = "listing1",
-  //            listingCreatorId = "tutor1",
-  //            bookerId = testUserId,
-  //            sessionStart = Date(System.currentTimeMillis()),
-  //            sessionEnd = Date(System.currentTimeMillis() + 3600000))
-  //    val booking2 =
-  //        Booking(
-  //            bookingId = "booking2",
-  //            associatedListingId = "listing2",
-  //            listingCreatorId = "tutor2",
-  //            bookerId = testUserId,
-  //            sessionStart = Date(System.currentTimeMillis()),
-  //            sessionEnd = Date(System.currentTimeMillis() + 3600000))
-  //    bookingRepository.addBooking(booking1)
-  //    bookingRepository.addBooking(booking2)
-  //
-  //    val bookings = bookingRepository.getBookingsByListing("listing1")
-  //    assertEquals(1, bookings.size)
-  //    assertEquals("booking1", bookings[0].bookingId)
-  //  }
-
-  // @Test
-  //  fun getBookingsByListingReturnsEmptyListForNonExistentListing() = runTest {
-  //    val bookings = bookingRepository.getBookingsByListing("non-existent-listing")
-  //    assertTrue(bookings.isEmpty())
-  //  }
-
-  //  @Test
-  //  fun canGetBookingsByStudent() = runTest {
-  //    val booking1 =
-  //        Booking(
-  //            bookingId = "booking1",
-  //            associatedListingId = "listing1",
-  //            listingCreatorId = "tutor1",
-  //            bookerId = testUserId,
-  //            sessionStart = Date(System.currentTimeMillis()),
-  //            sessionEnd = Date(System.currentTimeMillis() + 3600000))
-  //    bookingRepository.addBooking(booking1)
-  //
-  //    val bookings = bookingRepository.getBookingsByStudent(testUserId)
-  //    assertEquals(1, bookings.size)
-  //    assertEquals("booking1", bookings[0].bookingId)
-  //  }
-
   @Test
   fun canConfirmBooking() = runTest {
     val booking =
@@ -814,13 +765,25 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
   }
 
   @Test
-  fun getBookingThrowsExceptionWhenNotAuthenticated() {
+  fun getBookingThrowsExceptionWhenNotAuthenticated() = runTest {
+    // First create a booking with an authenticated user
+    val booking =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000))
+    bookingRepository.addBooking(booking)
+
+    // Now try to access it with unauthenticated user
     val unauthAuth = mockk<FirebaseAuth>()
     every { unauthAuth.currentUser } returns null
 
     val unauthRepo = FirestoreBookingRepository(firestore, unauthAuth)
 
-    assertThrows(Exception::class.java) { runTest { unauthRepo.getBooking("booking1") } }
+    assertThrows(Exception::class.java) { runBlocking { unauthRepo.getBooking("booking1") } }
   }
 
   @Test
