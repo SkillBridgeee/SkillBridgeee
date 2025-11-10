@@ -15,7 +15,6 @@ import com.android.sample.model.listing.ListingType
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingDetailsScreen(
@@ -45,47 +44,109 @@ fun BookingDetailsScreen(
 @Composable
 fun BookingDetailsContent(uiState: BkgDetailsUIState, modifier: Modifier = Modifier) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+
+    // Header
     BookingHeader(uiState)
 
     HorizontalDivider()
 
+    // Info about the creator
+    InfoCreator(uiState)
 
-    Text(
-        text = "Information about the course",
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold)
-    DetailRow(
-        label = "Listing Type",
-        value =
-            when (uiState.type) {
-              ListingType.PROPOSAL -> "Tutor (Proposition)"
-              ListingType.REQUEST -> "Request (Looking for a tutor)"
-            })
-    DetailRow(label = "Subject", value = uiState.subject.name.replace("_", " "))
-    DetailRow(label = "Location", value = uiState.location.name)
+    // Info about the courses
+    InfoListing(uiState)
 
     HorizontalDivider()
 
-    // 3. Section Horaires
-    Text(
-        text = "Schedule",
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold)
-    val dateFormatter = SimpleDateFormat("dd/MM/yyyy to HH:mm", Locale.getDefault())
-    DetailRow(label = "Start of the session", value = dateFormatter.format(uiState.start))
-    DetailRow(label = "End of the session", value = dateFormatter.format(uiState.end))
+    // Schedule
+    InfoSchedule(uiState)
 
     HorizontalDivider()
 
-    // 4. Description
-    Text(
-        text = "Description of the listing",
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold)
-    Text(
-        text = uiState.description.ifEmpty { "No description about the lessons." },
-        style = MaterialTheme.typography.bodyMedium)
+    // Description
+    InfoDesc(uiState)
   }
+}
+
+// --- Composable pour l'en-tête (utilise AnnotatedString pour le style) ---
+
+@Composable
+private fun BookingHeader(uiState: BkgDetailsUIState) {
+  val prefixText =
+      when (uiState.type) {
+        ListingType.REQUEST -> "Teacher for : "
+        ListingType.PROPOSAL -> "Student for : "
+      }
+
+  val baseStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal)
+  val prefixSize = MaterialTheme.typography.bodyLarge.fontSize
+
+  val styledText = buildAnnotatedString {
+    withStyle(style = SpanStyle(fontSize = prefixSize)) { append(prefixText) }
+    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) { append(uiState.courseName) }
+  }
+
+  Column(horizontalAlignment = Alignment.Start) {
+    Text(text = styledText, style = baseStyle, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    Spacer(modifier = Modifier.height(4.dp))
+  }
+}
+
+@Composable
+private fun InfoCreator(uiState: BkgDetailsUIState) {
+  val prefixText =
+      when (uiState.type) {
+        ListingType.REQUEST -> "Student : "
+        ListingType.PROPOSAL -> "Tutor : "
+      }
+
+  val baseStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal)
+  val prefixSize = MaterialTheme.typography.bodyLarge.fontSize
+
+  val styledText = buildAnnotatedString {
+    withStyle(style = SpanStyle(fontSize = prefixSize)) { append(prefixText) }
+    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) { append(uiState.creatorName) }
+  }
+
+  Text(text = styledText, style = baseStyle, maxLines = 2, overflow = TextOverflow.Ellipsis)
+}
+
+@Composable
+private fun InfoListing(uiState: BkgDetailsUIState) {
+  Text(
+      text = "Information about the course",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold)
+  DetailRow(
+      label = "Listing Type",
+      value =
+          when (uiState.type) {
+            ListingType.PROPOSAL -> "Tutor (Proposition)"
+            ListingType.REQUEST -> "Request (Looking for a tutor)"
+          })
+  DetailRow(label = "Subject", value = uiState.subject.name.replace("_", " "))
+  DetailRow(label = "Location", value = uiState.location.name)
+}
+
+@Composable
+private fun InfoSchedule(uiState: BkgDetailsUIState) {
+  Text(
+      text = "Schedule", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+  val dateFormatter = SimpleDateFormat("dd/MM/yyyy 'to' HH:mm", Locale.getDefault())
+
+  DetailRow(label = "Start of the session", value = dateFormatter.format(uiState.start))
+  DetailRow(label = "End of the session", value = dateFormatter.format(uiState.end))
+}
+
+@Composable
+private fun InfoDesc(uiState: BkgDetailsUIState) {
+  Text(
+      text = "Description of the listing",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold)
+  Text(
+      text = uiState.description.ifEmpty { "No description about the lessons." },
+      style = MaterialTheme.typography.bodyMedium)
 }
 
 // --- Composable réutilisable pour une ligne de détail ---
@@ -99,38 +160,5 @@ fun DetailRow(label: String, value: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.width(8.dp))
     Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-  }
-}
-
-// --- Composable pour l'en-tête (utilise AnnotatedString pour le style) ---
-
-@Composable
-fun BookingHeader(uiState: BkgDetailsUIState) {
-  val prefixText =
-      when (uiState.type) {
-        ListingType.REQUEST -> "Teacher for : "
-        ListingType.PROPOSAL -> "Student for : "
-      }
-
-  val baseStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal)
-  val prefixSize = MaterialTheme.typography.bodyLarge.fontSize // Taille légèrement plus petite
-
-  val styledText = buildAnnotatedString {
-    withStyle(style = SpanStyle(fontSize = prefixSize)) { append(prefixText) }
-    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) { append(uiState.courseName) }
-  }
-
-  Column(horizontalAlignment = Alignment.Start) {
-    Text(
-        text = styledText,
-        style = baseStyle,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis)
-    Spacer(modifier = Modifier.height(4.dp))
-    Text(
-        text = uiState.creatorName,
-        style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.primary)
   }
 }
