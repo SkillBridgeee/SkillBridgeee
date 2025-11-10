@@ -3,8 +3,11 @@ package com.android.sample.ui.profile
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -13,18 +16,24 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.GpsLocationProvider
@@ -52,40 +61,90 @@ object MyProfileScreenTestTag {
   const val LOGOUT_BUTTON = "logoutButton"
   const val ERROR_MSG = "errorMsg"
   const val PIN_CONTENT_DESC = "Use my location"
+
+  const val INFO_RATING_BAR = "infoRankingBar"
+  const val INFO_TAB = "infoTab"
+  const val RATING_TAB = "rankingTab"
+
+  const val RATING_COMING_SOON_TEXT = "rankingComingSoonText"
+  const val TAB_INDICATOR = "tabIndicator"
+}
+
+enum class ProfileTab {
+  INFO,
+  RATING
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+/**
+ * Top-level composable for the My Profile screen.
+ *
+ * This sets up the Scaffold (including the floating Save button) and hosts the screen content.
+ *
+ * @param profileViewModel ViewModel providing UI state and actions. Defaults to `viewModel()`.
+ * @param profileId Optional profile id to load (used when viewing other users). Passed to the
+ *   content loader.
+ * @param onLogout Callback invoked when the user taps the logout button.
+ */
 fun MyProfileScreen(
     profileViewModel: MyProfileViewModel = viewModel(),
     profileId: String,
     onLogout: () -> Unit = {}
 ) {
+  val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
   Scaffold(
       topBar = {},
       bottomBar = {},
       floatingActionButton = {
-        Button(
-            onClick = { profileViewModel.editProfile() },
-            modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON)) {
-              Text("Save Profile Changes")
-            }
+        // Save profile edits
+        // todo change the button and don't make it floating the rendering is very ugly
+        if (selectedTab.value == ProfileTab.INFO) {
+          Button(
+              onClick = { profileViewModel.editProfile() },
+              modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON)) {
+                Text("Save Profile Changes")
+              }
+        }
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
-        ProfileContent(pd, profileId, profileViewModel, onLogout)
+        val ui by profileViewModel.uiState.collectAsState()
+        LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
+
+        Column() {
+          InfoToRankingRow(selectedTab)
+          Spacer(modifier = Modifier.height(16.dp))
+
+          if (selectedTab.value == ProfileTab.INFO) {
+            ProfileContent(pd, ui, profileViewModel, onLogout)
+          } else {
+            RatingContent(pd, ui)
+          }
+        }
       }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+/**
+ * Internal content host for the My Profile screen.
+ *
+ * Loads the profile when `profileId` changes, observes the `uiState` from the `profileViewModel`,
+ * and composes the header, form, listings and logout sections inside a `LazyColumn`.
+ *
+ * @param pd Content padding from the parent Scaffold.
+ * @param profileId Profile id to load.
+ * @param profileViewModel ViewModel that exposes UI state and actions.
+ * @param onLogout Callback invoked by the logout UI.
+ */
 private fun ProfileContent(
     pd: PaddingValues,
-    profileId: String,
+    ui: MyProfileUIState,
     profileViewModel: MyProfileViewModel,
     onLogout: () -> Unit
 ) {
+  val profileId = ui.userId ?: ""
   LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
-  val ui by profileViewModel.uiState.collectAsState()
   val fieldSpacing = 8.dp
 
   LazyColumn(
@@ -105,6 +164,12 @@ private fun ProfileContent(
 }
 
 @Composable
+/**
+ * Small header composable showing avatar initial, display name, and role badge.
+ *
+ * @param name Display name to show. The avatar shows the first character uppercased or empty if
+ *   `null`.
+ */
 private fun ProfileHeader(name: String?) {
   Column(
       modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
@@ -140,6 +205,21 @@ private fun ProfileHeader(name: String?) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+/**
+ * Reusable small wrapper around `OutlinedTextField` used in this screen.
+ *
+ * Adds consistent `testTag` and supporting error text handling.
+ *
+ * @param value Current input value.
+ * @param onValueChange Change callback.
+ * @param label Label text.
+ * @param placeholder Placeholder text.
+ * @param isError True when field is invalid.
+ * @param errorMsg Optional supporting error message to display.
+ * @param testTag Test tag applied to the field root for UI tests.
+ * @param modifier Modifier applied to the field.
+ * @param minLines Minimum visible lines for the field.
+ */
 private fun ProfileTextField(
     value: String,
     onValueChange: (String) -> Unit,
@@ -167,6 +247,17 @@ private fun ProfileTextField(
 }
 
 @Composable
+/**
+ * Small reusable card-like container used for form sections.
+ *
+ * Provides consistent width, background, border and inner padding, and exposes a `Column` content
+ * slot so callers can place fields inside.
+ *
+ * @param title Section title shown at the top of the card.
+ * @param titleTestTag Optional test tag applied to the title `Text` for UI tests.
+ * @param modifier Optional `Modifier` applied to the root container.
+ * @param content Column-scoped composable content placed below the title.
+ */
 private fun SectionCard(
     title: String,
     titleTestTag: String? = null,
@@ -195,6 +286,15 @@ private fun SectionCard(
 }
 
 @Composable
+/**
+ * The editable profile form containing name, email, description and location inputs.
+ *
+ * Uses [SectionCard] to reduce duplication for the card styling.
+ *
+ * @param ui Current UI state from the view model.
+ * @param profileViewModel ViewModel instance used to update form fields.
+ * @param fieldSpacing Vertical spacing between fields.
+ */
 private fun ProfileForm(
     ui: MyProfileUIState,
     profileViewModel: MyProfileViewModel,
@@ -206,7 +306,7 @@ private fun ProfileForm(
       rememberLauncherForActivityResult(RequestPermission()) { granted ->
         val provider = GpsLocationProvider(context)
         if (granted) {
-          profileViewModel.fetchLocationFromGps(provider)
+          profileViewModel.fetchLocationFromGps(provider, context)
         } else {
           profileViewModel.onLocationPermissionDenied()
         }
@@ -272,7 +372,7 @@ private fun ProfileForm(
                       ContextCompat.checkSelfPermission(context, permission) ==
                           PackageManager.PERMISSION_GRANTED
                   if (granted) {
-                    profileViewModel.fetchLocationFromGps(GpsLocationProvider(context))
+                    profileViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
                   } else {
                     permissionLauncher.launch(permission)
                   }
@@ -289,6 +389,14 @@ private fun ProfileForm(
 }
 
 @Composable
+/**
+ * Listings section showing the user's created listings.
+ *
+ * Shows a localized loading UI while listings are being fetched so the rest of the profile remains
+ * visible.
+ *
+ * @param ui Current UI state providing listings and profile data for the creator.
+ */
 private fun ProfileListings(ui: MyProfileUIState) {
   Spacer(modifier = Modifier.height(16.dp))
   Text(
@@ -338,6 +446,13 @@ private fun ProfileListings(ui: MyProfileUIState) {
 }
 
 @Composable
+/**
+ * Logout section — presents a full-width logout button that triggers `onLogout`.
+ *
+ * The button includes a test tag so tests can find and click it.
+ *
+ * @param onLogout Callback invoked when the button is clicked.
+ */
 private fun ProfileLogout(onLogout: () -> Unit) {
   Spacer(modifier = Modifier.height(16.dp))
   Button(
@@ -348,5 +463,99 @@ private fun ProfileLogout(onLogout: () -> Unit) {
               .testTag(MyProfileScreenTestTag.LOGOUT_BUTTON)) {
         Text("Logout")
       }
+
   Spacer(modifier = Modifier.height(80.dp))
+}
+
+@Composable
+fun InfoToRankingRow(selectedTab: MutableState<ProfileTab>) {
+  val tabCount = 2
+  val indicatorHeight = 3.dp
+
+  Column(modifier = Modifier.fillMaxWidth()) {
+    // --- Tabs Row ---
+    Row(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INFO_RATING_BAR)) {
+      // Info tab
+      Box(
+          modifier =
+              Modifier.weight(1f)
+                  .clickable { selectedTab.value = ProfileTab.INFO }
+                  .padding(vertical = 12.dp)
+                  .testTag(MyProfileScreenTestTag.INFO_TAB),
+          contentAlignment = Alignment.Center) {
+            Text(
+                text = "Info",
+                fontWeight =
+                    if (selectedTab.value == ProfileTab.INFO) FontWeight.Bold
+                    else FontWeight.Normal,
+                color =
+                    if (selectedTab.value == ProfileTab.INFO) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+          }
+
+      // Ratings tab
+      Box(
+          modifier =
+              Modifier.weight(1f)
+                  .clickable { selectedTab.value = ProfileTab.RATING }
+                  .padding(vertical = 12.dp)
+                  .testTag(MyProfileScreenTestTag.RATING_TAB),
+          contentAlignment = Alignment.Center) {
+            Text(
+                text = "Ratings",
+                fontWeight =
+                    if (selectedTab.value == ProfileTab.RATING) FontWeight.Bold
+                    else FontWeight.Normal,
+                color =
+                    if (selectedTab.value == ProfileTab.RATING) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+          }
+    }
+
+    // --- Indicator Animation ---
+    val transition = updateTransition(targetState = selectedTab.value, label = "tabIndicator")
+    val offsetX by
+        transition.animateDp(label = "tabIndicatorOffset") { tab ->
+          when (tab) {
+            ProfileTab.INFO -> 0.dp
+            ProfileTab.RATING -> 0.5f.dp * LocalConfiguration.current.screenWidthDp
+          }
+        }
+
+    Box(
+        modifier =
+            Modifier.fillMaxWidth()
+                .height(indicatorHeight)
+                .testTag(MyProfileScreenTestTag.TAB_INDICATOR)) {
+          Box(
+              modifier =
+                  Modifier.offset(x = offsetX)
+                      .width((LocalConfiguration.current.screenWidthDp / tabCount).dp)
+                      .height(indicatorHeight)
+                      .background(MaterialTheme.colorScheme.primary))
+        }
+
+    Spacer(modifier = Modifier.height(16.dp))
+  }
+}
+
+@Composable
+private fun RatingContent(
+    pd: PaddingValues,
+    ui: MyProfileUIState,
+) {
+
+  Box(
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(pd)
+              .padding(16.dp)
+              .testTag(MyProfileScreenTestTag.RATING_COMING_SOON_TEXT),
+      contentAlignment = Alignment.Center) {
+        Text(
+            text = "Ratings Feature Coming Soon!",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+      }
 }

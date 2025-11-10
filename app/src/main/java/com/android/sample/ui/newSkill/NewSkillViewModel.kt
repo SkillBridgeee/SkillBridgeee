@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.listing.ListingType
 import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
@@ -29,6 +31,7 @@ import kotlinx.coroutines.launch
  * - ownerId: identifier of the skill owner
  * - title, description, price: input fields
  * - subject: selected main subject
+ * - listingType: whether this is a proposal (offer) or request (seeking)
  * - errorMsg: global error (e.g. network)
  * - invalid*Msg: per-field validation messages
  */
@@ -37,6 +40,7 @@ data class SkillUIState(
     val description: String = "",
     val price: String = "",
     val subject: MainSubject? = null,
+    val listingType: ListingType? = null,
     val selectedLocation: Location? = null,
     val locationQuery: String = "",
     val locationSuggestions: List<Location> = emptyList(),
@@ -44,6 +48,7 @@ data class SkillUIState(
     val invalidDescMsg: String? = null,
     val invalidPriceMsg: String? = null,
     val invalidSubjectMsg: String? = null,
+    val invalidListingTypeMsg: String? = null,
     val invalidLocationMsg: String? = null
 ) {
 
@@ -54,11 +59,13 @@ data class SkillUIState(
             invalidDescMsg == null &&
             invalidPriceMsg == null &&
             invalidSubjectMsg == null &&
+            invalidListingTypeMsg == null &&
             invalidLocationMsg == null &&
             title.isNotBlank() &&
             description.isNotBlank() &&
             price.isNotBlank() &&
             subject != null &&
+            listingType != null &&
             selectedLocation != null
 }
 
@@ -87,6 +94,7 @@ class NewSkillViewModel(
   private val priceEmptyMsg = "Price cannot be empty"
   private val priceInvalidMsg = "Price must be a positive number"
   private val subjectMsgError = "You must choose a subject"
+  private val listingTypeMsgError = "You must choose a listing type"
   private val locationMsgError = "You must choose a location"
 
   /**
@@ -96,7 +104,7 @@ class NewSkillViewModel(
    */
   fun load() {}
 
-  fun addSkill() {
+  fun addListing() {
     val state = _uiState.value
     if (state.isValid) {
       val price = state.price.toDouble()
@@ -106,27 +114,51 @@ class NewSkillViewModel(
               skill = state.title,
           )
 
-      val newProposal =
-          Proposal(
-              listingId = listingRepository.getNewUid(),
-              creatorUserId = userId,
-              skill = newSkill,
-              description = state.description,
-              location = state.selectedLocation!!,
-              hourlyRate = price)
-
-      addSkillToRepository(proposal = newProposal)
+      when (state.listingType!!) {
+        ListingType.PROPOSAL -> {
+          val newProposal =
+              Proposal(
+                  listingId = listingRepository.getNewUid(),
+                  creatorUserId = userId,
+                  skill = newSkill,
+                  description = state.description,
+                  location = state.selectedLocation!!,
+                  hourlyRate = price)
+          addProposalToRepository(proposal = newProposal)
+        }
+        ListingType.REQUEST -> {
+          val newRequest =
+              Request(
+                  listingId = listingRepository.getNewUid(),
+                  creatorUserId = userId,
+                  skill = newSkill,
+                  description = state.description,
+                  location = state.selectedLocation!!,
+                  hourlyRate = price)
+          addRequestToRepository(request = newRequest)
+        }
+      }
     } else {
       setError()
     }
   }
 
-  private fun addSkillToRepository(proposal: Proposal) {
+  private fun addProposalToRepository(proposal: Proposal) {
     viewModelScope.launch {
       try {
         listingRepository.addProposal(proposal)
       } catch (e: Exception) {
-        Log.e("NewSkillViewModel", "Error adding NewSkill", e)
+        Log.e("NewSkillViewModel", "Error adding Proposal", e)
+      }
+    }
+  }
+
+  private fun addRequestToRepository(request: Request) {
+    viewModelScope.launch {
+      try {
+        listingRepository.addRequest(request)
+      } catch (e: Exception) {
+        Log.e("NewSkillViewModel", "Error adding Request", e)
       }
     }
   }
@@ -141,6 +173,8 @@ class NewSkillViewModel(
               if (currentState.price.isBlank()) priceEmptyMsg
               else if (!isPosNumber(currentState.price)) priceInvalidMsg else null,
           invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null,
+          invalidListingTypeMsg =
+              if (currentState.listingType == null) listingTypeMsgError else null,
           invalidLocationMsg =
               if (currentState.selectedLocation == null) locationMsgError else null)
     }
@@ -150,9 +184,10 @@ class NewSkillViewModel(
 
   /** Update the title and validate presence. If the title is blank, sets `invalidTitleMsg`. */
   fun setTitle(title: String) {
-    _uiState.value =
-        _uiState.value.copy(
-            title = title, invalidTitleMsg = if (title.isBlank()) titleMsgError else null)
+    _uiState.update { currentState ->
+      currentState.copy(
+          title = title, invalidTitleMsg = if (title.isBlank()) titleMsgError else null)
+    }
   }
 
   /**
@@ -160,10 +195,11 @@ class NewSkillViewModel(
    * `invalidDescMsg`.
    */
   fun setDescription(description: String) {
-    _uiState.value =
-        _uiState.value.copy(
-            description = description,
-            invalidDescMsg = if (description.isBlank()) descMsgError else null)
+    _uiState.update { currentState ->
+      currentState.copy(
+          description = description,
+          invalidDescMsg = if (description.isBlank()) descMsgError else null)
+    }
   }
 
   /**
@@ -174,22 +210,32 @@ class NewSkillViewModel(
    * - non positive number or non-numeric -> "Price must be a positive number or null (0.0)"
    */
   fun setPrice(price: String) {
-    _uiState.value =
-        _uiState.value.copy(
-            price = price,
-            invalidPriceMsg =
-                if (price.isBlank()) priceEmptyMsg
-                else if (!isPosNumber(price)) priceInvalidMsg else null)
+    _uiState.update { currentState ->
+      currentState.copy(
+          price = price,
+          invalidPriceMsg =
+              if (price.isBlank()) priceEmptyMsg
+              else if (!isPosNumber(price)) priceInvalidMsg else null)
+    }
   }
 
   /** Update the selected main subject. */
   fun setSubject(sub: MainSubject) {
-    _uiState.value = _uiState.value.copy(subject = sub, invalidSubjectMsg = null)
+    _uiState.update { currentState -> currentState.copy(subject = sub, invalidSubjectMsg = null) }
+  }
+
+  /** Update the selected listing type (PROPOSAL or REQUEST). */
+  fun setListingType(type: ListingType) {
+    _uiState.update { currentState ->
+      currentState.copy(listingType = type, invalidListingTypeMsg = null)
+    }
   }
 
   // Update the selected location and the locationQuery
   fun setLocation(location: Location) {
-    _uiState.value = _uiState.value.copy(selectedLocation = location, locationQuery = location.name)
+    _uiState.update { currentState ->
+      currentState.copy(selectedLocation = location, locationQuery = location.name)
+    }
   }
 
   /**
@@ -204,7 +250,7 @@ class NewSkillViewModel(
    * @see viewModelScope
    */
   fun setLocationQuery(query: String) {
-    _uiState.value = _uiState.value.copy(locationQuery = query)
+    _uiState.update { it.copy(locationQuery = query) }
 
     locationSearchJob?.cancel()
 
@@ -214,18 +260,18 @@ class NewSkillViewModel(
             delay(locationSearchDelayTime)
             try {
               val results = locationRepository.search(query)
-              _uiState.value =
-                  _uiState.value.copy(locationSuggestions = results, invalidLocationMsg = null)
+              _uiState.update { it.copy(locationSuggestions = results, invalidLocationMsg = null) }
             } catch (_: Exception) {
-              _uiState.value = _uiState.value.copy(locationSuggestions = emptyList())
+              _uiState.update { it.copy(locationSuggestions = emptyList()) }
             }
           }
     } else {
-      _uiState.value =
-          _uiState.value.copy(
-              locationSuggestions = emptyList(),
-              invalidLocationMsg = locationMsgError,
-              selectedLocation = null)
+      _uiState.update {
+        it.copy(
+            locationSuggestions = emptyList(),
+            invalidLocationMsg = locationMsgError,
+            selectedLocation = null)
+      }
     }
   }
 
