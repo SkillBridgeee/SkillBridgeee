@@ -59,7 +59,7 @@ data class MyProfileUIState(
     val listings: List<Listing> = emptyList(),
     val listingsLoading: Boolean = false,
     val listingsLoadError: String? = null,
-    val ratings : List<Rating> = emptyList(),
+    val ratings: List<Rating> = emptyList(),
     val ratingsLoading: Boolean = false,
     val ratingsLoadError: String? = null
 ) {
@@ -159,30 +159,30 @@ class MyProfileViewModel(
       }
     }
   }
-  /**   * Loads ratings received by the given user and updates UI state.
-   *   * Uses a dedicated `ratingsLoading` flag so the rest of the screen can remain visible.
-   *   */
-
-    fun loadUserRatings(ownerId: String = _uiState.value.userId ?: userId) {
-        viewModelScope.launch {
-            // set ratings loading state (does not affect full-screen isLoading)
-            _uiState.update { it.copy(ratingsLoading = true, ratingsLoadError = null) }
-            try {
-                val items = ratingsRepository.getRatingsByToUser(ownerId)
-                _uiState.update {
-                    it.copy(ratings = items, ratingsLoading = false, ratingsLoadError = null)
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error loading ratings for user: $ownerId", e)
-                _uiState.update {
-                    it.copy(
-                        listings = emptyList(),
-                        listingsLoading = false,
-                        listingsLoadError = "Failed to load ratings.")
-                }
-            }
+  /**
+   * Loads ratings received by the given user and updates UI state.
+   * * Uses a dedicated `ratingsLoading` flag so the rest of the screen can remain visible.
+   */
+  fun loadUserRatings(ownerId: String = _uiState.value.userId ?: userId) {
+    viewModelScope.launch {
+      // set ratings loading state (does not affect full-screen isLoading)
+      _uiState.update { it.copy(ratingsLoading = true, ratingsLoadError = null) }
+      try {
+        val items = ratingsRepository.getRatingsByToUser(ownerId)
+        _uiState.update {
+          it.copy(ratings = items, ratingsLoading = false, ratingsLoadError = null)
         }
+      } catch (e: Exception) {
+        Log.e(TAG, "Error loading ratings for user: $ownerId", e)
+        _uiState.update {
+          it.copy(
+              listings = emptyList(),
+              listingsLoading = false,
+              listingsLoadError = "Failed to load ratings.")
+        }
+      }
     }
+  }
 
   /**
    * Edits a Profile.

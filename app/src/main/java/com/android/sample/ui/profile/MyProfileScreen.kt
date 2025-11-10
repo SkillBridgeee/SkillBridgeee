@@ -66,10 +66,10 @@ object MyProfileScreenTestTag {
   const val INFO_RATING_BAR = "infoRankingBar"
   const val INFO_TAB = "infoTab"
   const val RATING_TAB = "rankingTab"
+  const val RATING_SECTION = "ratingSection"
   const val LISTINGS_TAB = "listingsTab"
-
-  const val RATING_COMING_SOON_TEXT = "rankingComingSoonText"
   const val TAB_INDICATOR = "tabIndicator"
+  const val LISTINGS_SECTION = "listingsSection"
 }
 
 enum class ProfileTab {
@@ -97,25 +97,22 @@ fun MyProfileScreen(
 ) {
   val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
   Scaffold() { pd ->
-        val ui by profileViewModel.uiState.collectAsState()
-        LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
+    val ui by profileViewModel.uiState.collectAsState()
+    LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
 
-        Column() {
-          SelectionRow(selectedTab)
-          Spacer(modifier = Modifier.height(4.dp))
+    Column() {
+      SelectionRow(selectedTab)
+      Spacer(modifier = Modifier.height(4.dp))
 
-          if (selectedTab.value == ProfileTab.INFO) {
-            ProfileContent(pd, ui, profileViewModel, onLogout)
-          }
-          else if (selectedTab.value == ProfileTab.RATING ) {
-            RatingContent(ui)
-          }
-          else if (selectedTab.value == ProfileTab.LISTINGS) {
-            ProfileListings(ui)
-            }
-          else{}
-        }
-      }
+      if (selectedTab.value == ProfileTab.INFO) {
+        ProfileContent(pd, ui, profileViewModel, onLogout)
+      } else if (selectedTab.value == ProfileTab.RATING) {
+        RatingContent(ui)
+      } else if (selectedTab.value == ProfileTab.LISTINGS) {
+        ProfileListings(ui)
+      } else {}
+    }
+  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -273,8 +270,6 @@ private fun SectionCard(
               modifier = titleTestTag?.let { Modifier.testTag(it) } ?: Modifier)
           Spacer(modifier = Modifier.height(10.dp))
           content()
-
-
         }
       }
 }
@@ -305,10 +300,10 @@ private fun ProfileForm(
           profileViewModel.onLocationPermissionDenied()
         }
       }
-    var nameChanged by remember { mutableStateOf(false) }
-    var emailChanged by remember { mutableStateOf(false) }
-    var descriptionChanged by remember { mutableStateOf(false) }
-    var locationChanged by remember { mutableStateOf(false) }
+  var nameChanged by remember { mutableStateOf(false) }
+  var emailChanged by remember { mutableStateOf(false) }
+  var descriptionChanged by remember { mutableStateOf(false) }
+  var locationChanged by remember { mutableStateOf(false) }
 
   Row(
       modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -316,8 +311,10 @@ private fun ProfileForm(
         SectionCard(title = "Personal Details", titleTestTag = MyProfileScreenTestTag.CARD_TITLE) {
           ProfileTextField(
               value = ui.name ?: "",
-              onValueChange = { profileViewModel.setName(it)
-                              nameChanged = true },
+              onValueChange = {
+                profileViewModel.setName(it)
+                nameChanged = true
+              },
               label = "Name",
               placeholder = "Enter Your Full Name",
               isError = ui.invalidNameMsg != null,
@@ -329,8 +326,10 @@ private fun ProfileForm(
 
           ProfileTextField(
               value = ui.email ?: "",
-              onValueChange = { profileViewModel.setEmail(it)
-                              emailChanged = true },
+              onValueChange = {
+                profileViewModel.setEmail(it)
+                emailChanged = true
+              },
               label = "Email",
               placeholder = "Enter Your Email",
               isError = ui.invalidEmailMsg != null,
@@ -342,8 +341,10 @@ private fun ProfileForm(
 
           ProfileTextField(
               value = ui.description ?: "",
-              onValueChange = { profileViewModel.setDescription(it)
-                              descriptionChanged = true },
+              onValueChange = {
+                profileViewModel.setDescription(it)
+                descriptionChanged = true
+              },
               label = "Description",
               placeholder = "Info About You",
               isError = ui.invalidDescMsg != null,
@@ -359,8 +360,10 @@ private fun ProfileForm(
             LocationInputField(
                 locationQuery = ui.locationQuery,
                 locationSuggestions = ui.locationSuggestions,
-                onLocationQueryChange = { profileViewModel.setLocationQuery(it)
-                                        locationChanged = true },
+                onLocationQueryChange = {
+                  profileViewModel.setLocationQuery(it)
+                  locationChanged = true
+                },
                 errorMsg = ui.invalidLocationMsg,
                 onLocationSelected = { location ->
                   profileViewModel.setLocationQuery(location.name)
@@ -388,23 +391,18 @@ private fun ProfileForm(
           }
           Spacer(modifier = Modifier.height(fieldSpacing))
 
-
-            Button(
-                onClick = { profileViewModel.editProfile()
-                            nameChanged = false
-                            emailChanged = false
-                            descriptionChanged = false
-                            locationChanged = false },
-                modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON)
-                    .fillMaxWidth(),
-                enabled = ( nameChanged ||
-                        emailChanged ||
-                        descriptionChanged ||
-                        locationChanged )
-            ) {
+          Button(
+              onClick = {
+                profileViewModel.editProfile()
+                nameChanged = false
+                emailChanged = false
+                descriptionChanged = false
+                locationChanged = false
+              },
+              modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON).fillMaxWidth(),
+              enabled = (nameChanged || emailChanged || descriptionChanged || locationChanged)) {
                 Text("Save Profile Changes")
-            }
-
+              }
         }
       }
 }
@@ -423,7 +421,8 @@ private fun ProfileListings(ui: MyProfileUIState) {
       text = "Your Listings",
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold,
-      modifier = Modifier.padding(horizontal = 16.dp))
+      modifier =
+          Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.LISTINGS_SECTION))
   Spacer(modifier = Modifier.height(8.dp))
 
   when {
@@ -513,14 +512,14 @@ fun SelectionRow(selectedTab: MutableState<ProfileTab>) {
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
           }
 
-        //Listings tab
-        Box(
-            modifier =
-                Modifier.weight(1f)
-                    .clickable { selectedTab.value = ProfileTab.LISTINGS }
-                    .padding(vertical = 12.dp)
-                    .testTag(MyProfileScreenTestTag.LISTINGS_TAB),
-            contentAlignment = Alignment.Center) {
+      // Listings tab
+      Box(
+          modifier =
+              Modifier.weight(1f)
+                  .clickable { selectedTab.value = ProfileTab.LISTINGS }
+                  .padding(vertical = 12.dp)
+                  .testTag(MyProfileScreenTestTag.LISTINGS_TAB),
+          contentAlignment = Alignment.Center) {
             Text(
                 text = "Listings",
                 fontWeight =
@@ -529,9 +528,9 @@ fun SelectionRow(selectedTab: MutableState<ProfileTab>) {
                 color =
                     if (selectedTab.value == ProfileTab.LISTINGS) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-        }
+          }
 
-        // Ratings tab
+      // Ratings tab
       Box(
           modifier =
               Modifier.weight(1f)
@@ -552,13 +551,13 @@ fun SelectionRow(selectedTab: MutableState<ProfileTab>) {
 
     // --- Indicator Animation ---
     val transition = updateTransition(targetState = selectedTab.value, label = "tabIndicator")
-    val thirdToFLoat = 1/3f
+    val thirdToFLoat = 1 / 3f
     val offsetX by
         transition.animateDp(label = "tabIndicatorOffset") { tab ->
           when (tab) {
             ProfileTab.INFO -> 0.dp
             ProfileTab.LISTINGS -> thirdToFLoat.dp * LocalConfiguration.current.screenWidthDp
-            ProfileTab.RATING -> 2*thirdToFLoat.dp * LocalConfiguration.current.screenWidthDp
+            ProfileTab.RATING -> 2 * thirdToFLoat.dp * LocalConfiguration.current.screenWidthDp
           }
         }
 
@@ -584,54 +583,52 @@ private fun RatingContent(
     ui: MyProfileUIState,
 ) {
 
-    Text(
-        text = "Your Ratings",
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(horizontal = 16.dp))
-    Spacer(modifier = Modifier.height(8.dp))
+  Text(
+      text = "Your Ratings",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold,
+      modifier =
+          Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.RATING_SECTION))
+  Spacer(modifier = Modifier.height(8.dp))
 
-    when {
-        ui.ratingsLoading -> {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
-        ui.ratingsLoadError != null -> {
-            Text(
-                text = ui.listingsLoadError ?: "Failed to load ratings.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Red,
-                modifier = Modifier.padding(horizontal = 16.dp))
-        }
-        ui.ratings.isEmpty() -> {
-            Text(
-                text = "You don’t have any ratings yet.",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp))
-        }
-        else -> {
-            val creatorProfile =
-                Profile(
-                    userId = ui.userId ?: "",
-                    name = ui.name ?: "",
-                    email = ui.email ?: "",
-                    location = ui.selectedLocation ?: Location(),
-                    description = ui.description ?: "")
-            ui.ratings.forEach { rating ->
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    RatingCard(
-                        rating = rating,
-                        creator = creatorProfile,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                }
-            }
-        }
+  when {
+    ui.ratingsLoading -> {
+      Box(
+          modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+          contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+          }
     }
-
+    ui.ratingsLoadError != null -> {
+      Text(
+          text = ui.listingsLoadError ?: "Failed to load ratings.",
+          style = MaterialTheme.typography.bodyMedium,
+          color = Color.Red,
+          modifier = Modifier.padding(horizontal = 16.dp))
+    }
+    ui.ratings.isEmpty() -> {
+      Text(
+          text = "You don’t have any ratings yet.",
+          style = MaterialTheme.typography.bodyMedium,
+          modifier = Modifier.padding(horizontal = 16.dp))
+    }
+    else -> {
+      val creatorProfile =
+          Profile(
+              userId = ui.userId ?: "",
+              name = ui.name ?: "",
+              email = ui.email ?: "",
+              location = ui.selectedLocation ?: Location(),
+              description = ui.description ?: "")
+      ui.ratings.forEach { rating ->
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+          RatingCard(
+              rating = rating,
+              creator = creatorProfile,
+          )
+          Spacer(Modifier.height(8.dp))
+        }
+      }
+    }
+  }
 }
-
-

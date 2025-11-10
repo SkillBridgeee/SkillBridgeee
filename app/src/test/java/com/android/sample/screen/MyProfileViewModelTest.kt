@@ -10,6 +10,8 @@ import com.android.sample.model.listing.Request
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.profile.DESC_EMPTY_MSG
@@ -137,6 +139,32 @@ class MyProfileViewModelTest {
         emptyList()
   }
 
+  private class FakeRationgRepos : RatingRepository {
+    override fun getNewUid(): String = "fake-rating-id"
+
+    override suspend fun getAllRatings(): List<Rating> = emptyList()
+
+    override suspend fun getRating(ratingId: String): Rating? = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsByToUser(toUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
+
+    override suspend fun addRating(rating: Rating) = Unit
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) = Unit
+
+    override suspend fun deleteRating(ratingId: String) = Unit
+
+    /** Gets all tutor ratings for listings owned by this user */
+    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    /** Gets all student ratings received by this user */
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+  }
+
   private class SuccessGpsProvider(
       private val lat: Double = 12.34,
       private val lon: Double = 56.78
@@ -165,8 +193,9 @@ class MyProfileViewModelTest {
       repo: ProfileRepository = FakeProfileRepo(),
       locRepo: LocationRepository = FakeLocationRepo(),
       listingRepo: ListingRepository = FakeListingRepo(),
+      ratingRepo: RatingRepository = FakeRationgRepos(),
       userId: String = "testUid"
-  ) = MyProfileViewModel(repo, locRepo, listingRepo, userId)
+  ) = MyProfileViewModel(repo, locRepo, listingRepo, ratingRepo, userId = userId)
 
   private class NullGpsProvider :
       com.android.sample.model.map.GpsLocationProvider(
@@ -541,9 +570,12 @@ class MyProfileViewModelTest {
     val repo = mock<ProfileRepository>()
     val listingRepo = mock<ListingRepository>()
     val context = mock<Context>()
+    val ratingRepo = mock<RatingRepository>()
 
     val provider = GpsLocationProvider(context)
-    val viewModel = MyProfileViewModel(repo, listingRepository = listingRepo, userId = "demo")
+    val viewModel =
+        MyProfileViewModel(
+            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo")
 
     viewModel.fetchLocationFromGps(provider, context)
   }
@@ -553,8 +585,11 @@ class MyProfileViewModelTest {
     val repo = mock<ProfileRepository>()
     val listingRepo = mock<ListingRepository>()
     val context = mock<Context>()
+    val ratingRepo = mock<RatingRepository>()
 
-    val viewModel = MyProfileViewModel(repo, listingRepository = listingRepo, userId = "demo")
+    val viewModel =
+        MyProfileViewModel(
+            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo")
 
     viewModel.onLocationPermissionDenied()
   }
