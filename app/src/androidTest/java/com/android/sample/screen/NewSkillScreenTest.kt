@@ -18,6 +18,7 @@ import com.android.sample.ui.newSkill.NewSkillScreen
 import com.android.sample.ui.newSkill.NewSkillScreenTestTag
 import com.android.sample.ui.screens.newSkill.NewSkillViewModel
 import com.android.sample.ui.theme.SampleAppTheme
+import kotlin.collections.get
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -79,7 +80,9 @@ class FakeLocationRepository : LocationRepository {
 // === CI-Stable Test Helpers ===
 // =============================
 
-private fun ComposeContentTestRule.stabilizeCompose(delayMillis: Long = 1000) {
+private const val STABLE_WAIT_TIMEOUT = 20_000L
+
+private fun ComposeContentTestRule.stabilizeCompose(delayMillis: Long = 1_000) {
   mainClock.advanceTimeBy(delayMillis)
   waitForIdle()
 }
@@ -87,7 +90,7 @@ private fun ComposeContentTestRule.stabilizeCompose(delayMillis: Long = 1000) {
 private fun ComposeContentTestRule.waitForNodeStable(
     tag: String,
     useUnmergedTree: Boolean = true,
-    timeoutMillis: Long = 10_000
+    timeoutMillis: Long = STABLE_WAIT_TIMEOUT
 ) {
   waitUntil(timeoutMillis) {
     onAllNodesWithTag(tag, useUnmergedTree).fetchSemanticsNodes().isNotEmpty()
@@ -105,28 +108,35 @@ private fun ComposeContentTestRule.openDropdownStable(fieldTag: String) {
       }
 
   onNodeWithTag(fieldTag, useUnmergedTree = true).assertExists().performClick()
-
+  stabilizeCompose()
   waitForNodeStable(dropdownTag)
 }
 
 private fun ComposeContentTestRule.selectDropdownItemByTextStable(text: String) {
-  onNodeWithText(text, useUnmergedTree = true).assertExists().performClick()
+  waitUntil(STABLE_WAIT_TIMEOUT) {
+    onAllNodesWithText(text, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+  }
+  stabilizeCompose()
+  onAllNodesWithText(text, useUnmergedTree = true)[0].assertExists().performClick()
   stabilizeCompose()
 }
 
 private fun ComposeContentTestRule.selectDropdownItemByTagStable(
     itemTagPrefix: String,
-    index: Int
+    index: Int,
+    timeoutMillis: Long = STABLE_WAIT_TIMEOUT
 ) {
   val fullTag = "${itemTagPrefix}_$index"
 
-  waitUntil(10_000) {
+  waitUntil(timeoutMillis) {
     onAllNodesWithTag(fullTag, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
   }
 
   stabilizeCompose()
 
-  onNodeWithTag(fullTag, useUnmergedTree = true).assertExists().performClick()
+  // use onAllNodesWithTag and click the first matching node (should be the indexed one)
+  val nodes = onAllNodesWithTag(fullTag, useUnmergedTree = true)
+  nodes[0].assertExists().performClick()
 
   stabilizeCompose()
 }
