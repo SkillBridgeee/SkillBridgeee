@@ -221,20 +221,22 @@ fun SubjectMenu(
               }
             },
             modifier =
-                Modifier.menuAnchor().fillMaxWidth().testTag(NewSkillScreenTestTag.SUBJECT_FIELD))
+                Modifier.testTag(NewSkillScreenTestTag.SUBJECT_FIELD).menuAnchor().fillMaxWidth())
 
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier.testTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN)) {
-              subjects.forEach { subject ->
+              subjects.forEachIndexed { index, subject ->
                 DropdownMenuItem(
                     text = { Text(subject.name) },
                     onClick = {
                       onSubjectSelected(subject)
                       expanded = false
                     },
-                    modifier = Modifier.testTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX))
+                    modifier =
+                        Modifier.testTag(
+                            "${NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_$index"))
               }
             }
       }
@@ -269,15 +271,15 @@ fun ListingTypeMenu(
               }
             },
             modifier =
-                Modifier.menuAnchor()
-                    .fillMaxWidth()
-                    .testTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD))
+                Modifier.testTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
+                    .menuAnchor()
+                    .fillMaxWidth())
 
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier.testTag(NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN)) {
-              listingTypes.forEach { type ->
+              listingTypes.forEachIndexed { index, type ->
                 DropdownMenuItem(
                     text = { Text(type.name) },
                     onClick = {
@@ -285,7 +287,8 @@ fun ListingTypeMenu(
                       expanded = false
                     },
                     modifier =
-                        Modifier.testTag(NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX))
+                        Modifier.testTag(
+                            "${NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_$index"))
               }
             }
       }
@@ -320,13 +323,13 @@ fun SubSkillMenu(
               }
             },
             modifier =
-                Modifier.menuAnchor().fillMaxWidth().testTag(NewSkillScreenTestTag.SUB_SKILL_FIELD))
+                Modifier.testTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).menuAnchor().fillMaxWidth())
 
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             modifier = Modifier.testTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN)) {
-              options.forEach { opt ->
+              options.forEachIndexed { index, opt ->
                 DropdownMenuItem(
                     text = { Text(opt) },
                     onClick = {
@@ -334,7 +337,8 @@ fun SubSkillMenu(
                       expanded = false
                     },
                     modifier =
-                        Modifier.testTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX))
+                        Modifier.testTag(
+                            "${NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_$index"))
               }
             }
       }
