@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.listing.ListingType
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -23,17 +24,17 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingDetailsScreen(
-    bkgViewModel: BookingDetailsViewModel = BookingDetailsViewModel(),
+    bkgViewModel: BookingDetailsViewModel = viewModel(),
     bookingId: String,
     onCreatorClick: (String) -> Unit,
 ) {
 
-  val uiState by bkgViewModel.uiState.collectAsState()
+  val uiState by bkgViewModel.bookingUiState.collectAsState()
 
   LaunchedEffect(bookingId) { bkgViewModel.load(bookingId) }
 
   Scaffold { paddingValues ->
-    if (uiState.courseName.isEmpty() && uiState.creatorName.isEmpty()) {
+    if (uiState.loadError) {
       Box(
           modifier = Modifier.fillMaxSize().padding(paddingValues),
           contentAlignment = Alignment.Center) {
@@ -50,7 +51,7 @@ fun BookingDetailsScreen(
 
 @Composable
 fun BookingDetailsContent(
-    uiState: BkgDetailsUIState,
+    uiState: BookingUIState,
     onCreatorClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -84,9 +85,9 @@ fun BookingDetailsContent(
 // --- Composable pour l'en-tête (utilise AnnotatedString pour le style) ---
 
 @Composable
-private fun BookingHeader(uiState: BkgDetailsUIState) {
+private fun BookingHeader(uiState: BookingUIState) {
   val prefixText =
-      when (uiState.type) {
+      when (uiState.listing.type) {
         ListingType.REQUEST -> "Teacher for : "
         ListingType.PROPOSAL -> "Student for : "
       }
@@ -96,7 +97,9 @@ private fun BookingHeader(uiState: BkgDetailsUIState) {
 
   val styledText = buildAnnotatedString {
     withStyle(style = SpanStyle(fontSize = prefixSize)) { append(prefixText) }
-    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) { append(uiState.courseName) }
+    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+      append(uiState.listing.skill.skill)
+    }
   }
 
   Column(horizontalAlignment = Alignment.Start) {
@@ -106,9 +109,9 @@ private fun BookingHeader(uiState: BkgDetailsUIState) {
 }
 
 @Composable
-private fun InfoCreator(uiState: BkgDetailsUIState, onCreatorClick: (String) -> Unit) {
+private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Unit) {
   val creatorRole =
-      when (uiState.type) {
+      when (uiState.listing.type) {
         ListingType.REQUEST -> "Student"
         ListingType.PROPOSAL -> "Tutor"
       }
@@ -131,7 +134,7 @@ private fun InfoCreator(uiState: BkgDetailsUIState, onCreatorClick: (String) -> 
             verticalAlignment = Alignment.CenterVertically,
             modifier =
                 Modifier.clip(RoundedCornerShape(8.dp))
-                    .clickable { onCreatorClick(uiState.creatorId) }
+                    .clickable { onCreatorClick(uiState.booking.listingCreatorId) }
                     .padding(horizontal = 6.dp, vertical = 2.dp)) {
               Text(
                   text = "More Info",
@@ -146,40 +149,39 @@ private fun InfoCreator(uiState: BkgDetailsUIState, onCreatorClick: (String) -> 
             }
       }
 
-  DetailRow(label = "$creatorRole Name", value = uiState.creatorName)
-  DetailRow(label = "Email", value = uiState.creatorMail)
+  DetailRow(label = "$creatorRole Name", value = uiState.creatorProfile.name!!)
+  DetailRow(label = "Email", value = uiState.creatorProfile.email)
 }
 
 @Composable
-private fun InfoListing(uiState: BkgDetailsUIState) {
+private fun InfoListing(uiState: BookingUIState) {
   Text(
       text = "Information about the course",
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold)
-  DetailRow(label = "Subject", value = uiState.subject.name.replace("_", " "))
-  DetailRow(label = "Location", value = uiState.location.name)
-  DetailRow(label = "Hourly Rate", value = uiState.hourlyRate)
+  DetailRow(label = "Subject", value = uiState.listing.skill.mainSubject.name.replace("_", " "))
+  DetailRow(label = "Location", value = uiState.listing.location.name)
+  DetailRow(label = "Hourly Rate", value = uiState.booking.price.toString())
 }
 
 @Composable
-private fun InfoSchedule(uiState: BkgDetailsUIState) {
+private fun InfoSchedule(uiState: BookingUIState) {
   Text(
       text = "Schedule", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
   val dateFormatter = SimpleDateFormat("dd/MM/yyyy 'to' HH:mm", Locale.getDefault())
 
-  DetailRow(label = "Start of the session", value = dateFormatter.format(uiState.start))
-  DetailRow(label = "End of the session", value = dateFormatter.format(uiState.end))
+  DetailRow(
+      label = "Start of the session", value = dateFormatter.format(uiState.booking.sessionStart))
+  DetailRow(label = "End of the session", value = dateFormatter.format(uiState.booking.sessionEnd))
 }
 
 @Composable
-private fun InfoDesc(uiState: BkgDetailsUIState) {
+private fun InfoDesc(uiState: BookingUIState) {
   Text(
       text = "Description of the listing",
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold)
-  Text(
-      text = uiState.description.ifEmpty { "No description about the lessons." },
-      style = MaterialTheme.typography.bodyMedium)
+  Text(text = uiState.listing.description, style = MaterialTheme.typography.bodyMedium)
 }
 
 @Composable

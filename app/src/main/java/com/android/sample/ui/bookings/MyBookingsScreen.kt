@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.ui.components.BookingCard
 
 object MyBookingsPageTestTag {
@@ -27,7 +28,7 @@ object MyBookingsPageTestTag {
 @Composable
 fun MyBookingsScreen(
     modifier: Modifier = Modifier,
-    viewModel: MyBookingsViewModel = MyBookingsViewModel(),
+    viewModel: MyBookingsViewModel = viewModel(),
     onBookingClick: (String) -> Unit
 ) {
   Scaffold { inner ->
