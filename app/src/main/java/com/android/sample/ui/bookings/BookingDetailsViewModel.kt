@@ -50,7 +50,7 @@ class BookingDetailsViewModel(
                 loadError = false)
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error loading booking details for $bookingId", e)
-        bookingUiState.value.copy(loadError = true)
+        _bookingUiState.value = bookingUiState.value.copy(loadError = true)
       }
     }
   }
