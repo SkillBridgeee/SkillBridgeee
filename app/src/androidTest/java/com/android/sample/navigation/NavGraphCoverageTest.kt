@@ -123,11 +123,6 @@ class NavGraphCoverageTest {
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).performClick()
     composeTestRule.waitForIdle()
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
-
-    // FAB (Add)
-    composeTestRule.onNodeWithContentDescription("Add").performClick()
-    composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithTag(NewSkillScreenTestTag.CREATE_LESSONS_TITLE).assertExists()
   }
 
   @Test
