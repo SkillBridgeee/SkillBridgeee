@@ -1,4 +1,4 @@
-package com.android.sample.ui.screens.newSkill
+package com.android.sample.ui.newSkill
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,10 +33,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.android.sample.model.listing.ListingType
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.LocationInputField
+import com.android.sample.ui.screens.newSkill.NewSkillViewModel
 
 object NewSkillScreenTestTag {
   const val BUTTON_SAVE_SKILL = "buttonSaveSkill"
@@ -63,7 +65,11 @@ object NewSkillScreenTestTag {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewSkillScreen(skillViewModel: NewSkillViewModel = viewModel(), profileId: String) {
+fun NewSkillScreen(
+    skillViewModel: NewSkillViewModel = viewModel(),
+    profileId: String,
+    navController: NavController
+) {
   val skillUIState by skillViewModel.uiState.collectAsState()
   val buttonText =
       when (skillUIState.listingType) {
@@ -76,7 +82,10 @@ fun NewSkillScreen(skillViewModel: NewSkillViewModel = viewModel(), profileId: S
       floatingActionButton = {
         AppButton(
             text = buttonText,
-            onClick = { skillViewModel.addListing() },
+            onClick = {
+              skillViewModel.addListing()
+              navController.popBackStack()
+            },
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center,
