@@ -15,7 +15,6 @@ import com.android.sample.model.listing.ListingType
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-// --- Composable Principal ---
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +27,7 @@ fun BookingDetailsScreen(
 
   LaunchedEffect(bookingId) { bkgViewModel.load(bookingId) }
 
-  Scaffold() { paddingValues ->
+  Scaffold { paddingValues ->
     if (uiState.courseName.isEmpty() && uiState.creatorName.isEmpty()) {
       Box(
           modifier = Modifier.fillMaxSize().padding(paddingValues),
@@ -50,41 +49,41 @@ fun BookingDetailsContent(uiState: BkgDetailsUIState, modifier: Modifier = Modif
 
     HorizontalDivider()
 
-    // 2. Section Informations de Session
+
     Text(
-        text = "Informations de la Session",
+        text = "Information about the course",
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold)
     DetailRow(
-        label = "Type d'offre",
+        label = "Listing Type",
         value =
             when (uiState.type) {
-              ListingType.PROPOSAL -> "Tutorat (Proposition)"
-              ListingType.REQUEST -> "Demande (Recherche de Tuteur)"
+              ListingType.PROPOSAL -> "Tutor (Proposition)"
+              ListingType.REQUEST -> "Request (Looking for a tutor)"
             })
-    DetailRow(label = "Matière", value = uiState.subject.name.replace("_", " "))
-    DetailRow(label = "Localisation", value = uiState.location.name)
+    DetailRow(label = "Subject", value = uiState.subject.name.replace("_", " "))
+    DetailRow(label = "Location", value = uiState.location.name)
 
     HorizontalDivider()
 
     // 3. Section Horaires
     Text(
-        text = "Horaires",
+        text = "Schedule",
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold)
-    val dateFormatter = SimpleDateFormat("dd/MM/yyyy à HH:mm", Locale.getDefault())
-    DetailRow(label = "Début de session", value = dateFormatter.format(uiState.start))
-    DetailRow(label = "Fin de session", value = dateFormatter.format(uiState.end))
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy to HH:mm", Locale.getDefault())
+    DetailRow(label = "Start of the session", value = dateFormatter.format(uiState.start))
+    DetailRow(label = "End of the session", value = dateFormatter.format(uiState.end))
 
     HorizontalDivider()
 
     // 4. Description
     Text(
-        text = "Description du besoin ou de l'offre",
+        text = "Description of the listing",
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold)
     Text(
-        text = uiState.description.ifEmpty { "Aucune description fournie." },
+        text = uiState.description.ifEmpty { "No description about the lessons." },
         style = MaterialTheme.typography.bodyMedium)
   }
 }
@@ -109,31 +108,27 @@ fun DetailRow(label: String, value: String) {
 fun BookingHeader(uiState: BkgDetailsUIState) {
   val prefixText =
       when (uiState.type) {
-        ListingType.REQUEST -> "Tuteur pour : "
-        ListingType.PROPOSAL -> "Étudiant pour : "
+        ListingType.REQUEST -> "Teacher for : "
+        ListingType.PROPOSAL -> "Student for : "
       }
 
-  // Définir les styles pour le préfixe (petit) et le corps (grand, gras)
   val baseStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal)
   val prefixSize = MaterialTheme.typography.bodyLarge.fontSize // Taille légèrement plus petite
 
   val styledText = buildAnnotatedString {
-    // Appliquer la taille plus petite au préfixe
     withStyle(style = SpanStyle(fontSize = prefixSize)) { append(prefixText) }
-
-    // Appliquer le gras au titre du cours
     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) { append(uiState.courseName) }
   }
 
   Column(horizontalAlignment = Alignment.Start) {
     Text(
         text = styledText,
-        style = baseStyle, // Appliquer le style de base
+        style = baseStyle,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis)
     Spacer(modifier = Modifier.height(4.dp))
     Text(
-        text = "Partenaire : ${uiState.creatorName}",
+        text = uiState.creatorName,
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.primary)
