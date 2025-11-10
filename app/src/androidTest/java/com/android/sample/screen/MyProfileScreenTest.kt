@@ -436,5 +436,61 @@ class MyProfileScreenTest {
         .assertTextEquals("Student")
   }
 
+  @Test
+  fun infoRankingBarIsDisplayed() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RATING_BAR).assertIsDisplayed()
+  }
+
+  @Test
+  fun rankingTabIsDisplayed() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed()
+  }
+
+  @Test
+  fun infoTabIsDisplayed() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed()
+  }
+
+  @Test
+  fun rankingTabIsClickable() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertHasClickAction()
+  }
+
+  @Test
+  fun infoTabIsClickable() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertHasClickAction()
+  }
+
+  @Test
+  fun rankingTabToRankings() {
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_COMING_SOON_TEXT).assertIsDisplayed()
+  }
+
+  @Test
+  fun infoRankingBarInRankings() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RATING_BAR).assertIsDisplayed()
+  }
+
+  @Test
+  fun rankingToInfo_SwitchesContent() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_COMING_SOON_TEXT).assertIsDisplayed()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed().performClick()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
+  }
+
+  @Test
+  fun tabIndicatorDisplaysCorrectly() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.TAB_INDICATOR).assertIsDisplayed()
+  }
+
   // Edge case tests for null/empty values are in MyProfileScreenEdgeCasesTest.kt
 }
