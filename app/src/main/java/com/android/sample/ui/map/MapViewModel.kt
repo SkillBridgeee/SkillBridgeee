@@ -103,7 +103,7 @@ class MapViewModel(
       try {
         val currentUserId = runCatching { FirebaseAuth.getInstance().currentUser?.uid }.getOrNull()
         if (currentUserId == null) {
-          _uiState.value = _uiState.value.copy(isLoading = false)
+          _uiState.value = _uiState.value.copy(isLoading = false, bookingPins = emptyList())
           return@launch
         }
 
@@ -137,9 +137,11 @@ class MapViewModel(
             }
         _uiState.value = _uiState.value.copy(bookingPins = pins)
       } catch (e: Exception) {
-        if (_uiState.value.errorMessage == null) {
-          _uiState.value = _uiState.value.copy(errorMessage = e.message)
-        }
+        // Silently handle errors (e.g., missing Firestore indexes, no bookings, network issues)
+        // The map will simply not show booking pins, which is acceptable
+        _uiState.value = _uiState.value.copy(bookingPins = emptyList())
+        // Log for debugging but don't show error to user since map itself works fine
+        println("MapViewModel: Could not load bookings - ${e.message}")
       } finally {
         _uiState.value = _uiState.value.copy(isLoading = false)
       }

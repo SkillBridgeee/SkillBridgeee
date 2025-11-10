@@ -257,7 +257,7 @@ private fun ProfileInfoCard(
                   color = MaterialTheme.colorScheme.onSurfaceVariant,
                   modifier = Modifier.testTag(MapScreenTestTags.PROFILE_LOCATION))
 
-              if (profile.levelOfEducation.isNotEmpty()) {
+              if (profile.levelOfEducation.isNotBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = profile.levelOfEducation,
@@ -265,7 +265,7 @@ private fun ProfileInfoCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
               }
 
-              if (profile.description.isNotEmpty()) {
+              if (profile.description.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = profile.description,
