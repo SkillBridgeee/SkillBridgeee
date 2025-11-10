@@ -21,7 +21,6 @@ import com.android.sample.ui.map.MapScreenTestTags
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
 import com.android.sample.ui.profile.MyProfileScreenTestTag
-import com.android.sample.ui.screens.newSkill.NewSkillScreenTestTag
 import com.android.sample.ui.subject.SubjectListTestTags
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
