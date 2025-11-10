@@ -234,21 +234,21 @@ class NewSkillViewModel(
 
   /** Update the selected main subject. */
   fun setSubject(sub: MainSubject) {
-      val options = SkillsHelper.getSkillNames(sub)
-      _uiState.value =
-          _uiState.value.copy(
-              subject = sub,
-              subSkillOptions = options,
-              selectedSubSkill = null,
-              invalidSubjectMsg = null,
-              invalidSubSkillMsg = null)
+    val options = SkillsHelper.getSkillNames(sub)
+    _uiState.value =
+        _uiState.value.copy(
+            subject = sub,
+            subSkillOptions = options,
+            selectedSubSkill = null,
+            invalidSubjectMsg = null,
+            invalidSubSkillMsg = null)
   }
 
   /** Update the selected listing type (PROPOSAL or REQUEST). */
   fun setListingType(type: ListingType) {
-      _uiState.update { currentState ->
-          currentState.copy(listingType = type, invalidListingTypeMsg = null)
-      }
+    _uiState.update { currentState ->
+      currentState.copy(listingType = type, invalidListingTypeMsg = null)
+    }
   }
 
   /** Set a chosen sub-skill string. */

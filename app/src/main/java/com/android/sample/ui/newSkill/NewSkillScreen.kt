@@ -187,15 +187,15 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     onSubjectSelected = { skillViewModel.setSubject(it) },
                     errorMsg = skillUIState.invalidSubjectMsg)
 
-                  // Sub-skill dropdown, visible when a subject is selected
-                  if (skillUIState.subject != null) {
-                      Spacer(modifier = Modifier.height(textSpace))
-                      SubSkillMenu(
-                          selectedSubSkill = skillUIState.selectedSubSkill,
-                          options = skillUIState.subSkillOptions,
-                          skillViewModel = skillViewModel,
-                          skillUIState = skillUIState)
-                  }
+                // Sub-skill dropdown, visible when a subject is selected
+                if (skillUIState.subject != null) {
+                  Spacer(modifier = Modifier.height(textSpace))
+                  SubSkillMenu(
+                      selectedSubSkill = skillUIState.selectedSubSkill,
+                      options = skillUIState.subSkillOptions,
+                      skillViewModel = skillViewModel,
+                      skillUIState = skillUIState)
+                }
 
                 // Location Input with dropdown
                 LocationInputField(

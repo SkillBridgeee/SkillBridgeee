@@ -16,6 +16,7 @@ import com.android.sample.ui.screens.newSkill.NewSkillScreen
 import com.android.sample.ui.screens.newSkill.NewSkillScreenTestTag
 import com.android.sample.ui.screens.newSkill.NewSkillViewModel
 import com.android.sample.ui.theme.SampleAppTheme
+import kotlin.collections.get
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -89,6 +90,10 @@ private fun ComposeContentTestRule.nodeByTag(tag: String) =
 class NewSkillScreenTest {
 
   @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+  // Alias to match existing test usages of `compose`
+  private val compose: ComposeContentTestRule
+    get() = composeRule
 
   private lateinit var fakeListingRepository: FakeListingRepository
   private lateinit var fakeLocationRepository: FakeLocationRepository
@@ -400,6 +405,7 @@ class NewSkillScreenTest {
   }
   // ========== Integration Tests ==========
 
+  // File: `app/src/androidTest/java/com/android/sample/screen/NewSkillScreenTest.kt`
   @Test
   fun completeProposalForm_callsRepository() {
     val fakeRepo = FakeListingRepository()
@@ -431,7 +437,15 @@ class NewSkillScreenTest {
     composeRule.onNodeWithText("ACADEMICS").performClick()
     composeRule.waitForIdle()
 
-    // Set location programmatically through ViewModel since location search is complex
+    // Select a sub-skill
+    composeRule.nodeByTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
+    composeRule.waitForIdle()
+    composeRule
+        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX)[0]
+        .performClick()
+    composeRule.waitForIdle()
+
+    // Set location programmatically
     vm.setLocation(Location(46.5196535, 6.6322734, "Lausanne"))
     composeRule.waitForIdle()
 
@@ -439,11 +453,22 @@ class NewSkillScreenTest {
     composeRule.nodeByTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
     composeRule.waitForIdle()
 
-    // Verify proposal was added
-    assert(fakeRepo.proposals.size == 1)
-    assert(fakeRepo.proposals[0].skill.skill == "Math Tutoring")
-    assert(fakeRepo.proposals[0].description == "Expert tutor")
-    assert(fakeRepo.proposals[0].hourlyRate == 30.00)
+    // Wait for main thread idle and then assert repository side-effects
+    composeRule.runOnIdle {
+      // Proposal should have been added
+      assert(fakeRepo.proposals.size == 1)
+      val saved = fakeRepo.proposals[0]
+
+      // The ViewModel stores the chosen sub-skill in saved.skill.skill, not the title.
+      // Check the fields that actually map:
+      assert(saved.description == "Expert tutor")
+      assert(saved.hourlyRate == 30.00)
+      assert(saved.creatorUserId == "test-user-123")
+      // Ensure the main subject matches the chosen subject
+      assert(saved.skill.mainSubject == MainSubject.ACADEMICS)
+      // The specific sub-skill should be non-empty (we selected an option)
+      assert(saved.skill.skill.isNotBlank())
+    }
   }
 
   @Test
@@ -479,6 +504,14 @@ class NewSkillScreenTest {
     composeRule.onNodeWithText("ACADEMICS").performClick()
     composeRule.waitForIdle()
 
+    // Select a sub-skill
+    composeRule.nodeByTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
+    composeRule.waitForIdle()
+    composeRule
+        .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX)[0]
+        .performClick()
+    composeRule.waitForIdle()
+
     // Set location programmatically
     vm.setLocation(Location(46.2044, 6.1432, "Geneva"))
     composeRule.waitForIdle()
@@ -487,11 +520,21 @@ class NewSkillScreenTest {
     composeRule.nodeByTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
     composeRule.waitForIdle()
 
-    // Verify request was added
-    assert(fakeRepo.requests.size == 1)
-    assert(fakeRepo.requests[0].skill.skill == "Need Math Help")
-    assert(fakeRepo.requests[0].description == "Looking for tutor")
-    assert(fakeRepo.requests[0].hourlyRate == 25.00)
+    // Wait for main thread idle and then assert repository side-effects
+    composeRule.runOnIdle {
+      // Request should have been added
+      assert(fakeRepo.requests.size == 1)
+      val saved = fakeRepo.requests[0]
+
+      // Verify fields that map from the ViewModel
+      assert(saved.description == "Looking for tutor")
+      assert(saved.hourlyRate == 25.00)
+      assert(saved.creatorUserId == "test-user-456")
+      // Ensure the main subject matches the chosen subject
+      assert(saved.skill.mainSubject == MainSubject.ACADEMICS)
+      // The specific sub-skill should be non-empty (we selected an option)
+      assert(saved.skill.skill.isNotBlank())
+    }
   }
 
   // ----------------------------------------------------------
@@ -500,6 +543,14 @@ class NewSkillScreenTest {
 
   @Test
   fun subSkill_notVisible_untilSubjectSelected_thenVisible() {
+    val vm =
+        NewSkillViewModel(
+            listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
+    composeRule.setContent {
+      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+    }
+    composeRule.waitForIdle()
+
     // Initially, sub-skill picker should not be shown
     compose
         .onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD, useUnmergedTree = true)
@@ -516,6 +567,14 @@ class NewSkillScreenTest {
 
   @Test
   fun subjectDropdown_open_selectItem_thenCloses() {
+    val vm =
+        NewSkillViewModel(
+            listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
+    composeRule.setContent {
+      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+    }
+    composeRule.waitForIdle()
+
     compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
     compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN).assertIsDisplayed()
 
@@ -530,6 +589,14 @@ class NewSkillScreenTest {
 
   @Test
   fun subSkillDropdown_open_selectItem_thenCloses() {
+    val vm =
+        NewSkillViewModel(
+            listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
+    composeRule.setContent {
+      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+    }
+    composeRule.waitForIdle()
+
     // Precondition: select a subject so sub-skill menu appears
     compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
     compose.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)[0].performClick()
@@ -551,6 +618,14 @@ class NewSkillScreenTest {
 
   @Test
   fun showsError_whenNoSubject_onSave() {
+    val vm =
+        NewSkillViewModel(
+            listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
+    composeRule.setContent {
+      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+    }
+    composeRule.waitForIdle()
+
     // Ensure subject is empty (initial screen state), click Save
     compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
 
@@ -563,6 +638,14 @@ class NewSkillScreenTest {
 
   @Test
   fun showsError_whenSubjectChosen_butNoSubSkill_onSave() {
+    val vm =
+        NewSkillViewModel(
+            listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
+    composeRule.setContent {
+      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+    }
+    composeRule.waitForIdle()
+
     // Choose a subject
     compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
     compose.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)[0].performClick()
@@ -580,6 +663,14 @@ class NewSkillScreenTest {
 
   @Test
   fun selectingSubject_thenSubSkill_enablesCleanSave_noErrorsShown() {
+    val vm =
+        NewSkillViewModel(
+            listingRepository = fakeListingRepository, locationRepository = fakeLocationRepository)
+    composeRule.setContent {
+      SampleAppTheme { NewSkillScreen(skillViewModel = vm, profileId = "test-user") }
+    }
+    composeRule.waitForIdle()
+
     // Select a subject
     compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
     compose.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX)[0].performClick()
