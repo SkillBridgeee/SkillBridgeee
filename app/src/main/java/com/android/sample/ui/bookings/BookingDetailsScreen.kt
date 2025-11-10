@@ -53,6 +53,8 @@ fun BookingDetailsContent(uiState: BkgDetailsUIState, modifier: Modifier = Modif
     // Info about the creator
     InfoCreator(uiState)
 
+    HorizontalDivider()
+
     // Info about the courses
     InfoListing(uiState)
 
@@ -94,21 +96,19 @@ private fun BookingHeader(uiState: BkgDetailsUIState) {
 
 @Composable
 private fun InfoCreator(uiState: BkgDetailsUIState) {
-  val prefixText =
+  val creatorRole =
       when (uiState.type) {
-        ListingType.REQUEST -> "Student : "
-        ListingType.PROPOSAL -> "Tutor : "
+        ListingType.REQUEST -> "Student"
+        ListingType.PROPOSAL -> "Tutor"
       }
 
-  val baseStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal)
-  val prefixSize = MaterialTheme.typography.bodyLarge.fontSize
+  Text(
+      text = "Information about the $creatorRole",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold)
 
-  val styledText = buildAnnotatedString {
-    withStyle(style = SpanStyle(fontSize = prefixSize)) { append(prefixText) }
-    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) { append(uiState.creatorName) }
-  }
-
-  Text(text = styledText, style = baseStyle, maxLines = 2, overflow = TextOverflow.Ellipsis)
+  DetailRow(label = "Creator Name", value = uiState.creatorName)
+  DetailRow(label = "Email", value = uiState.creatorMail)
 }
 
 @Composable
@@ -117,15 +117,9 @@ private fun InfoListing(uiState: BkgDetailsUIState) {
       text = "Information about the course",
       style = MaterialTheme.typography.titleMedium,
       fontWeight = FontWeight.Bold)
-  DetailRow(
-      label = "Listing Type",
-      value =
-          when (uiState.type) {
-            ListingType.PROPOSAL -> "Tutor (Proposition)"
-            ListingType.REQUEST -> "Request (Looking for a tutor)"
-          })
   DetailRow(label = "Subject", value = uiState.subject.name.replace("_", " "))
   DetailRow(label = "Location", value = uiState.location.name)
+  DetailRow(label = "Hourly Rate", value = uiState.hourlyRate)
 }
 
 @Composable

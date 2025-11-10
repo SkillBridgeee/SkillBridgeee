@@ -23,10 +23,12 @@ import kotlinx.coroutines.launch
 
 data class BkgDetailsUIState(
     val creatorName: String = "",
+    val creatorMail: String = "",
     val courseName: String = "",
     val type: ListingType = ListingType.PROPOSAL,
     val location: Location = Location(),
     val description: String = "",
+    val hourlyRate: String = "",
     val start: Date = Date(),
     val end: Date = Date(),
     val subject: MainSubject = MainSubject.ACADEMICS,
@@ -76,10 +78,12 @@ class BookingDetailsViewModel(
         if (booking != null && listing != null && creatorProfile != null) {
           BkgDetailsUIState(
               creatorName = creatorProfile.name!!,
+              creatorMail = creatorProfile.email,
               courseName = listing.skill.skill,
               type = listing.type,
               location = listing.location,
               description = listing.description,
+              hourlyRate = listing.hourlyRate.toString(),
               start = booking.sessionStart,
               end = booking.sessionEnd,
               subject = listing.skill.mainSubject,
