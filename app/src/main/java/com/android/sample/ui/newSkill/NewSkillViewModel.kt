@@ -113,41 +113,69 @@ class NewSkillViewModel(
 
   fun addListing() {
     val state = _uiState.value
-    if (state.isValid) {
-      val price = state.price.toDouble()
-      val specificSkill = state.selectedSubSkill!!
-      val newSkill =
-          Skill(
-              mainSubject = state.subject!!,
-              skill = specificSkill,
-          )
-
-      when (state.listingType!!) {
-        ListingType.PROPOSAL -> {
-          val newProposal =
-              Proposal(
-                  listingId = listingRepository.getNewUid(),
-                  creatorUserId = userId,
-                  skill = newSkill,
-                  description = state.description,
-                  location = state.selectedLocation!!,
-                  hourlyRate = price)
-          addProposalToRepository(proposal = newProposal)
-        }
-        ListingType.REQUEST -> {
-          val newRequest =
-              Request(
-                  listingId = listingRepository.getNewUid(),
-                  creatorUserId = userId,
-                  skill = newSkill,
-                  description = state.description,
-                  location = state.selectedLocation!!,
-                  hourlyRate = price)
-          addRequestToRepository(request = newRequest)
-        }
-      }
-    } else {
+    if (!state.isValid) {
       setError()
+      return
+    }
+
+    // Defensive parsing and null checks to avoid force-unwrapping
+    val price = state.price.toDoubleOrNull()
+    if (price == null) {
+      Log.e("NewSkillViewModel", "Unexpected invalid price despite isValid")
+      setError()
+      return
+    }
+
+    val specificSkill = state.selectedSubSkill
+    if (specificSkill.isNullOrBlank()) {
+      Log.e("NewSkillViewModel", "Missing selectedSubSkill despite isValid")
+      setError()
+      return
+    }
+
+    val mainSubject = state.subject
+    if (mainSubject == null) {
+      Log.e("NewSkillViewModel", "Missing subject despite isValid")
+      setError()
+      return
+    }
+
+    val listingType = state.listingType
+    if (listingType == null) {
+      Log.e("NewSkillViewModel", "Missing listingType despite isValid")
+      setError()
+      return
+    }
+
+    val newSkill =
+        Skill(
+            mainSubject = mainSubject,
+            skill = specificSkill,
+        )
+
+    when (listingType) {
+      ListingType.PROPOSAL -> {
+        val newProposal =
+            Proposal(
+                listingId = listingRepository.getNewUid(),
+                creatorUserId = userId,
+                skill = newSkill,
+                description = state.description,
+                location = state.selectedLocation!!,
+                hourlyRate = price)
+        addProposalToRepository(proposal = newProposal)
+      }
+      ListingType.REQUEST -> {
+        val newRequest =
+            Request(
+                listingId = listingRepository.getNewUid(),
+                creatorUserId = userId,
+                skill = newSkill,
+                description = state.description,
+                location = state.selectedLocation!!,
+                hourlyRate = price)
+        addRequestToRepository(request = newRequest)
+      }
     }
   }
 
@@ -156,7 +184,7 @@ class NewSkillViewModel(
       try {
         listingRepository.addProposal(proposal)
       } catch (e: Exception) {
-        Log.e("NewSkillViewModel", "Error adding Proposal", e)
+        Log.e("NewSkillViewModel", "Network error adding Proposal", e)
       }
     }
   }
@@ -166,7 +194,7 @@ class NewSkillViewModel(
       try {
         listingRepository.addRequest(request)
       } catch (e: Exception) {
-        Log.e("NewSkillViewModel", "Error adding Request", e)
+        Log.e("NewSkillViewModel", "Network error adding Request", e)
       }
     }
   }

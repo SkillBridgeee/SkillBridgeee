@@ -628,12 +628,15 @@ class NewSkillScreenTest {
 
     // Ensure subject is empty (initial screen state), click Save
     compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.waitForIdle()
 
     // Error helper under Subject field should be visible
-    compose
-        .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+    val nodes =
+        compose
+            .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
+            .fetchSemanticsNodes()
+    org.junit.Assert.assertTrue(
+        "Expected invalid subject message to be present", nodes.isNotEmpty())
   }
 
   @Test
@@ -653,12 +656,15 @@ class NewSkillScreenTest {
     // Sub-skill field visible now but we don't choose any sub-skill
     // Click Save directly
     compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.waitForIdle()
 
     // Error helper under Sub-skill field should be visible
-    compose
-        .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUB_SKILL_MSG, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+    val nodes =
+        compose
+            .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUB_SKILL_MSG, useUnmergedTree = true)
+            .fetchSemanticsNodes()
+    org.junit.Assert.assertTrue(
+        "Expected invalid sub-skill message to be present", nodes.isNotEmpty())
   }
 
   @Test
