@@ -11,7 +11,7 @@ import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.testutils.TestAuthHelpers
 import com.android.sample.testutils.TestUiHelpers
-import com.android.sample.ui.bookings.MyBookingsPageTestTag
+import com.android.sample.ui.map.MapScreenTestTags
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
 import com.google.firebase.Firebase
@@ -89,14 +89,14 @@ class AppNavGraphTest {
     // Complete signup through UI
     Log.d(TAG, "Completing signup through UI")
     TestUiHelpers.signUpThroughUi(
-        composeTestRule = composeTestRule,
-        password = "TestPassw0rd!",
-        name = "Test",
-        surname = "User",
-        levelOfEducation = "CS, 3rd year",
-        description = "Test user for nav graph tests",
-        addressQuery = "Test Location",
-        timeoutMs = 15_000L)
+      composeTestRule = composeTestRule,
+      password = "TestPassw0rd!",
+      name = "Test",
+      surname = "User",
+      levelOfEducation = "CS, 3rd year",
+      description = "Test user for nav graph tests",
+      addressQuery = "Test Location",
+      timeoutMs = 15_000L)
 
     // Wait for signup to complete (check if profile exists in Firestore)
     runBlocking {
@@ -189,7 +189,7 @@ class AppNavGraphTest {
     waitForHome(timeoutMs = 15_000)
 
     composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).assertExists()
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).assertExists()
     Log.d(TAG, "Map screen navigation test passed")
   }
 }
