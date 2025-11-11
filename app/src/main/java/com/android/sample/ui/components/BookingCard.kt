@@ -42,7 +42,7 @@ import java.util.Locale
 object BookingCardTestTag {
   const val CARD = "booking_card"
   const val LISTING_TITLE = "booking_card_listing_title"
-  const val TUTOR_NAME = "booking_card_tutor_name"
+  const val CREATOR_NAME = "booking_card_creator_name"
   const val STATUS = "booking_card_status"
   const val DATE = "booking_card_date"
   const val PRICE = "booking_card_price"
@@ -62,7 +62,7 @@ fun BookingCard(
   val bookingDate = booking.dateString()
   val listingType = listing.type
   val listingTitle = listing.skill.skill
-  val tutorName = creator.name!!
+  val creatorName = creator.name ?: "Unknown"
   val priceString =
       remember(listing.hourlyRate) { String.format(Locale.ROOT, "$%.2f / hr", listing.hourlyRate) }
 
@@ -85,14 +85,14 @@ fun BookingCard(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.testTag(BookingCardTestTag.LISTING_TITLE))
 
-            // Tutor name
+            // Creator name
             Text(
-                text = creatorName(tutorName),
+                text = creatorName(creatorName),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.testTag(BookingCardTestTag.TUTOR_NAME))
+                modifier = Modifier.testTag(BookingCardTestTag.CREATOR_NAME))
 
             Spacer(Modifier.height(8.dp))
 
