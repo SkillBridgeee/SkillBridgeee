@@ -44,10 +44,10 @@ object UserSessionManager {
       val user = firebaseAuth.currentUser
       _currentUser.value = user
       _authState.value =
-        when {
-          user != null -> AuthState.Authenticated(user.uid, user.email)
-          else -> AuthState.Unauthenticated
-        }
+          when {
+            user != null -> AuthState.Authenticated(user.uid, user.email)
+            else -> AuthState.Unauthenticated
+          }
     }
   }
 
