@@ -31,7 +31,7 @@ class FirestoreBookingRepository(
               .await()
       return snapshot.toObjects(Booking::class.java)
     } catch (e: Exception) {
-        throw Exception("Failed to fetch bookings: ${e.message}")
+      throw Exception("Failed to fetch bookings: ${e.message}")
     }
   }
 
@@ -67,7 +67,7 @@ class FirestoreBookingRepository(
               .await()
       return snapshot.toObjects(Booking::class.java)
     } catch (e: Exception) {
-        throw Exception("Failed to fetch bookings by tutor: ${e.message}")
+      throw Exception("Failed to fetch bookings by tutor: ${e.message}")
     }
   }
 
@@ -81,7 +81,7 @@ class FirestoreBookingRepository(
               .await()
       return snapshot.toObjects(Booking::class.java)
     } catch (e: Exception) {
-        throw Exception("Failed to fetch bookings by user: ${e.message}")
+      throw Exception("Failed to fetch bookings by user: ${e.message}")
     }
   }
 
@@ -99,7 +99,7 @@ class FirestoreBookingRepository(
               .await()
       return snapshot.toObjects(Booking::class.java)
     } catch (e: Exception) {
-        throw Exception("Failed to fetch bookings by listing: ${e.message}")
+      throw Exception("Failed to fetch bookings by listing: ${e.message}")
     }
   }
 

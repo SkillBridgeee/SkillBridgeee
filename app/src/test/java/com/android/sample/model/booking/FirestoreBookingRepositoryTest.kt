@@ -442,5 +442,4 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
 
     assertThrows(Exception::class.java) { runTest { bookingRepository.addBooking(booking) } }
   }
-
 }
