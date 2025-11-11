@@ -1,9 +1,12 @@
 package com.android.sample.navigation
 
+import android.Manifest
+import android.app.UiAutomation
 import android.util.Log
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.MainActivity
 import com.android.sample.model.authentication.AuthState
 import com.android.sample.model.authentication.UserSessionManager
@@ -52,6 +55,16 @@ class AppNavGraphTest {
     // Clean up any existing user
     Firebase.auth.signOut()
 
+    // Grant location permission to prevent dialog from breaking compose hierarchy
+    val instrumentation = InstrumentationRegistry.getInstrumentation()
+    val uiAutomation: UiAutomation = instrumentation.uiAutomation
+    val packageName = composeTestRule.activity.packageName
+    try {
+      uiAutomation.grantRuntimePermission(packageName, Manifest.permission.ACCESS_FINE_LOCATION)
+    } catch (_: SecurityException) {
+      // In some test environments granting may fail; continue to run the test
+    }
+
     // Wait for login screen to be ready - use UI element as it's more reliable at startup
     // RouteStackManager may not be initialized immediately
     // Increased timeout for CI environments
@@ -93,6 +106,16 @@ class AppNavGraphTest {
     // Navigate to map
     composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
+
+    // Wait for map screen to fully compose before checking
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      try {
+        composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).fetchSemanticsNode()
+        true
+      } catch (_: AssertionError) {
+        false
+      }
+    }
 
     // Check map screen content via test tag
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).assertExists()
@@ -214,9 +237,19 @@ class AppNavGraphTest {
     composeTestRule.onNodeWithText("GitHub").performClick()
     composeTestRule.waitForIdle()
 
-    // Navigate to skills then profile
+    // Navigate to Map then profile
     composeTestRule.onNodeWithText("Map").performClick()
     composeTestRule.waitForIdle()
+
+    // Wait for map screen to fully compose
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      try {
+        composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).fetchSemanticsNode()
+        true
+      } catch (_: AssertionError) {
+        false
+      }
+    }
 
     composeTestRule.onNodeWithText("Profile").performClick()
     composeTestRule.waitForIdle()
@@ -271,27 +304,6 @@ class AppNavGraphTest {
         .onNodeWithTag(com.android.sample.ui.signup.SignUpScreenTestTags.TITLE)
         .assertExists()
     composeTestRule.onNodeWithText("Personal Informations").assertExists()
-  }
-
-  private fun navigateToProfileAndWait() {
-    // Trigger login + navigate to profile
-    composeTestRule.onNodeWithText("GitHub").performClick()
-    composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithText("Profile").performClick()
-    composeTestRule.waitForIdle()
-
-    // Wait until the nav route is PROFILE
-    composeTestRule.waitUntil(timeoutMillis = 15_000) {
-      RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
-    }
-
-    // Wait until the LazyColumn with ROOT_LIST is present in the semantics tree
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      composeTestRule
-          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
   }
 
   @Test

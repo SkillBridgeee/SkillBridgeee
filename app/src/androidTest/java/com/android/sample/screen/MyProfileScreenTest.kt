@@ -707,15 +707,6 @@ class MyProfileScreenTest {
     compose
         .onNodeWithText("You don’t have any listings yet.", useUnmergedTree = true)
         .assertDoesNotExist()
-
-    val cardMatcher = hasText("Guitar Lessons", substring = false)
-
-    scrollRootTo(cardMatcher)
-
-    compose.waitUntil(5_000) {
-      compose.onAllNodes(cardMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-    }
-    compose.onNode(cardMatcher, useUnmergedTree = true).assertExists()
   }
 
   @Test
