@@ -77,11 +77,11 @@ class MainActivity : ComponentActivity() {
     // Initialize authentication components
     authViewModel = AuthenticationViewModel(this)
     googleSignInHelper =
-      GoogleSignInHelper(this) { result -> authViewModel.handleGoogleSignInResult(result) }
+        GoogleSignInHelper(this) { result -> authViewModel.handleGoogleSignInResult(result) }
 
     setContent {
       MainApp(
-        authViewModel = authViewModel, onGoogleSignIn = { googleSignInHelper.signInWithGoogle() })
+          authViewModel = authViewModel, onGoogleSignIn = { googleSignInHelper.signInWithGoogle() })
     }
   }
 }
@@ -156,26 +156,26 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
 
   // Define main screens that should show bottom nav
   val mainScreenRoutes =
-    listOf(NavRoutes.HOME, NavRoutes.BOOKINGS, NavRoutes.PROFILE, NavRoutes.MAP)
+      listOf(NavRoutes.HOME, NavRoutes.BOOKINGS, NavRoutes.PROFILE, NavRoutes.MAP)
 
   // Check if current route should show bottom nav
   val showBottomNav = mainScreenRoutes.contains(currentRoute)
 
   Scaffold(
-    topBar = { TopAppBar(navController) },
-    bottomBar = {
-      if (showBottomNav) {
-        BottomNavBar(navController)
+      topBar = { TopAppBar(navController) },
+      bottomBar = {
+        if (showBottomNav) {
+          BottomNavBar(navController)
+        }
+      }) { paddingValues ->
+        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
+          AppNavGraph(
+              navController = navController,
+              bookingsViewModel,
+              profileViewModel,
+              mainPageViewModel,
+              authViewModel = authViewModel,
+              onGoogleSignIn = onGoogleSignIn)
+        }
       }
-    }) { paddingValues ->
-    androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
-      AppNavGraph(
-        navController = navController,
-        bookingsViewModel,
-        profileViewModel,
-        mainPageViewModel,
-        authViewModel = authViewModel,
-        onGoogleSignIn = onGoogleSignIn)
-    }
-  }
 }

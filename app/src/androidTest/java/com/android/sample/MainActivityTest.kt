@@ -95,14 +95,14 @@ class MainActivityTest {
     // Complete signup through UI
     Log.d(TAG, "Completing signup through UI")
     TestUiHelpers.signUpThroughUi(
-      composeTestRule = composeTestRule,
-      password = "TestPassw0rd!",
-      name = "Test",
-      surname = "User",
-      levelOfEducation = "CS, 3rd year",
-      description = "Test user for main activity tests",
-      addressQuery = "Test Location",
-      timeoutMs = 15_000L)
+        composeTestRule = composeTestRule,
+        password = "TestPassw0rd!",
+        name = "Test",
+        surname = "User",
+        levelOfEducation = "CS, 3rd year",
+        description = "Test user for main activity tests",
+        addressQuery = "Test Location",
+        timeoutMs = 15_000L)
 
     // Wait for signup to complete (check if profile exists in Firestore)
     runBlocking {
@@ -212,9 +212,9 @@ class MainActivityTest {
     // Wait for bottom navigation to appear using test tags
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
       composeTestRule
-        .onAllNodes(hasTestTag(MyBookingsPageTestTag.NAV_HOME))
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+          .onAllNodes(hasTestTag(MyBookingsPageTestTag.NAV_HOME))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
     Log.d(TAG, "Home screen and bottom navigation loaded successfully")
 

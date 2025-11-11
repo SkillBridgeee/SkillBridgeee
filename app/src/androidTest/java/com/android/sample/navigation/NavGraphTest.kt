@@ -89,14 +89,14 @@ class AppNavGraphTest {
     // Complete signup through UI
     Log.d(TAG, "Completing signup through UI")
     TestUiHelpers.signUpThroughUi(
-      composeTestRule = composeTestRule,
-      password = "TestPassw0rd!",
-      name = "Test",
-      surname = "User",
-      levelOfEducation = "CS, 3rd year",
-      description = "Test user for nav graph tests",
-      addressQuery = "Test Location",
-      timeoutMs = 15_000L)
+        composeTestRule = composeTestRule,
+        password = "TestPassw0rd!",
+        name = "Test",
+        surname = "User",
+        levelOfEducation = "CS, 3rd year",
+        description = "Test user for nav graph tests",
+        addressQuery = "Test Location",
+        timeoutMs = 15_000L)
 
     // Wait for signup to complete (check if profile exists in Firestore)
     runBlocking {
