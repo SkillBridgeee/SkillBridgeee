@@ -72,21 +72,26 @@ android {
             storePassword = "android"
         }
     }
-
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+            // Disable Firebase emulators in release builds
+            buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
         }
 
         debug {
             enableUnitTestCoverage = true
             enableAndroidTestCoverage = true
             signingConfig = signingConfigs.getByName("debug")
+            // Debug builds connect to Firebase emulators (for local testing on Android emulator)
+            // Make sure to run: firebase emulators:start
+            buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "true")
         }
     }
 
@@ -96,6 +101,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {

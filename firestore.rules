@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users/Profiles collection
+    match /profiles/{userId} {
+      // Allow read if authenticated
+      allow read: if isAuthenticated();
+
+      // Allow create/update if user is authenticated and owns the profile
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+
+      // Allow delete only by owner
+      allow delete: if isOwner(userId);
+    }
+
+    // Listings collection
+    match /listings/{listingId} {
+      // Allow read if authenticated
+      allow read: if isAuthenticated();
+
+      // Allow create if authenticated
+      allow create: if isAuthenticated();
+
+      // Allow update/delete only by the creator
+      allow update, delete: if isAuthenticated() &&
+                               resource.data.userId == request.auth.uid;
+    }
+
+    // Bookings collection
+    match /bookings/{bookingId} {
+      // Allow read if authenticated and user is either booker or listing creator
+      allow read: if isAuthenticated() &&
+                     (resource.data.bookerId == request.auth.uid ||
+                      resource.data.listingCreatorId == request.auth.uid);
+
+      // Allow create if authenticated
+      allow create: if isAuthenticated();
+
+      // Allow update/delete by booker or listing creator
+      allow update, delete: if isAuthenticated() &&
+                               (resource.data.bookerId == request.auth.uid ||
+                                resource.data.listingCreatorId == request.auth.uid);
+    }
+
+    // Ratings collection
+    match /ratings/{ratingId} {
+      // Allow read if authenticated
+      allow read: if isAuthenticated();
+
+      // Allow create if authenticated
+      allow create: if isAuthenticated();
+
+      // Allow update/delete only by the creator
+      allow update, delete: if isAuthenticated() &&
+                               resource.data.reviewerId == request.auth.uid;
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
