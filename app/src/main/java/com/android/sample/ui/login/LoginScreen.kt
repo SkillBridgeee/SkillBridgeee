@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -158,15 +159,27 @@ private fun EmailPasswordFields(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit
 ) {
+  var emailFocused by remember { mutableStateOf(false) }
+
+  val maxPreview = 30
+
+  val displayEmail =
+      if (!emailFocused && email.length > maxPreview) email.take(maxPreview) + "..." else email
+
   OutlinedTextField(
-      value = email,
+      value = displayEmail,
       onValueChange = onEmailChange,
       label = { Text("Email") },
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+      singleLine = true,
+      maxLines = 1,
       leadingIcon = {
         Icon(painterResource(id = android.R.drawable.ic_dialog_email), contentDescription = null)
       },
-      modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT))
+      modifier =
+          Modifier.fillMaxWidth()
+              .onFocusChanged { emailFocused = it.isFocused }
+              .testTag(SignInScreenTestTags.EMAIL_INPUT))
 
   Spacer(modifier = Modifier.height(10.dp))
 
@@ -176,6 +189,8 @@ private fun EmailPasswordFields(
       label = { Text("Password") },
       visualTransformation = PasswordVisualTransformation(),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+      singleLine = true,
+      maxLines = 1,
       leadingIcon = {
         Icon(painterResource(id = android.R.drawable.ic_lock_idle_lock), contentDescription = null)
       },
@@ -296,6 +311,37 @@ private fun SignUpLink(onNavigateToSignUp: () -> Unit = {}) {
         modifier =
             Modifier.clickable { onNavigateToSignUp() }.testTag(SignInScreenTestTags.SIGNUP_LINK))
   }
+}
+
+@Composable
+fun EllipsizingTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    maxPreviewLength: Int = 40,
+    shape: RoundedCornerShape = RoundedCornerShape(14.dp),
+    colors: TextFieldColors = TextFieldDefaults.colors()
+) {
+  var focused by remember { mutableStateOf(false) }
+
+  val displayValue =
+      if (!focused && value.length > maxPreviewLength) value.take(maxPreviewLength) + "..."
+      else value
+
+  TextField(
+      value = displayValue,
+      onValueChange = onValueChange,
+      modifier = modifier.onFocusChanged { focused = it.isFocused },
+      placeholder = { Text(placeholder, fontWeight = FontWeight.Bold) },
+      singleLine = true,
+      maxLines = 1,
+      shape = shape,
+      colors =
+          colors.copy(
+              focusedIndicatorColor = Color.Transparent,
+              unfocusedIndicatorColor = Color.Transparent,
+              disabledIndicatorColor = Color.Transparent))
 }
 
 // Legacy composable for backward compatibility and proper ViewModel creation

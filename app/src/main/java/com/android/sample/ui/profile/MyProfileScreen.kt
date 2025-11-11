@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
@@ -249,8 +250,14 @@ private fun ProfileTextField(
     modifier: Modifier = Modifier,
     minLines: Int = 1
 ) {
+  var focused by remember { mutableStateOf(false) }
+  val maxPreview = 30
+
+  val displayValue =
+      if (!focused && value.length > maxPreview) value.take(maxPreview) + "..." else value
+
   OutlinedTextField(
-      value = value,
+      value = displayValue,
       onValueChange = onValueChange,
       label = { Text(label) },
       placeholder = { Text(placeholder) },
@@ -260,8 +267,9 @@ private fun ProfileTextField(
           Text(text = it, modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
         }
       },
-      modifier = modifier.testTag(testTag),
-      minLines = minLines)
+      modifier = modifier.onFocusChanged { focused = it.isFocused }.testTag(testTag),
+      minLines = minLines,
+      singleLine = true)
 }
 
 @Composable

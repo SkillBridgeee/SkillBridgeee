@@ -20,15 +20,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -103,23 +108,25 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
             modifier = Modifier.testTag(SignUpScreenTestTags.SUBTITLE),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
 
-        TextField(
-            value = state.name,
-            onValueChange = { vm.onEvent(SignUpEvent.NameChanged(it)) },
-            modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.NAME),
-            placeholder = { Text("Enter your Name", fontWeight = FontWeight.Bold) },
-            singleLine = true,
-            shape = fieldShape,
-            colors = fieldColors)
+        Box(modifier = Modifier.fillMaxWidth()) {
+          EllipsizingTextField(
+              value = state.name,
+              onValueChange = { vm.onEvent(SignUpEvent.NameChanged(it)) },
+              placeholder = "Enter your Name",
+              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.NAME),
+              shape = fieldShape,
+              colors = fieldColors,
+              maxPreviewLength = 45)
+        }
 
-        TextField(
+        EllipsizingTextField(
             value = state.surname,
             onValueChange = { vm.onEvent(SignUpEvent.SurnameChanged(it)) },
+            placeholder = "Enter your Surname",
             modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.SURNAME),
-            placeholder = { Text("Enter your Surname", fontWeight = FontWeight.Bold) },
-            singleLine = true,
             shape = fieldShape,
-            colors = fieldColors)
+            colors = fieldColors,
+            maxPreviewLength = 45)
 
         // Location input with Nominatim search and dropdown
         val context = LocalContext.current
@@ -135,35 +142,51 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
               }
             }
 
-        Box(modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.ADDRESS)) {
+        var addressFocused by remember { mutableStateOf(false) }
+
+        val maxAddressPreview = 45
+        val displayAddress =
+            if (!addressFocused && state.locationQuery.length > maxAddressPreview)
+                state.locationQuery.take(maxAddressPreview) + "..."
+            else state.locationQuery
+
+      Box(
+          modifier = Modifier
+              .fillMaxWidth()
+              .testTag(SignUpScreenTestTags.ADDRESS)
+      ) {
           RoundEdgedLocationInputField(
               locationQuery = state.locationQuery,
               locationSuggestions = state.locationSuggestions,
               onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },
               onLocationSelected = { location ->
-                vm.onEvent(SignUpEvent.LocationSelected(location))
+                  vm.onEvent(SignUpEvent.LocationSelected(location))
               },
               shape = fieldShape,
-              colors = fieldColors)
+              colors = fieldColors
+          )
 
           IconButton(
               onClick = {
-                val granted =
-                    ContextCompat.checkSelfPermission(context, permission) ==
-                        PackageManager.PERMISSION_GRANTED
-                if (granted) {
-                  vm.fetchLocationFromGps(GpsLocationProvider(context), context)
-                } else {
-                  permissionLauncher.launch(permission)
-                }
+                  val granted =
+                      ContextCompat.checkSelfPermission(context, permission) ==
+                              PackageManager.PERMISSION_GRANTED
+                  if (granted) {
+                      vm.fetchLocationFromGps(GpsLocationProvider(context), context)
+                  } else {
+                      permissionLauncher.launch(permission)
+                  }
               },
-              modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
-                Icon(
-                    imageVector = Icons.Filled.MyLocation,
-                    contentDescription = SignUpScreenTestTags.PIN_CONTENT_DESC,
-                    tint = MaterialTheme.colorScheme.primary)
-              }
-        }
+              modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)
+          ) {
+              Icon(
+                  imageVector = Icons.Filled.MyLocation,
+                  contentDescription = SignUpScreenTestTags.PIN_CONTENT_DESC,
+                  tint = MaterialTheme.colorScheme.primary
+              )
+          }
+      }
+
 
         TextField(
             value = state.levelOfEducation,
@@ -301,6 +324,51 @@ private fun RequirementItem(met: Boolean, text: String) {
             color = if (met) MaterialTheme.colorScheme.onSurface else DisabledContent)
       }
 }
+
+@Composable
+fun EllipsizingTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    maxPreviewLength: Int = 40,
+    shape: RoundedCornerShape = RoundedCornerShape(14.dp),
+    colors: TextFieldColors = TextFieldDefaults.colors()
+) {
+    var focused by remember { mutableStateOf(false) }
+
+    // 👇 Show ellipsized text ONLY visually; keep the real value for tests/semantics
+    val ellipsizeTransformation = VisualTransformation { text ->
+        if (!focused && text.text.length > maxPreviewLength) {
+            val short = text.text.take(maxPreviewLength) + "..."
+            TransformedText(
+                AnnotatedString(short),
+                OffsetMapping.Identity
+            )
+        } else {
+            TransformedText(text, OffsetMapping.Identity)
+        }
+    }
+
+    TextField(
+        value = value, // keep REAL value here
+        onValueChange = onValueChange,
+        modifier = modifier.onFocusChanged { focused = it.isFocused },
+        placeholder = { Text(placeholder, fontWeight = FontWeight.Bold) },
+        singleLine = true,
+        maxLines = 1,
+        shape = shape,
+        visualTransformation = ellipsizeTransformation,
+        colors = colors.copy(
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            errorIndicatorColor = Color.Transparent
+        )
+    )
+}
+
+
 
 @Preview(showBackground = true)
 @Composable
