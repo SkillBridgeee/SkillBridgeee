@@ -55,7 +55,8 @@ data class MyProfileUIState(
     val updateError: String? = null,
     val listings: List<Listing> = emptyList(),
     val listingsLoading: Boolean = false,
-    val listingsLoadError: String? = null
+    val listingsLoadError: String? = null,
+    val updateSuccess: Boolean = false
 ) {
   /** True if all required fields are valid */
   val isValid: Boolean
@@ -102,12 +103,15 @@ class MyProfileViewModel(
   private val locationMsgError = "Location cannot be empty"
   private val descMsgError = "Description cannot be empty"
 
+  private var originalProfile: Profile? = null
+
   /** Loads the profile data (to be implemented) */
   fun loadProfile(profileUserId: String? = null) {
     val currentId = profileUserId ?: userId
     viewModelScope.launch {
       try {
         val profile = profileRepository.getProfile(userId = currentId)
+        originalProfile = profile
         _uiState.value =
             MyProfileUIState(
                 userId = currentId,
@@ -163,7 +167,7 @@ class MyProfileViewModel(
       return
     }
     val currentId = state.userId ?: userId
-    val profile =
+    val newProfile =
         Profile(
             userId = currentId,
             name = state.name ?: "",
@@ -171,7 +175,28 @@ class MyProfileViewModel(
             location = state.selectedLocation!!,
             description = state.description ?: "")
 
-    editProfileToRepository(currentId, profile)
+    val original = originalProfile
+    if (original != null && !hasProfileChanged(original, newProfile)) {
+      return
+    }
+
+    originalProfile = newProfile
+    editProfileToRepository(currentId, newProfile)
+  }
+
+  /**
+   * Checks if the profile has changed compared to the original.
+   *
+   * @param original The original Profile object.
+   * @param updated The updated Profile object.
+   */
+  private fun hasProfileChanged(original: Profile, updated: Profile): Boolean {
+    return original.name != updated.name ||
+        original.email != updated.email ||
+        original.description != updated.description ||
+        original.location.name != updated.location.name ||
+        original.location.latitude != updated.location.latitude ||
+        original.location.longitude != updated.location.longitude
   }
 
   /**
@@ -185,6 +210,7 @@ class MyProfileViewModel(
       _uiState.update { it.copy(updateError = null) }
       try {
         profileRepository.updateProfile(userId = userId, profile = profile)
+        _uiState.update { it.copy(updateSuccess = true) }
       } catch (e: Exception) {
         Log.e(TAG, "Error updating profile for user: $userId", e)
         _uiState.update { it.copy(updateError = UPDATE_PROFILE_FAILED_MSG) }
@@ -335,7 +361,16 @@ class MyProfileViewModel(
     }
   }
 
+  /**
+   * Handles the scenario when location permission is denied by updating the UI state with an
+   * appropriate error message.
+   */
   fun onLocationPermissionDenied() {
     _uiState.update { it.copy(invalidLocationMsg = LOCATION_PERMISSION_DENIED_MSG) }
+  }
+
+  /** Clears the update success flag in the UI state. */
+  fun clearUpdateSuccess() {
+    _uiState.update { it.copy(updateSuccess = false) }
   }
 }

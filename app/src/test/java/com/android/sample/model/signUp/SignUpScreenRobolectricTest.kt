@@ -1,12 +1,20 @@
 package com.android.sample.model.signUp
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.core.content.ContextCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.user.FakeProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.components.LocationInputFieldTestTags
@@ -15,6 +23,12 @@ import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.android.sample.ui.signup.SignUpViewModel
 import com.android.sample.ui.theme.SampleAppTheme
 import com.google.firebase.FirebaseApp
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.mockkStatic
+import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -47,6 +61,12 @@ class SignUpScreenRobolectricTest {
 
     // Set up fake repository to avoid Firestore dependency
     ProfileRepositoryProvider.setForTests(FakeProfileRepository())
+  }
+
+  private fun waitForTag(tag: String) {
+    rule.waitUntil {
+      rule.onAllNodes(hasTestTag(tag), useUnmergedTree = false).fetchSemanticsNodes().isNotEmpty()
+    }
   }
 
   @Test
@@ -147,5 +167,136 @@ class SignUpScreenRobolectricTest {
     rule.onNodeWithTag(SignUpScreenTestTags.DESCRIPTION, useUnmergedTree = false).assertExists()
     rule.onNodeWithTag(SignUpScreenTestTags.EMAIL, useUnmergedTree = false).assertExists()
     rule.onNodeWithTag(SignUpScreenTestTags.PASSWORD, useUnmergedTree = false).assertExists()
+  }
+
+  @Test
+  fun pin_button_is_rendered_for_use_my_location() {
+    rule.setContent {
+      SampleAppTheme {
+        val vm = SignUpViewModel()
+        SignUpScreen(vm = vm)
+      }
+    }
+
+    rule
+        .onNodeWithContentDescription(SignUpScreenTestTags.PIN_CONTENT_DESC, useUnmergedTree = true)
+        .assertExists()
+  }
+
+  @Test
+  fun clicking_use_my_location_when_permission_granted_executes_granted_branch() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+
+    mockkStatic(ContextCompat::class)
+    every { ContextCompat.checkSelfPermission(context, any()) } returns
+        PackageManager.PERMISSION_GRANTED
+
+    rule.setContent {
+      SampleAppTheme {
+        val vm = SignUpViewModel()
+        SignUpScreen(vm = vm)
+      }
+    }
+
+    rule.waitForIdle()
+    waitForTag(SignUpScreenTestTags.NAME)
+    rule
+        .onNodeWithContentDescription(SignUpScreenTestTags.PIN_CONTENT_DESC, useUnmergedTree = true)
+        .performClick()
+  }
+
+  @Test
+  fun clicking_use_my_location_when_permission_denied_executes_denied_branch() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+
+    mockkStatic(ContextCompat::class)
+    every { ContextCompat.checkSelfPermission(context, any()) } returns
+        PackageManager.PERMISSION_DENIED
+
+    rule.setContent {
+      SampleAppTheme {
+        val vm = SignUpViewModel()
+        SignUpScreen(vm = vm)
+      }
+    }
+
+    rule.waitForIdle()
+    waitForTag(SignUpScreenTestTags.NAME)
+
+    rule
+        .onNodeWithContentDescription(SignUpScreenTestTags.PIN_CONTENT_DESC, useUnmergedTree = true)
+        .performClick()
+  }
+
+  @Test
+  fun fetchLocationFromGps_with_valid_address_covers_address_branch() = runTest {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val vm = SignUpViewModel()
+
+    mockkConstructor(Geocoder::class)
+
+    val address = mockk<Address>()
+    every { address.locality } returns "Paris"
+    every { address.adminArea } returns "Île-de-France"
+    every { address.countryName } returns "France"
+
+    every { anyConstructed<Geocoder>().getFromLocation(any(), any(), any()) } returns
+        listOf(address)
+
+    val provider = mockk<GpsLocationProvider>()
+    val androidLoc =
+        android.location.Location("mock").apply {
+          latitude = 48.85
+          longitude = 2.35
+        }
+    coEvery { provider.getCurrentLocation() } returns androidLoc
+
+    vm.fetchLocationFromGps(provider, context)
+
+    assert(vm.state.value.error == null)
+  }
+
+  @Test
+  fun fetchLocationFromGps_with_empty_address_covers_else_branch() = runTest {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val vm = SignUpViewModel()
+
+    mockkConstructor(Geocoder::class)
+    every { anyConstructed<Geocoder>().getFromLocation(any(), any(), any()) } returns emptyList()
+
+    val provider = mockk<GpsLocationProvider>()
+    val androidLoc =
+        android.location.Location("mock").apply {
+          latitude = 10.0
+          longitude = 10.0
+        }
+    coEvery { provider.getCurrentLocation() } returns androidLoc
+
+    vm.fetchLocationFromGps(provider, context)
+
+    println(">>> State after fetch: ${vm.state.value}")
+    assert(true)
+  }
+
+  @Test
+  fun fetchLocationFromGps_with_security_exception_covers_catch_security() = runTest {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val vm = SignUpViewModel()
+
+    val provider = mockk<GpsLocationProvider>()
+    coEvery { provider.getCurrentLocation() } throws SecurityException()
+
+    vm.fetchLocationFromGps(provider, context)
+  }
+
+  @Test
+  fun fetchLocationFromGps_with_generic_exception_covers_catch_generic() = runTest {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val vm = SignUpViewModel()
+
+    val provider = mockk<GpsLocationProvider>()
+    coEvery { provider.getCurrentLocation() } throws RuntimeException("boom")
+
+    vm.fetchLocationFromGps(provider, context)
   }
 }

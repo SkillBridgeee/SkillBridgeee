@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -38,6 +39,7 @@ import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.ui.components.LocationInputField
 import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RequestCard
+import kotlinx.coroutines.delay
 
 /**
  * Test tags used by UI tests and screenshot tests on the My Profile screen.
@@ -108,8 +110,14 @@ fun MyProfileScreen(
       floatingActionButtonPosition = FabPosition.Center) { pd ->
         val ui by profileViewModel.uiState.collectAsState()
         LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
+        LaunchedEffect(ui.updateSuccess) {
+          if (ui.updateSuccess) {
+            delay(5000)
+            profileViewModel.clearUpdateSuccess()
+          }
+        }
 
-        Column() {
+        Column {
           InfoToRankingRow(selectedTab)
           Spacer(modifier = Modifier.height(16.dp))
 
@@ -150,6 +158,16 @@ private fun ProfileContent(
   LazyColumn(
       modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
       contentPadding = pd) {
+        if (ui.updateSuccess) {
+          item {
+            Text(
+                text = "Profile successfully updated!",
+                color = Color(0xFF2E7D32),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+          }
+        }
         item { ProfileHeader(name = ui.name) }
 
         item {
