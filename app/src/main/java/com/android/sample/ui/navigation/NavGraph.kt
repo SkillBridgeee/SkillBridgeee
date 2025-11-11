@@ -16,6 +16,7 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.HomePage.HomeScreen
 import com.android.sample.ui.HomePage.MainPageViewModel
+import com.android.sample.ui.bookings.BookingDetailsScreen
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
@@ -65,6 +66,7 @@ fun AppNavGraph(
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
   val profileID = remember { mutableStateOf("") }
+  val bookingId = remember { mutableStateOf("") }
 
   NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
     composable(NavRoutes.LOGIN) {
@@ -127,7 +129,11 @@ fun AppNavGraph(
 
     composable(NavRoutes.BOOKINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
-      MyBookingsScreen(viewModel = bookingsViewModel, navController = navController)
+      MyBookingsScreen(
+          onBookingClick = { bkgId ->
+            bookingId.value = bkgId
+            navController.navigate(NavRoutes.BOOKING_DETAILS)
+          })
     }
 
     composable(
@@ -170,6 +176,16 @@ fun AppNavGraph(
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
       // todo add other parameters
       ProfileScreen(profileId = profileID.value)
+    }
+
+    composable(route = NavRoutes.BOOKING_DETAILS) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKING_DETAILS) }
+      BookingDetailsScreen(
+          bookingId = bookingId.value,
+          onCreatorClick = { profileId ->
+            profileID.value = profileId
+            navController.navigate(NavRoutes.OTHERS_PROFILE)
+          })
     }
   }
 }
