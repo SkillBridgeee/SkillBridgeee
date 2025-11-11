@@ -1,12 +1,20 @@
 // Kotlin
 package com.android.sample.ui.bookings
 
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -24,7 +32,6 @@ object MyBookingsPageTestTag {
   const val NAV_MAP = "navMap"
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyBookingsScreen(
     modifier: Modifier = Modifier,
@@ -37,17 +44,10 @@ fun MyBookingsScreen(
     LaunchedEffect(Unit) { viewModel.load() }
 
     when {
-      uiState.isLoading ->
-          CircularProgressIndicator(modifier = Modifier.testTag(MyBookingsPageTestTag.LOADING))
-      uiState.hasError ->
-          Text(
-              text = "Failed to load your bookings",
-              modifier = Modifier.testTag(MyBookingsPageTestTag.ERROR))
+      uiState.isLoading -> CenteredText("Loading...", MyBookingsPageTestTag.LOADING)
+      uiState.hasError -> CenteredText("Failed to load your bookings", MyBookingsPageTestTag.ERROR)
       uiState.bookings.isEmpty() ->
-          Text(
-              text = "No bookings available",
-              modifier = Modifier.testTag(MyBookingsPageTestTag.EMPTY),
-          )
+          CenteredText("No bookings available", MyBookingsPageTestTag.EMPTY)
       else ->
           BookingsList(
               bookings = uiState.bookings,
@@ -75,4 +75,11 @@ fun BookingsList(
               onClickBookingCard = { bookingId -> onBookingClick(bookingId) })
         }
       }
+}
+
+@Composable
+private fun CenteredText(text: String, tag: String) {
+  Box(modifier = Modifier.fillMaxSize().testTag(tag), contentAlignment = Alignment.Center) {
+    Text(text = text)
+  }
 }
