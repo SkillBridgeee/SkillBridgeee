@@ -1,5 +1,6 @@
 package com.android.sample.ui.listing
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
@@ -214,7 +215,9 @@ class ListingViewModel(
         bookingRepo.confirmBooking(bookingId)
         // Refresh bookings to show updated status
         _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
-      } catch (_: Exception) {}
+      } catch (e: Exception) {
+          Log.w("ListingViewModel", "Couldnt approve the booking", e)
+      }
     }
   }
 
@@ -229,7 +232,9 @@ class ListingViewModel(
         bookingRepo.cancelBooking(bookingId)
         // Refresh bookings to show updated status
         _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
-      } catch (_: Exception) {}
+      } catch (e: Exception) {
+          Log.w("ListingViewModel", "Couldnt reject the booking", e)
+      }
     }
   }
 

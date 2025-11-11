@@ -63,7 +63,6 @@ object ProfileScreenTestTags {
 @Composable
 fun ProfileScreen(
     profileId: String,
-    onBackClick: () -> Unit = {},
     onProposalClick: (String) -> Unit = {},
     onRequestClick: (String) -> Unit = {},
     viewModel: ProfileScreenViewModel = viewModel {
