@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
@@ -38,8 +39,6 @@ import androidx.compose.ui.unit.times
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.GpsLocationProvider
-import com.android.sample.model.map.Location
-import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.ListingCard
 import com.android.sample.ui.components.LocationInputField
 import com.android.sample.ui.components.RatingCard
@@ -56,7 +55,6 @@ object MyProfileScreenTestTag {
   const val CARD_TITLE = "cardTitle"
   const val INPUT_PROFILE_NAME = "inputProfileName"
   const val INPUT_PROFILE_EMAIL = "inputProfileEmail"
-  const val INPUT_PROFILE_LOCATION = "inputProfileLocation"
   const val INPUT_PROFILE_DESC = "inputProfileDesc"
   const val SAVE_BUTTON = "saveButton"
   const val ROOT_LIST = "profile_list"
@@ -111,7 +109,7 @@ fun MyProfileScreen(
         RatingContent(ui)
       } else if (selectedTab.value == ProfileTab.LISTINGS) {
         ProfileListings(ui)
-      } else {}
+      }
     }
   }
 }
@@ -125,7 +123,7 @@ fun MyProfileScreen(
  * and composes the header, form, listings and logout sections inside a `LazyColumn`.
  *
  * @param pd Content padding from the parent Scaffold.
- * @param profileId Profile id to load.
+ * @param ui Current UI state from the view model.
  * @param profileViewModel ViewModel that exposes UI state and actions.
  * @param onLogout Callback invoked by the logout UI.
  */
@@ -135,8 +133,6 @@ private fun ProfileContent(
     profileViewModel: MyProfileViewModel,
     onLogout: () -> Unit,
 ) {
-  val profileId = ui.userId ?: ""
-  LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
   val fieldSpacing = 8.dp
 
   LazyColumn(
@@ -221,6 +217,7 @@ private fun ProfileHeader(name: String?) {
  * @param minLines Minimum visible lines for the field.
  */
 private fun ProfileTextField(
+    modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
@@ -228,7 +225,6 @@ private fun ProfileTextField(
     isError: Boolean = false,
     errorMsg: String? = null,
     testTag: String,
-    modifier: Modifier = Modifier,
     minLines: Int = 1
 ) {
   OutlinedTextField(
@@ -259,9 +255,9 @@ private fun ProfileTextField(
  * @param content Column-scoped composable content placed below the title.
  */
 private fun SectionCard(
+    modifier: Modifier = Modifier,
     title: String,
     titleTestTag: String? = null,
-    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
   Box(
@@ -446,7 +442,7 @@ private fun ProfileListings(ui: MyProfileUIState) {
     }
     ui.listingsLoadError != null -> {
       Text(
-          text = ui.listingsLoadError ?: "Failed to load listings.",
+          text = ui.listingsLoadError,
           style = MaterialTheme.typography.bodyMedium,
           color = Color.Red,
           modifier = Modifier.padding(horizontal = 16.dp))
@@ -458,17 +454,11 @@ private fun ProfileListings(ui: MyProfileUIState) {
           modifier = Modifier.padding(horizontal = 16.dp))
     }
     else -> {
-      val creatorProfile =
-          Profile(
-              userId = ui.userId ?: "",
-              name = ui.name ?: "",
-              email = ui.email ?: "",
-              location = ui.selectedLocation ?: Location(),
-              description = ui.description ?: "")
-      ui.listings.forEach { listing ->
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+      val creatorProfile = ui.toProfile
+      LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        items(ui.listings) { listing ->
           ListingCard(listing = listing, creator = creatorProfile, onOpenListing = {}, onBook = {})
-          Spacer(Modifier.height(8.dp))
+          Spacer(modifier = Modifier.height(8.dp))
         }
       }
     }
@@ -610,7 +600,7 @@ private fun RatingContent(ui: MyProfileUIState) {
     }
     ui.ratingsLoadError != null -> {
       Text(
-          text = ui.listingsLoadError ?: "Failed to load ratings.",
+          text = ui.ratingsLoadError,
           style = MaterialTheme.typography.bodyMedium,
           color = Color.Red,
           modifier = Modifier.padding(horizontal = 16.dp))
@@ -622,20 +612,12 @@ private fun RatingContent(ui: MyProfileUIState) {
           modifier = Modifier.padding(horizontal = 16.dp))
     }
     else -> {
-      val creatorProfile =
-          Profile(
-              userId = ui.userId ?: "",
-              name = ui.name ?: "",
-              email = ui.email ?: "",
-              location = ui.selectedLocation ?: Location(),
-              description = ui.description ?: "")
-      ui.ratings.forEach { rating ->
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-          RatingCard(
-              rating = rating,
-              creator = creatorProfile,
-          )
-          Spacer(Modifier.height(8.dp))
+      val creatorProfile = ui.toProfile
+
+      LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        items(ui.ratings) { rating ->
+          RatingCard(rating = rating, creator = creatorProfile)
+          Spacer(modifier = Modifier.height(8.dp))
         }
       }
     }

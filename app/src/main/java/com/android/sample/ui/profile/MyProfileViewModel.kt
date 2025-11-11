@@ -75,6 +75,15 @@ data class MyProfileUIState(
             !email.isNullOrBlank() &&
             selectedLocation != null &&
             !description.isNullOrBlank()
+
+  val toProfile: Profile
+    get() =
+        Profile(
+            userId = userId ?: "",
+            name = name ?: "",
+            email = email ?: "",
+            location = selectedLocation ?: Location(),
+            description = description ?: "")
 }
 
 /**
