@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
@@ -25,13 +24,11 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -83,6 +80,14 @@ object ListingScreenTestTags {
   const val APPROVE_BUTTON = "listingScreenApproveButton"
   const val REJECT_BUTTON = "listingScreenRejectButton"
   const val NO_BOOKINGS = "listingScreenNoBookings"
+  const val START_DATE_PICKER_DIALOG = "listingScreenStartDatePickerDialog"
+  const val START_TIME_PICKER_DIALOG = "listingScreenStartTimePickerDialog"
+  const val END_DATE_PICKER_DIALOG = "listingScreenEndDatePickerDialog"
+  const val END_TIME_PICKER_DIALOG = "listingScreenEndTimePickerDialog"
+  const val DATE_PICKER_OK_BUTTON = "listingScreenDatePickerOkButton"
+  const val DATE_PICKER_CANCEL_BUTTON = "listingScreenDatePickerCancelButton"
+  const val TIME_PICKER_OK_BUTTON = "listingScreenTimePickerOkButton"
+  const val TIME_PICKER_CANCEL_BUTTON = "listingScreenTimePickerCancelButton"
 }
 
 /**
@@ -137,35 +142,35 @@ fun ListingScreen(
 
   Scaffold(
       modifier = Modifier.fillMaxSize().testTag(ListingScreenTestTags.SCREEN),
-      ) { padding ->
-        when {
-          uiState.isLoading -> {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center) {
-                  CircularProgressIndicator(modifier = Modifier.testTag(ListingScreenTestTags.LOADING))
-                }
-          }
-          uiState.error != null -> {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center) {
-                  Text(
-                      text = uiState.error ?: "Unknown error",
-                      color = MaterialTheme.colorScheme.error,
-                      modifier = Modifier.testTag(ListingScreenTestTags.ERROR))
-                }
-          }
-          uiState.listing != null -> {
-            ListingContent(
-                uiState = uiState,
-                onBook = { start, end -> viewModel.createBooking(start, end) },
-                onApproveBooking = { bookingId -> viewModel.approveBooking(bookingId) },
-                onRejectBooking = { bookingId -> viewModel.rejectBooking(bookingId) },
-                modifier = Modifier.padding(padding))
-          }
-        }
+  ) { padding ->
+    when {
+      uiState.isLoading -> {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.Center) {
+              CircularProgressIndicator(modifier = Modifier.testTag(ListingScreenTestTags.LOADING))
+            }
       }
+      uiState.error != null -> {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.Center) {
+              Text(
+                  text = uiState.error ?: "Unknown error",
+                  color = MaterialTheme.colorScheme.error,
+                  modifier = Modifier.testTag(ListingScreenTestTags.ERROR))
+            }
+      }
+      uiState.listing != null -> {
+        ListingContent(
+            uiState = uiState,
+            onBook = { start, end -> viewModel.createBooking(start, end) },
+            onApproveBooking = { bookingId -> viewModel.approveBooking(bookingId) },
+            onRejectBooking = { bookingId -> viewModel.rejectBooking(bookingId) },
+            modifier = Modifier.padding(padding))
+      }
+    }
+  }
 }
 
 @Composable
@@ -185,11 +190,12 @@ private fun ListingContent(
       verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // Type badge
         Text(
-            text = if (listing.type == ListingType.PROPOSAL) "Offering to Teach" else "Looking for Tutor",
+            text =
+                if (listing.type == ListingType.PROPOSAL) "Offering to Teach"
+                else "Looking for Tutor",
             style = MaterialTheme.typography.labelLarge,
             color =
-                if (listing.type == ListingType.PROPOSAL)
-                    MaterialTheme.colorScheme.primary
+                if (listing.type == ListingType.PROPOSAL) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.secondary,
             modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
 
@@ -203,64 +209,78 @@ private fun ListingContent(
         if (listing.description.isNotBlank()) {
           Card(
               modifier = Modifier.fillMaxWidth(),
-              colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+              colors =
+                  CardDefaults.cardColors(
+                      containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                 Text(
                     text = listing.description,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier =
-                        Modifier.padding(16.dp).testTag(ListingScreenTestTags.DESCRIPTION))
+                    modifier = Modifier.padding(16.dp).testTag(ListingScreenTestTags.DESCRIPTION))
               }
         }
 
         // Creator info
         if (creator != null) {
           Card(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-              Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Person, contentDescription = null)
-                Spacer(Modifier.padding(4.dp))
-                Text(
-                    text = creator.name ?: "",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.testTag(ListingScreenTestTags.CREATOR_NAME))
-              }
-            }
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                  Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Person, contentDescription = null)
+                    Spacer(Modifier.padding(4.dp))
+                    Text(
+                        text = creator.name ?: "",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.testTag(ListingScreenTestTags.CREATOR_NAME))
+                  }
+                }
           }
         }
 
         // Skill details
         Card(modifier = Modifier.fillMaxWidth()) {
-          Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Skill Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-              Text("Subject:", style = MaterialTheme.typography.bodyMedium)
-              Text(
-                  listing.skill.mainSubject.name,
-                  style = MaterialTheme.typography.bodyMedium,
-                  fontWeight = FontWeight.Medium)
-            }
-
-            if (listing.skill.skill.isNotBlank()) {
-              Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Skill:", style = MaterialTheme.typography.bodyMedium)
+          Column(
+              modifier = Modifier.padding(16.dp),
+              verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    listing.skill.skill,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.testTag(ListingScreenTestTags.SKILL))
-              }
-            }
+                    "Skill Details",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold)
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-              Text("Expertise:", style = MaterialTheme.typography.bodyMedium)
-              Text(
-                  listing.skill.expertise.name,
-                  style = MaterialTheme.typography.bodyMedium,
-                  fontWeight = FontWeight.Medium,
-                  modifier = Modifier.testTag(ListingScreenTestTags.EXPERTISE))
-            }
-          }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween) {
+                      Text("Subject:", style = MaterialTheme.typography.bodyMedium)
+                      Text(
+                          listing.skill.mainSubject.name,
+                          style = MaterialTheme.typography.bodyMedium,
+                          fontWeight = FontWeight.Medium)
+                    }
+
+                if (listing.skill.skill.isNotBlank()) {
+                  Row(
+                      modifier = Modifier.fillMaxWidth(),
+                      horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Skill:", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            listing.skill.skill,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.testTag(ListingScreenTestTags.SKILL))
+                      }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween) {
+                      Text("Expertise:", style = MaterialTheme.typography.bodyMedium)
+                      Text(
+                          listing.skill.expertise.name,
+                          style = MaterialTheme.typography.bodyMedium,
+                          fontWeight = FontWeight.Medium,
+                          modifier = Modifier.testTag(ListingScreenTestTags.EXPERTISE))
+                    }
+              }
         }
 
         // Location
@@ -356,7 +376,8 @@ private fun BookingDialog(onDismiss: () -> Unit, onConfirm: (Date, Date) -> Unit
           // Session start
           Button(
               onClick = { showStartDatePicker = true },
-              modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.SESSION_START_BUTTON)) {
+              modifier =
+                  Modifier.fillMaxWidth().testTag(ListingScreenTestTags.SESSION_START_BUTTON)) {
                 Text(sessionStart?.let { dateFormat.format(it) } ?: "Select Start Time")
               }
 
@@ -364,7 +385,7 @@ private fun BookingDialog(onDismiss: () -> Unit, onConfirm: (Date, Date) -> Unit
           Button(
               onClick = { showEndDatePicker = true },
               modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.SESSION_END_BUTTON),
-              enabled = sessionStart != null) {
+              enabled = true) {
                 Text(sessionEnd?.let { dateFormat.format(it) } ?: "Select End Time")
               }
         }
@@ -404,11 +425,19 @@ private fun BookingDialog(onDismiss: () -> Unit, onConfirm: (Date, Date) -> Unit
                 }
                 showStartDatePicker = false
                 showStartTimePicker = true
-              }) {
+              },
+              modifier = Modifier.testTag(ListingScreenTestTags.DATE_PICKER_OK_BUTTON)) {
                 Text("OK")
               }
         },
-        dismissButton = { TextButton(onClick = { showStartDatePicker = false }) { Text("Cancel") } }) {
+        dismissButton = {
+          TextButton(
+              onClick = { showStartDatePicker = false },
+              modifier = Modifier.testTag(ListingScreenTestTags.DATE_PICKER_CANCEL_BUTTON)) {
+                Text("Cancel")
+              }
+        },
+        modifier = Modifier.testTag(ListingScreenTestTags.START_DATE_PICKER_DIALOG)) {
           DatePicker(state = datePickerState)
         }
   }
@@ -432,11 +461,19 @@ private fun BookingDialog(onDismiss: () -> Unit, onConfirm: (Date, Date) -> Unit
                   sessionStart = calendar.time
                 }
                 showStartTimePicker = false
-              }) {
+              },
+              modifier = Modifier.testTag(ListingScreenTestTags.TIME_PICKER_OK_BUTTON)) {
                 Text("OK")
               }
         },
-        dismissButton = { TextButton(onClick = { showStartTimePicker = false }) { Text("Cancel") } })
+        dismissButton = {
+          TextButton(
+              onClick = { showStartTimePicker = false },
+              modifier = Modifier.testTag(ListingScreenTestTags.TIME_PICKER_CANCEL_BUTTON)) {
+                Text("Cancel")
+              }
+        },
+        modifier = Modifier.testTag(ListingScreenTestTags.START_TIME_PICKER_DIALOG))
   }
 
   if (showEndDatePicker) {
@@ -452,11 +489,19 @@ private fun BookingDialog(onDismiss: () -> Unit, onConfirm: (Date, Date) -> Unit
                 }
                 showEndDatePicker = false
                 showEndTimePicker = true
-              }) {
+              },
+              modifier = Modifier.testTag(ListingScreenTestTags.DATE_PICKER_OK_BUTTON)) {
                 Text("OK")
               }
         },
-        dismissButton = { TextButton(onClick = { showEndDatePicker = false }) { Text("Cancel") } }) {
+        dismissButton = {
+          TextButton(
+              onClick = { showEndDatePicker = false },
+              modifier = Modifier.testTag(ListingScreenTestTags.DATE_PICKER_CANCEL_BUTTON)) {
+                Text("Cancel")
+              }
+        },
+        modifier = Modifier.testTag(ListingScreenTestTags.END_DATE_PICKER_DIALOG)) {
           DatePicker(state = datePickerState)
         }
   }
@@ -480,17 +525,23 @@ private fun BookingDialog(onDismiss: () -> Unit, onConfirm: (Date, Date) -> Unit
                   sessionEnd = calendar.time
                 }
                 showEndTimePicker = false
-              }) {
+              },
+              modifier = Modifier.testTag(ListingScreenTestTags.TIME_PICKER_OK_BUTTON)) {
                 Text("OK")
               }
         },
-        dismissButton = { TextButton(onClick = { showEndTimePicker = false }) { Text("Cancel") } })
+        dismissButton = {
+          TextButton(
+              onClick = { showEndTimePicker = false },
+              modifier = Modifier.testTag(ListingScreenTestTags.TIME_PICKER_CANCEL_BUTTON)) {
+                Text("Cancel")
+              }
+        },
+        modifier = Modifier.testTag(ListingScreenTestTags.END_TIME_PICKER_DIALOG))
   }
 }
 
-/**
- * Section displaying bookings for the listing owner
- */
+/** Section displaying bookings for the listing owner */
 @Composable
 private fun BookingsSection(
     uiState: ListingUiState,
@@ -508,14 +559,19 @@ private fun BookingsSection(
 
         when {
           uiState.bookingsLoading -> {
-            Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-              CircularProgressIndicator(modifier = Modifier.testTag(ListingScreenTestTags.BOOKINGS_LOADING))
-            }
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(32.dp),
+                contentAlignment = Alignment.Center) {
+                  CircularProgressIndicator(
+                      modifier = Modifier.testTag(ListingScreenTestTags.BOOKINGS_LOADING))
+                }
           }
           uiState.listingBookings.isEmpty() -> {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                   Text(
                       text = "No bookings yet",
                       style = MaterialTheme.typography.bodyMedium,
@@ -535,9 +591,7 @@ private fun BookingsSection(
       }
 }
 
-/**
- * Card displaying a single booking with approve/reject actions
- */
+/** Card displaying a single booking with approve/reject actions */
 @Composable
 private fun BookingCard(
     booking: com.android.sample.model.booking.Booking,
@@ -550,76 +604,101 @@ private fun BookingCard(
 
   Card(
       modifier = modifier.fillMaxWidth().testTag(ListingScreenTestTags.BOOKING_CARD),
-      colors = CardDefaults.cardColors(
-          containerColor =
-              when (booking.status) {
-                com.android.sample.model.booking.BookingStatus.PENDING -> MaterialTheme.colorScheme.surface
-                com.android.sample.model.booking.BookingStatus.CONFIRMED -> MaterialTheme.colorScheme.primaryContainer
-                com.android.sample.model.booking.BookingStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer
-                com.android.sample.model.booking.BookingStatus.COMPLETED -> MaterialTheme.colorScheme.tertiaryContainer
-              })) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          // Status badge
-          Text(
-              text = booking.status.name,
-              style = MaterialTheme.typography.labelSmall,
-              color =
+      colors =
+          CardDefaults.cardColors(
+              containerColor =
                   when (booking.status) {
-                    com.android.sample.model.booking.BookingStatus.PENDING -> MaterialTheme.colorScheme.onSurface
-                    com.android.sample.model.booking.BookingStatus.CONFIRMED -> MaterialTheme.colorScheme.onPrimaryContainer
-                    com.android.sample.model.booking.BookingStatus.CANCELLED -> MaterialTheme.colorScheme.onErrorContainer
-                    com.android.sample.model.booking.BookingStatus.COMPLETED -> MaterialTheme.colorScheme.onTertiaryContainer
-                  },
-              fontWeight = FontWeight.Bold)
+                    com.android.sample.model.booking.BookingStatus.PENDING ->
+                        MaterialTheme.colorScheme.surface
+                    com.android.sample.model.booking.BookingStatus.CONFIRMED ->
+                        MaterialTheme.colorScheme.primaryContainer
+                    com.android.sample.model.booking.BookingStatus.CANCELLED ->
+                        MaterialTheme.colorScheme.errorContainer
+                    com.android.sample.model.booking.BookingStatus.COMPLETED ->
+                        MaterialTheme.colorScheme.tertiaryContainer
+                  })) {
+        Column(
+            modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+              // Status badge
+              Text(
+                  text = booking.status.name,
+                  style = MaterialTheme.typography.labelSmall,
+                  color =
+                      when (booking.status) {
+                        com.android.sample.model.booking.BookingStatus.PENDING ->
+                            MaterialTheme.colorScheme.onSurface
+                        com.android.sample.model.booking.BookingStatus.CONFIRMED ->
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        com.android.sample.model.booking.BookingStatus.CANCELLED ->
+                            MaterialTheme.colorScheme.onErrorContainer
+                        com.android.sample.model.booking.BookingStatus.COMPLETED ->
+                            MaterialTheme.colorScheme.onTertiaryContainer
+                      },
+                  fontWeight = FontWeight.Bold)
 
-          // Booker info
-          if (bookerProfile != null) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-              Icon(Icons.Default.Person, contentDescription = null)
-              Spacer(Modifier.padding(4.dp))
-              Text(text = bookerProfile.name ?: "Unknown", style = MaterialTheme.typography.titleMedium)
-            }
-          }
-
-          // Session details
-          Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Start:", style = MaterialTheme.typography.bodyMedium)
-            Text(dateFormat.format(booking.sessionStart), style = MaterialTheme.typography.bodyMedium)
-          }
-
-          Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("End:", style = MaterialTheme.typography.bodyMedium)
-            Text(dateFormat.format(booking.sessionEnd), style = MaterialTheme.typography.bodyMedium)
-          }
-
-          Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Price:", style = MaterialTheme.typography.bodyMedium)
-            Text(
-                String.format(Locale.getDefault(), "$%.2f", booking.price),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold)
-          }
-
-          // Action buttons for pending bookings
-          if (booking.status == com.android.sample.model.booking.BookingStatus.PENDING) {
-            Spacer(Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                  Button(
-                      onClick = onApprove,
-                      modifier = Modifier.weight(1f).testTag(ListingScreenTestTags.APPROVE_BUTTON)) {
-                        Text("Approve")
-                      }
-                  Button(
-                      onClick = onReject,
-                      modifier = Modifier.weight(1f).testTag(ListingScreenTestTags.REJECT_BUTTON),
-                      colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
-                        Text("Reject")
-                      }
+              // Booker info
+              if (bookerProfile != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                  Icon(Icons.Default.Person, contentDescription = null)
+                  Spacer(Modifier.padding(4.dp))
+                  Text(
+                      text = bookerProfile.name ?: "Unknown",
+                      style = MaterialTheme.typography.titleMedium)
                 }
-          }
-        }
+              }
+
+              // Session details
+              Row(
+                  modifier = Modifier.fillMaxWidth(),
+                  horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Start:", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        dateFormat.format(booking.sessionStart),
+                        style = MaterialTheme.typography.bodyMedium)
+                  }
+
+              Row(
+                  modifier = Modifier.fillMaxWidth(),
+                  horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("End:", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        dateFormat.format(booking.sessionEnd),
+                        style = MaterialTheme.typography.bodyMedium)
+                  }
+
+              Row(
+                  modifier = Modifier.fillMaxWidth(),
+                  horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("Price:", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        String.format(Locale.getDefault(), "$%.2f", booking.price),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold)
+                  }
+
+              // Action buttons for pending bookings
+              if (booking.status == com.android.sample.model.booking.BookingStatus.PENDING) {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                      Button(
+                          onClick = onApprove,
+                          modifier =
+                              Modifier.weight(1f).testTag(ListingScreenTestTags.APPROVE_BUTTON)) {
+                            Text("Approve")
+                          }
+                      Button(
+                          onClick = onReject,
+                          modifier =
+                              Modifier.weight(1f).testTag(ListingScreenTestTags.REJECT_BUTTON),
+                          colors =
+                              ButtonDefaults.buttonColors(
+                                  containerColor = MaterialTheme.colorScheme.error)) {
+                            Text("Reject")
+                          }
+                    }
+              }
+            }
       }
 }
-
