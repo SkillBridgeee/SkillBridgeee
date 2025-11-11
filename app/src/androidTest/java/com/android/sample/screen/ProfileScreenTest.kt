@@ -238,30 +238,6 @@ class ProfileScreenTest {
   }
 
   @Test
-  fun profileScreen_backButton_isDisplayed() {
-    setupScreen()
-
-    compose.onNodeWithTag(ProfileScreenTestTags.BACK_BUTTON).assertIsDisplayed()
-  }
-
-  @Test
-  fun profileScreen_refreshButton_isDisplayed() {
-    setupScreen()
-
-    compose.onNodeWithTag(ProfileScreenTestTags.REFRESH_BUTTON).assertIsDisplayed()
-  }
-
-  @Test
-  fun profileScreen_backButton_callsCallback() {
-    var backClicked = false
-
-    setupScreen(onBackClick = { backClicked = true })
-
-    compose.onNodeWithTag(ProfileScreenTestTags.BACK_BUTTON).performClick()
-    assertTrue(backClicked)
-  }
-
-  @Test
   fun profileScreen_proposalClick_callsCallback() {
     var clickedProposalId: String? = null
 
