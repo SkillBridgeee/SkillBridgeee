@@ -35,9 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.GpsLocationProvider
+import com.android.sample.ui.components.LocationInputField
 import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RequestCard
-import com.android.sample.ui.components.LocationInputField
 
 /**
  * Test tags used by UI tests and screenshot tests on the My Profile screen.
@@ -433,14 +433,10 @@ private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Un
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
           when (listing) {
             is com.android.sample.model.listing.Proposal -> {
-              ProposalCard(
-                  proposal = listing,
-                  onClick = onListingClick)
+              ProposalCard(proposal = listing, onClick = onListingClick)
             }
             is com.android.sample.model.listing.Request -> {
-              RequestCard(
-                  request = listing,
-                  onClick = onListingClick)
+              RequestCard(request = listing, onClick = onListingClick)
             }
           }
           Spacer(Modifier.height(8.dp))

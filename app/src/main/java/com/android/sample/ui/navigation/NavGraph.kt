@@ -191,8 +191,8 @@ fun AppNavGraph(
 
     composable(
         route = NavRoutes.LISTING,
-        arguments = listOf(navArgument("listingId") { type = NavType.StringType })) {
-            backStackEntry ->
+        arguments = listOf(navArgument("listingId") { type = NavType.StringType })) { backStackEntry
+          ->
           val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
           com.android.sample.ui.listing.ListingScreen(
