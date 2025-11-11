@@ -69,12 +69,14 @@ object MapScreenTestTags {
  * @param modifier Optional modifier for the screen
  * @param viewModel The MapViewModel instance
  * @param onProfileClick Callback when a profile card is clicked (for future navigation)
+ * @param requestLocationOnStart Whether to request location permission on first composition
  */
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = viewModel(),
-    onProfileClick: (String) -> Unit = {}
+    onProfileClick: (String) -> Unit = {},
+    requestLocationOnStart: Boolean = false
 ) {
   val uiState by viewModel.uiState.collectAsState()
 
@@ -87,7 +89,8 @@ fun MapScreen(
           centerLocation = uiState.userLocation,
           bookingPins = uiState.bookingPins,
           myProfile = myProfile,
-          onBookingClicked = { pin -> pin.profile?.let { viewModel.selectProfile(it) } })
+          onBookingClicked = { pin -> pin.profile?.let { viewModel.selectProfile(it) } },
+          requestLocationOnStart = requestLocationOnStart)
 
       // Loading indicator
       if (uiState.isLoading) {
@@ -131,13 +134,15 @@ fun MapScreen(
  * @param bookingPins List of booking pins to display on the map.
  * @param myProfile The current user's profile to show on the map.
  * @param onBookingClicked Callback when a booking pin is clicked.
+ * @param requestLocationOnStart Whether to request location permission on first composition.
  */
 @Composable
 private fun MapView(
     centerLocation: LatLng,
     bookingPins: List<BookingPin>,
     myProfile: Profile?,
-    onBookingClicked: (BookingPin) -> Unit
+    onBookingClicked: (BookingPin) -> Unit,
+    requestLocationOnStart: Boolean = false
 ) {
   // Track location permission state
   var hasLocationPermission by remember { mutableStateOf(false) }
@@ -150,13 +155,15 @@ private fun MapView(
       }
 
   // Request location permission on first composition
-  // Only if launcher was successfully created (not in test environment)
-  LaunchedEffect(Unit) {
-    try {
-      permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-    } catch (_: Exception) {
-      // In test environment, permission launcher might fail - that's ok
-      // hasLocationPermission will remain false
+  // Only if requestLocationOnStart is true and launcher was successfully created
+  LaunchedEffect(requestLocationOnStart) {
+    if (requestLocationOnStart) {
+      try {
+        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+      } catch (e: Exception) {
+        android.util.Log.w(
+            "MapScreen", "Permission launcher unavailable in this environment: ${e.message}")
+      }
     }
   }
 

@@ -70,7 +70,7 @@ class MapScreenAndroidTest {
                 errorMessage = null))
     every { vm.uiState } returns state
 
-    composeRule.setContent { MapScreen(viewModel = vm) }
+    composeRule.setContent { MapScreen(viewModel = vm, requestLocationOnStart = false) }
     composeRule.waitForIdle() // executes GoogleMap content: Marker loop + profile Marker
   }
 
@@ -88,7 +88,7 @@ class MapScreenAndroidTest {
                 errorMessage = null))
     every { vm.uiState } returns flow
 
-    composeRule.setContent { MapScreen(viewModel = vm) }
+    composeRule.setContent { MapScreen(viewModel = vm, requestLocationOnStart = false) }
     composeRule.waitForIdle()
 
     // Switch to valid profile -> target becomes profileLatLng, LaunchedEffect runs again

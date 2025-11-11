@@ -1,5 +1,6 @@
 package com.android.sample.ui.map
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.booking.BookingRepository
@@ -141,7 +142,7 @@ class MapViewModel(
         // The map will simply not show booking pins, which is acceptable
         _uiState.value = _uiState.value.copy(bookingPins = emptyList())
         // Log for debugging but don't show error to user since map itself works fine
-        println("MapViewModel: Could not load bookings - ${e.message}")
+        Log.w("MapViewModel", "Could not load bookings: ${e.message}", e)
       } finally {
         _uiState.value = _uiState.value.copy(isLoading = false)
       }
