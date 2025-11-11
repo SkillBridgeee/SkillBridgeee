@@ -44,10 +44,10 @@ object UserSessionManager {
       val user = firebaseAuth.currentUser
       _currentUser.value = user
       _authState.value =
-          when {
-            user != null -> AuthState.Authenticated(user.uid, user.email)
-            else -> AuthState.Unauthenticated
-          }
+        when {
+          user != null -> AuthState.Authenticated(user.uid, user.email)
+          else -> AuthState.Unauthenticated
+        }
     }
   }
 
@@ -57,7 +57,7 @@ object UserSessionManager {
    * @return User ID if authenticated, null otherwise
    */
   fun getCurrentUserId(): String? {
-    return auth.currentUser?.uid
+    return testUserId ?: auth.currentUser?.uid
   }
 
   /**
@@ -72,6 +72,35 @@ object UserSessionManager {
     auth.signOut()
     _currentUser.value = null
     _authState.value = AuthState.Unauthenticated
+  }
+
+  // Test-only methods - DO NOT USE IN PRODUCTION CODE
+  private var testUserId: String? = null
+
+  /**
+   * FOR TESTING ONLY: Set a fake user ID for testing purposes This bypasses Firebase Auth and
+   * should only be used in tests
+   */
+  @Deprecated("FOR TESTING ONLY", level = DeprecationLevel.WARNING)
+  fun setCurrentUserId(userId: String) {
+    testUserId = userId
+    _authState.value = AuthState.Authenticated(userId, "test@example.com")
+  }
+
+  /** FOR TESTING ONLY: Clear the test session This should be called in test cleanup */
+  @Deprecated("FOR TESTING ONLY", level = DeprecationLevel.WARNING)
+  fun clearSession() {
+    testUserId = null
+    _authState.value = AuthState.Unauthenticated
+  }
+
+  /**
+   * Check if a user is signed in
+   *
+   * @return true if authenticated, false otherwise
+   */
+  fun isUserSignedIn(): Boolean {
+    return testUserId != null || auth.currentUser != null
   }
 }
 
