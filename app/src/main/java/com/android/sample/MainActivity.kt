@@ -46,10 +46,11 @@ class MainActivity : ComponentActivity() {
 
   companion object {
     // Automatically use Firebase emulators based on build configuration
-    // To enable emulators: Change USE_FIREBASE_EMULATOR to "true" in build.gradle.kts (debug buildType)
+    // To enable emulators: Change USE_FIREBASE_EMULATOR to "true" in build.gradle.kts (debug
+    // buildType)
     // Release builds ALWAYS use production Firebase (USE_FIREBASE_EMULATOR = false)
     init {
-      //If BuildConfig is red you should run the generateDebugBuildConfig task on gradle
+      // If BuildConfig is red you should run the generateDebugBuildConfig task on gradle
       if (BuildConfig.USE_FIREBASE_EMULATOR) {
         try {
           Firebase.firestore.useEmulator("10.0.2.2", 8080)
