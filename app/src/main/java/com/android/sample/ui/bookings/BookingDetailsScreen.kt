@@ -1,12 +1,31 @@
 package com.android.sample.ui.bookings
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,7 +56,6 @@ object BookingDetailsTestTag {
   const val ROW = "booking_detail_row"
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingDetailsScreen(
     bkgViewModel: BookingDetailsViewModel = viewModel(),
@@ -181,7 +199,7 @@ private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Uni
         }
     DetailRow(
         label = "$creatorRole Name",
-        value = uiState.creatorProfile.name!!,
+        value = uiState.creatorProfile.name ?: "Unknown",
         modifier = Modifier.testTag(BookingDetailsTestTag.CREATOR_NAME))
     DetailRow(
         label = "Email",
@@ -234,7 +252,7 @@ private fun InfoSchedule(uiState: BookingUIState) {
         text = "Schedule",
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold)
-    val dateFormatter = SimpleDateFormat("dd/MM/yyyy 'to' HH:mm", Locale.getDefault())
+    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy 'to' HH:mm", Locale.getDefault()) }
 
     DetailRow(
         label = "Start of the session",
