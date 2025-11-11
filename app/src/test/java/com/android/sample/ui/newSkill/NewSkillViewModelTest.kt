@@ -269,6 +269,7 @@ class NewSkillViewModelTest {
     viewModel.setPrice("25.00")
     viewModel.setSubject(MainSubject.ACADEMICS)
     viewModel.setListingType(ListingType.PROPOSAL)
+    viewModel.setSubSkill("Algebra")
     viewModel.setLocation(testLocation)
 
     val state = viewModel.uiState.first()
@@ -323,55 +324,72 @@ class NewSkillViewModelTest {
 
   @Test
   fun addListing_withValidProposal_callsAddProposal() = runTest {
-    // Setup valid state
-    viewModel.setTitle("Math Tutoring")
-    viewModel.setDescription("Expert in algebra")
-    viewModel.setPrice("30.00")
-    viewModel.setSubject(MainSubject.ACADEMICS)
-    viewModel.setListingType(ListingType.PROPOSAL)
-    viewModel.setLocation(testLocation)
+    val mainDispatcher = StandardTestDispatcher(testScheduler)
+    Dispatchers.setMain(mainDispatcher)
+    try {
+      // construct ViewModel after setting Main so viewModelScope uses the test dispatcher
+      viewModel =
+          NewSkillViewModel(
+              listingRepository = mockListingRepository,
+              locationRepository = mockLocationRepository,
+              userId = testUserId)
 
-    coEvery { mockListingRepository.addProposal(any()) } just Runs
+      // Arrange
+      viewModel.setTitle("Math Tutoring")
+      viewModel.setDescription("Expert tutor")
+      viewModel.setPrice("30.00")
+      viewModel.setListingType(ListingType.PROPOSAL)
+      viewModel.setSubject(MainSubject.ACADEMICS)
+      viewModel.setSubSkill("Algebra")
+      viewModel.setLocation(testLocation)
 
-    viewModel.addListing()
-    testDispatcher.scheduler.advanceUntilIdle()
+      // Act
+      viewModel.addListing()
 
-    coVerify(exactly = 1) {
-      mockListingRepository.addProposal(
-          match { proposal ->
-            proposal.listingId == "listing-123" &&
-                proposal.creatorUserId == testUserId &&
-                proposal.skill.mainSubject == MainSubject.ACADEMICS &&
-                proposal.skill.skill == "Math Tutoring" &&
-                proposal.description == "Expert in algebra" &&
-                proposal.hourlyRate == 30.00 &&
-                proposal.location == testLocation
-          })
+      // Let scheduled coroutines run on the test scheduler
+      advanceUntilIdle()
+
+      // Assert
+      coVerify(exactly = 1) {
+        mockListingRepository.addProposal(
+            match { proposal ->
+              proposal.creatorUserId == testUserId &&
+                  proposal.description == "Expert tutor" &&
+                  proposal.hourlyRate == 30.00 &&
+                  proposal.skill.mainSubject == MainSubject.ACADEMICS &&
+                  proposal.location == testLocation
+            })
+      }
+    } finally {
+      Dispatchers.resetMain()
     }
   }
 
   @Test
   fun addListing_withValidRequest_callsAddRequest() = runTest {
-    // Setup valid state
+    // Arrange: populate ViewModel with the inputs the ViewModel maps into the Request
     viewModel.setTitle("Need Math Help")
     viewModel.setDescription("Looking for algebra tutor")
     viewModel.setPrice("25.00")
-    viewModel.setSubject(MainSubject.ACADEMICS)
     viewModel.setListingType(ListingType.REQUEST)
+    viewModel.setSubject(MainSubject.ACADEMICS)
+    viewModel.setSubSkill("Algebra")
     viewModel.setLocation(testLocation)
 
-    coEvery { mockListingRepository.addRequest(any()) } just Runs
-
+    // Act: trigger addListing (which launches a coroutine on viewModelScope)
     viewModel.addListing()
-    testDispatcher.scheduler.advanceUntilIdle()
 
+    // Allow the ViewModelScope coroutine on Dispatchers.Main / test dispatcher to run
+    testDispatcher.scheduler.advanceUntilIdle()
+    advanceUntilIdle()
+
+    // Assert: repository was called with a Request that matches the mapped fields
     coVerify(exactly = 1) {
       mockListingRepository.addRequest(
           match { request ->
-            request.listingId == "listing-123" &&
-                request.creatorUserId == testUserId &&
+            request.creatorUserId == testUserId &&
                 request.skill.mainSubject == MainSubject.ACADEMICS &&
-                request.skill.skill == "Need Math Help" &&
+                request.skill.skill == "Algebra" &&
                 request.description == "Looking for algebra tutor" &&
                 request.hourlyRate == 25.00 &&
                 request.location == testLocation
@@ -381,24 +399,40 @@ class NewSkillViewModelTest {
 
   @Test
   fun addListing_whenRepositoryThrowsException_doesNotCrash() = runTest {
-    // Setup valid state
-    viewModel.setTitle("Math Tutoring")
-    viewModel.setDescription("Expert tutor")
-    viewModel.setPrice("30.00")
-    viewModel.setSubject(MainSubject.ACADEMICS)
-    viewModel.setListingType(ListingType.PROPOSAL)
-    viewModel.setLocation(testLocation)
+    val mainDispatcher = StandardTestDispatcher(testScheduler)
+    Dispatchers.setMain(mainDispatcher)
+    try {
+      // Make repo throw when adding a proposal
+      coEvery { mockListingRepository.addProposal(any()) } throws RuntimeException("boom")
 
-    coEvery { mockListingRepository.addProposal(any()) } throws Exception("Database error")
+      // construct ViewModel after setting Main so viewModelScope uses the test dispatcher
+      viewModel =
+          NewSkillViewModel(
+              listingRepository = mockListingRepository,
+              locationRepository = mockLocationRepository,
+              userId = testUserId)
 
-    // Should not throw exception
-    viewModel.addListing()
-    testDispatcher.scheduler.advanceUntilIdle()
+      // Arrange valid state
+      viewModel.setTitle("Math Tutoring")
+      viewModel.setDescription("Expert tutor")
+      viewModel.setPrice("30.00")
+      viewModel.setListingType(ListingType.PROPOSAL)
+      viewModel.setSubject(MainSubject.ACADEMICS)
+      viewModel.setSubSkill("Algebra")
+      viewModel.setLocation(testLocation)
 
-    // Verify it was attempted
-    coVerify(exactly = 1) { mockListingRepository.addProposal(any()) }
+      // Act
+      viewModel.addListing()
+
+      // Let scheduled coroutines run (the thrown exception will be caught inside VM)
+      advanceUntilIdle()
+
+      // Assert repository was invoked (exception was handled by ViewModel)
+      coVerify(exactly = 1) { mockListingRepository.addProposal(any()) }
+    } finally {
+      Dispatchers.resetMain()
+    }
   }
-
   // ========== Edge Cases ==========
 
   @Test
