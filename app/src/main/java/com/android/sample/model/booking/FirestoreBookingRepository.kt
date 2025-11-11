@@ -23,7 +23,6 @@ class FirestoreBookingRepository(
 
   override suspend fun getAllBookings(): List<Booking> {
     try {
-      // Try to use the indexed query first (requires Firestore index)
       val snapshot =
           db.collection(BOOKINGS_COLLECTION_PATH)
               .whereEqualTo("bookerId", currentUserId)
@@ -31,21 +30,8 @@ class FirestoreBookingRepository(
               .get()
               .await()
       return snapshot.toObjects(Booking::class.java)
-    } catch (_: Exception) {
-      // If index doesn't exist, fall back to simple query without ordering
-      // Then sort in memory
-      try {
-        val snapshot =
-            db.collection(BOOKINGS_COLLECTION_PATH)
-                .whereEqualTo("bookerId", currentUserId)
-                .get()
-                .await()
-        val bookings = snapshot.toObjects(Booking::class.java)
-        // Sort by sessionStart in memory
-        return bookings.sortedBy { it.sessionStart }
-      } catch (fallbackError: Exception) {
-        throw Exception("Failed to fetch bookings: ${fallbackError.message}")
-      }
+    } catch (e: Exception) {
+        throw Exception("Failed to fetch bookings: ${e.message}")
     }
   }
 
@@ -80,18 +66,8 @@ class FirestoreBookingRepository(
               .get()
               .await()
       return snapshot.toObjects(Booking::class.java)
-    } catch (_: Exception) {
-      // Fallback: fetch without ordering and sort in memory
-      try {
-        val snapshot =
-            db.collection(BOOKINGS_COLLECTION_PATH)
-                .whereEqualTo("listingCreatorId", tutorId)
-                .get()
-                .await()
-        return snapshot.toObjects(Booking::class.java).sortedBy { it.sessionStart }
-      } catch (fallbackError: Exception) {
-        throw Exception("Failed to fetch bookings by tutor: ${fallbackError.message}")
-      }
+    } catch (e: Exception) {
+        throw Exception("Failed to fetch bookings by tutor: ${e.message}")
     }
   }
 
@@ -104,15 +80,8 @@ class FirestoreBookingRepository(
               .get()
               .await()
       return snapshot.toObjects(Booking::class.java)
-    } catch (_: Exception) {
-      // Fallback: fetch without ordering and sort in memory
-      try {
-        val snapshot =
-            db.collection(BOOKINGS_COLLECTION_PATH).whereEqualTo("bookerId", userId).get().await()
-        return snapshot.toObjects(Booking::class.java).sortedBy { it.sessionStart }
-      } catch (fallbackError: Exception) {
-        throw Exception("Failed to fetch bookings by user: ${fallbackError.message}")
-      }
+    } catch (e: Exception) {
+        throw Exception("Failed to fetch bookings by user: ${e.message}")
     }
   }
 
@@ -129,18 +98,8 @@ class FirestoreBookingRepository(
               .get()
               .await()
       return snapshot.toObjects(Booking::class.java)
-    } catch (_: Exception) {
-      // Fallback: fetch without ordering and sort in memory
-      try {
-        val snapshot =
-            db.collection(BOOKINGS_COLLECTION_PATH)
-                .whereEqualTo("associatedListingId", listingId)
-                .get()
-                .await()
-        return snapshot.toObjects(Booking::class.java).sortedBy { it.sessionStart }
-      } catch (fallbackError: Exception) {
-        throw Exception("Failed to fetch bookings by listing: ${fallbackError.message}")
-      }
+    } catch (e: Exception) {
+        throw Exception("Failed to fetch bookings by listing: ${e.message}")
     }
   }
 
