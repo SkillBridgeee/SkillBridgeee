@@ -164,7 +164,71 @@ class MyBookingsScreenUiTest {
 
   @Test
   fun error_state_displays_message() {
-    // Réutilise le même ViewModel, mais on injecte un bookingRepo qui jette une exception
+    val listingRepo =
+        object : ListingRepository {
+          override fun getNewUid() = "demoL"
+
+          override suspend fun getListing(listingId: String): Listing =
+              Proposal(
+                  listingId = listingId,
+                  creatorUserId = if (listingId == "L1") "t1" else "t2",
+                  description = "Demo Listing $listingId",
+                  location = Location(),
+                  hourlyRate = if (listingId == "L1") 30.0 else 25.0)
+
+          override suspend fun getAllListings() = emptyList<Listing>()
+
+          override suspend fun getProposals() = emptyList<Proposal>()
+
+          override suspend fun getRequests() = emptyList<Request>()
+
+          override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
+
+          override suspend fun addProposal(proposal: Proposal) {}
+
+          override suspend fun addRequest(request: Request) {}
+
+          override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+          override suspend fun deleteListing(listingId: String) {}
+
+          override suspend fun deactivateListing(listingId: String) {}
+
+          override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
+              emptyList<Listing>()
+
+          override suspend fun searchByLocation(location: Location, radiusKm: Double) =
+              emptyList<Listing>()
+        }
+
+    val profileRepo =
+        object : ProfileRepository {
+          override fun getNewUid() = "demoP"
+
+          override suspend fun getProfile(userId: String): Profile =
+              when (userId) {
+                "t1" -> Profile("t1", "Alice Martin", "alice@test.com")
+                "t2" -> Profile("t2", "Lucas Dupont", "lucas@test.com")
+                else -> Profile(userId, "Unknown", "unknown@test.com")
+              }
+
+          override suspend fun getProfileById(userId: String) = getProfile(userId)
+
+          override suspend fun addProfile(profile: Profile) {}
+
+          override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+          override suspend fun deleteProfile(userId: String) {}
+
+          override suspend fun getAllProfiles() = emptyList<Profile>()
+
+          override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+              emptyList<Profile>()
+
+          override suspend fun getSkillsForUser(userId: String) =
+              emptyList<com.android.sample.model.skill.Skill>()
+        }
+
     val vm =
         MyBookingsViewModel(
             bookingRepo =
@@ -172,10 +236,9 @@ class MyBookingsScreenUiTest {
                   override fun getNewUid() = "demoError"
 
                   override suspend fun getBookingsByUserId(userId: String): List<Booking> {
-                    throw RuntimeException("Simulated failure") // 💥 force l'erreur
+                    throw RuntimeException("Simulated failure")
                   }
 
-                  // autres méthodes non utilisées
                   override suspend fun getAllBookings() = emptyList<Booking>()
 
                   override suspend fun getBooking(bookingId: String) = error("unused")
@@ -205,14 +268,13 @@ class MyBookingsScreenUiTest {
 
                   override suspend fun cancelBooking(bookingId: String) {}
                 },
-            listingRepo = demoViewModel().listingRepo,
-            profileRepo = demoViewModel().profileRepo)
+            listingRepo = listingRepo,
+            profileRepo = profileRepo)
 
     composeRule.setContent {
       SampleAppTheme { MyBookingsScreen(viewModel = vm, onBookingClick = {}) }
     }
 
-    // Vérifie que le message d’erreur est bien affiché
     composeRule.waitUntil(2_000) {
       composeRule
           .onAllNodesWithTag(MyBookingsPageTestTag.ERROR, useUnmergedTree = true)

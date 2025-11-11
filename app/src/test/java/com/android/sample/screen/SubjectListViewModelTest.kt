@@ -194,8 +194,7 @@ class SubjectListViewModelTest {
   ) =
       SubjectListViewModel(
           listingRepo = FakeListingRepo(listings, throwError),
-          profileRepo = FakeProfileRepo(profiles),
-          bookingRepo = fakeBookingRepo)
+          profileRepo = FakeProfileRepo(profiles))
 
   private val L1 = listing("1", "A", "Guitar class", MainSubject.MUSIC, "guitar")
   private val L2 = listing("2", "B", "Piano class", MainSubject.MUSIC, "piano")
