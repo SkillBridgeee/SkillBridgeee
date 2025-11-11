@@ -119,18 +119,12 @@ class ListingViewModel(
         val bookerIds = bookings.map { it.bookerId }.distinct()
         val profiles = mutableMapOf<String, Profile>()
         bookerIds.forEach { userId ->
-          profileRepo.getProfile(userId)?.let { profile ->
-            profiles[userId] = profile
-          }
+          profileRepo.getProfile(userId)?.let { profile -> profiles[userId] = profile }
         }
 
         _uiState.update {
-          it.copy(
-              listingBookings = bookings,
-              bookerProfiles = profiles,
-              bookingsLoading = false)
+          it.copy(listingBookings = bookings, bookerProfiles = profiles, bookingsLoading = false)
         }
-
       } catch (_: Exception) {
         _uiState.update { it.copy(bookingsLoading = false) }
       }
@@ -163,7 +157,9 @@ class ListingViewModel(
     }
 
     viewModelScope.launch {
-      _uiState.update { it.copy(bookingInProgress = true, bookingError = null, bookingSuccess = false) }
+      _uiState.update {
+        it.copy(bookingInProgress = true, bookingError = null, bookingSuccess = false)
+      }
       try {
         // Calculate price based on session duration and hourly rate
         val durationHours = (sessionEnd.time - sessionStart.time) / (1000.0 * 60 * 60)
@@ -192,7 +188,9 @@ class ListingViewModel(
       } catch (e: IllegalArgumentException) {
         _uiState.update {
           it.copy(
-              bookingInProgress = false, bookingError = "Invalid booking: ${e.message}", bookingSuccess = false)
+              bookingInProgress = false,
+              bookingError = "Invalid booking: ${e.message}",
+              bookingSuccess = false)
         }
       } catch (e: Exception) {
         _uiState.update {
@@ -205,18 +203,8 @@ class ListingViewModel(
     }
   }
 
-  /** Clear booking success state */
-  fun clearBookingSuccess() {
-    _uiState.update { it.copy(bookingSuccess = false) }
-  }
-
-  /** Clear booking error state */
-  fun clearBookingError() {
-    _uiState.update { it.copy(bookingError = null) }
-  }
-
   /**
-   * Approve a booking (change status to CONFIRMED)
+   * Approve a booking for this listing
    *
    * @param bookingId The ID of the booking to approve
    */
@@ -224,18 +212,14 @@ class ListingViewModel(
     viewModelScope.launch {
       try {
         bookingRepo.confirmBooking(bookingId)
-        // Reload bookings to reflect the change
-        _uiState.value.listing?.let { listing ->
-          loadBookingsForListing(listing.listingId)
-        }
-      } catch (e: Exception) {
-        _uiState.update { it.copy(bookingError = "Failed to approve booking: ${e.message}") }
-      }
+        // Refresh bookings to show updated status
+        _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
+      } catch (_: Exception) {}
     }
   }
 
   /**
-   * Reject a booking (change status to CANCELLED)
+   * Reject a booking for this listing
    *
    * @param bookingId The ID of the booking to reject
    */
@@ -243,14 +227,27 @@ class ListingViewModel(
     viewModelScope.launch {
       try {
         bookingRepo.cancelBooking(bookingId)
-        // Reload bookings to reflect the change
-        _uiState.value.listing?.let { listing ->
-          loadBookingsForListing(listing.listingId)
-        }
-      } catch (e: Exception) {
-        _uiState.update { it.copy(bookingError = "Failed to reject booking: ${e.message}") }
-      }
+        // Refresh bookings to show updated status
+        _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
+      } catch (_: Exception) {}
     }
   }
-}
 
+  /** Clears the booking success state. */
+  fun clearBookingSuccess() {
+    _uiState.update { it.copy(bookingSuccess = false) }
+  }
+
+  /** Clears the booking error state. */
+  fun clearBookingError() {
+    _uiState.update { it.copy(bookingError = null) }
+  }
+
+  fun showBookingSuccess() {
+    _uiState.update { it.copy(bookingSuccess = true) }
+  }
+
+  fun showBookingError(message: String) {
+    _uiState.update { it.copy(bookingError = message) }
+  }
+}

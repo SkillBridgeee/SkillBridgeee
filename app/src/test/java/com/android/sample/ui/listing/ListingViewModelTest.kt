@@ -1,0 +1,867 @@
+package com.android.sample.ui.listing
+
+import com.android.sample.model.authentication.FirebaseTestRule
+import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.booking.Booking
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
+import com.android.sample.model.map.Location
+import com.android.sample.model.skill.ExpertiseLevel
+import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepository
+import java.util.Date
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@Suppress("DEPRECATION")
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
+class ListingViewModelTest {
+
+  @get:Rule val firebaseRule = FirebaseTestRule()
+
+  private val testDispatcher = StandardTestDispatcher()
+
+  private val sampleProposal =
+      Proposal(
+          listingId = "listing-123",
+          creatorUserId = "creator-456",
+          skill = Skill(MainSubject.ACADEMICS, "Calculus", 5.0, ExpertiseLevel.ADVANCED),
+          description = "Advanced calculus tutoring for university students",
+          location = Location(name = "Campus Library", longitude = -74.0, latitude = 40.7),
+          createdAt = Date(),
+          isActive = true,
+          hourlyRate = 30.0)
+
+  private val sampleRequest =
+      Request(
+          listingId = "request-789",
+          creatorUserId = "creator-999",
+          skill = Skill(MainSubject.ACADEMICS, "Physics", 3.0, ExpertiseLevel.INTERMEDIATE),
+          description = "Need help with quantum mechanics",
+          location = Location(name = "Study Room", longitude = -74.0, latitude = 40.7),
+          createdAt = Date(),
+          isActive = true,
+          hourlyRate = 35.0)
+
+  private val sampleCreator =
+      Profile(
+          userId = "creator-456",
+          name = "Jane Smith",
+          email = "jane.smith@example.com",
+          location = Location(name = "New York"))
+
+  private val sampleBookerProfile =
+      Profile(
+          userId = "booker-789",
+          name = "John Doe",
+          email = "john.doe@example.com",
+          location = Location(name = "Boston"))
+
+  private val sampleBooking =
+      Booking(
+          bookingId = "booking-1",
+          associatedListingId = "listing-123",
+          listingCreatorId = "creator-456",
+          bookerId = "booker-789",
+          sessionStart = Date(),
+          sessionEnd = Date(System.currentTimeMillis() + 3600000),
+          status = BookingStatus.PENDING,
+          price = 30.0)
+
+  @Before
+  fun setup() {
+    Dispatchers.setMain(testDispatcher)
+    UserSessionManager.clearSession()
+  }
+
+  @After
+  fun tearDown() {
+    Dispatchers.resetMain()
+    UserSessionManager.clearSession()
+  }
+
+  // Fake Repositories
+  private open class FakeListingRepo(
+      private var storedListing: com.android.sample.model.listing.Listing? = null
+  ) : ListingRepository {
+    override fun getNewUid() = "fake-listing-id"
+
+    override suspend fun getAllListings() = listOfNotNull(storedListing)
+
+    override suspend fun getProposals() =
+        storedListing?.let { if (it is Proposal) listOf(it) else emptyList() } ?: emptyList()
+
+    override suspend fun getRequests() =
+        storedListing?.let { if (it is Request) listOf(it) else emptyList() } ?: emptyList()
+
+    override suspend fun getListing(listingId: String) =
+        if (storedListing?.listingId == listingId) storedListing else null
+
+    override suspend fun getListingsByUser(userId: String) =
+        emptyList<com.android.sample.model.listing.Listing>()
+
+    override suspend fun addProposal(proposal: Proposal) {}
+
+    override suspend fun addRequest(request: Request) {}
+
+    override suspend fun updateListing(
+        listingId: String,
+        listing: com.android.sample.model.listing.Listing
+    ) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: Skill) =
+        emptyList<com.android.sample.model.listing.Listing>()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double) =
+        emptyList<com.android.sample.model.listing.Listing>()
+  }
+
+  private open class FakeProfileRepo(private val profiles: Map<String, Profile> = emptyMap()) :
+      ProfileRepository {
+    override fun getNewUid() = "fake-profile-id"
+
+    override suspend fun getProfile(userId: String) = profiles[userId]
+
+    override suspend fun addProfile(profile: Profile) {}
+
+    override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+    override suspend fun deleteProfile(userId: String) {}
+
+    override suspend fun getAllProfiles() = profiles.values.toList()
+
+    override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+        emptyList<Profile>()
+
+    override suspend fun getProfileById(userId: String) = profiles[userId]
+
+    override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
+  }
+
+  private open class FakeBookingRepo(
+      private val storedBookings: MutableList<Booking> = mutableListOf()
+  ) : BookingRepository {
+    var confirmBookingCalled = false
+    var cancelBookingCalled = false
+    var addBookingCalled = false
+
+    override fun getNewUid() = "fake-booking-id"
+
+    override suspend fun getAllBookings() = storedBookings
+
+    override suspend fun getBooking(bookingId: String) =
+        storedBookings.find { it.bookingId == bookingId }
+
+    override suspend fun getBookingsByTutor(tutorId: String) =
+        storedBookings.filter { it.listingCreatorId == tutorId }
+
+    override suspend fun getBookingsByUserId(userId: String) =
+        storedBookings.filter { it.bookerId == userId || it.listingCreatorId == userId }
+
+    override suspend fun getBookingsByStudent(studentId: String) =
+        storedBookings.filter { it.bookerId == studentId }
+
+    override suspend fun getBookingsByListing(listingId: String) =
+        storedBookings.filter { it.associatedListingId == listingId }
+
+    override suspend fun addBooking(booking: Booking) {
+      addBookingCalled = true
+      storedBookings.add(booking)
+    }
+
+    override suspend fun updateBooking(bookingId: String, booking: Booking) {
+      val index = storedBookings.indexOfFirst { it.bookingId == bookingId }
+      if (index != -1) {
+        storedBookings[index] = booking
+      }
+    }
+
+    override suspend fun deleteBooking(bookingId: String) {
+      storedBookings.removeAll { it.bookingId == bookingId }
+    }
+
+    override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
+      val booking = storedBookings.find { it.bookingId == bookingId }
+      booking?.let {
+        val updated = it.copy(status = status)
+        updateBooking(bookingId, updated)
+      }
+    }
+
+    override suspend fun confirmBooking(bookingId: String) {
+      confirmBookingCalled = true
+      updateBookingStatus(bookingId, BookingStatus.CONFIRMED)
+    }
+
+    override suspend fun completeBooking(bookingId: String) {
+      updateBookingStatus(bookingId, BookingStatus.COMPLETED)
+    }
+
+    override suspend fun cancelBooking(bookingId: String) {
+      cancelBookingCalled = true
+      updateBookingStatus(bookingId, BookingStatus.CANCELLED)
+    }
+  }
+
+  // Tests for loadListing()
+
+  @Test
+  fun loadListing_success_updatesState() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.listing)
+    assertEquals("listing-123", state.listing?.listingId)
+    assertNotNull(state.creator)
+    assertEquals("Jane Smith", state.creator?.name)
+    assertFalse(state.isLoading)
+    assertNull(state.error)
+  }
+
+  @Test
+  fun loadListing_notFound_showsError() = runTest {
+    val listingRepo = FakeListingRepo(null)
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("non-existent-id")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNull(state.listing)
+    assertFalse(state.isLoading)
+    assertEquals("Listing not found", state.error)
+  }
+
+  @Test
+  fun loadListing_exception_showsError() = runTest {
+    val listingRepo =
+        object : FakeListingRepo(sampleProposal) {
+          override suspend fun getListing(listingId: String) =
+              throw RuntimeException("Network error")
+        }
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNull(state.listing)
+    assertFalse(state.isLoading)
+    assertNotNull(state.error)
+    assertTrue(state.error!!.contains("Failed to load listing"))
+  }
+
+  @Test
+  fun loadListing_ownListing_loadsBookings() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings = listOf(sampleBooking)
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertTrue(state.isOwnListing)
+    assertEquals(1, state.listingBookings.size)
+    assertEquals(1, state.bookerProfiles.size)
+    assertFalse(state.bookingsLoading)
+  }
+
+  @Test
+  fun loadListing_notOwnListing_doesNotLoadBookings() = runTest {
+    UserSessionManager.setCurrentUserId("other-user-123")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertFalse(state.isOwnListing)
+    assertTrue(state.listingBookings.isEmpty())
+  }
+
+  @Test
+  fun loadListing_noCreatorProfile_stillLoadsListing() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(emptyMap())
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.listing)
+    assertNull(state.creator)
+    assertFalse(state.isLoading)
+  }
+
+  @Test
+  fun loadBookingsForListing_exception_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo =
+        object : FakeBookingRepo() {
+          override suspend fun getBookingsByListing(listingId: String): List<Booking> {
+            throw RuntimeException("Database error")
+          }
+        }
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.listing)
+    assertTrue(state.listingBookings.isEmpty())
+    assertFalse(state.bookingsLoading)
+  }
+
+  // Tests for createBooking()
+
+  @Test
+  fun createBooking_success_updatesState() = runTest {
+    UserSessionManager.setCurrentUserId("user-123")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val sessionStart = Date()
+    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertTrue(state.bookingSuccess)
+    assertNull(state.bookingError)
+    assertFalse(state.bookingInProgress)
+    assertTrue(bookingRepo.addBookingCalled)
+  }
+
+  @Test
+  fun createBooking_noListing_showsError() = runTest {
+    UserSessionManager.setCurrentUserId("user-123")
+
+    val listingRepo = FakeListingRepo()
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    val sessionStart = Date()
+    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertEquals("Listing not found", state.bookingError)
+    assertFalse(state.bookingSuccess)
+  }
+
+  @Test
+  fun createBooking_notLoggedIn_showsError() = runTest {
+    UserSessionManager.clearSession()
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val sessionStart = Date()
+    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.bookingError)
+    assertTrue(state.bookingError!!.contains("logged in"))
+    assertFalse(state.bookingSuccess)
+  }
+
+  @Test
+  fun createBooking_ownListing_showsError() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val sessionStart = Date()
+    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.bookingError)
+    assertTrue(state.bookingError!!.contains("cannot book your own listing"))
+    assertFalse(state.bookingSuccess)
+  }
+
+  @Test
+  fun createBooking_invalidBooking_showsError() = runTest {
+    UserSessionManager.setCurrentUserId("user-123")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Invalid: end time before start time
+    val sessionStart = Date(System.currentTimeMillis() + 3600000)
+    val sessionEnd = Date()
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.bookingError)
+    assertTrue(state.bookingError!!.contains("Invalid booking"))
+    assertFalse(state.bookingSuccess)
+  }
+
+  @Test
+  fun createBooking_repositoryException_showsError() = runTest {
+    UserSessionManager.setCurrentUserId("user-123")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo =
+        object : FakeBookingRepo() {
+          override suspend fun addBooking(booking: Booking) {
+            throw RuntimeException("Database error")
+          }
+        }
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val sessionStart = Date()
+    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.bookingError)
+    assertTrue(state.bookingError!!.contains("Failed to create booking"))
+    assertFalse(state.bookingSuccess)
+  }
+
+  @Test
+  fun createBooking_calculatesPrice_correctly() = runTest {
+    UserSessionManager.setCurrentUserId("user-123")
+
+    val bookings = mutableListOf<Booking>()
+    val bookingRepo =
+        object : FakeBookingRepo(bookings) {
+          override suspend fun addBooking(booking: Booking) {
+            bookings.add(booking)
+          }
+        }
+
+    val listingRepo = FakeListingRepo(sampleProposal) // hourlyRate = 30.0
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val sessionStart = Date()
+    val sessionEnd = Date(System.currentTimeMillis() + 7200000) // 2 hours later
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    assertEquals(1, bookings.size)
+    assertEquals(60.0, bookings[0].price, 0.01) // 30.0 * 2 = 60.0
+  }
+
+  // Tests for approveBooking()
+
+  @Test
+  fun approveBooking_success_callsRepository() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings = listOf(sampleBooking.copy(status = BookingStatus.PENDING))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.approveBooking("booking-1")
+    advanceUntilIdle()
+
+    assertTrue(bookingRepo.confirmBookingCalled)
+  }
+
+  @Test
+  fun approveBooking_exception_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings = listOf(sampleBooking.copy(status = BookingStatus.PENDING))
+    val bookingRepo =
+        object : FakeBookingRepo(bookings.toMutableList()) {
+          override suspend fun confirmBooking(bookingId: String) {
+            throw RuntimeException("Booking service error")
+          }
+        }
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Should not crash
+    viewModel.approveBooking("booking-1")
+    advanceUntilIdle()
+
+    assertNotNull(viewModel.uiState.value.listing)
+  }
+
+  // Tests for rejectBooking()
+
+  @Test
+  fun rejectBooking_success_callsRepository() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings = listOf(sampleBooking.copy(status = BookingStatus.PENDING))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.rejectBooking("booking-1")
+    advanceUntilIdle()
+
+    assertTrue(bookingRepo.cancelBookingCalled)
+  }
+
+  @Test
+  fun rejectBooking_exception_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings = listOf(sampleBooking.copy(status = BookingStatus.PENDING))
+    val bookingRepo =
+        object : FakeBookingRepo(bookings.toMutableList()) {
+          override suspend fun cancelBooking(bookingId: String) {
+            throw RuntimeException("Booking service error")
+          }
+        }
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Should not crash
+    viewModel.rejectBooking("booking-1")
+    advanceUntilIdle()
+
+    assertNotNull(viewModel.uiState.value.listing)
+  }
+
+  // Tests for state management methods
+
+  @Test
+  fun clearBookingSuccess_updatesState() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.showBookingSuccess()
+    advanceUntilIdle()
+
+    assertTrue(viewModel.uiState.value.bookingSuccess)
+
+    viewModel.clearBookingSuccess()
+    advanceUntilIdle()
+
+    assertFalse(viewModel.uiState.value.bookingSuccess)
+  }
+
+  @Test
+  fun clearBookingError_updatesState() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.showBookingError("Test error")
+    advanceUntilIdle()
+
+    assertEquals("Test error", viewModel.uiState.value.bookingError)
+
+    viewModel.clearBookingError()
+    advanceUntilIdle()
+
+    assertNull(viewModel.uiState.value.bookingError)
+  }
+
+  @Test
+  fun showBookingSuccess_updatesState() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    assertFalse(viewModel.uiState.value.bookingSuccess)
+
+    viewModel.showBookingSuccess()
+    advanceUntilIdle()
+
+    assertTrue(viewModel.uiState.value.bookingSuccess)
+  }
+
+  @Test
+  fun showBookingError_updatesState() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    assertNull(viewModel.uiState.value.bookingError)
+
+    viewModel.showBookingError("Custom error message")
+    advanceUntilIdle()
+
+    assertEquals("Custom error message", viewModel.uiState.value.bookingError)
+  }
+
+  // Tests for loading states
+
+  @Test
+  fun loadListing_setsLoadingState() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    assertFalse(viewModel.uiState.value.isLoading)
+
+    viewModel.loadListing("listing-123")
+    // Don't advance - check intermediate state
+    // Note: This may be flaky depending on coroutine execution
+
+    advanceUntilIdle()
+    assertFalse(viewModel.uiState.value.isLoading)
+  }
+
+  @Test
+  fun createBooking_setsBookingInProgressState() = runTest {
+    UserSessionManager.setCurrentUserId("user-123")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    assertFalse(viewModel.uiState.value.bookingInProgress)
+
+    val sessionStart = Date()
+    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    viewModel.createBooking(sessionStart, sessionEnd)
+
+    advanceUntilIdle()
+    assertFalse(viewModel.uiState.value.bookingInProgress)
+  }
+
+  // Tests with Request listings
+
+  @Test
+  fun loadListing_request_loadsCorrectly() = runTest {
+    val listingRepo = FakeListingRepo(sampleRequest)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-999" to sampleCreator.copy(userId = "creator-999")))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("request-789")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.listing)
+    assertEquals("request-789", state.listing?.listingId)
+    assertEquals(35.0, state.listing?.hourlyRate)
+  }
+
+  // Tests for multiple bookings
+
+  @Test
+  fun loadBookingsForListing_multipleBookings_loadsAllProfiles() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val booking1 = sampleBooking.copy(bookingId = "b1", bookerId = "booker-1")
+    val booking2 = sampleBooking.copy(bookingId = "b2", bookerId = "booker-2")
+    val booking3 = sampleBooking.copy(bookingId = "b3", bookerId = "booker-1") // Duplicate booker
+
+    val bookings = listOf(booking1, booking2, booking3)
+    val profiles =
+        mapOf(
+            "creator-456" to sampleCreator,
+            "booker-1" to sampleBookerProfile.copy(userId = "booker-1", name = "Booker One"),
+            "booker-2" to sampleBookerProfile.copy(userId = "booker-2", name = "Booker Two"))
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(profiles)
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertEquals(3, state.listingBookings.size)
+    assertEquals(2, state.bookerProfiles.size) // Only 2 unique bookers
+    assertTrue(state.bookerProfiles.containsKey("booker-1"))
+    assertTrue(state.bookerProfiles.containsKey("booker-2"))
+  }
+
+  @Test
+  fun loadBookingsForListing_missingBookerProfile_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings = listOf(sampleBooking.copy(bookerId = "non-existent-booker"))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertEquals(1, state.listingBookings.size)
+    assertEquals(0, state.bookerProfiles.size) // Profile not found
+    assertFalse(state.bookingsLoading)
+  }
+
+  // Edge case tests
+
+  @Test
+  fun initialState_isCorrect() {
+    val listingRepo = FakeListingRepo()
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    val state = viewModel.uiState.value
+    assertNull(state.listing)
+    assertNull(state.creator)
+    assertFalse(state.isLoading)
+    assertNull(state.error)
+    assertFalse(state.isOwnListing)
+    assertFalse(state.bookingInProgress)
+    assertNull(state.bookingError)
+    assertFalse(state.bookingSuccess)
+    assertTrue(state.listingBookings.isEmpty())
+    assertFalse(state.bookingsLoading)
+    assertTrue(state.bookerProfiles.isEmpty())
+  }
+
+  @Test
+  fun approveBooking_withoutLoadingListing_handledGracefully() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    // Don't load listing first
+    viewModel.approveBooking("booking-1")
+    advanceUntilIdle()
+
+    // Should not crash
+    assertNull(viewModel.uiState.value.listing)
+  }
+
+  @Test
+  fun rejectBooking_withoutLoadingListing_handledGracefully() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    // Don't load listing first
+    viewModel.rejectBooking("booking-1")
+    advanceUntilIdle()
+
+    // Should not crash
+    assertNull(viewModel.uiState.value.listing)
+  }
+}
