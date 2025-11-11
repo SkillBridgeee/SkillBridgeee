@@ -1,5 +1,6 @@
 package com.android.sample.model.authentication
 
+import androidx.annotation.VisibleForTesting
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +58,7 @@ object UserSessionManager {
    * @return User ID if authenticated, null otherwise
    */
   fun getCurrentUserId(): String? {
-    return auth.currentUser?.uid
+    return testUserId ?: auth.currentUser?.uid
   }
 
   /**
@@ -72,6 +73,44 @@ object UserSessionManager {
     auth.signOut()
     _currentUser.value = null
     _authState.value = AuthState.Unauthenticated
+  }
+
+  // Test-only methods - DO NOT USE IN PRODUCTION CODE
+  // Using @VisibleForTesting provides compile-time protection against production usage
+  @VisibleForTesting internal var testUserId: String? = null
+
+  /**
+   * FOR TESTING ONLY: Set a fake user ID for testing purposes. This bypasses Firebase Auth and
+   * should only be used in tests.
+   *
+   * WARNING: This method is visible only for testing. Using it in production code will cause
+   * compilation warnings and should trigger code review alerts.
+   */
+  @VisibleForTesting
+  fun setCurrentUserId(userId: String) {
+    testUserId = userId
+    _authState.value = AuthState.Authenticated(userId, "test@example.com")
+  }
+
+  /**
+   * FOR TESTING ONLY: Clear the test session. This should be called in test cleanup.
+   *
+   * WARNING: This method is visible only for testing. Using it in production code will cause
+   * compilation warnings and should trigger code review alerts.
+   */
+  @VisibleForTesting
+  fun clearSession() {
+    testUserId = null
+    _authState.value = AuthState.Unauthenticated
+  }
+
+  /**
+   * Check if a user is signed in
+   *
+   * @return true if authenticated, false otherwise
+   */
+  fun isUserSignedIn(): Boolean {
+    return testUserId != null || auth.currentUser != null
   }
 }
 
