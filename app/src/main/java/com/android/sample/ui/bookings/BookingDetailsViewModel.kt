@@ -38,15 +38,25 @@ class BookingDetailsViewModel(
   fun load(bookingId: String) {
     viewModelScope.launch {
       try {
-        val booking1 = bookingRepository.getBooking(bookingId)
-        val creatorProfile1 = profileRepository.getProfile(booking1!!.listingCreatorId)
-        val listing1 = listingRepository.getListing(booking1.associatedListingId)
+        val booking =
+            bookingRepository.getBooking(bookingId)
+                ?: throw IllegalStateException(
+                    "BookingDetailsViewModel : Booking not found for id=$bookingId")
+
+        val creatorProfile =
+            profileRepository.getProfile(booking.listingCreatorId)
+                ?: throw IllegalStateException(
+                    "BookingDetailsViewModel : Creator profile not found")
+
+        val listing =
+            listingRepository.getListing(booking.associatedListingId)
+                ?: throw IllegalStateException("BookingDetailsViewModel : Listing not found")
 
         _bookingUiState.value =
             bookingUiState.value.copy(
-                booking = booking1,
-                listing = listing1!!,
-                creatorProfile = creatorProfile1!!,
+                booking = booking,
+                listing = listing,
+                creatorProfile = creatorProfile,
                 loadError = false)
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error loading booking details for $bookingId", e)
