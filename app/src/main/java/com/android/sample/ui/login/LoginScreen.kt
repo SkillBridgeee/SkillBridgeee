@@ -1,5 +1,6 @@
 package com.android.sample.ui.login
 
+import android.R
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,9 +16,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -159,27 +164,16 @@ private fun EmailPasswordFields(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit
 ) {
-  var emailFocused by remember { mutableStateOf(false) }
-
-  val maxPreview = 30
-
-  val displayEmail =
-      if (!emailFocused && email.length > maxPreview) email.take(maxPreview) + "..." else email
-
-  OutlinedTextField(
-      value = displayEmail,
+  EllipsizingTextField(
+      value = email,
       onValueChange = onEmailChange,
-      label = { Text("Email") },
+      placeholder = "Email",
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-      singleLine = true,
-      maxLines = 1,
       leadingIcon = {
-        Icon(painterResource(id = android.R.drawable.ic_dialog_email), contentDescription = null)
+        Icon(painterResource(id = R.drawable.ic_dialog_email), contentDescription = null)
       },
-      modifier =
-          Modifier.fillMaxWidth()
-              .onFocusChanged { emailFocused = it.isFocused }
-              .testTag(SignInScreenTestTags.EMAIL_INPUT))
+      modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT),
+      maxPreviewLength = 45)
 
   Spacer(modifier = Modifier.height(10.dp))
 
@@ -321,22 +315,32 @@ fun EllipsizingTextField(
     modifier: Modifier = Modifier,
     maxPreviewLength: Int = 40,
     shape: RoundedCornerShape = RoundedCornerShape(14.dp),
-    colors: TextFieldColors = TextFieldDefaults.colors()
+    colors: TextFieldColors = TextFieldDefaults.colors(),
+    leadingIcon: @Composable (() -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
   var focused by remember { mutableStateOf(false) }
 
-  val displayValue =
-      if (!focused && value.length > maxPreviewLength) value.take(maxPreviewLength) + "..."
-      else value
+  val ellipsizeTransformation = VisualTransformation { text ->
+    if (!focused && text.text.length > maxPreviewLength) {
+      val short = text.text.take(maxPreviewLength) + "..."
+      TransformedText(AnnotatedString(short), OffsetMapping.Identity)
+    } else {
+      TransformedText(text, OffsetMapping.Identity)
+    }
+  }
 
   TextField(
-      value = displayValue,
+      value = value, // keep the real value so submission/validation use the full email
       onValueChange = onValueChange,
       modifier = modifier.onFocusChanged { focused = it.isFocused },
       placeholder = { Text(placeholder, fontWeight = FontWeight.Bold) },
       singleLine = true,
       maxLines = 1,
       shape = shape,
+      visualTransformation = ellipsizeTransformation,
+      leadingIcon = leadingIcon,
+      keyboardOptions = keyboardOptions,
       colors =
           colors.copy(
               focusedIndicatorColor = Color.Transparent,
