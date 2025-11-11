@@ -72,10 +72,6 @@ fun AppNavGraph(
       LoginScreen(
           viewModel = authViewModel,
           onGoogleSignIn = onGoogleSignIn,
-          onGitHubSignIn = { // Temporary functionality to go to home page while GitHub auth isn't
-            // implemented
-            navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
-          },
           onNavigateToSignUp = { // Add this navigation callback
             navController.navigate(NavRoutes.SIGNUP_BASE)
           })
