@@ -34,8 +34,8 @@ data class BookingCardUI(val booking: Booking, val creatorProfile: Profile, val 
  */
 class MyBookingsViewModel(
     private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository,
-    val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
-    val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
+    private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
+    private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(MyBookingsUIState())
