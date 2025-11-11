@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,7 +58,8 @@ object ProfileScreenTestTags {
  * - List of requests (looking for tutors)
  *
  * @param profileId The ID of the profile to display.
- * @param onBackClick Callback when back button is clicked.
+ * @param onBackClick Optional callback when back button is clicked.
+ * @param onRefresh Optional callback when refresh button is clicked.
  * @param onProposalClick Callback when a proposal card is clicked.
  * @param onRequestClick Callback when a request card is clicked.
  * @param viewModel The ViewModel for managing profile data.
@@ -63,6 +68,8 @@ object ProfileScreenTestTags {
 @Composable
 fun ProfileScreen(
     profileId: String,
+    onBackClick: (() -> Unit)? = null,
+    onRefresh: (() -> Unit)? = null,
     onProposalClick: (String) -> Unit = {},
     onRequestClick: (String) -> Unit = {},
     viewModel: ProfileScreenViewModel = viewModel {
@@ -77,35 +84,62 @@ fun ProfileScreen(
   // Load profile data when profileId changes
   LaunchedEffect(profileId) { viewModel.loadProfile(profileId) }
 
-  Scaffold(modifier = Modifier.testTag(ProfileScreenTestTags.SCREEN)) { paddingValues ->
-    when {
-      uiState.isLoading -> {
-        Box(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentAlignment = Alignment.Center) {
-              CircularProgressIndicator(
-                  modifier = Modifier.testTag(ProfileScreenTestTags.LOADING_INDICATOR))
-            }
+  Scaffold(
+      modifier = Modifier.testTag(ProfileScreenTestTags.SCREEN),
+      topBar = {
+        if (onBackClick != null || onRefresh != null) {
+          TopAppBar(
+              title = { Text("Profile") },
+              navigationIcon = {
+                onBackClick?.let {
+                  IconButton(
+                      onClick = it,
+                      modifier = Modifier.testTag(ProfileScreenTestTags.BACK_BUTTON)) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back")
+                      }
+                }
+              },
+              actions = {
+                onRefresh?.let {
+                  IconButton(
+                      onClick = it,
+                      modifier = Modifier.testTag(ProfileScreenTestTags.REFRESH_BUTTON)) {
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
+                      }
+                }
+              })
+        }
+      }) { paddingValues ->
+        when {
+          uiState.isLoading -> {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center) {
+                  CircularProgressIndicator(
+                      modifier = Modifier.testTag(ProfileScreenTestTags.LOADING_INDICATOR))
+                }
+          }
+          uiState.errorMessage != null -> {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center) {
+                  Text(
+                      text = uiState.errorMessage ?: "Unknown error",
+                      color = MaterialTheme.colorScheme.error,
+                      modifier = Modifier.testTag(ProfileScreenTestTags.ERROR_TEXT))
+                }
+          }
+          uiState.profile != null -> {
+            ProfileContent(
+                uiState = uiState,
+                paddingValues = paddingValues,
+                onProposalClick = onProposalClick,
+                onRequestClick = onRequestClick)
+          }
+        }
       }
-      uiState.errorMessage != null -> {
-        Box(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentAlignment = Alignment.Center) {
-              Text(
-                  text = uiState.errorMessage ?: "Unknown error",
-                  color = MaterialTheme.colorScheme.error,
-                  modifier = Modifier.testTag(ProfileScreenTestTags.ERROR_TEXT))
-            }
-      }
-      uiState.profile != null -> {
-        ProfileContent(
-            uiState = uiState,
-            paddingValues = paddingValues,
-            onProposalClick = onProposalClick,
-            onRequestClick = onRequestClick)
-      }
-    }
-  }
 }
 
 @Composable

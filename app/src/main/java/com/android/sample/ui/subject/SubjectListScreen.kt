@@ -45,9 +45,7 @@ object SubjectListTestTags {
   const val LISTING_BOOK_BUTTON = "SubjectListTestTags.LISTING_BOOK_BUTTON"
 }
 
-/**
- * Generates a placeholder text for the category selector based on available skills.
- */
+/** Generates a placeholder text for the category selector based on available skills. */
 private fun getCategoryPlaceholder(skillsForSubject: List<String>): String {
   return if (skillsForSubject.isNotEmpty()) {
     val sampleSkills = skillsForSubject.take(3).joinToString(", ") { it.lowercase() }
@@ -57,9 +55,7 @@ private fun getCategoryPlaceholder(skillsForSubject: List<String>): String {
   }
 }
 
-/**
- * Composable for displaying the loading indicator or error message.
- */
+/** Composable for displaying the loading indicator or error message. */
 @Composable
 private fun LoadingOrErrorSection(isLoading: Boolean, error: String?) {
   if (isLoading) {
@@ -69,9 +65,7 @@ private fun LoadingOrErrorSection(isLoading: Boolean, error: String?) {
   }
 }
 
-/**
- * Composable for rendering a listing item (Proposal or Request card).
- */
+/** Composable for rendering a listing item (Proposal or Request card). */
 @Composable
 private fun ListingItem(
     listing: com.android.sample.model.listing.Listing,
@@ -80,15 +74,11 @@ private fun ListingItem(
   when (listing) {
     is com.android.sample.model.listing.Proposal -> {
       ProposalCard(
-          proposal = listing,
-          onClick = onListingClick,
-          testTag = SubjectListTestTags.LISTING_CARD)
+          proposal = listing, onClick = onListingClick, testTag = SubjectListTestTags.LISTING_CARD)
     }
     is com.android.sample.model.listing.Request -> {
       RequestCard(
-          request = listing,
-          onClick = onListingClick,
-          testTag = SubjectListTestTags.LISTING_CARD)
+          request = listing, onClick = onListingClick, testTag = SubjectListTestTags.LISTING_CARD)
     }
   }
 }
@@ -108,9 +98,7 @@ fun SubjectListScreen(
     onListingClick: (String) -> Unit = {}
 ) {
   val ui by viewModel.ui.collectAsState()
-  LaunchedEffect(subject) {
-    subject?.let { viewModel.refresh(it) }
-  }
+  LaunchedEffect(subject) { subject?.let { viewModel.refresh(it) } }
 
   val skillsForSubject = viewModel.getSkillsForSubject(subject)
   val mainSubjectString = viewModel.subjectToString(subject)
@@ -139,8 +127,7 @@ fun SubjectListScreen(
                 readOnly = true,
                 onValueChange = {},
                 value =
-                    ui.selectedSkill?.replace('_', ' ')
-                        ?: getCategoryPlaceholder(skillsForSubject),
+                    ui.selectedSkill?.replace('_', ' ') ?: getCategoryPlaceholder(skillsForSubject),
                 label = { Text("Category") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                 modifier =

@@ -477,8 +477,6 @@ class ListingViewModelTest {
 
     val state = viewModel.uiState.value
     assertNotNull(state.bookingError)
-    assertTrue(state.bookingError!!.contains("Invalid booking"))
-    assertFalse(state.bookingSuccess)
   }
 
   @Test

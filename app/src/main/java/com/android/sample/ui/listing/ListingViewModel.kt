@@ -162,8 +162,19 @@ class ListingViewModel(
         it.copy(bookingInProgress = true, bookingError = null, bookingSuccess = false)
       }
       try {
+        // Validate session times
+        val durationMillis = sessionEnd.time - sessionStart.time
+        if (durationMillis <= 0) {
+          _uiState.update {
+            it.copy(
+                bookingInProgress = false,
+                bookingError = "Invalid session time: End time must be after start time")
+          }
+          return@launch
+        }
+
         // Calculate price based on session duration and hourly rate
-        val durationHours = (sessionEnd.time - sessionStart.time) / (1000.0 * 60 * 60)
+        val durationHours = durationMillis.toDouble() / (1000.0 * 60 * 60)
         val price = listing.hourlyRate * durationHours
 
         val booking =
@@ -216,7 +227,7 @@ class ListingViewModel(
         // Refresh bookings to show updated status
         _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
       } catch (e: Exception) {
-          Log.w("ListingViewModel", "Couldnt approve the booking", e)
+        Log.w("ListingViewModel", "Couldnt approve the booking", e)
       }
     }
   }
@@ -233,7 +244,7 @@ class ListingViewModel(
         // Refresh bookings to show updated status
         _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
       } catch (e: Exception) {
-          Log.w("ListingViewModel", "Couldnt reject the booking", e)
+        Log.w("ListingViewModel", "Couldnt reject the booking", e)
       }
     }
   }
