@@ -6,9 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -81,56 +78,35 @@ fun ProfileScreen(
   // Load profile data when profileId changes
   LaunchedEffect(profileId) { viewModel.loadProfile(profileId) }
 
-  Scaffold(
-      modifier = Modifier.testTag(ProfileScreenTestTags.SCREEN),
-      topBar = {
-        TopAppBar(
-            title = { Text("Profile") },
-            navigationIcon = {
-              IconButton(
-                  onClick = onBackClick,
-                  modifier = Modifier.testTag(ProfileScreenTestTags.BACK_BUTTON)) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back")
-                  }
-            },
-            actions = {
-              IconButton(
-                  onClick = { viewModel.refresh(profileId) },
-                  modifier = Modifier.testTag(ProfileScreenTestTags.REFRESH_BUTTON)) {
-                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
-                  }
-            })
-      }) { paddingValues ->
-        when {
-          uiState.isLoading -> {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
-                contentAlignment = Alignment.Center) {
-                  CircularProgressIndicator(
-                      modifier = Modifier.testTag(ProfileScreenTestTags.LOADING_INDICATOR))
-                }
-          }
-          uiState.errorMessage != null -> {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(paddingValues),
-                contentAlignment = Alignment.Center) {
-                  Text(
-                      text = uiState.errorMessage ?: "Unknown error",
-                      color = MaterialTheme.colorScheme.error,
-                      modifier = Modifier.testTag(ProfileScreenTestTags.ERROR_TEXT))
-                }
-          }
-          uiState.profile != null -> {
-            ProfileContent(
-                uiState = uiState,
-                paddingValues = paddingValues,
-                onProposalClick = onProposalClick,
-                onRequestClick = onRequestClick)
-          }
-        }
+  Scaffold(modifier = Modifier.testTag(ProfileScreenTestTags.SCREEN)) { paddingValues ->
+    when {
+      uiState.isLoading -> {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            contentAlignment = Alignment.Center) {
+              CircularProgressIndicator(
+                  modifier = Modifier.testTag(ProfileScreenTestTags.LOADING_INDICATOR))
+            }
       }
+      uiState.errorMessage != null -> {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            contentAlignment = Alignment.Center) {
+              Text(
+                  text = uiState.errorMessage ?: "Unknown error",
+                  color = MaterialTheme.colorScheme.error,
+                  modifier = Modifier.testTag(ProfileScreenTestTags.ERROR_TEXT))
+            }
+      }
+      uiState.profile != null -> {
+        ProfileContent(
+            uiState = uiState,
+            paddingValues = paddingValues,
+            onProposalClick = onProposalClick,
+            onRequestClick = onRequestClick)
+      }
+    }
+  }
 }
 
 @Composable

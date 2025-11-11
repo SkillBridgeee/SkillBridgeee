@@ -99,6 +99,9 @@ fun AppNavGraph(
             // Clear the authentication state to reset email/password fields
             authViewModel.signOut()
             navController.navigate(NavRoutes.LOGIN) { popUpTo(0) { inclusive = true } }
+          },
+          onListingClick = { listingId ->
+            navController.navigate(NavRoutes.createListingRoute(listingId))
           })
     }
 
@@ -121,12 +124,15 @@ fun AppNavGraph(
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
       val viewModel: SubjectListViewModel = viewModel(backStackEntry)
       SubjectListScreen(
-          viewModel = viewModel, // You may need to provide this through dependency injection
+          viewModel = viewModel,
           onBookTutor = { profile ->
             // Navigate to booking or profile screen when tutor is booked
             // Example: navController.navigate("booking/${profile.uid}")
           },
-          subject = academicSubject.value)
+          subject = academicSubject.value,
+          onListingClick = { listingId ->
+            navController.navigate(NavRoutes.createListingRoute(listingId))
+          })
     }
 
     composable(NavRoutes.BOOKINGS) {
@@ -173,7 +179,24 @@ fun AppNavGraph(
     composable(route = NavRoutes.OTHERS_PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
       // todo add other parameters
-      ProfileScreen(profileId = profileID.value)
+      ProfileScreen(
+          profileId = profileID.value,
+          onProposalClick = { listingId ->
+            navController.navigate(NavRoutes.createListingRoute(listingId))
+          },
+          onRequestClick = { listingId ->
+            navController.navigate(NavRoutes.createListingRoute(listingId))
+          })
     }
+
+    composable(
+        route = NavRoutes.LISTING,
+        arguments = listOf(navArgument("listingId") { type = NavType.StringType })) { backStackEntry
+          ->
+          val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
+          com.android.sample.ui.listing.ListingScreen(
+              listingId = listingId, onNavigateBack = { navController.popBackStack() })
+        }
   }
 }
