@@ -7,24 +7,12 @@ import com.android.sample.ui.login.SignInScreenTestTags
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
 import com.android.sample.ui.signup.SignUpScreenTestTags
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 
 object TestUiHelpers {
+
   /**
-   * Perform a sign up through the app UI for tests that are redirected to the SignUp screen (e.g.
-   * Google-sign-in that requires creating an app profile).
-   *
-   * The function fills the exact fields used by SignUpScreen:
-   * - Name (placeholder "Enter your Name")
-   * - Surname (placeholder "Enter your Surname")
-   * - Address / location query (uses location input test tag if available)
-   * - Level of education (placeholder "Major, Year (e.g. CS, 3rd year)")
-   * - Description (placeholder "Short description of yourself")
-   * - Password only if the password field is present (SignUpScreen hides it for Google signups)
-   *
-   * Usage: TestUiHelpers.signUpThroughUi(composeTestRule, password = "P@ssw0rd!", name = "Test",
-   * surname = "User")
+   * Performs a full sign up through the app UI in tests. Handles both email/password and Google
+   * signups.
    */
   fun signUpThroughUi(
       composeTestRule: AndroidComposeTestRule<*, *>,
@@ -34,9 +22,9 @@ object TestUiHelpers {
       levelOfEducation: String = "CS",
       description: String = "Test description",
       addressQuery: String = "Test Location",
-      timeoutMs: Long = 8_000L
+      timeoutMs: Long = 10_000L
   ) {
-    // If there's a sign up link on the sign-in screen, open it first.
+    // Step 1: Navigate to SignUpScreen if necessary
     val signUpLinkNode =
         when {
           composeTestRule
@@ -47,27 +35,25 @@ object TestUiHelpers {
               composeTestRule.onNodeWithText("Sign Up")
           else -> null
         }
+
     signUpLinkNode?.apply {
       performClick()
       composeTestRule.waitForIdle()
     }
 
-    // Helper: prefer test tag, fallback to actual placeholder text used in SignUpScreen.
-    fun findNodeByTagOrText(tag: String, textFallback: String): SemanticsNodeInteraction {
-      return when {
-        composeTestRule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty() ->
-            composeTestRule.onNode(hasTestTag(tag))
-        composeTestRule.onAllNodes(hasText(textFallback)).fetchSemanticsNodes().isNotEmpty() ->
-            composeTestRule.onNodeWithText(textFallback)
-        else -> composeTestRule.onRoot() // will cause an assertion later if missing
-      }
-    }
+    // Step 2: Helper to find nodes by test tag or fallback text
+    fun findNode(tag: String, textFallback: String) =
+        when {
+          composeTestRule.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty() ->
+              composeTestRule.onNode(hasTestTag(tag))
+          composeTestRule.onAllNodes(hasText(textFallback)).fetchSemanticsNodes().isNotEmpty() ->
+              composeTestRule.onNodeWithText(textFallback)
+          else -> composeTestRule.onRoot() // will fail later if missing
+        }
 
-    // Locate the fields using the exact placeholders from SignUpScreen where helpful.
-    val nameNode = findNodeByTagOrText(SignUpScreenTestTags.NAME, "Enter your Name")
-    val surnameNode = findNodeByTagOrText(SignUpScreenTestTags.SURNAME, "Enter your Surname")
-
-    // Location input: try the inner location input test tag first, then the wrapper box tag.
+    // Step 3: Fill required fields if visible
+    val nameNode = findNode(SignUpScreenTestTags.NAME, "Enter your Name")
+    val surnameNode = findNode(SignUpScreenTestTags.SURNAME, "Enter your Surname")
     val addressNode =
         when {
           composeTestRule
@@ -81,50 +67,28 @@ object TestUiHelpers {
               .isNotEmpty() -> composeTestRule.onNode(hasTestTag(SignUpScreenTestTags.ADDRESS))
           else -> composeTestRule.onRoot()
         }
-
     val levelNode =
-        findNodeByTagOrText(
-            SignUpScreenTestTags.LEVEL_OF_EDUCATION, "Major, Year (e.g. CS, 3rd year)")
+        findNode(SignUpScreenTestTags.LEVEL_OF_EDUCATION, "Major, Year (e.g. CS, 3rd year)")
     val descriptionNode =
-        findNodeByTagOrText(SignUpScreenTestTags.DESCRIPTION, "Short description of yourself")
-    // Email is intentionally skipped for Google signups (SignUpScreen disables it when
-    // isGoogleSignUp).
-    val passwordNode = findNodeByTagOrText(SignUpScreenTestTags.PASSWORD, "Password")
+        findNode(SignUpScreenTestTags.DESCRIPTION, "Short description of yourself")
+    val passwordNode = findNode(SignUpScreenTestTags.PASSWORD, "Password")
 
-    // Fill required fields (guarded by existence checks)
-    if (nameNode.exists()) {
-      nameNode.performTextInput(name)
-    }
-    if (surnameNode.exists()) {
-      surnameNode.performTextInput(surname)
-    }
-
-    // Type into the location input so SignUpViewModel receives the query (it updates
-    // address/locationQuery).
+    if (nameNode.exists()) nameNode.performTextInput(name)
+    if (surnameNode.exists()) surnameNode.performTextInput(surname)
     if (addressNode.exists()) {
       addressNode.performTextReplacement(addressQuery)
-      // Try to commit the query (some location inputs react to IME action)
       try {
         addressNode.performImeAction()
       } catch (_: Throwable) {}
-      composeTestRule.waitForIdle()
     }
-
-    if (levelNode.exists()) {
-      levelNode.performTextInput(levelOfEducation)
-    }
-    if (descriptionNode.exists()) {
-      descriptionNode.performTextInput(description)
-    }
-
-    // Only fill password if visible (SignUpScreen hides password for Google signups)
-    if (passwordNode.exists()) {
-      passwordNode.performTextInput(password)
-    }
+    if (levelNode.exists()) levelNode.performTextInput(levelOfEducation)
+    if (descriptionNode.exists()) descriptionNode.performTextInput(description)
+    if (passwordNode.exists()) passwordNode.performTextInput(password)
 
     composeTestRule.waitForIdle()
+    Thread.sleep(200) // Replace delay() with Thread.sleep()
 
-    // Submit via the Sign Up button (test tag is present on the actual Button)
+    // Step 4: Click the Sign Up button
     val submitNode =
         when {
           composeTestRule
@@ -138,26 +102,23 @@ object TestUiHelpers {
 
     if (submitNode.exists()) {
       submitNode.performClick()
-    } else {
-      // fallback: trigger IME action on password field to attempt submit
-      if (passwordNode.exists()) {
-        passwordNode.performImeAction()
-      }
+    } else if (passwordNode.exists()) {
+      passwordNode.performImeAction()
     }
 
     composeTestRule.waitForIdle()
+    Thread.sleep(200) // Replace delay() with Thread.sleep()
 
-    // Wait until navigation leaves the signup route or timeout.
-    val start = System.currentTimeMillis()
-    while (System.currentTimeMillis() - start < timeoutMs) {
+    // Step 5: Wait until navigation leaves the signup route
+    composeTestRule.waitUntil(timeoutMs) {
       val current = RouteStackManager.getCurrentRoute()
-      if (current == null || !current.startsWith(NavRoutes.SIGNUP_BASE)) return
-      runBlocking { delay(200) }
+      current == null || !current.startsWith(NavRoutes.SIGNUP_BASE)
     }
-    // If timed out, the test will continue and likely fail — logs will help diagnose.
+
+    composeTestRule.waitForIdle() // final idle
   }
 
-  // Helper extension to detect presence without throwing.
+  // Helper to safely check existence
   private fun SemanticsNodeInteraction.exists(): Boolean {
     return try {
       this.fetchSemanticsNode()
