@@ -2,11 +2,6 @@ package com.android.sample.ui.subject
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.booking.Booking
-import com.android.sample.model.booking.BookingRepository
-import com.android.sample.model.booking.BookingRepositoryProvider
-import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
@@ -16,7 +11,6 @@ import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
-import java.util.Date
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -71,8 +65,7 @@ data class ListingUiModel(
  */
 class SubjectListViewModel(
     private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
-    private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
-    private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository
+    private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
   private val _ui = MutableStateFlow(SubjectListUiState())
   val ui: StateFlow<SubjectListUiState> = _ui
@@ -205,22 +198,5 @@ class SubjectListViewModel(
   fun getSkillsForSubject(mainSubject: MainSubject?): List<String> {
     if (mainSubject == null) return emptyList()
     return SkillsHelper.getSkillNames(mainSubject)
-  }
-
-  fun BookListing(listingUIModel: ListingUiModel) {
-    viewModelScope.launch {
-      val userId = runCatching { UserSessionManager.getCurrentUserId() }.getOrNull().orEmpty()
-      val newBooking =
-          Booking(
-              bookingId = bookingRepo.getNewUid(),
-              associatedListingId = listingUIModel.listing.listingId,
-              listingCreatorId = listingUIModel.listing.creatorUserId,
-              bookerId = userId,
-              sessionStart = Date(),
-              sessionEnd = Date(),
-              status = BookingStatus.PENDING,
-              price = listingUIModel.listing.hourlyRate)
-      bookingRepo.addBooking(newBooking)
-    }
   }
 }

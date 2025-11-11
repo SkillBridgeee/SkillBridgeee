@@ -27,7 +27,6 @@ import com.android.sample.ui.subject.SubjectListScreen
 import com.android.sample.ui.subject.SubjectListTestTags
 import com.android.sample.ui.subject.SubjectListViewModel
 import java.util.Date
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.delay
 import org.junit.Rule
 import org.junit.Test
