@@ -57,7 +57,8 @@ object ProfileScreenTestTags {
  * - List of requests (looking for tutors)
  *
  * @param profileId The ID of the profile to display.
- * @param onBackClick Callback when back button is clicked.
+ * @param onBackClick Optional callback when back button is clicked.
+ * @param onRefresh Optional callback when refresh button is clicked.
  * @param onProposalClick Callback when a proposal card is clicked.
  * @param onRequestClick Callback when a request card is clicked.
  * @param viewModel The ViewModel for managing profile data.
@@ -66,7 +67,8 @@ object ProfileScreenTestTags {
 @Composable
 fun ProfileScreen(
     profileId: String,
-    onBackClick: () -> Unit = {},
+    onBackClick: (() -> Unit)? = null,
+    onRefresh: (() -> Unit)? = null,
     onProposalClick: (String) -> Unit = {},
     onRequestClick: (String) -> Unit = {},
     viewModel: ProfileScreenViewModel = viewModel {
@@ -84,24 +86,30 @@ fun ProfileScreen(
   Scaffold(
       modifier = Modifier.testTag(ProfileScreenTestTags.SCREEN),
       topBar = {
-        TopAppBar(
-            title = { Text("Profile") },
-            navigationIcon = {
-              IconButton(
-                  onClick = onBackClick,
-                  modifier = Modifier.testTag(ProfileScreenTestTags.BACK_BUTTON)) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back")
-                  }
-            },
-            actions = {
-              IconButton(
-                  onClick = { viewModel.refresh(profileId) },
-                  modifier = Modifier.testTag(ProfileScreenTestTags.REFRESH_BUTTON)) {
-                    Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
-                  }
-            })
+        if (onBackClick != null || onRefresh != null) {
+          TopAppBar(
+              title = { Text("Profile") },
+              navigationIcon = {
+                onBackClick?.let {
+                  IconButton(
+                      onClick = it,
+                      modifier = Modifier.testTag(ProfileScreenTestTags.BACK_BUTTON)) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back")
+                      }
+                }
+              },
+              actions = {
+                onRefresh?.let {
+                  IconButton(
+                      onClick = it,
+                      modifier = Modifier.testTag(ProfileScreenTestTags.REFRESH_BUTTON)) {
+                        Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh")
+                      }
+                }
+              })
+        }
       }) { paddingValues ->
         when {
           uiState.isLoading -> {
