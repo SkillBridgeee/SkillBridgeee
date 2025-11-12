@@ -56,12 +56,7 @@ class MainActivity : ComponentActivity() {
           Firebase.firestore.useEmulator("10.0.2.2", 8080)
           Firebase.auth.useEmulator("10.0.2.2", 9099)
           Log.d("MainActivity", "✅ Firebase emulators enabled (Debug mode)")
-        } catch (_: IllegalStateException) {
-          Log.d("MainActivity", "Firebase emulator already initialized")
-        } catch (e: Exception) {
-          Log.e("MainActivity", "⚠️ Firebase emulator connection failed: ${e.message}")
-          Log.e("MainActivity", "Make sure to run: firebase emulators:start")
-        }
+        } catch (_: IllegalStateException) {}
       } else {
         Log.d("MainActivity", "🌐 Using production Firebase servers")
       }

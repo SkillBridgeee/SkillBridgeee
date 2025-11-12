@@ -154,49 +154,4 @@ class MainActivityTest {
     composeTestRule.onRoot().assertExists()
     Log.d(TAG, "MainActivity onCreate exception handling verified - app still renders")
   }
-
-  @Test
-  fun companion_init_handles_emulator_already_initialized() {
-    // This test covers line 62 - the IllegalStateException catch block in companion init
-    //
-    // COVERAGE EXPLANATION:
-    // The companion object's init block runs when MainActivity class is first loaded.
-    // If Firebase emulator is already initialized (e.g., from a previous test or app startup),
-    // the code catches IllegalStateException and logs "Firebase emulator already initialized".
-    //
-    // This test verifies the init block handles this gracefully without crashing.
-    // The IllegalStateException catch at line 62 is executed during class initialization.
-
-    // By the time this test runs, if the emulator was already set up, line 62 was executed
-    composeTestRule.waitForIdle()
-    composeTestRule.onRoot().assertExists()
-
-    Log.d(TAG, "✅ Line 62 covered: IllegalStateException catch in companion init")
-    Log.d(
-        TAG,
-        "If emulator was already initialized, 'Firebase emulator already initialized' was logged")
-  }
-
-  @Test
-  fun companion_init_executes_firebase_configuration() {
-    // This test covers line 66 - the else block when USE_FIREBASE_EMULATOR is false
-    //
-    // COVERAGE EXPLANATION:
-    // The companion init block executes one of two paths based on
-    // BuildConfig.USE_FIREBASE_EMULATOR:
-    // - TRUE (debug): Lines 57-63 - Connect to Firebase emulators
-    // - FALSE (release/androidTest): Line 66 - Log "Using production Firebase servers"
-    //
-    // During Android instrumentation tests, the companion init block runs when MainActivity
-    // class is loaded. The specific path depends on the build variant being tested.
-    // Both paths are exercised across debug and release builds.
-
-    // Verify the MainActivity initializes successfully regardless of configuration
-    composeTestRule.waitForIdle()
-    composeTestRule.onRoot().assertExists()
-
-    Log.d(TAG, "✅ Line 66 covered by companion init execution")
-    Log.d(TAG, "Companion init block runs when MainActivity class loads")
-    Log.d(TAG, "In production builds: logs '🌐 Using production Firebase servers'")
-  }
 }
