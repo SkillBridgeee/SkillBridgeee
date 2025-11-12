@@ -250,7 +250,8 @@ private fun ProfileTextField(
     modifier: Modifier = Modifier,
     minLines: Int = 1
 ) {
-  var focused by remember { mutableStateOf(false) }
+  val focusedState = remember { mutableStateOf(false) }
+  val focused = focusedState.value
   val maxPreview = 30
 
   val displayValue =
@@ -267,7 +268,7 @@ private fun ProfileTextField(
           Text(text = it, modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
         }
       },
-      modifier = modifier.onFocusChanged { focused = it.isFocused }.testTag(testTag),
+      modifier = modifier.onFocusChanged { focusedState.value = it.isFocused }.testTag(testTag),
       minLines = minLines,
       singleLine = true)
 }
