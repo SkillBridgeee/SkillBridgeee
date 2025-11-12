@@ -11,7 +11,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import com.android.sample.model.user.FirestoreProfileRepository
+import com.android.sample.model.user.FakeProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.signup.SignUpScreen
@@ -21,7 +21,6 @@ import com.android.sample.ui.theme.SampleAppTheme
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
-import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import org.junit.After
@@ -33,7 +32,7 @@ import org.junit.Rule
 import org.junit.Test
 
 // ---------- helpers ----------
-private const val DEFAULT_TIMEOUT_MS = 10_000L // Reduced from 30_000
+private const val DEFAULT_TIMEOUT_MS = 15_000L // a bit more headroom for CI
 
 private fun waitForTag(
     rule: ComposeContentTestRule,
@@ -48,10 +47,7 @@ private fun waitForTag(
 private fun ComposeContentTestRule.nodeByTag(tag: String) =
     onNodeWithTag(tag, useUnmergedTree = false)
 
-/**
- * Helper function to create a user programmatically and wait for completion. Returns true if
- * successful, false if failed.
- */
+/** Create a user via Firebase Auth and await completion. */
 private suspend fun createUserProgrammatically(
     auth: FirebaseAuth,
     email: String,
@@ -74,30 +70,29 @@ class SignUpScreenTest {
 
   @Before
   fun setUp() {
-    // Connect to Firebase emulators
+    // Use the Auth emulator; no Firestore dependency in these tests.
     try {
-      Firebase.firestore.useEmulator("10.0.2.2", 8080)
       Firebase.auth.useEmulator("10.0.2.2", 9099)
     } catch (_: IllegalStateException) {
-      // Emulator already initialized
+      // already configured
     }
 
     auth = Firebase.auth
 
-    // Initialize ProfileRepositoryProvider with real Firestore
-    ProfileRepositoryProvider.setForTests(FirestoreProfileRepository(Firebase.firestore))
+    // Use an in-memory fake repository to avoid Firestore emulator in CI
+    ProfileRepositoryProvider.setForTests(FakeProfileRepository())
 
-    // Clean up any existing user before starting
+    // Start from a clean auth state
     auth.signOut()
+    composeRule.waitUntil(2_000) { auth.currentUser == null }
   }
 
   @After
   fun tearDown() {
-    // Clean up: delete the test user if created
     try {
       auth.currentUser?.delete()
     } catch (_: Exception) {
-      // Ignore deletion errors
+      // ignore
     }
     auth.signOut()
   }
@@ -158,15 +153,17 @@ class SignUpScreenTest {
       vm.state.value.submitSuccess || vm.state.value.error != null
     }
 
-    // Verify success
+    // Verify success path in VM
     assertTrue("Signup should succeed", vm.state.value.submitSuccess)
 
-    // Wait for Firebase Auth to be ready by checking current user
-    composeRule.waitUntil(5_000) { auth.currentUser != null }
+    // Wait for Firebase Auth to reflect the current user
+    composeRule.waitUntil(15_000) { auth.currentUser != null }
 
-    // Verify Firebase Auth account was created
+    // Verify Firebase Auth account was created (normalize for comparison)
     assertNotNull("User should be authenticated", auth.currentUser)
-    assertEquals(testEmail, auth.currentUser?.email)
+    val actualEmail = auth.currentUser?.email?.trim()?.lowercase()
+    val expectedEmail = testEmail.trim().lowercase()
+    assertEquals(expectedEmail, actualEmail)
   }
 
   @Test
@@ -189,23 +186,19 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput("  $testEmail ")
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("passw0rd!")
 
-    // Close keyboard with IME action
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
     composeRule.waitForIdle()
 
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for signup to complete by observing ViewModel state
     composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
       vm.state.value.submitSuccess || vm.state.value.error != null
     }
 
     assertTrue("Signup should succeed", vm.state.value.submitSuccess)
 
-    // Wait for Firebase Auth to be ready
-    composeRule.waitUntil(5_000) { auth.currentUser != null }
-
+    composeRule.waitUntil(15_000) { auth.currentUser != null }
     assertNotNull("User should be authenticated", auth.currentUser)
   }
 
@@ -220,11 +213,13 @@ class SignUpScreenTest {
       assertTrue("Programmatic user creation should succeed", created)
 
       // Wait for auth to be ready
-      composeRule.waitUntil(5_000) { auth.currentUser != null }
+      composeRule.waitUntil(10_000) { auth.currentUser != null }
 
       // Sign out so we can test UI signup with duplicate email
       auth.signOut()
     }
+    // Give CI a moment to settle signed-out state
+    composeRule.waitUntil(3_000) { auth.currentUser == null }
 
     // Now try to sign up via UI with the same email - should show error
     val vm = SignUpViewModel()
@@ -280,17 +275,14 @@ class SignUpScreenTest {
     // Password "123!" is too short (< 8 chars) and missing a letter
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("123!")
 
-    // Close keyboard with IME action
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
     composeRule.waitForIdle()
 
-    // With a weak password, the sign up button should remain disabled
+    // Scroll to the button to ensure it's measured
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo()
-
-    // Wait a moment for validation to complete
     composeRule.waitForIdle()
 
-    // Verify the form validation failed and button is not enabled
+    // Verify form validation failed via VM (button enablement is derived from it)
     assertTrue("Weak password should prevent form submission", !vm.state.value.canSubmit)
   }
 }

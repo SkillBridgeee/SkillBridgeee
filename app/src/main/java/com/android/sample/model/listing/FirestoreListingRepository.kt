@@ -1,5 +1,6 @@
 package com.android.sample.model.listing
 
+import com.android.sample.model.ValidationUtils
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import com.google.firebase.auth.FirebaseAuth
@@ -14,6 +15,12 @@ class FirestoreListingRepository(
     private val db: FirebaseFirestore,
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) : ListingRepository {
+
+  private companion object {
+    private const val DESC_MAX = 2000
+    private const val HOURLY_RATE_MIN = 0.0
+    private const val HOURLY_RATE_MAX = 200.0
+  }
 
   private val currentUserId: String
     get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
@@ -90,6 +97,8 @@ class FirestoreListingRepository(
 
   private suspend fun addListing(listing: Listing) {
     try {
+      validateForWrite(listing)
+
       if (listing.creatorUserId != currentUserId) {
         throw Exception("Access denied: You can only create listings for yourself.")
       }
@@ -101,6 +110,8 @@ class FirestoreListingRepository(
 
   override suspend fun updateListing(listingId: String, listing: Listing) {
     try {
+      validateForWrite(listing)
+
       val docRef = db.collection(LISTINGS_COLLECTION_PATH).document(listingId)
       val existingListing = getListing(listingId) ?: throw Exception("Listing not found.")
 
@@ -170,6 +181,21 @@ class FirestoreListingRepository(
       }
     } catch (e: IllegalArgumentException) {
       null // Handle cases where the string in DB is not a valid enum
+    }
+  }
+
+  private fun validateForWrite(l: Listing) {
+    // ids
+    ValidationUtils.requireId(l.listingId, "listingId")
+    ValidationUtils.requireId(l.creatorUserId, "creatorUserId")
+
+    // description (required + max)
+    ValidationUtils.requireNonBlank(l.description, "description")
+    ValidationUtils.requireMaxLength(l.description, "description", DESC_MAX)
+
+    // hourly rate
+    require(l.hourlyRate in HOURLY_RATE_MIN..HOURLY_RATE_MAX) {
+      "hourlyRate must be between $HOURLY_RATE_MIN and $HOURLY_RATE_MAX."
     }
   }
 }

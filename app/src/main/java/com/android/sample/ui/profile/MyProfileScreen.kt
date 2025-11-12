@@ -26,12 +26,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -231,8 +238,22 @@ private fun ProfileTextField(
     testTag: String,
     minLines: Int = 1
 ) {
+  val focusedState = remember { mutableStateOf(false) }
+  val focused = focusedState.value
+  val maxPreview = 30
+
+  // keep REAL value; only change what is drawn
+  val ellipsizeTransformation = VisualTransformation { text ->
+    if (!focused && text.text.length > maxPreview) {
+      val short = text.text.take(maxPreview) + "..."
+      TransformedText(AnnotatedString(short), OffsetMapping.Identity)
+    } else {
+      TransformedText(text, OffsetMapping.Identity)
+    }
+  }
+
   OutlinedTextField(
-      value = value,
+      value = value, // ← real value, not truncated
       onValueChange = onValueChange,
       label = { Text(label) },
       placeholder = { Text(placeholder) },
@@ -242,8 +263,17 @@ private fun ProfileTextField(
           Text(text = it, modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
         }
       },
-      modifier = modifier.testTag(testTag),
-      minLines = minLines)
+      modifier =
+          modifier
+              .onFocusChanged { focusedState.value = it.isFocused }
+              .semantics {
+                // when visually ellipsized, expose full text for TalkBack
+                if (!focused && value.isNotEmpty()) contentDescription = value
+              }
+              .testTag(testTag),
+      minLines = minLines,
+      singleLine = (minLines == 1), // ← only single-line when requested
+      visualTransformation = ellipsizeTransformation)
 }
 
 @Composable
