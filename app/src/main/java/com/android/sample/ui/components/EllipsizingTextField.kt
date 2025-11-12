@@ -2,10 +2,7 @@ package com.android.sample.ui.components
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -18,6 +15,13 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
+data class EllipsizingTextFieldStyle(
+    val shape: RoundedCornerShape? = null,
+    val colors: TextFieldColors? = null,
+    val keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+)
+
+@Suppress("LongParameterList")
 @Composable
 fun EllipsizingTextField(
     value: String,
@@ -25,10 +29,8 @@ fun EllipsizingTextField(
     placeholder: String,
     modifier: Modifier = Modifier,
     maxPreviewLength: Int = 40,
-    shape: RoundedCornerShape = RoundedCornerShape(14.dp),
-    colors: TextFieldColors = TextFieldDefaults.colors(),
-    leadingIcon: (@Composable () -> Unit)? = null,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    style: EllipsizingTextFieldStyle = EllipsizingTextFieldStyle(),
+    leadingIcon: (@Composable (() -> Unit))? = null,
 ) {
   var focused by remember { mutableStateOf(false) }
 
@@ -40,6 +42,10 @@ fun EllipsizingTextField(
       TransformedText(text, OffsetMapping.Identity)
     }
   }
+
+  // Choose defaults INSIDE @Composable
+  val shape = style.shape ?: RoundedCornerShape(14.dp)
+  val colors = style.colors ?: TextFieldDefaults.colors()
 
   TextField(
       value = value,
@@ -54,7 +60,7 @@ fun EllipsizingTextField(
       shape = shape,
       visualTransformation = transform,
       leadingIcon = leadingIcon,
-      keyboardOptions = keyboardOptions,
+      keyboardOptions = style.keyboardOptions,
       colors =
           colors.copy(
               focusedIndicatorColor = Color.Transparent,

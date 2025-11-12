@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.ui.components.EllipsizingTextField
+import com.android.sample.ui.components.EllipsizingTextFieldStyle
 import com.android.sample.ui.components.RoundEdgedLocationInputField
 import com.android.sample.ui.theme.DisabledContent
 import com.android.sample.ui.theme.FieldContainer
@@ -110,9 +111,12 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
               onValueChange = { vm.onEvent(SignUpEvent.NameChanged(it)) },
               placeholder = "Enter your Name",
               modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.NAME),
-              shape = fieldShape,
-              colors = fieldColors,
-              maxPreviewLength = 45)
+              maxPreviewLength = 45,
+              style =
+                  EllipsizingTextFieldStyle(
+                      shape = fieldShape, colors = fieldColors
+                      // keyboardOptions = ... // not needed for name
+                      ))
         }
 
         EllipsizingTextField(
@@ -120,9 +124,8 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
             onValueChange = { vm.onEvent(SignUpEvent.SurnameChanged(it)) },
             placeholder = "Enter your Surname",
             modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.SURNAME),
-            shape = fieldShape,
-            colors = fieldColors,
-            maxPreviewLength = 45)
+            maxPreviewLength = 45,
+            style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
 
         // Location input with Nominatim search and dropdown
         val context = LocalContext.current

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.sample.model.authentication.*
 import com.android.sample.ui.components.EllipsizingTextField
+import com.android.sample.ui.components.EllipsizingTextFieldStyle
 import com.android.sample.ui.theme.extendedColors
 
 object SignInScreenTestTags {
@@ -156,7 +157,13 @@ private fun EmailPasswordFields(
       value = email,
       onValueChange = onEmailChange,
       placeholder = "Email",
-      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+      style =
+          EllipsizingTextFieldStyle(
+              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+              // you could also set shape/colors here if you want:
+              // shape = RoundedCornerShape(14.dp),
+              // colors = TextFieldDefaults.colors(...)
+              ),
       leadingIcon = {
         Icon(
             painter = painterResource(id = android.R.drawable.ic_dialog_email),
