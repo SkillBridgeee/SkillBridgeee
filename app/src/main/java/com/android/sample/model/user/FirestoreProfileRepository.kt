@@ -128,29 +128,33 @@ class FirestoreProfileRepository(
    * - Always trim strings; write the cleaned copy.
    */
   private fun validateAndClean(p: Profile): Profile {
-    // userId required
+    // required id
     ValidationUtils.requireId(p.userId, "userId")
 
-    // name (optional)
+    // name (nullable + optional)
     val name = p.name?.trim()
     name?.let { ValidationUtils.requireMaxLength(it, "name", NAME_MAX) }
 
-    // email (optional until provided)
+    // email (non-null String, optional until provided)
     val email = p.email.trim()
     if (email.isNotEmpty()) {
       ValidationUtils.requireMaxLength(email, "email", EMAIL_MAX)
       require(EMAIL_RE.matches(email)) { "email format is invalid." }
     }
 
-    // levelOfEducation (optional)
+    // levelOfEducation (non-null String, optional)
     val edu = p.levelOfEducation.trim()
-    ValidationUtils.requireMaxLength(edu, "levelOfEducation", EDUCATION_MAX)
+    if (edu.isNotEmpty()) {
+      ValidationUtils.requireMaxLength(edu, "levelOfEducation", EDUCATION_MAX)
+    }
 
-    // description (optional)
+    // description (non-null String, optional)
     val desc = p.description.trim()
-    ValidationUtils.requireMaxLength(desc, "description", DESC_MAX)
+    if (desc.isNotEmpty()) {
+      ValidationUtils.requireMaxLength(desc, "description", DESC_MAX)
+    }
 
-    // hourlyRate (optional until provided)
+    // hourlyRate (non-null String, optional until provided)
     val rateStr = p.hourlyRate.trim()
     val normalizedRate =
         if (rateStr.isEmpty()) ""
@@ -161,14 +165,15 @@ class FirestoreProfileRepository(
           require(rate in RATE_MIN..RATE_MAX) {
             "hourlyRate must be between $RATE_MIN and $RATE_MAX."
           }
-          rate.toString()
+          rate.toString() // normalize
         }
 
     return p.copy(
         name = name,
-        email = email,
-        levelOfEducation = edu,
-        description = desc,
-        hourlyRate = normalizedRate)
+        email = email, // trimmed (may be empty)
+        levelOfEducation = edu, // trimmed (may be empty)
+        description = desc, // trimmed (may be empty)
+        hourlyRate = normalizedRate // "" or normalized number
+        )
   }
 }

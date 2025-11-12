@@ -1,6 +1,5 @@
 package com.android.sample.ui.login
 
-import android.R
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,23 +10,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.sample.model.authentication.*
+import com.android.sample.ui.components.EllipsizingTextField
 import com.android.sample.ui.theme.extendedColors
 
 object SignInScreenTestTags {
@@ -163,7 +158,9 @@ private fun EmailPasswordFields(
       placeholder = "Email",
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
       leadingIcon = {
-        Icon(painterResource(id = R.drawable.ic_dialog_email), contentDescription = null)
+        Icon(
+            painter = painterResource(id = android.R.drawable.ic_dialog_email),
+            contentDescription = null)
       },
       modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT),
       maxPreviewLength = 45)
@@ -292,47 +289,6 @@ private fun SignUpLink(onNavigateToSignUp: () -> Unit = {}) {
         modifier =
             Modifier.clickable { onNavigateToSignUp() }.testTag(SignInScreenTestTags.SIGNUP_LINK))
   }
-}
-
-@Composable
-fun EllipsizingTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    maxPreviewLength: Int = 40,
-    shape: RoundedCornerShape = RoundedCornerShape(14.dp),
-    colors: TextFieldColors = TextFieldDefaults.colors(),
-    leadingIcon: @Composable (() -> Unit)? = null,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
-) {
-  var focused by remember { mutableStateOf(false) }
-
-  val ellipsizeTransformation = VisualTransformation { text ->
-    if (!focused && text.text.length > maxPreviewLength) {
-      val short = text.text.take(maxPreviewLength) + "..."
-      TransformedText(AnnotatedString(short), OffsetMapping.Identity)
-    } else {
-      TransformedText(text, OffsetMapping.Identity)
-    }
-  }
-
-  TextField(
-      value = value, // keep the real value so submission/validation use the full email
-      onValueChange = onValueChange,
-      modifier = modifier.onFocusChanged { focused = it.isFocused },
-      placeholder = { Text(placeholder, fontWeight = FontWeight.Bold) },
-      singleLine = true,
-      maxLines = 1,
-      shape = shape,
-      visualTransformation = ellipsizeTransformation,
-      leadingIcon = leadingIcon,
-      keyboardOptions = keyboardOptions,
-      colors =
-          colors.copy(
-              focusedIndicatorColor = Color.Transparent,
-              unfocusedIndicatorColor = Color.Transparent,
-              disabledIndicatorColor = Color.Transparent))
 }
 
 // Legacy composable for backward compatibility and proper ViewModel creation

@@ -30,7 +30,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -252,11 +258,18 @@ private fun ProfileTextField(
   val focused = focusedState.value
   val maxPreview = 30
 
-  val displayValue =
-      if (!focused && value.length > maxPreview) value.take(maxPreview) + "..." else value
+  // keep REAL value; only change what is drawn
+  val ellipsizeTransformation = VisualTransformation { text ->
+    if (!focused && text.text.length > maxPreview) {
+      val short = text.text.take(maxPreview) + "..."
+      TransformedText(AnnotatedString(short), OffsetMapping.Identity)
+    } else {
+      TransformedText(text, OffsetMapping.Identity)
+    }
+  }
 
   OutlinedTextField(
-      value = displayValue,
+      value = value, // ← real value, not truncated
       onValueChange = onValueChange,
       label = { Text(label) },
       placeholder = { Text(placeholder) },
@@ -266,9 +279,17 @@ private fun ProfileTextField(
           Text(text = it, modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
         }
       },
-      modifier = modifier.onFocusChanged { focusedState.value = it.isFocused }.testTag(testTag),
+      modifier =
+          modifier
+              .onFocusChanged { focusedState.value = it.isFocused }
+              .semantics {
+                // when visually ellipsized, expose full text for TalkBack
+                if (!focused && value.isNotEmpty()) contentDescription = value
+              }
+              .testTag(testTag),
       minLines = minLines,
-      singleLine = true)
+      singleLine = (minLines == 1), // ← only single-line when requested
+      visualTransformation = ellipsizeTransformation)
 }
 
 @Composable
