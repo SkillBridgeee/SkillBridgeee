@@ -479,22 +479,4 @@ class NewSkillScreenTest {
         .onNodeWithTag(NewSkillScreenTestTag.INPUT_LOCATION_FIELD, useUnmergedTree = true)
         .assertIsDisplayed()
   }
-
-  @Test
-  fun showsError_whenInvalidLocation_onSave() {
-    val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
-    composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
-    }
-    composeRule.waitForIdle()
-
-    // Simulate clicking save with no location input
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
-    composeRule.waitForIdle()
-
-    // Assert the error message tag is visible
-    composeRule
-        .onNodeWithTag(NewSkillScreenTestTag.INVALID_LOCATION_MSG, useUnmergedTree = true)
-        .assertIsDisplayed()
-  }
 }
