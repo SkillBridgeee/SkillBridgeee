@@ -53,7 +53,7 @@ class FirestoreProfileRepository(
 
       val cleaned = validateAndClean(profile)
 
-      db.collection(PROFILES_COLLECTION_PATH).document(profile.userId).set(profile).await()
+      db.collection(PROFILES_COLLECTION_PATH).document(cleaned.userId).set(cleaned).await()
     } catch (e: Exception) {
       throw Exception("Failed to add profile: ${e.message}")
     }
@@ -66,7 +66,7 @@ class FirestoreProfileRepository(
       }
       ValidationUtils.requireId(userId, "userId")
       val cleaned = validateAndClean(profile.copy(userId = userId))
-      db.collection(PROFILES_COLLECTION_PATH).document(userId).set(profile).await()
+      db.collection(PROFILES_COLLECTION_PATH).document(userId).set(cleaned).await()
     } catch (e: Exception) {
       throw Exception("Failed to update profile for user $userId: ${e.message}")
     }
@@ -121,44 +121,54 @@ class FirestoreProfileRepository(
     }
   }
 
+  /**
+   * Soft validation:
+   * - Allow blanks initially.
+   * - If a field is non-blank, validate content & bounds.
+   * - Always trim strings; write the cleaned copy.
+   */
   private fun validateAndClean(p: Profile): Profile {
-    // userId
+    // userId required
     ValidationUtils.requireId(p.userId, "userId")
 
-    // name (optional but bounded)
-    p.name?.let {
-      val t = it.trim()
-      ValidationUtils.requireMaxLength(t, "name", NAME_MAX)
+    // name (optional)
+    val name = p.name?.trim()
+    name?.let { ValidationUtils.requireMaxLength(it, "name", NAME_MAX) }
+
+    // email (optional until provided)
+    val email = p.email.trim()
+    if (email.isNotEmpty()) {
+      ValidationUtils.requireMaxLength(email, "email", EMAIL_MAX)
+      require(EMAIL_RE.matches(email)) { "email format is invalid." }
     }
 
-    // email (required, reasonable max + format)
-    val email = p.email.trim()
-    ValidationUtils.requireNonBlank(email, "email")
-    ValidationUtils.requireMaxLength(email, "email", EMAIL_MAX)
-    require(EMAIL_RE.matches(email)) { "email format is invalid." }
-
-    // levelOfEducation (optional, bounded)
+    // levelOfEducation (optional)
     val edu = p.levelOfEducation.trim()
     ValidationUtils.requireMaxLength(edu, "levelOfEducation", EDUCATION_MAX)
 
-    // description (optional, bounded)
+    // description (optional)
     val desc = p.description.trim()
     ValidationUtils.requireMaxLength(desc, "description", DESC_MAX)
 
-    // hourlyRate is a String in your model — coerce & bound
+    // hourlyRate (optional until provided)
     val rateStr = p.hourlyRate.trim()
-    ValidationUtils.requireNonBlank(rateStr, "hourlyRate")
-    val rate =
-        rateStr.toDoubleOrNull() ?: throw IllegalArgumentException("hourlyRate must be a number.")
-    require(rate in RATE_MIN..RATE_MAX) { "hourlyRate must be between $RATE_MIN and $RATE_MAX." }
+    val normalizedRate =
+        if (rateStr.isEmpty()) ""
+        else {
+          val rate =
+              rateStr.toDoubleOrNull()
+                  ?: throw IllegalArgumentException("hourlyRate must be a number.")
+          require(rate in RATE_MIN..RATE_MAX) {
+            "hourlyRate must be between $RATE_MIN and $RATE_MAX."
+          }
+          rate.toString()
+        }
 
-    // return a sanitized copy (trimmed fields, normalized rate back to String)
     return p.copy(
-        name = p.name?.trim(),
+        name = name,
         email = email,
         levelOfEducation = edu,
         description = desc,
-        hourlyRate = rate.toString() // normalized (e.g., "50.0")
-        )
+        hourlyRate = normalizedRate)
   }
 }
