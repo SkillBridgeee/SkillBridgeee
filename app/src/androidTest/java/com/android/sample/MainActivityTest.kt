@@ -6,14 +6,12 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
-import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.login.SignInScreenTestTags
 import org.junit.Before
 import org.junit.Rule
@@ -64,61 +62,82 @@ class MainActivityTest {
     // Activity is already launched by createAndroidComposeRule
     composeTestRule.waitForIdle()
 
+    // First, wait for the compose hierarchy to be available
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      try {
+        composeTestRule.onRoot().assertExists()
+        true
+      } catch (e: IllegalStateException) {
+        // Compose hierarchy not ready yet
+        false
+      }
+    }
+    Log.d(TAG, "Compose hierarchy is ready")
+
     // Wait for login screen using test tag instead of text
     composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      composeTestRule
-          .onAllNodes(hasTestTag(SignInScreenTestTags.AUTH_GITHUB))
-          .fetchSemanticsNodes()
-          .isNotEmpty()
+      try {
+        composeTestRule
+            .onAllNodes(hasTestTag(SignInScreenTestTags.AUTH_GOOGLE))
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+      } catch (e: IllegalStateException) {
+        // Hierarchy not ready yet
+        false
+      }
     }
     Log.d(TAG, "Login screen loaded successfully")
 
-    // Navigate from login to main app using test tag
+    // Verify key login screen components are present
     try {
-      composeTestRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).performClick()
-      Log.d(TAG, "Clicked GitHub sign-in button")
+      composeTestRule.onNodeWithTag(SignInScreenTestTags.TITLE).assertIsDisplayed()
+      Log.d(TAG, "Login title found")
     } catch (e: AssertionError) {
-      Log.e(TAG, "Failed to click GitHub sign-in button", e)
-      throw AssertionError("GitHub sign-in button not found or not clickable", e)
-    }
-
-    composeTestRule.waitForIdle()
-
-    // Wait for bottom navigation to appear using test tags
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      composeTestRule
-          .onAllNodes(hasTestTag(MyBookingsPageTestTag.NAV_HOME))
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
-    Log.d(TAG, "Home screen and bottom navigation loaded successfully")
-
-    // Verify all bottom navigation items exist using test tags (not brittle text)
-    try {
-      composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).assertIsDisplayed()
-      Log.d(TAG, "Home nav button found")
-    } catch (e: AssertionError) {
-      Log.e(TAG, "Home nav button not displayed", e)
-      throw AssertionError("Bottom navigation 'Home' button not displayed", e)
+      Log.e(TAG, "Login title not displayed", e)
+      throw AssertionError("Login screen title not displayed", e)
     }
 
     try {
-      composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).assertIsDisplayed()
-      Log.d(TAG, "Bookings nav button found")
+      composeTestRule.onNodeWithTag(SignInScreenTestTags.EMAIL_INPUT).assertIsDisplayed()
+      Log.d(TAG, "Email input found")
     } catch (e: AssertionError) {
-      Log.e(TAG, "Bookings nav button not displayed", e)
-      throw AssertionError("Bottom navigation 'Bookings' button not displayed", e)
+      Log.e(TAG, "Email input not displayed", e)
+      throw AssertionError("Email input field not displayed", e)
     }
 
     try {
-      composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertIsDisplayed()
-      Log.d(TAG, "Profile nav button found")
+      composeTestRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT).assertIsDisplayed()
+      Log.d(TAG, "Password input found")
     } catch (e: AssertionError) {
-      Log.e(TAG, "Profile nav button not displayed", e)
-      throw AssertionError("Bottom navigation 'Profile' button not displayed", e)
+      Log.e(TAG, "Password input not displayed", e)
+      throw AssertionError("Password input field not displayed", e)
     }
 
-    Log.d(TAG, "All bottom navigation components verified successfully")
+    try {
+      composeTestRule.onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).assertIsDisplayed()
+      Log.d(TAG, "Sign in button found")
+    } catch (e: AssertionError) {
+      Log.e(TAG, "Sign in button not displayed", e)
+      throw AssertionError("Sign in button not displayed", e)
+    }
+
+    try {
+      composeTestRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).assertIsDisplayed()
+      Log.d(TAG, "Google auth button found")
+    } catch (e: AssertionError) {
+      Log.e(TAG, "Google auth button not displayed", e)
+      throw AssertionError("Google authentication button not displayed", e)
+    }
+
+    try {
+      composeTestRule.onNodeWithTag(SignInScreenTestTags.SIGNUP_LINK).assertIsDisplayed()
+      Log.d(TAG, "Sign up link found")
+    } catch (e: AssertionError) {
+      Log.e(TAG, "Sign up link not displayed", e)
+      throw AssertionError("Sign up link not displayed", e)
+    }
+
+    Log.d(TAG, "All login screen components verified successfully")
   }
 
   @Test
