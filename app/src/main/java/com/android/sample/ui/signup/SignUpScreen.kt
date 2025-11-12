@@ -34,6 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.android.sample.model.map.GpsLocationProvider
+import com.android.sample.ui.components.EllipsizingTextField
+import com.android.sample.ui.components.EllipsizingTextFieldStyle
 import com.android.sample.ui.components.RoundEdgedLocationInputField
 import com.android.sample.ui.theme.DisabledContent
 import com.android.sample.ui.theme.FieldContainer
@@ -103,23 +105,27 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
             modifier = Modifier.testTag(SignUpScreenTestTags.SUBTITLE),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
 
-        TextField(
-            value = state.name,
-            onValueChange = { vm.onEvent(SignUpEvent.NameChanged(it)) },
-            modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.NAME),
-            placeholder = { Text("Enter your Name", fontWeight = FontWeight.Bold) },
-            singleLine = true,
-            shape = fieldShape,
-            colors = fieldColors)
+        Box(modifier = Modifier.fillMaxWidth()) {
+          EllipsizingTextField(
+              value = state.name,
+              onValueChange = { vm.onEvent(SignUpEvent.NameChanged(it)) },
+              placeholder = "Enter your Name",
+              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.NAME),
+              maxPreviewLength = 45,
+              style =
+                  EllipsizingTextFieldStyle(
+                      shape = fieldShape, colors = fieldColors
+                      // keyboardOptions = ... // not needed for name
+                      ))
+        }
 
-        TextField(
+        EllipsizingTextField(
             value = state.surname,
             onValueChange = { vm.onEvent(SignUpEvent.SurnameChanged(it)) },
+            placeholder = "Enter your Surname",
             modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.SURNAME),
-            placeholder = { Text("Enter your Surname", fontWeight = FontWeight.Bold) },
-            singleLine = true,
-            shape = fieldShape,
-            colors = fieldColors)
+            maxPreviewLength = 45,
+            style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
 
         // Location input with Nominatim search and dropdown
         val context = LocalContext.current
