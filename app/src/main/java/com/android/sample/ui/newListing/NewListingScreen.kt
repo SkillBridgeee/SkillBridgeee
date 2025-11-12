@@ -41,6 +41,9 @@ object NewSkillScreenTestTag {
   const val LISTING_TYPE_DROPDOWN = "listingTypeDropdown"
   const val LISTING_TYPE_DROPDOWN_ITEM_PREFIX = "listingTypeItem"
   const val INVALID_LISTING_TYPE_MSG = "invalidListingTypeMsg"
+
+  const val INPUT_LOCATION_FIELD = "inputLocationField"
+  const val INVALID_LOCATION_MSG = "invalidLocationMsg"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -182,15 +185,30 @@ fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewLi
                       errorMsg = ListingUIState.invalidSubSkillMsg)
                 }
 
-                LocationInputField(
-                    locationQuery = ListingUIState.locationQuery,
-                    locationSuggestions = ListingUIState.locationSuggestions,
-                    onLocationQueryChange = listingViewModel::setLocationQuery,
-                    errorMsg = ListingUIState.invalidLocationMsg,
-                    onLocationSelected = { location ->
-                      listingViewModel.setLocationQuery(location.name)
-                      listingViewModel.setLocation(location)
-                    })
+                // Location input with test tags
+                Column {
+                  // Tag the entire field container
+                  Box(modifier = Modifier.testTag(NewSkillScreenTestTag.INPUT_LOCATION_FIELD)) {
+                    LocationInputField(
+                        locationQuery = ListingUIState.locationQuery,
+                        locationSuggestions = ListingUIState.locationSuggestions,
+                        onLocationQueryChange = listingViewModel::setLocationQuery,
+                        errorMsg = ListingUIState.invalidLocationMsg,
+                        onLocationSelected = { location ->
+                          listingViewModel.setLocationQuery(location.name)
+                          listingViewModel.setLocation(location)
+                        })
+                  }
+
+                  // Show tagged error text if invalidLocationMsg is set
+                  ListingUIState.invalidLocationMsg?.let { msg ->
+                    Text(
+                        text = msg,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_LOCATION_MSG))
+                  }
+                }
               }
             }
       }
