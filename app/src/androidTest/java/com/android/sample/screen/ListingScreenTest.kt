@@ -298,8 +298,7 @@ class ListingScreenTest {
           .isNotEmpty()
     }
 
-    // Listing content should be displayed (TITLE appears twice)
-    compose.onAllNodesWithTag(ListingScreenTestTags.TITLE).assertCountEquals(2)
+    compose.onAllNodesWithTag(ListingScreenTestTags.TITLE).assertCountEquals(1)
   }
 
   @Test

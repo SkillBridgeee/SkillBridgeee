@@ -2,9 +2,10 @@ package com.android.sample.ui.listing.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,37 +35,44 @@ fun BookingsSection(
     onRejectBooking: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-  Column(
+  LazyColumn(
       modifier = modifier.fillMaxWidth().testTag(ListingScreenTestTags.BOOKINGS_SECTION),
       verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(
-            text = "Bookings",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold)
+        item {
+          Text(
+              text = "Bookings",
+              style = MaterialTheme.typography.titleLarge,
+              fontWeight = FontWeight.Bold)
+        }
 
         when {
           uiState.bookingsLoading -> {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(32.dp),
-                contentAlignment = Alignment.Center) {
-                  CircularProgressIndicator(
-                      modifier = Modifier.testTag(ListingScreenTestTags.BOOKINGS_LOADING))
-                }
+            item {
+              Box(
+                  modifier = Modifier.fillMaxWidth().padding(32.dp),
+                  contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.testTag(ListingScreenTestTags.BOOKINGS_LOADING))
+                  }
+            }
           }
           uiState.listingBookings.isEmpty() -> {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors =
-                    CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                  Text(
-                      text = "No bookings yet",
-                      style = MaterialTheme.typography.bodyMedium,
-                      modifier = Modifier.padding(16.dp).testTag(ListingScreenTestTags.NO_BOOKINGS))
-                }
+            item {
+              Card(
+                  modifier = Modifier.fillMaxWidth(),
+                  colors =
+                      CardDefaults.cardColors(
+                          containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                    Text(
+                        text = "No bookings yet",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier =
+                            Modifier.padding(16.dp).testTag(ListingScreenTestTags.NO_BOOKINGS))
+                  }
+            }
           }
           else -> {
-            uiState.listingBookings.forEach { booking ->
+            items(uiState.listingBookings) { booking ->
               BookingCard(
                   booking = booking,
                   bookerProfile = uiState.bookerProfiles[booking.bookerId],

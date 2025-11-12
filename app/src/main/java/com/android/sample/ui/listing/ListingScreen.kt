@@ -27,6 +27,7 @@ object ListingScreenTestTags {
   const val BACK_BUTTON = "listingScreenBackButton"
   const val LOADING = "listingScreenLoading"
   const val ERROR = "listingScreenError"
+  const val TYPE_BADGE = "listingScreenTypeBadge"
   const val TITLE = "listingScreenTitle"
   const val DESCRIPTION = "listingScreenDescription"
   const val CREATOR_NAME = "listingScreenCreatorName"
@@ -80,24 +81,19 @@ fun ListingScreen(
   // Load listing when screen is displayed
   LaunchedEffect(listingId) { viewModel.loadListing(listingId) }
 
+  // Helper function to handle success dialog dismissal
+  val handleSuccessDismiss: () -> Unit = {
+    viewModel.clearBookingSuccess()
+    onNavigateBack()
+  }
+
   // Show success dialog when booking is created
   if (uiState.bookingSuccess) {
     AlertDialog(
-        onDismissRequest = {
-          viewModel.clearBookingSuccess()
-          onNavigateBack()
-        },
+        onDismissRequest = handleSuccessDismiss,
         title = { Text("Booking Created") },
         text = { Text("Your booking has been created successfully and is pending confirmation.") },
-        confirmButton = {
-          Button(
-              onClick = {
-                viewModel.clearBookingSuccess()
-                onNavigateBack()
-              }) {
-                Text("OK")
-              }
-        },
+        confirmButton = { Button(onClick = handleSuccessDismiss) { Text("OK") } },
         modifier = Modifier.testTag(ListingScreenTestTags.SUCCESS_DIALOG))
   }
 

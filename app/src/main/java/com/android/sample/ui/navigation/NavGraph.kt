@@ -33,6 +33,14 @@ import com.android.sample.ui.subject.SubjectListViewModel
 private const val TAG = "NavGraph"
 
 /**
+ * Helper function to navigate to listing details screen Avoids code duplication across different
+ * navigation paths
+ */
+private fun navigateToListing(navController: NavHostController, listingId: String) {
+  navController.navigate(NavRoutes.createListingRoute(listingId))
+}
+
+/**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
  *
  * This file defines all navigation routes and their corresponding screen composables. Each route is
@@ -94,9 +102,7 @@ fun AppNavGraph(
       MyProfileScreen(
           profileViewModel = profileViewModel,
           profileId = currentUserId,
-          onListingClick = { listingId ->
-            navController.navigate(NavRoutes.createListingRoute(listingId))
-          },
+          onListingClick = { listingId -> navigateToListing(navController, listingId) },
           onLogout = {
             // Clear the authentication state to reset email/password fields
             authViewModel.signOut()
@@ -125,9 +131,7 @@ fun AppNavGraph(
       SubjectListScreen(
           viewModel = viewModel,
           subject = academicSubject.value,
-          onListingClick = { listingId ->
-            navController.navigate(NavRoutes.createListingRoute(listingId))
-          })
+          onListingClick = { listingId -> navigateToListing(navController, listingId) })
     }
 
     composable(NavRoutes.BOOKINGS) {
@@ -180,12 +184,8 @@ fun AppNavGraph(
       // todo add other parameters
       ProfileScreen(
           profileId = profileID.value,
-          onProposalClick = { listingId ->
-            navController.navigate(NavRoutes.createListingRoute(listingId))
-          },
-          onRequestClick = { listingId ->
-            navController.navigate(NavRoutes.createListingRoute(listingId))
-          })
+          onProposalClick = { listingId -> navigateToListing(navController, listingId) },
+          onRequestClick = { listingId -> navigateToListing(navController, listingId) })
     }
     composable(
         route = NavRoutes.LISTING,

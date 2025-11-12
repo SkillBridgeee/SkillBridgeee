@@ -30,6 +30,11 @@ import com.android.sample.ui.listing.ListingScreenTestTags
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+// String constants for button labels
+private const val APPROVE_BUTTON_TEXT = "Approve"
+private const val REJECT_BUTTON_TEXT = "Reject"
+private const val PROFILE_ICON_CONTENT_DESC = "Profile Icon"
+
 /**
  * Card displaying a single booking with approve/reject actions
  *
@@ -80,7 +85,7 @@ fun BookingCard(
               // Booker info
               if (bookerProfile != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                  Icon(Icons.Default.Person, contentDescription = null)
+                  Icon(Icons.Default.Person, contentDescription = PROFILE_ICON_CONTENT_DESC)
                   Spacer(Modifier.padding(4.dp))
                   Text(
                       text = bookerProfile.name ?: "Unknown",
@@ -127,7 +132,7 @@ fun BookingCard(
                           onClick = onApprove,
                           modifier =
                               Modifier.weight(1f).testTag(ListingScreenTestTags.APPROVE_BUTTON)) {
-                            Text("Approve")
+                            Text(APPROVE_BUTTON_TEXT)
                           }
                       Button(
                           onClick = onReject,
@@ -136,7 +141,7 @@ fun BookingCard(
                           colors =
                               ButtonDefaults.buttonColors(
                                   containerColor = MaterialTheme.colorScheme.error)) {
-                            Text("Reject")
+                            Text(REJECT_BUTTON_TEXT)
                           }
                     }
               }

@@ -51,7 +51,7 @@ private fun TypeBadge(listingType: ListingType, modifier: Modifier = Modifier) {
       text = text,
       style = MaterialTheme.typography.labelLarge,
       color = color,
-      modifier = modifier.testTag(ListingScreenTestTags.TITLE))
+      modifier = modifier.testTag(ListingScreenTestTags.TYPE_BADGE))
 }
 
 /** Creator information card */
