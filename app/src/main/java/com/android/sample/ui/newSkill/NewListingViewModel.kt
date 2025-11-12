@@ -110,7 +110,13 @@ class NewSkillViewModel(
    *
    * Kept as a coroutine scope for future asynchronous loading.
    */
-  fun load() {}
+  fun load() {
+    // Intentionally left empty.
+    // This is a stable public API used by the UI to trigger loading an existing skill in the future.
+    // Currently this ViewModel only supports creating new skills, so no loading logic is required.
+    // Keeping this no-op preserves API/behavior stability and provides a clear extension point
+    // for adding asynchronous load logic later (e.g. pre-fill fields when editing).
+  }
 
   fun addListing() {
     val state = _uiState.value
@@ -205,26 +211,51 @@ class NewSkillViewModel(
   }
 
   // Set all messages error, if invalid field
+// kotlin
   fun setError() {
     _uiState.update { currentState ->
+      val invalidTitle =
+        if (currentState.title.isBlank()) titleMsgError else null
+
+      val invalidDesc =
+        if (currentState.description.isBlank()) descMsgError else null
+
+      val invalidPrice =
+        if (currentState.price.isBlank()) priceEmptyMsg
+        else if (!isPosNumber(currentState.price)) priceInvalidMsg
+        else null
+
+      val invalidSubject =
+        if (currentState.subject == null) subjectMsgError else null
+
+      val invalidSubSkill = computeInvalidSubSkill(currentState)
+
+      val invalidListingType =
+        if (currentState.listingType == null) listingTypeMsgError else null
+
+      val invalidLocation =
+        if (currentState.selectedLocation == null) locationMsgError else null
+
       currentState.copy(
-          invalidTitleMsg = if (currentState.title.isBlank()) titleMsgError else null,
-          invalidDescMsg = if (currentState.description.isBlank()) descMsgError else null,
-          invalidPriceMsg =
-              if (currentState.price.isBlank()) priceEmptyMsg
-              else if (!isPosNumber(currentState.price)) priceInvalidMsg else null,
-          invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null,
-          // Set sub-skill error only when a subject is selected but no sub-skill chosen
-          invalidSubSkillMsg =
-              if (currentState.subject != null && currentState.selectedSubSkill.isNullOrBlank())
-                  subSkillMsgError
-              else null,
-          invalidListingTypeMsg =
-              if (currentState.listingType == null) listingTypeMsgError else null,
-          invalidLocationMsg =
-              if (currentState.selectedLocation == null) locationMsgError else null)
+        invalidTitleMsg = invalidTitle,
+        invalidDescMsg = invalidDesc,
+        invalidPriceMsg = invalidPrice,
+        invalidSubjectMsg = invalidSubject,
+        invalidSubSkillMsg = invalidSubSkill,
+        invalidListingTypeMsg = invalidListingType,
+        invalidLocationMsg = invalidLocation
+      )
     }
   }
+
+  private fun computeInvalidSubSkill(currentState: SkillUIState): String? {
+    return if (currentState.subject != null && currentState.selectedSubSkill.isNullOrBlank()) {
+      subSkillMsgError
+    } else {
+      null
+    }
+  }
+
 
   // --- State update helpers used by the UI ---
 
