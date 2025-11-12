@@ -42,6 +42,7 @@ object NewSkillScreenTestTag {
   const val LISTING_TYPE_DROPDOWN_ITEM_PREFIX = "listingTypeItem"
   const val INVALID_LISTING_TYPE_MSG = "invalidListingTypeMsg"
   const val INPUT_LOCATION_FIELD = "inputLocationField"
+  const val INVALID_LOCATION_MSG = "invalidLocationMsg"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -190,6 +191,13 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     },
                     modifier = Modifier.testTag(NewSkillScreenTestTag.INPUT_LOCATION_FIELD),
                 )
+
+                skillUIState.invalidLocationMsg?.let { error ->
+                  Text(
+                      text = error,
+                      color = MaterialTheme.colorScheme.error,
+                      modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_LOCATION_MSG))
+                }
               }
             }
       }
