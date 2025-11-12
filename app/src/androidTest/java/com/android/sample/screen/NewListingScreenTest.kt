@@ -192,6 +192,8 @@ class NewSkillScreenTest {
     composeRule.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).assertIsDisplayed()
     composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, true).assertIsDisplayed()
     composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_LOCATION_FIELD, true).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewSkillScreenTestTag.INVALID_LOCATION_MSG, true).assertIsDisplayed()
   }
 
   @Test
@@ -464,5 +466,25 @@ class NewSkillScreenTest {
             .fetchSemanticsNodes()
 
     org.junit.Assert.assertTrue(nodes.isNotEmpty())
+  }
+
+  @Test
+  fun missingLocation_showsError() {
+    val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
+    composeRule.setContent {
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+    }
+    composeRule.waitForIdle()
+
+    // leave all fields empty and click save -> triggers setError()
+    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+
+    // Location error should be surfaced with our dedicated tag
+    composeRule
+        .onNodeWithTag(NewSkillScreenTestTag.INVALID_LOCATION_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeRule
+        .onNodeWithText("You must choose a location", useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 }
