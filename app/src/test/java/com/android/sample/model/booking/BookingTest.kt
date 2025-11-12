@@ -1,5 +1,9 @@
 package com.android.sample.model.booking
 
+import com.android.sample.ui.theme.bkgCancelledColor
+import com.android.sample.ui.theme.bkgCompletedColor
+import com.android.sample.ui.theme.bkgConfirmedColor
+import com.android.sample.ui.theme.bkgPendingColor
 import java.util.Date
 import org.junit.Assert.*
 import org.junit.Test
@@ -210,5 +214,21 @@ class BookingTest {
     assertTrue(bookingString.contains("listing456"))
     assertTrue(bookingString.contains("tutor789"))
     assertTrue(bookingString.contains("user012"))
+  }
+
+  @Test
+  fun `color() returns correct color for each BookingStatus`() {
+    assertEquals(BookingStatus.PENDING.color(), bkgPendingColor)
+    assertEquals(BookingStatus.CONFIRMED.color(), bkgConfirmedColor)
+    assertEquals(BookingStatus.COMPLETED.color(), bkgCompletedColor)
+    assertEquals(BookingStatus.CANCELLED.color(), bkgCancelledColor)
+  }
+
+  @Test
+  fun `name() returns correct string for each BookingStatus`() {
+    assertEquals(BookingStatus.PENDING.name(), "PENDING")
+    assertEquals(BookingStatus.CONFIRMED.name(), "CONFIRMED")
+    assertEquals(BookingStatus.COMPLETED.name(), "COMPLETED")
+    assertEquals(BookingStatus.CANCELLED.name(), "CANCELLED")
   }
 }

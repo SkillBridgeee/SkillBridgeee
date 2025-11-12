@@ -14,6 +14,7 @@ import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
+import com.android.sample.model.skill.SkillsHelper
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.Job
@@ -40,6 +41,8 @@ data class SkillUIState(
     val description: String = "",
     val price: String = "",
     val subject: MainSubject? = null,
+    val selectedSubSkill: String? = null,
+    val subSkillOptions: List<String> = emptyList(),
     val listingType: ListingType? = null,
     val selectedLocation: Location? = null,
     val locationQuery: String = "",
@@ -48,6 +51,7 @@ data class SkillUIState(
     val invalidDescMsg: String? = null,
     val invalidPriceMsg: String? = null,
     val invalidSubjectMsg: String? = null,
+    val invalidSubSkillMsg: String? = null,
     val invalidListingTypeMsg: String? = null,
     val invalidLocationMsg: String? = null
 ) {
@@ -59,6 +63,7 @@ data class SkillUIState(
             invalidDescMsg == null &&
             invalidPriceMsg == null &&
             invalidSubjectMsg == null &&
+            invalidSubSkillMsg == null &&
             invalidListingTypeMsg == null &&
             invalidLocationMsg == null &&
             title.isNotBlank() &&
@@ -66,6 +71,7 @@ data class SkillUIState(
             price.isNotBlank() &&
             subject != null &&
             listingType != null &&
+            selectedSubSkill?.isNotBlank() == true &&
             selectedLocation != null
 }
 
@@ -95,6 +101,7 @@ class NewSkillViewModel(
   private val priceInvalidMsg = "Price must be a positive number"
   private val subjectMsgError = "You must choose a subject"
   private val listingTypeMsgError = "You must choose a listing type"
+  private val subSkillMsgError = "You must choose a sub-subject"
   private val locationMsgError = "You must choose a location"
 
   /**
@@ -106,40 +113,71 @@ class NewSkillViewModel(
 
   fun addListing() {
     val state = _uiState.value
-    if (state.isValid) {
-      val price = state.price.toDouble()
-      val newSkill =
-          Skill(
-              mainSubject = state.subject!!,
-              skill = state.title,
-          )
-
-      when (state.listingType!!) {
-        ListingType.PROPOSAL -> {
-          val newProposal =
-              Proposal(
-                  listingId = listingRepository.getNewUid(),
-                  creatorUserId = userId,
-                  skill = newSkill,
-                  description = state.description,
-                  location = state.selectedLocation!!,
-                  hourlyRate = price)
-          addProposalToRepository(proposal = newProposal)
-        }
-        ListingType.REQUEST -> {
-          val newRequest =
-              Request(
-                  listingId = listingRepository.getNewUid(),
-                  creatorUserId = userId,
-                  skill = newSkill,
-                  description = state.description,
-                  location = state.selectedLocation!!,
-                  hourlyRate = price)
-          addRequestToRepository(request = newRequest)
-        }
-      }
-    } else {
+    if (!state.isValid) {
       setError()
+      return
+    }
+
+    val price = state.price.toDoubleOrNull()
+    if (price == null) {
+      Log.e("NewSkillViewModel", "Unexpected invalid price despite isValid")
+      setError()
+      return
+    }
+
+    val specificSkill = state.selectedSubSkill
+    if (specificSkill.isNullOrBlank()) {
+      Log.e("NewSkillViewModel", "Missing selectedSubSkill despite isValid")
+      setError()
+      return
+    }
+
+    val mainSubject = state.subject
+    if (mainSubject == null) {
+      Log.e("NewSkillViewModel", "Missing subject despite isValid")
+      setError()
+      return
+    }
+
+    val listingType = state.listingType
+    if (listingType == null) {
+      Log.e("NewSkillViewModel", "Missing listingType despite isValid")
+      setError()
+      return
+    }
+
+    val selectedLocation = state.selectedLocation
+    if (selectedLocation == null) {
+      Log.e("NewSkillViewModel", "Missing selectedLocation despite isValid")
+      setError()
+      return
+    }
+
+    val newSkill = Skill(mainSubject = mainSubject, skill = specificSkill)
+
+    when (listingType) {
+      ListingType.PROPOSAL -> {
+        val newProposal =
+            Proposal(
+                listingId = listingRepository.getNewUid(),
+                creatorUserId = userId,
+                skill = newSkill,
+                description = state.description,
+                location = selectedLocation,
+                hourlyRate = price)
+        addProposalToRepository(proposal = newProposal)
+      }
+      ListingType.REQUEST -> {
+        val newRequest =
+            Request(
+                listingId = listingRepository.getNewUid(),
+                creatorUserId = userId,
+                skill = newSkill,
+                description = state.description,
+                location = selectedLocation,
+                hourlyRate = price)
+        addRequestToRepository(request = newRequest)
+      }
     }
   }
 
@@ -148,7 +186,7 @@ class NewSkillViewModel(
       try {
         listingRepository.addProposal(proposal)
       } catch (e: Exception) {
-        Log.e("NewSkillViewModel", "Error adding Proposal", e)
+        Log.e("NewSkillViewModel", "Network error adding Proposal", e)
       }
     }
   }
@@ -158,7 +196,7 @@ class NewSkillViewModel(
       try {
         listingRepository.addRequest(request)
       } catch (e: Exception) {
-        Log.e("NewSkillViewModel", "Error adding Request", e)
+        Log.e("NewSkillViewModel", "Network error adding Request", e)
       }
     }
   }
@@ -173,6 +211,11 @@ class NewSkillViewModel(
               if (currentState.price.isBlank()) priceEmptyMsg
               else if (!isPosNumber(currentState.price)) priceInvalidMsg else null,
           invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null,
+          // Set sub-skill error only when a subject is selected but no sub-skill chosen
+          invalidSubSkillMsg =
+              if (currentState.subject != null && currentState.selectedSubSkill.isNullOrBlank())
+                  subSkillMsgError
+              else null,
           invalidListingTypeMsg =
               if (currentState.listingType == null) listingTypeMsgError else null,
           invalidLocationMsg =
@@ -221,7 +264,14 @@ class NewSkillViewModel(
 
   /** Update the selected main subject. */
   fun setSubject(sub: MainSubject) {
-    _uiState.update { currentState -> currentState.copy(subject = sub, invalidSubjectMsg = null) }
+    val options = SkillsHelper.getSkillNames(sub)
+    _uiState.value =
+        _uiState.value.copy(
+            subject = sub,
+            subSkillOptions = options,
+            selectedSubSkill = null,
+            invalidSubjectMsg = null,
+            invalidSubSkillMsg = null)
   }
 
   /** Update the selected listing type (PROPOSAL or REQUEST). */
@@ -229,6 +279,11 @@ class NewSkillViewModel(
     _uiState.update { currentState ->
       currentState.copy(listingType = type, invalidListingTypeMsg = null)
     }
+  }
+
+  /** Set a chosen sub-skill string. */
+  fun setSubSkill(subSkill: String) {
+    _uiState.value = _uiState.value.copy(selectedSubSkill = subSkill, invalidSubSkillMsg = null)
   }
 
   // Update the selected location and the locationQuery

@@ -70,7 +70,7 @@ class MapScreenAndroidTest {
                 errorMessage = null))
     every { vm.uiState } returns state
 
-    composeRule.setContent { MapScreen(viewModel = vm) }
+    composeRule.setContent { MapScreen(viewModel = vm, requestLocationOnStart = false) }
     composeRule.waitForIdle() // executes GoogleMap content: Marker loop + profile Marker
   }
 
@@ -88,7 +88,7 @@ class MapScreenAndroidTest {
                 errorMessage = null))
     every { vm.uiState } returns flow
 
-    composeRule.setContent { MapScreen(viewModel = vm) }
+    composeRule.setContent { MapScreen(viewModel = vm, requestLocationOnStart = false) }
     composeRule.waitForIdle()
 
     // Switch to valid profile -> target becomes profileLatLng, LaunchedEffect runs again
@@ -99,5 +99,47 @@ class MapScreenAndroidTest {
     val zero = testProfile.copy(location = Location(0.0, 0.0, ""))
     flow.value = flow.value.copy(selectedProfile = zero)
     composeRule.waitForIdle()
+  }
+
+  @Test
+  fun covers_requestLocationOnStart_true() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.5196535, 6.6322734),
+                profiles = emptyList(),
+                bookingPins = emptyList(),
+                selectedProfile = null,
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    // Set requestLocationOnStart = true to cover lines 154-166
+    composeRule.setContent { MapScreen(viewModel = vm, requestLocationOnStart = true) }
+    composeRule.waitForIdle()
+    // The permission launcher will be invoked, and the catch block may execute
+  }
+
+  @Test
+  fun covers_myProfile_marker_rendering() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val profileWithLocation =
+        testProfile.copy(name = "Alice", location = Location(46.52, 6.63, "Test Location"))
+    val state =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.5196535, 6.6322734),
+                profiles = listOf(profileWithLocation),
+                myProfile = profileWithLocation, // Set myProfile to cover lines 217-226
+                bookingPins = emptyList(),
+                selectedProfile = null,
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns state
+
+    composeRule.setContent { MapScreen(viewModel = vm, requestLocationOnStart = false) }
+    composeRule.waitForIdle()
+    // This will render the user's profile marker with blue icon at lines 217-226
   }
 }

@@ -21,7 +21,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,14 +34,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.times
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.GpsLocationProvider
-import com.android.sample.model.map.Location
-import com.android.sample.model.user.Profile
-import com.android.sample.ui.components.ListingCard
 import com.android.sample.ui.components.LocationInputField
+import com.android.sample.ui.components.ProposalCard
+import com.android.sample.ui.components.RequestCard
 import kotlinx.coroutines.delay
 
 /**
@@ -93,7 +90,8 @@ enum class ProfileTab {
 fun MyProfileScreen(
     profileViewModel: MyProfileViewModel = viewModel(),
     profileId: String,
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onListingClick: (String) -> Unit = {}
 ) {
   val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
   Scaffold(
@@ -125,7 +123,7 @@ fun MyProfileScreen(
           Spacer(modifier = Modifier.height(16.dp))
 
           if (selectedTab.value == ProfileTab.INFO) {
-            ProfileContent(pd, ui, profileViewModel, onLogout)
+            ProfileContent(pd, ui, profileViewModel, onLogout, onListingClick)
           } else {
             RatingContent(pd, ui)
           }
@@ -145,12 +143,14 @@ fun MyProfileScreen(
  * @param profileId Profile id to load.
  * @param profileViewModel ViewModel that exposes UI state and actions.
  * @param onLogout Callback invoked by the logout UI.
+ * @param onListingClick Callback when a listing card is clicked.
  */
 private fun ProfileContent(
     pd: PaddingValues,
     ui: MyProfileUIState,
     profileViewModel: MyProfileViewModel,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onListingClick: (String) -> Unit
 ) {
   val profileId = ui.userId ?: ""
   LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
@@ -176,7 +176,7 @@ private fun ProfileContent(
           ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
         }
 
-        item { ProfileListings(ui = ui) }
+        item { ProfileListings(ui = ui, onListingClick = onListingClick) }
 
         item { ProfileLogout(onLogout = onLogout) }
       }
@@ -422,8 +422,9 @@ private fun ProfileForm(
  * visible.
  *
  * @param ui Current UI state providing listings and profile data for the creator.
+ * @param onListingClick Callback when a listing card is clicked.
  */
-private fun ProfileListings(ui: MyProfileUIState) {
+private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Unit = {}) {
   Spacer(modifier = Modifier.height(16.dp))
   Text(
       text = "Your Listings",
@@ -454,16 +455,16 @@ private fun ProfileListings(ui: MyProfileUIState) {
           modifier = Modifier.padding(horizontal = 16.dp))
     }
     else -> {
-      val creatorProfile =
-          Profile(
-              userId = ui.userId ?: "",
-              name = ui.name ?: "",
-              email = ui.email ?: "",
-              location = ui.selectedLocation ?: Location(),
-              description = ui.description ?: "")
       ui.listings.forEach { listing ->
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-          ListingCard(listing = listing, creator = creatorProfile, onOpenListing = {}, onBook = {})
+          when (listing) {
+            is com.android.sample.model.listing.Proposal -> {
+              ProposalCard(proposal = listing, onClick = onListingClick)
+            }
+            is com.android.sample.model.listing.Request -> {
+              RequestCard(request = listing, onClick = onListingClick)
+            }
+          }
           Spacer(Modifier.height(8.dp))
         }
       }

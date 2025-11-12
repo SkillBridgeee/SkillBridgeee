@@ -91,7 +91,7 @@ class MyViewModelFactory(private val userId: String) : ViewModelProvider.Factory
   override fun <T : ViewModel> create(modelClass: Class<T>): T {
     return when (modelClass) {
       MyBookingsViewModel::class.java -> {
-        MyBookingsViewModel(userId = userId) as T
+        MyBookingsViewModel() as T
       }
       MyProfileViewModel::class.java -> {
         MyProfileViewModel(userId = userId) as T
@@ -171,7 +171,7 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
         androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
           AppNavGraph(
               navController = navController,
-              bookingsViewModel,
+              bookingsViewModel = bookingsViewModel,
               profileViewModel,
               mainPageViewModel,
               authViewModel = authViewModel,

@@ -35,10 +35,14 @@ object NavRoutes {
   const val MESSAGES = "messages"
   const val SIGNUP = "signup?email={email}"
   const val SIGNUP_BASE = "signup"
+  const val LISTING = "listing/{listingId}"
 
   const val OTHERS_PROFILE = "profile"
+  const val BOOKING_DETAILS = "bookingDetails"
 
   fun createProfileRoute(profileId: String) = "myProfile/$profileId"
+
+  fun createListingRoute(listingId: String) = "listing/$listingId"
 
   fun createNewSkillRoute(profileId: String) = "new_skill/$profileId"
 
