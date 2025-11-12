@@ -74,15 +74,15 @@ fun NewListingScreen(
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
-        ListingContent(pd = pd, profileId = profileId, skillViewModel = skillViewModel)
+        ListingContent(pd = pd, profileId = profileId, listingViewModel = skillViewModel)
       }
 }
 
 @Composable
-fun ListingContent(pd: PaddingValues, profileId: String, skillViewModel: NewListingViewModel) {
-  val ListingUIState by skillViewModel.uiState.collectAsState()
+fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewListingViewModel) {
+  val ListingUIState by listingViewModel.uiState.collectAsState()
 
-  LaunchedEffect(profileId) { skillViewModel.load() }
+  LaunchedEffect(profileId) { listingViewModel.load() }
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -109,14 +109,14 @@ fun ListingContent(pd: PaddingValues, profileId: String, skillViewModel: NewList
 
                 ListingTypeMenu(
                     selectedListingType = ListingUIState.listingType,
-                    onListingTypeSelected = { skillViewModel.setListingType(it) },
+                    onListingTypeSelected = { listingViewModel.setListingType(it) },
                     errorMsg = ListingUIState.invalidListingTypeMsg)
 
                 Spacer(Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = ListingUIState.title,
-                    onValueChange = skillViewModel::setTitle,
+                    onValueChange = listingViewModel::setTitle,
                     label = { Text("Course Title") },
                     placeholder = { Text("Title") },
                     isError = ListingUIState.invalidTitleMsg != null,
@@ -134,7 +134,7 @@ fun ListingContent(pd: PaddingValues, profileId: String, skillViewModel: NewList
 
                 OutlinedTextField(
                     value = ListingUIState.description,
-                    onValueChange = skillViewModel::setDescription,
+                    onValueChange = listingViewModel::setDescription,
                     label = { Text("Description") },
                     placeholder = { Text("Description of the skill") },
                     isError = ListingUIState.invalidDescMsg != null,
@@ -152,7 +152,7 @@ fun ListingContent(pd: PaddingValues, profileId: String, skillViewModel: NewList
 
                 OutlinedTextField(
                     value = ListingUIState.price,
-                    onValueChange = skillViewModel::setPrice,
+                    onValueChange = listingViewModel::setPrice,
                     label = { Text("Hourly Rate") },
                     placeholder = { Text("Price per Hour") },
                     isError = ListingUIState.invalidPriceMsg != null,
@@ -169,7 +169,7 @@ fun ListingContent(pd: PaddingValues, profileId: String, skillViewModel: NewList
 
                 SubjectMenu(
                     selectedSubject = ListingUIState.subject,
-                    onSubjectSelected = skillViewModel::setSubject,
+                    onSubjectSelected = listingViewModel::setSubject,
                     errorMsg = ListingUIState.invalidSubjectMsg)
 
                 if (ListingUIState.subject != null) {
@@ -178,18 +178,18 @@ fun ListingContent(pd: PaddingValues, profileId: String, skillViewModel: NewList
                   SubSkillMenu(
                       selectedSubSkill = ListingUIState.selectedSubSkill,
                       options = ListingUIState.subSkillOptions,
-                      onSubSkillSelected = skillViewModel::setSubSkill,
+                      onSubSkillSelected = listingViewModel::setSubSkill,
                       errorMsg = ListingUIState.invalidSubSkillMsg)
                 }
 
                 LocationInputField(
                     locationQuery = ListingUIState.locationQuery,
                     locationSuggestions = ListingUIState.locationSuggestions,
-                    onLocationQueryChange = skillViewModel::setLocationQuery,
+                    onLocationQueryChange = listingViewModel::setLocationQuery,
                     errorMsg = ListingUIState.invalidLocationMsg,
                     onLocationSelected = { location ->
-                      skillViewModel.setLocationQuery(location.name)
-                      skillViewModel.setLocation(location)
+                      listingViewModel.setLocationQuery(location.name)
+                      listingViewModel.setLocation(location)
                     })
               }
             }
