@@ -13,6 +13,9 @@ import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
@@ -56,6 +59,9 @@ data class MyProfileUIState(
     val listings: List<Listing> = emptyList(),
     val listingsLoading: Boolean = false,
     val listingsLoadError: String? = null,
+    val ratings: List<Rating> = emptyList(),
+    val ratingsLoading: Boolean = false,
+    val ratingsLoadError: String? = null,
     val updateSuccess: Boolean = false
 ) {
   /** True if all required fields are valid */
@@ -69,6 +75,15 @@ data class MyProfileUIState(
             !email.isNullOrBlank() &&
             selectedLocation != null &&
             !description.isNullOrBlank()
+
+  val toProfile: Profile
+    get() =
+        Profile(
+            userId = userId ?: "",
+            name = name ?: "",
+            email = email ?: "",
+            location = selectedLocation ?: Location(),
+            description = description ?: "")
 }
 
 /**
@@ -85,6 +100,7 @@ class MyProfileViewModel(
     private val locationRepository: LocationRepository =
         NominatimLocationRepository(HttpClientProvider.client),
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
+    private val ratingsRepository: RatingRepository = RatingRepositoryProvider.repository,
     private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
 
@@ -107,7 +123,13 @@ class MyProfileViewModel(
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile(profileUserId: String? = null) {
-    val currentId = profileUserId ?: userId
+    val currentId = profileUserId?.takeIf { it.isNotBlank() } ?: userId
+
+    if (currentId.isBlank()) {
+      Log.w(TAG, "loadProfile called with empty userId; skipping load")
+      return
+    }
+
     viewModelScope.launch {
       try {
         val profile = profileRepository.getProfile(userId = currentId)
@@ -123,6 +145,8 @@ class MyProfileViewModel(
 
         // Load listings created by this user
         loadUserListings(currentId)
+        // Load ratings received by this user
+        loadUserRatings(currentId)
       } catch (e: Exception) {
         Log.e(TAG, "Error loading MyProfile by ID: $currentId", e)
       }
@@ -150,6 +174,30 @@ class MyProfileViewModel(
               listings = emptyList(),
               listingsLoading = false,
               listingsLoadError = "Failed to load listings.")
+        }
+      }
+    }
+  }
+  /**
+   * Loads ratings received by the given user and updates UI state.
+   * * Uses a dedicated `ratingsLoading` flag so the rest of the screen can remain visible.
+   */
+  fun loadUserRatings(ownerId: String = _uiState.value.userId ?: userId) {
+    viewModelScope.launch {
+      // set ratings loading state (does not affect full-screen isLoading)
+      _uiState.update { it.copy(ratingsLoading = true, ratingsLoadError = null) }
+      try {
+        val items = ratingsRepository.getRatingsByToUser(ownerId)
+        _uiState.update {
+          it.copy(ratings = items, ratingsLoading = false, ratingsLoadError = null)
+        }
+      } catch (e: Exception) {
+        Log.e(TAG, "Error loading ratings for user: $ownerId", e)
+        _uiState.update {
+          it.copy(
+              ratings = emptyList(),
+              ratingsLoading = false,
+              ratingsLoadError = "Failed to load ratings.")
         }
       }
     }
