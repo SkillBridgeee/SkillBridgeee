@@ -149,8 +149,8 @@ private fun MapView(
   // Check if permission is already granted on startup
   val initialPermissionState = remember {
     androidx.core.content.ContextCompat.checkSelfPermission(
-        context, Manifest.permission.ACCESS_FINE_LOCATION
-    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+        android.content.pm.PackageManager.PERMISSION_GRANTED
   }
 
   // Track location permission state
