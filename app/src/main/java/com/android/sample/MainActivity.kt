@@ -52,11 +52,9 @@ class MainActivity : ComponentActivity() {
     init {
       // If BuildConfig is red you should run the generateDebugBuildConfig task on gradle
       if (BuildConfig.USE_FIREBASE_EMULATOR) {
-        try {
-          Firebase.firestore.useEmulator("10.0.2.2", 8080)
-          Firebase.auth.useEmulator("10.0.2.2", 9099)
-          Log.d("MainActivity", "✅ Firebase emulators enabled (Debug mode)")
-        } catch (_: IllegalStateException) {}
+        Firebase.firestore.useEmulator("10.0.2.2", 8080)
+        Firebase.auth.useEmulator("10.0.2.2", 9099)
+        Log.d("MainActivity", "✅ Firebase emulators enabled (Debug mode)")
       } else {
         Log.d("MainActivity", "🌐 Using production Firebase servers")
       }
