@@ -190,10 +190,21 @@ class NewSkillScreenTest {
     composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION).assertIsDisplayed()
     composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).assertIsDisplayed()
     composeRule.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).assertIsDisplayed()
-    composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, true).assertIsDisplayed()
+
+    // Location input (both the inner component and the wrapper tag)
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeRule
+        .onNodeWithTag(NewSkillScreenTestTag.INPUT_LOCATION_FIELD, useUnmergedTree = true)
+        .assertIsDisplayed()
+
+    // Error should NOT be composed initially
+    composeRule
+        .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_LOCATION_MSG, true)
+        .assertCountEquals(0)
+
     composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).assertIsDisplayed()
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_LOCATION_FIELD, true).assertIsDisplayed()
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INVALID_LOCATION_MSG, true).assertIsDisplayed()
   }
 
   @Test
@@ -486,5 +497,20 @@ class NewSkillScreenTest {
     composeRule
         .onNodeWithText("You must choose a location", useUnmergedTree = true)
         .assertIsDisplayed()
+  }
+
+  @Test
+  fun showsError_whenMissingLocation_onSave() {
+    val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
+    composeRule.setContent {
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+    }
+    composeRule.waitForIdle()
+
+    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.waitForIdle()
+
+    composeRule.onNodeWithTag(NewSkillScreenTestTag.INVALID_LOCATION_MSG, true).assertIsDisplayed()
+    composeRule.onNodeWithText("You must choose a location", true).assertIsDisplayed()
   }
 }
