@@ -49,12 +49,14 @@ class MainActivity : ComponentActivity() {
     // To enable emulators: Change USE_FIREBASE_EMULATOR to "true" in build.gradle.kts (debug
     // buildType)
     // Release builds ALWAYS use production Firebase (USE_FIREBASE_EMULATOR = false)
+    // For physical devices, update FIREBASE_EMULATOR_HOST in build.gradle.kts to your local IP
     init {
       // If BuildConfig is red you should run the generateDebugBuildConfig task on gradle
       if (BuildConfig.USE_FIREBASE_EMULATOR) {
-        Firebase.firestore.useEmulator("10.0.2.2", 8080)
-        Firebase.auth.useEmulator("10.0.2.2", 9099)
-        Log.d("MainActivity", "✅ Firebase emulators enabled (Debug mode)")
+        Firebase.firestore.useEmulator(
+            BuildConfig.FIREBASE_EMULATOR_HOST, BuildConfig.FIRESTORE_EMULATOR_PORT)
+        Firebase.auth.useEmulator(
+            BuildConfig.FIREBASE_EMULATOR_HOST, BuildConfig.AUTH_EMULATOR_PORT)
       } else {
         Log.d("MainActivity", "🌐 Using production Firebase servers")
       }
