@@ -151,8 +151,6 @@ private fun ProfileContent(
     onLogout: () -> Unit,
     onListingClick: (String) -> Unit
 ) {
-  val profileId = ui.userId ?: ""
-  LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
   val fieldSpacing = 8.dp
 
   LazyColumn(
