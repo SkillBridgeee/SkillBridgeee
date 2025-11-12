@@ -33,6 +33,14 @@ import com.android.sample.ui.subject.SubjectListViewModel
 private const val TAG = "NavGraph"
 
 /**
+ * Helper function to navigate to listing details screen Avoids code duplication across different
+ * navigation paths
+ */
+private fun navigateToListing(navController: NavHostController, listingId: String) {
+  navController.navigate(NavRoutes.createListingRoute(listingId))
+}
+
+/**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
  *
  * This file defines all navigation routes and their corresponding screen composables. Each route is
@@ -94,6 +102,7 @@ fun AppNavGraph(
       MyProfileScreen(
           profileViewModel = profileViewModel,
           profileId = currentUserId,
+          onListingClick = { listingId -> navigateToListing(navController, listingId) },
           onLogout = {
             // Clear the authentication state to reset email/password fields
             authViewModel.signOut()
@@ -120,8 +129,9 @@ fun AppNavGraph(
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
       val viewModel: SubjectListViewModel = viewModel(backStackEntry)
       SubjectListScreen(
-          viewModel = viewModel, // You may need to provide this through dependency injection
-          subject = academicSubject.value)
+          viewModel = viewModel,
+          subject = academicSubject.value,
+          onListingClick = { listingId -> navigateToListing(navController, listingId) })
     }
 
     composable(NavRoutes.BOOKINGS) {
@@ -172,8 +182,20 @@ fun AppNavGraph(
     composable(route = NavRoutes.OTHERS_PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
       // todo add other parameters
-      ProfileScreen(profileId = profileID.value)
+      ProfileScreen(
+          profileId = profileID.value,
+          onProposalClick = { listingId -> navigateToListing(navController, listingId) },
+          onRequestClick = { listingId -> navigateToListing(navController, listingId) })
     }
+    composable(
+        route = NavRoutes.LISTING,
+        arguments = listOf(navArgument("listingId") { type = NavType.StringType })) { backStackEntry
+          ->
+          val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
+          com.android.sample.ui.listing.ListingScreen(
+              listingId = listingId, onNavigateBack = { navController.popBackStack() })
+        }
 
     composable(route = NavRoutes.BOOKING_DETAILS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKING_DETAILS) }
