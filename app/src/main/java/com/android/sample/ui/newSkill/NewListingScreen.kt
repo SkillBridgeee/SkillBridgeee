@@ -52,6 +52,13 @@ fun NewSkillScreen(
 ) {
   val skillUIState by skillViewModel.uiState.collectAsState()
 
+  LaunchedEffect(skillUIState.addSuccess) {
+    if (skillUIState.addSuccess) {
+      navController.popBackStack()
+      skillViewModel.clearAddSuccess()
+    }
+  }
+
   val buttonText =
       when (skillUIState.listingType) {
         ListingType.PROPOSAL -> "Create Proposal"
@@ -63,10 +70,7 @@ fun NewSkillScreen(
       floatingActionButton = {
         AppButton(
             text = buttonText,
-            onClick = {
-              skillViewModel.addListing()
-              navController.popBackStack()
-            },
+            onClick = { skillViewModel.addListing() },
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->

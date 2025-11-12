@@ -53,7 +53,8 @@ data class SkillUIState(
     val invalidSubjectMsg: String? = null,
     val invalidSubSkillMsg: String? = null,
     val invalidListingTypeMsg: String? = null,
-    val invalidLocationMsg: String? = null
+    val invalidLocationMsg: String? = null,
+    val addSuccess: Boolean = false
 ) {
 
   /** Indicates whether the current UI state is valid for submission. */
@@ -185,6 +186,7 @@ class NewSkillViewModel(
     viewModelScope.launch {
       try {
         listingRepository.addProposal(proposal)
+        _uiState.update { it.copy(addSuccess = true) }
       } catch (e: Exception) {
         Log.e("NewSkillViewModel", "Network error adding Proposal", e)
       }
@@ -195,6 +197,7 @@ class NewSkillViewModel(
     viewModelScope.launch {
       try {
         listingRepository.addRequest(request)
+        _uiState.update { it.copy(addSuccess = true) }
       } catch (e: Exception) {
         Log.e("NewSkillViewModel", "Network error adding Request", e)
       }
@@ -338,5 +341,9 @@ class NewSkillViewModel(
     } catch (_: Exception) {
       false
     }
+  }
+
+  fun clearAddSuccess() {
+    _uiState.update { it.copy(addSuccess = false) }
   }
 }
