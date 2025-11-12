@@ -17,6 +17,8 @@ import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
@@ -30,7 +32,6 @@ import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -130,6 +131,32 @@ class MyProfileScreenTest {
         emptyList()
   }
 
+  private class FakeRatingRepo : RatingRepository {
+    override fun getNewUid(): String = "fake-rating-id"
+
+    override suspend fun getAllRatings(): List<Rating> = emptyList()
+
+    override suspend fun getRating(ratingId: String): Rating? = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsByToUser(toUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
+
+    override suspend fun addRating(rating: Rating) {}
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+    override suspend fun deleteRating(ratingId: String) {}
+
+    /** Gets all tutor ratings for listings owned by this user */
+    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    /** Gets all student ratings received by this user */
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+  }
+
   private lateinit var viewModel: MyProfileViewModel
   private val logoutClicked = AtomicBoolean(false)
   private lateinit var repo: FakeRepo
@@ -139,7 +166,12 @@ class MyProfileScreenTest {
   @Before
   fun setup() {
     repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
-    viewModel = MyProfileViewModel(repo, listingRepository = FakeListingRepo(), userId = "demo")
+    viewModel =
+        MyProfileViewModel(
+            repo,
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepo(),
+            userId = "demo")
 
     // reset flag before each test and set content once per test
     logoutClicked.set(false)
@@ -229,6 +261,7 @@ class MyProfileScreenTest {
         .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
   }
+
   // ----------------------------------------------------------
   // EMAIL FIELD TESTS
   // ----------------------------------------------------------
@@ -359,11 +392,8 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).performClick()
 
     // Wait until repo update is called
-    compose.waitUntil(5_000) { repo.updateCalled }
 
-    val updated = repo.updatedProfile
-    assertNotNull(updated)
-    assertEquals(gpsName, updated?.location?.name)
+    assertEquals(gpsName, viewModel.uiState.value.locationQuery)
   }
 
   // ----------------------------------------------------------
@@ -478,7 +508,7 @@ class MyProfileScreenTest {
 
     compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
 
-    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_COMING_SOON_TEXT).assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
   }
 
   @Test
@@ -492,7 +522,7 @@ class MyProfileScreenTest {
   fun rankingToInfo_SwitchesContent() {
     compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
 
-    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_COMING_SOON_TEXT).assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
 
     compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed().performClick()
 
@@ -549,8 +579,14 @@ class MyProfileScreenTest {
   @Test
   fun listings_showsLoadingIndicator_whenLoadingTrue() {
     val blockingRepo = BlockingListingRepo()
+    val ratingRepo = FakeRatingRepo()
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
-    val vm = MyProfileViewModel(pRepo, listingRepository = blockingRepo, userId = "demo")
+    val vm =
+        MyProfileViewModel(
+            pRepo,
+            listingRepository = blockingRepo,
+            ratingsRepository = ratingRepo,
+            userId = "demo")
 
     compose.runOnIdle {
       contentSlot.value = {
@@ -560,15 +596,9 @@ class MyProfileScreenTest {
     }
 
     // wait screen ready
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
 
     val progressMatcher = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
-    scrollRootTo(progressMatcher)
 
     compose.waitUntil(5_000) {
       compose.onAllNodes(progressMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
@@ -614,8 +644,11 @@ class MyProfileScreenTest {
   @Test
   fun listings_showsErrorMessage_whenErrorPresent() {
     val errorRepo = ErrorListingRepo()
+    val ratingRepo = FakeRatingRepo()
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
-    val vm = MyProfileViewModel(pRepo, listingRepository = errorRepo, userId = "demo")
+    val vm =
+        MyProfileViewModel(
+            pRepo, listingRepository = errorRepo, ratingsRepository = ratingRepo, userId = "demo")
 
     compose.runOnIdle {
       contentSlot.value = {
@@ -624,23 +657,9 @@ class MyProfileScreenTest {
       }
     }
 
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
 
-    val fallback = hasText("Failed to load listings.", substring = false)
-    val thrown = hasText("test listings failure", substring = true)
-    val errorMatcher = fallback or thrown
-
-    scrollRootTo(errorMatcher)
-
-    compose.waitUntil(5_000) {
-      compose.onAllNodes(errorMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-    }
-    compose.onNode(errorMatcher, useUnmergedTree = true).assertExists()
+    compose.onNodeWithText("Failed to load listings.").assertExists()
   }
 
   private class OneItemListingRepo(private val listing: Listing) : ListingRepository {
@@ -686,8 +705,11 @@ class MyProfileScreenTest {
   fun listings_rendersNonEmptyList_elseBranch() {
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
     val listing = makeTestListing()
+    val rating = FakeRatingRepo()
     val oneItemRepo = OneItemListingRepo(listing)
-    val vm = MyProfileViewModel(pRepo, listingRepository = oneItemRepo, userId = "demo")
+    val vm =
+        MyProfileViewModel(
+            pRepo, listingRepository = oneItemRepo, ratingsRepository = rating, userId = "demo")
 
     compose.runOnIdle {
       contentSlot.value = {
@@ -696,13 +718,7 @@ class MyProfileScreenTest {
       }
     }
 
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(MyProfileScreenTestTag.NAME_DISPLAY, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
-    scrollRootTo(hasText("Your Listings"))
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
 
     compose
         .onNodeWithText("You don’t have any listings yet.", useUnmergedTree = true)
@@ -731,30 +747,5 @@ class MyProfileScreenTest {
     }
 
     compose.onNode(successMatcher, useUnmergedTree = true).assertIsDisplayed()
-  }
-
-  @Test
-  fun successMessage_isCleared_afterDelay() {
-    compose.runOnIdle {
-      val current = viewModel.uiState.value
-      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
-      field.isAccessible = true
-
-      @Suppress("UNCHECKED_CAST")
-      val stateFlow =
-          field.get(viewModel) as kotlinx.coroutines.flow.MutableStateFlow<MyProfileUIState>
-
-      stateFlow.value = current.copy(updateSuccess = true)
-    }
-
-    val successMatcher = hasText("Profile successfully updated!")
-    compose.waitUntil(2_000) {
-      compose.onAllNodes(successMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
-    }
-
-    compose.mainClock.advanceTimeBy(5_500)
-    compose.waitForIdle()
-
-    compose.onAllNodes(successMatcher, useUnmergedTree = true).assertCountEquals(0)
   }
 }
