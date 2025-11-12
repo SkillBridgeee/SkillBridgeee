@@ -3,8 +3,9 @@ package com.android.sample.screen
 import com.android.sample.mockRepository.bookingRepo.BookingFakeRepoEmpty
 import com.android.sample.mockRepository.bookingRepo.BookingFakeRepoError
 import com.android.sample.mockRepository.bookingRepo.BookingFakeRepoWorking
-import com.android.sample.mockRepository.listingRepo.ListingFakeRepoEmpty
+import com.android.sample.mockRepository.listingRepo.ListingFakeRepoError
 import com.android.sample.mockRepository.listingRepo.ListingFakeRepoWorking
+import com.android.sample.mockRepository.profileRepo.ProfileFakeRepoError
 import com.android.sample.mockRepository.profileRepo.ProfileFakeRepoWorking
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import kotlinx.coroutines.Dispatchers
@@ -23,9 +24,13 @@ class MyBookingsViewModelTest {
   private lateinit var bookingRepoWorking: BookingFakeRepoWorking
   private lateinit var bookingRepoEmpty: BookingFakeRepoEmpty
   private lateinit var errorBookingRepo: BookingFakeRepoError
-  private lateinit var listingRepo: ListingFakeRepoWorking
-  private lateinit var emptyListingRepo: ListingFakeRepoEmpty
-  private lateinit var profileRepo: ProfileFakeRepoWorking
+
+  private lateinit var listingRepoWorking: ListingFakeRepoWorking
+  private lateinit var errorListingRepo: ListingFakeRepoError
+
+  private lateinit var profileRepoWorking: ProfileFakeRepoWorking
+
+  private lateinit var errorProfileRepo: ProfileFakeRepoError
 
   @Before
   fun setup() {
@@ -34,10 +39,11 @@ class MyBookingsViewModelTest {
     bookingRepoEmpty = BookingFakeRepoEmpty()
     errorBookingRepo = BookingFakeRepoError()
 
-    listingRepo = ListingFakeRepoWorking()
-    emptyListingRepo = ListingFakeRepoEmpty()
+    listingRepoWorking = ListingFakeRepoWorking()
+    errorListingRepo = ListingFakeRepoError()
 
-    profileRepo = ProfileFakeRepoWorking()
+    profileRepoWorking = ProfileFakeRepoWorking()
+    errorProfileRepo = ProfileFakeRepoError()
   }
 
   @After
@@ -51,7 +57,9 @@ class MyBookingsViewModelTest {
   fun `load() sets empty bookings when user has none`() = runTest {
     val viewModel =
         MyBookingsViewModel(
-            bookingRepo = bookingRepoEmpty, listingRepo = listingRepo, profileRepo = profileRepo)
+            bookingRepo = bookingRepoEmpty,
+            listingRepo = listingRepoWorking,
+            profileRepo = profileRepoWorking)
 
     viewModel.load()
     advanceUntilIdle()
@@ -67,7 +75,9 @@ class MyBookingsViewModelTest {
   fun `load() builds correct BookingCardUI list`() = runTest {
     val viewModel =
         MyBookingsViewModel(
-            bookingRepo = bookingRepoWorking, listingRepo = listingRepo, profileRepo = profileRepo)
+            bookingRepo = bookingRepoWorking,
+            listingRepo = listingRepoWorking,
+            profileRepo = profileRepoWorking)
 
     viewModel.load()
     advanceUntilIdle()
@@ -96,7 +106,9 @@ class MyBookingsViewModelTest {
   fun `load() sets error when booking repository throws exception`() = runTest {
     val viewModel =
         MyBookingsViewModel(
-            bookingRepo = errorBookingRepo, listingRepo = listingRepo, profileRepo = profileRepo)
+            bookingRepo = errorBookingRepo,
+            listingRepo = listingRepoWorking,
+            profileRepo = profileRepoWorking)
 
     viewModel.load()
     advanceUntilIdle()
@@ -111,7 +123,26 @@ class MyBookingsViewModelTest {
   fun `load() sets error when listing repository throws exception`() = runTest {
     val viewModel =
         MyBookingsViewModel(
-            bookingRepo = bookingRepoWorking, listingRepo = listingRepo, profileRepo = profileRepo)
+            bookingRepo = bookingRepoWorking,
+            listingRepo = errorListingRepo,
+            profileRepo = profileRepoWorking)
+
+    viewModel.load()
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertTrue(state.hasError)
+    assertFalse(state.isLoading)
+    assertTrue(state.bookings.isEmpty())
+  }
+
+  @Test
+  fun `load() sets error when profile repository throws exception`() = runTest {
+    val viewModel =
+        MyBookingsViewModel(
+            bookingRepo = bookingRepoWorking,
+            listingRepo = listingRepoWorking,
+            profileRepo = errorProfileRepo)
 
     viewModel.load()
     advanceUntilIdle()
