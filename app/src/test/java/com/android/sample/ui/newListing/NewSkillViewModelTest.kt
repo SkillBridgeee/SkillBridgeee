@@ -6,7 +6,7 @@ import com.android.sample.model.listing.ListingType
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.skill.MainSubject
-import com.android.sample.ui.screens.newSkill.NewSkillViewModel
+import com.android.sample.ui.screens.newSkill.NewListingViewModel
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,7 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class NewSkillViewModelTest {
+class NewListingViewModelTest {
 
   @get:Rule val instantExecutorRule = InstantTaskExecutorRule()
 
@@ -27,7 +27,7 @@ class NewSkillViewModelTest {
 
   private lateinit var mockListingRepository: ListingRepository
   private lateinit var mockLocationRepository: LocationRepository
-  private lateinit var viewModel: NewSkillViewModel
+  private lateinit var viewModel: NewListingViewModel
 
   private val testUserId = "test-user-123"
   private val testLocation =
@@ -43,7 +43,7 @@ class NewSkillViewModelTest {
     every { mockListingRepository.getNewUid() } returns "listing-123"
 
     viewModel =
-        NewSkillViewModel(
+        NewListingViewModel(
             listingRepository = mockListingRepository,
             locationRepository = mockLocationRepository,
             userId = testUserId)
@@ -329,7 +329,7 @@ class NewSkillViewModelTest {
     try {
       // construct ViewModel after setting Main so viewModelScope uses the test dispatcher
       viewModel =
-          NewSkillViewModel(
+          NewListingViewModel(
               listingRepository = mockListingRepository,
               locationRepository = mockLocationRepository,
               userId = testUserId)
@@ -407,7 +407,7 @@ class NewSkillViewModelTest {
 
       // construct ViewModel after setting Main so viewModelScope uses the test dispatcher
       viewModel =
-          NewSkillViewModel(
+          NewListingViewModel(
               listingRepository = mockListingRepository,
               locationRepository = mockLocationRepository,
               userId = testUserId)

@@ -77,7 +77,7 @@ data class ListingUIState(
 }
 
 /**
- * ViewModel responsible for the NewSkillScreen UI logic.
+ * ViewModel responsible for the NewListingScreen UI logic.
  *
  * Exposes a StateFlow of [ListingUIState] and provides functions to update the state and perform
  * simple validation.
