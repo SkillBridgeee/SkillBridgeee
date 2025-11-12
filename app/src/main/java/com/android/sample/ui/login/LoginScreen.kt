@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.sample.model.authentication.*
+import com.android.sample.ui.components.EllipsizingTextField
+import com.android.sample.ui.components.EllipsizingTextFieldStyle
 import com.android.sample.ui.theme.extendedColors
 
 object SignInScreenTestTags {
@@ -151,15 +153,24 @@ private fun EmailPasswordFields(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit
 ) {
-  OutlinedTextField(
+  EllipsizingTextField(
       value = email,
       onValueChange = onEmailChange,
-      label = { Text("Email") },
-      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+      placeholder = "Email",
+      style =
+          EllipsizingTextFieldStyle(
+              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+              // you could also set shape/colors here if you want:
+              // shape = RoundedCornerShape(14.dp),
+              // colors = TextFieldDefaults.colors(...)
+              ),
       leadingIcon = {
-        Icon(painterResource(id = android.R.drawable.ic_dialog_email), contentDescription = null)
+        Icon(
+            painter = painterResource(id = android.R.drawable.ic_dialog_email),
+            contentDescription = null)
       },
-      modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT))
+      modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT),
+      maxPreviewLength = 45)
 
   Spacer(modifier = Modifier.height(10.dp))
 
@@ -169,6 +180,8 @@ private fun EmailPasswordFields(
       label = { Text("Password") },
       visualTransformation = PasswordVisualTransformation(),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+      singleLine = true,
+      maxLines = 1,
       leadingIcon = {
         Icon(painterResource(id = android.R.drawable.ic_lock_idle_lock), contentDescription = null)
       },

@@ -1,4 +1,4 @@
-package com.android.sample.ui.newSkill
+package com.android.sample.ui.newListing
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,7 +18,7 @@ import com.android.sample.model.listing.ListingType
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.LocationInputField
-import com.android.sample.ui.screens.newSkill.NewSkillViewModel
+import com.android.sample.ui.screens.newSkill.NewListingViewModel
 
 object NewSkillScreenTestTag {
   const val BUTTON_SAVE_SKILL = "buttonSaveSkill"
@@ -45,15 +45,22 @@ object NewSkillScreenTestTag {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewSkillScreen(
-    skillViewModel: NewSkillViewModel = viewModel(),
+fun NewListingScreen(
+    skillViewModel: NewListingViewModel = viewModel(),
     profileId: String,
     navController: NavController
 ) {
-  val skillUIState by skillViewModel.uiState.collectAsState()
+  val ListingUIState by skillViewModel.uiState.collectAsState()
+
+  LaunchedEffect(ListingUIState.addSuccess) {
+    if (ListingUIState.addSuccess) {
+      navController.popBackStack()
+      skillViewModel.clearAddSuccess()
+    }
+  }
 
   val buttonText =
-      when (skillUIState.listingType) {
+      when (ListingUIState.listingType) {
         ListingType.PROPOSAL -> "Create Proposal"
         ListingType.REQUEST -> "Create Request"
         null -> "Create Listing"
@@ -63,22 +70,19 @@ fun NewSkillScreen(
       floatingActionButton = {
         AppButton(
             text = buttonText,
-            onClick = {
-              skillViewModel.addListing()
-              navController.popBackStack()
-            },
+            onClick = { skillViewModel.addListing() },
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
-        SkillsContent(pd = pd, profileId = profileId, skillViewModel = skillViewModel)
+        ListingContent(pd = pd, profileId = profileId, listingViewModel = skillViewModel)
       }
 }
 
 @Composable
-fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkillViewModel) {
-  val skillUIState by skillViewModel.uiState.collectAsState()
+fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewListingViewModel) {
+  val ListingUIState by listingViewModel.uiState.collectAsState()
 
-  LaunchedEffect(profileId) { skillViewModel.load() }
+  LaunchedEffect(profileId) { listingViewModel.load() }
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -104,20 +108,20 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                 Spacer(Modifier.height(10.dp))
 
                 ListingTypeMenu(
-                    selectedListingType = skillUIState.listingType,
-                    onListingTypeSelected = { skillViewModel.setListingType(it) },
-                    errorMsg = skillUIState.invalidListingTypeMsg)
+                    selectedListingType = ListingUIState.listingType,
+                    onListingTypeSelected = { listingViewModel.setListingType(it) },
+                    errorMsg = ListingUIState.invalidListingTypeMsg)
 
                 Spacer(Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = skillUIState.title,
-                    onValueChange = skillViewModel::setTitle,
+                    value = ListingUIState.title,
+                    onValueChange = listingViewModel::setTitle,
                     label = { Text("Course Title") },
                     placeholder = { Text("Title") },
-                    isError = skillUIState.invalidTitleMsg != null,
+                    isError = ListingUIState.invalidTitleMsg != null,
                     supportingText = {
-                      skillUIState.invalidTitleMsg?.let {
+                      ListingUIState.invalidTitleMsg?.let {
                         Text(
                             text = it,
                             modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_TITLE_MSG))
@@ -129,13 +133,13 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                 Spacer(Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = skillUIState.description,
-                    onValueChange = skillViewModel::setDescription,
+                    value = ListingUIState.description,
+                    onValueChange = listingViewModel::setDescription,
                     label = { Text("Description") },
                     placeholder = { Text("Description of the skill") },
-                    isError = skillUIState.invalidDescMsg != null,
+                    isError = ListingUIState.invalidDescMsg != null,
                     supportingText = {
-                      skillUIState.invalidDescMsg?.let {
+                      ListingUIState.invalidDescMsg?.let {
                         Text(
                             text = it,
                             modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_DESC_MSG))
@@ -147,13 +151,13 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                 Spacer(Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = skillUIState.price,
-                    onValueChange = skillViewModel::setPrice,
+                    value = ListingUIState.price,
+                    onValueChange = listingViewModel::setPrice,
                     label = { Text("Hourly Rate") },
                     placeholder = { Text("Price per Hour") },
-                    isError = skillUIState.invalidPriceMsg != null,
+                    isError = ListingUIState.invalidPriceMsg != null,
                     supportingText = {
-                      skillUIState.invalidPriceMsg?.let {
+                      ListingUIState.invalidPriceMsg?.let {
                         Text(
                             text = it,
                             modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_PRICE_MSG))
@@ -164,28 +168,28 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                 Spacer(Modifier.height(8.dp))
 
                 SubjectMenu(
-                    selectedSubject = skillUIState.subject,
-                    onSubjectSelected = skillViewModel::setSubject,
-                    errorMsg = skillUIState.invalidSubjectMsg)
+                    selectedSubject = ListingUIState.subject,
+                    onSubjectSelected = listingViewModel::setSubject,
+                    errorMsg = ListingUIState.invalidSubjectMsg)
 
-                if (skillUIState.subject != null) {
+                if (ListingUIState.subject != null) {
                   Spacer(Modifier.height(8.dp))
 
                   SubSkillMenu(
-                      selectedSubSkill = skillUIState.selectedSubSkill,
-                      options = skillUIState.subSkillOptions,
-                      onSubSkillSelected = skillViewModel::setSubSkill,
-                      errorMsg = skillUIState.invalidSubSkillMsg)
+                      selectedSubSkill = ListingUIState.selectedSubSkill,
+                      options = ListingUIState.subSkillOptions,
+                      onSubSkillSelected = listingViewModel::setSubSkill,
+                      errorMsg = ListingUIState.invalidSubSkillMsg)
                 }
 
                 LocationInputField(
-                    locationQuery = skillUIState.locationQuery,
-                    locationSuggestions = skillUIState.locationSuggestions,
-                    onLocationQueryChange = skillViewModel::setLocationQuery,
-                    errorMsg = skillUIState.invalidLocationMsg,
+                    locationQuery = ListingUIState.locationQuery,
+                    locationSuggestions = ListingUIState.locationSuggestions,
+                    onLocationQueryChange = listingViewModel::setLocationQuery,
+                    errorMsg = ListingUIState.invalidLocationMsg,
                     onLocationSelected = { location ->
-                      skillViewModel.setLocationQuery(location.name)
-                      skillViewModel.setLocation(location)
+                      listingViewModel.setLocationQuery(location.name)
+                      listingViewModel.setLocation(location)
                     })
               }
             }
