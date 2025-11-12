@@ -1,4 +1,4 @@
-package com.android.sample.ui.newSkill
+package com.android.sample.ui.newListing
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,7 +45,7 @@ object NewSkillScreenTestTag {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewSkillScreen(
+fun NewListingScreen(
     skillViewModel: NewSkillViewModel = viewModel(),
     profileId: String,
     navController: NavController
@@ -74,12 +74,12 @@ fun NewSkillScreen(
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
-        SkillsContent(pd = pd, profileId = profileId, skillViewModel = skillViewModel)
+        ListingContent(pd = pd, profileId = profileId, skillViewModel = skillViewModel)
       }
 }
 
 @Composable
-fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkillViewModel) {
+fun ListingContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkillViewModel) {
   val skillUIState by skillViewModel.uiState.collectAsState()
 
   LaunchedEffect(profileId) { skillViewModel.load() }

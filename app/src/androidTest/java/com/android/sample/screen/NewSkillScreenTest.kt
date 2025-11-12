@@ -14,11 +14,10 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.LocationInputFieldTestTags
-import com.android.sample.ui.newSkill.NewSkillScreen
-import com.android.sample.ui.newSkill.NewSkillScreenTestTag
+import com.android.sample.ui.newListing.NewListingScreen
+import com.android.sample.ui.newListing.NewSkillScreenTestTag
 import com.android.sample.ui.screens.newSkill.NewSkillViewModel
 import com.android.sample.ui.theme.SampleAppTheme
-import kotlin.collections.get
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -181,7 +180,7 @@ class NewSkillScreenTest {
   fun allFieldsRender() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -199,7 +198,7 @@ class NewSkillScreenTest {
   fun buttonText_changesBasedOnListingType() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -219,7 +218,7 @@ class NewSkillScreenTest {
   fun titleInput_acceptsText() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -232,7 +231,7 @@ class NewSkillScreenTest {
   fun descriptionInput_acceptsText() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -245,7 +244,7 @@ class NewSkillScreenTest {
   fun priceInput_acceptsText() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -258,7 +257,7 @@ class NewSkillScreenTest {
   fun listingTypeDropdown_showsOptions() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -273,7 +272,7 @@ class NewSkillScreenTest {
   fun listingTypeDropdown_selectsProposal() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -289,7 +288,7 @@ class NewSkillScreenTest {
   fun listingTypeDropdown_selectsRequest() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -305,7 +304,7 @@ class NewSkillScreenTest {
   fun subjectDropdown_showsAllSubjects() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -319,7 +318,7 @@ class NewSkillScreenTest {
   fun subjectDropdown_selectsSubject() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -334,7 +333,7 @@ class NewSkillScreenTest {
   fun emptyPrice_showsError() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -348,7 +347,7 @@ class NewSkillScreenTest {
   fun invalidPrice_showsError() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -362,7 +361,7 @@ class NewSkillScreenTest {
   fun negativePrice_showsError() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -376,7 +375,7 @@ class NewSkillScreenTest {
   fun missingSubject_showsError() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -391,7 +390,7 @@ class NewSkillScreenTest {
   fun subSkill_notVisible_untilSubjectSelected_thenVisible() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -409,7 +408,7 @@ class NewSkillScreenTest {
   fun subjectDropdown_open_selectItem_thenCloses() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -428,7 +427,7 @@ class NewSkillScreenTest {
   fun showsError_whenNoSubject_onSave() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 
@@ -447,7 +446,7 @@ class NewSkillScreenTest {
   fun showsError_whenSubjectChosen_butNoSubSkill_onSave() {
     val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
     }
     composeRule.waitForIdle()
 

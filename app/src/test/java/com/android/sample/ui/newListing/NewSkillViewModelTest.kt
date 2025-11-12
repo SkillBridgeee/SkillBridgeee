@@ -1,4 +1,4 @@
-package com.android.sample.ui.newSkill
+package com.android.sample.ui.newListing
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.android.sample.model.listing.ListingRepository

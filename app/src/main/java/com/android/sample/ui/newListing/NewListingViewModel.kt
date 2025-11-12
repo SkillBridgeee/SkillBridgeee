@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
  * - errorMsg: global error (e.g. network)
  * - invalid*Msg: per-field validation messages
  */
-data class SkillUIState(
+data class ListingUIState(
     val title: String = "",
     val description: String = "",
     val price: String = "",
@@ -79,19 +79,19 @@ data class SkillUIState(
 /**
  * ViewModel responsible for the NewSkillScreen UI logic.
  *
- * Exposes a StateFlow of [SkillUIState] and provides functions to update the state and perform
+ * Exposes a StateFlow of [ListingUIState] and provides functions to update the state and perform
  * simple validation.
  */
-class NewSkillViewModel(
+class NewListingViewModel(
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val locationRepository: LocationRepository =
         NominatimLocationRepository(HttpClientProvider.client),
     private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
   // Internal mutable UI state
-  private val _uiState = MutableStateFlow(SkillUIState())
+  private val _uiState = MutableStateFlow(ListingUIState())
   // Public read-only state flow for the UI to observe
-  val uiState: StateFlow<SkillUIState> = _uiState.asStateFlow()
+  val uiState: StateFlow<ListingUIState> = _uiState.asStateFlow()
 
   private var locationSearchJob: Job? = null
   private val locationSearchDelayTime: Long = 1000
@@ -242,7 +242,7 @@ class NewSkillViewModel(
     }
   }
 
-  private fun computeInvalidSubSkill(currentState: SkillUIState): String? {
+  private fun computeInvalidSubSkill(currentState: ListingUIState): String? {
     return if (currentState.subject != null && currentState.selectedSubSkill.isNullOrBlank()) {
       subSkillMsgError
     } else {
