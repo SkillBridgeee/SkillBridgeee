@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
  * - errorMsg: global error (e.g. network)
  * - invalid*Msg: per-field validation messages
  */
-data class SkillUIState(
+data class ListingUIState(
     val title: String = "",
     val description: String = "",
     val price: String = "",
@@ -53,7 +53,8 @@ data class SkillUIState(
     val invalidSubjectMsg: String? = null,
     val invalidSubSkillMsg: String? = null,
     val invalidListingTypeMsg: String? = null,
-    val invalidLocationMsg: String? = null
+    val invalidLocationMsg: String? = null,
+    val addSuccess: Boolean = false
 ) {
 
   /** Indicates whether the current UI state is valid for submission. */
@@ -76,21 +77,21 @@ data class SkillUIState(
 }
 
 /**
- * ViewModel responsible for the NewSkillScreen UI logic.
+ * ViewModel responsible for the NewListingScreen UI logic.
  *
- * Exposes a StateFlow of [SkillUIState] and provides functions to update the state and perform
+ * Exposes a StateFlow of [ListingUIState] and provides functions to update the state and perform
  * simple validation.
  */
-class NewSkillViewModel(
+class NewListingViewModel(
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val locationRepository: LocationRepository =
         NominatimLocationRepository(HttpClientProvider.client),
     private val userId: String = Firebase.auth.currentUser?.uid ?: ""
 ) : ViewModel() {
   // Internal mutable UI state
-  private val _uiState = MutableStateFlow(SkillUIState())
+  private val _uiState = MutableStateFlow(ListingUIState())
   // Public read-only state flow for the UI to observe
-  val uiState: StateFlow<SkillUIState> = _uiState.asStateFlow()
+  val uiState: StateFlow<ListingUIState> = _uiState.asStateFlow()
 
   private var locationSearchJob: Job? = null
   private val locationSearchDelayTime: Long = 1000
@@ -109,7 +110,14 @@ class NewSkillViewModel(
    *
    * Kept as a coroutine scope for future asynchronous loading.
    */
-  fun load() {}
+  fun load() {
+    // Intentionally left empty.
+    // This is a stable public API used by the UI to trigger loading an existing skill in the
+    // future.
+    // Currently this ViewModel only supports creating new skills, so no loading logic is required.
+    // Keeping this no-op preserves API/behavior stability and provides a clear extension point
+    // for adding asynchronous load logic later (e.g. pre-fill fields when editing).
+  }
 
   fun addListing() {
     val state = _uiState.value
@@ -185,6 +193,7 @@ class NewSkillViewModel(
     viewModelScope.launch {
       try {
         listingRepository.addProposal(proposal)
+        _uiState.update { it.copy(addSuccess = true) }
       } catch (e: Exception) {
         Log.e("NewSkillViewModel", "Network error adding Proposal", e)
       }
@@ -195,6 +204,7 @@ class NewSkillViewModel(
     viewModelScope.launch {
       try {
         listingRepository.addRequest(request)
+        _uiState.update { it.copy(addSuccess = true) }
       } catch (e: Exception) {
         Log.e("NewSkillViewModel", "Network error adding Request", e)
       }
@@ -202,24 +212,41 @@ class NewSkillViewModel(
   }
 
   // Set all messages error, if invalid field
+  // kotlin
   fun setError() {
     _uiState.update { currentState ->
+      val invalidTitle = if (currentState.title.isBlank()) titleMsgError else null
+
+      val invalidDesc = if (currentState.description.isBlank()) descMsgError else null
+
+      val invalidPrice =
+          if (currentState.price.isBlank()) priceEmptyMsg
+          else if (!isPosNumber(currentState.price)) priceInvalidMsg else null
+
+      val invalidSubject = if (currentState.subject == null) subjectMsgError else null
+
+      val invalidSubSkill = computeInvalidSubSkill(currentState)
+
+      val invalidListingType = if (currentState.listingType == null) listingTypeMsgError else null
+
+      val invalidLocation = if (currentState.selectedLocation == null) locationMsgError else null
+
       currentState.copy(
-          invalidTitleMsg = if (currentState.title.isBlank()) titleMsgError else null,
-          invalidDescMsg = if (currentState.description.isBlank()) descMsgError else null,
-          invalidPriceMsg =
-              if (currentState.price.isBlank()) priceEmptyMsg
-              else if (!isPosNumber(currentState.price)) priceInvalidMsg else null,
-          invalidSubjectMsg = if (currentState.subject == null) subjectMsgError else null,
-          // Set sub-skill error only when a subject is selected but no sub-skill chosen
-          invalidSubSkillMsg =
-              if (currentState.subject != null && currentState.selectedSubSkill.isNullOrBlank())
-                  subSkillMsgError
-              else null,
-          invalidListingTypeMsg =
-              if (currentState.listingType == null) listingTypeMsgError else null,
-          invalidLocationMsg =
-              if (currentState.selectedLocation == null) locationMsgError else null)
+          invalidTitleMsg = invalidTitle,
+          invalidDescMsg = invalidDesc,
+          invalidPriceMsg = invalidPrice,
+          invalidSubjectMsg = invalidSubject,
+          invalidSubSkillMsg = invalidSubSkill,
+          invalidListingTypeMsg = invalidListingType,
+          invalidLocationMsg = invalidLocation)
+    }
+  }
+
+  private fun computeInvalidSubSkill(currentState: ListingUIState): String? {
+    return if (currentState.subject != null && currentState.selectedSubSkill.isNullOrBlank()) {
+      subSkillMsgError
+    } else {
+      null
     }
   }
 
@@ -338,5 +365,9 @@ class NewSkillViewModel(
     } catch (_: Exception) {
       false
     }
+  }
+
+  fun clearAddSuccess() {
+    _uiState.update { it.copy(addSuccess = false) }
   }
 }
