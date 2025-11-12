@@ -61,7 +61,7 @@ fun BookingCard(
   val statusColor = booking.status.color()
   val bookingDate = booking.dateString()
   val listingType = listing.type
-  val listingTitle = listing.skill.skill
+  val listingTitle = listing.displayTitle()
   val creatorName = creator.name ?: "Unknown"
   val priceString =
       remember(listing.hourlyRate) { String.format(Locale.ROOT, "$%.2f / hr", listing.hourlyRate) }
