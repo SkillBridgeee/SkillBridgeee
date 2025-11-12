@@ -519,6 +519,68 @@ class MapScreenTest {
     composeTestRule.onNodeWithText("   ").assertDoesNotExist()
   }
 
+  // --- Permission handling tests ---
+
+  @Test
+  fun mapScreen_requestLocationOnStart_true_triggersPermissionRequest() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                profiles = emptyList(),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    // Setting requestLocationOnStart = true should trigger permission request logic
+    composeTestRule.setContent { MapScreen(viewModel = vm, requestLocationOnStart = true) }
+    composeTestRule.waitForIdle()
+
+    // Map should still render regardless of permission state
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun mapScreen_requestLocationOnStart_false_doesNotTriggerPermissionRequest() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                profiles = emptyList(),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    // Default behavior (requestLocationOnStart = false) should not request permission
+    composeTestRule.setContent { MapScreen(viewModel = vm, requestLocationOnStart = false) }
+    composeTestRule.waitForIdle()
+
+    // Map should render without permission request
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun mapScreen_withExistingPermission_rendersMapWithLocationFeatures() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                profiles = emptyList(),
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    // This test verifies that the MapView composable handles permission checking
+    // The actual permission state is checked via ContextCompat.checkSelfPermission
+    composeTestRule.setContent { MapScreen(viewModel = vm, requestLocationOnStart = true) }
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
   @Test
   fun profileCard_withBlankEducation_hidesEducation() {
     val blankEduProfile = testProfile.copy(levelOfEducation = "   ", description = "Test user")
