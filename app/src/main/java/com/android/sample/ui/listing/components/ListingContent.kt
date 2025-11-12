@@ -37,6 +37,141 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/** Type badge showing whether the listing is offering to teach or looking for a tutor */
+@Composable
+private fun TypeBadge(listingType: ListingType, modifier: Modifier = Modifier) {
+  val (text, color) =
+      if (listingType == ListingType.PROPOSAL) {
+        "Offering to Teach" to MaterialTheme.colorScheme.primary
+      } else {
+        "Looking for Tutor" to MaterialTheme.colorScheme.secondary
+      }
+
+  Text(
+      text = text,
+      style = MaterialTheme.typography.labelLarge,
+      color = color,
+      modifier = modifier.testTag(ListingScreenTestTags.TITLE))
+}
+
+/** Creator information card */
+@Composable
+private fun CreatorCard(creator: com.android.sample.model.user.Profile) {
+  Card(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.Person, contentDescription = null)
+        Spacer(Modifier.padding(4.dp))
+        Text(
+            text = creator.name ?: "",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.testTag(ListingScreenTestTags.CREATOR_NAME))
+      }
+    }
+  }
+}
+
+/** Skill details card */
+@Composable
+private fun SkillDetailsCard(skill: com.android.sample.model.skill.Skill) {
+  Card(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      Text(
+          "Skill Details",
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.Bold)
+
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text("Subject:", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            skill.mainSubject.name,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium)
+      }
+
+      if (skill.skill.isNotBlank()) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+          Text("Skill:", style = MaterialTheme.typography.bodyMedium)
+          Text(
+              skill.skill,
+              style = MaterialTheme.typography.bodyMedium,
+              fontWeight = FontWeight.Medium,
+              modifier = Modifier.testTag(ListingScreenTestTags.SKILL))
+        }
+      }
+
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text("Expertise:", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            skill.expertise.name,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.testTag(ListingScreenTestTags.EXPERTISE))
+      }
+    }
+  }
+}
+
+/** Location card */
+@Composable
+private fun LocationCard(locationName: String) {
+  Card(modifier = Modifier.fillMaxWidth()) {
+    Row(
+        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically) {
+          Icon(Icons.Default.LocationOn, contentDescription = null)
+          Spacer(Modifier.padding(4.dp))
+          Text(
+              text = locationName,
+              style = MaterialTheme.typography.bodyLarge,
+              modifier = Modifier.testTag(ListingScreenTestTags.LOCATION))
+        }
+  }
+}
+
+/** Hourly rate card */
+@Composable
+private fun HourlyRateCard(hourlyRate: Double) {
+  Card(modifier = Modifier.fillMaxWidth()) {
+    Row(
+        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically) {
+          Text("Hourly Rate:", style = MaterialTheme.typography.titleMedium)
+          Text(
+              text = String.format(Locale.getDefault(), "$%.2f/hr", hourlyRate),
+              style = MaterialTheme.typography.titleLarge,
+              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              modifier = Modifier.testTag(ListingScreenTestTags.HOURLY_RATE))
+        }
+  }
+}
+
+/** Action button section (book now or bookings management) */
+@Composable
+private fun ActionSection(
+    uiState: ListingUiState,
+    onShowBookingDialog: () -> Unit,
+    onApproveBooking: (String) -> Unit,
+    onRejectBooking: (String) -> Unit
+) {
+  if (uiState.isOwnListing) {
+    BookingsSection(
+        uiState = uiState, onApproveBooking = onApproveBooking, onRejectBooking = onRejectBooking)
+  } else {
+    Button(
+        onClick = onShowBookingDialog,
+        modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.BOOK_BUTTON),
+        enabled = !uiState.bookingInProgress) {
+          if (uiState.bookingInProgress) {
+            CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
+          }
+          Text(if (uiState.bookingInProgress) "Creating Booking..." else "Book Now")
+        }
+  }
+}
+
 /**
  * Content section of the listing screen showing listing details
  *
@@ -63,15 +198,7 @@ fun ListingContent(
       modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // Type badge
-        Text(
-            text =
-                if (listing.type == ListingType.PROPOSAL) "Offering to Teach"
-                else "Looking for Tutor",
-            style = MaterialTheme.typography.labelLarge,
-            color =
-                if (listing.type == ListingType.PROPOSAL) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
+        TypeBadge(listingType = listing.type)
 
         // Title/Description
         Text(
@@ -80,6 +207,7 @@ fun ListingContent(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
 
+        // Description card (if present)
         if (listing.description.isNotBlank()) {
           Card(
               modifier = Modifier.fillMaxWidth(),
@@ -93,99 +221,17 @@ fun ListingContent(
               }
         }
 
-        // Creator info
-        if (creator != null) {
-          Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                  Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Person, contentDescription = null)
-                    Spacer(Modifier.padding(4.dp))
-                    Text(
-                        text = creator.name ?: "",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.testTag(ListingScreenTestTags.CREATOR_NAME))
-                  }
-                }
-          }
-        }
+        // Creator info (if available)
+        creator?.let { CreatorCard(it) }
 
         // Skill details
-        Card(modifier = Modifier.fillMaxWidth()) {
-          Column(
-              modifier = Modifier.padding(16.dp),
-              verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    "Skill Details",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold)
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween) {
-                      Text("Subject:", style = MaterialTheme.typography.bodyMedium)
-                      Text(
-                          listing.skill.mainSubject.name,
-                          style = MaterialTheme.typography.bodyMedium,
-                          fontWeight = FontWeight.Medium)
-                    }
-
-                if (listing.skill.skill.isNotBlank()) {
-                  Row(
-                      modifier = Modifier.fillMaxWidth(),
-                      horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Skill:", style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            listing.skill.skill,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.testTag(ListingScreenTestTags.SKILL))
-                      }
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween) {
-                      Text("Expertise:", style = MaterialTheme.typography.bodyMedium)
-                      Text(
-                          listing.skill.expertise.name,
-                          style = MaterialTheme.typography.bodyMedium,
-                          fontWeight = FontWeight.Medium,
-                          modifier = Modifier.testTag(ListingScreenTestTags.EXPERTISE))
-                    }
-              }
-        }
+        SkillDetailsCard(skill = listing.skill)
 
         // Location
-        Card(modifier = Modifier.fillMaxWidth()) {
-          Row(
-              modifier = Modifier.padding(16.dp).fillMaxWidth(),
-              verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.LocationOn, contentDescription = null)
-                Spacer(Modifier.padding(4.dp))
-                Text(
-                    text = listing.location.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.testTag(ListingScreenTestTags.LOCATION))
-              }
-        }
+        LocationCard(locationName = listing.location.name)
 
         // Hourly rate
-        Card(modifier = Modifier.fillMaxWidth()) {
-          Row(
-              modifier = Modifier.padding(16.dp).fillMaxWidth(),
-              horizontalArrangement = Arrangement.SpaceBetween,
-              verticalAlignment = Alignment.CenterVertically) {
-                Text("Hourly Rate:", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = String.format(Locale.getDefault(), "$%.2f/hr", listing.hourlyRate),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.testTag(ListingScreenTestTags.HOURLY_RATE))
-              }
-        }
+        HourlyRateCard(hourlyRate = listing.hourlyRate)
 
         // Created date
         val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
@@ -197,24 +243,12 @@ fun ListingContent(
 
         Spacer(Modifier.height(8.dp))
 
-        // Book button or bookings management section for owners
-        if (uiState.isOwnListing) {
-          // Bookings section for listing owner
-          BookingsSection(
-              uiState = uiState,
-              onApproveBooking = onApproveBooking,
-              onRejectBooking = onRejectBooking)
-        } else {
-          Button(
-              onClick = { showBookingDialog = true },
-              modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.BOOK_BUTTON),
-              enabled = !uiState.bookingInProgress) {
-                if (uiState.bookingInProgress) {
-                  CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
-                }
-                Text(if (uiState.bookingInProgress) "Creating Booking..." else "Book Now")
-              }
-        }
+        // Action section (book button or bookings management)
+        ActionSection(
+            uiState = uiState,
+            onShowBookingDialog = { showBookingDialog = true },
+            onApproveBooking = onApproveBooking,
+            onRejectBooking = onRejectBooking)
       }
 
   // Booking dialog
