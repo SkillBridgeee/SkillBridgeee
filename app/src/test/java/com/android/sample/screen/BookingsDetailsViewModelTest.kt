@@ -18,7 +18,6 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class BookingsDetailsViewModelTest {
 
   private val testDispatcher = StandardTestDispatcher()
@@ -33,6 +32,7 @@ class BookingsDetailsViewModelTest {
 
   private lateinit var errorProfileRepo: ProfileFakeRepoError
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   @Before
   fun setup() {
     Dispatchers.setMain(testDispatcher)
@@ -46,6 +46,7 @@ class BookingsDetailsViewModelTest {
     errorProfileRepo = ProfileFakeRepoError()
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   @After
   fun tearDown() {
     Dispatchers.resetMain()
