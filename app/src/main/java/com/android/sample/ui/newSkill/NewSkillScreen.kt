@@ -41,6 +41,7 @@ object NewSkillScreenTestTag {
   const val LISTING_TYPE_DROPDOWN = "listingTypeDropdown"
   const val LISTING_TYPE_DROPDOWN_ITEM_PREFIX = "listingTypeItem"
   const val INVALID_LISTING_TYPE_MSG = "invalidListingTypeMsg"
+  const val INPUT_LOCATION_FIELD = "inputLocationField"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -186,7 +187,9 @@ fun SkillsContent(pd: PaddingValues, profileId: String, skillViewModel: NewSkill
                     onLocationSelected = { location ->
                       skillViewModel.setLocationQuery(location.name)
                       skillViewModel.setLocation(location)
-                    })
+                    },
+                    modifier = Modifier.testTag(NewSkillScreenTestTag.INPUT_LOCATION_FIELD),
+                )
               }
             }
       }

@@ -466,4 +466,17 @@ class NewSkillScreenTest {
 
     org.junit.Assert.assertTrue(nodes.isNotEmpty())
   }
+
+  @Test
+  fun locationField_isDisplayed() {
+    val vm = NewSkillViewModel(fakeListingRepository, fakeLocationRepository)
+    composeRule.setContent {
+      SampleAppTheme { NewSkillScreen(vm, "test-user", createTestNavController()) }
+    }
+    composeRule.waitForIdle()
+
+    composeRule
+        .onNodeWithTag(NewSkillScreenTestTag.INPUT_LOCATION_FIELD, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
 }
