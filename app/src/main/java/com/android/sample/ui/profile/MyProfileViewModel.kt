@@ -123,7 +123,13 @@ class MyProfileViewModel(
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile(profileUserId: String? = null) {
-    val currentId = profileUserId ?: userId
+    val currentId = profileUserId?.takeIf { it.isNotBlank() } ?: userId
+
+    if (currentId.isBlank()) {
+      Log.w(TAG, "loadProfile called with empty userId; skipping load")
+      return
+    }
+
     viewModelScope.launch {
       try {
         val profile = profileRepository.getProfile(userId = currentId)
