@@ -144,8 +144,17 @@ private fun MapView(
     onBookingClicked: (BookingPin) -> Unit,
     requestLocationOnStart: Boolean = false
 ) {
+  val context = androidx.compose.ui.platform.LocalContext.current
+
+  // Check if permission is already granted on startup
+  val initialPermissionState = remember {
+    androidx.core.content.ContextCompat.checkSelfPermission(
+        context, Manifest.permission.ACCESS_FINE_LOCATION
+    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+  }
+
   // Track location permission state
-  var hasLocationPermission by remember { mutableStateOf(false) }
+  var hasLocationPermission by remember { mutableStateOf(initialPermissionState) }
 
   // Permission launcher
   val permissionLauncher =
@@ -155,9 +164,9 @@ private fun MapView(
       }
 
   // Request location permission on first composition
-  // Only if requestLocationOnStart is true and launcher was successfully created
+  // Only if requestLocationOnStart is true and permission not already granted
   LaunchedEffect(requestLocationOnStart) {
-    if (requestLocationOnStart) {
+    if (requestLocationOnStart && !hasLocationPermission) {
       try {
         permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
       } catch (e: Exception) {
