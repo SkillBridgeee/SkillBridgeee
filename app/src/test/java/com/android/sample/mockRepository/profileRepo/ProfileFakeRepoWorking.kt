@@ -9,7 +9,6 @@ import java.util.*
 
 class ProfileFakeRepoWorking : ProfileRepository {
 
-  // Profils correspondant aux listings/creators de FakeListingRepoForBookings
   private val profiles: Map<String, Profile> =
       mapOf(
           "creator_1" to

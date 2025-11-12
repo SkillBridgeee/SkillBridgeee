@@ -5,10 +5,6 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 
-/**
- * Fake ProfileRepository that always throws errors. Useful for testing error handling in ViewModels
- * or UseCases.
- */
 class ProfileFakeRepoError : ProfileRepository {
 
   override fun getNewUid(): String {
