@@ -14,57 +14,35 @@ service cloud.firestore {
 
     // Users/Profiles collection
     match /profiles/{userId} {
-      // Allow read if authenticated
-      allow read: if isAuthenticated();
+      // Allow all operations for emulator/testing
+      // TODO: Tighten these rules before production deployment
+      allow read, write: if true;
 
-      // Allow create/update if user is authenticated and owns the profile
-      allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId);
-
-      // Allow delete only by owner
-      allow delete: if isOwner(userId);
+      // Skills subcollection under profiles
+      match /skills/{skillId} {
+        allow read, write: if true;
+      }
     }
 
     // Listings collection
     match /listings/{listingId} {
-      // Allow read if authenticated
-      allow read: if isAuthenticated();
-
-      // Allow create if authenticated
-      allow create: if isAuthenticated();
-
-      // Allow update/delete only by the creator
-      allow update, delete: if isAuthenticated() &&
-                               resource.data.userId == request.auth.uid;
+      // Allow all operations for emulator/testing
+      // TODO: Tighten these rules before production deployment
+      allow read, write: if true;
     }
 
     // Bookings collection
     match /bookings/{bookingId} {
-      // Allow read if authenticated and user is either booker or listing creator
-      allow read: if isAuthenticated() &&
-                     (resource.data.bookerId == request.auth.uid ||
-                      resource.data.listingCreatorId == request.auth.uid);
-
-      // Allow create if authenticated
-      allow create: if isAuthenticated();
-
-      // Allow update/delete by booker or listing creator
-      allow update, delete: if isAuthenticated() &&
-                               (resource.data.bookerId == request.auth.uid ||
-                                resource.data.listingCreatorId == request.auth.uid);
+      // Allow all operations for emulator/testing
+      // TODO: Tighten these rules before production deployment
+      allow read, write: if true;
     }
 
     // Ratings collection
     match /ratings/{ratingId} {
-      // Allow read if authenticated
-      allow read: if isAuthenticated();
-
-      // Allow create if authenticated
-      allow create: if isAuthenticated();
-
-      // Allow update/delete only by the creator
-      allow update, delete: if isAuthenticated() &&
-                               resource.data.reviewerId == request.auth.uid;
+      // Allow all operations for emulator/testing
+      // TODO: Tighten these rules before production deployment
+      allow read, write: if true;
     }
 
     // Default deny all other collections

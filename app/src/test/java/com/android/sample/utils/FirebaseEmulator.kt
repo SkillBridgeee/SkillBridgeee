@@ -1,8 +1,9 @@
-package com.github.se.bootcamp.utils
+package com.android.sample.utils
 
 import android.util.Log
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase // Changed import
 import io.mockk.InternalPlatformDsl.toArray
@@ -47,17 +48,63 @@ object FirebaseEmulator {
 
     isRunning = areEmulatorsRunning()
     if (isRunning) {
+      // Configure Auth emulator
       auth.useEmulator(HOST, AUTH_PORT)
+
+      // Configure Firestore emulator FIRST, before any other settings
       firestore.useEmulator(HOST, FIRESTORE_PORT)
+
+      // Then configure Firestore settings for emulator
+      try {
+        val settings =
+            FirebaseFirestoreSettings.Builder()
+                .setPersistenceEnabled(false) // Disable persistence for tests
+                .build()
+        firestore.firestoreSettings = settings
+        Log.i("FirebaseEmulator", "Firestore settings configured successfully")
+      } catch (e: Exception) {
+        Log.w("FirebaseEmulator", "Failed to set Firestore settings: ${e.message}")
+        // Continue anyway, as this might not be critical for all tests
+      }
+
+      Log.i("FirebaseEmulator", "Successfully connected to Firebase emulators")
+    } else {
+      Log.e("FirebaseEmulator", "Firebase emulators are NOT running!")
+      Log.e("FirebaseEmulator", "Please start emulators with: firebase emulators:start")
+      throw IllegalStateException(
+          "Firebase emulators are not running. Please start them with 'firebase emulators:start' " +
+              "before running tests. Expected emulator at http://$HOST:$EMULATORS_PORT")
     }
   }
 
-  private fun areEmulatorsRunning(): Boolean =
-      runCatching {
-            val request = Request.Builder().url(emulatorsEndpoint).build()
-            httpClient.newCall(request).execute().isSuccessful
-          }
-          .getOrDefault(false)
+  private fun areEmulatorsRunning(): Boolean {
+    // Try both localhost and 127.0.0.1 to handle different network configurations
+    val hosts = listOf("localhost", "127.0.0.1")
+
+    for (host in hosts) {
+      val testEndpoint = "http://$host:$EMULATORS_PORT/emulators"
+      val isRunning =
+          runCatching {
+                val request = Request.Builder().url(testEndpoint).build()
+                val response = httpClient.newCall(request).execute()
+                Log.d(
+                    "FirebaseEmulator",
+                    "Checking emulator at $testEndpoint: ${response.isSuccessful}")
+                response.isSuccessful
+              }
+              .getOrElse { error ->
+                Log.d("FirebaseEmulator", "Failed to connect to $testEndpoint: ${error.message}")
+                false
+              }
+
+      if (isRunning) {
+        Log.i("FirebaseEmulator", "Found running emulator at $testEndpoint")
+        return true
+      }
+    }
+
+    return false
+  }
 
   private fun clearEmulator(endpoint: String) {
     if (!isRunning) return
