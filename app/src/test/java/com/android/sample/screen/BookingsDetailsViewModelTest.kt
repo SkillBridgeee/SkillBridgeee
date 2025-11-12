@@ -7,7 +7,6 @@ import com.android.sample.mockRepository.listingRepo.ListingFakeRepoWorking
 import com.android.sample.mockRepository.profileRepo.ProfileFakeRepoError
 import com.android.sample.mockRepository.profileRepo.ProfileFakeRepoWorking
 import com.android.sample.ui.bookings.BookingDetailsViewModel
-import java.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
