@@ -1,5 +1,8 @@
 package com.android.sample.screen
 
+import com.android.sample.model.booking.Booking
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -11,6 +14,7 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.subject.SubjectListViewModel
+import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -142,6 +146,46 @@ class SubjectListViewModelTest {
 
     override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
   }
+
+  private val fakeBookingRepo =
+      object : BookingRepository {
+        override fun getNewUid() = "b1"
+
+        override suspend fun getBooking(bookingId: String) =
+            Booking(
+                bookingId = bookingId,
+                associatedListingId = "l1",
+                listingCreatorId = "u1",
+                price = 50.0,
+                sessionStart = Date(1736546400000),
+                sessionEnd = Date(1736550000000),
+                status = BookingStatus.PENDING,
+                bookerId = "asdf")
+
+        override suspend fun getBookingsByUserId(userId: String) = emptyList<Booking>()
+
+        override suspend fun getAllBookings() = emptyList<Booking>()
+
+        override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+        override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+        override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+        override suspend fun addBooking(booking: Booking) {}
+
+        override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+        override suspend fun deleteBooking(bookingId: String) {}
+
+        override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+        override suspend fun confirmBooking(bookingId: String) {}
+
+        override suspend fun completeBooking(bookingId: String) {}
+
+        override suspend fun cancelBooking(bookingId: String) {}
+      }
 
   private fun newVm(
       listings: List<Listing> = defaultListings,

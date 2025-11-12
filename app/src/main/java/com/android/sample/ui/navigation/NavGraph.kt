@@ -16,6 +16,7 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.HomePage.HomeScreen
 import com.android.sample.ui.HomePage.MainPageViewModel
+import com.android.sample.ui.bookings.BookingDetailsScreen
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
@@ -65,6 +66,7 @@ fun AppNavGraph(
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
   val profileID = remember { mutableStateOf("") }
+  val bookingId = remember { mutableStateOf("") }
 
   NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
     composable(NavRoutes.LOGIN) {
@@ -72,10 +74,6 @@ fun AppNavGraph(
       LoginScreen(
           viewModel = authViewModel,
           onGoogleSignIn = onGoogleSignIn,
-          onGitHubSignIn = { // Temporary functionality to go to home page while GitHub auth isn't
-            // implemented
-            navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
-          },
           onNavigateToSignUp = { // Add this navigation callback
             navController.navigate(NavRoutes.SIGNUP_BASE)
           })
@@ -133,7 +131,11 @@ fun AppNavGraph(
 
     composable(NavRoutes.BOOKINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
-      MyBookingsScreen(viewModel = bookingsViewModel, navController = navController)
+      MyBookingsScreen(
+          onBookingClick = { bkgId ->
+            bookingId.value = bkgId
+            navController.navigate(NavRoutes.BOOKING_DETAILS)
+          })
     }
 
     composable(
@@ -193,5 +195,15 @@ fun AppNavGraph(
           com.android.sample.ui.listing.ListingScreen(
               listingId = listingId, onNavigateBack = { navController.popBackStack() })
         }
+
+    composable(route = NavRoutes.BOOKING_DETAILS) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKING_DETAILS) }
+      BookingDetailsScreen(
+          bookingId = bookingId.value,
+          onCreatorClick = { profileId ->
+            profileID.value = profileId
+            navController.navigate(NavRoutes.OTHERS_PROFILE)
+          })
+    }
   }
 }
