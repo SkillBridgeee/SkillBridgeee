@@ -160,7 +160,6 @@ private fun MyProfileContent(
           ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
         }
 
-        item { ProfileListings(ui = ui, onListingClick = onListingClick) }
 
         item { ProfileLogout(onLogout = onLogout) }
       }
