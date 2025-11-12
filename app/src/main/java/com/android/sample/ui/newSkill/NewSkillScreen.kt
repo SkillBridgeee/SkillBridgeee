@@ -65,10 +65,7 @@ fun NewSkillScreen(
       floatingActionButton = {
         AppButton(
             text = buttonText,
-            onClick = {
-              skillViewModel.addListing()
-              navController.popBackStack()
-            },
+            onClick = { skillViewModel.addListing() },
             testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
