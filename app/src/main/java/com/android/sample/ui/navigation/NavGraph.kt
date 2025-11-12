@@ -95,6 +95,9 @@ fun AppNavGraph(
       MyProfileScreen(
           profileViewModel = profileViewModel,
           profileId = currentUserId,
+          onListingClick = { listingId ->
+            navController.navigate(NavRoutes.createListingRoute(listingId))
+          },
           onLogout = {
             // Clear the authentication state to reset email/password fields
             authViewModel.signOut()
@@ -121,8 +124,11 @@ fun AppNavGraph(
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
       val viewModel: SubjectListViewModel = viewModel(backStackEntry)
       SubjectListScreen(
-          viewModel = viewModel, // You may need to provide this through dependency injection
-          subject = academicSubject.value)
+          viewModel = viewModel,
+          subject = academicSubject.value,
+          onListingClick = { listingId ->
+            navController.navigate(NavRoutes.createListingRoute(listingId))
+          })
     }
 
     composable(NavRoutes.BOOKINGS) {
@@ -169,7 +175,23 @@ fun AppNavGraph(
     composable(route = NavRoutes.OTHERS_PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
       // todo add other parameters
-      ProfileScreen(profileId = profileID.value)
+      ProfileScreen(
+          profileId = profileID.value,
+          onProposalClick = { listingId ->
+            navController.navigate(NavRoutes.createListingRoute(listingId))
+          },
+          onRequestClick = { listingId ->
+            navController.navigate(NavRoutes.createListingRoute(listingId))
+          })
     }
+    composable(
+        route = NavRoutes.LISTING,
+        arguments = listOf(navArgument("listingId") { type = NavType.StringType })) { backStackEntry
+          ->
+          val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
+          com.android.sample.ui.listing.ListingScreen(
+              listingId = listingId, onNavigateBack = { navController.popBackStack() })
+        }
   }
 }
