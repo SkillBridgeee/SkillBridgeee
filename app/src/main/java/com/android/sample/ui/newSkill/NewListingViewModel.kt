@@ -112,7 +112,8 @@ class NewSkillViewModel(
    */
   fun load() {
     // Intentionally left empty.
-    // This is a stable public API used by the UI to trigger loading an existing skill in the future.
+    // This is a stable public API used by the UI to trigger loading an existing skill in the
+    // future.
     // Currently this ViewModel only supports creating new skills, so no loading logic is required.
     // Keeping this no-op preserves API/behavior stability and provides a clear extension point
     // for adding asynchronous load logic later (e.g. pre-fill fields when editing).
@@ -211,40 +212,33 @@ class NewSkillViewModel(
   }
 
   // Set all messages error, if invalid field
-// kotlin
+  // kotlin
   fun setError() {
     _uiState.update { currentState ->
-      val invalidTitle =
-        if (currentState.title.isBlank()) titleMsgError else null
+      val invalidTitle = if (currentState.title.isBlank()) titleMsgError else null
 
-      val invalidDesc =
-        if (currentState.description.isBlank()) descMsgError else null
+      val invalidDesc = if (currentState.description.isBlank()) descMsgError else null
 
       val invalidPrice =
-        if (currentState.price.isBlank()) priceEmptyMsg
-        else if (!isPosNumber(currentState.price)) priceInvalidMsg
-        else null
+          if (currentState.price.isBlank()) priceEmptyMsg
+          else if (!isPosNumber(currentState.price)) priceInvalidMsg else null
 
-      val invalidSubject =
-        if (currentState.subject == null) subjectMsgError else null
+      val invalidSubject = if (currentState.subject == null) subjectMsgError else null
 
       val invalidSubSkill = computeInvalidSubSkill(currentState)
 
-      val invalidListingType =
-        if (currentState.listingType == null) listingTypeMsgError else null
+      val invalidListingType = if (currentState.listingType == null) listingTypeMsgError else null
 
-      val invalidLocation =
-        if (currentState.selectedLocation == null) locationMsgError else null
+      val invalidLocation = if (currentState.selectedLocation == null) locationMsgError else null
 
       currentState.copy(
-        invalidTitleMsg = invalidTitle,
-        invalidDescMsg = invalidDesc,
-        invalidPriceMsg = invalidPrice,
-        invalidSubjectMsg = invalidSubject,
-        invalidSubSkillMsg = invalidSubSkill,
-        invalidListingTypeMsg = invalidListingType,
-        invalidLocationMsg = invalidLocation
-      )
+          invalidTitleMsg = invalidTitle,
+          invalidDescMsg = invalidDesc,
+          invalidPriceMsg = invalidPrice,
+          invalidSubjectMsg = invalidSubject,
+          invalidSubSkillMsg = invalidSubSkill,
+          invalidListingTypeMsg = invalidListingType,
+          invalidLocationMsg = invalidLocation)
     }
   }
 
@@ -255,7 +249,6 @@ class NewSkillViewModel(
       null
     }
   }
-
 
   // --- State update helpers used by the UI ---
 
