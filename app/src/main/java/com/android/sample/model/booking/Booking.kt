@@ -1,6 +1,13 @@
 package com.android.sample.model.booking
 
+import androidx.compose.ui.graphics.Color
+import com.android.sample.ui.theme.bkgCancelledColor
+import com.android.sample.ui.theme.bkgCompletedColor
+import com.android.sample.ui.theme.bkgConfirmedColor
+import com.android.sample.ui.theme.bkgPendingColor
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 /** Enhanced booking with listing association */
 data class Booking(
@@ -30,4 +37,27 @@ enum class BookingStatus {
   CONFIRMED,
   COMPLETED,
   CANCELLED
+}
+
+fun Booking.dateString(): String {
+  val formatter = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
+  return formatter.format(this.sessionStart)
+}
+
+fun BookingStatus.color(): Color {
+  return when (this) {
+    BookingStatus.PENDING -> bkgPendingColor
+    BookingStatus.CONFIRMED -> bkgConfirmedColor
+    BookingStatus.COMPLETED -> bkgCompletedColor
+    BookingStatus.CANCELLED -> bkgCancelledColor
+  }
+}
+
+fun BookingStatus.name(): String {
+  return when (this) {
+    BookingStatus.PENDING -> "PENDING"
+    BookingStatus.CONFIRMED -> "CONFIRMED"
+    BookingStatus.COMPLETED -> "COMPLETED"
+    BookingStatus.CANCELLED -> "CANCELLED"
+  }
 }

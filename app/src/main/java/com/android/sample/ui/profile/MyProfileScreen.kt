@@ -160,6 +160,8 @@ private fun MyProfileContent(
           ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
         }
 
+        item { ProfileListings(ui = ui, onListingClick = onListingClick) }
+
         item { ProfileLogout(onLogout = onLogout) }
       }
 }
@@ -426,7 +428,7 @@ private fun ProfileForm(
  * visible.
  *
  * @param ui Current UI state providing listings and profile data for the creator.
- * @param onListingClick Callback invoked when a listing card is clicked.
+ * @param onListingClick Callback when a listing card is clicked.
  */
 @Composable
 private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Unit) {
