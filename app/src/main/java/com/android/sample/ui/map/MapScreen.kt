@@ -1,5 +1,8 @@
 package com.android.sample.ui.map
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -27,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.map.MapScreenTestTags.BOOKING_MARKER_PREFIX
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -46,28 +53,30 @@ object MapScreenTestTags {
   const val PROFILE_LOCATION = "profile_location"
 
   const val BOOKING_MARKER_PREFIX = "booking_marker_"
-
-  const val EMPTY_STATE = "empty_state"
+  const val USER_PROFILE_MARKER = "user_profile_marker"
 }
 
 /**
  * MapScreen displays a Google Map centered on a specific location.
  *
  * Features:
- * - Shows an interactive Google Map
- * - Centers on EPFL/Lausanne by default
+ * - Shows user's real-time GPS location (blue dot) when permission granted
+ * - Shows user's profile location (blue marker)
+ * - Shows all user's bookings (red markers)
+ * - Clicking a booking shows a profile card
  * - Supports zoom and pan gestures
- * - No markers displayed (clean map view)
  *
  * @param modifier Optional modifier for the screen
  * @param viewModel The MapViewModel instance
- * @param onProfileClick Callback when a profile is clicked (currently unused)
+ * @param onProfileClick Callback when a profile card is clicked (for future navigation)
+ * @param requestLocationOnStart Whether to request location permission on first composition
  */
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = viewModel(),
-    onProfileClick: (String) -> Unit = {}
+    onProfileClick: (String) -> Unit = {},
+    requestLocationOnStart: Boolean = false
 ) {
   val uiState by viewModel.uiState.collectAsState()
 
@@ -80,18 +89,8 @@ fun MapScreen(
           centerLocation = uiState.userLocation,
           bookingPins = uiState.bookingPins,
           myProfile = myProfile,
-          onBookingClicked = { pin -> pin.profile?.let { viewModel.selectProfile(it) } })
-
-      if (uiState.bookingPins.isEmpty() && !uiState.isLoading && uiState.errorMessage == null) {
-        Text(
-            text = "No available bookings nearby.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier =
-                Modifier.align(Alignment.Center)
-                    .padding(24.dp)
-                    .testTag(MapScreenTestTags.EMPTY_STATE))
-      }
+          onBookingClicked = { pin -> pin.profile?.let { viewModel.selectProfile(it) } },
+          requestLocationOnStart = requestLocationOnStart)
 
       // Loading indicator
       if (uiState.isLoading) {
@@ -117,7 +116,7 @@ fun MapScreen(
             }
       }
 
-      // Selected profile card at bottom
+      // Selected profile card at bottom - shows tutor/student info when booking marker clicked
       uiState.selectedProfile?.let { profile ->
         ProfileInfoCard(
             profile = profile,
@@ -135,14 +134,39 @@ fun MapScreen(
  * @param bookingPins List of booking pins to display on the map.
  * @param myProfile The current user's profile to show on the map.
  * @param onBookingClicked Callback when a booking pin is clicked.
+ * @param requestLocationOnStart Whether to request location permission on first composition.
  */
 @Composable
 private fun MapView(
     centerLocation: LatLng,
     bookingPins: List<BookingPin>,
     myProfile: Profile?,
-    onBookingClicked: (BookingPin) -> Unit
+    onBookingClicked: (BookingPin) -> Unit,
+    requestLocationOnStart: Boolean = false
 ) {
+  // Track location permission state
+  var hasLocationPermission by remember { mutableStateOf(false) }
+
+  // Permission launcher
+  val permissionLauncher =
+      rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission()) {
+          isGranted ->
+        hasLocationPermission = isGranted
+      }
+
+  // Request location permission on first composition
+  // Only if requestLocationOnStart is true and launcher was successfully created
+  LaunchedEffect(requestLocationOnStart) {
+    if (requestLocationOnStart) {
+      try {
+        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+      } catch (e: Exception) {
+        android.util.Log.w(
+            "MapScreen", "Permission launcher unavailable in this environment: ${e.message}")
+      }
+    }
+  }
+
   // Camera position state
   val cameraPositionState = rememberCameraPositionState()
 
@@ -167,16 +191,17 @@ private fun MapView(
           zoomGesturesEnabled = true,
           scrollGesturesEnabled = true,
           rotationGesturesEnabled = true,
-          tiltGesturesEnabled = true)
+          tiltGesturesEnabled = true,
+          myLocationButtonEnabled = hasLocationPermission)
 
-  val mapProperties = MapProperties(isMyLocationEnabled = false)
+  val mapProperties = MapProperties(isMyLocationEnabled = hasLocationPermission)
 
   GoogleMap(
       modifier = Modifier.fillMaxSize().testTag(MapScreenTestTags.MAP_VIEW),
       cameraPositionState = cameraPositionState,
       uiSettings = mapUiSettings,
       properties = mapProperties) {
-        // Booking markers
+        // Booking markers - show where the user has sessions
         bookingPins.forEach { pin ->
           Marker(
               state = MarkerState(position = pin.position),
@@ -188,19 +213,22 @@ private fun MapView(
               },
               tag = BOOKING_MARKER_PREFIX + pin.bookingId)
         }
+        // User's profile location marker (blue pinpoint)
         myProfile?.location?.let { loc ->
           if (loc.latitude != 0.0 || loc.longitude != 0.0) {
             Marker(
                 state = MarkerState(position = LatLng(loc.latitude, loc.longitude)),
                 title = myProfile.name ?: "Me",
-                snippet = loc.name)
+                snippet = loc.name,
+                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
+                tag = MapScreenTestTags.USER_PROFILE_MARKER)
           }
         }
       }
 }
 
 /**
- * Displays information about the selected profile.
+ * Displays information about the selected profile (tutor/student from booking).
  *
  * @param profile The profile to display.
  * @param onProfileClick Callback when the profile card is clicked.
@@ -236,7 +264,7 @@ private fun ProfileInfoCard(
                   color = MaterialTheme.colorScheme.onSurfaceVariant,
                   modifier = Modifier.testTag(MapScreenTestTags.PROFILE_LOCATION))
 
-              if (profile.levelOfEducation.isNotEmpty()) {
+              if (profile.levelOfEducation.isNotBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = profile.levelOfEducation,
@@ -244,7 +272,7 @@ private fun ProfileInfoCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
               }
 
-              if (profile.description.isNotEmpty()) {
+              if (profile.description.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = profile.description,

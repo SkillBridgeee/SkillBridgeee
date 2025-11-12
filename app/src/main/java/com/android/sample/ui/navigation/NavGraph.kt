@@ -122,10 +122,6 @@ fun AppNavGraph(
       val viewModel: SubjectListViewModel = viewModel(backStackEntry)
       SubjectListScreen(
           viewModel = viewModel, // You may need to provide this through dependency injection
-          onBookTutor = { profile ->
-            // Navigate to booking or profile screen when tutor is booked
-            // Example: navController.navigate("booking/${profile.uid}")
-          },
           subject = academicSubject.value)
     }
 

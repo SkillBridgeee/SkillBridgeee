@@ -39,9 +39,10 @@ import androidx.compose.ui.unit.times
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.GpsLocationProvider
-import com.android.sample.ui.components.ListingCard
 import com.android.sample.ui.components.LocationInputField
+import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RatingCard
+import com.android.sample.ui.components.RequestCard
 
 /**
  * Test tags used by UI tests and screenshot tests on the My Profile screen.
@@ -55,6 +56,7 @@ object MyProfileScreenTestTag {
   const val CARD_TITLE = "cardTitle"
   const val INPUT_PROFILE_NAME = "inputProfileName"
   const val INPUT_PROFILE_EMAIL = "inputProfileEmail"
+  const val INPUT_PROFILE_LOCATION = "inputProfileLocation"
   const val INPUT_PROFILE_DESC = "inputProfileDesc"
   const val SAVE_BUTTON = "saveButton"
   const val ROOT_LIST = "profile_list"
@@ -92,7 +94,8 @@ enum class ProfileTab {
 fun MyProfileScreen(
     profileViewModel: MyProfileViewModel = viewModel(),
     profileId: String,
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onListingClick: (String) -> Unit = {}
 ) {
   val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
   Scaffold() { pd ->
@@ -104,11 +107,11 @@ fun MyProfileScreen(
       Spacer(modifier = Modifier.height(4.dp))
 
       if (selectedTab.value == ProfileTab.INFO) {
-        ProfileContent(pd, ui, profileViewModel, onLogout)
+        MyProfileContent(pd, ui, profileViewModel, onLogout, onListingClick)
       } else if (selectedTab.value == ProfileTab.RATING) {
         RatingContent(ui)
       } else if (selectedTab.value == ProfileTab.LISTINGS) {
-        ProfileListings(ui)
+        ProfileListings(ui, onListingClick)
       }
     }
   }
@@ -126,12 +129,14 @@ fun MyProfileScreen(
  * @param ui Current UI state from the view model.
  * @param profileViewModel ViewModel that exposes UI state and actions.
  * @param onLogout Callback invoked by the logout UI.
+ * @param onListingClick Callback when a listing card is clicked.
  */
-private fun ProfileContent(
+private fun MyProfileContent(
     pd: PaddingValues,
     ui: MyProfileUIState,
     profileViewModel: MyProfileViewModel,
     onLogout: () -> Unit,
+    onListingClick: (String) -> Unit
 ) {
   val fieldSpacing = 8.dp
 
@@ -414,7 +419,6 @@ private fun ProfileForm(
       }
 }
 
-@Composable
 /**
  * Listings section showing the user's created listings.
  *
@@ -422,8 +426,10 @@ private fun ProfileForm(
  * visible.
  *
  * @param ui Current UI state providing listings and profile data for the creator.
+ * @param onListingClick Callback invoked when a listing card is clicked.
  */
-private fun ProfileListings(ui: MyProfileUIState) {
+@Composable
+private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Unit) {
   Text(
       text = "Your Listings",
       style = MaterialTheme.typography.titleMedium,
@@ -443,29 +449,32 @@ private fun ProfileListings(ui: MyProfileUIState) {
     ui.listingsLoadError != null -> {
       Text(
           text = ui.listingsLoadError,
-          style = MaterialTheme.typography.bodyMedium,
           color = Color.Red,
           modifier = Modifier.padding(horizontal = 16.dp))
     }
     ui.listings.isEmpty() -> {
       Text(
           text = "You don’t have any listings yet.",
-          style = MaterialTheme.typography.bodyMedium,
           modifier = Modifier.padding(horizontal = 16.dp))
     }
     else -> {
-      val creatorProfile = ui.toProfile
       LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         items(ui.listings) { listing ->
-          ListingCard(listing = listing, creator = creatorProfile, onOpenListing = {}, onBook = {})
-          Spacer(modifier = Modifier.height(8.dp))
+          when (listing) {
+            is com.android.sample.model.listing.Proposal -> {
+              ProposalCard(proposal = listing, onClick = onListingClick)
+            }
+            is com.android.sample.model.listing.Request -> {
+              RequestCard(request = listing, onClick = onListingClick)
+            }
+          }
+          Spacer(Modifier.height(8.dp))
         }
       }
     }
   }
 }
 
-@Composable
 /**
  * Logout section — presents a full-width logout button that triggers `onLogout`.
  *
@@ -473,6 +482,7 @@ private fun ProfileListings(ui: MyProfileUIState) {
  *
  * @param onLogout Callback invoked when the button is clicked.
  */
+@Composable
 private fun ProfileLogout(onLogout: () -> Unit) {
   Spacer(modifier = Modifier.height(16.dp))
   Button(

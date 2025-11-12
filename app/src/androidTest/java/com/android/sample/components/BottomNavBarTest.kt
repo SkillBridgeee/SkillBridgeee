@@ -1,5 +1,7 @@
 package com.android.sample.components
 
+import android.Manifest
+import android.app.UiAutomation
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -18,6 +20,7 @@ import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomNavBar
+import com.android.sample.ui.map.MapScreenTestTags
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.profile.MyProfileViewModel
@@ -42,6 +45,16 @@ class BottomNavBarTest {
     } catch (e: Exception) {
       // Initialization may fail in some CI/emulator setups; log and continue
       println("Repository init failed: ${e.message}")
+    }
+
+    // Grant location permission to prevent dialog from breaking compose hierarchy
+    val instrumentation = InstrumentationRegistry.getInstrumentation()
+    val uiAutomation: UiAutomation = instrumentation.uiAutomation
+    try {
+      uiAutomation.grantRuntimePermission(
+          "com.android.sample", Manifest.permission.ACCESS_FINE_LOCATION)
+    } catch (_: SecurityException) {
+      // In some test environments granting may fail; continue to run the test
     }
   }
 
@@ -115,6 +128,15 @@ class BottomNavBarTest {
 
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).performClick()
     composeTestRule.waitForIdle()
+    // Wait for map screen to fully compose before checking route
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      try {
+        composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).fetchSemanticsNode()
+        true
+      } catch (_: AssertionError) {
+        false
+      }
+    }
     route = navController?.currentBackStackEntry?.destination?.route
     assertEquals("Expected MAP route", NavRoutes.MAP, route)
 

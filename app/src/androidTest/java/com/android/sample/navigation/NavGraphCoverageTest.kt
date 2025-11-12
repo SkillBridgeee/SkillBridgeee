@@ -1,5 +1,7 @@
 package com.android.sample.navigation
 
+import android.Manifest
+import android.app.UiAutomation
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
@@ -39,6 +41,16 @@ class NavGraphCoverageTest {
       e.printStackTrace()
     }
     RouteStackManager.clear()
+
+    // Grant location permission to prevent dialog from breaking compose hierarchy
+    val instrumentation = InstrumentationRegistry.getInstrumentation()
+    val uiAutomation: UiAutomation = instrumentation.uiAutomation
+    val packageName = composeTestRule.activity.packageName
+    try {
+      uiAutomation.grantRuntimePermission(packageName, Manifest.permission.ACCESS_FINE_LOCATION)
+    } catch (_: SecurityException) {
+      // In some test environments granting may fail; continue to run the test
+    }
   }
 
   @Test
@@ -48,23 +60,43 @@ class NavGraphCoverageTest {
     composeTestRule.waitForIdle()
 
     // Home assertions
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.HOME
+    }
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertExists()
 
     // Navigate using bottom nav (use test tags for reliability)
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).performClick()
     composeTestRule.waitForIdle()
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      try {
+        composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).fetchSemanticsNode()
+        true
+      } catch (_: AssertionError) {
+        false
+      }
+    }
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).assertExists()
 
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).performClick()
     composeTestRule.waitForIdle()
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.PROFILE
+    }
     composeTestRule.onNodeWithTag(MyProfileScreenTestTag.CARD_TITLE).assertExists()
 
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).performClick()
     composeTestRule.waitForIdle()
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.BOOKINGS
+    }
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).assertExists()
 
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).performClick()
     composeTestRule.waitForIdle()
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      RouteStackManager.getCurrentRoute() == NavRoutes.HOME
+    }
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
   }
 
