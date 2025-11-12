@@ -7,6 +7,23 @@ import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import java.util.*
 
+/**
+ * A fake implementation of [ProfileRepository] that provides a predefined set of user profiles.
+ *
+ * This mock repository is used for testing and development purposes, simulating a repository with
+ * actual profiles without requiring a real backend.
+ *
+ * Features:
+ * - Contains two initial profiles: one tutor and one student.
+ * - Supports retrieving profiles by ID or listing all profiles.
+ * - Supports basic search by location (returns all profiles in this mock).
+ * - Immutable mock: add, update, and delete operations do not persist changes.
+ *
+ * Typical use cases:
+ * - Verifying ViewModel or UseCase logic when profiles exist.
+ * - Testing UI rendering of tutors and students.
+ * - Simulating user interactions such as profile lookup.
+ */
 class ProfileFakeRepoWorking : ProfileRepository {
 
   private val profiles: Map<String, Profile> =

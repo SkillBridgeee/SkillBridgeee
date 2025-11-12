@@ -5,8 +5,22 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 
 /**
- * Fake repository that always throws exceptions. Used to test error handling in ViewModels or
- * UseCases.
+ * A fake implementation of [ListingRepository] that always throws exceptions.
+ *
+ * This mock repository is used for testing how the application handles errors when interacting with
+ * listing-related data sources.
+ *
+ * Each method in this class intentionally throws a descriptive exception to simulate various
+ * failure scenarios such as:
+ * - Network failures
+ * - Database access issues
+ * - Invalid input or missing data
+ *
+ * Typical use cases:
+ * - Verifying ViewModel or UseCase error handling logic.
+ * - Ensuring the UI reacts correctly to repository failures (e.g., displaying error messages, retry
+ *   buttons, or fallback states).
+ * - Testing resilience and recovery flows in the app.
  */
 class ListingFakeRepoError : ListingRepository {
 

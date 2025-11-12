@@ -4,6 +4,19 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
 
+/**
+ * A fake implementation of [BookingRepository] that always returns empty data.
+ *
+ * This mock repository is used for testing scenarios where the user has no bookings or when the
+ * backend/database contains no data.
+ *
+ * All "get" methods return empty lists or `null`. "write" operations such as add, update, or delete
+ * are not implemented, as this repository is only meant for read-only empty state testing.
+ *
+ * Example use case:
+ * - Verifying that the UI correctly displays an "empty bookings" message.
+ * - Testing ViewModel logic when there are no bookings available.
+ */
 class BookingFakeRepoEmpty : BookingRepository {
 
   override fun getNewUid(): String {

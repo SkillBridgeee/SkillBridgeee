@@ -5,6 +5,24 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 
+/**
+ * A fake implementation of [ProfileRepository] that always throws exceptions.
+ *
+ * This mock repository is used to test how the application handles errors when interacting with
+ * profile-related data sources.
+ *
+ * Each method intentionally throws a descriptive exception to simulate various failure scenarios,
+ * such as:
+ * - Network failures
+ * - Database access issues
+ * - Invalid input or missing profile data
+ *
+ * Typical use cases:
+ * - Verifying ViewModel or UseCase error handling logic.
+ * - Ensuring the UI reacts correctly to repository failures (e.g., showing error messages, retry
+ *   prompts, or fallback states).
+ * - Testing the robustness and error recovery flows of the app.
+ */
 class ProfileFakeRepoError : ProfileRepository {
 
   override fun getNewUid(): String {

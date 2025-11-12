@@ -5,6 +5,20 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 
+/**
+ * A fake implementation of [ProfileRepository] that returns empty or null data for all queries.
+ *
+ * This mock repository is used for testing how the application behaves when there are no user
+ * profiles available.
+ *
+ * Each method either returns null or an empty list, simulating the case where the data source
+ * contains no profiles or skills.
+ *
+ * Typical use cases:
+ * - Verifying ViewModel or UseCase logic when no profiles exist.
+ * - Ensuring the UI correctly displays empty states (e.g., empty lists, messages).
+ * - Testing fallback behavior or default states in the absence of profiles.
+ */
 class ProfileFakeRepoEmpty : ProfileRepository {
   override fun getNewUid(): String {
     return ""

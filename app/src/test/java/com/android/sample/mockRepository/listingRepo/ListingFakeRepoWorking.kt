@@ -5,6 +5,23 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import java.util.*
 
+/**
+ * A fake implementation of [ListingRepository] that provides a predefined set of listings.
+ *
+ * This mock repository is used for testing and development purposes, simulating a repository with
+ * actual proposal and request listings without requiring a real backend.
+ *
+ * Features:
+ * - Contains two initial listings: one Proposal and one Request.
+ * - Supports adding, updating, deleting, and deactivating listings.
+ * - Supports simple search by skill or location (mock implementation).
+ * - Returns copies or filtered lists to avoid external mutation.
+ *
+ * Typical use cases:
+ * - Verifying ViewModel or UseCase logic when listings exist.
+ * - Testing UI rendering of proposals and requests.
+ * - Simulating user actions such as adding or deactivating listings.
+ */
 class ListingFakeRepoWorking : ListingRepository {
 
   private val listings =

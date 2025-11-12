@@ -7,6 +7,20 @@ import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 
+/**
+ * A fake implementation of [ListingRepository] that returns empty data for all queries.
+ *
+ * This mock repository is used for testing how the application behaves when there are no listings
+ * available.
+ *
+ * Each method either returns an empty list or null, simulating the case where the data source
+ * contains no listings, proposals, or requests.
+ *
+ * Typical use cases:
+ * - Verifying ViewModel or UseCase logic when no data is present.
+ * - Ensuring the UI correctly displays empty states (e.g., empty lists, messages).
+ * - Testing fallback behavior or default states in the absence of listings.
+ */
 class ListingFakeRepoEmpty : ListingRepository {
   override fun getNewUid(): String {
     return ""

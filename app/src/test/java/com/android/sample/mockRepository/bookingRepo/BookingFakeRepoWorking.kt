@@ -5,6 +5,22 @@ import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
 import java.util.*
 
+/**
+ * A fake implementation of [BookingRepository] that provides a predefined set of bookings.
+ *
+ * This mock repository is used for testing and development purposes, simulating a repository with
+ * actual booking data without requiring a real backend.
+ *
+ * Features:
+ * - Contains two initial bookings with different statuses (CONFIRMED and PENDING).
+ * - Supports all repository operations such as add, update, delete, and status changes.
+ * - Returns copies of the internal list to prevent external mutation.
+ *
+ * Typical use cases:
+ * - Verifying ViewModel or UseCase logic when bookings exist.
+ * - Testing UI rendering of booking lists with different statuses.
+ * - Simulating user actions like confirming, completing, or cancelling bookings.
+ */
 class BookingFakeRepoWorking : BookingRepository {
 
   val initialNumBooking = 2
