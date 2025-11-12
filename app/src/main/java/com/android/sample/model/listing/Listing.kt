@@ -24,8 +24,7 @@ sealed class Listing {
 
   /** Display title: prefer description, then skill text, then main subject name */
   // todo not sure very relevant because title cannot be blank
-  fun displayTitle(): String =
-      title.ifBlank { description.ifBlank { skill.skill.ifBlank { skill.mainSubject.name } } }
+  fun displayTitle(): String = title.ifBlank { "This Listing has no title" }
 }
 
 /** Proposal - user offering to teach */
