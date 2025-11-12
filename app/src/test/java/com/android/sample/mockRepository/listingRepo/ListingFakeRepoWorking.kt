@@ -5,7 +5,7 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import java.util.*
 
-class FakeListingRepoForBookings : ListingRepository {
+class ListingFakeRepoWorking : ListingRepository {
 
   // Créons directement les listings correspondant aux bookings
   private val listings: Map<String, Listing> =
