@@ -7,13 +7,15 @@ import java.util.*
 
 class BookingFakeRepoWorking : BookingRepository {
 
+  val initialNumBooking = 2
+
   private val bookings =
       mutableListOf(
           Booking(
               bookingId = "b1",
               associatedListingId = "listing_1",
-              listingCreatorId = "tutor_1",
-              bookerId = "student_1",
+              listingCreatorId = "creator_1",
+              bookerId = "booker_1",
               sessionStart = Date(System.currentTimeMillis() + 3600000L),
               sessionEnd = Date(System.currentTimeMillis() + 7200000L),
               status = BookingStatus.CONFIRMED,
@@ -21,8 +23,8 @@ class BookingFakeRepoWorking : BookingRepository {
           Booking(
               bookingId = "b2",
               associatedListingId = "listing_2",
-              listingCreatorId = "tutor_2",
-              bookerId = "student_2",
+              listingCreatorId = "creator_2",
+              bookerId = "booker_2",
               sessionStart = Date(System.currentTimeMillis() + 10800000L),
               sessionEnd = Date(System.currentTimeMillis() + 14400000L),
               status = BookingStatus.PENDING,
@@ -39,24 +41,23 @@ class BookingFakeRepoWorking : BookingRepository {
   }
 
   override suspend fun getBooking(bookingId: String): Booking? {
-    return bookings.find { it.bookingId == bookingId }
+    return bookings.first()
   }
 
   override suspend fun getBookingsByTutor(tutorId: String): List<Booking> {
-    return bookings.filter { it.listingCreatorId == tutorId }
+    return bookings.toList()
   }
 
   override suspend fun getBookingsByUserId(userId: String): List<Booking> {
-    // Si un user peut être soit tuteur soit étudiant
-    return bookings.filter { it.listingCreatorId == userId || it.bookerId == userId }
+    return bookings.toList()
   }
 
   override suspend fun getBookingsByStudent(studentId: String): List<Booking> {
-    return bookings.filter { it.bookerId == studentId }
+    return bookings.toList()
   }
 
   override suspend fun getBookingsByListing(listingId: String): List<Booking> {
-    return bookings.filter { it.associatedListingId == listingId }
+    return bookings.toList()
   }
 
   // --- Mutations ---
