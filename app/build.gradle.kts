@@ -92,10 +92,6 @@ android {
             // Debug builds connect to Firebase emulators (for local testing on Android emulator)
             // Make sure to run: firebase emulators:start
             buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "true")
-            // Emulator host: 10.0.2.2 for Android emulator, or use your local IP for physical device
-            buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"10.0.2.2\"")
-            buildConfigField("int", "FIRESTORE_EMULATOR_PORT", "8080")
-            buildConfigField("int", "AUTH_EMULATOR_PORT", "9099")
         }
     }
 
