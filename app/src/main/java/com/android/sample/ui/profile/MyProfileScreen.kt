@@ -56,7 +56,6 @@ object MyProfileScreenTestTag {
   const val CARD_TITLE = "cardTitle"
   const val INPUT_PROFILE_NAME = "inputProfileName"
   const val INPUT_PROFILE_EMAIL = "inputProfileEmail"
-  const val INPUT_PROFILE_LOCATION = "inputProfileLocation"
   const val INPUT_PROFILE_DESC = "inputProfileDesc"
   const val SAVE_BUTTON = "saveButton"
   const val ROOT_LIST = "profile_list"
@@ -159,7 +158,6 @@ private fun MyProfileContent(
           Spacer(modifier = Modifier.height(12.dp))
           ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
         }
-
 
         item { ProfileLogout(onLogout = onLogout) }
       }
@@ -437,7 +435,6 @@ private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Un
       fontWeight = FontWeight.Bold,
       modifier =
           Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.LISTINGS_SECTION))
-  Spacer(modifier = Modifier.height(8.dp))
 
   when {
     ui.listingsLoading -> {
