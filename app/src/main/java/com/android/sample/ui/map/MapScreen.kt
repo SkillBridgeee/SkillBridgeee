@@ -135,6 +135,10 @@ fun MapScreen(
  * @param myProfile The current user's profile to show on the map.
  * @param onBookingClicked Callback when a booking pin is clicked.
  * @param requestLocationOnStart Whether to request location permission on first composition.
+ * @param permissionChecker Injectable function to check if permission is granted. Defaults to
+ *   checking ACCESS_FINE_LOCATION via ContextCompat. Useful for testing.
+ * @param permissionRequester Injectable function to request a permission. Defaults to using the
+ *   permission launcher. Useful for testing.
  */
 @Composable
 private fun MapView(
@@ -142,33 +146,39 @@ private fun MapView(
     bookingPins: List<BookingPin>,
     myProfile: Profile?,
     onBookingClicked: (BookingPin) -> Unit,
-    requestLocationOnStart: Boolean = false
+    requestLocationOnStart: Boolean = false,
+    permissionChecker: @Composable () -> Boolean = {
+      val context = androidx.compose.ui.platform.LocalContext.current
+      androidx.core.content.ContextCompat.checkSelfPermission(
+          context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+          android.content.pm.PackageManager.PERMISSION_GRANTED
+    },
+    permissionRequester: ((String) -> Unit)? = null
 ) {
-  val context = androidx.compose.ui.platform.LocalContext.current
+  // Get initial permission state using the injected checker
+  val initialPermissionState = permissionChecker()
 
-  // Check if permission is already granted on startup
-  val initialPermissionState = remember {
-    androidx.core.content.ContextCompat.checkSelfPermission(
-        context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-        android.content.pm.PackageManager.PERMISSION_GRANTED
-  }
-
-  // Track location permission state
+  // Track location permission state - initialized with checker result
   var hasLocationPermission by remember { mutableStateOf(initialPermissionState) }
 
-  // Permission launcher
+  // Permission launcher that updates local state
   val permissionLauncher =
       rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission()) {
           isGranted ->
         hasLocationPermission = isGranted
       }
 
-  // Request location permission on first composition
-  // Only if requestLocationOnStart is true and permission not already granted
-  LaunchedEffect(requestLocationOnStart) {
+  // Wire default requester to the launcher if the caller didn't override
+  val requester =
+      remember(permissionLauncher, permissionRequester) {
+        permissionRequester ?: { permission: String -> permissionLauncher.launch(permission) }
+      }
+
+  // Request location permission - reacts to requestLocationOnStart and hasLocationPermission
+  LaunchedEffect(requestLocationOnStart, hasLocationPermission) {
     if (requestLocationOnStart && !hasLocationPermission) {
       try {
-        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        requester(Manifest.permission.ACCESS_FINE_LOCATION)
       } catch (e: Exception) {
         android.util.Log.w(
             "MapScreen", "Permission launcher unavailable in this environment: ${e.message}")
