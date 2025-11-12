@@ -34,7 +34,6 @@ class LoginScreenTest {
     composeRule.onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_SECTION).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.SIGNUP_LINK).assertIsDisplayed()
   }
 
@@ -156,18 +155,6 @@ class LoginScreenTest {
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).assertTextEquals("Google")
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).performClick()
-  }
-
-  @Test
-  fun authGitHubButtonIsDisplayed() {
-    composeRule.setContent {
-      val context = LocalContext.current
-      val viewModel = AuthenticationViewModel(context)
-      LoginScreen(viewModel = viewModel, onGoogleSignIn = { /* Test placeholder */})
-    }
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).assertTextEquals("GitHub")
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).performClick()
   }
 
   @Test
