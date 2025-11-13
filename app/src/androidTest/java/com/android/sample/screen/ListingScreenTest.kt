@@ -405,4 +405,47 @@ class ListingScreenTest {
     // TITLE appears twice, use onFirst()
     compose.onAllNodesWithTag(ListingScreenTestTags.TITLE).onFirst().assertIsDisplayed()
   }
+
+  @Test
+  fun listingScreen_bookingFailure_errorDialogOk_clearsError() {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = false) // force failure
+    val vm = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    compose.setContent {
+      ListingScreen(listingId = "listing-123", onNavigateBack = {}, viewModel = vm)
+    }
+
+    // Wait for content to load
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.TITLE, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Trigger a failing booking
+    compose.runOnUiThread { vm.createBooking(Date(), Date(System.currentTimeMillis() + 3_600_000)) }
+
+    // Error dialog appears
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.ERROR_DIALOG, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.ERROR_DIALOG).assertIsDisplayed()
+
+    // Click OK to clear it
+    compose.onNodeWithText("OK", useUnmergedTree = true).assertIsDisplayed().performClick()
+
+    // Dialog disappears
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.ERROR_DIALOG, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isEmpty()
+    }
+  }
 }
