@@ -28,6 +28,7 @@ class RequestCardTest {
       hourlyRate: Double = 30.0,
       locationName: String = "University Library",
       isActive: Boolean = true,
+      title: String = "This Listing has no title",
       skill: Skill =
           Skill(
               mainSubject = MainSubject.ACADEMICS,
@@ -40,6 +41,7 @@ class RequestCardTest {
         listingId = id,
         creatorUserId = creatorId,
         skill = skill,
+        title = title,
         description = description,
         location = Location(name = locationName),
         createdAt = createdAt,
@@ -107,6 +109,7 @@ class RequestCardTest {
     val request =
         makeRequest(
             description = "",
+            title = "Cours d'espagnol",
             skill =
                 Skill(
                     mainSubject = MainSubject.LANGUAGES,
@@ -118,7 +121,7 @@ class RequestCardTest {
 
     // Should display skill as title
     composeRule.onNodeWithTag(RequestCardTestTags.TITLE, useUnmergedTree = true).assertIsDisplayed()
-    composeRule.onNodeWithText("Spanish").assertIsDisplayed()
+    composeRule.onNodeWithText("Cours d'espagnol").assertIsDisplayed()
   }
 
   @Test

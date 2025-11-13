@@ -175,6 +175,7 @@ class NewListingViewModel(
                 listingId = listingRepository.getNewUid(),
                 creatorUserId = userId,
                 skill = newSkill,
+                title = state.title,
                 description = state.description,
                 location = selectedLocation,
                 hourlyRate = price)
@@ -186,6 +187,7 @@ class NewListingViewModel(
                 listingId = listingRepository.getNewUid(),
                 creatorUserId = userId,
                 skill = newSkill,
+                title = state.title,
                 description = state.description,
                 location = selectedLocation,
                 hourlyRate = price)

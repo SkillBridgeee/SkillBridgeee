@@ -25,13 +25,28 @@ object MyBookingsPageTestTag {
   const val LOADING = "myBookingsLoading"
   const val ERROR = "myBookingsError"
   const val EMPTY = "myBookingsEmpty"
-  const val BOOKING_CARD = "bookingCard"
   const val NAV_HOME = "navHome"
   const val NAV_BOOKINGS = "navBookings"
   const val NAV_PROFILE = "navProfile"
   const val NAV_MAP = "navMap"
 }
 
+/**
+ * Main composable function that displays the "My Bookings" screen.
+ *
+ * This screen is responsible for showing all bookings belonging to the current user. It observes
+ * the [MyBookingsViewModel] to manage loading, error, and empty states.
+ *
+ * Depending on the current UI state:
+ * - Displays a loading message while data is being fetched.
+ * - Displays an error message if the data retrieval fails.
+ * - Displays an empty message if there are no bookings.
+ * - Displays a list of bookings once successfully loaded.
+ *
+ * @param modifier Optional [Modifier] for styling or layout adjustments.
+ * @param viewModel The [MyBookingsViewModel] that provides the booking data and UI state.
+ * @param onBookingClick Callback invoked when a booking card is clicked, passing the booking ID.
+ */
 @Composable
 fun MyBookingsScreen(
     modifier: Modifier = Modifier,
@@ -57,6 +72,16 @@ fun MyBookingsScreen(
   }
 }
 
+/**
+ * Composable function that displays a scrollable list of booking cards.
+ *
+ * The list is rendered using a [LazyColumn], where each item corresponds to a [BookingCard]. It
+ * also handles spacing and padding between items for a clean layout.
+ *
+ * @param bookings A list of [BookingCardUI] objects representing the user's bookings.
+ * @param onBookingClick Callback triggered when a booking card is clicked.
+ * @param modifier Optional [Modifier] to apply to the list container.
+ */
 @Composable
 fun BookingsList(
     bookings: List<BookingCardUI>,
@@ -77,6 +102,15 @@ fun BookingsList(
       }
 }
 
+/**
+ * Composable helper function that displays centered text within the screen.
+ *
+ * This is used for displaying loading, error, or empty states in a simple, centered layout. It also
+ * includes a test tag to facilitate UI testing.
+ *
+ * @param text The message text to be displayed.
+ * @param tag The test tag to identify the composable in UI tests.
+ */
 @Composable
 private fun CenteredText(text: String, tag: String) {
   Box(modifier = Modifier.fillMaxSize().testTag(tag), contentAlignment = Alignment.Center) {
