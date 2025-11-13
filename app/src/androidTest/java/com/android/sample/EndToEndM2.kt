@@ -281,5 +281,9 @@ class EndToEndM2 {
     compose.onNodeWithText("All").assertIsDisplayed().performClick()
 
     compose.onAllNodesWithText("Learn math with me")[0].assertIsDisplayed()
+
+    compose.onNodeWithContentDescription("Back").performClick()
+
+    compose.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertIsDisplayed().performClick()
   }
 }
