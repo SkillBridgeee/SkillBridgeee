@@ -1,26 +1,33 @@
 package com.android.sample.ui.newListing
 
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.android.sample.model.listing.ListingType
+import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.LocationInputField
-import com.android.sample.ui.screens.newSkill.NewListingViewModel
 
-object NewSkillScreenTestTag {
+object NewListingScreenTestTag {
   const val BUTTON_SAVE_SKILL = "buttonSaveSkill"
   const val CREATE_LESSONS_TITLE = "createLessonsTitle"
   const val INPUT_COURSE_TITLE = "inputCourseTitle"
@@ -41,6 +48,7 @@ object NewSkillScreenTestTag {
   const val LISTING_TYPE_DROPDOWN = "listingTypeDropdown"
   const val LISTING_TYPE_DROPDOWN_ITEM_PREFIX = "listingTypeItem"
   const val INVALID_LISTING_TYPE_MSG = "invalidListingTypeMsg"
+  const val BUTTON_USE_MY_LOCATION = "buttonUseMyLocation"
 
   const val INPUT_LOCATION_FIELD = "inputLocationField"
   const val INVALID_LOCATION_MSG = "invalidLocationMsg"
@@ -53,17 +61,17 @@ fun NewListingScreen(
     profileId: String,
     navController: NavController
 ) {
-  val ListingUIState by skillViewModel.uiState.collectAsState()
+  val listingUIState by skillViewModel.uiState.collectAsState()
 
-  LaunchedEffect(ListingUIState.addSuccess) {
-    if (ListingUIState.addSuccess) {
+  LaunchedEffect(listingUIState.addSuccess) {
+    if (listingUIState.addSuccess) {
       navController.popBackStack()
       skillViewModel.clearAddSuccess()
     }
   }
 
   val buttonText =
-      when (ListingUIState.listingType) {
+      when (listingUIState.listingType) {
         ListingType.PROPOSAL -> "Create Proposal"
         ListingType.REQUEST -> "Create Request"
         null -> "Create Listing"
@@ -74,7 +82,7 @@ fun NewListingScreen(
         AppButton(
             text = buttonText,
             onClick = { skillViewModel.addListing() },
-            testTag = NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
+            testTag = NewListingScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
         ListingContent(pd = pd, profileId = profileId, listingViewModel = skillViewModel)
@@ -83,9 +91,21 @@ fun NewListingScreen(
 
 @Composable
 fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewListingViewModel) {
-  val ListingUIState by listingViewModel.uiState.collectAsState()
+  val listingUIState by listingViewModel.uiState.collectAsState()
 
   LaunchedEffect(profileId) { listingViewModel.load() }
+
+  val context = LocalContext.current
+  val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
+
+  val permissionLauncher =
+      rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+          listingViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
+        } else {
+          listingViewModel.onLocationPermissionDenied()
+        }
+      }
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
@@ -106,107 +126,131 @@ fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewLi
                 Text(
                     text = "Create Your Listing",
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.testTag(NewSkillScreenTestTag.CREATE_LESSONS_TITLE))
+                    modifier = Modifier.testTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE))
 
                 Spacer(Modifier.height(10.dp))
 
                 ListingTypeMenu(
-                    selectedListingType = ListingUIState.listingType,
+                    selectedListingType = listingUIState.listingType,
                     onListingTypeSelected = { listingViewModel.setListingType(it) },
-                    errorMsg = ListingUIState.invalidListingTypeMsg)
+                    errorMsg = listingUIState.invalidListingTypeMsg)
 
                 Spacer(Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = ListingUIState.title,
+                    value = listingUIState.title,
                     onValueChange = listingViewModel::setTitle,
                     label = { Text("Course Title") },
                     placeholder = { Text("Title") },
-                    isError = ListingUIState.invalidTitleMsg != null,
+                    isError = listingUIState.invalidTitleMsg != null,
                     supportingText = {
-                      ListingUIState.invalidTitleMsg?.let {
+                      listingUIState.invalidTitleMsg?.let {
                         Text(
                             text = it,
-                            modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_TITLE_MSG))
+                            modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_TITLE_MSG))
                       }
                     },
                     modifier =
-                        Modifier.fillMaxWidth().testTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE))
+                        Modifier.fillMaxWidth().testTag(NewListingScreenTestTag.INPUT_COURSE_TITLE))
 
                 Spacer(Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = ListingUIState.description,
+                    value = listingUIState.description,
                     onValueChange = listingViewModel::setDescription,
                     label = { Text("Description") },
                     placeholder = { Text("Description of the skill") },
-                    isError = ListingUIState.invalidDescMsg != null,
+                    isError = listingUIState.invalidDescMsg != null,
                     supportingText = {
-                      ListingUIState.invalidDescMsg?.let {
+                      listingUIState.invalidDescMsg?.let {
                         Text(
                             text = it,
-                            modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_DESC_MSG))
+                            modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_DESC_MSG))
                       }
                     },
                     modifier =
-                        Modifier.fillMaxWidth().testTag(NewSkillScreenTestTag.INPUT_DESCRIPTION))
+                        Modifier.fillMaxWidth().testTag(NewListingScreenTestTag.INPUT_DESCRIPTION))
 
                 Spacer(Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = ListingUIState.price,
+                    value = listingUIState.price,
                     onValueChange = listingViewModel::setPrice,
                     label = { Text("Hourly Rate") },
                     placeholder = { Text("Price per Hour") },
-                    isError = ListingUIState.invalidPriceMsg != null,
+                    isError = listingUIState.invalidPriceMsg != null,
                     supportingText = {
-                      ListingUIState.invalidPriceMsg?.let {
+                      listingUIState.invalidPriceMsg?.let {
                         Text(
                             text = it,
-                            modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_PRICE_MSG))
+                            modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_PRICE_MSG))
                       }
                     },
-                    modifier = Modifier.fillMaxWidth().testTag(NewSkillScreenTestTag.INPUT_PRICE))
+                    modifier = Modifier.fillMaxWidth().testTag(NewListingScreenTestTag.INPUT_PRICE))
 
                 Spacer(Modifier.height(8.dp))
 
                 SubjectMenu(
-                    selectedSubject = ListingUIState.subject,
+                    selectedSubject = listingUIState.subject,
                     onSubjectSelected = listingViewModel::setSubject,
-                    errorMsg = ListingUIState.invalidSubjectMsg)
+                    errorMsg = listingUIState.invalidSubjectMsg)
 
-                if (ListingUIState.subject != null) {
+                if (listingUIState.subject != null) {
                   Spacer(Modifier.height(8.dp))
 
                   SubSkillMenu(
-                      selectedSubSkill = ListingUIState.selectedSubSkill,
-                      options = ListingUIState.subSkillOptions,
+                      selectedSubSkill = listingUIState.selectedSubSkill,
+                      options = listingUIState.subSkillOptions,
                       onSubSkillSelected = listingViewModel::setSubSkill,
-                      errorMsg = ListingUIState.invalidSubSkillMsg)
+                      errorMsg = listingUIState.invalidSubSkillMsg)
                 }
 
                 // Location input with test tags
                 Column {
                   // Tag the entire field container
-                  Box(modifier = Modifier.testTag(NewSkillScreenTestTag.INPUT_LOCATION_FIELD)) {
+                  Box(modifier = Modifier.testTag(NewListingScreenTestTag.INPUT_LOCATION_FIELD)) {
                     LocationInputField(
-                        locationQuery = ListingUIState.locationQuery,
-                        locationSuggestions = ListingUIState.locationSuggestions,
+                        locationQuery = listingUIState.locationQuery,
+                        locationSuggestions = listingUIState.locationSuggestions,
                         onLocationQueryChange = listingViewModel::setLocationQuery,
-                        errorMsg = ListingUIState.invalidLocationMsg,
+                        errorMsg = listingUIState.invalidLocationMsg,
                         onLocationSelected = { location ->
                           listingViewModel.setLocationQuery(location.name)
                           listingViewModel.setLocation(location)
                         })
+
+                    IconButton(
+                        onClick = {
+                          val granted =
+                              ContextCompat.checkSelfPermission(context, permission) ==
+                                  PackageManager.PERMISSION_GRANTED
+
+                          if (granted) {
+                            listingViewModel.fetchLocationFromGps(
+                                GpsLocationProvider(context), context)
+                          } else {
+                            permissionLauncher.launch(permission)
+                          }
+                        },
+                        modifier =
+                            Modifier.align(Alignment.CenterEnd)
+                                .offset(y = (-5).dp)
+                                .size(36.dp)
+                                .testTag(NewListingScreenTestTag.BUTTON_USE_MY_LOCATION)) {
+                          Icon(
+                              imageVector = Icons.Default.MyLocation,
+                              contentDescription = "Use my location",
+                              tint = MaterialTheme.colorScheme.primary)
+                        }
                   }
 
                   // Show tagged error text if invalidLocationMsg is set
-                  ListingUIState.invalidLocationMsg?.let { msg ->
+                  listingUIState.invalidLocationMsg?.let { msg ->
                     Text(
                         text = msg,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_LOCATION_MSG))
+                        modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_LOCATION_MSG))
                   }
                 }
               }
@@ -239,16 +283,16 @@ fun SubjectMenu(
               errorMsg?.let {
                 Text(
                     text = it,
-                    modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG))
+                    modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG))
               }
             },
             modifier =
-                Modifier.testTag(NewSkillScreenTestTag.SUBJECT_FIELD).menuAnchor().fillMaxWidth())
+                Modifier.testTag(NewListingScreenTestTag.SUBJECT_FIELD).menuAnchor().fillMaxWidth())
 
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.testTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN)) {
+            modifier = Modifier.testTag(NewListingScreenTestTag.SUBJECT_DROPDOWN)) {
               subjects.forEachIndexed { index, subject ->
                 DropdownMenuItem(
                     text = { Text(subject.name) },
@@ -258,7 +302,7 @@ fun SubjectMenu(
                     },
                     modifier =
                         Modifier.testTag(
-                            "${NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_$index"))
+                            "${NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_$index"))
               }
             }
       }
@@ -289,18 +333,18 @@ fun ListingTypeMenu(
               errorMsg?.let {
                 Text(
                     text = it,
-                    modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_LISTING_TYPE_MSG))
+                    modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_LISTING_TYPE_MSG))
               }
             },
             modifier =
-                Modifier.testTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
+                Modifier.testTag(NewListingScreenTestTag.LISTING_TYPE_FIELD)
                     .menuAnchor()
                     .fillMaxWidth())
 
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.testTag(NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN)) {
+            modifier = Modifier.testTag(NewListingScreenTestTag.LISTING_TYPE_DROPDOWN)) {
               listingTypes.forEachIndexed { index, type ->
                 DropdownMenuItem(
                     text = { Text(type.name) },
@@ -310,7 +354,7 @@ fun ListingTypeMenu(
                     },
                     modifier =
                         Modifier.testTag(
-                            "${NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_$index"))
+                            "${NewListingScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_$index"))
               }
             }
       }
@@ -341,16 +385,18 @@ fun SubSkillMenu(
               errorMsg?.let {
                 Text(
                     text = it,
-                    modifier = Modifier.testTag(NewSkillScreenTestTag.INVALID_SUB_SKILL_MSG))
+                    modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_SUB_SKILL_MSG))
               }
             },
             modifier =
-                Modifier.testTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).menuAnchor().fillMaxWidth())
+                Modifier.testTag(NewListingScreenTestTag.SUB_SKILL_FIELD)
+                    .menuAnchor()
+                    .fillMaxWidth())
 
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.testTag(NewSkillScreenTestTag.SUB_SKILL_DROPDOWN)) {
+            modifier = Modifier.testTag(NewListingScreenTestTag.SUB_SKILL_DROPDOWN)) {
               options.forEachIndexed { index, opt ->
                 DropdownMenuItem(
                     text = { Text(opt) },
@@ -360,7 +406,7 @@ fun SubSkillMenu(
                     },
                     modifier =
                         Modifier.testTag(
-                            "${NewSkillScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_$index"))
+                            "${NewListingScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_$index"))
               }
             }
       }

@@ -6,7 +6,6 @@ import com.android.sample.model.listing.ListingType
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.skill.MainSubject
-import com.android.sample.ui.screens.newSkill.NewListingViewModel
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
