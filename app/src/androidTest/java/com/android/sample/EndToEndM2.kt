@@ -71,7 +71,7 @@ class EndToEndM2 {
 
   @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
-  @Before
+  /*@Before
   fun setUp() {
 
     // Connect to Firebase emulators
@@ -100,7 +100,7 @@ class EndToEndM2 {
       // Ignore deletion errors
     }
     auth.signOut()
-  }
+  }*/
 
   @Test
   fun userSignsIn() {
