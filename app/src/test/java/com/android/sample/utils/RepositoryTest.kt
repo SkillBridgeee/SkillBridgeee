@@ -4,7 +4,6 @@ import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.user.ProfileRepository
-import com.github.se.bootcamp.utils.FirebaseEmulator
 import com.google.firebase.FirebaseApp
 import org.junit.After
 import org.junit.Before

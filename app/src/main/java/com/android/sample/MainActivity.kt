@@ -45,18 +45,18 @@ class MainActivity : ComponentActivity() {
   private lateinit var googleSignInHelper: GoogleSignInHelper
 
   companion object {
-    // Ensure emulator is only initialized once across the entire app lifecycle
+    // Automatically use Firebase emulators based on build configuration
+    // To enable emulators: Change USE_FIREBASE_EMULATOR to "true" in build.gradle.kts (debug
+    // buildType)
+    // Release builds ALWAYS use production Firebase (USE_FIREBASE_EMULATOR = false)
+    // For physical devices, update FIREBASE_EMULATOR_HOST in build.gradle.kts to your local IP
     init {
-      try {
+      // If BuildConfig is red you should run the generateDebugBuildConfig task on gradle
+      if (BuildConfig.USE_FIREBASE_EMULATOR) {
         Firebase.firestore.useEmulator("10.0.2.2", 8080)
         Firebase.auth.useEmulator("10.0.2.2", 9099)
-      } catch (_: IllegalStateException) {
-        // Emulator already initialized - this is fine
-        println("Firebase emulator already initialized")
-      } catch (e: Exception) {
-        // Other errors (network issues, etc.) - log but don't crash
-        println("Firebase emulator connection failed: ${e.message}")
-        // App will continue to work with production Firebase
+      } else {
+        Log.d("MainActivity", "🌐 Using production Firebase servers")
       }
     }
   }
