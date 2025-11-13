@@ -35,6 +35,97 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Content section of the listing screen showing listing details
+ *
+ * @param uiState UI state containing listing and booking information
+ * @param onBook Callback when booking is confirmed with start and end dates
+ * @param onApproveBooking Callback when a booking is approved
+ * @param onRejectBooking Callback when a booking is rejected
+ * @param modifier Modifier for the content
+ */
+@Composable
+fun ListingContent(
+    uiState: ListingUiState,
+    onBook: (Date, Date) -> Unit,
+    onApproveBooking: (String) -> Unit,
+    onRejectBooking: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    autoFillDatesForTesting: Boolean = false
+) {
+  val listing = uiState.listing ?: return
+  val creator = uiState.creator
+  var showBookingDialog by remember { mutableStateOf(false) }
+
+  Column(
+      modifier = modifier.fillMaxSize().padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // Type badge
+        TypeBadge(listingType = listing.type)
+
+        // Title/Description
+        Text(
+            text = listing.displayTitle(),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
+
+        // Description card (if present)
+        if (listing.description.isNotBlank()) {
+          Card(
+              modifier = Modifier.fillMaxWidth(),
+              colors =
+                  CardDefaults.cardColors(
+                      containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                Text(
+                    text = listing.description,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(16.dp).testTag(ListingScreenTestTags.DESCRIPTION))
+              }
+        }
+
+        // Creator info (if available)
+        creator?.let { CreatorCard(it) }
+
+        // Skill details
+        SkillDetailsCard(skill = listing.skill)
+
+        // Location
+        LocationCard(locationName = listing.location.name)
+
+        // Hourly rate
+        HourlyRateCard(hourlyRate = listing.hourlyRate)
+
+        // Created date
+        val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+        Text(
+            text = "Posted on ${dateFormat.format(listing.createdAt)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
+
+        Spacer(Modifier.height(8.dp))
+
+        // Action section (book button or bookings management)
+        ActionSection(
+            uiState = uiState,
+            onShowBookingDialog = { showBookingDialog = true },
+            onApproveBooking = onApproveBooking,
+            onRejectBooking = onRejectBooking)
+      }
+
+  // Booking dialog
+  if (showBookingDialog) {
+    BookingDialog(
+        onDismiss = { showBookingDialog = false },
+        onConfirm = { start, end ->
+          onBook(start, end)
+          showBookingDialog = false
+        },
+        autoFillDatesForTesting = autoFillDatesForTesting)
+  }
+}
+
 /** Type badge showing whether the listing is offering to teach or looking for a tutor */
 @Composable
 private fun TypeBadge(listingType: ListingType, modifier: Modifier = Modifier) {
@@ -167,96 +258,5 @@ private fun ActionSection(
           }
           Text(if (uiState.bookingInProgress) "Creating Booking..." else "Book Now")
         }
-  }
-}
-
-/**
- * Content section of the listing screen showing listing details
- *
- * @param uiState UI state containing listing and booking information
- * @param onBook Callback when booking is confirmed with start and end dates
- * @param onApproveBooking Callback when a booking is approved
- * @param onRejectBooking Callback when a booking is rejected
- * @param modifier Modifier for the content
- */
-@Composable
-fun ListingContent(
-    uiState: ListingUiState,
-    onBook: (Date, Date) -> Unit,
-    onApproveBooking: (String) -> Unit,
-    onRejectBooking: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    autoFillDatesForTesting: Boolean = false
-) {
-  val listing = uiState.listing ?: return
-  val creator = uiState.creator
-  var showBookingDialog by remember { mutableStateOf(false) }
-
-  Column(
-      modifier = modifier.fillMaxSize().padding(16.dp),
-      verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Type badge
-        TypeBadge(listingType = listing.type)
-
-        // Title/Description
-        Text(
-            text = listing.displayTitle(),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
-
-        // Description card (if present)
-        if (listing.description.isNotBlank()) {
-          Card(
-              modifier = Modifier.fillMaxWidth(),
-              colors =
-                  CardDefaults.cardColors(
-                      containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                Text(
-                    text = listing.description,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(16.dp).testTag(ListingScreenTestTags.DESCRIPTION))
-              }
-        }
-
-        // Creator info (if available)
-        creator?.let { CreatorCard(it) }
-
-        // Skill details
-        SkillDetailsCard(skill = listing.skill)
-
-        // Location
-        LocationCard(locationName = listing.location.name)
-
-        // Hourly rate
-        HourlyRateCard(hourlyRate = listing.hourlyRate)
-
-        // Created date
-        val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-        Text(
-            text = "Posted on ${dateFormat.format(listing.createdAt)}",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
-
-        Spacer(Modifier.height(8.dp))
-
-        // Action section (book button or bookings management)
-        ActionSection(
-            uiState = uiState,
-            onShowBookingDialog = { showBookingDialog = true },
-            onApproveBooking = onApproveBooking,
-            onRejectBooking = onRejectBooking)
-      }
-
-  // Booking dialog
-  if (showBookingDialog) {
-    BookingDialog(
-        onDismiss = { showBookingDialog = false },
-        onConfirm = { start, end ->
-          onBook(start, end)
-          showBookingDialog = false
-        },
-        autoFillDatesForTesting = autoFillDatesForTesting)
   }
 }

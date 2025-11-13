@@ -23,8 +23,6 @@ import com.android.sample.ui.listing.components.ListingContent
 /** Test tags for the listing screen */
 object ListingScreenTestTags {
   const val SCREEN = "listingScreen"
-  const val TOP_BAR = "listingScreenTopBar"
-  const val BACK_BUTTON = "listingScreenBackButton"
   const val LOADING = "listingScreenLoading"
   const val ERROR = "listingScreenError"
   const val TYPE_BADGE = "listingScreenTypeBadge"
@@ -37,7 +35,6 @@ object ListingScreenTestTags {
   const val EXPERTISE = "listingScreenExpertise"
   const val CREATED_DATE = "listingScreenCreatedDate"
   const val BOOK_BUTTON = "listingScreenBookButton"
-  const val OWN_LISTING_MESSAGE = "listingScreenOwnListingMessage"
   const val BOOKING_DIALOG = "listingScreenBookingDialog"
   const val SESSION_START_BUTTON = "listingScreenSessionStartButton"
   const val SESSION_END_BUTTON = "listingScreenSessionEndButton"
