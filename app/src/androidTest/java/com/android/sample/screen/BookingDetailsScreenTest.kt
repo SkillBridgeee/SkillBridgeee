@@ -208,4 +208,102 @@ class BookingDetailsScreenTest {
 
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertIsDisplayed()
   }
+
+  private val fakeBookingRepo2 =
+      object : BookingRepository {
+        override fun getNewUid() = "b1"
+
+        override suspend fun getBooking(bookingId: String) =
+            Booking(
+                bookingId = bookingId,
+                associatedListingId = "l1",
+                listingCreatorId = "u1",
+                price = 50.0,
+                sessionStart = Date(1736546400000),
+                sessionEnd = Date(1736550000000),
+                status = BookingStatus.PENDING,
+                bookerId = "asdf")
+
+        override suspend fun getBookingsByUserId(userId: String) = emptyList<Booking>()
+
+        override suspend fun getAllBookings() = emptyList<Booking>()
+
+        override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
+
+        override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
+
+        override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
+
+        override suspend fun addBooking(booking: Booking) {}
+
+        override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+        override suspend fun deleteBooking(bookingId: String) {}
+
+        override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+        override suspend fun confirmBooking(bookingId: String) {}
+
+        override suspend fun completeBooking(bookingId: String) {}
+
+        override suspend fun cancelBooking(bookingId: String) {}
+      }
+
+  private val fakeListingRepo2 =
+      object : ListingRepository {
+        override fun getNewUid() = "l1"
+
+        override suspend fun getListing(listingId: String) =
+            Request(
+                listingId = listingId,
+                description = "Cours de maths",
+                skill = Skill(skill = "Algebra", mainSubject = MainSubject.ACADEMICS),
+                location = Location(name = "Geneva"))
+
+        override suspend fun getAllListings() = emptyList<Listing>()
+
+        override suspend fun getProposals() = emptyList<Proposal>()
+
+        override suspend fun getRequests() = emptyList<com.android.sample.model.listing.Request>()
+
+        override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
+
+        override suspend fun addProposal(proposal: Proposal) {}
+
+        override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+
+        override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+        override suspend fun deleteListing(listingId: String) {}
+
+        override suspend fun deactivateListing(listingId: String) {}
+
+        override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
+            emptyList<Listing>()
+
+        override suspend fun searchByLocation(location: Location, radiusKm: Double) =
+            emptyList<Listing>()
+      }
+
+  private fun fakeViewModel2() =
+      BookingDetailsViewModel(
+          bookingRepository = fakeBookingRepo2,
+          listingRepository = fakeListingRepo2,
+          profileRepository = fakeProfileRepo)
+
+  @Test
+  fun bookingDetailsScreen_displaysAllSections2() {
+    val vm = fakeViewModel2()
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    // Vérifie les sections visibles
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.SCHEDULE_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.DESCRIPTION_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.STATUS).assertExists()
+  }
 }
