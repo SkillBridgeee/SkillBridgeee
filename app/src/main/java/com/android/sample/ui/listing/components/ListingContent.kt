@@ -357,7 +357,7 @@ fun ListingContent(
         }
 
         // Action section (book button or bookings management)
-        ActionSection(
+        actionSection(
             uiState = uiState,
             onShowBookingDialog = { showBookingDialog = true },
             onApproveBooking = onApproveBooking,
@@ -510,14 +510,14 @@ private fun PostedDate(date: Date) {
 }
 
 /** Action button section (book now or bookings management) */
-private fun LazyListScope.ActionSection(
+private fun LazyListScope.actionSection(
     uiState: ListingUiState,
     onShowBookingDialog: () -> Unit,
     onApproveBooking: (String) -> Unit,
     onRejectBooking: (String) -> Unit
 ) {
   if (uiState.isOwnListing) {
-    BookingsSection(
+    bookingsSection(
         uiState = uiState, onApproveBooking = onApproveBooking, onRejectBooking = onRejectBooking)
   } else {
     item {

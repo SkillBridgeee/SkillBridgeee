@@ -44,8 +44,8 @@ fun BookingDialog(
   val initialStart = if (autoFillDatesForTesting) Date() else null
   val initialEnd = if (autoFillDatesForTesting) Date(System.currentTimeMillis() + 3600000) else null
 
-  var sessionStart by remember { mutableStateOf<Date?>(initialStart) }
-  var sessionEnd by remember { mutableStateOf<Date?>(initialEnd) }
+  var sessionStart by remember { mutableStateOf(initialStart) }
+  var sessionEnd by remember { mutableStateOf(initialEnd) }
   var showStartDatePicker by remember { mutableStateOf(false) }
   var showStartTimePicker by remember { mutableStateOf(false) }
   var showEndDatePicker by remember { mutableStateOf(false) }

@@ -48,7 +48,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onNodeWithText("Bookings").assertIsDisplayed()
@@ -66,7 +66,7 @@ class BookingsSectionTest {
             bookingsLoading = true)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.BOOKINGS_LOADING).assertIsDisplayed()
@@ -84,7 +84,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.NO_BOOKINGS).assertIsDisplayed()
@@ -103,7 +103,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.NO_BOOKINGS).assertDoesNotExist()
@@ -126,7 +126,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onAllNodesWithTag(ListingScreenTestTags.BOOKING_CARD).assertCountEquals(3)
@@ -144,7 +144,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.BOOKINGS_SECTION).assertExists()
@@ -162,7 +162,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.NO_BOOKINGS).assertIsDisplayed()
@@ -182,7 +182,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.APPROVE_BUTTON).assertIsDisplayed()
@@ -202,7 +202,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.REJECT_BUTTON).assertIsDisplayed()
@@ -223,7 +223,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(
+      bookingsSection(
           uiState = uiState, onApproveBooking = { approvedBookingId = it }, onRejectBooking = {})
     }
 
@@ -247,7 +247,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(
+      bookingsSection(
           uiState = uiState, onApproveBooking = {}, onRejectBooking = { rejectedBookingId = it })
     }
 
@@ -272,7 +272,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onAllNodesWithTag(ListingScreenTestTags.BOOKING_CARD).assertCountEquals(3)
@@ -293,7 +293,7 @@ class BookingsSectionTest {
             bookingsLoading = false)
 
     compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
+      bookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.NO_BOOKINGS).assertDoesNotExist()

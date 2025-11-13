@@ -26,11 +26,10 @@ import com.android.sample.ui.listing.ListingUiState
  * @param onRejectBooking Callback when a booking is rejected
  * @param modifier Modifier for the section
  */
-fun LazyListScope.BookingsSection(
+fun LazyListScope.bookingsSection(
     uiState: ListingUiState,
     onApproveBooking: (String) -> Unit,
     onRejectBooking: (String) -> Unit,
-    modifier: Modifier = Modifier
 ) {
   item {
     Text(
