@@ -1,11 +1,13 @@
 package com.android.sample.screen
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.ComposeNavigator
+import androidx.navigation.testing.TestNavHostController
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -15,8 +17,8 @@ import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.newListing.NewListingScreen
-import com.android.sample.ui.newListing.NewSkillScreenTestTag
-import com.android.sample.ui.screens.newSkill.NewListingViewModel
+import com.android.sample.ui.newListing.NewListingScreenTestTag
+import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.theme.SampleAppTheme
 import org.junit.Before
 import org.junit.Rule
@@ -104,9 +106,9 @@ private fun ComposeContentTestRule.openDropdownStable(fieldTag: String) {
 
   val dropdown =
       when (fieldTag) {
-        NewSkillScreenTestTag.SUBJECT_FIELD -> NewSkillScreenTestTag.SUBJECT_DROPDOWN
-        NewSkillScreenTestTag.SUB_SKILL_FIELD -> NewSkillScreenTestTag.SUB_SKILL_DROPDOWN
-        NewSkillScreenTestTag.LISTING_TYPE_FIELD -> NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN
+        NewListingScreenTestTag.SUBJECT_FIELD -> NewListingScreenTestTag.SUBJECT_DROPDOWN
+        NewListingScreenTestTag.SUB_SKILL_FIELD -> NewListingScreenTestTag.SUB_SKILL_DROPDOWN
+        NewListingScreenTestTag.LISTING_TYPE_FIELD -> NewListingScreenTestTag.LISTING_TYPE_DROPDOWN
         else -> error("Unknown dropdown fieldTag")
       }
 
@@ -184,14 +186,14 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.CREATE_LESSONS_TITLE).assertIsDisplayed()
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD).assertIsDisplayed()
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE).assertIsDisplayed()
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION).assertIsDisplayed()
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).assertIsDisplayed()
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.LISTING_TYPE_FIELD).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.SUBJECT_FIELD).assertIsDisplayed()
     composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, true).assertIsDisplayed()
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_SKILL).assertIsDisplayed()
   }
 
   @Test
@@ -205,11 +207,11 @@ class NewSkillScreenTest {
     composeRule.onNodeWithText("Create Listing").assertIsDisplayed()
 
     composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD, itemText = "PROPOSAL")
+        fieldTag = NewListingScreenTestTag.LISTING_TYPE_FIELD, itemText = "PROPOSAL")
     composeRule.onNodeWithText("Create Proposal").assertIsDisplayed()
 
     composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD, itemText = "REQUEST")
+        fieldTag = NewListingScreenTestTag.LISTING_TYPE_FIELD, itemText = "REQUEST")
     composeRule.onNodeWithText("Create Request").assertIsDisplayed()
   }
 
@@ -223,8 +225,8 @@ class NewSkillScreenTest {
     composeRule.waitForIdle()
 
     val text = "Advanced Mathematics"
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE).performTextInput(text)
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE).assertTextContains(text)
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE).performTextInput(text)
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE).assertTextContains(text)
   }
 
   @Test
@@ -236,8 +238,8 @@ class NewSkillScreenTest {
     composeRule.waitForIdle()
 
     val text = "Expert tutor with 5 years experience"
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION).performTextInput(text)
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION).assertTextContains(text)
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION).performTextInput(text)
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION).assertTextContains(text)
   }
 
   @Test
@@ -248,8 +250,8 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("25.50")
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).assertTextContains("25.50")
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE).performTextInput("25.50")
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE).assertTextContains("25.50")
   }
 
   // Dropdown Tests
@@ -261,8 +263,8 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openDropdownStable(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
-    composeRule.waitForNodeStable(NewSkillScreenTestTag.LISTING_TYPE_DROPDOWN)
+    composeRule.openDropdownStable(NewListingScreenTestTag.LISTING_TYPE_FIELD)
+    composeRule.waitForNodeStable(NewListingScreenTestTag.LISTING_TYPE_DROPDOWN)
 
     composeRule.onNodeWithText("PROPOSAL").assertIsDisplayed()
     composeRule.onNodeWithText("REQUEST").assertIsDisplayed()
@@ -277,10 +279,10 @@ class NewSkillScreenTest {
     composeRule.waitForIdle()
 
     composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD, itemText = "PROPOSAL")
+        fieldTag = NewListingScreenTestTag.LISTING_TYPE_FIELD, itemText = "PROPOSAL")
 
     composeRule
-        .onNodeWithTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
+        .onNodeWithTag(NewListingScreenTestTag.LISTING_TYPE_FIELD)
         .assertTextContains("PROPOSAL")
   }
 
@@ -293,10 +295,10 @@ class NewSkillScreenTest {
     composeRule.waitForIdle()
 
     composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.LISTING_TYPE_FIELD, itemText = "REQUEST")
+        fieldTag = NewListingScreenTestTag.LISTING_TYPE_FIELD, itemText = "REQUEST")
 
     composeRule
-        .onNodeWithTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
+        .onNodeWithTag(NewListingScreenTestTag.LISTING_TYPE_FIELD)
         .assertTextContains("REQUEST")
   }
 
@@ -308,8 +310,8 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.openDropdownStable(NewSkillScreenTestTag.SUBJECT_FIELD)
-    composeRule.waitForNodeStable(NewSkillScreenTestTag.SUBJECT_DROPDOWN)
+    composeRule.openDropdownStable(NewListingScreenTestTag.SUBJECT_FIELD)
+    composeRule.waitForNodeStable(NewListingScreenTestTag.SUBJECT_DROPDOWN)
 
     MainSubject.entries.forEach { composeRule.onNodeWithText(it.name).assertIsDisplayed() }
   }
@@ -323,9 +325,9 @@ class NewSkillScreenTest {
     composeRule.waitForIdle()
 
     composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD, itemText = "ACADEMICS")
+        fieldTag = NewListingScreenTestTag.SUBJECT_FIELD, itemText = "ACADEMICS")
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).assertTextContains("ACADEMICS")
+    composeRule.onNodeWithTag(NewListingScreenTestTag.SUBJECT_FIELD).assertTextContains("ACADEMICS")
   }
 
   // Validation Tests
@@ -337,9 +339,9 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_SKILL).performClick()
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INVALID_PRICE_MSG, true).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, true).assertIsDisplayed()
     composeRule.onNodeWithText("Price cannot be empty", true).assertIsDisplayed()
   }
 
@@ -351,9 +353,9 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("abc")
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE).performTextInput("abc")
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INVALID_PRICE_MSG, true).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, true).assertIsDisplayed()
     composeRule.onNodeWithText("Price must be a positive number", true).assertIsDisplayed()
   }
 
@@ -365,9 +367,9 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).performTextInput("-10")
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE).performTextInput("-10")
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INVALID_PRICE_MSG, true).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, true).assertIsDisplayed()
     composeRule.onNodeWithText("Price must be a positive number", true).assertIsDisplayed()
   }
 
@@ -379,9 +381,9 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_SKILL).performClick()
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG, true).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG, true).assertIsDisplayed()
 
     composeRule.onNodeWithText("You must choose a subject", true).assertIsDisplayed()
   }
@@ -394,14 +396,16 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onAllNodesWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD, true).assertCountEquals(0)
+    composeRule
+        .onAllNodesWithTag(NewListingScreenTestTag.SUB_SKILL_FIELD, true)
+        .assertCountEquals(0)
 
     composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
-        itemTagPrefix = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
+        fieldTag = NewListingScreenTestTag.SUBJECT_FIELD,
+        itemTagPrefix = NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
         index = 0)
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.SUB_SKILL_FIELD).assertIsDisplayed()
   }
 
   @Test
@@ -412,15 +416,16 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    // ✅ FIXED: removed unsupported dropdownTag argument
-    composeRule.openDropdownStable(fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD)
+    composeRule.openDropdownStable(fieldTag = NewListingScreenTestTag.SUBJECT_FIELD)
 
-    composeRule.waitForNodeStable(NewSkillScreenTestTag.SUBJECT_DROPDOWN)
+    composeRule.waitForNodeStable(NewListingScreenTestTag.SUBJECT_DROPDOWN)
 
     composeRule.selectDropdownItemByTagStable(
-        itemTagPrefix = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX, index = 0)
+        itemTagPrefix = NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX, index = 0)
 
-    composeRule.onAllNodesWithTag(NewSkillScreenTestTag.SUBJECT_DROPDOWN, true).assertCountEquals(0)
+    composeRule
+        .onAllNodesWithTag(NewListingScreenTestTag.SUBJECT_DROPDOWN, true)
+        .assertCountEquals(0)
   }
 
   @Test
@@ -431,12 +436,12 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_SKILL).performClick()
     composeRule.waitForIdle()
 
     val nodes =
         composeRule
-            .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUBJECT_MSG, true)
+            .onAllNodesWithTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG, true)
             .fetchSemanticsNodes()
 
     org.junit.Assert.assertTrue(nodes.isNotEmpty())
@@ -451,18 +456,77 @@ class NewSkillScreenTest {
     composeRule.waitForIdle()
 
     composeRule.openAndSelectStable(
-        fieldTag = NewSkillScreenTestTag.SUBJECT_FIELD,
-        itemTagPrefix = NewSkillScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
+        fieldTag = NewListingScreenTestTag.SUBJECT_FIELD,
+        itemTagPrefix = NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
         index = 0)
 
-    composeRule.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_SKILL).performClick()
     composeRule.waitForIdle()
 
     val nodes =
         composeRule
-            .onAllNodesWithTag(NewSkillScreenTestTag.INVALID_SUB_SKILL_MSG, true)
+            .onAllNodesWithTag(NewListingScreenTestTag.INVALID_SUB_SKILL_MSG, true)
             .fetchSemanticsNodes()
 
     org.junit.Assert.assertTrue(nodes.isNotEmpty())
+  }
+
+  @Test
+  fun locationInputField_typingShowsSuggestions_andSelectingUpdatesField() {
+    val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
+
+    vm.setLocationSuggestions(listOf(Location(name = "Paris"), Location(name = "Parc Astérix")))
+
+    composeRule.setContent {
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
+      }
+    }
+    composeRule.waitForIdle()
+
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .performTextInput("Par")
+
+    composeRule.waitForIdle()
+
+    composeRule
+        .onAllNodesWithTag(LocationInputFieldTestTags.SUGGESTION, useUnmergedTree = true)
+        .assertCountEquals(2)
+
+    composeRule
+        .onAllNodesWithTag(LocationInputFieldTestTags.SUGGESTION, useUnmergedTree = true)[0]
+        .performClick()
+
+    composeRule.waitForIdle()
+
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .assertTextContains("Paris")
+  }
+
+  @Test
+  fun test_location_user() {
+    val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
+
+    composeRule.setContent {
+      SampleAppTheme {
+        val context = LocalContext.current
+        val nav =
+            TestNavHostController(context).apply {
+              navigatorProvider.addNavigator(ComposeNavigator())
+            }
+
+        NewListingScreen(skillViewModel = vm, profileId = "test", navController = nav)
+      }
+    }
+
+    composeRule.waitForIdle()
+
+    composeRule
+        .onNodeWithTag(NewListingScreenTestTag.BUTTON_USE_MY_LOCATION)
+        .assertExists()
+        .performClick()
   }
 }
