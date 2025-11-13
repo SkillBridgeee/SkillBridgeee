@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users/Profiles collection
+    match /profiles/{userId} {
+      // Allow all operations for emulator/testing
+      // TODO: Tighten these rules before production deployment
+      allow read, write: if true;
+
+      // Skills subcollection under profiles
+      match /skills/{skillId} {
+        allow read, write: if true;
+      }
+    }
+
+    // Listings collection
+    match /listings/{listingId} {
+      // Allow all operations for emulator/testing
+      // TODO: Tighten these rules before production deployment
+      allow read, write: if true;
+    }
+
+    // Bookings collection
+    match /bookings/{bookingId} {
+      // Allow all operations for emulator/testing
+      // TODO: Tighten these rules before production deployment
+      allow read, write: if true;
+    }
+
+    // Ratings collection
+    match /ratings/{ratingId} {
+      // Allow all operations for emulator/testing
+      // TODO: Tighten these rules before production deployment
+      allow read, write: if true;
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
