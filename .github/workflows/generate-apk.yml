@@ -44,7 +44,8 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           if [ -n "$LOCAL_PROPERTIES" ]; then
-            echo "$LOCAL_PROPERTIES" >> local.properties
+            echo "$LOCAL_PROPERTIES" | base64 --decode >> local.properties
+            echo "✅ LOCAL_PROPERTIES decoded and configured"
           else
             echo "::warning::LOCAL_PROPERTIES secret not set. Using default values."
             echo "MAPS_API_KEY=DEFAULT_API_KEY" >> local.properties
