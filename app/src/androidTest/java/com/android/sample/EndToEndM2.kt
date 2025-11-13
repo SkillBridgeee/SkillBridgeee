@@ -2,28 +2,36 @@ package com.android.sample
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.sample.model.user.FakeProfileRepository
 import com.android.sample.model.user.FirestoreProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.components.LocationInputFieldTestTags
+import com.android.sample.ui.listing.ListingScreenTestTags
 import com.android.sample.ui.login.SignInScreenTestTags
+import com.android.sample.ui.newListing.NewSkillScreenTestTag
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.signup.SignUpScreenTestTags
+import com.android.sample.ui.subject.SubjectListTestTags
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
@@ -67,45 +75,14 @@ private fun ComposeContentTestRule.nodeByText(text: String) =
 @RunWith(AndroidJUnit4::class)
 class EndToEndM2 {
 
-  private lateinit var auth: FirebaseAuth
 
-  @get:Rule val compose = createAndroidComposeRule<MainActivity>()
-
-  /*@Before
-  fun setUp() {
-
-    // Connect to Firebase emulators
-    try {
-      Firebase.firestore.useEmulator("10.0.2.2", 8080)
-      Firebase.auth.useEmulator("10.0.2.2", 9099)
-    } catch (_: IllegalStateException) {
-      // Emulator already initialized
-    }
-
-    auth = Firebase.auth
-
-    // Initialize ProfileRepositoryProvider with real Firestore
-    ProfileRepositoryProvider.setForTests(FirestoreProfileRepository(Firebase.firestore))
-
-    // Clean up any existing user before starting
-    auth.signOut()
-  }
-
-  @After
-  fun tearDown() {
-    // Clean up: delete the test user if created
-    try {
-      auth.currentUser?.delete()
-    } catch (_: Exception) {
-      // Ignore deletion errors
-    }
-    auth.signOut()
-  }*/
+    @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
   @Test
-  fun userSignsIn() {
+  fun userSignsInAndDiscoversApp() {
 
-    val testEmail = "guillaume.lepinus@epfl.ch"
+    //--------User Sign-Up, Sign-In and Profile Update Flow--------//
+    val testEmail = "guillaume.lepinuus@epfl.ch"
     val testPassword = "testPassword123!"
 
     waitForTag(compose, SignInScreenTestTags.SIGN_IN_BUTTON)
@@ -217,9 +194,134 @@ class EndToEndM2 {
         .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
         .assertIsDisplayed()
         .assertTextContains("Gay Man")
+    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
+        .performClick()
+        .performTextClearance()
+    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
+        .performTextInput("Gay")
+
+      compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON)
+          .assertIsEnabled()
+          .performClick()
+
+    waitForText(compose, "Gay")
 
     compose.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).assertIsDisplayed().performClick()
 
     waitForTag(compose, HomeScreenTestTags.WELCOME_SECTION)
+
+    //--------End of User Sign-Up, Sign-In and Profile Update Flow--------//
+
+    //--------User Discovers the Home Page of the app and creates a new listing--------//
+
+    compose.onNodeWithTag(HomeScreenTestTags.FAB_ADD)
+        .assertIsDisplayed()
+        .performClick()
+
+    waitForTag(compose, NewSkillScreenTestTag.INPUT_COURSE_TITLE)
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
+        .assertIsDisplayed()
+        .performClick()
+    compose.onNodeWithText("PROPOSAL")
+        .assertIsDisplayed()
+        .performClick()
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
+        .assertTextContains("PROPOSAL")
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE)
+        .assertIsDisplayed()
+        .performClick()
+        .performTextInput("Math Class")
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE)
+        .assertTextContains("Math Class")
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION)
+        .assertIsDisplayed()
+        .performClick()
+        .performTextInput("Learn math with me")
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION)
+        .assertTextContains("Learn math with me")
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE)
+        .assertIsDisplayed()
+        .performClick()
+        .performTextInput("50")
+    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE)
+        .assertTextContains("50")
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD)
+        .performClick()
+
+    compose.onNodeWithText("ACADEMICS").performClick()
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD)
+        .assertTextContains("ACADEMICS")
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD)
+        .performClick()
+
+    compose.onNodeWithText("MATHEMATICS").performClick()
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD)
+        .assertTextContains("MATHEMATICS")
+
+
+    compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION)
+        .performClick()
+        .performTextInput("epfl")
+
+
+
+    waitForText(compose, "EPFL")
+    compose.onNodeWithText("EPFL")
+        .assertIsDisplayed()
+        .performClick()
+
+
+
+      compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION)
+          .assertTextContains("EPFL")
+
+    compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL)
+        .performClick()
+
+
+
+    waitForTag(compose, HomeScreenTestTags.WELCOME_SECTION)
+    compose.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
+
+      compose.onAllNodesWithTag(HomeScreenTestTags.SKILL_CARD)[0]
+          .assertIsDisplayed()
+          .performClick()
+
+    waitForText(compose, "Learn math with me")
+
+    compose.onAllNodesWithText("Learn math with me")[0]
+        .assertIsDisplayed()
+
+    compose.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR)
+        .performClick()
+
+    compose.onNodeWithText("Chemistry")
+        .assertIsDisplayed()
+        .performClick()
+
+      compose.onNodeWithText("Learn math with me")
+          .assertIsNotDisplayed()
+
+      compose.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR)
+          .performClick()
+
+      compose.onNodeWithText("All")
+            .assertIsDisplayed()
+            .performClick()
+
+      compose.onAllNodesWithText("Learn math with me")[0]
+          .assertIsDisplayed()
+
+
   }
 }
