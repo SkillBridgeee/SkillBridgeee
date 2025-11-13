@@ -73,7 +73,7 @@ object ListingScreenTestTags {
 fun ListingScreen(
     listingId: String,
     onNavigateBack: () -> Unit,
-    onBookingCreated: () -> Unit,
+    onBookingCreated: () -> Unit = {},
     viewModel: ListingViewModel = viewModel(),
     autoFillDatesForTesting: Boolean = false
 ) {
