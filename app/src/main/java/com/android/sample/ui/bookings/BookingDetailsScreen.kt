@@ -48,14 +48,25 @@ object BookingDetailsTestTag {
   const val CREATOR_NAME = "booking_creator_name"
   const val CREATOR_EMAIL = "booking_creator_email"
   const val MORE_INFO_BUTTON = "booking_creator_more_info_button"
-
   const val LISTING_SECTION = "booking_listing_section"
   const val SCHEDULE_SECTION = "booking_schedule_section"
   const val DESCRIPTION_SECTION = "booking_description_section"
-
   const val ROW = "booking_detail_row"
 }
 
+/**
+ * Main composable function that displays the booking details screen.
+ *
+ * This function:
+ * - Observes the UI state from [BookingDetailsViewModel].
+ * - Loads the booking data based on the provided [bookingId].
+ * - Displays either a loading/error indicator or the detailed booking content.
+ *
+ * @param bkgViewModel The [BookingDetailsViewModel] responsible for managing the booking data.
+ * @param bookingId The unique identifier of the booking to display.
+ * @param onCreatorClick Callback triggered when the user clicks the "More Info" button of the
+ *   creator.
+ */
 @Composable
 fun BookingDetailsScreen(
     bkgViewModel: BookingDetailsViewModel = viewModel(),
@@ -83,6 +94,20 @@ fun BookingDetailsScreen(
   }
 }
 
+/**
+ * Composable function that displays the main content of the booking details screen.
+ *
+ * It includes:
+ * - Header section
+ * - Creator information
+ * - Course/listing information
+ * - Schedule details
+ * - Listing description
+ *
+ * @param uiState The current [BookingUIState] holding booking, listing, and creator data.
+ * @param onCreatorClick Callback invoked when the "More Info" button is clicked.
+ * @param modifier Optional [Modifier] to apply to the container.
+ */
 @Composable
 fun BookingDetailsContent(
     uiState: BookingUIState,
@@ -136,7 +161,7 @@ private fun BookingHeader(uiState: BookingUIState) {
   val styledText = buildAnnotatedString {
     withStyle(style = SpanStyle(fontSize = prefixSize)) { append(prefixText) }
     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-      append(uiState.listing.skill.skill)
+      append(uiState.listing.displayTitle())
     }
   }
 
