@@ -194,7 +194,13 @@ fun AppNavGraph(
           val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
           com.android.sample.ui.listing.ListingScreen(
-              listingId = listingId, onNavigateBack = { navController.popBackStack() })
+              listingId = listingId,
+              onNavigateBack = {
+                navController.navigate(NavRoutes.HOME) {
+                  popUpTo(0) { inclusive = true }
+                  launchSingleTop = true
+                }
+              })
         }
 
     composable(route = NavRoutes.BOOKING_DETAILS) {
