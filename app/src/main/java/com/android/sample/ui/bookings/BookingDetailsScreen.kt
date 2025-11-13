@@ -1,5 +1,6 @@
 package com.android.sample.ui.bookings
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,7 +37,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.booking.color
+import com.android.sample.model.booking.name
 import com.android.sample.model.listing.ListingType
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -51,6 +56,8 @@ object BookingDetailsTestTag {
   const val LISTING_SECTION = "booking_listing_section"
   const val SCHEDULE_SECTION = "booking_schedule_section"
   const val DESCRIPTION_SECTION = "booking_description_section"
+
+  const val STATUS = "booking_status"
   const val ROW = "booking_detail_row"
 }
 
@@ -168,7 +175,18 @@ private fun BookingHeader(uiState: BookingUIState) {
   Column(
       horizontalAlignment = Alignment.Start,
       modifier = Modifier.testTag(BookingDetailsTestTag.HEADER)) {
-        Text(text = styledText, style = baseStyle, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically) {
+              Text(
+                  text = styledText,
+                  style = baseStyle,
+                  maxLines = 2,
+                  overflow = TextOverflow.Ellipsis)
+              BookingStatus(uiState.booking.status)
+            }
+
         Spacer(modifier = Modifier.height(4.dp))
       }
 }
@@ -333,6 +351,21 @@ fun DetailRow(label: String, value: String, modifier: Modifier = Modifier) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold)
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis)
       }
+}
+
+@Composable
+private fun BookingStatus(status: BookingStatus) {
+  Text(
+      text = status.name(),
+      color = status.color(),
+      fontSize = 8.sp,
+      fontWeight = FontWeight.SemiBold,
+      modifier =
+          Modifier.border(width = 1.dp, color = status.color(), shape = RoundedCornerShape(12.dp))
+              .padding(horizontal = 12.dp, vertical = 6.dp)
+              .testTag(BookingDetailsTestTag.STATUS))
 }

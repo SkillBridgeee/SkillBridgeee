@@ -1,6 +1,7 @@
 package com.android.sample.ui.listing.components
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.android.sample.model.booking.Booking
@@ -36,6 +37,18 @@ class BookingsSectionTest {
           description = "Music enthusiast",
           location = Location(latitude = 40.7128, longitude = -74.0060, name = "New York"))
 
+  private fun setBookingsContent(
+      uiState: ListingUiState,
+      onApprove: (String) -> Unit = {},
+      onReject: (String) -> Unit = {}
+  ) {
+    compose.setContent {
+      LazyColumn {
+        bookingsSection(uiState = uiState, onApproveBooking = onApprove, onRejectBooking = onReject)
+      }
+    }
+  }
+
   @Test
   fun bookingsSection_displaysTitle() {
     val uiState =
@@ -47,9 +60,7 @@ class BookingsSectionTest {
             bookerProfiles = emptyMap(),
             bookingsLoading = false)
 
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
+    setBookingsContent(uiState)
 
     compose.onNodeWithText("Bookings").assertIsDisplayed()
   }
@@ -65,9 +76,7 @@ class BookingsSectionTest {
             bookerProfiles = emptyMap(),
             bookingsLoading = true)
 
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
+    setBookingsContent(uiState)
 
     compose.onNodeWithTag(ListingScreenTestTags.BOOKINGS_LOADING).assertIsDisplayed()
   }
@@ -83,9 +92,7 @@ class BookingsSectionTest {
             bookerProfiles = emptyMap(),
             bookingsLoading = false)
 
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
+    setBookingsContent(uiState)
 
     compose.onNodeWithTag(ListingScreenTestTags.NO_BOOKINGS).assertIsDisplayed()
     compose.onNodeWithText("No bookings yet").assertIsDisplayed()
@@ -102,9 +109,7 @@ class BookingsSectionTest {
             bookerProfiles = mapOf("booker-789" to sampleBooker),
             bookingsLoading = false)
 
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
+    setBookingsContent(uiState)
 
     compose.onNodeWithTag(ListingScreenTestTags.NO_BOOKINGS).assertDoesNotExist()
     compose.onNodeWithTag(ListingScreenTestTags.BOOKING_CARD).assertIsDisplayed()
@@ -125,53 +130,14 @@ class BookingsSectionTest {
             bookerProfiles = mapOf("booker-789" to sampleBooker),
             bookingsLoading = false)
 
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
+    setBookingsContent(uiState)
 
     compose.onAllNodesWithTag(ListingScreenTestTags.BOOKING_CARD).assertCountEquals(3)
   }
 
   @Test
-  fun bookingsSection_hasCorrectTestTag() {
-    val uiState =
-        ListingUiState(
-            listing = null,
-            creator = null,
-            isOwnListing = true,
-            listingBookings = emptyList(),
-            bookerProfiles = emptyMap(),
-            bookingsLoading = false)
-
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
-
-    compose.onNodeWithTag(ListingScreenTestTags.BOOKINGS_SECTION).assertExists()
-  }
-
-  @Test
-  fun bookingsSection_emptyState_displaysInCard() {
-    val uiState =
-        ListingUiState(
-            listing = null,
-            creator = null,
-            isOwnListing = true,
-            listingBookings = emptyList(),
-            bookerProfiles = emptyMap(),
-            bookingsLoading = false)
-
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
-
-    compose.onNodeWithTag(ListingScreenTestTags.NO_BOOKINGS).assertIsDisplayed()
-  }
-
-  @Test
   fun bookingsSection_bookingCards_haveApproveButton() {
     val booking = sampleBooking.copy(status = BookingStatus.PENDING)
-
     val uiState =
         ListingUiState(
             listing = null,
@@ -181,9 +147,7 @@ class BookingsSectionTest {
             bookerProfiles = mapOf("booker-789" to sampleBooker),
             bookingsLoading = false)
 
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
+    setBookingsContent(uiState)
 
     compose.onNodeWithTag(ListingScreenTestTags.APPROVE_BUTTON).assertIsDisplayed()
   }
@@ -191,7 +155,6 @@ class BookingsSectionTest {
   @Test
   fun bookingsSection_bookingCards_haveRejectButton() {
     val booking = sampleBooking.copy(status = BookingStatus.PENDING)
-
     val uiState =
         ListingUiState(
             listing = null,
@@ -201,9 +164,7 @@ class BookingsSectionTest {
             bookerProfiles = mapOf("booker-789" to sampleBooker),
             bookingsLoading = false)
 
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
+    setBookingsContent(uiState)
 
     compose.onNodeWithTag(ListingScreenTestTags.REJECT_BUTTON).assertIsDisplayed()
   }
@@ -222,10 +183,7 @@ class BookingsSectionTest {
             bookerProfiles = mapOf("booker-789" to sampleBooker),
             bookingsLoading = false)
 
-    compose.setContent {
-      BookingsSection(
-          uiState = uiState, onApproveBooking = { approvedBookingId = it }, onRejectBooking = {})
-    }
+    setBookingsContent(uiState, onApprove = { approvedBookingId = it })
 
     compose.onNodeWithTag(ListingScreenTestTags.APPROVE_BUTTON).performClick()
 
@@ -246,10 +204,7 @@ class BookingsSectionTest {
             bookerProfiles = mapOf("booker-789" to sampleBooker),
             bookingsLoading = false)
 
-    compose.setContent {
-      BookingsSection(
-          uiState = uiState, onApproveBooking = {}, onRejectBooking = { rejectedBookingId = it })
-    }
+    setBookingsContent(uiState, onReject = { rejectedBookingId = it })
 
     compose.onNodeWithTag(ListingScreenTestTags.REJECT_BUTTON).performClick()
 
@@ -271,9 +226,7 @@ class BookingsSectionTest {
             bookerProfiles = mapOf("booker-789" to sampleBooker),
             bookingsLoading = false)
 
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
+    setBookingsContent(uiState)
 
     compose.onAllNodesWithTag(ListingScreenTestTags.BOOKING_CARD).assertCountEquals(3)
     compose.onNodeWithText("PENDING").assertExists()
@@ -292,9 +245,7 @@ class BookingsSectionTest {
             bookerProfiles = mapOf("booker-789" to sampleBooker),
             bookingsLoading = false)
 
-    compose.setContent {
-      BookingsSection(uiState = uiState, onApproveBooking = {}, onRejectBooking = {})
-    }
+    setBookingsContent(uiState)
 
     compose.onNodeWithTag(ListingScreenTestTags.NO_BOOKINGS).assertDoesNotExist()
     compose.onNodeWithText("No bookings yet").assertDoesNotExist()

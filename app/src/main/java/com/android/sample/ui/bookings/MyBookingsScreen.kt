@@ -1,4 +1,3 @@
-// Kotlin
 package com.android.sample.ui.bookings
 
 import androidx.compose.foundation.layout.Arrangement
