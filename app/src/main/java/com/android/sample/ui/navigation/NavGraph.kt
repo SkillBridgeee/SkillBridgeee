@@ -195,11 +195,9 @@ fun AppNavGraph(
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
           com.android.sample.ui.listing.ListingScreen(
               listingId = listingId,
-              onNavigateBack = { navController.popBackStack() },
-              onBookingCreated = {
-                // Go to HOME and clear previous entries so back cannot return to LISTING
+              onNavigateBack = {
                 navController.navigate(NavRoutes.HOME) {
-                  popUpTo(NavRoutes.HOME) { inclusive = false } // keep HOME as root
+                  popUpTo(0) { inclusive = true }
                   launchSingleTop = true
                 }
               })
