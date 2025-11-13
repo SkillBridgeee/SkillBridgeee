@@ -325,61 +325,33 @@ fun ListingContent(
   LazyColumn(
       modifier = modifier.fillMaxSize().padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Type badge
-        item { TypeBadge(listingType = listing.type) }
         item {
+          TypeBadge(listingType = listing.type)
+
           // Title/Description
           Text(
               text = listing.displayTitle(),
               style = MaterialTheme.typography.headlineMedium,
               fontWeight = FontWeight.Bold,
               modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
-        }
 
-        item {
           // Description card (if present)
-          if (listing.description.isNotBlank()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors =
-                    CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                  Text(
-                      text = listing.description,
-                      style = MaterialTheme.typography.bodyLarge,
-                      modifier = Modifier.padding(16.dp).testTag(ListingScreenTestTags.DESCRIPTION))
-                }
-          }
-        }
+          DescriptionCard(listing.description)
 
-        item {
           // Creator info (if available)
           creator?.let { CreatorCard(it) }
-        }
 
-        item {
           // Skill details
           SkillDetailsCard(skill = listing.skill)
-        }
 
-        item {
           // Location
           LocationCard(locationName = listing.location.name)
-        }
 
-        item {
           // Hourly rate
           HourlyRateCard(hourlyRate = listing.hourlyRate)
-        }
 
-        item {
           // Created date
-          val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-          Text(
-              text = "Posted on ${dateFormat.format(listing.createdAt)}",
-              style = MaterialTheme.typography.bodySmall,
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
+          PostedDate(listing.createdAt)
 
           Spacer(Modifier.height(8.dp))
         }
@@ -419,6 +391,18 @@ private fun TypeBadge(listingType: ListingType, modifier: Modifier = Modifier) {
       style = MaterialTheme.typography.labelLarge,
       color = color,
       modifier = modifier.testTag(ListingScreenTestTags.TYPE_BADGE))
+}
+
+@Composable
+private fun DescriptionCard(description: String) {
+  Card(
+      modifier = Modifier.fillMaxWidth(),
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Text(
+            text = description.ifBlank { "This Listing has no Description." },
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(16.dp).testTag(ListingScreenTestTags.DESCRIPTION))
+      }
 }
 
 /** Creator information card */
@@ -513,6 +497,16 @@ private fun HourlyRateCard(hourlyRate: Double) {
               modifier = Modifier.testTag(ListingScreenTestTags.HOURLY_RATE))
         }
   }
+}
+
+@Composable
+private fun PostedDate(date: Date) {
+  val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
+  Text(
+      text = "Posted on ${dateFormat.format(date)}",
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
 }
 
 /** Action button section (book now or bookings management) */
