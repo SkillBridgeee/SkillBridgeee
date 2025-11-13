@@ -1,5 +1,8 @@
-package com.android.sample.ui.screens.newSkill
+package com.android.sample.ui.newListing
 
+import android.content.Context
+import android.location.Address
+import android.location.Geocoder
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +12,7 @@ import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.ListingType
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
+import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
@@ -17,6 +21,7 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.skill.SkillsHelper
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -371,5 +376,65 @@ class NewListingViewModel(
 
   fun clearAddSuccess() {
     _uiState.update { it.copy(addSuccess = false) }
+  }
+
+  /**
+   * Fetches the current GPS location using the provided [GpsLocationProvider] and updates the UI
+   * state with the obtained location.
+   *
+   * @param provider The [GpsLocationProvider] used to obtain the current GPS location.
+   * @param context The [Context] used for geocoding the location into a human-readable address.
+   */
+  @Suppress("DEPRECATION")
+  fun fetchLocationFromGps(provider: GpsLocationProvider, context: Context) {
+    viewModelScope.launch {
+      try {
+        val androidLoc = provider.getCurrentLocation()
+
+        if (androidLoc != null) {
+          val geocoder = Geocoder(context, Locale.getDefault())
+          val addresses: List<Address> =
+              geocoder.getFromLocation(androidLoc.latitude, androidLoc.longitude, 1)?.toList()
+                  ?: emptyList()
+
+          val addressText =
+              if (addresses.isNotEmpty()) {
+                val address = addresses[0]
+                listOfNotNull(address.locality, address.adminArea, address.countryName)
+                    .joinToString(", ")
+              } else {
+                "${androidLoc.latitude}, ${androidLoc.longitude}"
+              }
+
+          val mapLocation =
+              Location(
+                  latitude = androidLoc.latitude,
+                  longitude = androidLoc.longitude,
+                  name = addressText)
+
+          _uiState.update {
+            it.copy(
+                selectedLocation = mapLocation,
+                locationQuery = addressText,
+                invalidLocationMsg = null)
+          }
+        } else {
+          _uiState.update { it.copy(invalidLocationMsg = "Failed to obtain GPS location") }
+        }
+      } catch (_: SecurityException) {
+        _uiState.update { it.copy(invalidLocationMsg = "Location permission denied") }
+      } catch (_: Exception) {
+        _uiState.update { it.copy(invalidLocationMsg = "Failed to obtain GPS location") }
+      }
+    }
+  }
+  /** Handles the event when location permission is denied by setting an error message. */
+  fun onLocationPermissionDenied() {
+    _uiState.update { it.copy(invalidLocationMsg = "Location permission denied") }
+  }
+
+  /** Sets the list of location suggestions in the UI state. */
+  fun setLocationSuggestions(list: List<Location>) {
+    _uiState.update { it.copy(locationSuggestions = list) }
   }
 }
