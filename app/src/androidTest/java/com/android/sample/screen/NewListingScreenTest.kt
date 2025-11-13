@@ -465,6 +465,4 @@ class NewSkillScreenTest {
 
     org.junit.Assert.assertTrue(nodes.isNotEmpty())
   }
-
-
 }
