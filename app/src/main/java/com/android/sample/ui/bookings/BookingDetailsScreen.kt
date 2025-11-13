@@ -351,7 +351,9 @@ fun DetailRow(label: String, value: String, modifier: Modifier = Modifier) {
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold)
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis)
       }
 }
 
