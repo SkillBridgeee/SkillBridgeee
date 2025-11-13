@@ -69,6 +69,8 @@ class EndToEndM2 {
   @Test
   fun userSignsInAndDiscoversApp() {
 
+    compose.waitForIdle()
+
     // --------User Sign-Up, Sign-In and Profile Update Flow--------//
     val testEmail = "guillaume.lepinuuus@epfl.ch"
     val testPassword = "testPassword123!"
