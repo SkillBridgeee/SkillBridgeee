@@ -142,6 +142,7 @@ class BookingDetailsScreenTest {
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertExists()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.SCHEDULE_SECTION).assertExists()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.DESCRIPTION_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.STATUS).assertExists()
 
     // Vérifie le nom et email du créateur
     composeTestRule
