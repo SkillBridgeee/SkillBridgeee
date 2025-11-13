@@ -432,4 +432,9 @@ class NewListingViewModel(
   fun onLocationPermissionDenied() {
     _uiState.update { it.copy(invalidLocationMsg = "Location permission denied") }
   }
+
+  /** Sets the list of location suggestions in the UI state. */
+  fun setLocationSuggestions(list: List<Location>) {
+    _uiState.update { it.copy(locationSuggestions = list) }
+  }
 }

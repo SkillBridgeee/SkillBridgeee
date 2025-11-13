@@ -465,4 +465,44 @@ class NewSkillScreenTest {
 
     org.junit.Assert.assertTrue(nodes.isNotEmpty())
   }
+
+  @Test
+  fun locationInputField_typingShowsSuggestions_andSelectingUpdatesField() {
+    val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
+
+    // Manually inject suggestions into UI state
+    vm.setLocationSuggestions(listOf(Location(name = "Paris"), Location(name = "Parc Astérix")))
+
+    composeRule.setContent {
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
+      }
+    }
+    composeRule.waitForIdle()
+
+    // Step 1: Type into field
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .performTextInput("Par")
+
+    composeRule.waitForIdle()
+
+    // Step 2: Check suggestions appear
+    composeRule
+        .onAllNodesWithTag(LocationInputFieldTestTags.SUGGESTION, useUnmergedTree = true)
+        .assertCountEquals(2)
+
+    // Step 3: Click first suggestion
+    composeRule
+        .onAllNodesWithTag(LocationInputFieldTestTags.SUGGESTION, useUnmergedTree = true)[0]
+        .performClick()
+
+    composeRule.waitForIdle()
+
+    // Step 4: Field updates
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .assertTextContains("Paris")
+  }
 }
