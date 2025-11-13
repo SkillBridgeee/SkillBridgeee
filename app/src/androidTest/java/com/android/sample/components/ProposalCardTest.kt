@@ -30,6 +30,7 @@ class ProposalCardTest {
       hourlyRate: Double = 25.0,
       locationName: String = "Campus Library",
       isActive: Boolean = true,
+      title: String = "This Listing has no title",
       skill: Skill =
           Skill(
               mainSubject = MainSubject.ACADEMICS,
@@ -42,6 +43,7 @@ class ProposalCardTest {
         listingId = id,
         creatorUserId = creatorId,
         skill = skill,
+        title = title,
         description = description,
         location = Location(name = locationName),
         createdAt = createdAt,
@@ -175,6 +177,7 @@ class ProposalCardTest {
     val proposal =
         makeProposal(
             description = "",
+            title = "Piano Lessons",
             skill =
                 Skill(
                     mainSubject = MainSubject.MUSIC,
@@ -188,7 +191,7 @@ class ProposalCardTest {
     composeRule
         .onNodeWithTag(ProposalCardTestTags.TITLE, useUnmergedTree = true)
         .assertIsDisplayed()
-    composeRule.onNodeWithText("Piano").assertIsDisplayed()
+    composeRule.onNodeWithText("Piano Lessons").assertIsDisplayed()
   }
 
   @Test
