@@ -22,8 +22,7 @@ sealed class Listing {
   abstract val hourlyRate: Double
   abstract val type: ListingType
 
-  /** Display title: prefer description, then skill text, then main subject name */
-  // todo not sure very relevant because title cannot be blank
+  // Display title
   fun displayTitle(): String = title.ifBlank { "This Listing has no title" }
 }
 
