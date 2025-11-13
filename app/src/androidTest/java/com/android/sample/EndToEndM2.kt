@@ -270,6 +270,7 @@ class EndToEndM2 {
     waitForTag(compose, MyBookingsPageTestTag.EMPTY)
     compose.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
     // done
+    //test
   }
 
 
