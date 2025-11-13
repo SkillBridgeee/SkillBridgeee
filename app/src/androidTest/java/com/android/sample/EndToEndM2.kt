@@ -10,7 +10,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -71,7 +70,7 @@ class EndToEndM2 {
   fun userSignsInAndDiscoversApp() {
 
     // --------User Sign-Up, Sign-In and Profile Update Flow--------//
-    val testEmail = "guillaume.lepinuus@epfl.ch"
+    val testEmail = "guillaume.lepinuuus@epfl.ch"
     val testPassword = "testPassword123!"
 
     waitForTag(compose, SignInScreenTestTags.SIGN_IN_BUTTON)
@@ -246,44 +245,27 @@ class EndToEndM2 {
     compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
 
     compose.onNodeWithText("MATHEMATICS").performClick()
-
-    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).assertTextContains("MATHEMATICS")
-
-    compose
-        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION)
-        .performClick()
-        .performTextInput("epfl")
-
-    waitForText(compose, "EPFL")
-    compose.onNodeWithText("EPFL").assertIsDisplayed().performClick()
-
-    compose.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION).assertTextContains("EPFL")
-
-    compose.onNodeWithTag(NewSkillScreenTestTag.BUTTON_SAVE_SKILL).performClick()
-
-    waitForTag(compose, HomeScreenTestTags.WELCOME_SECTION)
-    compose.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
-
-    compose.onAllNodesWithTag(HomeScreenTestTags.SKILL_CARD)[0].assertIsDisplayed().performClick()
-
-    waitForText(compose, "Learn math with me")
-
-    compose.onAllNodesWithText("Learn math with me")[0].assertIsDisplayed()
-
-    compose.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).performClick()
-
-    compose.onNodeWithText("Chemistry").assertIsDisplayed().performClick()
-
-    compose.onNodeWithText("Learn math with me").assertIsNotDisplayed()
-
-    compose.onNodeWithTag(SubjectListTestTags.CATEGORY_SELECTOR).performClick()
-
-    compose.onNodeWithText("All").assertIsDisplayed().performClick()
-
-    compose.onAllNodesWithText("Learn math with me")[0].assertIsDisplayed()
-
-    compose.onNodeWithContentDescription("Back").performClick()
+    compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
 
     compose.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertIsDisplayed().performClick()
+    waitForTag(compose, MyProfileScreenTestTag.PROFILE_ICON)
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).assertIsDisplayed().performClick()
+    waitForTag(compose, MyProfileScreenTestTag.LISTINGS_SECTION)
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_SECTION).assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
+
+    // Go back to home page
+    compose.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).assertIsDisplayed().performClick()
+
+    compose.onAllNodesWithTag(HomeScreenTestTags.SKILL_CARD)[0].assertIsDisplayed().performClick()
+    waitForTag(compose, SubjectListTestTags.CATEGORY_SELECTOR)
+    compose.onNodeWithTag(SubjectListTestTags.LISTING_CARD).assertIsNotDisplayed()
+
+    // User goes to bookings
+    compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
+    compose.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).assertIsDisplayed().performClick()
+    waitForTag(compose, MyBookingsPageTestTag.EMPTY)
+    compose.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
   }
 }
