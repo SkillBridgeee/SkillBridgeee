@@ -51,6 +51,7 @@ class ListingCardTest {
       description: String = "Beginner piano coaching",
       hourlyRate: Double = 25.0,
       locationName: String = "Campus East",
+      title: String = "This Listing has no title",
       skill: Skill =
           Skill(
               mainSubject = MainSubject.MUSIC,
@@ -62,6 +63,7 @@ class ListingCardTest {
         listingId = listingId,
         creatorUserId = creatorUserId,
         skill = skill,
+        title = title,
         description = description,
         location = Location(name = locationName),
         createdAt = Date(),
@@ -103,7 +105,7 @@ class ListingCardTest {
     composeRule.onNodeWithTag(ListingCardTestTags.CARD).assertIsDisplayed()
 
     // Title / name of the listing
-    composeRule.onNodeWithText("Beginner piano coaching").assertIsDisplayed()
+    composeRule.onNodeWithText("This Listing has no title").assertIsDisplayed()
 
     // Tutor line: "by Alice Johnson"
     composeRule.onNodeWithText("by Alice Johnson").assertIsDisplayed()
@@ -191,6 +193,7 @@ class ListingCardTest {
             creatorUserId = "tutor-anon",
             description = "Math tutoring for IB exams",
             hourlyRate = 30.0,
+            title = "Math tutoring for IB exams",
             locationName = "Library Hall")
 
     composeRule.setContent {
@@ -204,8 +207,10 @@ class ListingCardTest {
       }
     }
 
-    // Title from listing.description
-    composeRule.onNodeWithText("Math tutoring for IB exams").assertIsDisplayed()
+    // Title
+    composeRule
+        .onNodeWithText("Math tutoring for IB exams", useUnmergedTree = true)
+        .assertIsDisplayed()
 
     // Tutor line falls back to creatorUserId ("by tutor-anon")
     composeRule.onNodeWithText("by tutor-anon").assertIsDisplayed()
@@ -225,6 +230,7 @@ class ListingCardTest {
             description = "",
             hourlyRate = 20.0,
             locationName = "Music Hall",
+            title = "Cours de Piano",
             skill =
                 Skill(
                     mainSubject = MainSubject.MUSIC,
@@ -243,18 +249,15 @@ class ListingCardTest {
       }
     }
 
-    // Since description = "", we expect the title to fall back to skill = "PIANO"
-    composeRule.onNodeWithText("PIANO").assertIsDisplayed()
+    composeRule.onNodeWithText("Cours de Piano").assertIsDisplayed()
     // We still expect correct tutor fallback text
     composeRule.onNodeWithText("by Bob Smith").assertIsDisplayed()
   }
 
   @Test
-  fun listingCard_titleFallsBackToMainSubjectWhenDescriptionAndSkillBlank() {
+  fun listingCard_titleFallsBackToThisListingHasNoTitle() {
     val tutor = fakeTutor(name = "Charlie", userId = "tutor-88")
 
-    // Here: description = "", skill.skill = "".
-    // That should make the card fall back to mainSubject.name ("MUSIC").
     val listing =
         fakeListing(
             listingId = "listing-subject-fallback",
@@ -281,7 +284,7 @@ class ListingCardTest {
     }
 
     // Expect fallback to mainSubject.name, i.e. "MUSIC"
-    composeRule.onNodeWithText("MUSIC").assertIsDisplayed()
+    composeRule.onNodeWithText("This Listing has no title").assertIsDisplayed()
     composeRule.onNodeWithText("by Charlie").assertIsDisplayed()
   }
 

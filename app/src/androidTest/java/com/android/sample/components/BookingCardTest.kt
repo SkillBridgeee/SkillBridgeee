@@ -53,7 +53,8 @@ class BookingCardTest {
             Request(
                 listingId = "listing123",
                 creatorUserId = "creator123",
-                skill = Skill(skill = title),
+                title = title,
+                skill = Skill(skill = "Math"),
                 description = "Looking for a math tutor",
                 hourlyRate = rate,
                 isActive = true)
@@ -61,7 +62,8 @@ class BookingCardTest {
             Proposal(
                 listingId = "listing123",
                 creatorUserId = "creator123",
-                skill = Skill(skill = title),
+                title = title,
+                skill = Skill(skill = "Math"),
                 description = "Offering math tutoring",
                 hourlyRate = rate,
                 isActive = true)
