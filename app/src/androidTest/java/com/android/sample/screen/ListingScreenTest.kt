@@ -340,6 +340,20 @@ class ListingScreenTest {
   }
 
   @Test
+  fun push_butto() {
+    val vm =
+        createViewModel(
+            listing = sampleRequest, creator = sampleCreator.copy(userId = "creator-789"))
+
+    compose.setContent {
+      ListingScreen(listingId = "listing-456", onNavigateBack = {}, viewModel = vm)
+    }
+
+    compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON).performClick()
+    compose.onNodeWithTag(ListingScreenTestTags.BOOKING_DIALOG).assertIsDisplayed()
+  }
+
+  @Test
   fun listingScreen_navigationCallback_isProvided() {
     compose.setContent {
       ListingScreen(
