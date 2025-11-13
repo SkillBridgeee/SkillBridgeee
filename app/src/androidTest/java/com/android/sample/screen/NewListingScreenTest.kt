@@ -15,8 +15,8 @@ import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.newListing.NewListingScreen
+import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.newListing.NewSkillScreenTestTag
-import com.android.sample.ui.screens.newSkill.NewListingViewModel
 import com.android.sample.ui.theme.SampleAppTheme
 import org.junit.Before
 import org.junit.Rule
