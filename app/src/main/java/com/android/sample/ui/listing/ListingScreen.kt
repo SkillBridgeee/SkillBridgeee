@@ -73,6 +73,7 @@ object ListingScreenTestTags {
 fun ListingScreen(
     listingId: String,
     onNavigateBack: () -> Unit,
+    onBookingCreated: () -> Unit,
     viewModel: ListingViewModel = viewModel(),
     autoFillDatesForTesting: Boolean = false
 ) {
@@ -84,7 +85,7 @@ fun ListingScreen(
   // Helper function to handle success dialog dismissal
   val handleSuccessDismiss: () -> Unit = {
     viewModel.clearBookingSuccess()
-    onNavigateBack()
+    onBookingCreated()
   }
 
   // Show success dialog when booking is created
