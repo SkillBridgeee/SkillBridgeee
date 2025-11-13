@@ -81,4 +81,34 @@ class NewListingViewModelLocationRobolectricTest {
     vm.onLocationPermissionDenied()
     assertNotNull(vm.uiState.value.invalidLocationMsg)
   }
+
+    @Test
+    fun fetchLocationFromGps_nullLocation_setsError() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val vm = NewListingViewModel()
+
+        val mockProvider = mockk<GpsLocationProvider>()
+        coEvery { mockProvider.getCurrentLocation() } returns null
+
+        vm.fetchLocationFromGps(mockProvider, context)
+        advanceUntilIdle()
+
+        val s = vm.uiState.value
+        assertEquals("Failed to obtain GPS location", s.invalidLocationMsg)
+    }
+
+    @Test
+    fun fetchLocationFromGps_providerThrows_setsError() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val vm = NewListingViewModel()
+
+        val mockProvider = mockk<GpsLocationProvider>()
+        coEvery { mockProvider.getCurrentLocation() } throws RuntimeException("boom")
+
+        vm.fetchLocationFromGps(mockProvider, context)
+        advanceUntilIdle()
+
+        val s = vm.uiState.value
+        assertEquals("Failed to obtain GPS location", s.invalidLocationMsg)
+    }
 }
