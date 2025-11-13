@@ -101,6 +101,8 @@ fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewLi
       rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
           listingViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
+        } else {
+          listingViewModel.onLocationPermissionDenied()
         }
       }
 

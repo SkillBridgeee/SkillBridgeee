@@ -428,4 +428,8 @@ class NewListingViewModel(
       }
     }
   }
+  /** Handles the event when location permission is denied by setting an error message. */
+  fun onLocationPermissionDenied() {
+    _uiState.update { it.copy(invalidLocationMsg = "Location permission denied") }
+  }
 }
