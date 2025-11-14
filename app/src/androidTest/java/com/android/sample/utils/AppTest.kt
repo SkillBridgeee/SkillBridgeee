@@ -5,16 +5,37 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import com.android.sample.HttpClientProvider
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.components.BottomBarTestTag
+import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Before
 
 abstract class AppTest() {
 
-  @Before open fun setUp() {}
+  abstract fun createInitializedProfileRepo(): ProfileRepository
 
-  @After open fun tearDown() {}
+  open fun initializeHTTPClient(): OkHttpClient = FakeHttpClient.getClient()
+
+  val profileRepository: ProfileRepository
+    get() = ProfileRepositoryProvider.repository
+
+  @Before
+  open fun setUp() {
+    ProfileRepositoryProvider.setForTests(createInitializedProfileRepo())
+    HttpClientProvider.client = initializeHTTPClient()
+  }
+
+  @After
+  open fun tearDown() {
+    if (FirebaseEmulator.isRunning) {
+      FirebaseEmulator.auth.signOut()
+      FirebaseEmulator.clearAuthEmulator()
+    }
+  }
 
   fun ComposeTestRule.enterText(testTag: String, text: String) {
     onNodeWithTag(testTag).performTextClearance()
