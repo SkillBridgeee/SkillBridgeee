@@ -23,6 +23,7 @@ import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.map.MapScreenTestTags
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
+import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -109,6 +110,8 @@ class BottomNavBarTest {
       val profileViewModel: MyProfileViewModel = viewModel(factory = factory)
       val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
 
+      val newListingViewModel: NewListingViewModel = viewModel(factory = factory)
+
       AppNavGraph(
           navController = controller,
           bookingsViewModel = bookingsViewModel,
@@ -116,6 +119,7 @@ class BottomNavBarTest {
           mainPageViewModel = mainPageViewModel,
           authViewModel =
               AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
+          newListingViewModel = newListingViewModel,
           onGoogleSignIn = {})
       BottomNavBar(navController = controller)
     }

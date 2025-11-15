@@ -12,9 +12,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
+
+object BottomBarTestTag {
+  const val NAV_HOME = "nav_home"
+  const val NAV_BOOKINGS = "nav_bookings"
+  const val NAV_MAP = "nav_map"
+  const val NAV_PROFILE = "nav_profile"
+}
 
 /**
  * BottomNavBar - Main navigation bar component for SkillBridge app
@@ -59,10 +65,10 @@ fun BottomNavBar(navController: NavHostController) {
     items.forEach { item ->
       val itemModifier =
           when (item.route) {
-            NavRoutes.HOME -> Modifier.testTag(MyBookingsPageTestTag.NAV_HOME)
-            NavRoutes.BOOKINGS -> Modifier.testTag(MyBookingsPageTestTag.NAV_BOOKINGS)
-            NavRoutes.PROFILE -> Modifier.testTag(MyBookingsPageTestTag.NAV_PROFILE)
-            NavRoutes.MAP -> Modifier.testTag(MyBookingsPageTestTag.NAV_MAP)
+            NavRoutes.HOME -> Modifier.testTag(BottomBarTestTag.NAV_HOME)
+            NavRoutes.BOOKINGS -> Modifier.testTag(BottomBarTestTag.NAV_BOOKINGS)
+            NavRoutes.PROFILE -> Modifier.testTag(BottomBarTestTag.NAV_PROFILE)
+            NavRoutes.MAP -> Modifier.testTag(BottomBarTestTag.NAV_MAP)
 
             // Add NAV_MESSAGES mapping here if needed
             else -> Modifier

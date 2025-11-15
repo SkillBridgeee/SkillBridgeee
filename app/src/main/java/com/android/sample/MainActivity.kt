@@ -30,6 +30,7 @@ import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
+import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -99,6 +100,9 @@ class MyViewModelFactory(private val userId: String) : ViewModelProvider.Factory
       MainPageViewModel::class.java -> {
         MainPageViewModel() as T
       }
+      NewListingViewModel::class.java -> {
+        NewListingViewModel() as T
+      }
       else -> throw IllegalArgumentException("Unknown ViewModel class")
     }
   }
@@ -153,6 +157,7 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val bookingsViewModel: MyBookingsViewModel = viewModel(factory = factory)
   val profileViewModel: MyProfileViewModel = viewModel(factory = factory)
   val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
+  val newListingViewModel: NewListingViewModel = viewModel(factory = factory)
 
   // Define main screens that should show bottom nav
   val mainScreenRoutes =
@@ -174,6 +179,7 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
               bookingsViewModel = bookingsViewModel,
               profileViewModel,
               mainPageViewModel,
+              newListingViewModel = newListingViewModel,
               authViewModel = authViewModel,
               onGoogleSignIn = onGoogleSignIn)
         }

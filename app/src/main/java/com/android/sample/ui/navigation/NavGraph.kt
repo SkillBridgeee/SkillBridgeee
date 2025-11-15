@@ -22,6 +22,7 @@ import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.newListing.NewListingScreen
+import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.profile.ProfileScreen
@@ -69,6 +70,7 @@ fun AppNavGraph(
     bookingsViewModel: MyBookingsViewModel,
     profileViewModel: MyProfileViewModel,
     mainPageViewModel: MainPageViewModel,
+    newListingViewModel: NewListingViewModel,
     authViewModel: AuthenticationViewModel,
     onGoogleSignIn: () -> Unit
 ) {
@@ -149,7 +151,10 @@ fun AppNavGraph(
           ->
           val profileId = backStackEntry.arguments?.getString("profileId") ?: ""
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.NEW_SKILL) }
-          NewListingScreen(profileId = profileId, navController = navController)
+          NewListingScreen(
+              profileId = profileId,
+              navController = navController,
+              skillViewModel = newListingViewModel)
         }
 
     composable(
