@@ -1,14 +1,14 @@
-package com.android.sample.utils.fakeRepo
+package com.android.sample.utils.fakeRepo.fakeProfile
 
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
-import com.android.sample.model.user.ProfileRepository
-import java.util.*
+import java.util.UUID
 
 /**
- * A fake implementation of [ProfileRepository] that provides a predefined set of user profiles.
+ * A fake implementation of [com.android.sample.model.user.ProfileRepository] that provides a
+ * predefined set of user profiles.
  *
  * This mock repository is used for testing and development purposes, simulating a repository with
  * actual profiles without requiring a real backend.
@@ -24,7 +24,7 @@ import java.util.*
  * - Testing UI rendering of tutors and students.
  * - Simulating user interactions such as profile lookup.
  */
-class ProfileFake : ProfileRepository {
+class ProfileFakeWorking : FakeProfileRepo {
 
   private val profiles: List<Profile> =
       listOf(
@@ -74,4 +74,12 @@ class ProfileFake : ProfileRepository {
   override suspend fun getProfileById(userId: String): Profile? = null
 
   override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
+
+  override fun getCurrentUserId(): String {
+    return profiles.get(0).userId
+  }
+
+  override fun getCurrentUserName(): String? {
+    return profiles.get(0).name
+  }
 }

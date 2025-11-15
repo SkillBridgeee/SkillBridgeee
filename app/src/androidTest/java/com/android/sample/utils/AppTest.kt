@@ -21,7 +21,6 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.rating.RatingRepository
-import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
@@ -31,13 +30,14 @@ import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.profile.MyProfileViewModel
+import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
 import kotlin.collections.contains
 import org.junit.After
 import org.junit.Before
 
 abstract class AppTest() {
 
-  abstract fun createInitializedProfileRepo(): ProfileRepository
+  abstract fun createInitializedProfileRepo(): FakeProfileRepo
 
   abstract fun createInitializedListingRepo(): ListingRepository
 
@@ -45,7 +45,7 @@ abstract class AppTest() {
 
   abstract fun createInitializedRatingRepo(): RatingRepository
 
-  val profileRepository: ProfileRepository
+  val profileRepository: FakeProfileRepo
     get() = createInitializedProfileRepo()
 
   val listingRepository: ListingRepository
@@ -84,7 +84,8 @@ abstract class AppTest() {
         MainPageViewModel(
             profileRepository = profileRepository, listingRepository = listingRepository)
 
-    UserSessionManager.setCurrentUserId("creator_1")
+    val currentUserId = profileRepository.getCurrentUserId()
+    UserSessionManager.setCurrentUserId(currentUserId)
   }
 
   @Composable

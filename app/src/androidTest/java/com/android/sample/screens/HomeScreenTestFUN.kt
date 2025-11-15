@@ -9,14 +9,14 @@ import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.skill.MainSubject
-import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.utils.AppTest
 import com.android.sample.utils.fakeRepo.BookingFake
 import com.android.sample.utils.fakeRepo.ListingFake
-import com.android.sample.utils.fakeRepo.ProfileFake
 import com.android.sample.utils.fakeRepo.RatingFake
+import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
+import com.android.sample.utils.fakeRepo.fakeProfile.ProfileFakeWorking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -25,8 +25,8 @@ class HomeScreenTestFUN : AppTest() {
 
   @get:Rule val composeTestRule = createComposeRule()
 
-  override fun createInitializedProfileRepo(): ProfileRepository {
-    return ProfileFake()
+  override fun createInitializedProfileRepo(): FakeProfileRepo {
+    return ProfileFakeWorking()
   }
 
   override fun createInitializedListingRepo(): ListingRepository {
