@@ -70,7 +70,7 @@ fun AppNavGraph(
     bookingsViewModel: MyBookingsViewModel,
     profileViewModel: MyProfileViewModel,
     mainPageViewModel: MainPageViewModel,
-    newListingViewModel: NewListingViewModel = viewModel(),
+    newListingViewModel: NewListingViewModel,
     authViewModel: AuthenticationViewModel,
     onGoogleSignIn: () -> Unit
 ) {
