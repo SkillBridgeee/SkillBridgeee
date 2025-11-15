@@ -59,8 +59,9 @@ class HomeScreenTestFUN : AppTest() {
   fun testWelcomeSection() {
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertIsDisplayed()
-    // TODO changer le hard code
-    composeTestRule.onNodeWithText("Welcome back, Alice!").assertIsDisplayed()
+    composeTestRule
+        .onNodeWithText("Welcome back, ${profileRepository.getCurrentUserName()}!")
+        .assertIsDisplayed()
   }
 
   @Test
