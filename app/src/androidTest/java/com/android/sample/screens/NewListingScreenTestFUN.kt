@@ -19,39 +19,33 @@ import org.junit.Test
 
 class NewListingScreenTestFUN : AppTest() {
 
-    @get:Rule val composeTestRule = createComposeRule()
+  @get:Rule val composeTestRule = createComposeRule()
 
+  override fun createInitializedProfileRepo(): FakeProfileRepo {
+    return ProfileFakeWorking()
+  }
 
-    override fun createInitializedProfileRepo(): FakeProfileRepo {
-        return ProfileFakeWorking()
-    }
+  override fun createInitializedListingRepo(): ListingRepository {
+    return ListingFake()
+  }
 
-    override fun createInitializedListingRepo(): ListingRepository {
-        return ListingFake()
-    }
+  override fun createInitializedBookingRepo(): BookingRepository {
+    return BookingFake()
+  }
 
-    override fun createInitializedBookingRepo(): BookingRepository {
-        return BookingFake()
-    }
+  override fun createInitializedRatingRepo(): RatingRepository {
+    return RatingFake()
+  }
 
-    override fun createInitializedRatingRepo(): RatingRepository {
-        return RatingFake()
-    }
+  @Before
+  override fun setUp() {
+    super.setUp()
+    composeTestRule.setContent { CreateEveryThing() }
+    composeTestRule.navigateToNewListing()
+  }
 
-
-    @Before
-    override fun setUp() {
-        super.setUp()
-        composeTestRule.setContent { CreateEveryThing() }
-        composeTestRule.navigateToNewListing()
-    }
-
-
-
-    @Test
-    fun testGoodScreen() {
-        composeTestRule.onNodeWithTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE)
-            .assertIsDisplayed()
-    }
-
+  @Test
+  fun testGoodScreen() {
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE).assertIsDisplayed()
+  }
 }
