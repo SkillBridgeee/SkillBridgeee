@@ -479,12 +479,12 @@ class MyProfileScreenTest {
   }
 
   @Test
-  fun infoRankingBarIsDisplayed() {
+  fun tabBar_isDisplayed() {
     compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RATING_BAR).assertIsDisplayed()
   }
 
   @Test
-  fun rankingTabIsDisplayed() {
+  fun ratingTabIsDisplayed() {
     compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed()
   }
 
@@ -494,7 +494,7 @@ class MyProfileScreenTest {
   }
 
   @Test
-  fun rankingTabIsClickable() {
+  fun ratingTabIsClickable() {
     compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertHasClickAction()
   }
 
@@ -504,7 +504,7 @@ class MyProfileScreenTest {
   }
 
   @Test
-  fun rankingTabToRankings() {
+  fun ratingTabSwitchesContent() {
 
     compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
 
@@ -512,14 +512,14 @@ class MyProfileScreenTest {
   }
 
   @Test
-  fun infoRankingBarInRankings() {
+  fun infoTabSwitchesContent() {
     compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
 
     compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RATING_BAR).assertIsDisplayed()
   }
 
   @Test
-  fun rankingToInfo_SwitchesContent() {
+  fun bothTabsAreClickable() {
     compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
 
     compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
@@ -529,17 +529,20 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
   }
 
-  private fun scrollRootTo(matcher: SemanticsMatcher) {
-    // Ensure the LazyColumn exists
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
-    compose
-        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
-        .performScrollToNode(matcher)
+  @Test
+  fun historyTab_isDisplayed() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_TAB).assertIsDisplayed()
+  }
+
+  @Test
+  fun historyTab_isClickable() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_TAB).assertHasClickAction()
+  }
+
+  @Test
+  fun historyTab_switchesContentToHistorySection() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_TAB).performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_SECTION).assertIsDisplayed()
   }
 
   private class BlockingListingRepo : ListingRepository {
@@ -747,5 +750,57 @@ class MyProfileScreenTest {
     }
 
     compose.onNode(successMatcher, useUnmergedTree = true).assertIsDisplayed()
+  }
+
+  @Test
+  fun history_showsCompletedListings() {
+    val completed = makeTestListing().copy(isActive = false)
+    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    val listingRepo = OneItemListingRepo(completed)
+    val ratingRepo = FakeRatingRepo()
+
+    val vm =
+        MyProfileViewModel(
+            profileRepository = pRepo,
+            listingRepository = listingRepo,
+            ratingsRepository = ratingRepo,
+            userId = "demo")
+
+    compose.runOnIdle {
+      contentSlot.value = {
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+      }
+    }
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_TAB).performClick()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_SECTION).assertIsDisplayed()
+    compose.onNodeWithText("Guitar Lessons").assertExists()
+  }
+
+  @Test
+  fun history_showsEmptyMessage() {
+    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    val listingRepo = OneItemListingRepo(makeTestListing().copy(isActive = true))
+    val ratingRepo = FakeRatingRepo()
+
+    val vm =
+        MyProfileViewModel(
+            profileRepository = pRepo,
+            listingRepository = listingRepo,
+            ratingsRepository = ratingRepo,
+            userId = "demo")
+
+    compose.runOnIdle {
+      contentSlot.value = {
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+      }
+    }
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_TAB).performClick()
+
+    compose.onNodeWithText("You don’t have any completed listings yet.").assertExists()
   }
 }
