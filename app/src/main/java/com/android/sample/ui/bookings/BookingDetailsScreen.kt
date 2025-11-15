@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -59,6 +60,7 @@ object BookingDetailsTestTag {
 
   const val STATUS = "booking_status"
   const val ROW = "booking_detail_row"
+  const val COMPLETE_BUTTON = "booking_complete_button"
 }
 
 /**
@@ -96,6 +98,7 @@ fun BookingDetailsScreen(
       BookingDetailsContent(
           uiState = uiState,
           onCreatorClick = { profileId -> onCreatorClick(profileId) },
+          onMarkCompleted = { bkgViewModel.markBookingAsCompleted() },
           modifier = Modifier.padding(paddingValues).fillMaxSize().padding(16.dp))
     }
   }
@@ -119,6 +122,7 @@ fun BookingDetailsScreen(
 fun BookingDetailsContent(
     uiState: BookingUIState,
     onCreatorClick: (String) -> Unit,
+    onMarkCompleted: () -> Unit,
     modifier: Modifier = Modifier
 ) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -145,6 +149,12 @@ fun BookingDetailsContent(
 
     // Description
     InfoDesc(uiState)
+
+    HorizontalDivider()
+    // Let the student mark the session as completed once it is confirmed
+    if (uiState.booking.status == BookingStatus.CONFIRMED) {
+      ConfirmCompletionSection(onMarkCompleted)
+    }
   }
 }
 
@@ -368,4 +378,22 @@ private fun BookingStatus(status: BookingStatus) {
           Modifier.border(width = 1.dp, color = status.color(), shape = RoundedCornerShape(12.dp))
               .padding(horizontal = 12.dp, vertical = 6.dp)
               .testTag(BookingDetailsTestTag.STATUS))
+}
+
+@Composable
+private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
+  Column(
+      modifier = Modifier.fillMaxWidth(),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "Has the session taken place?",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Button(
+            onClick = onMarkCompleted,
+            modifier = Modifier.testTag(BookingDetailsTestTag.COMPLETE_BUTTON)) {
+              Text(text = "Mark as completed")
+            }
+      }
 }
