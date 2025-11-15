@@ -1,25 +1,36 @@
 package com.android.sample.utils
 
 import android.content.Context
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.user.ProfileRepository
-import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomBarTestTag
+import com.android.sample.ui.components.BottomNavBar
+import com.android.sample.ui.components.TopAppBar
+import com.android.sample.ui.navigation.AppNavGraph
+import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.profile.MyProfileViewModel
-import com.android.sample.utils.InMemoryBootcampTest.ProfileFake
 import com.android.sample.utils.fakeRepo.BookingFake
 import com.android.sample.utils.fakeRepo.ListingFake
 import com.android.sample.utils.fakeRepo.RatingFake
@@ -35,7 +46,7 @@ abstract class AppTest() {
   open fun initializeHTTPClient(): OkHttpClient = FakeHttpClient.getClient()
 
   val profileRepository: ProfileRepository
-    get() = ProfileRepositoryProvider.repository
+    get() = createInitializedProfileRepo()
 
   lateinit var authViewModel: AuthenticationViewModel
   lateinit var bookingsViewModel: MyBookingsViewModel
@@ -54,13 +65,11 @@ abstract class AppTest() {
 
     bookingRepo = BookingFake()
     listingRepo = ListingFake()
-    profileRepo = ProfileFake()
+    profileRepo = profileRepository
     ratingRepo = RatingFake()
 
     val context = ApplicationProvider.getApplicationContext<Context>()
     authViewModel = AuthenticationViewModel(context = context, profileRepository = profileRepo)
-
-    // ✅ Initialiser les autres ViewModels (fakes ou defaults)
     bookingsViewModel =
         MyBookingsViewModel(
             bookingRepo = bookingRepo, listingRepo = listingRepo, profileRepo = profileRepo)
@@ -71,6 +80,40 @@ abstract class AppTest() {
             ratingsRepository = ratingRepo)
     mainPageViewModel =
         MainPageViewModel(profileRepository = profileRepo, listingRepository = listingRepo)
+
+    UserSessionManager.setCurrentUserId("creator_1")
+  }
+
+  @Composable
+  fun CreateEveryThing() {
+    val navController = rememberNavController()
+
+    val mainScreenRoutes =
+        listOf(NavRoutes.HOME, NavRoutes.BOOKINGS, NavRoutes.PROFILE, NavRoutes.MAP)
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val showBottomNav = mainScreenRoutes.contains(currentRoute)
+
+    Scaffold(
+        topBar = { TopAppBar(navController) },
+        bottomBar = {
+          if (showBottomNav) {
+            BottomNavBar(navController)
+          }
+        }) { paddingValues ->
+          Box(modifier = Modifier.padding(paddingValues)) {
+            AppNavGraph(
+                navController = navController,
+                bookingsViewModel = bookingsViewModel,
+                profileViewModel = profileViewModel,
+                mainPageViewModel = mainPageViewModel,
+                authViewModel = authViewModel,
+                onGoogleSignIn = {})
+          }
+          LaunchedEffect(Unit) {
+            navController.navigate(NavRoutes.HOME) { popUpTo(0) { inclusive = true } }
+          }
+        }
   }
 
   @After open fun tearDown() {}
