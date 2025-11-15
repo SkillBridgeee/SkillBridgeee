@@ -32,13 +32,16 @@ import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
+import com.android.sample.utils.fakeRepo.fakeProfile.ProfileFakeWorking
 import kotlin.collections.contains
 import org.junit.After
 import org.junit.Before
 
 abstract class AppTest() {
 
-  abstract fun createInitializedProfileRepo(): FakeProfileRepo
+  open fun createInitializedProfileRepo(): FakeProfileRepo {
+    return ProfileFakeWorking()
+  }
 
   abstract fun createInitializedListingRepo(): ListingRepository
 

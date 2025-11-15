@@ -15,8 +15,6 @@ import com.android.sample.utils.AppTest
 import com.android.sample.utils.fakeRepo.BookingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.ListingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.RatingFakeRepoWorking
-import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
-import com.android.sample.utils.fakeRepo.fakeProfile.ProfileFakeWorking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -24,10 +22,6 @@ import org.junit.Test
 class HomeScreenTestFUN : AppTest() {
 
   @get:Rule val composeTestRule = createComposeRule()
-
-  override fun createInitializedProfileRepo(): FakeProfileRepo {
-    return ProfileFakeWorking()
-  }
 
   override fun createInitializedListingRepo(): ListingRepository {
     return ListingFakeRepoWorking()
