@@ -79,15 +79,14 @@ object MyProfileScreenTestTag {
   const val RATING_SECTION = "ratingSection"
   const val LISTINGS_TAB = "listingsTab"
   const val LISTINGS_SECTION = "listingsSection"
-    const val HISTORY_SECTION = "historySection"
+  const val HISTORY_SECTION = "historySection"
 }
 
 enum class ProfileTab {
   INFO,
   LISTINGS,
   RATING,
-
-    HISTORY
+  HISTORY
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,12 +116,12 @@ fun MyProfileScreen(
       SelectionRow(selectedTab)
       Spacer(modifier = Modifier.height(4.dp))
 
-        when (selectedTab.value) {
-            ProfileTab.INFO -> MyProfileContent(pd, ui, profileViewModel, onLogout, onListingClick)
-            ProfileTab.RATING -> RatingContent(ui)
-            ProfileTab.LISTINGS -> ProfileListings(ui, onListingClick)
-            ProfileTab.HISTORY -> ProfileHistory(ui, onListingClick)
-        }
+      when (selectedTab.value) {
+        ProfileTab.INFO -> MyProfileContent(pd, ui, profileViewModel, onLogout, onListingClick)
+        ProfileTab.RATING -> RatingContent(ui)
+        ProfileTab.LISTINGS -> ProfileListings(ui, onListingClick)
+        ProfileTab.HISTORY -> ProfileHistory(ui, onListingClick)
+      }
     }
   }
 }
@@ -515,50 +514,50 @@ private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Un
  */
 @Composable
 private fun ProfileHistory(ui: MyProfileUIState, onListingClick: (String) -> Unit) {
-    val historyListings = ui.listings.filter { !it.isActive }
+  val historyListings = ui.listings.filter { !it.isActive }
 
-    Text(
-        text = "Your History",
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        modifier =
-            Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.HISTORY_SECTION))
+  Text(
+      text = "Your History",
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold,
+      modifier =
+          Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.HISTORY_SECTION))
 
-    when {
-        ui.listingsLoading -> {
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
-        ui.listingsLoadError != null -> {
-            Text(
-                text = ui.listingsLoadError,
-                color = Color.Red,
-                modifier = Modifier.padding(horizontal = 16.dp))
-        }
-        historyListings.isEmpty() -> {
-            Text(
-                text = "You don’t have any completed listings yet.",
-                modifier = Modifier.padding(horizontal = 16.dp))
-        }
-        else -> {
-            LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                items(historyListings) { listing ->
-                    when (listing) {
-                        is com.android.sample.model.listing.Proposal -> {
-                            ProposalCard(proposal = listing, onClick = onListingClick)
-                        }
-                        is com.android.sample.model.listing.Request -> {
-                            RequestCard(request = listing, onClick = onListingClick)
-                        }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                }
-            }
-        }
+  when {
+    ui.listingsLoading -> {
+      Box(
+          modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+          contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+          }
     }
+    ui.listingsLoadError != null -> {
+      Text(
+          text = ui.listingsLoadError,
+          color = Color.Red,
+          modifier = Modifier.padding(horizontal = 16.dp))
+    }
+    historyListings.isEmpty() -> {
+      Text(
+          text = "You don’t have any completed listings yet.",
+          modifier = Modifier.padding(horizontal = 16.dp))
+    }
+    else -> {
+      LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        items(historyListings) { listing ->
+          when (listing) {
+            is com.android.sample.model.listing.Proposal -> {
+              ProposalCard(proposal = listing, onClick = onListingClick)
+            }
+            is com.android.sample.model.listing.Request -> {
+              RequestCard(request = listing, onClick = onListingClick)
+            }
+          }
+          Spacer(Modifier.height(8.dp))
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -589,101 +588,86 @@ private fun ProfileLogout(onLogout: () -> Unit) {
  * Shows an animated indicator below the selected tab.
  *
  * @param selectedTab Mutable state holding the currently selected tab. Updated when the user
- * selects a different tab.
+ *   selects a different tab.
  */
 @Composable
 fun SelectionRow(selectedTab: MutableState<ProfileTab>) {
-    val tabCount = 4
-    val indicatorHeight = 3.dp
+  val tabCount = 4
+  val indicatorHeight = 3.dp
 
-    val density = LocalDensity.current
-    val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
-    val tabWidthPx = screenWidthPx / tabCount
+  val density = LocalDensity.current
+  val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+  val tabWidthPx = screenWidthPx / tabCount
 
-    val tabLabels = listOf("Info", "Listings", "Ratings", "History")
+  val tabLabels = listOf("Info", "Listings", "Ratings", "History")
 
-    val textWidthsPx = remember { mutableStateListOf(0f, 0f, 0f, 0f) }
+  val textWidthsPx = remember { mutableStateListOf(0f, 0f, 0f, 0f) }
 
-    /**
-     * Returns the index of the given [tab].
-     * @param tab The [ProfileTab] whose index is to be found.
-     */
-    fun tabIndex(tab: ProfileTab) = when (tab) {
+  /**
+   * Returns the index of the given [tab].
+   *
+   * @param tab The [ProfileTab] whose index is to be found.
+   */
+  fun tabIndex(tab: ProfileTab) =
+      when (tab) {
         ProfileTab.INFO -> 0
         ProfileTab.LISTINGS -> 1
         ProfileTab.RATING -> 2
         ProfileTab.HISTORY -> 3
-    }
+      }
 
-    Column(Modifier.fillMaxWidth()) {
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(MyProfileScreenTestTag.INFO_RATING_BAR)
-        ) {
-            // Loop through each tab and create a clickable Text
-            tabLabels.forEachIndexed { index, label ->
-                val tab = ProfileTab.entries[index]
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { selectedTab.value = tab }
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = label,
-                        fontWeight = if (selectedTab.value == tab) FontWeight.Bold else FontWeight.Normal,
-                        color = if (selectedTab.value == tab)
-                            MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        modifier = Modifier.onGloballyPositioned {
-                            textWidthsPx[index] = it.size.width.toFloat()
-                        }
-                    )
-                }
-            }
-        }
-
-        // When the selected tab changes, animate the indicator's position and width
-        val transition = updateTransition(
-            targetState = selectedTab.value,
-            label = "tabIndicator"
-        )
-
-        // Calculate the indicator's offset and width based on the selected tab
-        val indicatorOffsetPx by transition.animateFloat(label = "offsetAnim") { tab ->
-            val index = tabIndex(tab)
-            val textWidth = textWidthsPx[index]
-            tabWidthPx * index + (tabWidthPx - textWidth) / 2f
-        }
-
-        // Calculate the indicator's width based on the selected tab
-        val indicatorWidthPx by transition.animateFloat(label = "widthAnim") { tab ->
-            textWidthsPx[tabIndex(tab)]
-        }
+  Column(Modifier.fillMaxWidth()) {
+    Row(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INFO_RATING_BAR)) {
+      // Loop through each tab and create a clickable Text
+      tabLabels.forEachIndexed { index, label ->
+        val tab = ProfileTab.entries[index]
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(indicatorHeight)
-        ) {
-            // Draw the animated indicator
-            Box(
-                modifier = Modifier
-                    .offset { IntOffset(indicatorOffsetPx.toInt(), 0) }
-                    .width(with(density) { indicatorWidthPx.toDp() })
-                    .height(indicatorHeight)
-                    .background(MaterialTheme.colorScheme.primary)
-            )
+            modifier =
+                Modifier.weight(1f).clickable { selectedTab.value = tab }.padding(vertical = 12.dp),
+            contentAlignment = Alignment.Center) {
+              Text(
+                  text = label,
+                  fontWeight = if (selectedTab.value == tab) FontWeight.Bold else FontWeight.Normal,
+                  color =
+                      if (selectedTab.value == tab) MaterialTheme.colorScheme.primary
+                      else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                  modifier =
+                      Modifier.onGloballyPositioned {
+                        textWidthsPx[index] = it.size.width.toFloat()
+                      })
+            }
+      }
+    }
+
+    // When the selected tab changes, animate the indicator's position and width
+    val transition = updateTransition(targetState = selectedTab.value, label = "tabIndicator")
+
+    // Calculate the indicator's offset and width based on the selected tab
+    val indicatorOffsetPx by
+        transition.animateFloat(label = "offsetAnim") { tab ->
+          val index = tabIndex(tab)
+          val textWidth = textWidthsPx[index]
+          tabWidthPx * index + (tabWidthPx - textWidth) / 2f
         }
 
-        Spacer(Modifier.height(16.dp))
-    }
-}
+    // Calculate the indicator's width based on the selected tab
+    val indicatorWidthPx by
+        transition.animateFloat(label = "widthAnim") { tab -> textWidthsPx[tabIndex(tab)] }
 
+    Box(modifier = Modifier.fillMaxWidth().height(indicatorHeight)) {
+      // Draw the animated indicator
+      Box(
+          modifier =
+              Modifier.offset { IntOffset(indicatorOffsetPx.toInt(), 0) }
+                  .width(with(density) { indicatorWidthPx.toDp() })
+                  .height(indicatorHeight)
+                  .background(MaterialTheme.colorScheme.primary))
+    }
+
+    Spacer(Modifier.height(16.dp))
+  }
+}
 
 @Composable
 private fun RatingContent(ui: MyProfileUIState) {
