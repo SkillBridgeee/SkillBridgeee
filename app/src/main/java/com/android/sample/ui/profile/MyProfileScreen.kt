@@ -3,7 +3,7 @@ package com.android.sample.ui.profile
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
-import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -29,8 +30,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -41,8 +44,8 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.times
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.GpsLocationProvider
@@ -75,14 +78,16 @@ object MyProfileScreenTestTag {
   const val RATING_TAB = "rankingTab"
   const val RATING_SECTION = "ratingSection"
   const val LISTINGS_TAB = "listingsTab"
-  const val TAB_INDICATOR = "tabIndicator"
   const val LISTINGS_SECTION = "listingsSection"
+    const val HISTORY_SECTION = "historySection"
 }
 
 enum class ProfileTab {
   INFO,
   LISTINGS,
-  RATING
+  RATING,
+
+    HISTORY
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,21 +109,20 @@ fun MyProfileScreen(
     onListingClick: (String) -> Unit = {}
 ) {
   val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
-  Scaffold() { pd ->
+  Scaffold { pd ->
     val ui by profileViewModel.uiState.collectAsState()
     LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
 
-    Column() {
+    Column {
       SelectionRow(selectedTab)
       Spacer(modifier = Modifier.height(4.dp))
 
-      if (selectedTab.value == ProfileTab.INFO) {
-        MyProfileContent(pd, ui, profileViewModel, onLogout, onListingClick)
-      } else if (selectedTab.value == ProfileTab.RATING) {
-        RatingContent(ui)
-      } else if (selectedTab.value == ProfileTab.LISTINGS) {
-        ProfileListings(ui, onListingClick)
-      }
+        when (selectedTab.value) {
+            ProfileTab.INFO -> MyProfileContent(pd, ui, profileViewModel, onLogout, onListingClick)
+            ProfileTab.RATING -> RatingContent(ui)
+            ProfileTab.LISTINGS -> ProfileListings(ui, onListingClick)
+            ProfileTab.HISTORY -> ProfileHistory(ui, onListingClick)
+        }
     }
   }
 }
@@ -504,6 +508,60 @@ private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Un
 }
 
 /**
+ * History section showing the user's completed listings.
+ *
+ * @param ui Current UI state providing listings and profile data for the creator.
+ * @param onListingClick Callback when a listing card is clicked.
+ */
+@Composable
+private fun ProfileHistory(ui: MyProfileUIState, onListingClick: (String) -> Unit) {
+    val historyListings = ui.listings.filter { !it.isActive }
+
+    Text(
+        text = "Your History",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier =
+            Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.HISTORY_SECTION))
+
+    when {
+        ui.listingsLoading -> {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        ui.listingsLoadError != null -> {
+            Text(
+                text = ui.listingsLoadError,
+                color = Color.Red,
+                modifier = Modifier.padding(horizontal = 16.dp))
+        }
+        historyListings.isEmpty() -> {
+            Text(
+                text = "You don’t have any completed listings yet.",
+                modifier = Modifier.padding(horizontal = 16.dp))
+        }
+        else -> {
+            LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                items(historyListings) { listing ->
+                    when (listing) {
+                        is com.android.sample.model.listing.Proposal -> {
+                            ProposalCard(proposal = listing, onClick = onListingClick)
+                        }
+                        is com.android.sample.model.listing.Request -> {
+                            RequestCard(request = listing, onClick = onListingClick)
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+/**
  * Logout section — presents a full-width logout button that triggers `onLogout`.
  *
  * The button includes a test tag so tests can find and click it.
@@ -525,97 +583,107 @@ private fun ProfileLogout(onLogout: () -> Unit) {
   Spacer(modifier = Modifier.height(80.dp))
 }
 
+/**
+ * Top tab row for selecting between Info, Listings, Ratings, and History tabs.
+ *
+ * Shows an animated indicator below the selected tab.
+ *
+ * @param selectedTab Mutable state holding the currently selected tab. Updated when the user
+ * selects a different tab.
+ */
 @Composable
 fun SelectionRow(selectedTab: MutableState<ProfileTab>) {
-  val tabCount = 3
-  val indicatorHeight = 3.dp
+    val tabCount = 4
+    val indicatorHeight = 3.dp
 
-  Column(modifier = Modifier.fillMaxWidth()) {
-    // --- Tabs Row ---
-    Row(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INFO_RATING_BAR)) {
-      // Info tab
-      Box(
-          modifier =
-              Modifier.weight(1f)
-                  .clickable { selectedTab.value = ProfileTab.INFO }
-                  .padding(vertical = 12.dp)
-                  .testTag(MyProfileScreenTestTag.INFO_TAB),
-          contentAlignment = Alignment.Center) {
-            Text(
-                text = "Info",
-                fontWeight =
-                    if (selectedTab.value == ProfileTab.INFO) FontWeight.Bold
-                    else FontWeight.Normal,
-                color =
-                    if (selectedTab.value == ProfileTab.INFO) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-          }
+    val density = LocalDensity.current
+    val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+    val tabWidthPx = screenWidthPx / tabCount
 
-      // Listings tab
-      Box(
-          modifier =
-              Modifier.weight(1f)
-                  .clickable { selectedTab.value = ProfileTab.LISTINGS }
-                  .padding(vertical = 12.dp)
-                  .testTag(MyProfileScreenTestTag.LISTINGS_TAB),
-          contentAlignment = Alignment.Center) {
-            Text(
-                text = "Listings",
-                fontWeight =
-                    if (selectedTab.value == ProfileTab.LISTINGS) FontWeight.Bold
-                    else FontWeight.Normal,
-                color =
-                    if (selectedTab.value == ProfileTab.LISTINGS) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-          }
+    val tabLabels = listOf("Info", "Listings", "Ratings", "History")
 
-      // Ratings tab
-      Box(
-          modifier =
-              Modifier.weight(1f)
-                  .clickable { selectedTab.value = ProfileTab.RATING }
-                  .padding(vertical = 12.dp)
-                  .testTag(MyProfileScreenTestTag.RATING_TAB),
-          contentAlignment = Alignment.Center) {
-            Text(
-                text = "Ratings",
-                fontWeight =
-                    if (selectedTab.value == ProfileTab.RATING) FontWeight.Bold
-                    else FontWeight.Normal,
-                color =
-                    if (selectedTab.value == ProfileTab.RATING) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-          }
+    val textWidthsPx = remember { mutableStateListOf(0f, 0f, 0f, 0f) }
+
+    /**
+     * Returns the index of the given [tab].
+     * @param tab The [ProfileTab] whose index is to be found.
+     */
+    fun tabIndex(tab: ProfileTab) = when (tab) {
+        ProfileTab.INFO -> 0
+        ProfileTab.LISTINGS -> 1
+        ProfileTab.RATING -> 2
+        ProfileTab.HISTORY -> 3
     }
 
-    // --- Indicator Animation ---
-    val transition = updateTransition(targetState = selectedTab.value, label = "tabIndicator")
-    val thirdToFLoat = 1 / 3f
-    val offsetX by
-        transition.animateDp(label = "tabIndicatorOffset") { tab ->
-          when (tab) {
-            ProfileTab.INFO -> 0.dp
-            ProfileTab.LISTINGS -> thirdToFLoat.dp * LocalConfiguration.current.screenWidthDp
-            ProfileTab.RATING -> 2 * thirdToFLoat.dp * LocalConfiguration.current.screenWidthDp
-          }
+    Column(Modifier.fillMaxWidth()) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(MyProfileScreenTestTag.INFO_RATING_BAR)
+        ) {
+            // Loop through each tab and create a clickable Text
+            tabLabels.forEachIndexed { index, label ->
+                val tab = ProfileTab.entries[index]
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { selectedTab.value = tab }
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = label,
+                        fontWeight = if (selectedTab.value == tab) FontWeight.Bold else FontWeight.Normal,
+                        color = if (selectedTab.value == tab)
+                            MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        modifier = Modifier.onGloballyPositioned {
+                            textWidthsPx[index] = it.size.width.toFloat()
+                        }
+                    )
+                }
+            }
         }
 
-    Box(
-        modifier =
-            Modifier.fillMaxWidth()
+        // When the selected tab changes, animate the indicator's position and width
+        val transition = updateTransition(
+            targetState = selectedTab.value,
+            label = "tabIndicator"
+        )
+
+        // Calculate the indicator's offset and width based on the selected tab
+        val indicatorOffsetPx by transition.animateFloat(label = "offsetAnim") { tab ->
+            val index = tabIndex(tab)
+            val textWidth = textWidthsPx[index]
+            tabWidthPx * index + (tabWidthPx - textWidth) / 2f
+        }
+
+        // Calculate the indicator's width based on the selected tab
+        val indicatorWidthPx by transition.animateFloat(label = "widthAnim") { tab ->
+            textWidthsPx[tabIndex(tab)]
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
                 .height(indicatorHeight)
-                .testTag(MyProfileScreenTestTag.TAB_INDICATOR)) {
-          Box(
-              modifier =
-                  Modifier.offset(x = offsetX)
-                      .width((LocalConfiguration.current.screenWidthDp / tabCount).dp)
-                      .height(indicatorHeight)
-                      .background(MaterialTheme.colorScheme.primary))
+        ) {
+            // Draw the animated indicator
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(indicatorOffsetPx.toInt(), 0) }
+                    .width(with(density) { indicatorWidthPx.toDp() })
+                    .height(indicatorHeight)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
         }
 
-    Spacer(modifier = Modifier.height(16.dp))
-  }
+        Spacer(Modifier.height(16.dp))
+    }
 }
+
 
 @Composable
 private fun RatingContent(ui: MyProfileUIState) {
