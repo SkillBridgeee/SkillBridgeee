@@ -5,16 +5,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToIndex
-import com.android.sample.model.booking.BookingRepository
-import com.android.sample.model.listing.ListingRepository
-import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.utils.AppTest
-import com.android.sample.utils.fakeRepo.BookingFakeRepoWorking
-import com.android.sample.utils.fakeRepo.ListingFakeRepoWorking
-import com.android.sample.utils.fakeRepo.RatingFakeRepoWorking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -22,18 +16,6 @@ import org.junit.Test
 class HomeScreenTestFUN : AppTest() {
 
   @get:Rule val composeTestRule = createComposeRule()
-
-  override fun createInitializedListingRepo(): ListingRepository {
-    return ListingFakeRepoWorking()
-  }
-
-  override fun createInitializedBookingRepo(): BookingRepository {
-    return BookingFakeRepoWorking()
-  }
-
-  override fun createInitializedRatingRepo(): RatingRepository {
-    return RatingFakeRepoWorking()
-  }
 
   @Before
   override fun setUp() {

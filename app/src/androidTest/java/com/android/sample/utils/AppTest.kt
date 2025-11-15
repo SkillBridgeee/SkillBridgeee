@@ -31,6 +31,9 @@ import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
+import com.android.sample.utils.fakeRepo.BookingFakeRepoWorking
+import com.android.sample.utils.fakeRepo.ListingFakeRepoWorking
+import com.android.sample.utils.fakeRepo.RatingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
 import com.android.sample.utils.fakeRepo.fakeProfile.ProfileFakeWorking
 import kotlin.collections.contains
@@ -43,11 +46,17 @@ abstract class AppTest() {
     return ProfileFakeWorking()
   }
 
-  abstract fun createInitializedListingRepo(): ListingRepository
+  open fun createInitializedListingRepo(): ListingRepository {
+    return ListingFakeRepoWorking()
+  }
 
-  abstract fun createInitializedBookingRepo(): BookingRepository
+  open fun createInitializedBookingRepo(): BookingRepository {
+    return BookingFakeRepoWorking()
+  }
 
-  abstract fun createInitializedRatingRepo(): RatingRepository
+  open fun createInitializedRatingRepo(): RatingRepository {
+    return RatingFakeRepoWorking()
+  }
 
   val profileRepository: FakeProfileRepo
     get() = createInitializedProfileRepo()
