@@ -64,4 +64,25 @@ class BookingDetailsViewModel(
       }
     }
   }
+
+  fun markBookingAsCompleted() {
+    val currentBookingId = bookingUiState.value.booking.bookingId
+    if (currentBookingId.isBlank()) return
+
+    viewModelScope.launch {
+      try {
+        bookingRepository.completeBooking(currentBookingId)
+
+        // Refresh the booking from Firestore so UI gets the new status
+        val updatedBooking = bookingRepository.getBooking(currentBookingId)
+        if (updatedBooking != null) {
+          _bookingUiState.value =
+              bookingUiState.value.copy(booking = updatedBooking, loadError = false)
+        }
+      } catch (e: Exception) {
+        Log.e("BookingDetailsViewModel", "Error completing booking $currentBookingId", e)
+        _bookingUiState.value = bookingUiState.value.copy(loadError = true)
+      }
+    }
+  }
 }
