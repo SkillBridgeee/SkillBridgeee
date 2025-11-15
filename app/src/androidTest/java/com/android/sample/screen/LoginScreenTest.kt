@@ -1,23 +1,67 @@
 package com.android.sample.screen
 
+import android.content.Context
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
+import com.android.sample.model.user.FakeProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.login.SignInScreenTestTags
+import com.google.firebase.FirebaseApp
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 class LoginScreenTest {
   @get:Rule val composeRule = createComposeRule()
+
+  @Before
+  fun setUp() {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+
+    // (Optional but harmless) ensure Firebase is initialized for test envs
+    try {
+      FirebaseApp.clearInstancesForTest()
+    } catch (_: Throwable) {}
+    try {
+      FirebaseApp.initializeApp(context)
+    } catch (_: IllegalStateException) {}
+
+    // 👇 This is the important bit for your crash
+    ProfileRepositoryProvider.setForTests(FakeProfileRepository())
+  }
+  // read the visible text of a node by testTag
+  private fun ComposeTestRule.textOf(tag: String, useUnmergedTree: Boolean = false): String {
+    val node = onNodeWithTag(tag, useUnmergedTree).fetchSemanticsNode()
+    val texts = node.config.getOrNull(SemanticsProperties.Text)
+    return texts?.joinToString("") { it.text } ?: ""
+  }
+
+  // count nodes with a tag (useful instead of assertExists/IsDisplayed)
+  private fun ComposeTestRule.nodeCount(tag: String, useUnmergedTree: Boolean = false): Int {
+    return onAllNodes(hasTestTag(tag), useUnmergedTree).fetchSemanticsNodes().size
+  }
+
+  private fun androidx.compose.ui.test.SemanticsNodeInteraction.readEditableText(): String {
+    val node = fetchSemanticsNode()
+    val editable = node.config.getOrNull(SemanticsProperties.EditableText)
+    return editable?.text ?: ""
+  }
 
   @Test
   fun allMainSectionsAreDisplayed() {
@@ -34,7 +78,6 @@ class LoginScreenTest {
     composeRule.onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_SECTION).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.SIGNUP_LINK).assertIsDisplayed()
   }
 
@@ -156,18 +199,6 @@ class LoginScreenTest {
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).assertIsDisplayed()
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).assertTextEquals("Google")
     composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GOOGLE).performClick()
-  }
-
-  @Test
-  fun authGitHubButtonIsDisplayed() {
-    composeRule.setContent {
-      val context = LocalContext.current
-      val viewModel = AuthenticationViewModel(context)
-      LoginScreen(viewModel = viewModel, onGoogleSignIn = { /* Test placeholder */})
-    }
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).assertIsDisplayed()
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).assertTextEquals("GitHub")
-    composeRule.onNodeWithTag(SignInScreenTestTags.AUTH_GITHUB).performClick()
   }
 
   @Test
@@ -294,5 +325,36 @@ class LoginScreenTest {
 
     // Button should be enabled with valid inputs
     composeRule.onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).assertIsEnabled()
+  }
+
+  @Test
+  fun password_field_present_and_not_affected_by_email_ellipsizing() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val vm = AuthenticationViewModel(context)
+      LoginScreen(viewModel = vm, onGoogleSignIn = {})
+    }
+
+    // presence via count (no assertExists/IsDisplayed)
+    val before = composeRule.nodeCount(SignInScreenTestTags.PASSWORD_INPUT)
+    assert(before >= 1) { "Password field not found." }
+
+    // type into password
+    val longPassword = "thisIsAVeryLongPassword123!@#"
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT, useUnmergedTree = false)
+        .performClick()
+        .performTextInput(longPassword)
+
+    // flip focus to email and back just to ensure nothing breaks
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.EMAIL_INPUT, useUnmergedTree = false)
+        .performClick()
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT, useUnmergedTree = false)
+        .performClick()
+
+    val after = composeRule.nodeCount(SignInScreenTestTags.PASSWORD_INPUT)
+    assert(after >= 1) { "Password field disappeared after interactions." }
   }
 }

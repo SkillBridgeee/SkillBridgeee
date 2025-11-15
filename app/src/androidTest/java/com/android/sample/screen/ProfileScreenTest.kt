@@ -144,7 +144,8 @@ class ProfileScreenTest {
   private fun setupScreen(
       viewModel: ProfileScreenViewModel = createDefaultViewModel(),
       profileId: String = "user-123",
-      onBackClick: () -> Unit = {},
+      onBackClick: (() -> Unit)? = null,
+      onRefresh: (() -> Unit)? = null,
       onProposalClick: (String) -> Unit = {},
       onRequestClick: (String) -> Unit = {}
   ) {
@@ -152,6 +153,7 @@ class ProfileScreenTest {
       ProfileScreen(
           profileId = profileId,
           onBackClick = onBackClick,
+          onRefresh = onRefresh,
           onProposalClick = onProposalClick,
           onRequestClick = onRequestClick,
           viewModel = viewModel)
@@ -238,30 +240,6 @@ class ProfileScreenTest {
   }
 
   @Test
-  fun profileScreen_backButton_isDisplayed() {
-    setupScreen()
-
-    compose.onNodeWithTag(ProfileScreenTestTags.BACK_BUTTON).assertIsDisplayed()
-  }
-
-  @Test
-  fun profileScreen_refreshButton_isDisplayed() {
-    setupScreen()
-
-    compose.onNodeWithTag(ProfileScreenTestTags.REFRESH_BUTTON).assertIsDisplayed()
-  }
-
-  @Test
-  fun profileScreen_backButton_callsCallback() {
-    var backClicked = false
-
-    setupScreen(onBackClick = { backClicked = true })
-
-    compose.onNodeWithTag(ProfileScreenTestTags.BACK_BUTTON).performClick()
-    assertTrue(backClicked)
-  }
-
-  @Test
   fun profileScreen_proposalClick_callsCallback() {
     var clickedProposalId: String? = null
 
@@ -308,15 +286,56 @@ class ProfileScreenTest {
 
     compose.setContent {
       ProfileScreen(
-          profileId = "user-123",
-          onBackClick = {},
-          onProposalClick = {},
-          onRequestClick = {},
-          viewModel = vm)
+          profileId = "user-123", onProposalClick = {}, onRequestClick = {}, viewModel = vm)
     }
 
     // Loading indicator should appear initially
     // Note: This may be very brief, so we just check it exists at some point
     compose.onNodeWithTag(ProfileScreenTestTags.SCREEN).assertIsDisplayed()
+  }
+
+  @Test
+  fun profileScreen_backButton_callsCallback() {
+    var backClicked = false
+    setupScreen(onBackClick = { backClicked = true })
+
+    compose.onNodeWithTag(ProfileScreenTestTags.BACK_BUTTON).assertIsDisplayed()
+    compose.onNodeWithTag(ProfileScreenTestTags.BACK_BUTTON).performClick()
+    assertTrue(backClicked)
+  }
+
+  @Test
+  fun profileScreen_refreshButton_callsCallback() {
+    var refreshClicked = false
+    val vm = createDefaultViewModel()
+
+    compose.setContent {
+      ProfileScreen(
+          profileId = "user-123",
+          onRefresh = { refreshClicked = true },
+          onProposalClick = {},
+          onRequestClick = {},
+          viewModel = vm)
+    }
+
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(ProfileScreenTestTags.PROFILE_ICON, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    compose.onNodeWithTag(ProfileScreenTestTags.REFRESH_BUTTON).assertIsDisplayed()
+    compose.onNodeWithTag(ProfileScreenTestTags.REFRESH_BUTTON).performClick()
+    assertTrue(refreshClicked)
+  }
+
+  @Test
+  fun profileScreen_withoutCallbacks_noBackOrRefreshButtons() {
+    setupScreen()
+
+    // Without callbacks, back and refresh buttons should not exist
+    compose.onNodeWithTag(ProfileScreenTestTags.BACK_BUTTON).assertDoesNotExist()
+    compose.onNodeWithTag(ProfileScreenTestTags.REFRESH_BUTTON).assertDoesNotExist()
   }
 }

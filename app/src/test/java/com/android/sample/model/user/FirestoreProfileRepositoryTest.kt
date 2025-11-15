@@ -2,8 +2,8 @@ package com.android.sample.model.user
 
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
+import com.android.sample.utils.FirebaseEmulator
 import com.android.sample.utils.RepositoryTest
-import com.github.se.bootcamp.utils.FirebaseEmulator
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
@@ -21,11 +21,8 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-@RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28])
 class FirestoreProfileRepositoryTest : RepositoryTest() {
   private lateinit var firestore: FirebaseFirestore

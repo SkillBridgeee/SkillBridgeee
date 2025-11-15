@@ -1,5 +1,8 @@
 package com.android.sample.ui.map
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,8 +19,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -25,11 +32,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.user.Profile
+import com.android.sample.ui.map.MapScreenTestTags.BOOKING_MARKER_PREFIX
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 
 object MapScreenTestTags {
@@ -40,33 +51,46 @@ object MapScreenTestTags {
   const val PROFILE_CARD = "profile_card"
   const val PROFILE_NAME = "profile_name"
   const val PROFILE_LOCATION = "profile_location"
+
+  const val BOOKING_MARKER_PREFIX = "booking_marker_"
+  const val USER_PROFILE_MARKER = "user_profile_marker"
 }
 
 /**
  * MapScreen displays a Google Map centered on a specific location.
  *
  * Features:
- * - Shows an interactive Google Map
- * - Centers on EPFL/Lausanne by default
+ * - Shows user's real-time GPS location (blue dot) when permission granted
+ * - Shows user's profile location (blue marker)
+ * - Shows all user's bookings (red markers)
+ * - Clicking a booking shows a profile card
  * - Supports zoom and pan gestures
- * - No markers displayed (clean map view)
  *
  * @param modifier Optional modifier for the screen
  * @param viewModel The MapViewModel instance
- * @param onProfileClick Callback when a profile is clicked (currently unused)
+ * @param onProfileClick Callback when a profile card is clicked (for future navigation)
+ * @param requestLocationOnStart Whether to request location permission on first composition
  */
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = viewModel(),
-    onProfileClick: (String) -> Unit = {}
+    onProfileClick: (String) -> Unit = {},
+    requestLocationOnStart: Boolean = false
 ) {
   val uiState by viewModel.uiState.collectAsState()
 
   Scaffold(modifier = modifier.testTag(MapScreenTestTags.MAP_SCREEN)) { innerPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
       // Google Map
-      MapView(centerLocation = uiState.userLocation)
+      val myProfile = uiState.myProfile
+
+      MapView(
+          centerLocation = uiState.userLocation,
+          bookingPins = uiState.bookingPins,
+          myProfile = myProfile,
+          onBookingClicked = { pin -> pin.profile?.let { viewModel.selectProfile(it) } },
+          requestLocationOnStart = requestLocationOnStart)
 
       // Loading indicator
       if (uiState.isLoading) {
@@ -92,7 +116,7 @@ fun MapScreen(
             }
       }
 
-      // Selected profile card at bottom
+      // Selected profile card at bottom - shows tutor/student info when booking marker clicked
       uiState.selectedProfile?.let { profile ->
         ProfileInfoCard(
             profile = profile,
@@ -103,12 +127,80 @@ fun MapScreen(
   }
 }
 
-/** Displays the Google Map centered on a location (no markers). */
+/**
+ * Displays the Google Map centered on the users location.
+ *
+ * @param centerLocation The default center location of the map.
+ * @param bookingPins List of booking pins to display on the map.
+ * @param myProfile The current user's profile to show on the map.
+ * @param onBookingClicked Callback when a booking pin is clicked.
+ * @param requestLocationOnStart Whether to request location permission on first composition.
+ * @param permissionChecker Injectable function to check if permission is granted. Defaults to
+ *   checking ACCESS_FINE_LOCATION via ContextCompat. Useful for testing.
+ * @param permissionRequester Injectable function to request a permission. Defaults to using the
+ *   permission launcher. Useful for testing.
+ */
 @Composable
-private fun MapView(centerLocation: LatLng) {
+private fun MapView(
+    centerLocation: LatLng,
+    bookingPins: List<BookingPin>,
+    myProfile: Profile?,
+    onBookingClicked: (BookingPin) -> Unit,
+    requestLocationOnStart: Boolean = false,
+    permissionChecker: @Composable () -> Boolean = {
+      val context = androidx.compose.ui.platform.LocalContext.current
+      androidx.core.content.ContextCompat.checkSelfPermission(
+          context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+          android.content.pm.PackageManager.PERMISSION_GRANTED
+    },
+    permissionRequester: ((String) -> Unit)? = null
+) {
+  // Get initial permission state using the injected checker
+  val initialPermissionState = permissionChecker()
+
+  // Track location permission state - initialized with checker result
+  var hasLocationPermission by remember { mutableStateOf(initialPermissionState) }
+
+  // Permission launcher that updates local state
+  val permissionLauncher =
+      rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission()) {
+          isGranted ->
+        hasLocationPermission = isGranted
+      }
+
+  // Wire default requester to the launcher if the caller didn't override
+  val requester =
+      remember(permissionLauncher, permissionRequester) {
+        permissionRequester ?: { permission: String -> permissionLauncher.launch(permission) }
+      }
+
+  // Request location permission - reacts to requestLocationOnStart and hasLocationPermission
+  LaunchedEffect(requestLocationOnStart, hasLocationPermission) {
+    if (requestLocationOnStart && !hasLocationPermission) {
+      try {
+        requester(Manifest.permission.ACCESS_FINE_LOCATION)
+      } catch (e: Exception) {
+        android.util.Log.w(
+            "MapScreen", "Permission launcher unavailable in this environment: ${e.message}")
+      }
+    }
+  }
+
   // Camera position state
-  val cameraPositionState = rememberCameraPositionState {
-    position = CameraPosition.fromLatLngZoom(centerLocation, 12f)
+  val cameraPositionState = rememberCameraPositionState()
+
+  val profileLatLng =
+      myProfile
+          ?.location
+          ?.takeIf { it.latitude != 0.0 || it.longitude != 0.0 }
+          ?.let { LatLng(it.latitude, it.longitude) }
+
+  val target = profileLatLng ?: centerLocation
+
+  LaunchedEffect(target) {
+    if (cameraPositionState.position.target != target) {
+      cameraPositionState.position = CameraPosition.fromLatLngZoom(target, 12f)
+    }
   }
 
   // Map settings
@@ -118,23 +210,49 @@ private fun MapView(centerLocation: LatLng) {
           zoomGesturesEnabled = true,
           scrollGesturesEnabled = true,
           rotationGesturesEnabled = true,
-          tiltGesturesEnabled = true)
+          tiltGesturesEnabled = true,
+          myLocationButtonEnabled = hasLocationPermission)
 
-  val mapProperties =
-      MapProperties(
-          isMyLocationEnabled = false // Can be enabled with proper location permissions
-          )
+  val mapProperties = MapProperties(isMyLocationEnabled = hasLocationPermission)
 
   GoogleMap(
       modifier = Modifier.fillMaxSize().testTag(MapScreenTestTags.MAP_VIEW),
       cameraPositionState = cameraPositionState,
       uiSettings = mapUiSettings,
       properties = mapProperties) {
-        // Map is centered on the location - no markers needed
+        // Booking markers - show where the user has sessions
+        bookingPins.forEach { pin ->
+          Marker(
+              state = MarkerState(position = pin.position),
+              title = pin.title,
+              snippet = pin.snippet,
+              onClick = {
+                onBookingClicked(pin)
+                false
+              },
+              tag = BOOKING_MARKER_PREFIX + pin.bookingId)
+        }
+        // User's profile location marker (blue pinpoint)
+        myProfile?.location?.let { loc ->
+          if (loc.latitude != 0.0 || loc.longitude != 0.0) {
+            Marker(
+                state = MarkerState(position = LatLng(loc.latitude, loc.longitude)),
+                title = myProfile.name ?: "Me",
+                snippet = loc.name,
+                icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
+                tag = MapScreenTestTags.USER_PROFILE_MARKER)
+          }
+        }
       }
 }
 
-/** Displays information about the selected profile. */
+/**
+ * Displays information about the selected profile (tutor/student from booking).
+ *
+ * @param profile The profile to display.
+ * @param onProfileClick Callback when the profile card is clicked.
+ * @param modifier Modifier for the profile card.
+ */
 @Composable
 private fun ProfileInfoCard(
     profile: Profile,
@@ -165,7 +283,7 @@ private fun ProfileInfoCard(
                   color = MaterialTheme.colorScheme.onSurfaceVariant,
                   modifier = Modifier.testTag(MapScreenTestTags.PROFILE_LOCATION))
 
-              if (profile.levelOfEducation.isNotEmpty()) {
+              if (profile.levelOfEducation.isNotBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = profile.levelOfEducation,
@@ -173,7 +291,7 @@ private fun ProfileInfoCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
               }
 
-              if (profile.description.isNotEmpty()) {
+              if (profile.description.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = profile.description,

@@ -1,39 +1,49 @@
 package com.android.sample.screen
 
-import com.android.sample.model.booking.Booking
-import com.android.sample.model.booking.BookingRepository
-import com.android.sample.model.booking.BookingStatus
-import com.android.sample.model.listing.Listing
-import com.android.sample.model.listing.ListingRepository
-import com.android.sample.model.listing.Proposal
-import com.android.sample.model.listing.Request
-import com.android.sample.model.map.Location
-import com.android.sample.model.rating.Rating
-import com.android.sample.model.rating.RatingRepository
-import com.android.sample.model.rating.RatingType
-import com.android.sample.model.rating.StarRating
-import com.android.sample.model.skill.Skill
-import com.android.sample.model.user.Profile
-import com.android.sample.model.user.ProfileRepository
+import com.android.sample.mockRepository.bookingRepo.BookingFakeRepoEmpty
+import com.android.sample.mockRepository.bookingRepo.BookingFakeRepoError
+import com.android.sample.mockRepository.bookingRepo.BookingFakeRepoWorking
+import com.android.sample.mockRepository.listingRepo.ListingFakeRepoError
+import com.android.sample.mockRepository.listingRepo.ListingFakeRepoWorking
+import com.android.sample.mockRepository.profileRepo.ProfileFakeRepoError
+import com.android.sample.mockRepository.profileRepo.ProfileFakeRepoWorking
 import com.android.sample.ui.bookings.MyBookingsViewModel
-import java.util.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
-class MyBookingsViewModelLogicTest {
+@OptIn(ExperimentalCoroutinesApi::class)
+class MyBookingsViewModelTest {
 
   private val testDispatcher = StandardTestDispatcher()
+
+  private lateinit var bookingRepoWorking: BookingFakeRepoWorking
+  private lateinit var bookingRepoEmpty: BookingFakeRepoEmpty
+  private lateinit var errorBookingRepo: BookingFakeRepoError
+
+  private lateinit var listingRepoWorking: ListingFakeRepoWorking
+  private lateinit var errorListingRepo: ListingFakeRepoError
+
+  private lateinit var profileRepoWorking: ProfileFakeRepoWorking
+
+  private lateinit var errorProfileRepo: ProfileFakeRepoError
 
   @Before
   fun setup() {
     Dispatchers.setMain(testDispatcher)
+    bookingRepoWorking = BookingFakeRepoWorking()
+    bookingRepoEmpty = BookingFakeRepoEmpty()
+    errorBookingRepo = BookingFakeRepoError()
+
+    listingRepoWorking = ListingFakeRepoWorking()
+    errorListingRepo = ListingFakeRepoError()
+
+    profileRepoWorking = ProfileFakeRepoWorking()
+    errorProfileRepo = ProfileFakeRepoError()
   }
 
   @After
@@ -41,306 +51,107 @@ class MyBookingsViewModelLogicTest {
     Dispatchers.resetMain()
   }
 
-  private fun booking(
-      id: String = "b1",
-      creatorId: String = "t1",
-      bookerId: String = "s1",
-      listingId: String = "L1",
-      start: Date = Date(),
-      end: Date = Date(start.time + 90 * 60 * 1000), // 1h30
-      price: Double = 30.0
-  ) =
-      Booking(
-          bookingId = id,
-          associatedListingId = listingId,
-          listingCreatorId = creatorId,
-          bookerId = bookerId,
-          sessionStart = start,
-          sessionEnd = end,
-          status = BookingStatus.CONFIRMED,
-          price = price)
+  // region --- Tests ---
 
-  /** Simple in-memory fakes */
-  private class FakeBookingRepo(private val list: List<Booking>) : BookingRepository {
-    override fun getNewUid() = "X"
+  @Test
+  fun `load() sets empty bookings when user has none`() = runTest {
+    val viewModel =
+        MyBookingsViewModel(
+            bookingRepo = bookingRepoEmpty,
+            listingRepo = listingRepoWorking,
+            profileRepo = profileRepoWorking)
 
-    override suspend fun getAllBookings() = list
+    viewModel.load()
+    advanceUntilIdle()
 
-    override suspend fun getBooking(bookingId: String) = list.first { it.bookingId == bookingId }
+    val state = viewModel.uiState.value
 
-    override suspend fun getBookingsByTutor(tutorId: String) =
-        list.filter { it.listingCreatorId == tutorId }
-
-    override suspend fun getBookingsByUserId(userId: String) = list.filter { it.bookerId == userId }
-
-    override suspend fun getBookingsByStudent(studentId: String) =
-        list.filter { it.bookerId == studentId }
-
-    override suspend fun getBookingsByListing(listingId: String) =
-        list.filter { it.associatedListingId == listingId }
-
-    override suspend fun addBooking(booking: Booking) {}
-
-    override suspend fun updateBooking(bookingId: String, booking: Booking) {}
-
-    override suspend fun deleteBooking(bookingId: String) {}
-
-    override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
-
-    override suspend fun confirmBooking(bookingId: String) {}
-
-    override suspend fun completeBooking(bookingId: String) {}
-
-    override suspend fun cancelBooking(bookingId: String) {}
-  }
-
-  private class FakeRatingRepo(
-      private val map: Map<String, List<Rating>> // key: listingId -> ratings
-  ) : RatingRepository {
-    override fun getNewUid() = "R"
-
-    override suspend fun getAllRatings(): List<Rating> = map.values.flatten()
-
-    override suspend fun getRating(ratingId: String) = error("not used in these tests")
-
-    override suspend fun getRatingsByFromUser(fromUserId: String) = emptyList<Rating>()
-
-    override suspend fun getRatingsByToUser(toUserId: String) = emptyList<Rating>()
-
-    override suspend fun getRatingsOfListing(listingId: String): List<Rating> =
-        map[listingId] ?: emptyList()
-
-    override suspend fun addRating(rating: Rating) {}
-
-    override suspend fun updateRating(ratingId: String, rating: Rating) {}
-
-    override suspend fun deleteRating(ratingId: String) {}
-
-    override suspend fun getTutorRatingsOfUser(userId: String) = emptyList<Rating>()
-
-    override suspend fun getStudentRatingsOfUser(userId: String) = emptyList<Rating>()
-  }
-
-  private class FakeProfileRepo(private val map: Map<String, Profile>) : ProfileRepository {
-    override fun getNewUid() = "P"
-
-    override suspend fun getProfile(userId: String) = map.getValue(userId)
-
-    override suspend fun addProfile(profile: Profile) {}
-
-    override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-    override suspend fun deleteProfile(userId: String) {}
-
-    override suspend fun getAllProfiles() = map.values.toList()
-
-    override suspend fun searchProfilesByLocation(
-        location: com.android.sample.model.map.Location,
-        radiusKm: Double
-    ) = emptyList<Profile>()
-
-    override suspend fun getProfileById(userId: String): Profile {
-      TODO("Not yet implemented")
-    }
-
-    override suspend fun getSkillsForUser(userId: String): List<Skill> {
-      TODO("Not yet implemented")
-    }
-  }
-
-  private class FakeListingRepo(private val map: Map<String, Listing>) : ListingRepository {
-    override fun getNewUid() = "L"
-
-    override suspend fun getAllListings() = map.values.toList()
-
-    override suspend fun getProposals() = map.values.filterIsInstance<Proposal>()
-
-    override suspend fun getRequests() = map.values.filterIsInstance<Request>()
-
-    override suspend fun getListing(listingId: String) = map.getValue(listingId)
-
-    override suspend fun getListingsByUser(userId: String) =
-        map.values.filter { it.creatorUserId == userId }
-
-    override suspend fun addProposal(proposal: Proposal) {}
-
-    override suspend fun addRequest(request: Request) {}
-
-    override suspend fun updateListing(listingId: String, listing: Listing) {}
-
-    override suspend fun deleteListing(listingId: String) {}
-
-    override suspend fun deactivateListing(listingId: String) {}
-
-    override suspend fun searchBySkill(skill: Skill) = map.values.filter { it.skill == skill }
-
-    override suspend fun searchByLocation(
-        location: com.android.sample.model.map.Location,
-        radiusKm: Double
-    ) = emptyList<Listing>()
+    assertFalse(state.isLoading)
+    assertFalse(state.hasError)
+    assertTrue(state.bookings.isEmpty())
   }
 
   @Test
-  fun load_success_populates_cards_and_formats_labels() = runTest {
-    val start = Date(0L) // 01/01/1970 00:00 UTC
-    val end = Date(0L + 90 * 60 * 1000) // +1h30
-
-    val listing = Proposal("L1", "t1", description = "", location = Location(), hourlyRate = 30.0)
-    val prof = Profile("t1", "Alice Martin", "a@a.com")
-    val rating = Rating("r1", "s1", "t1", StarRating.FOUR, "", RatingType.TUTOR)
-
-    val vm =
+  fun `load() builds correct BookingCardUI list`() = runTest {
+    val viewModel =
         MyBookingsViewModel(
-            bookingRepo = FakeBookingRepo(listOf(booking(start = start, end = end))),
-            userId = "s1",
-            listingRepo = FakeListingRepo(mapOf("L1" to listing)),
-            profileRepo = FakeProfileRepo(mapOf("t1" to prof)),
-            ratingRepo = FakeRatingRepo(mapOf("L1" to listOf(rating))),
-            locale = Locale.UK,
-        )
+            bookingRepo = bookingRepoWorking,
+            listingRepo = listingRepoWorking,
+            profileRepo = profileRepoWorking)
 
-    this.testScheduler.advanceUntilIdle()
+    viewModel.load()
+    advanceUntilIdle()
 
-    val c = vm.uiState.value.single()
-    assertEquals("01/01/1970", c.dateLabel) // now deterministic
-    assertEquals("1h 30m", c.durationLabel)
+    val state = viewModel.uiState.value
+
+    assertFalse(state.isLoading)
+    assertFalse(state.hasError)
+    assertEquals(bookingRepoWorking.initialNumBooking, state.bookings.size)
+
+    // Vérification cohérente avec les données mockées
+    val firstCard = state.bookings.first()
+    val lastCard = state.bookings.last()
+
+    assertNotNull(firstCard.listing)
+    assertNotNull(firstCard.creatorProfile)
+    assertTrue(
+        firstCard.listing.description.contains("Tutor") ||
+            firstCard.listing.description.contains("Student"))
+
+    assertEquals("creator_1", firstCard.creatorProfile.userId)
+    assertEquals("creator_2", lastCard.creatorProfile.userId)
   }
 
   @Test
-  fun when_rating_absent_stars_and_count_are_zero_and_pluralization_for_exact_hours() = runTest {
-    val twoHours =
-        booking(
-            id = "b2", start = Date(0L), end = Date(0L + 2 * 60 * 60 * 1000) // 2 hours exact
-            )
-
-    val vm =
+  fun `load() sets error when booking repository throws exception`() = runTest {
+    val viewModel =
         MyBookingsViewModel(
-            bookingRepo = FakeBookingRepo(listOf(twoHours)),
-            userId = "s1",
-            listingRepo =
-                FakeListingRepo(
-                    mapOf(
-                        "L1" to
-                            Proposal(
-                                "L1",
-                                "t1",
-                                description = "",
-                                location = Location(),
-                                hourlyRate = 10.0))),
-            profileRepo = FakeProfileRepo(mapOf("t1" to Profile("t1", "T", "t@t.com"))),
-            ratingRepo = FakeRatingRepo(mapOf("L1" to emptyList())), // no rating
-            locale = Locale.US,
-        )
+            bookingRepo = errorBookingRepo,
+            listingRepo = listingRepoWorking,
+            profileRepo = profileRepoWorking)
 
-    this.testScheduler.advanceUntilIdle()
-    val c = vm.uiState.value.single()
-    assertEquals(0, c.ratingStars)
-    assertEquals(0, c.ratingCount)
-    assertEquals("2hrs", c.durationLabel) // pluralization branch
+    viewModel.load()
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertTrue(state.hasError)
+    assertFalse(state.isLoading)
+    assertTrue(state.bookings.isEmpty())
   }
 
   @Test
-  fun listing_fetch_failure_skips_booking() = runTest {
-    val failingListingRepo =
-        object : ListingRepository {
-          override fun getNewUid() = "L"
-
-          override suspend fun getAllListings() = emptyList<Listing>()
-
-          override suspend fun getProposals() = emptyList<Proposal>()
-
-          override suspend fun getRequests() = emptyList<Request>()
-
-          override suspend fun getListing(listingId: String) = throw RuntimeException("no listing")
-
-          override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
-
-          override suspend fun addProposal(proposal: Proposal) {}
-
-          override suspend fun addRequest(request: Request) {}
-
-          override suspend fun updateListing(listingId: String, listing: Listing) {}
-
-          override suspend fun deleteListing(listingId: String) {}
-
-          override suspend fun deactivateListing(listingId: String) {}
-
-          override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
-
-          override suspend fun searchByLocation(
-              location: com.android.sample.model.map.Location,
-              radiusKm: Double
-          ) = emptyList<Listing>()
-        }
-
-    val vm =
+  fun `load() sets error when listing repository throws exception`() = runTest {
+    val viewModel =
         MyBookingsViewModel(
-            bookingRepo = FakeBookingRepo(listOf(booking())),
-            userId = "s1",
-            listingRepo = failingListingRepo,
-            profileRepo = FakeProfileRepo(emptyMap()),
-            ratingRepo = FakeRatingRepo(emptyMap()),
-        )
+            bookingRepo = bookingRepoWorking,
+            listingRepo = errorListingRepo,
+            profileRepo = profileRepoWorking)
 
-    this.testScheduler.advanceUntilIdle()
-    assertTrue(vm.uiState.value.isEmpty()) // buildCardSafely returned null → skipped
+    viewModel.load()
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertTrue(state.hasError)
+    assertFalse(state.isLoading)
+    assertTrue(state.bookings.isEmpty())
   }
 
   @Test
-  fun profile_fetch_failure_skips_booking() = runTest {
-    val listing = Proposal("L1", "t1", description = "", location = Location(), hourlyRate = 10.0)
-    val failingProfiles =
-        object : ProfileRepository {
-          override fun getNewUid() = "P"
-
-          override suspend fun getProfile(userId: String) = throw RuntimeException("no profile")
-
-          override suspend fun addProfile(profile: Profile) {}
-
-          override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-          override suspend fun deleteProfile(userId: String) {}
-
-          override suspend fun getAllProfiles() = emptyList<Profile>()
-
-          override suspend fun searchProfilesByLocation(
-              location: com.android.sample.model.map.Location,
-              radiusKm: Double
-          ) = emptyList<Profile>()
-
-          override suspend fun getProfileById(userId: String): Profile {
-            TODO("Not yet implemented")
-          }
-
-          override suspend fun getSkillsForUser(userId: String): List<Skill> {
-            TODO("Not yet implemented")
-          }
-        }
-
-    val vm =
+  fun `load() sets error when profile repository throws exception`() = runTest {
+    val viewModel =
         MyBookingsViewModel(
-            bookingRepo = FakeBookingRepo(listOf(booking())),
-            userId = "s1",
-            listingRepo = FakeListingRepo(mapOf("L1" to listing)),
-            profileRepo = failingProfiles,
-            ratingRepo = FakeRatingRepo(emptyMap()),
-        )
+            bookingRepo = bookingRepoWorking,
+            listingRepo = listingRepoWorking,
+            profileRepo = errorProfileRepo)
 
-    this.testScheduler.advanceUntilIdle()
-    assertTrue(vm.uiState.value.isEmpty())
+    viewModel.load()
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertTrue(state.hasError)
+    assertFalse(state.isLoading)
+    assertTrue(state.bookings.isEmpty())
   }
 
-  @Test
-  fun load_empty_results_in_empty_list() = runTest {
-    val vm =
-        MyBookingsViewModel(
-            bookingRepo = FakeBookingRepo(emptyList()),
-            userId = "s1",
-            listingRepo = FakeListingRepo(emptyMap()),
-            profileRepo = FakeProfileRepo(emptyMap()),
-            ratingRepo = FakeRatingRepo(emptyMap()),
-        )
-    this.testScheduler.advanceUntilIdle()
-    assertTrue(vm.uiState.value.isEmpty())
-  }
+  // endregion
 }

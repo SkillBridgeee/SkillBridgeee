@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.sample.model.authentication.*
+import com.android.sample.ui.components.EllipsizingTextField
+import com.android.sample.ui.components.EllipsizingTextFieldStyle
 import com.android.sample.ui.theme.extendedColors
 
 object SignInScreenTestTags {
@@ -31,7 +33,6 @@ object SignInScreenTestTags {
   const val SIGN_IN_BUTTON = "signInButton"
   const val AUTH_GOOGLE = "authGoogle"
   const val SIGNUP_LINK = "signUpLink"
-  const val AUTH_GITHUB = "authGitHub"
   const val FORGOT_PASSWORD = "forgotPassword"
   const val AUTH_SECTION = "authSection"
   const val SUBTITLE = "subtitle"
@@ -41,7 +42,6 @@ object SignInScreenTestTags {
 fun LoginScreen(
     viewModel: AuthenticationViewModel = AuthenticationViewModel(LocalContext.current),
     onGoogleSignIn: () -> Unit = {},
-    onGitHubSignIn: () -> Unit = {},
     onNavigateToSignUp: () -> Unit = {} // Add this parameter
 ) {
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -63,7 +63,6 @@ fun LoginScreen(
               uiState = uiState,
               viewModel = viewModel,
               onGoogleSignIn = onGoogleSignIn,
-              onGitHubSignIn = onGitHubSignIn,
               onNavigateToSignUp)
         }
       }
@@ -105,7 +104,6 @@ private fun LoginForm(
     uiState: AuthenticationUiState,
     viewModel: AuthenticationViewModel,
     onGoogleSignIn: () -> Unit,
-    onGitHubSignIn: () -> Unit = {},
     onNavigateToSignUp: () -> Unit = {}
 ) {
   LoginHeader()
@@ -128,10 +126,7 @@ private fun LoginForm(
       onClick = viewModel::signIn)
   Spacer(modifier = Modifier.height(20.dp))
 
-  AlternativeAuthSection(
-      isLoading = uiState.isLoading,
-      onGoogleSignIn = onGoogleSignIn,
-      onGitHubSignIn = onGitHubSignIn)
+  AlternativeAuthSection(isLoading = uiState.isLoading, onGoogleSignIn = onGoogleSignIn)
   Spacer(modifier = Modifier.height(20.dp))
 
   SignUpLink(onNavigateToSignUp = onNavigateToSignUp)
@@ -158,15 +153,24 @@ private fun EmailPasswordFields(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit
 ) {
-  OutlinedTextField(
+  EllipsizingTextField(
       value = email,
       onValueChange = onEmailChange,
-      label = { Text("Email") },
-      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+      placeholder = "Email",
+      style =
+          EllipsizingTextFieldStyle(
+              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+              // you could also set shape/colors here if you want:
+              // shape = RoundedCornerShape(14.dp),
+              // colors = TextFieldDefaults.colors(...)
+              ),
       leadingIcon = {
-        Icon(painterResource(id = android.R.drawable.ic_dialog_email), contentDescription = null)
+        Icon(
+            painter = painterResource(id = android.R.drawable.ic_dialog_email),
+            contentDescription = null)
       },
-      modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT))
+      modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT),
+      maxPreviewLength = 45)
 
   Spacer(modifier = Modifier.height(10.dp))
 
@@ -176,6 +180,8 @@ private fun EmailPasswordFields(
       label = { Text("Password") },
       visualTransformation = PasswordVisualTransformation(),
       keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+      singleLine = true,
+      maxLines = 1,
       leadingIcon = {
         Icon(painterResource(id = android.R.drawable.ic_lock_idle_lock), contentDescription = null)
       },
@@ -235,7 +241,6 @@ private fun SignInButton(isLoading: Boolean, isEnabled: Boolean, onClick: () -> 
 private fun AlternativeAuthSection(
     isLoading: Boolean,
     onGoogleSignIn: () -> Unit,
-    onGitHubSignIn: () -> Unit = {}
 ) {
   Text("or continue with", modifier = Modifier.testTag(SignInScreenTestTags.AUTH_SECTION))
   Spacer(modifier = Modifier.height(15.dp))
@@ -246,11 +251,6 @@ private fun AlternativeAuthSection(
         enabled = !isLoading,
         onClick = onGoogleSignIn,
         testTag = SignInScreenTestTags.AUTH_GOOGLE)
-    AuthProviderButton(
-        text = "GitHub",
-        enabled = !isLoading,
-        onClick = onGitHubSignIn, // This line is correct
-        testTag = SignInScreenTestTags.AUTH_GITHUB)
   }
 }
 

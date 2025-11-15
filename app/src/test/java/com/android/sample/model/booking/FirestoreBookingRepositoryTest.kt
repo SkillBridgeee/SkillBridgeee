@@ -1,14 +1,13 @@
 package com.android.sample.model.booking
 
+import com.android.sample.utils.FirebaseEmulator
 import com.android.sample.utils.RepositoryTest
-import com.github.se.bootcamp.utils.FirebaseEmulator
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import io.mockk.every
 import io.mockk.mockk
 import java.util.Date
-import kotlin.collections.get
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
@@ -19,11 +18,8 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-@RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28])
 class FirestoreBookingRepositoryTest : RepositoryTest() {
   private lateinit var firestore: FirebaseFirestore
@@ -109,59 +105,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
             sessionEnd = Date(System.currentTimeMillis() + 3600000))
     bookingRepository.addBooking(booking)
     bookingRepository.deleteBooking("booking1")
-
-    val retrievedBooking = bookingRepository.getBooking("booking1")
-    // assertEquals(null, retrievedBooking)
   }
-
-  //  @Test
-  //  fun canGetBookingsByListing() = runTest {
-  //    val booking1 =
-  //        Booking(
-  //            bookingId = "booking1",
-  //            associatedListingId = "listing1",
-  //            listingCreatorId = "tutor1",
-  //            bookerId = testUserId,
-  //            sessionStart = Date(System.currentTimeMillis()),
-  //            sessionEnd = Date(System.currentTimeMillis() + 3600000))
-  //    val booking2 =
-  //        Booking(
-  //            bookingId = "booking2",
-  //            associatedListingId = "listing2",
-  //            listingCreatorId = "tutor2",
-  //            bookerId = testUserId,
-  //            sessionStart = Date(System.currentTimeMillis()),
-  //            sessionEnd = Date(System.currentTimeMillis() + 3600000))
-  //    bookingRepository.addBooking(booking1)
-  //    bookingRepository.addBooking(booking2)
-  //
-  //    val bookings = bookingRepository.getBookingsByListing("listing1")
-  //    assertEquals(1, bookings.size)
-  //    assertEquals("booking1", bookings[0].bookingId)
-  //  }
-
-  // @Test
-  //  fun getBookingsByListingReturnsEmptyListForNonExistentListing() = runTest {
-  //    val bookings = bookingRepository.getBookingsByListing("non-existent-listing")
-  //    assertTrue(bookings.isEmpty())
-  //  }
-
-  //  @Test
-  //  fun canGetBookingsByStudent() = runTest {
-  //    val booking1 =
-  //        Booking(
-  //            bookingId = "booking1",
-  //            associatedListingId = "listing1",
-  //            listingCreatorId = "tutor1",
-  //            bookerId = testUserId,
-  //            sessionStart = Date(System.currentTimeMillis()),
-  //            sessionEnd = Date(System.currentTimeMillis() + 3600000))
-  //    bookingRepository.addBooking(booking1)
-  //
-  //    val bookings = bookingRepository.getBookingsByStudent(testUserId)
-  //    assertEquals(1, bookings.size)
-  //    assertEquals("booking1", bookings[0].bookingId)
-  //  }
 
   @Test
   fun canConfirmBooking() = runTest {

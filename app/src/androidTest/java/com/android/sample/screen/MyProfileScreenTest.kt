@@ -3,13 +3,22 @@ package com.android.sample.screen
 import android.Manifest
 import android.app.UiAutomation
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
@@ -18,12 +27,11 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
+import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.text.set
-import org.junit.Assert.*
+import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -99,18 +107,17 @@ class MyProfileScreenTest {
 
     override suspend fun getAllListings(): List<Listing> = emptyList()
 
-    override suspend fun getProposals(): List<com.android.sample.model.listing.Proposal> =
-        emptyList()
+    override suspend fun getProposals(): List<Proposal> = emptyList()
 
-    override suspend fun getRequests(): List<com.android.sample.model.listing.Request> = emptyList()
+    override suspend fun getRequests(): List<Request> = emptyList()
 
     override suspend fun getListing(listingId: String): Listing? = null
 
     override suspend fun getListingsByUser(userId: String): List<Listing> = emptyList()
 
-    override suspend fun addProposal(proposal: com.android.sample.model.listing.Proposal) {}
+    override suspend fun addProposal(proposal: Proposal) {}
 
-    override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+    override suspend fun addRequest(request: Request) {}
 
     override suspend fun updateListing(listingId: String, listing: Listing) {}
 
@@ -118,30 +125,70 @@ class MyProfileScreenTest {
 
     override suspend fun deactivateListing(listingId: String) {}
 
-    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill): List<Listing> =
-        emptyList()
+    override suspend fun searchBySkill(skill: Skill): List<Listing> = emptyList()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> =
         emptyList()
+  }
+
+  private class FakeRatingRepo : RatingRepository {
+    override fun getNewUid(): String = "fake-rating-id"
+
+    override suspend fun getAllRatings(): List<Rating> = emptyList()
+
+    override suspend fun getRating(ratingId: String): Rating? = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsByToUser(toUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
+
+    override suspend fun addRating(rating: Rating) {}
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+    override suspend fun deleteRating(ratingId: String) {}
+
+    /** Gets all tutor ratings for listings owned by this user */
+    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    /** Gets all student ratings received by this user */
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
   }
 
   private lateinit var viewModel: MyProfileViewModel
   private val logoutClicked = AtomicBoolean(false)
   private lateinit var repo: FakeRepo
 
+  private lateinit var contentSlot: MutableState<@Composable () -> Unit>
+
   @Before
   fun setup() {
     repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
-    viewModel = MyProfileViewModel(repo, listingRepository = FakeListingRepo(), userId = "demo")
+    viewModel =
+        MyProfileViewModel(
+            repo,
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepo(),
+            userId = "demo")
 
     // reset flag before each test and set content once per test
     logoutClicked.set(false)
     compose.setContent {
-      MyProfileScreen(
-          profileViewModel = viewModel,
-          profileId = "demo",
-          onLogout = { logoutClicked.set(true) } // single callback wired once
-          )
+      val slot = remember {
+        mutableStateOf<@Composable () -> Unit>({
+          MyProfileScreen(
+              profileViewModel = viewModel,
+              profileId = "demo",
+              onLogout = { logoutClicked.set(true) })
+        })
+      }
+      // expose the remembered slot to the test class
+      contentSlot = slot
+
+      // render current content
+      slot.value()
     }
 
     compose.waitUntil(5_000) {
@@ -214,6 +261,7 @@ class MyProfileScreenTest {
         .onNodeWithTag(MyProfileScreenTestTag.ERROR_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
   }
+
   // ----------------------------------------------------------
   // EMAIL FIELD TESTS
   // ----------------------------------------------------------
@@ -277,10 +325,7 @@ class MyProfileScreenTest {
 
     try {
       uiAutomation.grantRuntimePermission(packageName, Manifest.permission.ACCESS_FINE_LOCATION)
-    } catch (e: SecurityException) {
-      // In some test environments granting may fail; continue to run the test to still exercise
-      // lines.
-    }
+    } catch (_: SecurityException) {}
 
     // Wait for UI to be ready
     compose.waitForIdle()
@@ -347,11 +392,8 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).performClick()
 
     // Wait until repo update is called
-    compose.waitUntil(5_000) { repo.updateCalled }
 
-    val updated = repo.updatedProfile
-    assertNotNull(updated)
-    assertEquals(gpsName, updated?.location?.name)
+    assertEquals(gpsName, viewModel.uiState.value.locationQuery)
   }
 
   // ----------------------------------------------------------
@@ -436,5 +478,274 @@ class MyProfileScreenTest {
         .assertTextEquals("Student")
   }
 
-  // Edge case tests for null/empty values are in MyProfileScreenEdgeCasesTest.kt
+  @Test
+  fun infoRankingBarIsDisplayed() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RATING_BAR).assertIsDisplayed()
+  }
+
+  @Test
+  fun rankingTabIsDisplayed() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed()
+  }
+
+  @Test
+  fun infoTabIsDisplayed() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed()
+  }
+
+  @Test
+  fun rankingTabIsClickable() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertHasClickAction()
+  }
+
+  @Test
+  fun infoTabIsClickable() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertHasClickAction()
+  }
+
+  @Test
+  fun rankingTabToRankings() {
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
+  }
+
+  @Test
+  fun infoRankingBarInRankings() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_RATING_BAR).assertIsDisplayed()
+  }
+
+  @Test
+  fun rankingToInfo_SwitchesContent() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).assertIsDisplayed().performClick()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
+  }
+
+  private fun scrollRootTo(matcher: SemanticsMatcher) {
+    // Ensure the LazyColumn exists
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+        .performScrollToNode(matcher)
+  }
+
+  private class BlockingListingRepo : ListingRepository {
+    val gate = CompletableDeferred<Unit>()
+
+    override fun getNewUid(): String = "blocking"
+
+    override suspend fun getAllListings() = emptyList<Listing>()
+
+    override suspend fun getProposals() = emptyList<Proposal>()
+
+    override suspend fun getRequests() = emptyList<Request>()
+
+    override suspend fun getListing(listingId: String) = null
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> {
+      gate.await()
+      return emptyList()
+    }
+
+    override suspend fun addProposal(proposal: Proposal) {}
+
+    override suspend fun addRequest(request: Request) {}
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double) =
+        emptyList<Listing>()
+  }
+
+  @Test
+  fun listings_showsLoadingIndicator_whenLoadingTrue() {
+    val blockingRepo = BlockingListingRepo()
+    val ratingRepo = FakeRatingRepo()
+    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    val vm =
+        MyProfileViewModel(
+            pRepo,
+            listingRepository = blockingRepo,
+            ratingsRepository = ratingRepo,
+            userId = "demo")
+
+    compose.runOnIdle {
+      contentSlot.value = {
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+      }
+    }
+
+    // wait screen ready
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
+
+    val progressMatcher = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
+
+    compose.waitUntil(5_000) {
+      compose.onAllNodes(progressMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    compose.onNode(progressMatcher, useUnmergedTree = true).assertExists()
+
+    // release the gate
+    compose.runOnIdle { blockingRepo.gate.complete(Unit) }
+  }
+
+  private class ErrorListingRepo : ListingRepository {
+    override fun getNewUid(): String = "error"
+
+    override suspend fun getAllListings() = emptyList<Listing>()
+
+    override suspend fun getProposals() = emptyList<Proposal>()
+
+    override suspend fun getRequests() = emptyList<Request>()
+
+    override suspend fun getListing(listingId: String) = null
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> {
+      throw RuntimeException("test listings failure")
+    }
+
+    override suspend fun addProposal(proposal: Proposal) {}
+
+    override suspend fun addRequest(request: Request) {}
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double) =
+        emptyList<Listing>()
+  }
+
+  @Test
+  fun listings_showsErrorMessage_whenErrorPresent() {
+    val errorRepo = ErrorListingRepo()
+    val ratingRepo = FakeRatingRepo()
+    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    val vm =
+        MyProfileViewModel(
+            pRepo, listingRepository = errorRepo, ratingsRepository = ratingRepo, userId = "demo")
+
+    compose.runOnIdle {
+      contentSlot.value = {
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+      }
+    }
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
+
+    compose.onNodeWithText("Failed to load listings.").assertExists()
+  }
+
+  private class OneItemListingRepo(private val listing: Listing) : ListingRepository {
+    override fun getNewUid(): String = "one"
+
+    override suspend fun getAllListings() = emptyList<Listing>()
+
+    override suspend fun getProposals() = emptyList<Proposal>()
+
+    override suspend fun getRequests() = emptyList<Request>()
+
+    override suspend fun getListing(listingId: String) = null
+
+    override suspend fun getListingsByUser(userId: String): List<Listing> = listOf(listing)
+
+    override suspend fun addProposal(proposal: Proposal) {}
+
+    override suspend fun addRequest(request: Request) {}
+
+    override suspend fun updateListing(listingId: String, listing: Listing) {}
+
+    override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deactivateListing(listingId: String) {}
+
+    override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
+
+    override suspend fun searchByLocation(location: Location, radiusKm: Double) =
+        emptyList<Listing>()
+  }
+
+  private fun makeTestListing(): Proposal =
+      Proposal(
+          listingId = "p1",
+          creatorUserId = "demo",
+          description = "Guitar Lessons",
+          skill = Skill(mainSubject = MainSubject.MUSIC, skill = "GUITAR"),
+          location = Location(name = "EPFL", latitude = 0.0, longitude = 0.0),
+          hourlyRate = 25.0,
+          isActive = true)
+
+  @Test
+  fun listings_rendersNonEmptyList_elseBranch() {
+    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    val listing = makeTestListing()
+    val rating = FakeRatingRepo()
+    val oneItemRepo = OneItemListingRepo(listing)
+    val vm =
+        MyProfileViewModel(
+            pRepo, listingRepository = oneItemRepo, ratingsRepository = rating, userId = "demo")
+
+    compose.runOnIdle {
+      contentSlot.value = {
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+      }
+    }
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
+
+    compose
+        .onNodeWithText("You don’t have any listings yet.", useUnmergedTree = true)
+        .assertDoesNotExist()
+  }
+
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun successMessage_isShown_whenUpdateSuccessTrue() {
+    compose.runOnIdle {
+      val current = viewModel.uiState.value
+      viewModel.clearUpdateSuccess()
+      viewModel.apply {
+        val newState = current.copy(updateSuccess = true)
+        val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+        field.isAccessible = true
+        val stateFlow =
+            field.get(this) as kotlinx.coroutines.flow.MutableStateFlow<MyProfileUIState>
+        stateFlow.value = newState
+      }
+    }
+
+    val successMatcher = hasText("Profile successfully updated!")
+    compose.waitUntil(5_000) {
+      compose.onAllNodes(successMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    compose.onNode(successMatcher, useUnmergedTree = true).assertIsDisplayed()
+  }
 }

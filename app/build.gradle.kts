@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.androidTestImplementation
 import java.util.Properties
 
 plugins {
@@ -30,6 +31,10 @@ configurations.matching {
     it.name.contains("androidTest", ignoreCase = true)
 }.all {
     exclude(group = "com.google.protobuf", module = "protobuf-lite")
+}
+configurations.matching { it.name.contains("AndroidTest", ignoreCase = true) }.all {
+    exclude(group = "org.junit.jupiter")
+    exclude(group = "org.junit.platform")
 }
 
 android {
@@ -67,21 +72,26 @@ android {
             storePassword = "android"
         }
     }
-
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+            // Disable Firebase emulators in release builds
+            buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
         }
 
         debug {
             enableUnitTestCoverage = true
             enableAndroidTestCoverage = true
             signingConfig = signingConfigs.getByName("debug")
+            // Debug builds connect to Firebase emulators (for local testing on Android emulator)
+            // Make sure to run: firebase emulators:start
+            buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "true")
         }
     }
 
@@ -91,6 +101,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -194,6 +205,19 @@ dependencies {
     implementation("com.google.protobuf:protobuf-javalite:3.21.12")
     testImplementation("com.google.protobuf:protobuf-javalite:3.21.12")
     androidTestImplementation("com.google.protobuf:protobuf-javalite:3.21.12")
+
+    // Instrumentation
+    androidTestImplementation("io.mockk:mockk-android:1.13.11")
+
+    // Compose testing
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:<compose_version>")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:<compose_version>")
+
+    // AndroidX test libs
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+    androidTestImplementation("androidx.test:core-ktx:1.5.0")
+    androidTestImplementation(libs.androidx.navigation.testing)
 
     // Google Play Services for Google Sign-In
     implementation(libs.play.services.auth)

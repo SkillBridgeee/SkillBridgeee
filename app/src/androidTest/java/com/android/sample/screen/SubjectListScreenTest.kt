@@ -7,11 +7,8 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
@@ -26,7 +23,6 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.subject.SubjectListScreen
 import com.android.sample.ui.subject.SubjectListTestTags
 import com.android.sample.ui.subject.SubjectListViewModel
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.delay
 import org.junit.Rule
 import org.junit.Test
@@ -177,27 +173,6 @@ class SubjectListScreenTest {
 
     composeRule.onNodeWithText("Debug Guitar Lessons").assertIsDisplayed()
     composeRule.onNodeWithText("Debug Piano Coaching").assertIsDisplayed()
-  }
-
-  @Test
-  fun clickingBook_callsCallback() {
-    val clicked = AtomicBoolean(false)
-    val vm = makeViewModel()
-    composeRule.setContent {
-      MaterialTheme {
-        SubjectListScreen(vm, onBookTutor = { clicked.set(true) }, subject = MainSubject.MUSIC)
-      }
-    }
-
-    composeRule.waitUntil(3_000) {
-      composeRule
-          .onAllNodesWithTag(SubjectListTestTags.LISTING_BOOK_BUTTON)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
-
-    composeRule.onAllNodesWithTag(SubjectListTestTags.LISTING_BOOK_BUTTON).onFirst().performClick()
-    assert(clicked.get())
   }
 
   @Test

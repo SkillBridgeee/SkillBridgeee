@@ -1,5 +1,6 @@
 package com.android.sample.screen
 
+import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.listing.Listing
@@ -9,6 +10,8 @@ import com.android.sample.model.listing.Request
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.profile.DESC_EMPTY_MSG
@@ -19,6 +22,7 @@ import com.android.sample.ui.profile.LOCATION_EMPTY_MSG
 import com.android.sample.ui.profile.LOCATION_PERMISSION_DENIED_MSG
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.profile.NAME_EMPTY_MSG
+import java.nio.channels.spi.AsynchronousChannelProvider.provider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -32,6 +36,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -135,6 +140,33 @@ class MyProfileViewModelTest {
         emptyList()
   }
 
+  private class FakeRatingRepos : RatingRepository {
+    override fun getNewUid(): String = "fake-rating-id"
+
+    override suspend fun getAllRatings(): List<Rating> = emptyList()
+
+    override suspend fun getRating(ratingId: String): Rating? = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsByToUser(toUserId: String): List<Rating> =
+        throw RuntimeException("Failed to load ratings.")
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
+
+    override suspend fun addRating(rating: Rating) = Unit
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) = Unit
+
+    override suspend fun deleteRating(ratingId: String) = Unit
+
+    /** Gets all tutor ratings for listings owned by this user */
+    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    /** Gets all student ratings received by this user */
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+  }
+
   private class SuccessGpsProvider(
       private val lat: Double = 12.34,
       private val lon: Double = 56.78
@@ -163,8 +195,9 @@ class MyProfileViewModelTest {
       repo: ProfileRepository = FakeProfileRepo(),
       locRepo: LocationRepository = FakeLocationRepo(),
       listingRepo: ListingRepository = FakeListingRepo(),
+      ratingRepo: RatingRepository = FakeRatingRepos(),
       userId: String = "testUid"
-  ) = MyProfileViewModel(repo, locRepo, listingRepo, userId)
+  ) = MyProfileViewModel(repo, locRepo, listingRepo, ratingRepo, userId = userId)
 
   private class NullGpsProvider :
       com.android.sample.model.map.GpsLocationProvider(
@@ -443,7 +476,7 @@ class MyProfileViewModelTest {
     val vm = newVm()
     val provider = SuccessGpsProvider(12.34, 56.78)
 
-    vm.fetchLocationFromGps(provider)
+    vm.fetchLocationFromGps(provider, context = ApplicationProvider.getApplicationContext())
     advanceUntilIdle()
 
     val ui = vm.uiState.value
@@ -459,7 +492,7 @@ class MyProfileViewModelTest {
     val vm = newVm()
     val provider = NullGpsProvider()
 
-    vm.fetchLocationFromGps(provider)
+    vm.fetchLocationFromGps(provider, context = ApplicationProvider.getApplicationContext())
     advanceUntilIdle()
 
     val ui = vm.uiState.value
@@ -471,7 +504,7 @@ class MyProfileViewModelTest {
     val vm = newVm()
     val provider = SecurityExceptionGpsProvider()
 
-    vm.fetchLocationFromGps(provider)
+    vm.fetchLocationFromGps(provider, context = ApplicationProvider.getApplicationContext())
     advanceUntilIdle()
 
     val ui = vm.uiState.value
@@ -532,5 +565,184 @@ class MyProfileViewModelTest {
     vm.setLocation(Location(name = "Paris"))
     // now all required fields present and valid -> valid
     assertTrue(vm.uiState.value.isValid)
+  }
+
+  @Test
+  fun permissionGranted_branch_executes_fetchLocationFromGps() {
+    val repo = mock<ProfileRepository>()
+    val listingRepo = mock<ListingRepository>()
+    val context = mock<Context>()
+    val ratingRepo = mock<RatingRepository>()
+
+    val provider = GpsLocationProvider(context)
+    val viewModel =
+        MyProfileViewModel(
+            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo")
+
+    viewModel.fetchLocationFromGps(provider, context)
+  }
+
+  @Test
+  fun permissionDenied_branch_executes_onLocationPermissionDenied() = runTest {
+    val repo = mock<ProfileRepository>()
+    val listingRepo = mock<ListingRepository>()
+    val context = mock<Context>()
+    val ratingRepo = mock<RatingRepository>()
+
+    val viewModel =
+        MyProfileViewModel(
+            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo")
+
+    viewModel.onLocationPermissionDenied()
+  }
+
+  @Test
+  fun loadUserRatingFails_handlesRepositoryException_setsRatingsError() = runTest {
+    val failingRatingRepo =
+        object : RatingRepository by FakeRatingRepos() {
+          override suspend fun getRatingsByToUser(toUserId: String): List<Rating> {
+            throw RuntimeException("Ratings fetch failed")
+          }
+        }
+
+    val repo = FakeProfileRepo(makeProfile())
+    val vm = newVm(repo = repo, ratingRepo = failingRatingRepo)
+
+    // Trigger ratings load
+    vm.loadUserRatings("userId")
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertTrue(ui.ratings.isEmpty())
+    assertFalse(ui.ratingsLoading)
+    assertEquals("Failed to load ratings.", ui.ratingsLoadError)
+  }
+
+  @Test
+  fun clearUpdateSuccess_resetsFlag_afterSuccessfulUpdate() = runTest {
+    val repo = FakeProfileRepo()
+    val vm = newVm(repo)
+
+    vm.setName("New Name")
+    vm.setEmail("new@mail.com")
+    vm.setLocation(Location(name = "Paris"))
+    vm.setDescription("Desc")
+
+    vm.editProfile()
+    advanceUntilIdle()
+
+    assertTrue(vm.uiState.value.updateSuccess)
+
+    vm.clearUpdateSuccess()
+
+    assertFalse(vm.uiState.value.updateSuccess)
+  }
+
+  @Test
+  fun editProfile_doesNothing_whenNoFieldsChangedAfterLoad() = runTest {
+    val stored =
+        makeProfile(
+            id = "u1",
+            name = "Alice",
+            email = "alice@mail.com",
+            location = Location(name = "Lyon"),
+            desc = "Tutor")
+    val repo = FakeProfileRepo(storedProfile = stored)
+    val vm = newVm(repo)
+
+    vm.loadProfile()
+    advanceUntilIdle()
+
+    vm.editProfile()
+    advanceUntilIdle()
+
+    assertFalse(repo.updateCalled)
+  }
+
+  @Test
+  fun editProfile_updates_whenAnyFieldChanges_afterLoad() = runTest {
+    val stored =
+        makeProfile(
+            id = "u1",
+            name = "Alice",
+            email = "alice@mail.com",
+            location = Location(name = "Lyon"),
+            desc = "Tutor")
+    val repo = FakeProfileRepo(stored)
+    val vm = newVm(repo)
+
+    vm.loadProfile()
+    advanceUntilIdle()
+
+    vm.setName("Alice Cooper")
+
+    vm.editProfile()
+    advanceUntilIdle()
+
+    assertTrue(repo.updateCalled)
+    val updated = repo.updatedProfile!!
+    assertEquals("Alice Cooper", updated.name)
+    assertEquals("alice@mail.com", updated.email)
+    assertEquals("Lyon", updated.location.name)
+    assertEquals("Tutor", updated.description)
+  }
+
+  @Test
+  fun hasProfileChanged_false_whenProfilesAreIdentical() {
+    val vm = newVm()
+    val original =
+        makeProfile(
+            id = "u1",
+            name = "A",
+            email = "a@mail.com",
+            location = Location(name = "Paris", latitude = 1.0, longitude = 2.0),
+            desc = "Desc")
+    val updated = original.copy()
+
+    val m =
+        MyProfileViewModel::class
+            .java
+            .getDeclaredMethod("hasProfileChanged", Profile::class.java, Profile::class.java)
+    m.isAccessible = true
+
+    val result = m.invoke(vm, original, updated) as Boolean
+    assertFalse(result)
+  }
+
+  @Test
+  fun hasProfileChanged_true_whenAnyFieldDiffers_includingLocationFields() {
+    val vm = newVm()
+    val original =
+        makeProfile(
+            id = "u1",
+            name = "A",
+            email = "a@mail.com",
+            location = Location(name = "Paris", latitude = 1.0, longitude = 2.0),
+            desc = "Desc")
+
+    val changedName = original.copy(name = "B")
+    val changedEmail = original.copy(email = "b@mail.com")
+    val changedDesc = original.copy(description = "Other")
+    val changedLocName = original.copy(location = original.location.copy(name = "Lyon"))
+    val changedLat = original.copy(location = original.location.copy(latitude = 9.9))
+    val changedLon = original.copy(location = original.location.copy(longitude = 8.8))
+
+    val m =
+        MyProfileViewModel::class
+            .java
+            .getDeclaredMethod("hasProfileChanged", Profile::class.java, Profile::class.java)
+    m.isAccessible = true
+
+    fun assertChanged(updated: Profile) {
+      val result = m.invoke(vm, original, updated) as Boolean
+      assertTrue(result)
+    }
+
+    assertChanged(changedName)
+    assertChanged(changedEmail)
+    assertChanged(changedDesc)
+    assertChanged(changedLocName)
+    assertChanged(changedLat)
+    assertChanged(changedLon)
   }
 }

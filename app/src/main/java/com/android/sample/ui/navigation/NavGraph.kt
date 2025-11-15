@@ -16,20 +16,29 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.HomePage.HomeScreen
 import com.android.sample.ui.HomePage.MainPageViewModel
+import com.android.sample.ui.bookings.BookingDetailsScreen
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
+import com.android.sample.ui.newListing.NewListingScreen
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.profile.ProfileScreen
-import com.android.sample.ui.screens.newSkill.NewSkillScreen
 import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpViewModel
 import com.android.sample.ui.subject.SubjectListScreen
 import com.android.sample.ui.subject.SubjectListViewModel
 
 private const val TAG = "NavGraph"
+
+/**
+ * Helper function to navigate to listing details screen Avoids code duplication across different
+ * navigation paths
+ */
+private fun navigateToListing(navController: NavHostController, listingId: String) {
+  navController.navigate(NavRoutes.createListingRoute(listingId))
+}
 
 /**
  * AppNavGraph - Main navigation configuration for the SkillBridge app
@@ -65,6 +74,7 @@ fun AppNavGraph(
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
   val profileID = remember { mutableStateOf("") }
+  val bookingId = remember { mutableStateOf("") }
 
   NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
     composable(NavRoutes.LOGIN) {
@@ -72,10 +82,6 @@ fun AppNavGraph(
       LoginScreen(
           viewModel = authViewModel,
           onGoogleSignIn = onGoogleSignIn,
-          onGitHubSignIn = { // Temporary functionality to go to home page while GitHub auth isn't
-            // implemented
-            navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
-          },
           onNavigateToSignUp = { // Add this navigation callback
             navController.navigate(NavRoutes.SIGNUP_BASE)
           })
@@ -84,6 +90,7 @@ fun AppNavGraph(
     composable(NavRoutes.MAP) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MAP) }
       MapScreen(
+          requestLocationOnStart = true,
           onProfileClick = { profileId ->
             navController.navigate(NavRoutes.createProfileRoute(profileId))
           })
@@ -95,6 +102,7 @@ fun AppNavGraph(
       MyProfileScreen(
           profileViewModel = profileViewModel,
           profileId = currentUserId,
+          onListingClick = { listingId -> navigateToListing(navController, listingId) },
           onLogout = {
             // Clear the authentication state to reset email/password fields
             authViewModel.signOut()
@@ -121,17 +129,18 @@ fun AppNavGraph(
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
       val viewModel: SubjectListViewModel = viewModel(backStackEntry)
       SubjectListScreen(
-          viewModel = viewModel, // You may need to provide this through dependency injection
-          onBookTutor = { profile ->
-            // Navigate to booking or profile screen when tutor is booked
-            // Example: navController.navigate("booking/${profile.uid}")
-          },
-          subject = academicSubject.value)
+          viewModel = viewModel,
+          subject = academicSubject.value,
+          onListingClick = { listingId -> navigateToListing(navController, listingId) })
     }
 
     composable(NavRoutes.BOOKINGS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
-      MyBookingsScreen(viewModel = bookingsViewModel, navController = navController)
+      MyBookingsScreen(
+          onBookingClick = { bkgId ->
+            bookingId.value = bkgId
+            navController.navigate(NavRoutes.BOOKING_DETAILS)
+          })
     }
 
     composable(
@@ -140,7 +149,7 @@ fun AppNavGraph(
           ->
           val profileId = backStackEntry.arguments?.getString("profileId") ?: ""
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.NEW_SKILL) }
-          NewSkillScreen(profileId = profileId)
+          NewListingScreen(profileId = profileId, navController = navController)
         }
 
     composable(
@@ -173,7 +182,35 @@ fun AppNavGraph(
     composable(route = NavRoutes.OTHERS_PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
       // todo add other parameters
-      ProfileScreen(profileId = profileID.value)
+      ProfileScreen(
+          profileId = profileID.value,
+          onProposalClick = { listingId -> navigateToListing(navController, listingId) },
+          onRequestClick = { listingId -> navigateToListing(navController, listingId) })
+    }
+    composable(
+        route = NavRoutes.LISTING,
+        arguments = listOf(navArgument("listingId") { type = NavType.StringType })) { backStackEntry
+          ->
+          val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
+          com.android.sample.ui.listing.ListingScreen(
+              listingId = listingId,
+              onNavigateBack = {
+                navController.navigate(NavRoutes.HOME) {
+                  popUpTo(0) { inclusive = true }
+                  launchSingleTop = true
+                }
+              })
+        }
+
+    composable(route = NavRoutes.BOOKING_DETAILS) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKING_DETAILS) }
+      BookingDetailsScreen(
+          bookingId = bookingId.value,
+          onCreatorClick = { profileId ->
+            profileID.value = profileId
+            navController.navigate(NavRoutes.OTHERS_PROFILE)
+          })
     }
   }
 }

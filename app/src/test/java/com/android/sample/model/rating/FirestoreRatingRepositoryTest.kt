@@ -1,14 +1,12 @@
 package com.android.sample.model.rating
 
+import com.android.sample.utils.FirebaseEmulator
 import com.android.sample.utils.RepositoryTest
-import com.github.se.bootcamp.utils.FirebaseEmulator
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.collections.get
-import kotlin.text.set
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
@@ -16,11 +14,8 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-@RunWith(RobolectricTestRunner::class)
 @Config(sdk = [28])
 class FirestoreRatingRepositoryTest : RepositoryTest() {
   private lateinit var firestore: FirebaseFirestore

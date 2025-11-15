@@ -1,5 +1,6 @@
 package com.android.sample.model.user
 
+import com.android.sample.model.ValidationUtils
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import com.google.firebase.auth.FirebaseAuth
@@ -13,6 +14,17 @@ class FirestoreProfileRepository(
     private val db: FirebaseFirestore,
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) : ProfileRepository {
+
+  private companion object {
+    private const val NAME_MAX = 80
+    private const val EMAIL_MAX = 254
+    private const val EDUCATION_MAX = 300
+    private const val DESC_MAX = 1200
+    private const val RATE_MIN = 0.0
+    private const val RATE_MAX = 200.0
+    private val EMAIL_RE =
+        Regex("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", RegexOption.IGNORE_CASE)
+  }
 
   private val currentUserId: String
     get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
@@ -38,7 +50,10 @@ class FirestoreProfileRepository(
       if (profile.userId != currentUserId) {
         throw Exception("Access denied: You can only create a profile for yourself.")
       }
-      db.collection(PROFILES_COLLECTION_PATH).document(profile.userId).set(profile).await()
+
+      val cleaned = validateAndClean(profile)
+
+      db.collection(PROFILES_COLLECTION_PATH).document(cleaned.userId).set(cleaned).await()
     } catch (e: Exception) {
       throw Exception("Failed to add profile: ${e.message}")
     }
@@ -49,7 +64,9 @@ class FirestoreProfileRepository(
       if (userId != currentUserId) {
         throw Exception("Access denied: You can only update your own profile.")
       }
-      db.collection(PROFILES_COLLECTION_PATH).document(userId).set(profile).await()
+      ValidationUtils.requireId(userId, "userId")
+      val cleaned = validateAndClean(profile.copy(userId = userId))
+      db.collection(PROFILES_COLLECTION_PATH).document(userId).set(cleaned).await()
     } catch (e: Exception) {
       throw Exception("Failed to update profile for user $userId: ${e.message}")
     }
@@ -102,5 +119,61 @@ class FirestoreProfileRepository(
     } catch (e: Exception) {
       throw Exception("Failed to get skills for user $userId: ${e.message}")
     }
+  }
+
+  /**
+   * Soft validation:
+   * - Allow blanks initially.
+   * - If a field is non-blank, validate content & bounds.
+   * - Always trim strings; write the cleaned copy.
+   */
+  private fun validateAndClean(p: Profile): Profile {
+    // required id
+    ValidationUtils.requireId(p.userId, "userId")
+
+    // name (nullable + optional)
+    val name = p.name?.trim()
+    name?.let { ValidationUtils.requireMaxLength(it, "name", NAME_MAX) }
+
+    // email (non-null String, optional until provided)
+    val email = p.email.trim()
+    if (email.isNotEmpty()) {
+      ValidationUtils.requireMaxLength(email, "email", EMAIL_MAX)
+      require(EMAIL_RE.matches(email)) { "email format is invalid." }
+    }
+
+    // levelOfEducation (non-null String, optional)
+    val edu = p.levelOfEducation.trim()
+    if (edu.isNotEmpty()) {
+      ValidationUtils.requireMaxLength(edu, "levelOfEducation", EDUCATION_MAX)
+    }
+
+    // description (non-null String, optional)
+    val desc = p.description.trim()
+    if (desc.isNotEmpty()) {
+      ValidationUtils.requireMaxLength(desc, "description", DESC_MAX)
+    }
+
+    // hourlyRate (non-null String, optional until provided)
+    val rateStr = p.hourlyRate.trim()
+    val normalizedRate =
+        if (rateStr.isEmpty()) ""
+        else {
+          val rate =
+              rateStr.toDoubleOrNull()
+                  ?: throw IllegalArgumentException("hourlyRate must be a number.")
+          require(rate in RATE_MIN..RATE_MAX) {
+            "hourlyRate must be between $RATE_MIN and $RATE_MAX."
+          }
+          rate.toString() // normalize
+        }
+
+    return p.copy(
+        name = name,
+        email = email, // trimmed (may be empty)
+        levelOfEducation = edu, // trimmed (may be empty)
+        description = desc, // trimmed (may be empty)
+        hourlyRate = normalizedRate // "" or normalized number
+        )
   }
 }

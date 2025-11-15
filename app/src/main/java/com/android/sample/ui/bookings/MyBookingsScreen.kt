@@ -1,155 +1,118 @@
-// Kotlin
 package com.android.sample.ui.bookings
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import com.android.sample.ui.theme.BrandBlue
-import com.android.sample.ui.theme.CardBg
-import com.android.sample.ui.theme.ChipBorder
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.sample.ui.components.BookingCard
 
 object MyBookingsPageTestTag {
-  const val BOOKING_CARD = "bookingCard"
-  const val BOOKING_DETAILS_BUTTON = "bookingDetailsButton"
+  const val LOADING = "myBookingsLoading"
+  const val ERROR = "myBookingsError"
+  const val EMPTY = "myBookingsEmpty"
   const val NAV_HOME = "navHome"
   const val NAV_BOOKINGS = "navBookings"
   const val NAV_PROFILE = "navProfile"
-  const val EMPTY_BOOKINGS = "emptyBookings"
-  const val NAV_MAP = "nav_map"
+  const val NAV_MAP = "navMap"
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Main composable function that displays the "My Bookings" screen.
+ *
+ * This screen is responsible for showing all bookings belonging to the current user. It observes
+ * the [MyBookingsViewModel] to manage loading, error, and empty states.
+ *
+ * Depending on the current UI state:
+ * - Displays a loading message while data is being fetched.
+ * - Displays an error message if the data retrieval fails.
+ * - Displays an empty message if there are no bookings.
+ * - Displays a list of bookings once successfully loaded.
+ *
+ * @param modifier Optional [Modifier] for styling or layout adjustments.
+ * @param viewModel The [MyBookingsViewModel] that provides the booking data and UI state.
+ * @param onBookingClick Callback invoked when a booking card is clicked, passing the booking ID.
+ */
 @Composable
 fun MyBookingsScreen(
-    viewModel: MyBookingsViewModel,
-    navController: NavHostController,
-    onOpenDetails: ((BookingCardUi) -> Unit)? = null,
-    onOpenTutor: ((BookingCardUi) -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: MyBookingsViewModel = viewModel(),
+    onBookingClick: (String) -> Unit
 ) {
   Scaffold { inner ->
-    val bookings by viewModel.uiState.collectAsState(initial = emptyList())
-    BookingsList(
-        bookings = bookings,
-        navController = navController,
-        onOpenDetails = onOpenDetails,
-        onOpenTutor = onOpenTutor,
-        modifier = modifier.padding(inner))
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.load() }
+
+    when {
+      uiState.isLoading -> CenteredText("Loading...", MyBookingsPageTestTag.LOADING)
+      uiState.hasError -> CenteredText("Failed to load your bookings", MyBookingsPageTestTag.ERROR)
+      uiState.bookings.isEmpty() ->
+          CenteredText("No bookings available", MyBookingsPageTestTag.EMPTY)
+      else ->
+          BookingsList(
+              bookings = uiState.bookings,
+              onBookingClick = onBookingClick,
+              modifier = modifier.padding(inner))
+    }
   }
 }
 
+/**
+ * Composable function that displays a scrollable list of booking cards.
+ *
+ * The list is rendered using a [LazyColumn], where each item corresponds to a [BookingCard]. It
+ * also handles spacing and padding between items for a clean layout.
+ *
+ * @param bookings A list of [BookingCardUI] objects representing the user's bookings.
+ * @param onBookingClick Callback triggered when a booking card is clicked.
+ * @param modifier Optional [Modifier] to apply to the list container.
+ */
 @Composable
 fun BookingsList(
-    bookings: List<BookingCardUi>,
-    navController: NavHostController,
-    onOpenDetails: ((BookingCardUi) -> Unit)? = null,
-    onOpenTutor: ((BookingCardUi) -> Unit)? = null,
+    bookings: List<BookingCardUI>,
+    onBookingClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-  if (bookings.isEmpty()) {
-    Box(
-        modifier =
-            modifier.fillMaxSize().padding(16.dp).testTag(MyBookingsPageTestTag.EMPTY_BOOKINGS),
-        contentAlignment = Alignment.Center) {
-          Text(text = "No bookings available")
-        }
-    return
-  }
-
   LazyColumn(
       modifier = modifier.fillMaxSize().padding(12.dp),
+      contentPadding = PaddingValues(6.dp),
       verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(bookings, key = { it.id }) { booking ->
+        items(bookings, key = { it.booking.bookingId }) { bookingUI ->
           BookingCard(
-              booking = booking,
-              onOpenDetails = {
-                onOpenDetails?.invoke(it) ?: navController.navigate("lesson/${it.id}")
-              },
-              onOpenTutor = {
-                onOpenTutor?.invoke(it) ?: navController.navigate("tutor/${it.tutorId}")
-              })
+              booking = bookingUI.booking,
+              listing = bookingUI.listing,
+              creator = bookingUI.creatorProfile,
+              onClickBookingCard = { bookingId -> onBookingClick(bookingId) })
         }
       }
 }
 
+/**
+ * Composable helper function that displays centered text within the screen.
+ *
+ * This is used for displaying loading, error, or empty states in a simple, centered layout. It also
+ * includes a test tag to facilitate UI testing.
+ *
+ * @param text The message text to be displayed.
+ * @param tag The test tag to identify the composable in UI tests.
+ */
 @Composable
-private fun BookingCard(
-    booking: BookingCardUi,
-    onOpenDetails: (BookingCardUi) -> Unit,
-    onOpenTutor: (BookingCardUi) -> Unit
-) {
-  Card(
-      modifier = Modifier.fillMaxWidth().testTag(MyBookingsPageTestTag.BOOKING_CARD),
-      shape = MaterialTheme.shapes.large,
-      colors = CardDefaults.cardColors(containerColor = CardBg)) {
-        Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-          Box(
-              modifier =
-                  Modifier.size(36.dp)
-                      .background(Color.White, CircleShape)
-                      .border(2.dp, ChipBorder, CircleShape),
-              contentAlignment = Alignment.Center) {
-                val first = booking.tutorName?.firstOrNull()?.uppercaseChar() ?: '—'
-                Text(first.toString(), fontWeight = FontWeight.Bold)
-              }
-
-          Spacer(Modifier.width(12.dp))
-
-          Column(modifier = Modifier.weight(1f)) {
-            Text(
-                "a",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { onOpenTutor(booking) })
-            Spacer(Modifier.height(2.dp))
-            Text(booking.subject, color = BrandBlue)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "${booking.pricePerHourLabel} - ${booking.durationLabel}",
-                color = BrandBlue,
-                fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(4.dp))
-            Text(booking.dateLabel)
-            Spacer(Modifier.height(6.dp))
-            RatingRow(stars = booking.ratingStars, count = booking.ratingCount)
-          }
-
-          Column(horizontalAlignment = Alignment.End) {
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = { onOpenDetails(booking) },
-                modifier = Modifier.testTag(MyBookingsPageTestTag.BOOKING_DETAILS_BUTTON),
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = BrandBlue, contentColor = Color.White)) {
-                  Text("details")
-                }
-          }
-        }
-      }
-}
-
-@Composable
-private fun RatingRow(stars: Int, count: Int) {
-  val full = "★".repeat(stars.coerceIn(0, 5))
-  val empty = "☆".repeat((5 - stars).coerceIn(0, 5))
-  Row(verticalAlignment = Alignment.CenterVertically) {
-    Text(full + empty)
-    Spacer(Modifier.width(6.dp))
-    Text("($count)")
+private fun CenteredText(text: String, tag: String) {
+  Box(modifier = Modifier.fillMaxSize().testTag(tag), contentAlignment = Alignment.Center) {
+    Text(text = text)
   }
 }
