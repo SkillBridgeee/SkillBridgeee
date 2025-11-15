@@ -78,6 +78,8 @@ object MyProfileScreenTestTag {
   const val RATING_TAB = "rankingTab"
   const val RATING_SECTION = "ratingSection"
   const val LISTINGS_TAB = "listingsTab"
+
+  const val HISTORY_TAB = "historyTab"
   const val LISTINGS_SECTION = "listingsSection"
   const val HISTORY_SECTION = "historySection"
 }
@@ -618,13 +620,23 @@ fun SelectionRow(selectedTab: MutableState<ProfileTab>) {
 
   Column(Modifier.fillMaxWidth()) {
     Row(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INFO_RATING_BAR)) {
-      // Loop through each tab and create a clickable Text
       tabLabels.forEachIndexed { index, label ->
         val tab = ProfileTab.entries[index]
 
+        val tabTestTag =
+            when (tab) {
+              ProfileTab.INFO -> MyProfileScreenTestTag.INFO_TAB
+              ProfileTab.LISTINGS -> MyProfileScreenTestTag.LISTINGS_TAB
+              ProfileTab.RATING -> MyProfileScreenTestTag.RATING_TAB
+              ProfileTab.HISTORY -> MyProfileScreenTestTag.HISTORY_TAB
+            }
+
         Box(
             modifier =
-                Modifier.weight(1f).clickable { selectedTab.value = tab }.padding(vertical = 12.dp),
+                Modifier.weight(1f)
+                    .clickable { selectedTab.value = tab }
+                    .padding(vertical = 12.dp)
+                    .testTag(tabTestTag),
             contentAlignment = Alignment.Center) {
               Text(
                   text = label,
