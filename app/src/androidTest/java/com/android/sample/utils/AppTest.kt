@@ -29,6 +29,7 @@ import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
+import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
 import kotlin.collections.contains
@@ -62,10 +63,15 @@ abstract class AppTest() {
   lateinit var profileViewModel: MyProfileViewModel
   lateinit var mainPageViewModel: MainPageViewModel
 
+  lateinit var newListingViewModel: NewListingViewModel
+
   @Before
   open fun setUp() {
     //    ProfileRepositoryProvider.setForTests(createInitializedProfileRepo())
     //    HttpClientProvider.client = initializeHTTPClient()
+
+    val currentUserId = profileRepository.getCurrentUserId()
+    UserSessionManager.setCurrentUserId(currentUserId)
 
     val context = ApplicationProvider.getApplicationContext<Context>()
     authViewModel =
@@ -84,8 +90,7 @@ abstract class AppTest() {
         MainPageViewModel(
             profileRepository = profileRepository, listingRepository = listingRepository)
 
-    val currentUserId = profileRepository.getCurrentUserId()
-    UserSessionManager.setCurrentUserId(currentUserId)
+    newListingViewModel = NewListingViewModel(listingRepository = listingRepository)
   }
 
   @Composable
@@ -111,6 +116,7 @@ abstract class AppTest() {
                 bookingsViewModel = bookingsViewModel,
                 profileViewModel = profileViewModel,
                 mainPageViewModel = mainPageViewModel,
+                newListingViewModel = newListingViewModel,
                 authViewModel = authViewModel,
                 onGoogleSignIn = {})
           }

@@ -151,7 +151,10 @@ fun AppNavGraph(
           ->
           val profileId = backStackEntry.arguments?.getString("profileId") ?: ""
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.NEW_SKILL) }
-          NewListingScreen(profileId = profileId, navController = navController)
+          NewListingScreen(
+              profileId = profileId,
+              navController = navController,
+              skillViewModel = newListingViewModel)
         }
 
     composable(
