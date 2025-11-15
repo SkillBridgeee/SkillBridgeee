@@ -22,7 +22,7 @@ import java.util.*
  * - Testing UI rendering of proposals and requests.
  * - Simulating user actions such as adding or deactivating listings.
  */
-class ListingFake : ListingRepository {
+class ListingFakeRepoWorking : ListingRepository {
 
   private val listings =
       mutableMapOf<String, Listing>(

@@ -12,9 +12,9 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.utils.AppTest
-import com.android.sample.utils.fakeRepo.BookingFake
-import com.android.sample.utils.fakeRepo.ListingFake
-import com.android.sample.utils.fakeRepo.RatingFake
+import com.android.sample.utils.fakeRepo.BookingFakeRepoWorking
+import com.android.sample.utils.fakeRepo.ListingFakeRepoWorking
+import com.android.sample.utils.fakeRepo.RatingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
 import com.android.sample.utils.fakeRepo.fakeProfile.ProfileFakeWorking
 import org.junit.Before
@@ -30,15 +30,15 @@ class HomeScreenTestFUN : AppTest() {
   }
 
   override fun createInitializedListingRepo(): ListingRepository {
-    return ListingFake()
+    return ListingFakeRepoWorking()
   }
 
   override fun createInitializedBookingRepo(): BookingRepository {
-    return BookingFake()
+    return BookingFakeRepoWorking()
   }
 
   override fun createInitializedRatingRepo(): RatingRepository {
-    return RatingFake()
+    return RatingFakeRepoWorking()
   }
 
   @Before

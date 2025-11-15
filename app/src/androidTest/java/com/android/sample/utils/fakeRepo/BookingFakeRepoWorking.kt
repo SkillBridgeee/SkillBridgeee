@@ -21,7 +21,7 @@ import java.util.*
  * - Testing UI rendering of booking lists with different statuses.
  * - Simulating user actions like confirming, completing, or cancelling bookings.
  */
-class BookingFake : BookingRepository {
+class BookingFakeRepoWorking : BookingRepository {
 
   val initialNumBooking = 2
 

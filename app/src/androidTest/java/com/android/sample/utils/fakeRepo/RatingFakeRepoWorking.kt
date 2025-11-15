@@ -3,7 +3,7 @@ package com.android.sample.utils.fakeRepo
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
 
-class RatingFake : RatingRepository {
+class RatingFakeRepoWorking : RatingRepository {
   override fun getNewUid(): String {
     TODO("Not yet implemented")
   }
