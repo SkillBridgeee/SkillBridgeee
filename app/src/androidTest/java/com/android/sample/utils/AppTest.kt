@@ -31,11 +31,7 @@ import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.profile.MyProfileViewModel
-import com.android.sample.utils.fakeRepo.BookingFake
-import com.android.sample.utils.fakeRepo.ListingFake
-import com.android.sample.utils.fakeRepo.RatingFake
 import kotlin.collections.contains
-import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Before
 
@@ -43,43 +39,50 @@ abstract class AppTest() {
 
   abstract fun createInitializedProfileRepo(): ProfileRepository
 
-  open fun initializeHTTPClient(): OkHttpClient = FakeHttpClient.getClient()
+  abstract fun createInitializedListingRepo(): ListingRepository
+
+  abstract fun createInitializedBookingRepo(): BookingRepository
+
+  abstract fun createInitializedRatingRepo(): RatingRepository
 
   val profileRepository: ProfileRepository
     get() = createInitializedProfileRepo()
+
+  val listingRepository: ListingRepository
+    get() = createInitializedListingRepo()
+
+  val bookingRepository: BookingRepository
+    get() = createInitializedBookingRepo()
+
+  val ratingRepository: RatingRepository
+    get() = createInitializedRatingRepo()
 
   lateinit var authViewModel: AuthenticationViewModel
   lateinit var bookingsViewModel: MyBookingsViewModel
   lateinit var profileViewModel: MyProfileViewModel
   lateinit var mainPageViewModel: MainPageViewModel
 
-  private lateinit var bookingRepo: BookingRepository
-  private lateinit var listingRepo: ListingRepository
-  private lateinit var profileRepo: ProfileRepository
-  private lateinit var ratingRepo: RatingRepository
-
   @Before
   open fun setUp() {
     //    ProfileRepositoryProvider.setForTests(createInitializedProfileRepo())
     //    HttpClientProvider.client = initializeHTTPClient()
 
-    bookingRepo = BookingFake()
-    listingRepo = ListingFake()
-    profileRepo = profileRepository
-    ratingRepo = RatingFake()
-
     val context = ApplicationProvider.getApplicationContext<Context>()
-    authViewModel = AuthenticationViewModel(context = context, profileRepository = profileRepo)
+    authViewModel =
+        AuthenticationViewModel(context = context, profileRepository = profileRepository)
     bookingsViewModel =
         MyBookingsViewModel(
-            bookingRepo = bookingRepo, listingRepo = listingRepo, profileRepo = profileRepo)
+            bookingRepo = bookingRepository,
+            listingRepo = listingRepository,
+            profileRepo = profileRepository)
     profileViewModel =
         MyProfileViewModel(
-            profileRepository = profileRepo,
-            listingRepository = listingRepo,
-            ratingsRepository = ratingRepo)
+            profileRepository = profileRepository,
+            listingRepository = listingRepository,
+            ratingsRepository = ratingRepository)
     mainPageViewModel =
-        MainPageViewModel(profileRepository = profileRepo, listingRepository = listingRepo)
+        MainPageViewModel(
+            profileRepository = profileRepository, listingRepository = listingRepository)
 
     UserSessionManager.setCurrentUserId("creator_1")
   }

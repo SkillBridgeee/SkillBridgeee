@@ -5,12 +5,18 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToIndex
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.utils.AppTest
+import com.android.sample.utils.fakeRepo.BookingFake
+import com.android.sample.utils.fakeRepo.ListingFake
 import com.android.sample.utils.fakeRepo.ProfileFake
+import com.android.sample.utils.fakeRepo.RatingFake
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -21,6 +27,18 @@ class HomeScreenTestFUN : AppTest() {
 
   override fun createInitializedProfileRepo(): ProfileRepository {
     return ProfileFake()
+  }
+
+  override fun createInitializedListingRepo(): ListingRepository {
+    return ListingFake()
+  }
+
+  override fun createInitializedBookingRepo(): BookingRepository {
+    return BookingFake()
+  }
+
+  override fun createInitializedRatingRepo(): RatingRepository {
+    return RatingFake()
   }
 
   @Before
@@ -41,13 +59,13 @@ class HomeScreenTestFUN : AppTest() {
   fun testWelcomeSection() {
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
     composeTestRule.onNodeWithText("Ready to learn something new today?").assertIsDisplayed()
+    // TODO changer le hard code
     composeTestRule.onNodeWithText("Welcome back, Alice!").assertIsDisplayed()
   }
 
   @Test
   fun testExploreSkill() {
     composeTestRule.onNodeWithTag(HomeScreenTestTags.EXPLORE_SKILLS_SECTION).assertIsDisplayed()
-
     composeTestRule.onNodeWithTag(HomeScreenTestTags.ALL_SUBJECT_LIST).assertIsDisplayed()
 
     // Scroll the list
@@ -55,7 +73,7 @@ class HomeScreenTestFUN : AppTest() {
         .onNodeWithTag(HomeScreenTestTags.ALL_SUBJECT_LIST)
         .performScrollToIndex(MainSubject.entries.size - 1)
 
-    // Check if last MainSubject isDisplayed
+    // Check if last MainSubject is displayed
     composeTestRule.onNodeWithText(MainSubject.entries[6].name).assertIsDisplayed()
   }
 }
