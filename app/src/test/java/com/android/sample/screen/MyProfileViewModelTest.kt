@@ -27,7 +27,6 @@ import com.android.sample.ui.profile.LOCATION_EMPTY_MSG
 import com.android.sample.ui.profile.LOCATION_PERMISSION_DENIED_MSG
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.profile.NAME_EMPTY_MSG
-import java.nio.channels.spi.AsynchronousChannelProvider.provider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -204,9 +203,7 @@ class MyProfileViewModelTest {
   private class SuccessGpsProvider(
       private val lat: Double = 12.34,
       private val lon: Double = 56.78
-  ) :
-      com.android.sample.model.map.GpsLocationProvider(
-          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+  ) : GpsLocationProvider(ApplicationProvider.getApplicationContext()) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
       val loc = android.location.Location("test")
       loc.latitude = lat
@@ -241,15 +238,12 @@ class MyProfileViewModelTest {
           bookingRepository = bookingRepo,
           userId = userId)
 
-  private class NullGpsProvider :
-      com.android.sample.model.map.GpsLocationProvider(
-          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+  private class NullGpsProvider : GpsLocationProvider(ApplicationProvider.getApplicationContext()) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? = null
   }
 
   private class SecurityExceptionGpsProvider :
-      com.android.sample.model.map.GpsLocationProvider(
-          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+      GpsLocationProvider(ApplicationProvider.getApplicationContext()) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
       throw SecurityException("Permission denied")
     }
@@ -628,7 +622,6 @@ class MyProfileViewModelTest {
   fun permissionDenied_branch_executes_onLocationPermissionDenied() = runTest {
     val repo = mock<ProfileRepository>()
     val listingRepo = mock<ListingRepository>()
-    val context = mock<Context>()
     val ratingRepo = mock<RatingRepository>()
 
     val viewModel =

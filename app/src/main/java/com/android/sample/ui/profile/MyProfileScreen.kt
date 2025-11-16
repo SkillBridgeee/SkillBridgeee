@@ -471,8 +471,7 @@ private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Un
         text = "Your Listings",
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
-        modifier =
-            Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.LISTINGS_SECTION))
+        modifier = Modifier.padding(horizontal = 16.dp))
   }
 
   when {
