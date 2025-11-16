@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
@@ -161,10 +162,26 @@ abstract class AppTest() {
     onNodeWithTag(testTag = testTag).performClick()
   }
 
-  fun ComposeTestRule.chooseSelectableComponents(
-      selectComponentTestTag: String,
-      choiceTestTag: String
+  fun ComposeTestRule.multipleChooseExposeMenu(
+      multipleTestTag: String,
+      differentChoiceTestTag: String
   ) {
-    onNodeWithTag(selectComponentTestTag).performClick()
+    onNodeWithTag(multipleTestTag).performClick()
+
+    onNodeWithTag(differentChoiceTestTag).performClick()
+  }
+
+  fun ComposeTestRule.enterAndChooseLocation(
+      enterText: String,
+      selectText: String,
+      inputLocationTestTag: String
+  ) {
+
+    onNodeWithTag(inputLocationTestTag, useUnmergedTree = true).performTextInput(enterText)
+
+    waitUntil(timeoutMillis = 20_000) {
+      onAllNodesWithText(selectText).fetchSemanticsNodes().isNotEmpty()
+    }
+    onAllNodesWithText(selectText)[0].performClick()
   }
 }
