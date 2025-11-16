@@ -48,7 +48,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.map.GpsLocationProvider
+import com.android.sample.ui.components.BookingCard
 import com.android.sample.ui.components.LocationInputField
 import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RatingCard
@@ -60,72 +62,72 @@ import com.android.sample.ui.components.RequestCard
  * Keep these stable — tests rely on the exact string constants below.
  */
 object MyProfileScreenTestTag {
-  const val PROFILE_ICON = "profileIcon"
-  const val NAME_DISPLAY = "nameDisplay"
-  const val ROLE_BADGE = "roleBadge"
-  const val CARD_TITLE = "cardTitle"
-  const val INPUT_PROFILE_NAME = "inputProfileName"
-  const val INPUT_PROFILE_EMAIL = "inputProfileEmail"
-  const val INPUT_PROFILE_DESC = "inputProfileDesc"
-  const val SAVE_BUTTON = "saveButton"
-  const val ROOT_LIST = "profile_list"
-  const val LOGOUT_BUTTON = "logoutButton"
-  const val ERROR_MSG = "errorMsg"
-  const val PIN_CONTENT_DESC = "Use my location"
+    const val PROFILE_ICON = "profileIcon"
+    const val NAME_DISPLAY = "nameDisplay"
+    const val ROLE_BADGE = "roleBadge"
+    const val CARD_TITLE = "cardTitle"
+    const val INPUT_PROFILE_NAME = "inputProfileName"
+    const val INPUT_PROFILE_EMAIL = "inputProfileEmail"
+    const val INPUT_PROFILE_DESC = "inputProfileDesc"
+    const val SAVE_BUTTON = "saveButton"
+    const val ROOT_LIST = "profile_list"
+    const val LOGOUT_BUTTON = "logoutButton"
+    const val ERROR_MSG = "errorMsg"
+    const val PIN_CONTENT_DESC = "Use my location"
 
-  const val INFO_RATING_BAR = "infoRankingBar"
-  const val INFO_TAB = "infoTab"
-  const val RATING_TAB = "rankingTab"
-  const val RATING_SECTION = "ratingSection"
-  const val LISTINGS_TAB = "listingsTab"
+    const val INFO_RATING_BAR = "infoRankingBar"
+    const val INFO_TAB = "infoTab"
+    const val RATING_TAB = "rankingTab"
+    const val RATING_SECTION = "ratingSection"
+    const val LISTINGS_TAB = "listingsTab"
 
-  const val HISTORY_TAB = "historyTab"
-  const val LISTINGS_SECTION = "listingsSection"
-  const val HISTORY_SECTION = "historySection"
+    const val HISTORY_TAB = "historyTab"
+    const val LISTINGS_SECTION = "listingsSection"
+    const val HISTORY_SECTION = "historySection"
 }
 
 enum class ProfileTab {
-  INFO,
-  LISTINGS,
-  RATING,
-  HISTORY
+    INFO,
+    LISTINGS,
+    RATING,
+    HISTORY
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-/**
- * Top-level composable for the My Profile screen.
- *
- * This sets up the Scaffold (including the floating Save button) and hosts the screen content.
- *
- * @param profileViewModel ViewModel providing UI state and actions. Defaults to `viewModel()`.
- * @param profileId Optional profile id to load (used when viewing other users). Passed to the
- *   content loader.
- * @param onLogout Callback invoked when the user taps the logout button.
- */
+        /**
+         * Top-level composable for the My Profile screen.
+         *
+         * This sets up the Scaffold (including the floating Save button) and hosts the screen content.
+         *
+         * @param profileViewModel ViewModel providing UI state and actions. Defaults to `viewModel()`.
+         * @param profileId Optional profile id to load (used when viewing other users). Passed to the
+         *   content loader.
+         * @param onLogout Callback invoked when the user taps the logout button.
+         */
 fun MyProfileScreen(
     profileViewModel: MyProfileViewModel = viewModel(),
     profileId: String,
     onLogout: () -> Unit = {},
     onListingClick: (String) -> Unit = {}
 ) {
-  val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
-  Scaffold { pd ->
-    val ui by profileViewModel.uiState.collectAsState()
-    LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
+    val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
+    Scaffold { pd ->
+        val ui by profileViewModel.uiState.collectAsState()
+        LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
 
-    Column {
-      SelectionRow(selectedTab)
-      Spacer(modifier = Modifier.height(4.dp))
+        Column {
+            SelectionRow(selectedTab)
+            Spacer(modifier = Modifier.height(4.dp))
 
-      when (selectedTab.value) {
-        ProfileTab.INFO -> MyProfileContent(pd, ui, profileViewModel, onLogout, onListingClick)
-        ProfileTab.RATING -> RatingContent(ui)
-        ProfileTab.LISTINGS -> ProfileListings(ui, onListingClick)
-        ProfileTab.HISTORY -> ProfileHistory(ui, onListingClick)
-      }
+            when (selectedTab.value) {
+                ProfileTab.INFO -> MyProfileContent(pd, ui, profileViewModel, onLogout, onListingClick)
+                ProfileTab.RATING -> RatingContent(ui)
+                ProfileTab.LISTINGS -> ProfileListings(ui, onListingClick)
+                ProfileTab.HISTORY -> ProfileHistory(ui, onListingClick)
+            }
+        }
     }
-  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -149,30 +151,30 @@ private fun MyProfileContent(
     onLogout: () -> Unit,
     onListingClick: (String) -> Unit
 ) {
-  val fieldSpacing = 8.dp
+    val fieldSpacing = 8.dp
 
-  LazyColumn(
-      modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
-      contentPadding = pd) {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
+        contentPadding = pd) {
         if (ui.updateSuccess) {
-          item {
-            Text(
-                text = "Profile successfully updated!",
-                color = Color(0xFF2E7D32),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
-          }
+            item {
+                Text(
+                    text = "Profile successfully updated!",
+                    color = Color(0xFF2E7D32),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+            }
         }
         item { ProfileHeader(name = ui.name) }
 
         item {
-          Spacer(modifier = Modifier.height(12.dp))
-          ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
+            Spacer(modifier = Modifier.height(12.dp))
+            ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
         }
 
         item { ProfileLogout(onLogout = onLogout) }
-      }
+    }
 }
 
 @Composable
@@ -183,9 +185,9 @@ private fun MyProfileContent(
  *   `null`.
  */
 private fun ProfileHeader(name: String?) {
-  Column(
-      modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-      horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier =
                 Modifier.size(50.dp)
@@ -194,12 +196,12 @@ private fun ProfileHeader(name: String?) {
                     .border(2.dp, Color.Blue, CircleShape)
                     .testTag(MyProfileScreenTestTag.PROFILE_ICON),
             contentAlignment = Alignment.Center) {
-              Text(
-                  text = name?.firstOrNull()?.uppercase() ?: "",
-                  style = MaterialTheme.typography.titleLarge,
-                  color = Color.Black,
-                  fontWeight = FontWeight.Bold)
-            }
+            Text(
+                text = name?.firstOrNull()?.uppercase() ?: "",
+                style = MaterialTheme.typography.titleLarge,
+                color = Color.Black,
+                fontWeight = FontWeight.Bold)
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -212,7 +214,7 @@ private fun ProfileHeader(name: String?) {
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray,
             modifier = Modifier.testTag(MyProfileScreenTestTag.ROLE_BADGE))
-      }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -243,42 +245,42 @@ private fun ProfileTextField(
     testTag: String,
     minLines: Int = 1
 ) {
-  val focusedState = remember { mutableStateOf(false) }
-  val focused = focusedState.value
-  val maxPreview = 30
+    val focusedState = remember { mutableStateOf(false) }
+    val focused = focusedState.value
+    val maxPreview = 30
 
-  // keep REAL value; only change what is drawn
-  val ellipsizeTransformation = VisualTransformation { text ->
-    if (!focused && text.text.length > maxPreview) {
-      val short = text.text.take(maxPreview) + "..."
-      TransformedText(AnnotatedString(short), OffsetMapping.Identity)
-    } else {
-      TransformedText(text, OffsetMapping.Identity)
-    }
-  }
-
-  OutlinedTextField(
-      value = value, // ← real value, not truncated
-      onValueChange = onValueChange,
-      label = { Text(label) },
-      placeholder = { Text(placeholder) },
-      isError = isError,
-      supportingText = {
-        errorMsg?.let {
-          Text(text = it, modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
+    // keep REAL value; only change what is drawn
+    val ellipsizeTransformation = VisualTransformation { text ->
+        if (!focused && text.text.length > maxPreview) {
+            val short = text.text.take(maxPreview) + "..."
+            TransformedText(AnnotatedString(short), OffsetMapping.Identity)
+        } else {
+            TransformedText(text, OffsetMapping.Identity)
         }
-      },
-      modifier =
-          modifier
-              .onFocusChanged { focusedState.value = it.isFocused }
-              .semantics {
-                // when visually ellipsized, expose full text for TalkBack
-                if (!focused && value.isNotEmpty()) contentDescription = value
-              }
-              .testTag(testTag),
-      minLines = minLines,
-      singleLine = (minLines == 1), // ← only single-line when requested
-      visualTransformation = ellipsizeTransformation)
+    }
+
+    OutlinedTextField(
+        value = value, // ← real value, not truncated
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
+        isError = isError,
+        supportingText = {
+            errorMsg?.let {
+                Text(text = it, modifier = Modifier.testTag(MyProfileScreenTestTag.ERROR_MSG))
+            }
+        },
+        modifier =
+            modifier
+                .onFocusChanged { focusedState.value = it.isFocused }
+                .semantics {
+                    // when visually ellipsized, expose full text for TalkBack
+                    if (!focused && value.isNotEmpty()) contentDescription = value
+                }
+                .testTag(testTag),
+        minLines = minLines,
+        singleLine = (minLines == 1), // ← only single-line when requested
+        visualTransformation = ellipsizeTransformation)
 }
 
 @Composable
@@ -299,25 +301,25 @@ private fun SectionCard(
     titleTestTag: String? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-  Box(
-      modifier =
-          modifier
-              .widthIn(max = 300.dp)
-              .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
-              .border(
-                  width = 1.dp,
-                  brush = Brush.linearGradient(colors = listOf(Color.Gray, Color.LightGray)),
-                  shape = MaterialTheme.shapes.medium)
-              .padding(16.dp)) {
+    Box(
+        modifier =
+            modifier
+                .widthIn(max = 300.dp)
+                .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium)
+                .border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(colors = listOf(Color.Gray, Color.LightGray)),
+                    shape = MaterialTheme.shapes.medium)
+                .padding(16.dp)) {
         Column {
-          Text(
-              text = title,
-              fontWeight = FontWeight.Bold,
-              modifier = titleTestTag?.let { Modifier.testTag(it) } ?: Modifier)
-          Spacer(modifier = Modifier.height(10.dp))
-          content()
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                modifier = titleTestTag?.let { Modifier.testTag(it) } ?: Modifier)
+            Spacer(modifier = Modifier.height(10.dp))
+            content()
         }
-      }
+    }
 }
 
 @Composable
@@ -335,122 +337,122 @@ private fun ProfileForm(
     profileViewModel: MyProfileViewModel,
     fieldSpacing: Dp = 8.dp
 ) {
-  val context = LocalContext.current
-  val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
-  val permissionLauncher =
-      rememberLauncherForActivityResult(RequestPermission()) { granted ->
-        val provider = GpsLocationProvider(context)
-        if (granted) {
-          profileViewModel.fetchLocationFromGps(provider, context)
-        } else {
-          profileViewModel.onLocationPermissionDenied()
+    val context = LocalContext.current
+    val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
+    val permissionLauncher =
+        rememberLauncherForActivityResult(RequestPermission()) { granted ->
+            val provider = GpsLocationProvider(context)
+            if (granted) {
+                profileViewModel.fetchLocationFromGps(provider, context)
+            } else {
+                profileViewModel.onLocationPermissionDenied()
+            }
         }
-      }
-  var nameChanged by remember { mutableStateOf(false) }
-  var emailChanged by remember { mutableStateOf(false) }
-  var descriptionChanged by remember { mutableStateOf(false) }
-  var locationChanged by remember { mutableStateOf(false) }
+    var nameChanged by remember { mutableStateOf(false) }
+    var emailChanged by remember { mutableStateOf(false) }
+    var descriptionChanged by remember { mutableStateOf(false) }
+    var locationChanged by remember { mutableStateOf(false) }
 
-  Row(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-      horizontalArrangement = Arrangement.Center) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.Center) {
         SectionCard(title = "Personal Details", titleTestTag = MyProfileScreenTestTag.CARD_TITLE) {
-          ProfileTextField(
-              value = ui.name ?: "",
-              onValueChange = {
-                profileViewModel.setName(it)
-                nameChanged = true
-              },
-              label = "Name",
-              placeholder = "Enter Your Full Name",
-              isError = ui.invalidNameMsg != null,
-              errorMsg = ui.invalidNameMsg,
-              testTag = MyProfileScreenTestTag.INPUT_PROFILE_NAME,
-              modifier = Modifier.fillMaxWidth())
-
-          Spacer(modifier = Modifier.height(fieldSpacing))
-
-          ProfileTextField(
-              value = ui.email ?: "",
-              onValueChange = {
-                profileViewModel.setEmail(it)
-                emailChanged = true
-              },
-              label = "Email",
-              placeholder = "Enter Your Email",
-              isError = ui.invalidEmailMsg != null,
-              errorMsg = ui.invalidEmailMsg,
-              testTag = MyProfileScreenTestTag.INPUT_PROFILE_EMAIL,
-              modifier = Modifier.fillMaxWidth())
-
-          Spacer(modifier = Modifier.height(fieldSpacing))
-
-          ProfileTextField(
-              value = ui.description ?: "",
-              onValueChange = {
-                profileViewModel.setDescription(it)
-                descriptionChanged = true
-              },
-              label = "Description",
-              placeholder = "Info About You",
-              isError = ui.invalidDescMsg != null,
-              errorMsg = ui.invalidDescMsg,
-              testTag = MyProfileScreenTestTag.INPUT_PROFILE_DESC,
-              modifier = Modifier.fillMaxWidth(),
-              minLines = 2)
-
-          Spacer(modifier = Modifier.height(fieldSpacing))
-
-          // Location input + pin icon overlay
-          Box(modifier = Modifier.fillMaxWidth()) {
-            LocationInputField(
-                locationQuery = ui.locationQuery,
-                locationSuggestions = ui.locationSuggestions,
-                onLocationQueryChange = {
-                  profileViewModel.setLocationQuery(it)
-                  locationChanged = true
+            ProfileTextField(
+                value = ui.name ?: "",
+                onValueChange = {
+                    profileViewModel.setName(it)
+                    nameChanged = true
                 },
-                errorMsg = ui.invalidLocationMsg,
-                onLocationSelected = { location ->
-                  profileViewModel.setLocationQuery(location.name)
-                  profileViewModel.setLocation(location)
-                },
+                label = "Name",
+                placeholder = "Enter Your Full Name",
+                isError = ui.invalidNameMsg != null,
+                errorMsg = ui.invalidNameMsg,
+                testTag = MyProfileScreenTestTag.INPUT_PROFILE_NAME,
                 modifier = Modifier.fillMaxWidth())
 
-            IconButton(
-                onClick = {
-                  val granted =
-                      ContextCompat.checkSelfPermission(context, permission) ==
-                          PackageManager.PERMISSION_GRANTED
-                  if (granted) {
-                    profileViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
-                  } else {
-                    permissionLauncher.launch(permission)
-                  }
-                },
-                modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
-                  Icon(
-                      imageVector = Icons.Filled.MyLocation,
-                      contentDescription = MyProfileScreenTestTag.PIN_CONTENT_DESC,
-                      tint = MaterialTheme.colorScheme.primary)
-                }
-          }
-          Spacer(modifier = Modifier.height(fieldSpacing))
+            Spacer(modifier = Modifier.height(fieldSpacing))
 
-          Button(
-              onClick = {
-                profileViewModel.editProfile()
-                nameChanged = false
-                emailChanged = false
-                descriptionChanged = false
-                locationChanged = false
-              },
-              modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON).fillMaxWidth(),
-              enabled = (nameChanged || emailChanged || descriptionChanged || locationChanged)) {
+            ProfileTextField(
+                value = ui.email ?: "",
+                onValueChange = {
+                    profileViewModel.setEmail(it)
+                    emailChanged = true
+                },
+                label = "Email",
+                placeholder = "Enter Your Email",
+                isError = ui.invalidEmailMsg != null,
+                errorMsg = ui.invalidEmailMsg,
+                testTag = MyProfileScreenTestTag.INPUT_PROFILE_EMAIL,
+                modifier = Modifier.fillMaxWidth())
+
+            Spacer(modifier = Modifier.height(fieldSpacing))
+
+            ProfileTextField(
+                value = ui.description ?: "",
+                onValueChange = {
+                    profileViewModel.setDescription(it)
+                    descriptionChanged = true
+                },
+                label = "Description",
+                placeholder = "Info About You",
+                isError = ui.invalidDescMsg != null,
+                errorMsg = ui.invalidDescMsg,
+                testTag = MyProfileScreenTestTag.INPUT_PROFILE_DESC,
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 2)
+
+            Spacer(modifier = Modifier.height(fieldSpacing))
+
+            // Location input + pin icon overlay
+            Box(modifier = Modifier.fillMaxWidth()) {
+                LocationInputField(
+                    locationQuery = ui.locationQuery,
+                    locationSuggestions = ui.locationSuggestions,
+                    onLocationQueryChange = {
+                        profileViewModel.setLocationQuery(it)
+                        locationChanged = true
+                    },
+                    errorMsg = ui.invalidLocationMsg,
+                    onLocationSelected = { location ->
+                        profileViewModel.setLocationQuery(location.name)
+                        profileViewModel.setLocation(location)
+                    },
+                    modifier = Modifier.fillMaxWidth())
+
+                IconButton(
+                    onClick = {
+                        val granted =
+                            ContextCompat.checkSelfPermission(context, permission) ==
+                                    PackageManager.PERMISSION_GRANTED
+                        if (granted) {
+                            profileViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
+                        } else {
+                            permissionLauncher.launch(permission)
+                        }
+                    },
+                    modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.MyLocation,
+                        contentDescription = MyProfileScreenTestTag.PIN_CONTENT_DESC,
+                        tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+            Spacer(modifier = Modifier.height(fieldSpacing))
+
+            Button(
+                onClick = {
+                    profileViewModel.editProfile()
+                    nameChanged = false
+                    emailChanged = false
+                    descriptionChanged = false
+                    locationChanged = false
+                },
+                modifier = Modifier.testTag(MyProfileScreenTestTag.SAVE_BUTTON).fillMaxWidth(),
+                enabled = (nameChanged || emailChanged || descriptionChanged || locationChanged)) {
                 Text("Save Profile Changes")
-              }
+            }
         }
-      }
+    }
 }
 
 /**
@@ -464,48 +466,48 @@ private fun ProfileForm(
  */
 @Composable
 private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Unit) {
-  Text(
-      text = "Your Listings",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-      modifier =
-          Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.LISTINGS_SECTION))
+    Text(
+        text = "Your Listings",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier =
+            Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.LISTINGS_SECTION))
 
-  when {
-    ui.listingsLoading -> {
-      Box(
-          modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-          contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-          }
-    }
-    ui.listingsLoadError != null -> {
-      Text(
-          text = ui.listingsLoadError,
-          color = Color.Red,
-          modifier = Modifier.padding(horizontal = 16.dp))
-    }
-    ui.listings.isEmpty() -> {
-      Text(
-          text = "You don’t have any listings yet.",
-          modifier = Modifier.padding(horizontal = 16.dp))
-    }
-    else -> {
-      LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        items(ui.listings) { listing ->
-          when (listing) {
-            is com.android.sample.model.listing.Proposal -> {
-              ProposalCard(proposal = listing, onClick = onListingClick)
+    when {
+        ui.listingsLoading -> {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
-            is com.android.sample.model.listing.Request -> {
-              RequestCard(request = listing, onClick = onListingClick)
-            }
-          }
-          Spacer(Modifier.height(8.dp))
         }
-      }
+        ui.listingsLoadError != null -> {
+            Text(
+                text = ui.listingsLoadError,
+                color = Color.Red,
+                modifier = Modifier.padding(horizontal = 16.dp))
+        }
+        ui.listings.isEmpty() -> {
+            Text(
+                text = "You don’t have any listings yet.",
+                modifier = Modifier.padding(horizontal = 16.dp))
+        }
+        else -> {
+            LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                items(ui.listings) { listing ->
+                    when (listing) {
+                        is com.android.sample.model.listing.Proposal -> {
+                            ProposalCard(proposal = listing, onClick = onListingClick)
+                        }
+                        is com.android.sample.model.listing.Request -> {
+                            RequestCard(request = listing, onClick = onListingClick)
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+            }
+        }
     }
-  }
 }
 
 /**
@@ -515,51 +517,50 @@ private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Un
  * @param onListingClick Callback when a listing card is clicked.
  */
 @Composable
-private fun ProfileHistory(ui: MyProfileUIState, onListingClick: (String) -> Unit) {
-  val historyListings = ui.listings.filter { !it.isActive }
+private fun ProfileHistory(
+    ui: MyProfileUIState,
+    onListingClick: (String) -> Unit,
+) {
+    val historyBookings = ui.bookings.filter {
+        it.status == BookingStatus.COMPLETED
+    }
 
-  Text(
-      text = "Your History",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-      modifier =
-          Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.HISTORY_SECTION))
+    Text(
+        text = "Your History",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(horizontal = 16.dp)
+    )
 
-  when {
-    ui.listingsLoading -> {
-      Box(
-          modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-          contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-          }
-    }
-    ui.listingsLoadError != null -> {
-      Text(
-          text = ui.listingsLoadError,
-          color = Color.Red,
-          modifier = Modifier.padding(horizontal = 16.dp))
-    }
-    historyListings.isEmpty() -> {
-      Text(
-          text = "You don’t have any completed listings yet.",
-          modifier = Modifier.padding(horizontal = 16.dp))
-    }
-    else -> {
-      LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        items(historyListings) { listing ->
-          when (listing) {
-            is com.android.sample.model.listing.Proposal -> {
-              ProposalCard(proposal = listing, onClick = onListingClick)
-            }
-            is com.android.sample.model.listing.Request -> {
-              RequestCard(request = listing, onClick = onListingClick)
-            }
-          }
-          Spacer(Modifier.height(8.dp))
+    when {
+        historyBookings.isEmpty() -> {
+            Text(
+                text = "You don’t have any completed bookings yet.",
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
         }
-      }
+
+        else -> {
+            LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                items(historyBookings) { booking ->
+
+                    val listing = ui.listings.firstOrNull {
+                        it.listingId == booking.associatedListingId
+                    }
+                    val creator = ui.profilesById[booking.listingCreatorId]
+
+                    BookingCard(
+                        booking = booking,
+                        listing = listing,
+                        creator = creator,
+                        onClickBookingCard = {
+                            listing?.listingId?.let { id -> onListingClick(id) }
+                        }
+                    )
+                }
+            }
+        }
     }
-  }
 }
 
 /**
@@ -571,17 +572,17 @@ private fun ProfileHistory(ui: MyProfileUIState, onListingClick: (String) -> Uni
  */
 @Composable
 private fun ProfileLogout(onLogout: () -> Unit) {
-  Spacer(modifier = Modifier.height(16.dp))
-  Button(
-      onClick = onLogout,
-      modifier =
-          Modifier.fillMaxWidth()
-              .padding(horizontal = 16.dp)
-              .testTag(MyProfileScreenTestTag.LOGOUT_BUTTON)) {
+    Spacer(modifier = Modifier.height(16.dp))
+    Button(
+        onClick = onLogout,
+        modifier =
+            Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .testTag(MyProfileScreenTestTag.LOGOUT_BUTTON)) {
         Text("Logout")
-      }
+    }
 
-  Spacer(modifier = Modifier.height(80.dp))
+    Spacer(modifier = Modifier.height(80.dp))
 }
 
 /**
@@ -594,134 +595,135 @@ private fun ProfileLogout(onLogout: () -> Unit) {
  */
 @Composable
 fun SelectionRow(selectedTab: MutableState<ProfileTab>) {
-  val tabCount = 4
-  val indicatorHeight = 3.dp
+    val tabCount = 4
+    val indicatorHeight = 3.dp
 
-  val density = LocalDensity.current
-  val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
-  val tabWidthPx = screenWidthPx / tabCount
+    val density = LocalDensity.current
+    val screenWidthPx = with(density) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
+    val tabWidthPx = screenWidthPx / tabCount
 
-  val tabLabels = listOf("Info", "Listings", "Ratings", "History")
+    val tabLabels = listOf("Info", "Listings", "Ratings", "History")
 
-  val textWidthsPx = remember { mutableStateListOf(0f, 0f, 0f, 0f) }
+    val textWidthsPx = remember { mutableStateListOf(0f, 0f, 0f, 0f) }
 
-  /**
-   * Returns the index of the given [tab].
-   *
-   * @param tab The [ProfileTab] whose index is to be found.
-   */
-  fun tabIndex(tab: ProfileTab) =
-      when (tab) {
-        ProfileTab.INFO -> 0
-        ProfileTab.LISTINGS -> 1
-        ProfileTab.RATING -> 2
-        ProfileTab.HISTORY -> 3
-      }
-
-  Column(Modifier.fillMaxWidth()) {
-    Row(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INFO_RATING_BAR)) {
-      tabLabels.forEachIndexed { index, label ->
-        val tab = ProfileTab.entries[index]
-
-        val tabTestTag =
-            when (tab) {
-              ProfileTab.INFO -> MyProfileScreenTestTag.INFO_TAB
-              ProfileTab.LISTINGS -> MyProfileScreenTestTag.LISTINGS_TAB
-              ProfileTab.RATING -> MyProfileScreenTestTag.RATING_TAB
-              ProfileTab.HISTORY -> MyProfileScreenTestTag.HISTORY_TAB
-            }
-
-        Box(
-            modifier =
-                Modifier.weight(1f)
-                    .clickable { selectedTab.value = tab }
-                    .padding(vertical = 12.dp)
-                    .testTag(tabTestTag),
-            contentAlignment = Alignment.Center) {
-              Text(
-                  text = label,
-                  fontWeight = if (selectedTab.value == tab) FontWeight.Bold else FontWeight.Normal,
-                  color =
-                      if (selectedTab.value == tab) MaterialTheme.colorScheme.primary
-                      else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                  modifier =
-                      Modifier.onGloballyPositioned {
-                        textWidthsPx[index] = it.size.width.toFloat()
-                      })
-            }
-      }
-    }
-
-    // When the selected tab changes, animate the indicator's position and width
-    val transition = updateTransition(targetState = selectedTab.value, label = "tabIndicator")
-
-    // Calculate the indicator's offset and width based on the selected tab
-    val indicatorOffsetPx by
-        transition.animateFloat(label = "offsetAnim") { tab ->
-          val index = tabIndex(tab)
-          val textWidth = textWidthsPx[index]
-          tabWidthPx * index + (tabWidthPx - textWidth) / 2f
+    /**
+     * Returns the index of the given [tab].
+     *
+     * @param tab The [ProfileTab] whose index is to be found.
+     */
+    fun tabIndex(tab: ProfileTab) =
+        when (tab) {
+            ProfileTab.INFO -> 0
+            ProfileTab.LISTINGS -> 1
+            ProfileTab.RATING -> 2
+            ProfileTab.HISTORY -> 3
         }
 
-    // Calculate the indicator's width based on the selected tab
-    val indicatorWidthPx by
+    Column(Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.INFO_RATING_BAR)) {
+            tabLabels.forEachIndexed { index, label ->
+                val tab = ProfileTab.entries[index]
+
+                val tabTestTag =
+                    when (tab) {
+                        ProfileTab.INFO -> MyProfileScreenTestTag.INFO_TAB
+                        ProfileTab.LISTINGS -> MyProfileScreenTestTag.LISTINGS_TAB
+                        ProfileTab.RATING -> MyProfileScreenTestTag.RATING_TAB
+                        ProfileTab.HISTORY -> MyProfileScreenTestTag.HISTORY_TAB
+                    }
+
+                Box(
+                    modifier =
+                        Modifier.weight(1f)
+                            .clickable { selectedTab.value = tab }
+                            .padding(vertical = 12.dp)
+                            .testTag(tabTestTag),
+                    contentAlignment = Alignment.Center) {
+                    Text(
+                        text = label,
+                        fontWeight = if (selectedTab.value == tab) FontWeight.Bold else FontWeight.Normal,
+                        color =
+                            if (selectedTab.value == tab) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        modifier =
+                            Modifier.onGloballyPositioned {
+                                textWidthsPx[index] = it.size.width.toFloat()
+                            })
+                }
+            }
+        }
+
+        // When the selected tab changes, animate the indicator's position and width
+        val transition = updateTransition(targetState = selectedTab.value, label = "tabIndicator")
+
+        // Calculate the indicator's offset and width based on the selected tab
+        val indicatorOffsetPx by
+        transition.animateFloat(label = "offsetAnim") { tab ->
+            val index = tabIndex(tab)
+            val textWidth = textWidthsPx[index]
+            tabWidthPx * index + (tabWidthPx - textWidth) / 2f
+        }
+
+        // Calculate the indicator's width based on the selected tab
+        val indicatorWidthPx by
         transition.animateFloat(label = "widthAnim") { tab -> textWidthsPx[tabIndex(tab)] }
 
-    Box(modifier = Modifier.fillMaxWidth().height(indicatorHeight)) {
-      // Draw the animated indicator
-      Box(
-          modifier =
-              Modifier.offset { IntOffset(indicatorOffsetPx.toInt(), 0) }
-                  .width(with(density) { indicatorWidthPx.toDp() })
-                  .height(indicatorHeight)
-                  .background(MaterialTheme.colorScheme.primary))
-    }
+        Box(modifier = Modifier.fillMaxWidth().height(indicatorHeight)) {
+            // Draw the animated indicator
+            Box(
+                modifier =
+                    Modifier.offset { IntOffset(indicatorOffsetPx.toInt(), 0) }
+                        .width(with(density) { indicatorWidthPx.toDp() })
+                        .height(indicatorHeight)
+                        .background(MaterialTheme.colorScheme.primary))
+        }
 
-    Spacer(Modifier.height(16.dp))
-  }
+        Spacer(Modifier.height(16.dp))
+    }
 }
 
 @Composable
 private fun RatingContent(ui: MyProfileUIState) {
 
-  Text(
-      text = "Your Ratings",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-      modifier =
-          Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.RATING_SECTION))
-  Spacer(modifier = Modifier.height(8.dp))
+    Text(
+        text = "Your Ratings",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier =
+            Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.RATING_SECTION))
+    Spacer(modifier = Modifier.height(8.dp))
 
-  when {
-    ui.ratingsLoading -> {
-      Box(
-          modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-          contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-          }
-    }
-    ui.ratingsLoadError != null -> {
-      Text(
-          text = ui.ratingsLoadError,
-          style = MaterialTheme.typography.bodyMedium,
-          color = Color.Red,
-          modifier = Modifier.padding(horizontal = 16.dp))
-    }
-    ui.ratings.isEmpty() -> {
-      Text(
-          text = "You don’t have any ratings yet.",
-          style = MaterialTheme.typography.bodyMedium,
-          modifier = Modifier.padding(horizontal = 16.dp))
-    }
-    else -> {
-      val creatorProfile = ui.toProfile
-
-      LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        items(ui.ratings) { rating ->
-          RatingCard(rating = rating, creator = creatorProfile)
-          Spacer(modifier = Modifier.height(8.dp))
+    when {
+        ui.ratingsLoading -> {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
         }
-      }
+        ui.ratingsLoadError != null -> {
+            Text(
+                text = ui.ratingsLoadError,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Red,
+                modifier = Modifier.padding(horizontal = 16.dp))
+        }
+        ui.ratings.isEmpty() -> {
+            Text(
+                text = "You don’t have any ratings yet.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 16.dp))
+        }
+        else -> {
+            val creatorProfile = ui.toProfile
+
+            LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                items(ui.ratings) { rating ->
+                    RatingCard(rating = rating, creator = creatorProfile)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
     }
-  }
 }
+
