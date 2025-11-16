@@ -33,8 +33,8 @@ import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.utils.fakeRepo.BookingFakeRepoWorking
-import com.android.sample.utils.fakeRepo.ListingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.RatingFakeRepoWorking
+import com.android.sample.utils.fakeRepo.fakeListing.ListingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
 import com.android.sample.utils.fakeRepo.fakeProfile.ProfileFakeWorking
 import kotlin.collections.contains
