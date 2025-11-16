@@ -65,6 +65,15 @@ class BookingDetailsViewModel(
     }
   }
 
+  /**
+   * Marks the currently loaded booking as completed and updates the UI state.
+   * - This function attempts to update the booking status in the `BookingRepository` to
+   *   `COMPLETED`. If the operation succeeds, the method fetches the updated booking from the
+   *   repository so that the UI reflects the new status.
+   * - If an error occurs (e.g., network or Firestore failure), the UI state is updated with
+   *   `loadError = true`, allowing the UI layer to display an appropriate error message.
+   * - This function does nothing if no valid booking ID is currently loaded.
+   */
   fun markBookingAsCompleted() {
     val currentBookingId = bookingUiState.value.booking.bookingId
     if (currentBookingId.isBlank()) return

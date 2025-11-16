@@ -380,6 +380,17 @@ private fun BookingStatus(status: BookingStatus) {
               .testTag(BookingDetailsTestTag.STATUS))
 }
 
+/**
+ * UI section allowing a tutor to confirm that a booked learning session has been completed.
+ *
+ * This component displays a prompt text and a button. When the user taps the **"Mark as
+ * completed"** button, the `onMarkCompleted` callback is invoked.
+ *
+ * It is typically shown when a booking has the status `CONFIRMED` and the tutor can now validate
+ * that the session actually took place.
+ *
+ * @param onMarkCompleted Callback triggered when the user clicks the **Mark as completed** button.
+ */
 @Composable
 private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
   Column(
