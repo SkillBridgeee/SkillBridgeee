@@ -28,7 +28,7 @@ import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.LocationInputField
 
 object NewListingScreenTestTag {
-  const val BUTTON_SAVE_SKILL = "buttonSaveSkill"
+  const val BUTTON_SAVE_LISTING = "buttonSaveListing"
   const val CREATE_LESSONS_TITLE = "createLessonsTitle"
   const val INPUT_COURSE_TITLE = "inputCourseTitle"
   const val INVALID_TITLE_MSG = "invalidTitleMsg"
@@ -82,7 +82,7 @@ fun NewListingScreen(
         AppButton(
             text = buttonText,
             onClick = { skillViewModel.addListing() },
-            testTag = NewListingScreenTestTag.BUTTON_SAVE_SKILL)
+            testTag = NewListingScreenTestTag.BUTTON_SAVE_LISTING)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
         ListingContent(pd = pd, profileId = profileId, listingViewModel = skillViewModel)

@@ -140,11 +140,6 @@ abstract class AppTest() {
 
   @After open fun tearDown() {}
 
-  fun ComposeTestRule.enterText(testTag: String, text: String) {
-    onNodeWithTag(testTag).performTextClearance()
-    onNodeWithTag(testTag).performTextInput(text)
-  }
-
   //////// HelperFunction to navigate from Home Screen
 
   fun ComposeTestRule.navigateToNewListing() {
@@ -155,6 +150,21 @@ abstract class AppTest() {
     onNodeWithTag(BottomBarTestTag.NAV_PROFILE).performClick()
   }
 
-  ///////
+  /////// Helper Method to test components
 
+  fun ComposeTestRule.enterText(testTag: String, text: String) {
+    onNodeWithTag(testTag).performTextClearance()
+    onNodeWithTag(testTag).performTextInput(text)
+  }
+
+  fun ComposeTestRule.clickOn(testTag: String) {
+    onNodeWithTag(testTag = testTag).performClick()
+  }
+
+  fun ComposeTestRule.chooseSelectableComponents(
+      selectComponentTestTag: String,
+      choiceTestTag: String
+  ) {
+    onNodeWithTag(selectComponentTestTag).performClick()
+  }
 }
