@@ -466,12 +466,20 @@ private fun ProfileForm(
  */
 @Composable
 private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Unit) {
-  Text(
-      text = "Your Listings",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-      modifier =
-          Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.LISTINGS_SECTION))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(MyProfileScreenTestTag.LISTINGS_SECTION)
+    ) {
+        Text(
+            text = "Your Listings",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier =
+                Modifier.padding(horizontal = 16.dp)
+                    .testTag(MyProfileScreenTestTag.LISTINGS_SECTION)
+        )
+    }
 
   when {
     ui.listingsLoading -> {
@@ -523,13 +531,22 @@ private fun ProfileHistory(
 ) {
   val historyBookings = ui.bookings.filter { it.status == BookingStatus.COMPLETED }
 
-  Text(
-      text = "Your History",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-      modifier = Modifier.padding(horizontal = 16.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(MyProfileScreenTestTag.HISTORY_SECTION)
+    ) {
 
-  when {
+        Text(
+            text = "Your History",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+    }
+
+
+        when {
     historyBookings.isEmpty() -> {
       Text(
           text = "You don’t have any completed bookings yet.",
@@ -541,11 +558,13 @@ private fun ProfileHistory(
           val listing = ui.listings.firstOrNull { it.listingId == booking.associatedListingId }
           val creator = ui.profilesById[booking.listingCreatorId]
 
-          BookingCard(
-              booking = booking,
-              listing = listing,
-              creator = creator,
-              onClickBookingCard = { listing?.listingId?.let { id -> onListingClick(id) } })
+          if (creator != null && listing != null) {
+            BookingCard(
+                booking = booking,
+                listing = listing,
+                creator = creator,
+                onClickBookingCard = { onListingClick(listing.listingId) })
+          }
         }
       }
     }

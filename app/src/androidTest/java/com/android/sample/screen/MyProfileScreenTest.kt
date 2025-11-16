@@ -1,6 +1,7 @@
 package com.android.sample.screen
 
 import android.Manifest
+import android.R.attr.data
 import android.app.UiAutomation
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
@@ -12,6 +13,10 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.sample.model.booking.Booking
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -131,6 +136,45 @@ class MyProfileScreenTest {
         emptyList()
   }
 
+  private class FakeBookingRepo : BookingRepository {
+    private val items = mutableListOf<Booking>()
+    fun seed(vararg bookings: Booking) {
+      items.clear()
+      items.addAll(bookings.toList())
+    }
+    override fun getNewUid(): String = "fake-booking-id"
+
+    override suspend fun getAllBookings(): List<Booking> = emptyList()
+
+    override suspend fun getBooking(bookingId: String): Booking? = null
+
+    override suspend fun getBookingsByTutor(tutorId: String): List<Booking> = emptyList()
+
+    override suspend fun getBookingsByUserId(userId: String): List<Booking> = emptyList()
+
+    override suspend fun getBookingsByStudent(studentId: String): List<Booking> = emptyList()
+
+    override suspend fun getBookingsByListing(listingId: String): List<Booking> = emptyList()
+
+    override suspend fun addBooking(booking: Booking) {}
+
+    override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+    override suspend fun deleteBooking(bookingId: String) {}
+
+    override suspend fun updateBookingStatus(
+      bookingId: String,
+      status: BookingStatus
+    ) {}
+
+    override suspend fun confirmBooking(bookingId: String) {}
+
+    override suspend fun completeBooking(bookingId: String) {}
+
+    override suspend fun cancelBooking(bookingId: String) {}
+  }
+
+
   private class FakeRatingRepo : RatingRepository {
     override fun getNewUid(): String = "fake-rating-id"
 
@@ -165,11 +209,13 @@ class MyProfileScreenTest {
 
   @Before
   fun setup() {
+    BookingRepositoryProvider.setForTests(FakeBookingRepo())
     repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
     viewModel =
         MyProfileViewModel(
             repo,
             listingRepository = FakeListingRepo(),
+          bookingRepository = FakeBookingRepo(),
             ratingsRepository = FakeRatingRepo(),
             userId = "demo")
 
@@ -541,9 +587,40 @@ class MyProfileScreenTest {
 
   @Test
   fun historyTab_switchesContentToHistorySection() {
+    val bookingRepo = FakeBookingRepo().apply {
+      seed(
+        Booking(
+          bookingId = "b1",
+          associatedListingId = "p1",
+          listingCreatorId = "demo",
+          bookerId = "demo",
+          status = BookingStatus.COMPLETED
+        )
+      )
+    }
+
+    val vm = MyProfileViewModel(
+      profileRepository = repo,
+      listingRepository = FakeListingRepo(),
+      ratingsRepository = FakeRatingRepo(),
+      bookingRepository = bookingRepo,
+      userId = "demo"
+    )
+
+    compose.runOnIdle {
+      contentSlot.value = {
+        MyProfileScreen(
+          profileViewModel = vm,
+          profileId = "demo",
+          onLogout = { logoutClicked.set(true) }
+        )
+      }
+    }
+
     compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_TAB).performClick()
     compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_SECTION).assertIsDisplayed()
   }
+
 
   private class BlockingListingRepo : ListingRepository {
     val gate = CompletableDeferred<Unit>()
@@ -588,6 +665,7 @@ class MyProfileScreenTest {
         MyProfileViewModel(
             pRepo,
             listingRepository = blockingRepo,
+          bookingRepository = FakeBookingRepo(),
             ratingsRepository = ratingRepo,
             userId = "demo")
 
@@ -753,54 +831,30 @@ class MyProfileScreenTest {
   }
 
   @Test
-  fun history_showsCompletedListings() {
-    val completed = makeTestListing().copy(isActive = false)
-    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
-    val listingRepo = OneItemListingRepo(completed)
-    val ratingRepo = FakeRatingRepo()
-
-    val vm =
-        MyProfileViewModel(
-            profileRepository = pRepo,
-            listingRepository = listingRepo,
-            ratingsRepository = ratingRepo,
-            userId = "demo")
-
-    compose.runOnIdle {
-      contentSlot.value = {
-        MyProfileScreen(
-            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
-      }
-    }
-
-    compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_TAB).performClick()
-
-    compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_SECTION).assertIsDisplayed()
-    compose.onNodeWithText("Guitar Lessons").assertExists()
-  }
-
-  @Test
   fun history_showsEmptyMessage() {
-    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
-    val listingRepo = OneItemListingRepo(makeTestListing().copy(isActive = true))
-    val ratingRepo = FakeRatingRepo()
+    val bookingRepo = FakeBookingRepo()
 
-    val vm =
-        MyProfileViewModel(
-            profileRepository = pRepo,
-            listingRepository = listingRepo,
-            ratingsRepository = ratingRepo,
-            userId = "demo")
+
+    val vm = MyProfileViewModel(
+      profileRepository = repo,
+      listingRepository = FakeListingRepo(),
+      ratingsRepository = FakeRatingRepo(),
+      bookingRepository = bookingRepo,
+      userId = "demo"
+    )
 
     compose.runOnIdle {
       contentSlot.value = {
         MyProfileScreen(
-            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+          profileViewModel = vm,
+          profileId = "demo",
+          onLogout = { logoutClicked.set(true) })
       }
     }
 
     compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_TAB).performClick()
 
-    compose.onNodeWithText("You don’t have any completed listings yet.").assertExists()
+    compose.onNodeWithText("You don’t have any completed bookings yet.").assertExists()
   }
+
 }

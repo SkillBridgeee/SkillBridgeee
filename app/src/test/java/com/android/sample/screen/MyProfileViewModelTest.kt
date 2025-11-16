@@ -3,6 +3,10 @@ package com.android.sample.screen
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.FirebaseTestRule
+import com.android.sample.model.booking.Booking
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -52,6 +56,7 @@ class MyProfileViewModelTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
+    BookingRepositoryProvider.setForTests(FakeBookingRepo())
   }
 
   @After
@@ -108,6 +113,41 @@ class MyProfileViewModelTest {
       return if (query.isNotBlank()) results else emptyList()
     }
   }
+
+  private class FakeBookingRepo : BookingRepository {
+    override fun getNewUid(): String = "fake-booking-id"
+
+    override suspend fun getAllBookings(): List<Booking> = emptyList()
+
+    override suspend fun getBooking(bookingId: String): Booking? = null
+
+    override suspend fun getBookingsByTutor(tutorId: String): List<Booking> = emptyList()
+
+    override suspend fun getBookingsByUserId(userId: String): List<Booking> = emptyList()
+
+    override suspend fun getBookingsByStudent(studentId: String): List<Booking> = emptyList()
+
+    override suspend fun getBookingsByListing(listingId: String): List<Booking> = emptyList()
+
+    override suspend fun addBooking(booking: Booking) {}
+
+    override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+    override suspend fun deleteBooking(bookingId: String) {}
+
+    override suspend fun updateBookingStatus(
+      bookingId: String,
+      status: BookingStatus
+    ) {}
+
+    override suspend fun confirmBooking(bookingId: String) {}
+
+    override suspend fun completeBooking(bookingId: String) {}
+
+    override suspend fun cancelBooking(bookingId: String) {}
+  }
+
+
 
   // Minimal fake ListingRepository to satisfy the ViewModel dependency
   private class FakeListingRepo : ListingRepository {
@@ -192,12 +232,20 @@ class MyProfileViewModelTest {
   ) = Profile(id, name, email, location = location, description = desc)
 
   private fun newVm(
-      repo: ProfileRepository = FakeProfileRepo(),
-      locRepo: LocationRepository = FakeLocationRepo(),
-      listingRepo: ListingRepository = FakeListingRepo(),
-      ratingRepo: RatingRepository = FakeRatingRepos(),
-      userId: String = "testUid"
-  ) = MyProfileViewModel(repo, locRepo, listingRepo, ratingRepo, userId = userId)
+    repo: ProfileRepository = FakeProfileRepo(),
+    locRepo: LocationRepository = FakeLocationRepo(),
+    listingRepo: ListingRepository = FakeListingRepo(),
+    ratingRepo: RatingRepository = FakeRatingRepos(),
+    bookingRepo: BookingRepository = FakeBookingRepo(),
+    userId: String = "testUid"
+  ) = MyProfileViewModel(
+    profileRepository = repo,
+    locationRepository = locRepo,
+    listingRepository = listingRepo,
+    ratingsRepository = ratingRepo,
+    bookingRepository = bookingRepo,
+    userId = userId
+  )
 
   private class NullGpsProvider :
       com.android.sample.model.map.GpsLocationProvider(

@@ -52,22 +52,20 @@ object BookingCardTestTag {
 fun BookingCard(
     modifier: Modifier = Modifier,
     booking: Booking,
-    listing: Listing?,
-    creator: Profile?,
+    listing: Listing,
+    creator: Profile,
     onClickBookingCard: (String) -> Unit = {}
 ) {
 
   val statusString = booking.status.name()
   val statusColor = booking.status.color()
   val bookingDate = booking.dateString()
-  val listingType = listing?.type
-  val listingTitle = listing?.displayTitle() ?: "Unknown listing"
-  val creatorName = creator?.name ?: "Unknown"
+  val listingType = listing.type
+  val listingTitle = listing.displayTitle()
+  val creatorName = creator.name ?: "Unknown"
   val priceString =
-      remember(listing?.hourlyRate) {
-        val rate = listing?.hourlyRate ?: 0.0
-        String.format(Locale.ROOT, "$%.2f / hr", rate)
-      }
+      remember(listing.hourlyRate) { String.format(Locale.ROOT, "$%.2f / hr", listing.hourlyRate) }
+
   Card(
       shape = MaterialTheme.shapes.large,
       colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -136,12 +134,11 @@ fun BookingCard(
 }
 
 @Composable
-private fun cardTitle(listingType: ListingType?, listingTitle: String): AnnotatedString {
+private fun cardTitle(listingType: ListingType, listingTitle: String): AnnotatedString {
   val tutorStudentPrefix: String =
       when (listingType) {
         ListingType.REQUEST -> "Tutor for "
         ListingType.PROPOSAL -> "Student for "
-        else -> ""
       }
   val styledText = buildAnnotatedString {
     withStyle(style = SpanStyle(fontSize = MaterialTheme.typography.bodySmall.fontSize)) {
