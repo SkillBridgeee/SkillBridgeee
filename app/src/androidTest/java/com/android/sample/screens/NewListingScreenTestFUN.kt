@@ -107,25 +107,144 @@ class NewListingScreenTestFUN : AppTest() {
     }
 
     // --- ASSERT ERRORS ---
-    //    composeTestRule
-    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_LISTING_TYPE_MSG, useUnmergedTree =
-    // true)
-    //        .assertIsDisplayed()
-    //    composeTestRule
-    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
-    //        .assertIsDisplayed()
-    //    composeTestRule
-    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
-    //        .assertIsDisplayed()
-    //    composeTestRule
-    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
-    //        .assertIsDisplayed()
-    //    composeTestRule
-    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_LOCATION_MSG, useUnmergedTree = true)
-    //        .assertIsDisplayed()
-    //    composeTestRule
-    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
-    //        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_LISTING_TYPE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_LOCATION_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun testCI1() {
+    // Important en CI :
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
+
+    // --- WAIT FOR VALIDATION ERRORS ---
+    // Indispensable : attendre que les erreurs apparaissent dans l’arbre
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      composeTestRule
+          .onAllNodesWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // --- ASSERT ERRORS ---
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_LISTING_TYPE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun testCI2() {
+    // Important en CI :
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
+
+    // --- WAIT FOR VALIDATION ERRORS ---
+    // Indispensable : attendre que les erreurs apparaissent dans l’arbre
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      composeTestRule
+          .onAllNodesWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // --- ASSERT ERRORS ---
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun testCI3() {
+    // Important en CI :
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
+
+    // --- WAIT FOR VALIDATION ERRORS ---
+    // Indispensable : attendre que les erreurs apparaissent dans l’arbre
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      composeTestRule
+          .onAllNodesWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // --- ASSERT ERRORS ---
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun testCI4() {
+    // Important en CI :
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
+
+    // --- WAIT FOR VALIDATION ERRORS ---
+    // Indispensable : attendre que les erreurs apparaissent dans l’arbre
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      composeTestRule
+          .onAllNodesWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // --- ASSERT ERRORS ---
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun testCI5() {
+    // Important en CI :
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
+
+    // --- WAIT FOR VALIDATION ERRORS ---
+    // Indispensable : attendre que les erreurs apparaissent dans l’arbre
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      composeTestRule
+          .onAllNodesWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // --- ASSERT ERRORS ---
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_LOCATION_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun testCI6() {
+    // Important en CI :
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
+
+    // --- WAIT FOR VALIDATION ERRORS ---
+    // Indispensable : attendre que les erreurs apparaissent dans l’arbre
+    composeTestRule.waitUntil(timeoutMillis = 10_000) {
+      composeTestRule
+          .onAllNodesWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // --- ASSERT ERRORS ---
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   //  @Test
