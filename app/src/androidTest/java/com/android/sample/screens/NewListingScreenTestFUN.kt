@@ -24,4 +24,9 @@ class NewListingScreenTestFUN : AppTest() {
   fun testGoodScreen() {
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE).assertIsDisplayed()
   }
+
+  @Test
+  fun test() {
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE).assertIsDisplayed()
+  }
 }
