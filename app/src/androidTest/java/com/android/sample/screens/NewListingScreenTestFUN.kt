@@ -52,6 +52,8 @@ class NewListingScreenTestFUN : AppTest() {
     // CLick on Save button
     composeTestRule.clickOn(NewListingScreenTestTag.BUTTON_SAVE_LISTING)
 
+    composeTestRule.waitForIdle()
+
     // Test Error msg
     composeTestRule
         .onNodeWithTag(NewListingScreenTestTag.INVALID_LISTING_TYPE_MSG, useUnmergedTree = true)
