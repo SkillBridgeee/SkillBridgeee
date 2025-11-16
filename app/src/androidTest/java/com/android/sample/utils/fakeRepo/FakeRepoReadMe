@@ -1,0 +1,28 @@
+
+
+This file describes how to use fake repositories.
+
+All fake repositories implement a fake interface that implements the real interface of
+the correct repository (e.g interface FakeProfileRepo : ProfileRepository).
+
+This allows us to define helper methods to test what each repository contains and call them
+in the tests.
+(e.g in the fake listing repo: getLastListingCreated to check whether a listing has been added).
+
+There are three types of repositories:
+- ‘error’
+- ‘empty’
+- ‘working’
+
+Error Repository :
+Returns an error for each request.
+This repository is used to test the UI when there is an error with the repositories.
+
+Empty Repository :
+Has no data during initialisation.
+This repository is used to test the UI when there is no data yet in a repository.
+
+Working Repository :
+Has data during initialisation.
+
+

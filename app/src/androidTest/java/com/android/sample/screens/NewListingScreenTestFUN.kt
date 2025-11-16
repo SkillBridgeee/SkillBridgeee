@@ -34,57 +34,107 @@ class NewListingScreenTestFUN : AppTest() {
   }
 
   @Test
-  fun testCi() {
-    composeTestRule.onNodeWithTag(NewListingScreenTestTag.LISTING_TYPE_FIELD)
-  }
-
-  @Test
   fun testAllComponentsAreDisplayedAndErrorMsg() {
+    //    // Check all components
+    //
+    //
+    // composeTestRule.onNodeWithTag(NewListingScreenTestTag.LISTING_TYPE_FIELD).assertIsDisplayed()
+    //
+    //
+    // composeTestRule.onNodeWithTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE).assertIsDisplayed()
+    //
+    //
+    // composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).assertIsDisplayed()
+    //
+    //
+    // composeTestRule.onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE).assertIsDisplayed()
+    //
+    // composeTestRule.onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION).assertIsDisplayed()
+    //    composeTestRule.onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE).assertIsDisplayed()
+    //
+    //
+    // composeTestRule.onNodeWithTag(NewListingScreenTestTag.INPUT_LOCATION_FIELD).assertIsDisplayed()
+    //
+    //
+    // composeTestRule.onNodeWithTag(NewListingScreenTestTag.SUB_SKILL_FIELD).assertIsNotDisplayed()
+    //    composeTestRule
+    //        .onNodeWithTag(NewListingScreenTestTag.BUTTON_USE_MY_LOCATION)
+    //        .assertIsDisplayed()
+    //    composeTestRule.onNodeWithTag(NewListingScreenTestTag.SUBJECT_FIELD).assertIsDisplayed()
+    //
+    //    // CLick on Save button
+    //    composeTestRule.clickOn(NewListingScreenTestTag.BUTTON_SAVE_LISTING)
+    //
+    //    composeTestRule.waitForIdle()
+    //
+    //    // Test Error msg
+    //    composeTestRule
+    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_LISTING_TYPE_MSG, useUnmergedTree =
+    // true)
+    //        .assertIsDisplayed()
+    //    composeTestRule
+    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+    //        .assertIsDisplayed()
+    //    composeTestRule
+    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
+    //        .assertIsDisplayed()
+    //    composeTestRule
+    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
+    //        .assertIsDisplayed()
+    //    composeTestRule
+    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_LOCATION_MSG, useUnmergedTree = true)
+    //        .assertIsDisplayed()
+    //    composeTestRule
+    //        .onNodeWithTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
+    //        .assertIsDisplayed()
+
     // Check all components
-
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.LISTING_TYPE_FIELD).assertIsDisplayed()
-
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE).assertIsDisplayed()
-
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).assertIsDisplayed()
-
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE).assertIsDisplayed()
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION).assertIsDisplayed()
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE).assertIsDisplayed()
-
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.INPUT_LOCATION_FIELD).assertIsDisplayed()
-
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.SUB_SKILL_FIELD).assertIsNotDisplayed()
     composeTestRule
         .onNodeWithTag(NewListingScreenTestTag.BUTTON_USE_MY_LOCATION)
         .assertIsDisplayed()
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.SUBJECT_FIELD).assertIsDisplayed()
 
-    //      // CLick on Save button
-    //      composeTestRule.clickOn(NewListingScreenTestTag.BUTTON_SAVE_LISTING)
-    //
-    //      composeTestRule.waitForIdle()
-    //
-    //      // Test Error msg
-    //      composeTestRule
-    //          .onNodeWithTag(NewListingScreenTestTag.INVALID_LISTING_TYPE_MSG, useUnmergedTree =
-    // true)
-    //          .assertIsDisplayed()
-    //      composeTestRule
-    //          .onNodeWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
-    //          .assertIsDisplayed()
-    //      composeTestRule
-    //          .onNodeWithTag(NewListingScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
-    //          .assertIsDisplayed()
-    //      composeTestRule
-    //          .onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
-    //          .assertIsDisplayed()
-    //      composeTestRule
-    //          .onNodeWithTag(NewListingScreenTestTag.INVALID_LOCATION_MSG, useUnmergedTree = true)
-    //          .assertIsDisplayed()
-    //      composeTestRule
-    //          .onNodeWithTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
-    //          .assertIsDisplayed()
+    // --- CLICK SAVE ---
+
+    // Important en CI : scrollTo + click
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
+
+    // --- WAIT FOR VALIDATION ERRORS ---
+    // Indispensable : attendre que les erreurs apparaissent dans l’arbre
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+          .onAllNodesWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // --- ASSERT ERRORS ---
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_LISTING_TYPE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_LOCATION_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   @Test

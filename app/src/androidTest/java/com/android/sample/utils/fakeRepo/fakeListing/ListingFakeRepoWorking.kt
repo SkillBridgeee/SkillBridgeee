@@ -87,6 +87,6 @@ class ListingFakeRepoWorking() : FakeListingRepo {
   }
 
   override fun getLastListingCreated(): Listing? {
-    TODO("Not yet implemented")
+    return lastListingCreated
   }
 }
