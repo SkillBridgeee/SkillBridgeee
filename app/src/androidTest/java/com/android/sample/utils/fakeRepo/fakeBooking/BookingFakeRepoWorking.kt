@@ -1,12 +1,13 @@
-package com.android.sample.utils.fakeRepo
+package com.android.sample.utils.fakeRepo.fakeBooking
 
 import com.android.sample.model.booking.Booking
-import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
-import java.util.*
+import java.util.Date
+import java.util.UUID
 
 /**
- * A fake implementation of [BookingRepository] that provides a predefined set of bookings.
+ * A fake implementation of [com.android.sample.model.booking.BookingRepository] that provides a
+ * predefined set of bookings.
  *
  * This mock repository is used for testing and development purposes, simulating a repository with
  * actual booking data without requiring a real backend.
@@ -21,7 +22,7 @@ import java.util.*
  * - Testing UI rendering of booking lists with different statuses.
  * - Simulating user actions like confirming, completing, or cancelling bookings.
  */
-class BookingFakeRepoWorking : BookingRepository {
+class BookingFakeRepoWorking : FakeBookingRepo {
 
   val initialNumBooking = 2
 

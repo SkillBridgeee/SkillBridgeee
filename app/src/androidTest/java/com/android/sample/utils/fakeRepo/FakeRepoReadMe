@@ -14,15 +14,19 @@ There are three types of repositories:
 - ‘empty’
 - ‘working’
 
-Error Repository :
+- Error Repository :
 Returns an error for each request.
 This repository is used to test the UI when there is an error with the repositories.
 
-Empty Repository :
+- Empty Repository :
 Has no data during initialisation.
 This repository is used to test the UI when there is no data yet in a repository.
 
-Working Repository :
+- Working Repository :
 Has data during initialisation.
+Here's the scenario for the working repository
+
+The current User is Alice
+Alice has made a proposal for Maths class
 
 

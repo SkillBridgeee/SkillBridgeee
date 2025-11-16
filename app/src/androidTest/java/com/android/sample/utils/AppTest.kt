@@ -19,8 +19,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.booking.BookingRepository
-import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.HomePage.MainPageViewModel
@@ -32,8 +30,10 @@ import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
-import com.android.sample.utils.fakeRepo.BookingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.RatingFakeRepoWorking
+import com.android.sample.utils.fakeRepo.fakeBooking.BookingFakeRepoWorking
+import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingRepo
+import com.android.sample.utils.fakeRepo.fakeListing.FakeListingRepo
 import com.android.sample.utils.fakeRepo.fakeListing.ListingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
 import com.android.sample.utils.fakeRepo.fakeProfile.ProfileFakeWorking
@@ -47,11 +47,11 @@ abstract class AppTest() {
     return ProfileFakeWorking()
   }
 
-  open fun createInitializedListingRepo(): ListingRepository {
+  open fun createInitializedListingRepo(): FakeListingRepo {
     return ListingFakeRepoWorking()
   }
 
-  open fun createInitializedBookingRepo(): BookingRepository {
+  open fun createInitializedBookingRepo(): FakeBookingRepo {
     return BookingFakeRepoWorking()
   }
 
@@ -62,10 +62,10 @@ abstract class AppTest() {
   val profileRepository: FakeProfileRepo
     get() = createInitializedProfileRepo()
 
-  val listingRepository: ListingRepository
+  val listingRepository: FakeListingRepo
     get() = createInitializedListingRepo()
 
-  val bookingRepository: BookingRepository
+  val bookingRepository: FakeBookingRepo
     get() = createInitializedBookingRepo()
 
   val ratingRepository: RatingRepository
