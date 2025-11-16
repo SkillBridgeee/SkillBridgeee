@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.utils.AppTest
 import org.junit.Before
@@ -120,7 +121,7 @@ class NewListingScreenTestFUN : AppTest() {
         .onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
     composeTestRule
-        .onNodeWithTag(NewListingScreenTestTag.INVALID_LOCATION_MSG, useUnmergedTree = true)
+        .onNodeWithTag(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
     composeTestRule
         .onNodeWithTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG, useUnmergedTree = true)
@@ -223,7 +224,7 @@ class NewListingScreenTestFUN : AppTest() {
 
     // --- ASSERT ERRORS ---
     composeTestRule
-        .onNodeWithTag(NewListingScreenTestTag.INVALID_LOCATION_MSG, useUnmergedTree = true)
+        .onNodeWithTag(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
   }
 
