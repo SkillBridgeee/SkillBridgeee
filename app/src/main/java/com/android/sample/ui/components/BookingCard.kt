@@ -63,10 +63,11 @@ fun BookingCard(
   val listingType = listing?.type
   val listingTitle = listing?.displayTitle() ?: "Unknown listing"
   val creatorName = creator?.name ?: "Unknown"
-    val priceString = remember(listing?.hourlyRate) {
+  val priceString =
+      remember(listing?.hourlyRate) {
         val rate = listing?.hourlyRate ?: 0.0
         String.format(Locale.ROOT, "$%.2f / hr", rate)
-    }
+      }
   Card(
       shape = MaterialTheme.shapes.large,
       colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -140,7 +141,7 @@ private fun cardTitle(listingType: ListingType?, listingTitle: String): Annotate
       when (listingType) {
         ListingType.REQUEST -> "Tutor for "
         ListingType.PROPOSAL -> "Student for "
-          else -> ""
+        else -> ""
       }
   val styledText = buildAnnotatedString {
     withStyle(style = SpanStyle(fontSize = MaterialTheme.typography.bodySmall.fontSize)) {
