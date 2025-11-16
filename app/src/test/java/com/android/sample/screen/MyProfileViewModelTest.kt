@@ -135,10 +135,7 @@ class MyProfileViewModelTest {
 
     override suspend fun deleteBooking(bookingId: String) {}
 
-    override suspend fun updateBookingStatus(
-      bookingId: String,
-      status: BookingStatus
-    ) {}
+    override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
     override suspend fun confirmBooking(bookingId: String) {}
 
@@ -146,8 +143,6 @@ class MyProfileViewModelTest {
 
     override suspend fun cancelBooking(bookingId: String) {}
   }
-
-
 
   // Minimal fake ListingRepository to satisfy the ViewModel dependency
   private class FakeListingRepo : ListingRepository {
@@ -232,20 +227,20 @@ class MyProfileViewModelTest {
   ) = Profile(id, name, email, location = location, description = desc)
 
   private fun newVm(
-    repo: ProfileRepository = FakeProfileRepo(),
-    locRepo: LocationRepository = FakeLocationRepo(),
-    listingRepo: ListingRepository = FakeListingRepo(),
-    ratingRepo: RatingRepository = FakeRatingRepos(),
-    bookingRepo: BookingRepository = FakeBookingRepo(),
-    userId: String = "testUid"
-  ) = MyProfileViewModel(
-    profileRepository = repo,
-    locationRepository = locRepo,
-    listingRepository = listingRepo,
-    ratingsRepository = ratingRepo,
-    bookingRepository = bookingRepo,
-    userId = userId
-  )
+      repo: ProfileRepository = FakeProfileRepo(),
+      locRepo: LocationRepository = FakeLocationRepo(),
+      listingRepo: ListingRepository = FakeListingRepo(),
+      ratingRepo: RatingRepository = FakeRatingRepos(),
+      bookingRepo: BookingRepository = FakeBookingRepo(),
+      userId: String = "testUid"
+  ) =
+      MyProfileViewModel(
+          profileRepository = repo,
+          locationRepository = locRepo,
+          listingRepository = listingRepo,
+          ratingsRepository = ratingRepo,
+          bookingRepository = bookingRepo,
+          userId = userId)
 
   private class NullGpsProvider :
       com.android.sample.model.map.GpsLocationProvider(

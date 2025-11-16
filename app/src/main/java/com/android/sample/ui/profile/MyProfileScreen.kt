@@ -466,20 +466,14 @@ private fun ProfileForm(
  */
 @Composable
 private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(MyProfileScreenTestTag.LISTINGS_SECTION)
-    ) {
-        Text(
-            text = "Your Listings",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier =
-                Modifier.padding(horizontal = 16.dp)
-                    .testTag(MyProfileScreenTestTag.LISTINGS_SECTION)
-        )
-    }
+  Column(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.LISTINGS_SECTION)) {
+    Text(
+        text = "Your Listings",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier =
+            Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.LISTINGS_SECTION))
+  }
 
   when {
     ui.listingsLoading -> {
@@ -531,22 +525,15 @@ private fun ProfileHistory(
 ) {
   val historyBookings = ui.bookings.filter { it.status == BookingStatus.COMPLETED }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(MyProfileScreenTestTag.HISTORY_SECTION)
-    ) {
+  Column(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.HISTORY_SECTION)) {
+    Text(
+        text = "Your History",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(horizontal = 16.dp))
+  }
 
-        Text(
-            text = "Your History",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-    }
-
-
-        when {
+  when {
     historyBookings.isEmpty() -> {
       Text(
           text = "You don’t have any completed bookings yet.",
