@@ -306,4 +306,71 @@ class BookingDetailsScreenTest {
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.DESCRIPTION_SECTION).assertExists()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.STATUS).assertExists()
   }
+
+  @Test
+  fun markCompletedButton_isVisible_whenStatusConfirmed_andCallsCallback() {
+    // given: a CONFIRMED booking
+    val booking =
+        Booking(
+            bookingId = "booking-1",
+            associatedListingId = "listing-1",
+            listingCreatorId = "creator-1",
+            bookerId = "student-1",
+            status = BookingStatus.CONFIRMED,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(), // dummy listing is fine
+            creatorProfile = Profile(),
+            loadError = false)
+
+    var clicked = false
+
+    composeTestRule.setContent {
+      BookingDetailsContent(
+          uiState = uiState,
+          onCreatorClick = {},
+          onMarkCompleted = { clicked = true },
+      )
+    }
+
+    // then: button is visible
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .assertIsDisplayed()
+        .performClick()
+
+    // and: callback was triggered
+    assert(clicked)
+  }
+
+  @Test
+  fun markCompletedButton_isNotVisible_whenStatusNotConfirmed() {
+    // given: a PENDING booking
+    val booking =
+        Booking(
+            bookingId = "booking-2",
+            associatedListingId = "listing-2",
+            listingCreatorId = "creator-2",
+            bookerId = "student-2",
+            status = BookingStatus.PENDING,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking, listing = Proposal(), creatorProfile = Profile(), loadError = false)
+
+    composeTestRule.setContent {
+      BookingDetailsContent(
+          uiState = uiState,
+          onCreatorClick = {},
+          onMarkCompleted = {},
+      )
+    }
+
+    // then: button should not exist in the tree
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertDoesNotExist()
+  }
 }
