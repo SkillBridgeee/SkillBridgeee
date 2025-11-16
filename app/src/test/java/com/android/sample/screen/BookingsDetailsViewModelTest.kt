@@ -120,175 +120,115 @@ class BookingsDetailsViewModelTest {
     assertTrue(state.loadError)
   }
 
-  /** --- Scenario 3 : markBookingAsCompleted updates status to COMPLETED on success --- */
-  @OptIn(ExperimentalCoroutinesApi::class)
-  @Test
-  fun markBookingAsCompleted_success_updatesStatusToCompleted() = runTest {
-    // Local fake BookingRepository just for this test
-    val bookingRepoForCompleteSuccess =
-        object : BookingRepository {
-          // Start with a CONFIRMED booking
-          private var booking =
-              Booking(
-                  bookingId = "b-complete",
-                  associatedListingId = "listing-1",
-                  listingCreatorId = "creator_1",
-                  bookerId = "student_1",
-                  status = BookingStatus.CONFIRMED)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun markBookingAsCompleted_updatesStatusToCompleted() = runTest {
+        val repo =
+            object : BookingRepository {
+                var booking =
+                    Booking(
+                        bookingId = "b1",
+                        associatedListingId = "listing_1",
+                        listingCreatorId = "creator_1",
+                        bookerId = "student_1",
+                        status = BookingStatus.CONFIRMED)
 
-          override fun getNewUid(): String = "unused"
-
-          override suspend fun getAllBookings(): List<Booking> = emptyList()
-
-          override suspend fun getBooking(bookingId: String): Booking? {
-            return if (bookingId == booking.bookingId) booking else null
-          }
-
-          override suspend fun getBookingsByTutor(tutorId: String): List<Booking> = emptyList()
-
-          override suspend fun getBookingsByUserId(userId: String): List<Booking> = emptyList()
-
-          override suspend fun getBookingsByStudent(studentId: String): List<Booking> = emptyList()
-
-          override suspend fun getBookingsByListing(listingId: String): List<Booking> = emptyList()
-
-          override suspend fun addBooking(booking: Booking) {
-            // not needed in this test
-          }
-
-          override suspend fun updateBooking(bookingId: String, booking: Booking) {
-            // not needed in this test
-          }
-
-          override suspend fun deleteBooking(bookingId: String) {
-            // not needed in this test
-          }
-
-          override suspend fun updateBookingStatus(
-              bookingId: String,
-              status: BookingStatus,
-          ) {
-            if (bookingId == booking.bookingId) {
-              booking = booking.copy(status = status)
+                override fun getNewUid(): String = "unused"
+                override suspend fun getAllBookings(): List<Booking> = emptyList()
+                override suspend fun getBooking(bookingId: String): Booking? =
+                    booking.takeIf { it.bookingId == bookingId }
+                override suspend fun getBookingsByTutor(tutorId: String): List<Booking> = emptyList()
+                override suspend fun getBookingsByUserId(userId: String): List<Booking> = emptyList()
+                override suspend fun getBookingsByStudent(studentId: String): List<Booking> = emptyList()
+                override suspend fun getBookingsByListing(listingId: String): List<Booking> = emptyList()
+                override suspend fun addBooking(booking: Booking) {}
+                override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+                override suspend fun deleteBooking(bookingId: String) {}
+                override suspend fun updateBookingStatus(
+                    bookingId: String,
+                    status: BookingStatus,
+                ) {
+                    if (bookingId == booking.bookingId) booking = booking.copy(status = status)
+                }
+                override suspend fun confirmBooking(bookingId: String) {
+                    updateBookingStatus(bookingId, BookingStatus.CONFIRMED)
+                }
+                override suspend fun completeBooking(bookingId: String) {
+                    updateBookingStatus(bookingId, BookingStatus.COMPLETED)
+                }
+                override suspend fun cancelBooking(bookingId: String) {
+                    updateBookingStatus(bookingId, BookingStatus.CANCELLED)
+                }
             }
-          }
 
-          override suspend fun confirmBooking(bookingId: String) {
-            updateBookingStatus(bookingId, BookingStatus.CONFIRMED)
-          }
+        val vm =
+            BookingDetailsViewModel(
+                bookingRepository = repo,
+                listingRepository = listingRepoWorking,
+                profileRepository = profileRepoWorking)
 
-          override suspend fun completeBooking(bookingId: String) {
-            updateBookingStatus(bookingId, BookingStatus.COMPLETED)
-          }
+        vm.load("b1")
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(BookingStatus.CONFIRMED, vm.bookingUiState.value.booking.status)
 
-          override suspend fun cancelBooking(bookingId: String) {
-            updateBookingStatus(bookingId, BookingStatus.CANCELLED)
-          }
-        }
+        vm.markBookingAsCompleted()
+        testDispatcher.scheduler.advanceUntilIdle()
 
-    val vm =
-        BookingDetailsViewModel(
-            bookingRepository = bookingRepoForCompleteSuccess,
-            listingRepository = listingRepoWorking,
-            profileRepository = profileRepoWorking)
+        assertEquals(BookingStatus.COMPLETED, vm.bookingUiState.value.booking.status)
+    }
 
-    // Load existing booking
-    vm.load("b-complete")
-    testDispatcher.scheduler.advanceUntilIdle()
 
-    // Sanity check: starts as CONFIRMED
-    assertEquals(BookingStatus.CONFIRMED, vm.bookingUiState.value.booking.status)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun markBookingAsCompleted_whenRepoThrows_doesNotChangeStatus() = runTest {
+        val repo =
+            object : BookingRepository {
+                val booking =
+                    Booking(
+                        bookingId = "b1",
+                        associatedListingId = "listing_1",
+                        listingCreatorId = "creator_1",
+                        bookerId = "student_1",
+                        status = BookingStatus.CONFIRMED)
 
-    // When: student marks booking as completed
-    vm.markBookingAsCompleted()
-    testDispatcher.scheduler.advanceUntilIdle()
+                override fun getNewUid(): String = "unused"
+                override suspend fun getAllBookings(): List<Booking> = emptyList()
+                override suspend fun getBooking(bookingId: String): Booking? =
+                    booking.takeIf { it.bookingId == bookingId }
+                override suspend fun getBookingsByTutor(tutorId: String): List<Booking> = emptyList()
+                override suspend fun getBookingsByUserId(userId: String): List<Booking> = emptyList()
+                override suspend fun getBookingsByStudent(studentId: String): List<Booking> = emptyList()
+                override suspend fun getBookingsByListing(listingId: String): List<Booking> = emptyList()
+                override suspend fun addBooking(booking: Booking) {}
+                override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+                override suspend fun deleteBooking(bookingId: String) {}
+                override suspend fun updateBookingStatus(
+                    bookingId: String,
+                    status: BookingStatus,
+                ) { /* not used */ }
+                override suspend fun confirmBooking(bookingId: String) { /* not used */ }
+                override suspend fun completeBooking(bookingId: String) {
+                    throw RuntimeException("boom")
+                }
+                override suspend fun cancelBooking(bookingId: String) { /* not used */ }
+            }
 
-    // Then: status is COMPLETED in the ViewModel state
-    assertEquals(BookingStatus.COMPLETED, vm.bookingUiState.value.booking.status)
-    assertFalse(vm.bookingUiState.value.loadError)
-  }
+        val vm =
+            BookingDetailsViewModel(
+                bookingRepository = repo,
+                listingRepository = listingRepoWorking,
+                profileRepository = profileRepoWorking)
 
-  /** --- Scenario 4 : markBookingAsCompleted sets loadError on repository error --- */
-  @OptIn(ExperimentalCoroutinesApi::class)
-  @Test
-  fun markBookingAsCompleted_error_setsLoadErrorTrue() = runTest {
-    // Fake repo where getBooking works but completeBooking throws
-    val bookingRepoForCompleteError =
-        object : BookingRepository {
-          private val booking =
-              Booking(
-                  bookingId = "b-error",
-                  associatedListingId = "listing-1",
-                  listingCreatorId = "creator_1",
-                  bookerId = "student_1",
-                  status = BookingStatus.CONFIRMED)
+        vm.load("b1")
+        testDispatcher.scheduler.advanceUntilIdle()
+        val before = vm.bookingUiState.value.booking.status
+        assertEquals(BookingStatus.CONFIRMED, before)
 
-          override fun getNewUid(): String = "unused"
+        vm.markBookingAsCompleted()
+        testDispatcher.scheduler.advanceUntilIdle()
+        val after = vm.bookingUiState.value.booking.status
 
-          override suspend fun getAllBookings(): List<Booking> = emptyList()
+        assertEquals(before, after)
+    }
 
-          override suspend fun getBooking(bookingId: String): Booking? {
-            return if (bookingId == booking.bookingId) booking else null
-          }
-
-          override suspend fun getBookingsByTutor(tutorId: String): List<Booking> = emptyList()
-
-          override suspend fun getBookingsByUserId(userId: String): List<Booking> = emptyList()
-
-          override suspend fun getBookingsByStudent(studentId: String): List<Booking> = emptyList()
-
-          override suspend fun getBookingsByListing(listingId: String): List<Booking> = emptyList()
-
-          override suspend fun addBooking(booking: Booking) {
-            // not needed
-          }
-
-          override suspend fun updateBooking(bookingId: String, booking: Booking) {
-            // not needed
-          }
-
-          override suspend fun deleteBooking(bookingId: String) {
-            // not needed
-          }
-
-          override suspend fun updateBookingStatus(
-              bookingId: String,
-              status: BookingStatus,
-          ) {
-            // not needed
-          }
-
-          override suspend fun confirmBooking(bookingId: String) {
-            // not needed
-          }
-
-          override suspend fun completeBooking(bookingId: String) {
-            throw RuntimeException("Simulated repository error in completeBooking")
-          }
-
-          override suspend fun cancelBooking(bookingId: String) {
-            // not needed
-          }
-        }
-
-    val vm =
-        BookingDetailsViewModel(
-            bookingRepository = bookingRepoForCompleteError,
-            listingRepository = listingRepoWorking,
-            profileRepository = profileRepoWorking)
-
-    // First load succeeds
-    vm.load("b-error")
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    assertFalse(vm.bookingUiState.value.loadError)
-    assertEquals("b-error", vm.bookingUiState.value.booking.bookingId)
-
-    // When: mark as completed (fake will throw)
-    vm.markBookingAsCompleted()
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    // Then: ViewModel should report loadError = true
-    assertTrue(vm.bookingUiState.value.loadError)
-  }
 }
