@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
@@ -25,7 +26,11 @@ class MainActivityTest {
     private const val TAG = "MainActivityTest"
   }
 
-  @get:Rule val composeTestRule = createAndroidComposeRule<MainActivity>()
+  @get:Rule
+  val composeTestRule =
+      createAndroidComposeRule<MainActivity>().also {
+        UserSessionManager.setCurrentUserId("testUser")
+      }
 
   @Before
   fun initRepositories() {
@@ -40,6 +45,8 @@ class MainActivityTest {
       // Initialization may fail in some CI/emulator setups; log and continue
       Log.w(TAG, "Repository initialization failed", e)
     }
+
+    UserSessionManager.setCurrentUserId("testUser")
   }
 
   @Test
