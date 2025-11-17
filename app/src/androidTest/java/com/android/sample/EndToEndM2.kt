@@ -123,6 +123,8 @@ class EndToEndM2 {
 
     compose
         .onNodeWithTag(SignUpScreenTestTags.PASSWORD)
+        .performScrollTo()
+        .assertIsDisplayed()
         .performClick()
         .performTextInput(testPassword)
 
