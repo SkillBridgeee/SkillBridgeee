@@ -1,5 +1,5 @@
 package com.android.sample
-/*
+
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
@@ -23,7 +23,7 @@ import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.login.SignInScreenTestTags
-import com.android.sample.ui.newListing.NewSkillScreenTestTag
+import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.android.sample.ui.subject.SubjectListTestTags
@@ -204,47 +204,47 @@ class EndToEndM2 {
 
     compose.onNodeWithTag(HomeScreenTestTags.FAB_ADD).assertIsDisplayed().performClick()
 
-    waitForTag(compose, NewSkillScreenTestTag.INPUT_COURSE_TITLE)
+    waitForTag(compose, NewListingScreenTestTag.INPUT_COURSE_TITLE)
 
     compose
-        .onNodeWithTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
+        .onNodeWithTag(NewListingScreenTestTag.LISTING_TYPE_FIELD)
         .assertIsDisplayed()
         .performClick()
     compose.onNodeWithText("PROPOSAL").assertIsDisplayed().performClick()
 
-    compose.onNodeWithTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD).assertTextContains("PROPOSAL")
+    compose.onNodeWithTag(NewListingScreenTestTag.LISTING_TYPE_FIELD).assertTextContains("PROPOSAL")
 
     compose
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE)
+        .onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE)
         .assertIsDisplayed()
         .performClick()
         .performTextInput("Math Class")
 
-    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE).assertTextContains("Math Class")
+    compose.onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE).assertTextContains("Math Class")
 
     compose
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION)
+        .onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION)
         .assertIsDisplayed()
         .performClick()
         .performTextInput("Learn math with me")
 
     compose
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION)
+        .onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION)
         .assertTextContains("Learn math with me")
 
     compose
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE)
+        .onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE)
         .assertIsDisplayed()
         .performClick()
         .performTextInput("50")
-    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).assertTextContains("50")
+    compose.onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE).assertTextContains("50")
 
-    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
+    compose.onNodeWithTag(NewListingScreenTestTag.SUBJECT_FIELD).performClick()
 
     compose.onNodeWithText("ACADEMICS").performClick()
-    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).assertTextContains("ACADEMICS")
+    compose.onNodeWithTag(NewListingScreenTestTag.SUBJECT_FIELD).assertTextContains("ACADEMICS")
 
-    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
+    compose.onNodeWithTag(NewListingScreenTestTag.SUB_SKILL_FIELD).performClick()
 
     compose.onNodeWithText("MATHEMATICS").performClick()
     compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
@@ -269,9 +269,8 @@ class EndToEndM2 {
     compose.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).assertIsDisplayed().performClick()
     waitForTag(compose, MyBookingsPageTestTag.EMPTY)
     compose.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
-    // done
-    //test
+
   }
 
 
-}*/
+}
