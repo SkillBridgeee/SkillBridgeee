@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.GpsLocationProvider
+import com.android.sample.ui.components.BookingCard
 import com.android.sample.ui.components.LocationInputField
 import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RatingCard
@@ -464,12 +465,13 @@ private fun ProfileForm(
  */
 @Composable
 private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Unit) {
-  Text(
-      text = "Your Listings",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-      modifier =
-          Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.LISTINGS_SECTION))
+  Column(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.LISTINGS_SECTION)) {
+    Text(
+        text = "Your Listings",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(horizontal = 16.dp))
+  }
 
   when {
     ui.listingsLoading -> {
@@ -515,47 +517,39 @@ private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Un
  * @param onListingClick Callback when a listing card is clicked.
  */
 @Composable
-private fun ProfileHistory(ui: MyProfileUIState, onListingClick: (String) -> Unit) {
-  val historyListings = ui.listings.filter { !it.isActive }
+private fun ProfileHistory(
+    ui: MyProfileUIState,
+    onListingClick: (String) -> Unit,
+) {
+  val historyBookings = ui.completedBookings
 
-  Text(
-      text = "Your History",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-      modifier =
-          Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.HISTORY_SECTION))
+  Column(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.HISTORY_SECTION)) {
+    Text(
+        text = "Your History",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(horizontal = 16.dp))
+  }
 
   when {
-    ui.listingsLoading -> {
-      Box(
-          modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-          contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-          }
-    }
-    ui.listingsLoadError != null -> {
+    historyBookings.isEmpty() -> {
       Text(
-          text = ui.listingsLoadError,
-          color = Color.Red,
-          modifier = Modifier.padding(horizontal = 16.dp))
-    }
-    historyListings.isEmpty() -> {
-      Text(
-          text = "You don’t have any completed listings yet.",
+          text = "You don’t have any completed bookings yet.",
           modifier = Modifier.padding(horizontal = 16.dp))
     }
     else -> {
       LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        items(historyListings) { listing ->
-          when (listing) {
-            is com.android.sample.model.listing.Proposal -> {
-              ProposalCard(proposal = listing, onClick = onListingClick)
-            }
-            is com.android.sample.model.listing.Request -> {
-              RequestCard(request = listing, onClick = onListingClick)
-            }
+        items(historyBookings) { booking ->
+          val listing = ui.listings.firstOrNull { it.listingId == booking.associatedListingId }
+          val creator = ui.profilesById[booking.listingCreatorId]
+
+          if (creator != null && listing != null) {
+            BookingCard(
+                booking = booking,
+                listing = listing,
+                creator = creator,
+                onClickBookingCard = { onListingClick(listing.listingId) })
           }
-          Spacer(Modifier.height(8.dp))
         }
       }
     }
