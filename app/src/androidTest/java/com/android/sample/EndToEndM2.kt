@@ -198,7 +198,7 @@ class EndToEndM2 {
         .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
         .performClick()
         .performTextClearance()
-    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC).performTextInput("Gay")
+    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC).performTextInput("Happy")
 
     compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertIsEnabled().performClick()
 
