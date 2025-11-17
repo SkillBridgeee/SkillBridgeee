@@ -2,13 +2,9 @@ name: CI - Test Runner
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
+    types: [opened, synchronize, reopened]
 
 jobs:
   ci:
@@ -16,102 +12,73 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # -------------------------------------
-      # 1) Checkout
-      # -------------------------------------
-      - name: Checkout
+      # -------------------------------------------------
+      # 1. Checkout
+      # -------------------------------------------------
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
 
-      # -------------------------------------
-      # 2) KVM acceleration
-      # -------------------------------------
-      - name: Enable KVM group perms
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      # -------------------------------------
-      # 3) Java
-      # -------------------------------------
+      # -------------------------------------------------
+      # 2. Java
+      # -------------------------------------------------
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "17"
 
-      # -------------------------------------
-      # 4) Gradle cache
-      # -------------------------------------
+      # -------------------------------------------------
+      # 3. Gradle cache
+      # -------------------------------------------------
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
-      # -------------------------------------
-      # 5) AVD cache
-      # -------------------------------------
-      - name: AVD cache
-        uses: actions/cache@v4
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-34
+      # -------------------------------------------------
+      # 4. Disable AVD cache (causes unstable snapshots)
+      # -------------------------------------------------
+      - name: Disable AVD cache
+        run: echo "AVD cache disabled for stability"
 
-      - name: create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          target: google_apis
-          arch: x86_64
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: false
-          script: echo "Generated AVD snapshot for caching."
-
-      # -------------------------------------
-      # 6) Make gradlew executable
-      # -------------------------------------
-      - name: Grant execute permission for gradlew
+      # -------------------------------------------------
+      # 5. Make gradlew executable
+      # -------------------------------------------------
+      - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # -------------------------------------
-      # 7) Create local.properties
-      # -------------------------------------
+      # -------------------------------------------------
+      # 6. local.properties
+      # -------------------------------------------------
       - name: Create local.properties
         env:
           LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
         run: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > ./local.properties
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           if [ -n "$LOCAL_PROPERTIES" ]; then
-            echo "$LOCAL_PROPERTIES" | base64 --decode >> ./local.properties
-            echo "✅ LOCAL_PROPERTIES decoded and configured"
+            echo "$LOCAL_PROPERTIES" | base64 --decode >> local.properties
           else
-            echo "::warning::LOCAL_PROPERTIES not set. Creating fallback."
-            echo "MAPS_API_KEY=DEFAULT_API_KEY" >> ./local.properties
+            echo "MAPS_API_KEY=DEFAULT_API_KEY" >> local.properties
           fi
 
-      # -------------------------------------
-      # 8) Decode google-services.json
-      # -------------------------------------
+      # -------------------------------------------------
+      # 7. Firebase google-services.json
+      # -------------------------------------------------
       - name: Decode google-services.json
         env:
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
           if [ -n "$GOOGLE_SERVICES" ]; then
-            echo "$GOOGLE_SERVICES" | base64 --decode > ./app/google-services.json
+            echo "$GOOGLE_SERVICES" | base64 --decode > app/google-services.json
           else
-            echo "::warning::GOOGLE_SERVICES secret not set."
+            echo "::warning:: GOOGLE_SERVICES missing — tests may fail"
           fi
 
-      # -------------------------------------
-      # 9) Setup Node + Firebase
-      # -------------------------------------
-      - name: Setup Node.js
+      # -------------------------------------------------
+      # 8. Node + Firebase CLI
+      # -------------------------------------------------
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '18'
@@ -122,76 +89,96 @@ jobs:
       - name: Start Firebase Emulators
         run: |
           firebase emulators:start --only firestore,auth --project demo-test --debug > firebase.log 2>&1 &
-          echo "Waiting for Firebase emulators..."
-          sleep 15
+          echo "Waiting for Firebase emulator..."
+          sleep 12
 
-      # -------------------------------------
-      # 10) Formatting checks
-      # -------------------------------------
+      # -------------------------------------------------
+      # 9. Formatting
+      # -------------------------------------------------
       - name: KTFmt Check
         run: ./gradlew ktfmtCheck --stacktrace
 
-      # -------------------------------------
-      # 11) Build + Lint
-      # -------------------------------------
-      - name: Assemble
+      # -------------------------------------------------
+      # 10. Build
+      # -------------------------------------------------
+      - name: Assemble & Lint
         run: ./gradlew assemble lint --stacktrace --build-cache
 
-      # -------------------------------------
-      # 12) Unit tests
-      # -------------------------------------
-      - name: Run unit tests
-        run: ./gradlew check --stacktrace --build-cache
+      # -------------------------------------------------
+      # 11. Unit tests
+      # -------------------------------------------------
+      - name: Run Unit Tests
         env:
           CI: true
+        run: ./gradlew check --stacktrace --build-cache
 
-      # -------------------------------------
-      # 13) Instrumented tests
-      # -------------------------------------
-      - name: Run instrumented tests
+      # -------------------------------------------------
+      # 12. Emulator Boot (Stable Settings)
+      # -------------------------------------------------
+      - name: Run Instrumented Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           target: google_apis
           arch: x86_64
-          force-avd-creation: false
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          force-avd-creation: true # FORCE new AVD each run → most stable
+          emulator-options: >
+            -no-snapshot
+            -no-snapshot-save
+            -no-window
+            -gpu swiftshader_indirect
+            -noaudio
+            -no-boot-anim
+            -camera-back none
           disable-animations: true
-          script: ./gradlew connectedCheck --stacktrace --build-cache
+          script: |
+            echo "Stabilizing ADB..."
+            adb kill-server || true
+            adb start-server || true
+            adb devices
 
-      # -------------------------------------
-      # 14) Coverage
-      # -------------------------------------
+            echo "Waiting extra time for system to settle..."
+            sleep 10
+
+            echo "Starting connectedCheck..."
+            ./gradlew connectedCheck --stacktrace --build-cache
+
+      # -------------------------------------------------
+      # 13. Coverage
+      # -------------------------------------------------
       - name: Generate Coverage Report
         run: ./gradlew jacocoTestReport --stacktrace
 
-      # -------------------------------------
-      # 15) SonarCloud
-      # -------------------------------------
+      # -------------------------------------------------
+      # 14. SonarCloud
+      # -------------------------------------------------
       - name: Upload report to SonarCloud
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew sonar --stacktrace --build-cache
 
-      # -------------------------------------
-      # 16) Debug logs & Artifacts when CI FAILS
-      # -------------------------------------
-      - name: Debug output on failure
+      # -------------------------------------------------
+      # 15. Debug logs (only if CI fails)
+      # -------------------------------------------------
+      - name: Debug logs on failure
         if: failure()
         run: |
-          echo "========= CI FAILED - DEBUG INFO ========="
-          echo "----- Gradle Daemon Logs -----"
+          echo "==== DEBUG INFO (CI FAILURE) ===="
+          echo "--- Gradle Daemon Logs ---"
           find ~/.gradle/daemon -type f -name "*.log" -exec tail -n 200 {} \; || true
-          
-          echo "----- Firebase Emulator Logs -----"
+
+          echo "--- Firebase Emulator Log ---"
           tail -n 200 firebase.log || true
 
-      - name: Upload test reports
+          echo "--- ADB Devices ---"
+          adb devices || true
+
+      - name: Upload reports on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: failure-reports
           path: |
             **/build/reports/
             firebase.log
