@@ -72,7 +72,7 @@ class EndToEndM2 {
     compose.waitForIdle()
 
     // --------User Sign-Up, Sign-In and Profile Update Flow--------//
-    val testEmail = "guillaume.lepinuuuuuus@epfl.ch"
+    val testEmail = "guillaume.lepinuuuuusu@epfl.ch"
     val testPassword = "testPassword123!"
 
     waitForTag(compose, SignInScreenTestTags.SIGN_IN_BUTTON)
@@ -133,14 +133,11 @@ class EndToEndM2 {
     compose.waitForIdle()
 
     compose.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
-
-    compose.waitUntil(timeoutMillis = 10000) {
-      compose
-          .onAllNodes(hasTestTag(SignInScreenTestTags.EMAIL_INPUT))
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    compose.waitForIdle()
     // Wait for navigation to home screen
+
+    compose.onNodeWithContentDescription("Back").performClick()
+    waitForTag(compose, SignInScreenTestTags.SIGN_IN_BUTTON)
 
     // Now sign in with the created user
     compose
