@@ -2,6 +2,7 @@ package com.android.sample.utils.fakeRepo.fakeRating
 
 import com.android.sample.model.rating.Rating
 
+// todo implementer ce file
 class RatingFakeRepoWorking : FakeRatingRepo {
   override fun getNewUid(): String {
     TODO("Not yet implemented")

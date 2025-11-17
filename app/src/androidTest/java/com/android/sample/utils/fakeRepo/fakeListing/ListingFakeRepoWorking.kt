@@ -35,7 +35,8 @@ class ListingFakeRepoWorking() : FakeListingRepo {
               listingId = "listing_1",
               creatorUserId = "creator_1",
               skill = Skill(skill = "Math"),
-              description = "Tutor proposal",
+              title = "Class on derivatives",
+              description = "I am ready to help everyone regardless of their level",
               location = Location(),
               createdAt = Date(),
               hourlyRate = 30.0),
@@ -43,7 +44,9 @@ class ListingFakeRepoWorking() : FakeListingRepo {
               listingId = "listing_2",
               creatorUserId = "creator_2",
               skill = Skill(skill = "Physics"),
-              description = "Student request",
+              title = "Class on mechanical physics",
+              description =
+                  "I'm looking for someone that can explain me thing from a different angle",
               location = Location(),
               createdAt = Date(),
               hourlyRate = 45.0))
