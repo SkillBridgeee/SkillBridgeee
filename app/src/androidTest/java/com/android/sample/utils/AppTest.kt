@@ -22,6 +22,7 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.components.BookingCardTestTag
 import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.components.TopAppBar
@@ -157,7 +158,9 @@ abstract class AppTest() {
 
   fun ComposeTestRule.navigateToBookingDetails() {
     navigateToMyBookings()
-    // onNodeWithTag(MyBoo)
+    onNodeWithTag(BookingCardTestTag.CARD) // merged tree par défaut
+        .assertExists()
+        .performClick()
   }
 
   /////// Helper Method to test components

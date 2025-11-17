@@ -40,8 +40,8 @@ class BookingFakeRepoWorking : FakeBookingRepo {
           Booking(
               bookingId = "b2",
               associatedListingId = "listing_2",
-              listingCreatorId = "creator_1",
-              bookerId = "booker_2",
+              listingCreatorId = "creator_2",
+              bookerId = "creator_1",
               sessionStart = Date(System.currentTimeMillis() + 10800000L),
               sessionEnd = Date(System.currentTimeMillis() + 14400000L),
               status = BookingStatus.PENDING,
@@ -65,7 +65,7 @@ class BookingFakeRepoWorking : FakeBookingRepo {
   }
 
   override suspend fun getBookingsByUserId(userId: String): List<Booking> {
-    return bookings.filter { booking -> booking.bookingId == userId }
+    return bookings.filter { booking -> booking.bookerId == userId }
   }
 
   override suspend fun getBookingsByStudent(studentId: String): List<Booking> {

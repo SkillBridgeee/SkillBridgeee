@@ -17,6 +17,7 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.HomePage.HomeScreen
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsScreen
+import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
@@ -72,6 +73,7 @@ fun AppNavGraph(
     mainPageViewModel: MainPageViewModel,
     newListingViewModel: NewListingViewModel,
     authViewModel: AuthenticationViewModel,
+    bookingDetailsViewModel: BookingDetailsViewModel,
     onGoogleSignIn: () -> Unit
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
