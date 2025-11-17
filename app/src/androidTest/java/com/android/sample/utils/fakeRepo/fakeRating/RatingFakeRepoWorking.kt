@@ -20,7 +20,7 @@ class RatingFakeRepoWorking : FakeRatingRepo {
   }
 
   override suspend fun getRatingsByToUser(toUserId: String): List<Rating> {
-    TODO("Not yet implemented")
+    return emptyList()
   }
 
   override suspend fun getRatingsOfListing(listingId: String): List<Rating> {
