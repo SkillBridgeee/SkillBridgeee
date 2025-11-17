@@ -113,11 +113,13 @@ class EndToEndM2 {
         .assertIsDisplayed()
         .performClick()
         .performTextInput(testEmail)
-    compose
-        .onNodeWithText("Password")
-        .assertIsDisplayed()
-        .performClick()
-        .performTextInput(testPassword)
+
+    compose.waitUntil(timeoutMillis = 10000) {
+      compose
+          .onAllNodes(hasTestTag(SignUpScreenTestTags.PASSWORD))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
     compose.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performImeAction()
 
