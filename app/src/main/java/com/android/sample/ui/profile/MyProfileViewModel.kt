@@ -128,9 +128,7 @@ class MyProfileViewModel(
 
   private var originalProfile: Profile? = null
 
-  private val userId: String =
-      sessionManager.getCurrentUserId()
-          ?: ""
+  private val userId: String = sessionManager.getCurrentUserId() ?: ""
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile(profileUserId: String? = null) {
