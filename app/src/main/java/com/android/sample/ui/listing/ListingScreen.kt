@@ -14,11 +14,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.ui.listing.components.ListingContent
+import kotlinx.coroutines.launch
 
 /** Test tags for the listing screen */
 object ListingScreenTestTags {
@@ -74,6 +77,8 @@ fun ListingScreen(
     autoFillDatesForTesting: Boolean = false
 ) {
   val uiState by viewModel.uiState.collectAsState()
+  val scope = rememberCoroutineScope()
+  val listingRepository = ListingRepositoryProvider.repository
 
   // Load listing when screen is displayed
   LaunchedEffect(listingId) { viewModel.loadListing(listingId) }
@@ -131,6 +136,16 @@ fun ListingScreen(
             onBook = { start, end -> viewModel.createBooking(start, end) },
             onApproveBooking = { bookingId -> viewModel.approveBooking(bookingId) },
             onRejectBooking = { bookingId -> viewModel.rejectBooking(bookingId) },
+            onDeleteListing = {
+              scope.launch {
+                try {
+                  listingRepository.deleteListing(listingId)
+                  onNavigateBack()
+                } catch (e: Exception) {
+                  viewModel.showBookingError("Error deleting listing: ${e.message}")
+                }
+              }
+            },
             modifier = Modifier.padding(padding),
             autoFillDatesForTesting = autoFillDatesForTesting)
       }

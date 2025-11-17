@@ -13,7 +13,9 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,6 +46,7 @@ import java.util.Locale
  * @param onBook Callback when booking is confirmed with start and end dates
  * @param onApproveBooking Callback when a booking is approved
  * @param onRejectBooking Callback when a booking is rejected
+ * @param onDeleteListing Callback when a listing is deleted
  * @param modifier Modifier for the content
  */
 @Composable
@@ -52,6 +55,7 @@ fun ListingContent(
     onBook: (Date, Date) -> Unit,
     onApproveBooking: (String) -> Unit,
     onRejectBooking: (String) -> Unit,
+    onDeleteListing: () -> Unit,
     modifier: Modifier = Modifier,
     autoFillDatesForTesting: Boolean = false
 ) {
@@ -60,57 +64,54 @@ fun ListingContent(
   var showBookingDialog by remember { mutableStateOf(false) }
 
   LazyColumn(
-      modifier = modifier
-        .fillMaxSize()
-        .padding(16.dp),
+      modifier = modifier.fillMaxSize().padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp)) {
-    item { TypeBadge(listingType = listing.type) }
+        item { TypeBadge(listingType = listing.type) }
 
-    item {
-      // Title/Description
-      Text(
-        text = listing.displayTitle(),
-        style = MaterialTheme.typography.headlineMedium,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.testTag(ListingScreenTestTags.TITLE)
-      )
-    }
+        item {
+          // Title/Description
+          Text(
+              text = listing.displayTitle(),
+              style = MaterialTheme.typography.headlineMedium,
+              fontWeight = FontWeight.Bold,
+              modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
+        }
 
-    item {
-      // Description card (if present)
-      DescriptionCard(listing.description)
-    }
+        item {
+          // Description card (if present)
+          DescriptionCard(listing.description)
+        }
 
-    item {
-      // Creator info (if available)
-      creator?.let { CreatorCard(it) }
-    }
+        item {
+          // Creator info (if available)
+          creator?.let { CreatorCard(it) }
+        }
 
-    item {        // Skill details
-      SkillDetailsCard(skill = listing.skill)
-    }
+        item { // Skill details
+          SkillDetailsCard(skill = listing.skill)
+        }
 
-    item {        // Location
-      LocationCard(locationName = listing.location.name)
-    }
+        item { // Location
+          LocationCard(locationName = listing.location.name)
+        }
 
-    item {        // Hourly rate
-      HourlyRateCard(hourlyRate = listing.hourlyRate)
-    }
+        item { // Hourly rate
+          HourlyRateCard(hourlyRate = listing.hourlyRate)
+        }
 
-    item {        // Created date
-      PostedDate(listing.createdAt)
-    }
+        item { // Created date
+          PostedDate(listing.createdAt)
+        }
 
-    item { Spacer(Modifier.height(8.dp)) }
-
+        item { Spacer(Modifier.height(8.dp)) }
 
         // Action section (book button or bookings management)
         actionSection(
             uiState = uiState,
             onShowBookingDialog = { showBookingDialog = true },
             onApproveBooking = onApproveBooking,
-            onRejectBooking = onRejectBooking)
+            onRejectBooking = onRejectBooking,
+            onDeleteListing = onDeleteListing)
       }
 
   // Booking dialog
@@ -150,9 +151,7 @@ private fun DescriptionCard(description: String) {
         Text(
             text = description.ifBlank { "This Listing has no Description." },
             style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier
-              .padding(16.dp)
-              .testTag(ListingScreenTestTags.DESCRIPTION))
+            modifier = Modifier.padding(16.dp).testTag(ListingScreenTestTags.DESCRIPTION))
       }
 }
 
@@ -219,9 +218,7 @@ private fun SkillDetailsCard(skill: com.android.sample.model.skill.Skill) {
 private fun LocationCard(locationName: String) {
   Card(modifier = Modifier.fillMaxWidth()) {
     Row(
-        modifier = Modifier
-          .padding(16.dp)
-          .fillMaxWidth(),
+        modifier = Modifier.padding(16.dp).fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically) {
           Icon(Icons.Default.LocationOn, contentDescription = null)
           Spacer(Modifier.padding(4.dp))
@@ -238,9 +235,7 @@ private fun LocationCard(locationName: String) {
 private fun HourlyRateCard(hourlyRate: Double) {
   Card(modifier = Modifier.fillMaxWidth()) {
     Row(
-        modifier = Modifier
-          .padding(16.dp)
-          .fillMaxWidth(),
+        modifier = Modifier.padding(16.dp).fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically) {
           Text("Hourly Rate:", style = MaterialTheme.typography.titleMedium)
@@ -269,18 +264,52 @@ private fun LazyListScope.actionSection(
     uiState: ListingUiState,
     onShowBookingDialog: () -> Unit,
     onApproveBooking: (String) -> Unit,
-    onRejectBooking: (String) -> Unit
+    onRejectBooking: (String) -> Unit,
+    onDeleteListing: () -> Unit
 ) {
   if (uiState.isOwnListing) {
     bookingsSection(
         uiState = uiState, onApproveBooking = onApproveBooking, onRejectBooking = onRejectBooking)
+
+    item { Spacer(Modifier.height(8.dp)) }
+
+    item {
+      var showDeleteDialog by remember { mutableStateOf(false) }
+
+      Button(
+          onClick = { showDeleteDialog = true },
+          modifier = Modifier.fillMaxWidth(),
+          colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
+            Text("Delete Listing")
+          }
+
+      if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Listing") },
+            text = {
+              Text("Are you sure you want to delete this listing? This action cannot be undone.")
+            },
+            confirmButton = {
+              Button(
+                  onClick = {
+                    showDeleteDialog = false
+                    onDeleteListing()
+                  },
+                  colors =
+                      ButtonDefaults.buttonColors(
+                          containerColor = MaterialTheme.colorScheme.error)) {
+                    Text("Delete")
+                  }
+            },
+            dismissButton = { Button(onClick = { showDeleteDialog = false }) { Text("Cancel") } })
+      }
+    }
   } else {
     item {
       Button(
           onClick = onShowBookingDialog,
-          modifier = Modifier
-            .fillMaxWidth()
-            .testTag(ListingScreenTestTags.BOOK_BUTTON),
+          modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.BOOK_BUTTON),
           enabled = !uiState.bookingInProgress) {
             if (uiState.bookingInProgress) {
               CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
