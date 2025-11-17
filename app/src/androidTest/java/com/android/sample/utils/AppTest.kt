@@ -19,7 +19,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.rating.RatingRepository
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
@@ -30,13 +29,14 @@ import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
-import com.android.sample.utils.fakeRepo.RatingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.fakeBooking.BookingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingRepo
 import com.android.sample.utils.fakeRepo.fakeListing.FakeListingRepo
 import com.android.sample.utils.fakeRepo.fakeListing.ListingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
 import com.android.sample.utils.fakeRepo.fakeProfile.ProfileFakeWorking
+import com.android.sample.utils.fakeRepo.fakeRating.FakeRatingRepo
+import com.android.sample.utils.fakeRepo.fakeRating.RatingFakeRepoWorking
 import kotlin.collections.contains
 import org.junit.After
 import org.junit.Before
@@ -55,7 +55,7 @@ abstract class AppTest() {
     return BookingFakeRepoWorking()
   }
 
-  open fun createInitializedRatingRepo(): RatingRepository {
+  open fun createInitializedRatingRepo(): FakeRatingRepo {
     return RatingFakeRepoWorking()
   }
 
@@ -68,21 +68,17 @@ abstract class AppTest() {
   val bookingRepository: FakeBookingRepo
     get() = createInitializedBookingRepo()
 
-  val ratingRepository: RatingRepository
+  val ratingRepository: FakeRatingRepo
     get() = createInitializedRatingRepo()
 
   lateinit var authViewModel: AuthenticationViewModel
   lateinit var bookingsViewModel: MyBookingsViewModel
   lateinit var profileViewModel: MyProfileViewModel
   lateinit var mainPageViewModel: MainPageViewModel
-
   lateinit var newListingViewModel: NewListingViewModel
 
   @Before
   open fun setUp() {
-    //    ProfileRepositoryProvider.setForTests(createInitializedProfileRepo())
-    //    HttpClientProvider.client = initializeHTTPClient()
-
     val currentUserId = profileRepository.getCurrentUserId()
     UserSessionManager.setCurrentUserId(currentUserId)
 
