@@ -26,7 +26,14 @@ This repository is used to test the UI when there is no data yet in a repository
 Has data during initialisation.
 Here's the scenario for the working repository
 
+There is two Profile Alice and Bob
+
 The current User is Alice
+
 Alice has made a proposal for Maths class
+Bob has made a request for Physics class
+
+Alice has book Bob request
+Bob has book Alice proposal
 
 
