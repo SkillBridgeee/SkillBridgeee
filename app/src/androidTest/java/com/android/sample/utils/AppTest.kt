@@ -147,6 +147,14 @@ abstract class AppTest() {
     onNodeWithTag(BottomBarTestTag.NAV_PROFILE).performClick()
   }
 
+  fun ComposeTestRule.navigateToMyBookings() {
+    onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).performClick()
+  }
+
+  fun ComposeTestRule.navigateToMap() {
+    onNodeWithTag(BottomBarTestTag.NAV_MAP).performClick()
+  }
+
   /////// Helper Method to test components
 
   fun ComposeTestRule.enterText(testTag: String, text: String) {

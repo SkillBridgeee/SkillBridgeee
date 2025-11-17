@@ -142,7 +142,8 @@ fun AppNavGraph(
           onBookingClick = { bkgId ->
             bookingId.value = bkgId
             navController.navigate(NavRoutes.BOOKING_DETAILS)
-          })
+          },
+          viewModel = bookingsViewModel)
     }
 
     composable(
