@@ -73,7 +73,7 @@ class EndToEndM2 {
     compose.waitForIdle()
 
     // --------User Sign-Up, Sign-In and Profile Update Flow--------//
-    val testEmail = "guillaume.lepinuuus@epfl.ch"
+    val testEmail = "guillaume.lepinuuuuuus@epfl.ch"
     val testPassword = "testPassword123!"
 
     waitForTag(compose, SignInScreenTestTags.SIGN_IN_BUTTON)
