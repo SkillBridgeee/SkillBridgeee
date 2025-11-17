@@ -32,7 +32,7 @@ class BookingFakeRepoWorking : FakeBookingRepo {
               bookingId = "b1",
               associatedListingId = "listing_1",
               listingCreatorId = "creator_1",
-              bookerId = "booker_1",
+              bookerId = "creator_2",
               sessionStart = Date(System.currentTimeMillis() + 3600000L),
               sessionEnd = Date(System.currentTimeMillis() + 7200000L),
               status = BookingStatus.CONFIRMED,
@@ -40,7 +40,7 @@ class BookingFakeRepoWorking : FakeBookingRepo {
           Booking(
               bookingId = "b2",
               associatedListingId = "listing_2",
-              listingCreatorId = "creator_2",
+              listingCreatorId = "creator_1",
               bookerId = "booker_2",
               sessionStart = Date(System.currentTimeMillis() + 10800000L),
               sessionEnd = Date(System.currentTimeMillis() + 14400000L),
@@ -52,29 +52,28 @@ class BookingFakeRepoWorking : FakeBookingRepo {
     return "booking_${UUID.randomUUID()}"
   }
 
-  // --- Récupérations ---
   override suspend fun getAllBookings(): List<Booking> {
     return bookings.toList()
   }
 
   override suspend fun getBooking(bookingId: String): Booking? {
-    return bookings.first()
+    return bookings.find { booking -> booking.bookingId == bookingId }
   }
 
   override suspend fun getBookingsByTutor(tutorId: String): List<Booking> {
-    return bookings.toList()
+    TODO("Not yet implemented")
   }
 
   override suspend fun getBookingsByUserId(userId: String): List<Booking> {
-    return bookings.toList()
+    return bookings.filter { booking -> booking.bookingId == userId }
   }
 
   override suspend fun getBookingsByStudent(studentId: String): List<Booking> {
-    return bookings.toList()
+    TODO("Not yet implemented")
   }
 
   override suspend fun getBookingsByListing(listingId: String): List<Booking> {
-    return bookings.toList()
+    return bookings.filter { booking -> booking.associatedListingId == listingId }
   }
 
   // --- Mutations ---
