@@ -121,6 +121,12 @@ class EndToEndM2 {
           .isNotEmpty()
     }
 
+    compose
+        .onNodeWithTag(SignUpScreenTestTags.PASSWORD)
+        .assertIsDisplayed()
+        .performClick()
+        .performTextInput(testPassword)
+
     compose.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performImeAction()
 
     compose.waitForIdle()
