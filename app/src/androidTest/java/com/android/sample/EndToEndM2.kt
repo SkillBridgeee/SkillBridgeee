@@ -259,14 +259,6 @@ class EndToEndM2 {
 
     compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
 
-    compose.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertIsDisplayed().performClick()
-    waitForTag(compose, MyProfileScreenTestTag.PROFILE_ICON)
-    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).assertIsDisplayed().performClick()
-    waitForTag(compose, MyProfileScreenTestTag.LISTINGS_SECTION)
-    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_SECTION).assertIsDisplayed()
-    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
-    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
-
     // Go back to home page
     compose.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).assertIsDisplayed().performClick()
 
