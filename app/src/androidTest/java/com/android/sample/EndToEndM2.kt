@@ -220,7 +220,9 @@ class EndToEndM2 {
         .performClick()
         .performTextInput("Math Class")
 
-    compose.onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE).assertTextContains("Math Class")
+    compose
+        .onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE)
+        .assertTextContains("Math Class")
 
     compose
         .onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION)
@@ -269,8 +271,5 @@ class EndToEndM2 {
     compose.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).assertIsDisplayed().performClick()
     waitForTag(compose, MyBookingsPageTestTag.EMPTY)
     compose.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
-
   }
-
-
 }
