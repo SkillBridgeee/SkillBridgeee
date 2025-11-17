@@ -3,6 +3,7 @@ package com.android.sample.screen
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.FirebaseTestRule
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
@@ -43,8 +44,6 @@ import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import com.android.sample.model.authentication.UserSessionManager
-
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -227,22 +226,20 @@ class MyProfileViewModelTest {
   ) = Profile(id, name, email, location = location, description = desc)
 
   private fun newVm(
-    repo: ProfileRepository = FakeProfileRepo(),
-    locRepo: LocationRepository = FakeLocationRepo(),
-    listingRepo: ListingRepository = FakeListingRepo(),
-    ratingRepo: RatingRepository = FakeRatingRepos(),
-    bookingRepo: BookingRepository = FakeBookingRepo()
+      repo: ProfileRepository = FakeProfileRepo(),
+      locRepo: LocationRepository = FakeLocationRepo(),
+      listingRepo: ListingRepository = FakeListingRepo(),
+      ratingRepo: RatingRepository = FakeRatingRepos(),
+      bookingRepo: BookingRepository = FakeBookingRepo()
   ): MyProfileViewModel {
     return MyProfileViewModel(
-      profileRepository = repo,
-      locationRepository = locRepo,
-      listingRepository = listingRepo,
-      ratingsRepository = ratingRepo,
-      bookingRepository = bookingRepo,
-      sessionManager = UserSessionManager
-    )
+        profileRepository = repo,
+        locationRepository = locRepo,
+        listingRepository = listingRepo,
+        ratingsRepository = ratingRepo,
+        bookingRepository = bookingRepo,
+        sessionManager = UserSessionManager)
   }
-
 
   private class NullGpsProvider : GpsLocationProvider(ApplicationProvider.getApplicationContext()) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? = null
@@ -461,7 +458,6 @@ class MyProfileViewModelTest {
     UserSessionManager.setCurrentUserId("originalUserId")
     val vm = newVm(repo)
 
-
     // When - load profile with different userId
     vm.loadProfile("differentUserId")
     advanceUntilIdle()
@@ -495,7 +491,6 @@ class MyProfileViewModelTest {
     val repo = FakeProfileRepo(profile)
     UserSessionManager.setCurrentUserId("originalUserId")
     val vm = newVm(repo)
-
 
     // Load profile with different userId
     vm.loadProfile("targetUserId")
@@ -625,8 +620,10 @@ class MyProfileViewModelTest {
     UserSessionManager.setCurrentUserId("demo")
     val viewModel =
         MyProfileViewModel(
-            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, sessionManager = UserSessionManager)
-
+            repo,
+            listingRepository = listingRepo,
+            ratingsRepository = ratingRepo,
+            sessionManager = UserSessionManager)
 
     viewModel.fetchLocationFromGps(provider, context)
   }
@@ -640,7 +637,10 @@ class MyProfileViewModelTest {
 
     val viewModel =
         MyProfileViewModel(
-            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, sessionManager = UserSessionManager)
+            repo,
+            listingRepository = listingRepo,
+            ratingsRepository = ratingRepo,
+            sessionManager = UserSessionManager)
 
     viewModel.onLocationPermissionDenied()
   }
@@ -862,7 +862,6 @@ class MyProfileViewModelTest {
             bookingRepository = failingBookingRepo,
             sessionManager = UserSessionManager)
 
-
     vm.loadUserBookings("demo")
   }
 
@@ -977,8 +976,6 @@ class MyProfileViewModelTest {
             ratingsRepository = FakeRatingRepos(),
             bookingRepository = bookingRepo,
             sessionManager = UserSessionManager)
-
-
 
     vm.loadUserBookings("demo")
   }
@@ -1110,8 +1107,6 @@ class MyProfileViewModelTest {
             ratingsRepository = FakeRatingRepos(),
             bookingRepository = bookingRepo,
             sessionManager = UserSessionManager)
-
-
 
     vm.loadUserBookings("demo")
   }

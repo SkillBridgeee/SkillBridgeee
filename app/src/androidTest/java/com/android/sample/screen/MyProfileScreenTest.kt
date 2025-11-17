@@ -12,6 +12,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
@@ -35,12 +36,11 @@ import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CompletableDeferred
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import com.android.sample.model.authentication.UserSessionManager
-import org.junit.After
 
 class MyProfileScreenTest {
 
@@ -217,7 +217,7 @@ class MyProfileScreenTest {
             listingRepository = FakeListingRepo(),
             bookingRepository = FakeBookingRepo(),
             ratingsRepository = FakeRatingRepo(),
-          sessionManager = UserSessionManager)
+            sessionManager = UserSessionManager)
 
     // reset flag before each test and set content once per test
     logoutClicked.set(false)
@@ -249,7 +249,6 @@ class MyProfileScreenTest {
   fun tearDown() {
     UserSessionManager.clearSession()
   }
-
 
   // Helper: wait for the LazyColumn to appear and scroll it so the logout button becomes visible
   private fun ensureLogoutVisible() {
@@ -732,7 +731,10 @@ class MyProfileScreenTest {
     UserSessionManager.setCurrentUserId("demo")
     val vm =
         MyProfileViewModel(
-            pRepo, listingRepository = errorRepo, ratingsRepository = ratingRepo, sessionManager = UserSessionManager)
+            pRepo,
+            listingRepository = errorRepo,
+            ratingsRepository = ratingRepo,
+            sessionManager = UserSessionManager)
 
     compose.runOnIdle {
       contentSlot.value = {
@@ -794,7 +796,10 @@ class MyProfileScreenTest {
     UserSessionManager.setCurrentUserId("demo")
     val vm =
         MyProfileViewModel(
-            pRepo, listingRepository = oneItemRepo, ratingsRepository = rating, sessionManager = UserSessionManager)
+            pRepo,
+            listingRepository = oneItemRepo,
+            ratingsRepository = rating,
+            sessionManager = UserSessionManager)
 
     compose.runOnIdle {
       contentSlot.value = {
