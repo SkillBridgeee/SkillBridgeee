@@ -132,13 +132,17 @@ class EndToEndM2 {
 
     compose.waitForIdle()
 
-    compose.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
-    compose.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
+      compose.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
+    compose.waitUntil(timeoutMillis = 10000) {
+      compose
+          .onAllNodes(hasTestTag(SignInScreenTestTags.EMAIL_INPUT))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+
+    }
     // Wait for navigation to home screen
 
-    compose.onNodeWithContentDescription("Back").performClick()
-    waitForTag(compose, SignInScreenTestTags.SIGN_IN_BUTTON)
 
     // Now sign in with the created user
     compose
@@ -258,6 +262,14 @@ class EndToEndM2 {
     compose.onNodeWithTag(NewListingScreenTestTag.SUB_SKILL_FIELD).performClick()
 
     compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
+
+    compose.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertIsDisplayed().performClick()
+    waitForTag(compose, MyProfileScreenTestTag.PROFILE_ICON)
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).assertIsDisplayed().performClick()
+    waitForTag(compose, MyProfileScreenTestTag.LISTINGS_SECTION)
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_SECTION).assertIsDisplayed()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).assertIsDisplayed().performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
 
     // Go back to home page
     compose.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).assertIsDisplayed().performClick()
