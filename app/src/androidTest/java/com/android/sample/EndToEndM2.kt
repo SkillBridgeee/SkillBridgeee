@@ -132,17 +132,15 @@ class EndToEndM2 {
 
     compose.waitForIdle()
 
-      compose.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
+    compose.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
     compose.waitUntil(timeoutMillis = 10000) {
       compose
           .onAllNodes(hasTestTag(SignInScreenTestTags.EMAIL_INPUT))
           .fetchSemanticsNodes()
           .isNotEmpty()
-
     }
     // Wait for navigation to home screen
-
 
     // Now sign in with the created user
     compose
