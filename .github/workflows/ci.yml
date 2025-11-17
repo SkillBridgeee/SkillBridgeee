@@ -1,168 +1,198 @@
-name: CI - Fast API 34
+name: CI - Test Runner
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    types: [opened, synchronize, reopened]
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   ci:
+    name: CI
     runs-on: ubuntu-latest
 
     steps:
-
-      # -------------------------------------------------
-      # 1. Checkout
-      # -------------------------------------------------
-      - name: Checkout repository
+      # -------------------------------------
+      # 1) Checkout
+      # -------------------------------------
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           submodules: recursive
+          fetch-depth: 0
 
-      # -------------------------------------------------
-      # 2. Java
-      # -------------------------------------------------
+      # -------------------------------------
+      # 2) KVM acceleration
+      # -------------------------------------
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # -------------------------------------
+      # 3) Java
+      # -------------------------------------
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "17"
 
-      # -------------------------------------------------
-      # 3. Gradle cache
-      # -------------------------------------------------
+      # -------------------------------------
+      # 4) Gradle cache
+      # -------------------------------------
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
-      # -------------------------------------------------
-      # 4. No AVD cache (VERY important for API-34)
-      # -------------------------------------------------
-      - name: Disable AVD cache
-        run: echo "AVD cache disabled for API-34 stability"
+      # -------------------------------------
+      # 5) AVD cache
+      # -------------------------------------
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-34
 
-      # -------------------------------------------------
-      # 5. gradlew executable
-      # -------------------------------------------------
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      # -------------------------------------------------
-      # 6. local.properties
-      # -------------------------------------------------
-      - name: Create local.properties
-        env:
-          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
-        run: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          if [ -n "$LOCAL_PROPERTIES" ]; then
-            echo "$LOCAL_PROPERTIES" | base64 --decode >> local.properties
-          fi
-
-      # -------------------------------------------------
-      # 7. google-services.json
-      # -------------------------------------------------
-      - name: Decode google-services.json
-        env:
-          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
-        run: |
-          if [ -n "$GOOGLE_SERVICES" ]; then
-            echo "$GOOGLE_SERVICES" | base64 --decode > app/google-services.json
-          fi
-
-      # -------------------------------------------------
-      # 8. Formatting
-      # -------------------------------------------------
-      - name: KTFmt Check
-        run: ./gradlew ktfmtCheck --stacktrace
-
-      # -------------------------------------------------
-      # 9. Build before emulator (faster overall)
-      # -------------------------------------------------
-      - name: Assemble & Lint
-        run: ./gradlew assemble lint --stacktrace --build-cache
-
-      # -------------------------------------------------
-      # 10. Unit tests
-      # -------------------------------------------------
-      - name: Unit tests
-        env:
-          CI: true
-        run: ./gradlew check --stacktrace --build-cache
-
-      # -------------------------------------------------
-      # 11. API 34 FAST EMULATOR + connected tests
-      # -------------------------------------------------
-      - name: Instrumented Tests (API 34)
+      - name: create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           target: google_apis
           arch: x86_64
-          force-avd-creation: true
-          disable-animations: true
-          emulator-options: >
-            -no-snapshot
-            -no-snapshot-save
-            -no-window
-            -gpu swiftshader_indirect
-            -noaudio
-            -camera-back none
-            -no-boot-anim
-            -skin 480x800
-            -dpi-device 160
-          script: |
-            echo "[ADB] Stabilizing..."
-            adb kill-server || true
-            adb start-server
-            adb devices
-            
-            echo "[SYSTEM] Extra wait for services..."
-            sleep 12
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
 
-            echo "[TEST] Running connectedCheck..."
-            ./gradlew connectedCheck --stacktrace --build-cache
+      # -------------------------------------
+      # 6) Make gradlew executable
+      # -------------------------------------
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
 
-      # -------------------------------------------------
-      # 12. Firebase emulator starts AFTER Android tests
-      # -------------------------------------------------
-      - name: Start Firebase Emulators (after boot)
+      # -------------------------------------
+      # 7) Create local.properties
+      # -------------------------------------
+      - name: Create local.properties
+        env:
+          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
+        run: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > ./local.properties
+          if [ -n "$LOCAL_PROPERTIES" ]; then
+            echo "$LOCAL_PROPERTIES" | base64 --decode >> ./local.properties
+            echo "✅ LOCAL_PROPERTIES decoded and configured"
+          else
+            echo "::warning::LOCAL_PROPERTIES not set. Creating fallback."
+            echo "MAPS_API_KEY=DEFAULT_API_KEY" >> ./local.properties
+          fi
+
+      # -------------------------------------
+      # 8) Decode google-services.json
+      # -------------------------------------
+      - name: Decode google-services.json
+        env:
+          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES" ]; then
+            echo "$GOOGLE_SERVICES" | base64 --decode > ./app/google-services.json
+          else
+            echo "::warning::GOOGLE_SERVICES secret not set."
+          fi
+
+      # -------------------------------------
+      # 9) Setup Node + Firebase
+      # -------------------------------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Start Firebase Emulators
         run: |
           firebase emulators:start --only firestore,auth --project demo-test --debug > firebase.log 2>&1 &
-          sleep 10
+          echo "Waiting for Firebase emulators..."
+          sleep 15
 
-      # -------------------------------------------------
-      # 13. Coverage
-      # -------------------------------------------------
-      - name: Coverage
+      # -------------------------------------
+      # 10) Formatting checks
+      # -------------------------------------
+      - name: KTFmt Check
+        run: ./gradlew ktfmtCheck --stacktrace
+
+      # -------------------------------------
+      # 11) Build + Lint
+      # -------------------------------------
+      - name: Assemble
+        run: ./gradlew assemble lint --stacktrace --build-cache
+
+      # -------------------------------------
+      # 12) Unit tests
+      # -------------------------------------
+      - name: Run unit tests
+        run: ./gradlew check --stacktrace --build-cache
+        env:
+          CI: true
+
+      # -------------------------------------
+      # 13) Instrumented tests
+      # -------------------------------------
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: ./gradlew connectedCheck --stacktrace --build-cache
+
+      # -------------------------------------
+      # 14) Coverage
+      # -------------------------------------
+      - name: Generate Coverage Report
         run: ./gradlew jacocoTestReport --stacktrace
 
-      # -------------------------------------------------
-      # 14. SonarCloud
-      # -------------------------------------------------
-      - name: SonarCloud Upload
+      # -------------------------------------
+      # 15) SonarCloud
+      # -------------------------------------
+      - name: Upload report to SonarCloud
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew sonar --stacktrace --build-cache
 
-      # -------------------------------------------------
-      # 15. Debug logs on failure
-      # -------------------------------------------------
-      - name: Debug logs on failure
+      # -------------------------------------
+      # 16) Debug logs & Artifacts when CI FAILS
+      # -------------------------------------
+      - name: Debug output on failure
         if: failure()
         run: |
-          echo "==== DEBUG: CI FAILURE ===="
-          find ~/.gradle/daemon -type f -name "*.log" -exec tail -n 200 {} \;
-          adb devices || true
+          echo "========= CI FAILED - DEBUG INFO ========="
+          echo "----- Gradle Daemon Logs -----"
+          find ~/.gradle/daemon -type f -name "*.log" -exec tail -n 200 {} \; || true
+          
+          echo "----- Firebase Emulator Logs -----"
+          tail -n 200 firebase.log || true
 
-      - name: Upload reports on failure
+      - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: failure-reports
+          name: test-reports
           path: |
             **/build/reports/
-            ~/.gradle/daemon/
             firebase.log
+            ~/.gradle/daemon/
