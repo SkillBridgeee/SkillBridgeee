@@ -56,6 +56,7 @@ fun ListingContent(
     onApproveBooking: (String) -> Unit,
     onRejectBooking: (String) -> Unit,
     onDeleteListing: () -> Unit,
+    onEditListing: () -> Unit,
     modifier: Modifier = Modifier,
     autoFillDatesForTesting: Boolean = false
 ) {
@@ -111,7 +112,8 @@ fun ListingContent(
             onShowBookingDialog = { showBookingDialog = true },
             onApproveBooking = onApproveBooking,
             onRejectBooking = onRejectBooking,
-            onDeleteListing = onDeleteListing)
+            onDeleteListing = onDeleteListing,
+            onEditListing = onEditListing)
       }
 
   // Booking dialog
@@ -265,11 +267,18 @@ private fun LazyListScope.actionSection(
     onShowBookingDialog: () -> Unit,
     onApproveBooking: (String) -> Unit,
     onRejectBooking: (String) -> Unit,
-    onDeleteListing: () -> Unit
+    onDeleteListing: () -> Unit,
+    onEditListing: () -> Unit
 ) {
   if (uiState.isOwnListing) {
     bookingsSection(
         uiState = uiState, onApproveBooking = onApproveBooking, onRejectBooking = onRejectBooking)
+
+    item { Spacer(Modifier.height(8.dp)) }
+
+    item {
+      Button(onClick = onEditListing, modifier = Modifier.fillMaxWidth()) { Text("Edit Listing") }
+    }
 
     item { Spacer(Modifier.height(8.dp)) }
 

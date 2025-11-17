@@ -73,6 +73,7 @@ object ListingScreenTestTags {
 fun ListingScreen(
     listingId: String,
     onNavigateBack: () -> Unit,
+    onEditListing: () -> Unit,
     viewModel: ListingViewModel = viewModel(),
     autoFillDatesForTesting: Boolean = false
 ) {
@@ -133,20 +134,17 @@ fun ListingScreen(
       uiState.listing != null -> {
         ListingContent(
             uiState = uiState,
+            modifier = Modifier.padding(padding),
             onBook = { start, end -> viewModel.createBooking(start, end) },
             onApproveBooking = { bookingId -> viewModel.approveBooking(bookingId) },
             onRejectBooking = { bookingId -> viewModel.rejectBooking(bookingId) },
             onDeleteListing = {
               scope.launch {
-                try {
-                  listingRepository.deleteListing(listingId)
-                  onNavigateBack()
-                } catch (e: Exception) {
-                  viewModel.showBookingError("Error deleting listing: ${e.message}")
-                }
+                listingRepository.deleteListing(listingId)
+                onNavigateBack()
               }
             },
-            modifier = Modifier.padding(padding),
+            onEditListing = onEditListing,
             autoFillDatesForTesting = autoFillDatesForTesting)
       }
     }
