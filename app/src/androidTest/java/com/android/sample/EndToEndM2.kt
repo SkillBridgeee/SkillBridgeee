@@ -114,7 +114,7 @@ class EndToEndM2 {
         .performClick()
         .performTextInput(testEmail)
     compose
-        .onNodeWithTag(SignUpScreenTestTags.PASSWORD)
+        .onNodeWithText("Password")
         .assertIsDisplayed()
         .performClick()
         .performTextInput(testPassword)

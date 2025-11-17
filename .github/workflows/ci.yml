@@ -1,4 +1,4 @@
-name: CI - Test Runner
+name: CI - Fast API 34
 
 on:
   push:
@@ -8,18 +8,18 @@ on:
 
 jobs:
   ci:
-    name: CI
     runs-on: ubuntu-latest
 
     steps:
+
       # -------------------------------------------------
       # 1. Checkout
       # -------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive
           fetch-depth: 0
+          submodules: recursive
 
       # -------------------------------------------------
       # 2. Java
@@ -37,13 +37,13 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       # -------------------------------------------------
-      # 4. Disable AVD cache (causes unstable snapshots)
+      # 4. No AVD cache (VERY important for API-34)
       # -------------------------------------------------
       - name: Disable AVD cache
-        run: echo "AVD cache disabled for stability"
+        run: echo "AVD cache disabled for API-34 stability"
 
       # -------------------------------------------------
-      # 5. Make gradlew executable
+      # 5. gradlew executable
       # -------------------------------------------------
       - name: Make gradlew executable
         run: chmod +x ./gradlew
@@ -58,12 +58,10 @@ jobs:
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           if [ -n "$LOCAL_PROPERTIES" ]; then
             echo "$LOCAL_PROPERTIES" | base64 --decode >> local.properties
-          else
-            echo "MAPS_API_KEY=DEFAULT_API_KEY" >> local.properties
           fi
 
       # -------------------------------------------------
-      # 7. Firebase google-services.json
+      # 7. google-services.json
       # -------------------------------------------------
       - name: Decode google-services.json
         env:
@@ -71,107 +69,92 @@ jobs:
         run: |
           if [ -n "$GOOGLE_SERVICES" ]; then
             echo "$GOOGLE_SERVICES" | base64 --decode > app/google-services.json
-          else
-            echo "::warning:: GOOGLE_SERVICES missing — tests may fail"
           fi
 
       # -------------------------------------------------
-      # 8. Node + Firebase CLI
-      # -------------------------------------------------
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-
-      - name: Start Firebase Emulators
-        run: |
-          firebase emulators:start --only firestore,auth --project demo-test --debug > firebase.log 2>&1 &
-          echo "Waiting for Firebase emulator..."
-          sleep 12
-
-      # -------------------------------------------------
-      # 9. Formatting
+      # 8. Formatting
       # -------------------------------------------------
       - name: KTFmt Check
         run: ./gradlew ktfmtCheck --stacktrace
 
       # -------------------------------------------------
-      # 10. Build
+      # 9. Build before emulator (faster overall)
       # -------------------------------------------------
       - name: Assemble & Lint
         run: ./gradlew assemble lint --stacktrace --build-cache
 
       # -------------------------------------------------
-      # 11. Unit tests
+      # 10. Unit tests
       # -------------------------------------------------
-      - name: Run Unit Tests
+      - name: Unit tests
         env:
           CI: true
         run: ./gradlew check --stacktrace --build-cache
 
       # -------------------------------------------------
-      # 12. Emulator Boot (Stable Settings)
+      # 11. API 34 FAST EMULATOR + connected tests
       # -------------------------------------------------
-      - name: Run Instrumented Tests
+      - name: Instrumented Tests (API 34)
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           target: google_apis
           arch: x86_64
-          force-avd-creation: true # FORCE new AVD each run → most stable
+          force-avd-creation: true
+          disable-animations: true
           emulator-options: >
             -no-snapshot
             -no-snapshot-save
             -no-window
             -gpu swiftshader_indirect
             -noaudio
-            -no-boot-anim
             -camera-back none
-          disable-animations: true
+            -no-boot-anim
+            -skin 480x800
+            -dpi-device 160
           script: |
-            echo "Stabilizing ADB..."
+            echo "[ADB] Stabilizing..."
             adb kill-server || true
-            adb start-server || true
+            adb start-server
             adb devices
+            
+            echo "[SYSTEM] Extra wait for services..."
+            sleep 12
 
-            echo "Waiting extra time for system to settle..."
-            sleep 10
-
-            echo "Starting connectedCheck..."
+            echo "[TEST] Running connectedCheck..."
             ./gradlew connectedCheck --stacktrace --build-cache
+
+      # -------------------------------------------------
+      # 12. Firebase emulator starts AFTER Android tests
+      # -------------------------------------------------
+      - name: Start Firebase Emulators (after boot)
+        run: |
+          firebase emulators:start --only firestore,auth --project demo-test --debug > firebase.log 2>&1 &
+          sleep 10
 
       # -------------------------------------------------
       # 13. Coverage
       # -------------------------------------------------
-      - name: Generate Coverage Report
+      - name: Coverage
         run: ./gradlew jacocoTestReport --stacktrace
 
       # -------------------------------------------------
       # 14. SonarCloud
       # -------------------------------------------------
-      - name: Upload report to SonarCloud
+      - name: SonarCloud Upload
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew sonar --stacktrace --build-cache
 
       # -------------------------------------------------
-      # 15. Debug logs (only if CI fails)
+      # 15. Debug logs on failure
       # -------------------------------------------------
       - name: Debug logs on failure
         if: failure()
         run: |
-          echo "==== DEBUG INFO (CI FAILURE) ===="
-          echo "--- Gradle Daemon Logs ---"
-          find ~/.gradle/daemon -type f -name "*.log" -exec tail -n 200 {} \; || true
-
-          echo "--- Firebase Emulator Log ---"
-          tail -n 200 firebase.log || true
-
-          echo "--- ADB Devices ---"
+          echo "==== DEBUG: CI FAILURE ===="
+          find ~/.gradle/daemon -type f -name "*.log" -exec tail -n 200 {} \;
           adb devices || true
 
       - name: Upload reports on failure
@@ -181,5 +164,5 @@ jobs:
           name: failure-reports
           path: |
             **/build/reports/
-            firebase.log
             ~/.gradle/daemon/
+            firebase.log
