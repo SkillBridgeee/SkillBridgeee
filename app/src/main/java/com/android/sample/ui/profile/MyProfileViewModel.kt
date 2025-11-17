@@ -130,7 +130,7 @@ class MyProfileViewModel(
 
   private val userId: String =
       sessionManager.getCurrentUserId()
-          ?: error("User must be logged in before using MyProfileViewModel")
+          ?: ""
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile(profileUserId: String? = null) {
