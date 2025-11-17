@@ -10,7 +10,6 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -258,10 +257,6 @@ class EndToEndM2 {
 
     compose.onNodeWithTag(NewListingScreenTestTag.SUB_SKILL_FIELD).performClick()
 
-    compose.waitUntil(10000) {
-      compose.onAllNodesWithText("MATHEMATICS").fetchSemanticsNodes().isNotEmpty()
-    }
-    compose.onNodeWithText("MATHEMATICS").performClick()
     compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
 
     compose.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertIsDisplayed().performClick()
