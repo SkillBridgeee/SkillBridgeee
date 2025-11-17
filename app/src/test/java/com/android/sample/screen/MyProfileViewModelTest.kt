@@ -3,6 +3,11 @@ package com.android.sample.screen
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.FirebaseTestRule
+import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.booking.Booking
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -12,6 +17,7 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.profile.DESC_EMPTY_MSG
@@ -22,7 +28,6 @@ import com.android.sample.ui.profile.LOCATION_EMPTY_MSG
 import com.android.sample.ui.profile.LOCATION_PERMISSION_DENIED_MSG
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.profile.NAME_EMPTY_MSG
-import java.nio.channels.spi.AsynchronousChannelProvider.provider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -52,11 +57,14 @@ class MyProfileViewModelTest {
   @Before
   fun setUp() {
     Dispatchers.setMain(dispatcher)
+    BookingRepositoryProvider.setForTests(FakeBookingRepo())
+    UserSessionManager.setCurrentUserId("testUid")
   }
 
   @After
   fun tearDown() {
     Dispatchers.resetMain()
+    UserSessionManager.clearSession()
   }
 
   // -------- Fake repositories ------------------------------------------------------
@@ -91,8 +99,7 @@ class MyProfileViewModelTest {
     override suspend fun getProfileById(userId: String) =
         storedProfile ?: error("Profile not found")
 
-    override suspend fun getSkillsForUser(userId: String) =
-        emptyList<com.android.sample.model.skill.Skill>()
+    override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
   }
 
   private class FakeLocationRepo(
@@ -107,6 +114,36 @@ class MyProfileViewModelTest {
       searchCalled = true
       return if (query.isNotBlank()) results else emptyList()
     }
+  }
+
+  private class FakeBookingRepo : BookingRepository {
+    override fun getNewUid(): String = "fake-booking-id"
+
+    override suspend fun getAllBookings(): List<Booking> = emptyList()
+
+    override suspend fun getBooking(bookingId: String): Booking? = null
+
+    override suspend fun getBookingsByTutor(tutorId: String): List<Booking> = emptyList()
+
+    override suspend fun getBookingsByUserId(userId: String): List<Booking> = emptyList()
+
+    override suspend fun getBookingsByStudent(studentId: String): List<Booking> = emptyList()
+
+    override suspend fun getBookingsByListing(listingId: String): List<Booking> = emptyList()
+
+    override suspend fun addBooking(booking: Booking) {}
+
+    override suspend fun updateBooking(bookingId: String, booking: Booking) {}
+
+    override suspend fun deleteBooking(bookingId: String) {}
+
+    override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+    override suspend fun confirmBooking(bookingId: String) {}
+
+    override suspend fun completeBooking(bookingId: String) {}
+
+    override suspend fun cancelBooking(bookingId: String) {}
   }
 
   // Minimal fake ListingRepository to satisfy the ViewModel dependency
@@ -133,8 +170,7 @@ class MyProfileViewModelTest {
 
     override suspend fun deactivateListing(listingId: String) {}
 
-    override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill): List<Listing> =
-        emptyList()
+    override suspend fun searchBySkill(skill: Skill): List<Listing> = emptyList()
 
     override suspend fun searchByLocation(location: Location, radiusKm: Double): List<Listing> =
         emptyList()
@@ -170,9 +206,7 @@ class MyProfileViewModelTest {
   private class SuccessGpsProvider(
       private val lat: Double = 12.34,
       private val lon: Double = 56.78
-  ) :
-      com.android.sample.model.map.GpsLocationProvider(
-          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+  ) : GpsLocationProvider(ApplicationProvider.getApplicationContext()) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
       val loc = android.location.Location("test")
       loc.latitude = lat
@@ -196,18 +230,23 @@ class MyProfileViewModelTest {
       locRepo: LocationRepository = FakeLocationRepo(),
       listingRepo: ListingRepository = FakeListingRepo(),
       ratingRepo: RatingRepository = FakeRatingRepos(),
-      userId: String = "testUid"
-  ) = MyProfileViewModel(repo, locRepo, listingRepo, ratingRepo, userId = userId)
+      bookingRepo: BookingRepository = FakeBookingRepo()
+  ): MyProfileViewModel {
+    return MyProfileViewModel(
+        profileRepository = repo,
+        locationRepository = locRepo,
+        listingRepository = listingRepo,
+        ratingsRepository = ratingRepo,
+        bookingRepository = bookingRepo,
+        sessionManager = UserSessionManager)
+  }
 
-  private class NullGpsProvider :
-      com.android.sample.model.map.GpsLocationProvider(
-          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+  private class NullGpsProvider : GpsLocationProvider(ApplicationProvider.getApplicationContext()) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? = null
   }
 
   private class SecurityExceptionGpsProvider :
-      com.android.sample.model.map.GpsLocationProvider(
-          androidx.test.core.app.ApplicationProvider.getApplicationContext()) {
+      GpsLocationProvider(ApplicationProvider.getApplicationContext()) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
       throw SecurityException("Permission denied")
     }
@@ -416,7 +455,8 @@ class MyProfileViewModelTest {
     // Given
     val profile = makeProfile()
     val repo = FakeProfileRepo(profile)
-    val vm = newVm(repo, userId = "originalUserId")
+    UserSessionManager.setCurrentUserId("originalUserId")
+    val vm = newVm(repo)
 
     // When - load profile with different userId
     vm.loadProfile("differentUserId")
@@ -432,7 +472,8 @@ class MyProfileViewModelTest {
     // Given
     val profile = makeProfile()
     val repo = FakeProfileRepo(profile)
-    val vm = newVm(repo, userId = "defaultUserId")
+    UserSessionManager.setCurrentUserId("defaultUserId")
+    val vm = newVm(repo)
 
     // When - load profile without parameter
     vm.loadProfile()
@@ -448,7 +489,8 @@ class MyProfileViewModelTest {
     // Given
     val profile = makeProfile()
     val repo = FakeProfileRepo(profile)
-    val vm = newVm(repo, userId = "originalUserId")
+    UserSessionManager.setCurrentUserId("originalUserId")
+    val vm = newVm(repo)
 
     // Load profile with different userId
     vm.loadProfile("targetUserId")
@@ -575,9 +617,13 @@ class MyProfileViewModelTest {
     val ratingRepo = mock<RatingRepository>()
 
     val provider = GpsLocationProvider(context)
+    UserSessionManager.setCurrentUserId("demo")
     val viewModel =
         MyProfileViewModel(
-            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo")
+            repo,
+            listingRepository = listingRepo,
+            ratingsRepository = ratingRepo,
+            sessionManager = UserSessionManager)
 
     viewModel.fetchLocationFromGps(provider, context)
   }
@@ -586,12 +632,15 @@ class MyProfileViewModelTest {
   fun permissionDenied_branch_executes_onLocationPermissionDenied() = runTest {
     val repo = mock<ProfileRepository>()
     val listingRepo = mock<ListingRepository>()
-    val context = mock<Context>()
     val ratingRepo = mock<RatingRepository>()
+    UserSessionManager.setCurrentUserId("demo")
 
     val viewModel =
         MyProfileViewModel(
-            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo")
+            repo,
+            listingRepository = listingRepo,
+            ratingsRepository = ratingRepo,
+            sessionManager = UserSessionManager)
 
     viewModel.onLocationPermissionDenied()
   }
@@ -744,5 +793,321 @@ class MyProfileViewModelTest {
     assertChanged(changedLocName)
     assertChanged(changedLat)
     assertChanged(changedLon)
+  }
+
+  @Test
+  fun loadUserBookings_catchesBookingException() = runTest {
+    val failingBookingRepo =
+        object : BookingRepository {
+          override suspend fun getBookingsByUserId(userId: String): List<Booking> {
+            throw RuntimeException("boom")
+          }
+
+          override suspend fun getBookingsByStudent(studentId: String): List<Booking> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getBookingsByListing(listingId: String): List<Booking> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun addBooking(booking: Booking) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun deleteBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun confirmBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun completeBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun cancelBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override fun getNewUid() = "x"
+
+          override suspend fun getAllBookings(): List<Booking> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getBooking(bookingId: String): Booking? {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getBookingsByTutor(tutorId: String): List<Booking> {
+            TODO("Not yet implemented")
+          }
+        }
+    UserSessionManager.setCurrentUserId("demo")
+    val vm =
+        MyProfileViewModel(
+            profileRepository = FakeProfileRepo(),
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepos(),
+            bookingRepository = failingBookingRepo,
+            sessionManager = UserSessionManager)
+
+    vm.loadUserBookings("demo")
+  }
+
+  @Test
+  fun loadUserBookings_catchesProfileException() = runTest {
+    val bookingRepo =
+        object : BookingRepository {
+          override suspend fun getBookingsByUserId(userId: String): List<Booking> =
+              listOf(
+                  Booking(
+                      bookingId = "b1",
+                      associatedListingId = "l1",
+                      listingCreatorId = "tutor1",
+                      bookerId = "demo",
+                      status = BookingStatus.COMPLETED))
+
+          override suspend fun getBookingsByStudent(studentId: String): List<Booking> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getBookingsByListing(listingId: String): List<Booking> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun addBooking(booking: Booking) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun deleteBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun confirmBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun completeBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun cancelBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override fun getNewUid() = "x"
+
+          override suspend fun getAllBookings(): List<Booking> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getBooking(bookingId: String): Booking? {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getBookingsByTutor(tutorId: String): List<Booking> {
+            TODO("Not yet implemented")
+          }
+        }
+
+    val failingProfileRepo =
+        object : ProfileRepository {
+          override suspend fun getProfile(userId: String): Profile {
+            throw RuntimeException("boom")
+          }
+
+          override suspend fun addProfile(profile: Profile) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updateProfile(userId: String, profile: Profile) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun deleteProfile(userId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getAllProfiles(): List<Profile> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun searchProfilesByLocation(
+              location: Location,
+              radiusKm: Double
+          ): List<Profile> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getProfileById(userId: String): Profile? {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getSkillsForUser(userId: String): List<Skill> {
+            TODO("Not yet implemented")
+          }
+
+          override fun getNewUid() = "x"
+        }
+    UserSessionManager.setCurrentUserId("demo")
+    val vm =
+        MyProfileViewModel(
+            profileRepository = failingProfileRepo,
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepos(),
+            bookingRepository = bookingRepo,
+            sessionManager = UserSessionManager)
+
+    vm.loadUserBookings("demo")
+  }
+
+  @Test
+  fun loadUserBookings_catchesListingException() = runTest {
+    val bookingRepo =
+        object : BookingRepository {
+          override suspend fun getBookingsByUserId(userId: String): List<Booking> =
+              listOf(
+                  Booking(
+                      bookingId = "b1",
+                      associatedListingId = "l1",
+                      listingCreatorId = "tutor1",
+                      bookerId = "demo",
+                      status = BookingStatus.COMPLETED))
+
+          override suspend fun getBookingsByStudent(studentId: String): List<Booking> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getBookingsByListing(listingId: String): List<Booking> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun addBooking(booking: Booking) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updateBooking(bookingId: String, booking: Booking) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun deleteBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun confirmBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun completeBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun cancelBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override fun getNewUid() = "x"
+
+          override suspend fun getAllBookings(): List<Booking> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getBooking(bookingId: String): Booking? {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getBookingsByTutor(tutorId: String): List<Booking> {
+            TODO("Not yet implemented")
+          }
+        }
+
+    val failingListingRepo =
+        object : ListingRepository {
+          override suspend fun getListing(listingId: String): Listing {
+            throw RuntimeException("boom")
+          }
+
+          override suspend fun getListingsByUser(userId: String): List<Listing> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun addProposal(proposal: Proposal) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun addRequest(request: Request) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updateListing(listingId: String, listing: Listing) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun deleteListing(listingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun deactivateListing(listingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun searchBySkill(skill: Skill): List<Listing> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun searchByLocation(
+              location: Location,
+              radiusKm: Double
+          ): List<Listing> {
+            TODO("Not yet implemented")
+          }
+
+          override fun getNewUid() = "x"
+
+          override suspend fun getAllListings(): List<Listing> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getProposals(): List<Proposal> {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun getRequests(): List<Request> {
+            TODO("Not yet implemented")
+          }
+        }
+    UserSessionManager.setCurrentUserId("demo")
+    val vm =
+        MyProfileViewModel(
+            profileRepository = FakeProfileRepo(),
+            listingRepository = failingListingRepo,
+            ratingsRepository = FakeRatingRepos(),
+            bookingRepository = bookingRepo,
+            sessionManager = UserSessionManager)
+
+    vm.loadUserBookings("demo")
   }
 }
