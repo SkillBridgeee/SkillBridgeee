@@ -6,7 +6,6 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
-import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.model.authentication.UserSessionManager
@@ -28,11 +27,10 @@ class MainActivityTest {
   }
 
   @get:Rule
-  val composeTestRule = createAndroidComposeRule<MainActivity>().also {
-    UserSessionManager.setCurrentUserId("testUser")
-  }
-
-
+  val composeTestRule =
+      createAndroidComposeRule<MainActivity>().also {
+        UserSessionManager.setCurrentUserId("testUser")
+      }
 
   @Before
   fun initRepositories() {
