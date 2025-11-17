@@ -6,9 +6,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
@@ -22,8 +24,6 @@ import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -67,7 +67,8 @@ data class MyProfileUIState(
     val ratings: List<Rating> = emptyList(),
     val ratingsLoading: Boolean = false,
     val ratingsLoadError: String? = null,
-    val updateSuccess: Boolean = false
+    val updateSuccess: Boolean = false,
+    val completedBookings: List<Booking> = emptyList()
 ) {
   /** True if all required fields are valid */
   val isValid: Boolean
@@ -107,7 +108,7 @@ class MyProfileViewModel(
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val ratingsRepository: RatingRepository = RatingRepositoryProvider.repository,
     private val bookingRepository: BookingRepository = BookingRepositoryProvider.repository,
-    private val userId: String = Firebase.auth.currentUser?.uid ?: ""
+    sessionManager: UserSessionManager,
 ) : ViewModel() {
 
   companion object {
@@ -126,6 +127,10 @@ class MyProfileViewModel(
   private val descMsgError = "Description cannot be empty"
 
   private var originalProfile: Profile? = null
+
+  private val userId: String =
+      sessionManager.getCurrentUserId()
+          ?: error("User must be logged in before using MyProfileViewModel")
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile(profileUserId: String? = null) {
@@ -440,7 +445,11 @@ class MyProfileViewModel(
       try {
         val items = bookingRepository.getBookingsByUserId(ownerId)
 
-        _uiState.update { it.copy(bookings = items) }
+        _uiState.update {
+          it.copy(
+              bookings = items,
+              completedBookings = items.filter { b -> b.status == BookingStatus.COMPLETED })
+        }
 
         loadProfilesForBookings(items)
         loadListingsForBookings(items)

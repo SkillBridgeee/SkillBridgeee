@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.ui.components.BookingCard
 import com.android.sample.ui.components.LocationInputField
@@ -522,7 +521,7 @@ private fun ProfileHistory(
     ui: MyProfileUIState,
     onListingClick: (String) -> Unit,
 ) {
-  val historyBookings = ui.bookings.filter { it.status == BookingStatus.COMPLETED }
+  val historyBookings = ui.completedBookings
 
   Column(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.HISTORY_SECTION)) {
     Text(

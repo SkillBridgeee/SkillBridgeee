@@ -39,6 +39,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import com.android.sample.model.authentication.UserSessionManager
+import org.junit.After
 
 class MyProfileScreenTest {
 
@@ -208,13 +210,14 @@ class MyProfileScreenTest {
   fun setup() {
     BookingRepositoryProvider.setForTests(FakeBookingRepo())
     repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    UserSessionManager.setCurrentUserId("demo")
     viewModel =
         MyProfileViewModel(
             repo,
             listingRepository = FakeListingRepo(),
             bookingRepository = FakeBookingRepo(),
             ratingsRepository = FakeRatingRepo(),
-            userId = "demo")
+          sessionManager = UserSessionManager)
 
     // reset flag before each test and set content once per test
     logoutClicked.set(false)
@@ -241,6 +244,12 @@ class MyProfileScreenTest {
           .isNotEmpty()
     }
   }
+
+  @After
+  fun tearDown() {
+    UserSessionManager.clearSession()
+  }
+
 
   // Helper: wait for the LazyColumn to appear and scroll it so the logout button becomes visible
   private fun ensureLogoutVisible() {
@@ -594,14 +603,14 @@ class MyProfileScreenTest {
                   bookerId = "demo",
                   status = BookingStatus.COMPLETED))
         }
-
+    UserSessionManager.setCurrentUserId("demo")
     val vm =
         MyProfileViewModel(
             profileRepository = repo,
             listingRepository = FakeListingRepo(),
             ratingsRepository = FakeRatingRepo(),
             bookingRepository = bookingRepo,
-            userId = "demo")
+            sessionManager = UserSessionManager)
 
     compose.runOnIdle {
       contentSlot.value = {
@@ -653,13 +662,14 @@ class MyProfileScreenTest {
     val blockingRepo = BlockingListingRepo()
     val ratingRepo = FakeRatingRepo()
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    UserSessionManager.setCurrentUserId("demo")
     val vm =
         MyProfileViewModel(
             pRepo,
             listingRepository = blockingRepo,
             bookingRepository = FakeBookingRepo(),
             ratingsRepository = ratingRepo,
-            userId = "demo")
+            sessionManager = UserSessionManager)
 
     compose.runOnIdle {
       contentSlot.value = {
@@ -719,9 +729,10 @@ class MyProfileScreenTest {
     val errorRepo = ErrorListingRepo()
     val ratingRepo = FakeRatingRepo()
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    UserSessionManager.setCurrentUserId("demo")
     val vm =
         MyProfileViewModel(
-            pRepo, listingRepository = errorRepo, ratingsRepository = ratingRepo, userId = "demo")
+            pRepo, listingRepository = errorRepo, ratingsRepository = ratingRepo, sessionManager = UserSessionManager)
 
     compose.runOnIdle {
       contentSlot.value = {
@@ -780,9 +791,10 @@ class MyProfileScreenTest {
     val listing = makeTestListing()
     val rating = FakeRatingRepo()
     val oneItemRepo = OneItemListingRepo(listing)
+    UserSessionManager.setCurrentUserId("demo")
     val vm =
         MyProfileViewModel(
-            pRepo, listingRepository = oneItemRepo, ratingsRepository = rating, userId = "demo")
+            pRepo, listingRepository = oneItemRepo, ratingsRepository = rating, sessionManager = UserSessionManager)
 
     compose.runOnIdle {
       contentSlot.value = {
@@ -825,14 +837,14 @@ class MyProfileScreenTest {
   @Test
   fun history_showsEmptyMessage() {
     val bookingRepo = FakeBookingRepo()
-
+    UserSessionManager.setCurrentUserId("demo")
     val vm =
         MyProfileViewModel(
             profileRepository = repo,
             listingRepository = FakeListingRepo(),
             ratingsRepository = FakeRatingRepo(),
             bookingRepository = bookingRepo,
-            userId = "demo")
+            sessionManager = UserSessionManager)
 
     compose.runOnIdle {
       contentSlot.value = {

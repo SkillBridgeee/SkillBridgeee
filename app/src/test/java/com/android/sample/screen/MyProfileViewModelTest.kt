@@ -43,6 +43,8 @@ import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import com.android.sample.model.authentication.UserSessionManager
+
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -57,11 +59,13 @@ class MyProfileViewModelTest {
   fun setUp() {
     Dispatchers.setMain(dispatcher)
     BookingRepositoryProvider.setForTests(FakeBookingRepo())
+    UserSessionManager.setCurrentUserId("testUid")
   }
 
   @After
   fun tearDown() {
     Dispatchers.resetMain()
+    UserSessionManager.clearSession()
   }
 
   // -------- Fake repositories ------------------------------------------------------
@@ -223,20 +227,22 @@ class MyProfileViewModelTest {
   ) = Profile(id, name, email, location = location, description = desc)
 
   private fun newVm(
-      repo: ProfileRepository = FakeProfileRepo(),
-      locRepo: LocationRepository = FakeLocationRepo(),
-      listingRepo: ListingRepository = FakeListingRepo(),
-      ratingRepo: RatingRepository = FakeRatingRepos(),
-      bookingRepo: BookingRepository = FakeBookingRepo(),
-      userId: String = "testUid"
-  ) =
-      MyProfileViewModel(
-          profileRepository = repo,
-          locationRepository = locRepo,
-          listingRepository = listingRepo,
-          ratingsRepository = ratingRepo,
-          bookingRepository = bookingRepo,
-          userId = userId)
+    repo: ProfileRepository = FakeProfileRepo(),
+    locRepo: LocationRepository = FakeLocationRepo(),
+    listingRepo: ListingRepository = FakeListingRepo(),
+    ratingRepo: RatingRepository = FakeRatingRepos(),
+    bookingRepo: BookingRepository = FakeBookingRepo()
+  ): MyProfileViewModel {
+    return MyProfileViewModel(
+      profileRepository = repo,
+      locationRepository = locRepo,
+      listingRepository = listingRepo,
+      ratingsRepository = ratingRepo,
+      bookingRepository = bookingRepo,
+      sessionManager = UserSessionManager
+    )
+  }
+
 
   private class NullGpsProvider : GpsLocationProvider(ApplicationProvider.getApplicationContext()) {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? = null
@@ -452,7 +458,9 @@ class MyProfileViewModelTest {
     // Given
     val profile = makeProfile()
     val repo = FakeProfileRepo(profile)
-    val vm = newVm(repo, userId = "originalUserId")
+    UserSessionManager.setCurrentUserId("originalUserId")
+    val vm = newVm(repo)
+
 
     // When - load profile with different userId
     vm.loadProfile("differentUserId")
@@ -468,7 +476,8 @@ class MyProfileViewModelTest {
     // Given
     val profile = makeProfile()
     val repo = FakeProfileRepo(profile)
-    val vm = newVm(repo, userId = "defaultUserId")
+    UserSessionManager.setCurrentUserId("defaultUserId")
+    val vm = newVm(repo)
 
     // When - load profile without parameter
     vm.loadProfile()
@@ -484,7 +493,9 @@ class MyProfileViewModelTest {
     // Given
     val profile = makeProfile()
     val repo = FakeProfileRepo(profile)
-    val vm = newVm(repo, userId = "originalUserId")
+    UserSessionManager.setCurrentUserId("originalUserId")
+    val vm = newVm(repo)
+
 
     // Load profile with different userId
     vm.loadProfile("targetUserId")
@@ -611,9 +622,11 @@ class MyProfileViewModelTest {
     val ratingRepo = mock<RatingRepository>()
 
     val provider = GpsLocationProvider(context)
+    UserSessionManager.setCurrentUserId("demo")
     val viewModel =
         MyProfileViewModel(
-            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo")
+            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, sessionManager = UserSessionManager)
+
 
     viewModel.fetchLocationFromGps(provider, context)
   }
@@ -623,10 +636,11 @@ class MyProfileViewModelTest {
     val repo = mock<ProfileRepository>()
     val listingRepo = mock<ListingRepository>()
     val ratingRepo = mock<RatingRepository>()
+    UserSessionManager.setCurrentUserId("demo")
 
     val viewModel =
         MyProfileViewModel(
-            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, userId = "demo")
+            repo, listingRepository = listingRepo, ratingsRepository = ratingRepo, sessionManager = UserSessionManager)
 
     viewModel.onLocationPermissionDenied()
   }
@@ -839,14 +853,15 @@ class MyProfileViewModelTest {
             TODO("Not yet implemented")
           }
         }
-
+    UserSessionManager.setCurrentUserId("demo")
     val vm =
         MyProfileViewModel(
             profileRepository = FakeProfileRepo(),
             listingRepository = FakeListingRepo(),
             ratingsRepository = FakeRatingRepos(),
             bookingRepository = failingBookingRepo,
-            userId = "demo")
+            sessionManager = UserSessionManager)
+
 
     vm.loadUserBookings("demo")
   }
@@ -954,14 +969,16 @@ class MyProfileViewModelTest {
 
           override fun getNewUid() = "x"
         }
-
+    UserSessionManager.setCurrentUserId("demo")
     val vm =
         MyProfileViewModel(
             profileRepository = failingProfileRepo,
             listingRepository = FakeListingRepo(),
             ratingsRepository = FakeRatingRepos(),
             bookingRepository = bookingRepo,
-            userId = "demo")
+            sessionManager = UserSessionManager)
+
+
 
     vm.loadUserBookings("demo")
   }
@@ -1085,15 +1102,17 @@ class MyProfileViewModelTest {
             TODO("Not yet implemented")
           }
         }
-
+    UserSessionManager.setCurrentUserId("demo")
     val vm =
         MyProfileViewModel(
             profileRepository = FakeProfileRepo(),
             listingRepository = failingListingRepo,
             ratingsRepository = FakeRatingRepos(),
             bookingRepository = bookingRepo,
-            userId = "demo")
+            sessionManager = UserSessionManager)
 
-    vm.loadUserBookings("demo") // No crash = listing catch executed
+
+
+    vm.loadUserBookings("demo")
   }
 }
