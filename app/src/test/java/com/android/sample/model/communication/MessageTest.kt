@@ -1,168 +1,207 @@
 package com.android.sample.model.communication
 
-import java.util.Date
+import com.google.firebase.Timestamp
 import org.junit.Assert.*
 import org.junit.Test
 
 class MessageTest {
 
   @Test
-  fun `test Message creation with default values`() {
-    // Default values will fail validation since sentFrom and sentTo are both empty strings
-    // So we need to provide different values
-    val message = Message(sentFrom = "user1", sentTo = "user2")
+  fun `test Message no-arg constructor`() {
+    val message = Message()
 
-    assertEquals("user1", message.sentFrom)
-    assertEquals("user2", message.sentTo)
-    assertNotNull(message.sentTime)
+    assertEquals("", message.messageId)
+    assertEquals("", message.conversationId)
+    assertEquals("", message.sentFrom)
+    assertEquals("", message.sentTo)
+    assertNull(message.sentTime)
     assertNull(message.receiveTime)
     assertNull(message.readTime)
-    assertEquals("", message.message)
+    assertEquals("", message.content)
+    assertFalse(message.isRead)
   }
 
   @Test
   fun `test Message creation with valid values`() {
-    val sentTime = Date()
-    val receiveTime = Date(sentTime.time + 1000)
-    val readTime = Date(receiveTime.time + 1000)
+    val sentTime = Timestamp.now()
+    val receiveTime = Timestamp(sentTime.seconds + 1, sentTime.nanoseconds)
+    val readTime = Timestamp(receiveTime.seconds + 1, receiveTime.nanoseconds)
 
     val message =
         Message(
+            messageId = "msg123",
+            conversationId = "conv456",
             sentFrom = "user123",
             sentTo = "user456",
             sentTime = sentTime,
             receiveTime = receiveTime,
             readTime = readTime,
-            message = "Hello, how are you?")
+            content = "Hello, how are you?",
+            isRead = true)
 
+    assertEquals("msg123", message.messageId)
+    assertEquals("conv456", message.conversationId)
     assertEquals("user123", message.sentFrom)
     assertEquals("user456", message.sentTo)
     assertEquals(sentTime, message.sentTime)
     assertEquals(receiveTime, message.receiveTime)
     assertEquals(readTime, message.readTime)
-    assertEquals("Hello, how are you?", message.message)
-  }
-
-  @Test(expected = IllegalArgumentException::class)
-  fun `test Message validation - same sender and receiver`() {
-    Message(sentFrom = "user123", sentTo = "user123", message = "Test message")
-  }
-
-  @Test(expected = IllegalArgumentException::class)
-  fun `test Message validation - receive time before sent time`() {
-    val sentTime = Date()
-    val receiveTime = Date(sentTime.time - 1000) // 1 second before sent time
-
-    Message(
-        sentFrom = "user123",
-        sentTo = "user456",
-        sentTime = sentTime,
-        receiveTime = receiveTime,
-        message = "Test message")
-  }
-
-  @Test(expected = IllegalArgumentException::class)
-  fun `test Message validation - read time before sent time`() {
-    val sentTime = Date()
-    val readTime = Date(sentTime.time - 1000) // 1 second before sent time
-
-    Message(
-        sentFrom = "user123",
-        sentTo = "user456",
-        sentTime = sentTime,
-        readTime = readTime,
-        message = "Test message")
-  }
-
-  @Test(expected = IllegalArgumentException::class)
-  fun `test Message validation - read time before receive time`() {
-    val sentTime = Date()
-    val receiveTime = Date(sentTime.time + 1000)
-    val readTime = Date(receiveTime.time - 500) // Before receive time
-
-    Message(
-        sentFrom = "user123",
-        sentTo = "user456",
-        sentTime = sentTime,
-        receiveTime = receiveTime,
-        readTime = readTime,
-        message = "Test message")
+    assertEquals("Hello, how are you?", message.content)
+    assertTrue(message.isRead)
   }
 
   @Test
-  fun `test Message with valid time sequence`() {
-    val sentTime = Date()
-    val receiveTime = Date(sentTime.time + 1000)
-    val readTime = Date(receiveTime.time + 500)
-
+  fun `test Message creation with minimal values`() {
     val message =
         Message(
-            sentFrom = "user123",
-            sentTo = "user456",
-            sentTime = sentTime,
-            receiveTime = receiveTime,
-            readTime = readTime,
-            message = "Test message")
+            conversationId = "conv123",
+            sentFrom = "user1",
+            sentTo = "user2",
+            content = "Test message")
 
-    assertTrue(message.sentTime.before(message.receiveTime))
-    assertTrue(message.receiveTime!!.before(message.readTime))
+    assertEquals("conv123", message.conversationId)
+    assertEquals("user1", message.sentFrom)
+    assertEquals("user2", message.sentTo)
+    assertEquals("Test message", message.content)
+    assertFalse(message.isRead)
   }
 
   @Test
-  fun `test Message with only sent time`() {
-    val message = Message(sentFrom = "user123", sentTo = "user456", message = "Test message")
+  fun `test Message validate passes with valid data`() {
+    val message =
+        Message(
+            conversationId = "conv123",
+            sentFrom = "user1",
+            sentTo = "user2",
+            content = "Valid message")
 
-    assertNotNull(message.sentTime)
+    // Should not throw
+    message.validate()
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `test Message validate fails when sentFrom is blank`() {
+    val message =
+        Message(conversationId = "conv123", sentFrom = "", sentTo = "user2", content = "Test")
+
+    message.validate()
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `test Message validate fails when sentTo is blank`() {
+    val message =
+        Message(conversationId = "conv123", sentFrom = "user1", sentTo = "", content = "Test")
+
+    message.validate()
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `test Message validate fails when sender and receiver are same`() {
+    val message =
+        Message(
+            conversationId = "conv123",
+            sentFrom = "user123",
+            sentTo = "user123",
+            content = "Test message")
+
+    message.validate()
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `test Message validate fails when conversationId is blank`() {
+    val message =
+        Message(conversationId = "", sentFrom = "user1", sentTo = "user2", content = "Test")
+
+    message.validate()
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `test Message validate fails when content is blank`() {
+    val message =
+        Message(conversationId = "conv123", sentFrom = "user1", sentTo = "user2", content = "")
+
+    message.validate()
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `test Message validate fails when content is whitespace only`() {
+    val message =
+        Message(conversationId = "conv123", sentFrom = "user1", sentTo = "user2", content = "   ")
+
+    message.validate()
+  }
+
+  @Test
+  fun `test Message with null timestamps`() {
+    val message =
+        Message(
+            messageId = "msg1",
+            conversationId = "conv1",
+            sentFrom = "user1",
+            sentTo = "user2",
+            sentTime = null,
+            receiveTime = null,
+            readTime = null,
+            content = "Test",
+            isRead = false)
+
+    assertNull(message.sentTime)
     assertNull(message.receiveTime)
     assertNull(message.readTime)
   }
 
   @Test
-  fun `test Message with sent and receive time only`() {
-    val sentTime = Date()
-    val receiveTime = Date(sentTime.time + 1000)
-
-    val message =
-        Message(
-            sentFrom = "user123",
-            sentTo = "user456",
-            sentTime = sentTime,
-            receiveTime = receiveTime,
-            message = "Test message")
-
-    assertEquals(sentTime, message.sentTime)
-    assertEquals(receiveTime, message.receiveTime)
-    assertNull(message.readTime)
-  }
-
-  @Test
-  fun `test Message equality and hashCode`() {
-    val sentTime = Date()
+  fun `test Message isRead flag`() {
     val message1 =
-        Message(
-            sentFrom = "user123", sentTo = "user456", sentTime = sentTime, message = "Test message")
+        Message(conversationId = "conv1", sentFrom = "u1", sentTo = "u2", content = "Test")
+    assertFalse(message1.isRead)
 
     val message2 =
         Message(
-            sentFrom = "user123", sentTo = "user456", sentTime = sentTime, message = "Test message")
-
-    assertEquals(message1, message2)
-    assertEquals(message1.hashCode(), message2.hashCode())
+            conversationId = "conv1",
+            sentFrom = "u1",
+            sentTo = "u2",
+            content = "Test",
+            isRead = true)
+    assertTrue(message2.isRead)
   }
 
   @Test
-  fun `test Message copy functionality`() {
-    val originalMessage =
-        Message(sentFrom = "user123", sentTo = "user456", message = "Original message")
+  fun `test Message copy with different values`() {
+    val original =
+        Message(
+            messageId = "msg1",
+            conversationId = "conv1",
+            sentFrom = "user1",
+            sentTo = "user2",
+            content = "Original",
+            isRead = false)
 
-    val readTime = Date()
-    val updatedMessage = originalMessage.copy(readTime = readTime, message = "Updated message")
+    val copy = original.copy(content = "Modified", isRead = true)
 
-    assertEquals("user123", updatedMessage.sentFrom)
-    assertEquals("user456", updatedMessage.sentTo)
-    assertEquals(readTime, updatedMessage.readTime)
-    assertEquals("Updated message", updatedMessage.message)
+    assertEquals("msg1", copy.messageId)
+    assertEquals("Modified", copy.content)
+    assertTrue(copy.isRead)
+  }
 
-    assertNotEquals(originalMessage, updatedMessage)
+  @Test
+  fun `test Message equality`() {
+    val message1 =
+        Message(
+            messageId = "msg1",
+            conversationId = "conv1",
+            sentFrom = "user1",
+            sentTo = "user2",
+            content = "Test")
+
+    val message2 =
+        Message(
+            messageId = "msg1",
+            conversationId = "conv1",
+            sentFrom = "user1",
+            sentTo = "user2",
+            content = "Test")
+
+    assertEquals(message1, message2)
   }
 }
