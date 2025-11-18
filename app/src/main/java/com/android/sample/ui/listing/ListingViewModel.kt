@@ -21,24 +21,24 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class ListingUiState(
-  val listing: Listing? = null,
-  val creator: Profile? = null,
-  val isLoading: Boolean = false,
-  val error: String? = null,
-  val isOwnListing: Boolean = false,
-  val bookingInProgress: Boolean = false,
-  val bookingError: String? = null,
-  val bookingSuccess: Boolean = false,
-  val listingBookings: List<Booking> = emptyList(),
-  val bookingsLoading: Boolean = false,
-  val bookerProfiles: Map<String, Profile> = emptyMap(),
-  val listingDeleted: Boolean = false
+    val listing: Listing? = null,
+    val creator: Profile? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null,
+    val isOwnListing: Boolean = false,
+    val bookingInProgress: Boolean = false,
+    val bookingError: String? = null,
+    val bookingSuccess: Boolean = false,
+    val listingBookings: List<Booking> = emptyList(),
+    val bookingsLoading: Boolean = false,
+    val bookerProfiles: Map<String, Profile> = emptyMap(),
+    val listingDeleted: Boolean = false
 )
 
 class ListingViewModel(
-  private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
-  private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
-  private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository
+    private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
+    private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
+    private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(ListingUiState())
@@ -60,11 +60,11 @@ class ListingViewModel(
 
         _uiState.update {
           it.copy(
-            listing = listing,
-            creator = creator,
-            isLoading = false,
-            isOwnListing = isOwnListing,
-            error = null)
+              listing = listing,
+              creator = creator,
+              isLoading = false,
+              isOwnListing = isOwnListing,
+              error = null)
         }
 
         if (isOwnListing) {
@@ -126,8 +126,8 @@ class ListingViewModel(
         if (durationMillis <= 0) {
           _uiState.update {
             it.copy(
-              bookingInProgress = false,
-              bookingError = "Invalid session time: End time must be after start time")
+                bookingInProgress = false,
+                bookingError = "Invalid session time: End time must be after start time")
           }
           return@launch
         }
@@ -136,15 +136,15 @@ class ListingViewModel(
         val price = listing.hourlyRate * durationHours
 
         val booking =
-          Booking(
-            bookingId = bookingRepo.getNewUid(),
-            associatedListingId = listing.listingId,
-            listingCreatorId = listing.creatorUserId,
-            bookerId = currentUserId,
-            sessionStart = sessionStart,
-            sessionEnd = sessionEnd,
-            status = BookingStatus.PENDING,
-            price = price)
+            Booking(
+                bookingId = bookingRepo.getNewUid(),
+                associatedListingId = listing.listingId,
+                listingCreatorId = listing.creatorUserId,
+                bookerId = currentUserId,
+                sessionStart = sessionStart,
+                sessionEnd = sessionEnd,
+                status = BookingStatus.PENDING,
+                price = price)
 
         booking.validate()
 
@@ -156,16 +156,16 @@ class ListingViewModel(
       } catch (e: IllegalArgumentException) {
         _uiState.update {
           it.copy(
-            bookingInProgress = false,
-            bookingError = "Invalid booking: ${e.message}",
-            bookingSuccess = false)
+              bookingInProgress = false,
+              bookingError = "Invalid booking: ${e.message}",
+              bookingSuccess = false)
         }
       } catch (e: Exception) {
         _uiState.update {
           it.copy(
-            bookingInProgress = false,
-            bookingError = "Failed to create booking: ${e.message}",
-            bookingSuccess = false)
+              bookingInProgress = false,
+              bookingError = "Failed to create booking: ${e.message}",
+              bookingSuccess = false)
         }
       }
     }
@@ -224,22 +224,25 @@ class ListingViewModel(
       _uiState.update { it.copy(isLoading = true, error = null, listingDeleted = false) }
       try {
         // fetch bookings for listing
-        val bookings = try {
-          bookingRepo.getBookingsByListing(listing.listingId)
-        } catch (e: Exception) {
-          // If fetching bookings fails, continue but log; we still attempt deletion
-          Log.w("ListingViewModel", "Failed to fetch bookings for cancellation", e)
-          emptyList()
-        }
+        val bookings =
+            try {
+              bookingRepo.getBookingsByListing(listing.listingId)
+            } catch (e: Exception) {
+              // If fetching bookings fails, continue but log; we still attempt deletion
+              Log.w("ListingViewModel", "Failed to fetch bookings for cancellation", e)
+              emptyList()
+            }
 
         // Cancel each non-cancelled booking. Log errors but continue.
-        bookings.filter { it.status != BookingStatus.CANCELLED }.forEach { booking ->
-          try {
-            bookingRepo.cancelBooking(booking.bookingId)
-          } catch (e: Exception) {
-            Log.w("ListingViewModel", "Failed to cancel booking ${booking.bookingId}", e)
-          }
-        }
+        bookings
+            .filter { it.status != BookingStatus.CANCELLED }
+            .forEach { booking ->
+              try {
+                bookingRepo.cancelBooking(booking.bookingId)
+              } catch (e: Exception) {
+                Log.w("ListingViewModel", "Failed to cancel booking ${booking.bookingId}", e)
+              }
+            }
 
         // Delete the listing
         listingRepo.deleteListing(listing.listingId)
@@ -247,16 +250,19 @@ class ListingViewModel(
         // Update UI state: listing removed and bookings cleared
         _uiState.update {
           it.copy(
-            listing = null,
-            listingBookings = emptyList(),
-            isOwnListing = false,
-            isLoading = false,
-            error = null,
-            listingDeleted = true)
+              listing = null,
+              listingBookings = emptyList(),
+              isOwnListing = false,
+              isLoading = false,
+              error = null,
+              listingDeleted = true)
         }
       } catch (e: Exception) {
         _uiState.update {
-          it.copy(isLoading = false, error = "Failed to delete listing: ${e.message}", listingDeleted = false)
+          it.copy(
+              isLoading = false,
+              error = "Failed to delete listing: ${e.message}",
+              listingDeleted = false)
         }
       }
     }

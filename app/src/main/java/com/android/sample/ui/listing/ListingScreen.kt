@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.ui.listing.components.ListingContent
 import kotlinx.coroutines.launch
 
@@ -79,7 +78,7 @@ fun ListingScreen(
 ) {
   val uiState by viewModel.uiState.collectAsState()
   val scope = rememberCoroutineScope()
-  val listingRepository = ListingRepositoryProvider.repository
+  //  val listingRepository = ListingRepositoryProvider.repository
 
   // Load listing when screen is displayed
   LaunchedEffect(listingId) { viewModel.loadListing(listingId) }
@@ -145,11 +144,7 @@ fun ListingScreen(
             onBook = { start, end -> viewModel.createBooking(start, end) },
             onApproveBooking = { bookingId -> viewModel.approveBooking(bookingId) },
             onRejectBooking = { bookingId -> viewModel.rejectBooking(bookingId) },
-            onDeleteListing = {
-              scope.launch {
-                viewModel.deleteListing()
-              }
-            },
+            onDeleteListing = { scope.launch { viewModel.deleteListing() } },
             onEditListing = onEditListing,
             autoFillDatesForTesting = autoFillDatesForTesting)
       }

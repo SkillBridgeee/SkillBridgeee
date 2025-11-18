@@ -53,80 +53,80 @@ import java.util.Locale
  */
 @Composable
 fun ListingContent(
-  uiState: ListingUiState,
-  onBook: (Date, Date) -> Unit,
-  onApproveBooking: (String) -> Unit,
-  onRejectBooking: (String) -> Unit,
-  onDeleteListing: () -> Unit,
-  onEditListing: () -> Unit,
-  modifier: Modifier = Modifier,
-  autoFillDatesForTesting: Boolean = false
+    uiState: ListingUiState,
+    onBook: (Date, Date) -> Unit,
+    onApproveBooking: (String) -> Unit,
+    onRejectBooking: (String) -> Unit,
+    onDeleteListing: () -> Unit,
+    onEditListing: () -> Unit,
+    modifier: Modifier = Modifier,
+    autoFillDatesForTesting: Boolean = false
 ) {
   val listing = uiState.listing ?: return
   val creator = uiState.creator
   var showBookingDialog by remember { mutableStateOf(false) }
 
   LazyColumn(
-    modifier = modifier.fillMaxSize().padding(16.dp),
-    verticalArrangement = Arrangement.spacedBy(16.dp)) {
-    item { TypeBadge(listingType = listing.type) }
+      modifier = modifier.fillMaxSize().padding(16.dp),
+      verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item { TypeBadge(listingType = listing.type) }
 
-    item {
-      // Title/Description
-      Text(
-        text = listing.displayTitle(),
-        style = MaterialTheme.typography.headlineMedium,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
-    }
+        item {
+          // Title/Description
+          Text(
+              text = listing.displayTitle(),
+              style = MaterialTheme.typography.headlineMedium,
+              fontWeight = FontWeight.Bold,
+              modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
+        }
 
-    item {
-      // Description card (if present)
-      DescriptionCard(listing.description)
-    }
+        item {
+          // Description card (if present)
+          DescriptionCard(listing.description)
+        }
 
-    item {
-      // Creator info (if available)
-      creator?.let { CreatorCard(it) }
-    }
+        item {
+          // Creator info (if available)
+          creator?.let { CreatorCard(it) }
+        }
 
-    item { // Skill details
-      SkillDetailsCard(skill = listing.skill)
-    }
+        item { // Skill details
+          SkillDetailsCard(skill = listing.skill)
+        }
 
-    item { // Location
-      LocationCard(locationName = listing.location.name)
-    }
+        item { // Location
+          LocationCard(locationName = listing.location.name)
+        }
 
-    item { // Hourly rate
-      HourlyRateCard(hourlyRate = listing.hourlyRate)
-    }
+        item { // Hourly rate
+          HourlyRateCard(hourlyRate = listing.hourlyRate)
+        }
 
-    item { // Created date
-      PostedDate(listing.createdAt)
-    }
+        item { // Created date
+          PostedDate(listing.createdAt)
+        }
 
-    item { Spacer(Modifier.height(8.dp)) }
+        item { Spacer(Modifier.height(8.dp)) }
 
-    // Action section (book button or bookings management)
-    actionSection(
-      uiState = uiState,
-      onShowBookingDialog = { showBookingDialog = true },
-      onApproveBooking = onApproveBooking,
-      onRejectBooking = onRejectBooking,
-      onDeleteListing = onDeleteListing,
-      onEditListing = onEditListing)
-  }
+        // Action section (book button or bookings management)
+        actionSection(
+            uiState = uiState,
+            onShowBookingDialog = { showBookingDialog = true },
+            onApproveBooking = onApproveBooking,
+            onRejectBooking = onRejectBooking,
+            onDeleteListing = onDeleteListing,
+            onEditListing = onEditListing)
+      }
 
   // Booking dialog
   if (showBookingDialog) {
     BookingDialog(
-      onDismiss = { showBookingDialog = false },
-      onConfirm = { start, end ->
-        onBook(start, end)
-        showBookingDialog = false
-      },
-      autoFillDatesForTesting = autoFillDatesForTesting)
+        onDismiss = { showBookingDialog = false },
+        onConfirm = { start, end ->
+          onBook(start, end)
+          showBookingDialog = false
+        },
+        autoFillDatesForTesting = autoFillDatesForTesting)
   }
 }
 
@@ -134,29 +134,29 @@ fun ListingContent(
 @Composable
 private fun TypeBadge(listingType: ListingType, modifier: Modifier = Modifier) {
   val (text, color) =
-    if (listingType == ListingType.PROPOSAL) {
-      "Offering to Teach" to MaterialTheme.colorScheme.primary
-    } else {
-      "Looking for Tutor" to MaterialTheme.colorScheme.secondary
-    }
+      if (listingType == ListingType.PROPOSAL) {
+        "Offering to Teach" to MaterialTheme.colorScheme.primary
+      } else {
+        "Looking for Tutor" to MaterialTheme.colorScheme.secondary
+      }
 
   Text(
-    text = text,
-    style = MaterialTheme.typography.labelLarge,
-    color = color,
-    modifier = modifier.testTag(ListingScreenTestTags.TYPE_BADGE))
+      text = text,
+      style = MaterialTheme.typography.labelLarge,
+      color = color,
+      modifier = modifier.testTag(ListingScreenTestTags.TYPE_BADGE))
 }
 
 @Composable
 private fun DescriptionCard(description: String) {
   Card(
-    modifier = Modifier.fillMaxWidth(),
-    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-    Text(
-      text = description.ifBlank { "This Listing has no Description." },
-      style = MaterialTheme.typography.bodyLarge,
-      modifier = Modifier.padding(16.dp).testTag(ListingScreenTestTags.DESCRIPTION))
-  }
+      modifier = Modifier.fillMaxWidth(),
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Text(
+            text = description.ifBlank { "This Listing has no Description." },
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(16.dp).testTag(ListingScreenTestTags.DESCRIPTION))
+      }
 }
 
 /** Creator information card */
@@ -168,9 +168,9 @@ private fun CreatorCard(creator: com.android.sample.model.user.Profile) {
         Icon(Icons.Default.Person, contentDescription = null)
         Spacer(Modifier.padding(4.dp))
         Text(
-          text = creator.name ?: "",
-          style = MaterialTheme.typography.titleMedium,
-          modifier = Modifier.testTag(ListingScreenTestTags.CREATOR_NAME))
+            text = creator.name ?: "",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.testTag(ListingScreenTestTags.CREATOR_NAME))
       }
     }
   }
@@ -182,36 +182,36 @@ private fun SkillDetailsCard(skill: com.android.sample.model.skill.Skill) {
   Card(modifier = Modifier.fillMaxWidth()) {
     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
       Text(
-        "Skill Details",
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold)
+          "Skill Details",
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.Bold)
 
       Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text("Subject:", style = MaterialTheme.typography.bodyMedium)
         Text(
-          skill.mainSubject.name,
-          style = MaterialTheme.typography.bodyMedium,
-          fontWeight = FontWeight.Medium)
+            skill.mainSubject.name,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium)
       }
 
       if (skill.skill.isNotBlank()) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
           Text("Skill:", style = MaterialTheme.typography.bodyMedium)
           Text(
-            skill.skill,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.testTag(ListingScreenTestTags.SKILL))
+              skill.skill,
+              style = MaterialTheme.typography.bodyMedium,
+              fontWeight = FontWeight.Medium,
+              modifier = Modifier.testTag(ListingScreenTestTags.SKILL))
         }
       }
 
       Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text("Expertise:", style = MaterialTheme.typography.bodyMedium)
         Text(
-          skill.expertise.name,
-          style = MaterialTheme.typography.bodyMedium,
-          fontWeight = FontWeight.Medium,
-          modifier = Modifier.testTag(ListingScreenTestTags.EXPERTISE))
+            skill.expertise.name,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.testTag(ListingScreenTestTags.EXPERTISE))
       }
     }
   }
@@ -222,15 +222,15 @@ private fun SkillDetailsCard(skill: com.android.sample.model.skill.Skill) {
 private fun LocationCard(locationName: String) {
   Card(modifier = Modifier.fillMaxWidth()) {
     Row(
-      modifier = Modifier.padding(16.dp).fillMaxWidth(),
-      verticalAlignment = Alignment.CenterVertically) {
-      Icon(Icons.Default.LocationOn, contentDescription = null)
-      Spacer(Modifier.padding(4.dp))
-      Text(
-        text = locationName,
-        style = MaterialTheme.typography.bodyLarge,
-        modifier = Modifier.testTag(ListingScreenTestTags.LOCATION))
-    }
+        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically) {
+          Icon(Icons.Default.LocationOn, contentDescription = null)
+          Spacer(Modifier.padding(4.dp))
+          Text(
+              text = locationName,
+              style = MaterialTheme.typography.bodyLarge,
+              modifier = Modifier.testTag(ListingScreenTestTags.LOCATION))
+        }
   }
 }
 
@@ -239,17 +239,17 @@ private fun LocationCard(locationName: String) {
 private fun HourlyRateCard(hourlyRate: Double) {
   Card(modifier = Modifier.fillMaxWidth()) {
     Row(
-      modifier = Modifier.padding(16.dp).fillMaxWidth(),
-      horizontalArrangement = Arrangement.SpaceBetween,
-      verticalAlignment = Alignment.CenterVertically) {
-      Text("Hourly Rate:", style = MaterialTheme.typography.titleMedium)
-      Text(
-        text = String.format(Locale.getDefault(), "$%.2f/hr", hourlyRate),
-        style = MaterialTheme.typography.titleLarge,
-        color = MaterialTheme.colorScheme.primary,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.testTag(ListingScreenTestTags.HOURLY_RATE))
-    }
+        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically) {
+          Text("Hourly Rate:", style = MaterialTheme.typography.titleMedium)
+          Text(
+              text = String.format(Locale.getDefault(), "$%.2f/hr", hourlyRate),
+              style = MaterialTheme.typography.titleLarge,
+              color = MaterialTheme.colorScheme.primary,
+              fontWeight = FontWeight.Bold,
+              modifier = Modifier.testTag(ListingScreenTestTags.HOURLY_RATE))
+        }
   }
 }
 
@@ -257,24 +257,24 @@ private fun HourlyRateCard(hourlyRate: Double) {
 private fun PostedDate(date: Date) {
   val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
   Text(
-    text = "Posted on ${dateFormat.format(date)}",
-    style = MaterialTheme.typography.bodySmall,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-    modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
+      text = "Posted on ${dateFormat.format(date)}",
+      style = MaterialTheme.typography.bodySmall,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
 }
 
 /** Action button section (book now or bookings management) */
 private fun LazyListScope.actionSection(
-  uiState: ListingUiState,
-  onShowBookingDialog: () -> Unit,
-  onApproveBooking: (String) -> Unit,
-  onRejectBooking: (String) -> Unit,
-  onDeleteListing: () -> Unit,
-  onEditListing: () -> Unit
+    uiState: ListingUiState,
+    onShowBookingDialog: () -> Unit,
+    onApproveBooking: (String) -> Unit,
+    onRejectBooking: (String) -> Unit,
+    onDeleteListing: () -> Unit,
+    onEditListing: () -> Unit
 ) {
   if (uiState.isOwnListing) {
     bookingsSection(
-      uiState = uiState, onApproveBooking = onApproveBooking, onRejectBooking = onRejectBooking)
+        uiState = uiState, onApproveBooking = onApproveBooking, onRejectBooking = onRejectBooking)
 
     item { Spacer(Modifier.height(8.dp)) }
 
@@ -285,19 +285,20 @@ private fun LazyListScope.actionSection(
     val canEdit = !uiState.bookingsLoading && !hasActiveBookings
 
     item {
-      Button(
-        onClick = onEditListing,
-        modifier = Modifier.fillMaxWidth(),
-        enabled = canEdit) { Text("Edit Listing") }
+      Button(onClick = onEditListing, modifier = Modifier.fillMaxWidth(), enabled = canEdit) {
+        Text("Edit Listing")
+      }
     }
 
     // If editing is disabled, show a short explanation
     if (!canEdit) {
       item {
         Text(
-          text = if (uiState.bookingsLoading) "Loading bookings..." else "Cannot edit listing: it has bookings",
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant)
+            text =
+                if (uiState.bookingsLoading) "Loading bookings..."
+                else "Cannot edit listing: it has bookings",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
       }
     }
 
@@ -307,45 +308,45 @@ private fun LazyListScope.actionSection(
       var showDeleteDialog by remember { mutableStateOf(false) }
 
       Button(
-        onClick = { showDeleteDialog = true },
-        modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
-        Text("Delete Listing")
-      }
+          onClick = { showDeleteDialog = true },
+          modifier = Modifier.fillMaxWidth(),
+          colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
+            Text("Delete Listing")
+          }
 
       if (showDeleteDialog) {
         AlertDialog(
-          onDismissRequest = { showDeleteDialog = false },
-          title = { Text("Delete Listing") },
-          text = {
-            Text("Are you sure you want to delete this listing? This action cannot be undone.")
-          },
-          confirmButton = {
-            Button(
-              onClick = {
-                showDeleteDialog = false
-                onDeleteListing()
-              },
-              colors =
-                ButtonDefaults.buttonColors(
-                  containerColor = MaterialTheme.colorScheme.error)) {
-              Text("Delete")
-            }
-          },
-          dismissButton = { Button(onClick = { showDeleteDialog = false }) { Text("Cancel") } })
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Listing") },
+            text = {
+              Text("Are you sure you want to delete this listing? This action cannot be undone.")
+            },
+            confirmButton = {
+              Button(
+                  onClick = {
+                    showDeleteDialog = false
+                    onDeleteListing()
+                  },
+                  colors =
+                      ButtonDefaults.buttonColors(
+                          containerColor = MaterialTheme.colorScheme.error)) {
+                    Text("Delete")
+                  }
+            },
+            dismissButton = { Button(onClick = { showDeleteDialog = false }) { Text("Cancel") } })
       }
     }
   } else {
     item {
       Button(
-        onClick = onShowBookingDialog,
-        modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.BOOK_BUTTON),
-        enabled = !uiState.bookingInProgress) {
-        if (uiState.bookingInProgress) {
-          CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
-        }
-        Text(if (uiState.bookingInProgress) "Creating Booking..." else "Book Now")
-      }
+          onClick = onShowBookingDialog,
+          modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.BOOK_BUTTON),
+          enabled = !uiState.bookingInProgress) {
+            if (uiState.bookingInProgress) {
+              CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
+            }
+            Text(if (uiState.bookingInProgress) "Creating Booking..." else "Book Now")
+          }
     }
   }
 }

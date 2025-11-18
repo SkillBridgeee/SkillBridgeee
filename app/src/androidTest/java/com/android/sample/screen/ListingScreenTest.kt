@@ -182,7 +182,8 @@ class ListingScreenTest {
     val vm = createViewModel()
 
     compose.setContent {
-      ListingScreen(listingId = "listing-123", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.SCREEN).assertIsDisplayed()
@@ -196,7 +197,8 @@ class ListingScreenTest {
     val vm = ListingViewModel(listingRepo, profileRepo, bookingRepo)
 
     compose.setContent {
-      ListingScreen(listingId = "listing-123", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.SCREEN).assertIsDisplayed()
@@ -210,7 +212,8 @@ class ListingScreenTest {
     val vm = ListingViewModel(listingRepo, profileRepo, bookingRepo)
 
     compose.setContent {
-      ListingScreen(listingId = "non-existent", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
     compose.waitUntil(5_000) {
@@ -229,7 +232,8 @@ class ListingScreenTest {
     val vm = createViewModel()
 
     compose.setContent {
-      ListingScreen(listingId = "listing-123", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
     compose.waitUntil(5_000) {
@@ -252,7 +256,8 @@ class ListingScreenTest {
     val vm = ListingViewModel(listingRepo, profileRepo, bookingRepo)
 
     compose.setContent {
-      ListingScreen(listingId = "listing-123", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
     // Wait for screen to load
@@ -288,7 +293,8 @@ class ListingScreenTest {
     val vm = createViewModel()
 
     compose.setContent {
-      ListingScreen(listingId = "listing-123", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
     compose.waitUntil(5_000) {
@@ -306,7 +312,8 @@ class ListingScreenTest {
     val vm = createViewModel(listing = sampleProposal)
 
     compose.setContent {
-      ListingScreen(listingId = "listing-123", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
     compose.waitUntil(5_000) {
@@ -326,7 +333,11 @@ class ListingScreenTest {
             listing = sampleRequest, creator = sampleCreator.copy(userId = "creator-789"))
 
     compose.setContent {
-      ListingScreen(listingId = "listing-456", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = sampleRequest.listingId,
+          onNavigateBack = {},
+          onEditListing = {},
+          viewModel = vm)
     }
 
     compose.waitUntil(5_000) {
@@ -340,13 +351,17 @@ class ListingScreenTest {
   }
 
   @Test
-  fun push_butto() {
+  fun push_book_button() {
     val vm =
         createViewModel(
             listing = sampleRequest, creator = sampleCreator.copy(userId = "creator-789"))
 
     compose.setContent {
-      ListingScreen(listingId = "listing-456", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = sampleRequest.listingId,
+          onNavigateBack = {},
+          onEditListing = {},
+          viewModel = vm)
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON).performClick()
@@ -355,11 +370,11 @@ class ListingScreenTest {
 
   @Test
   fun listingScreen_navigationCallback_isProvided() {
+    val vm = createViewModel()
+
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123",
-          onNavigateBack = { /* Navigation callback */},
-          viewModel = createViewModel())
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
     compose.waitUntil(5_000) {
@@ -377,9 +392,9 @@ class ListingScreenTest {
     val vm = createViewModel()
 
     compose.setContent {
-      ListingScreen(listingId = "listing-123", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
-
     compose.onNodeWithTag(ListingScreenTestTags.SCREEN).assertIsDisplayed()
   }
 
@@ -388,7 +403,8 @@ class ListingScreenTest {
     val vm = createViewModel()
 
     compose.setContent {
-      ListingScreen(listingId = "listing-123", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
     // Initially loading or content
@@ -414,7 +430,8 @@ class ListingScreenTest {
     val vm = ListingViewModel(listingRepo, profileRepo, bookingRepo)
 
     compose.setContent {
-      ListingScreen(listingId = "listing-123", onNavigateBack = {}, viewModel = vm)
+      ListingScreen(
+          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
     // Wait for content to load
