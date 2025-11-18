@@ -862,4 +862,47 @@ class ListingViewModelTest {
     // Should not crash
     assertNull(viewModel.uiState.value.listing)
   }
+
+  @Test
+  fun loadBookings_setsTutorRatingPending_true_whenCompletedBookingExists() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val completedBooking =
+        sampleBooking.copy(status = BookingStatus.COMPLETED, bookerId = "booker-789")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(mutableListOf(completedBooking))
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertTrue(state.tutorRatingPending)
+    assertEquals(1, state.listingBookings.size)
+  }
+
+  @Test
+  fun loadBookings_setsTutorRatingPending_false_whenNoCompletedBookings() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val pendingBooking = sampleBooking.copy(status = BookingStatus.PENDING, bookerId = "booker-789")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(mutableListOf(pendingBooking))
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertFalse(state.tutorRatingPending)
+    assertEquals(1, state.listingBookings.size)
+  }
 }
