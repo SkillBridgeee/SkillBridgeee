@@ -40,6 +40,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+object ListingContentTestTags {
+  const val EDIT_BUTTON = "listingContentEditButton"
+  const val DELETE_BUTTON = "listingContentDeleteButton"
+}
+
 /**
  * Content section of the listing screen showing listing details
  *

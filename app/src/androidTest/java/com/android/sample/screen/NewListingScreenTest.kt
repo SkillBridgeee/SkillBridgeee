@@ -688,4 +688,28 @@ class NewSkillScreenTest {
         .assertExists()
         .performClick()
   }
+
+  @Test
+  fun newListingScreen_showsEditMode_whenListingIdProvided() {
+    val vm = NewListingViewModel(FakeListingRepository(), FakeLocationRepository())
+    composeRule.setContent {
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = "existing-listing", // non-null to indicate edit mode
+            navController = createTestNavController(),
+            onNavigateBack = {})
+      }
+    }
+
+    composeRule.waitForIdle()
+
+    // Title should indicate edit mode
+    composeRule.onNodeWithTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE).assertIsDisplayed()
+    composeRule.onNodeWithText("Edit Listing").assertIsDisplayed()
+
+    // Floating action button should show save changes
+    composeRule.onNodeWithText("Save Changes").assertIsDisplayed()
+  }
 }
