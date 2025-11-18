@@ -49,21 +49,15 @@ import org.junit.Before
 
 abstract class AppTest() {
 
-  open fun createInitializedProfileRepo(): FakeProfileRepo {
-    return FakeProfileWorking()
-  }
+  // These factory methods allow swapping between different Fake repos
+  // (e.g., working repos vs. error repos) depending on the test scenario.
+  open fun createInitializedProfileRepo(): FakeProfileRepo = FakeProfileWorking()
 
-  open fun createInitializedListingRepo(): FakeListingRepo {
-    return FakeListingWorking()
-  }
+  open fun createInitializedListingRepo(): FakeListingRepo = FakeListingWorking()
 
-  open fun createInitializedBookingRepo(): FakeBookingRepo {
-    return FakeBookingWorking()
-  }
+  open fun createInitializedBookingRepo(): FakeBookingRepo = FakeBookingWorking()
 
-  open fun createInitializedRatingRepo(): FakeRatingRepo {
-    return RatingFakeRepoWorking()
-  }
+  open fun createInitializedRatingRepo(): FakeRatingRepo = RatingFakeRepoWorking()
 
   lateinit var listingRepository: FakeListingRepo
   lateinit var profileRepository: FakeProfileRepo
@@ -75,9 +69,17 @@ abstract class AppTest() {
   lateinit var profileViewModel: MyProfileViewModel
   lateinit var mainPageViewModel: MainPageViewModel
   lateinit var newListingViewModel: NewListingViewModel
-
   lateinit var bookingDetailsViewModel: BookingDetailsViewModel
 
+  /**
+   * Composable function that sets up the main UI structure used during tests.
+   *
+   * This function creates a NavController and configures the app's navigation graph, top bar, and
+   * bottom navigation bar. It also initializes the start destination in the Home Page
+   *
+   * This function is typically used in UI tests to render the full app structure with fake
+   * repositories and pre-initialized ViewModels.
+   */
   @Before
   open fun setUp() {
 
