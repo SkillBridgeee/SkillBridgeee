@@ -27,7 +27,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +46,7 @@ import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.booking.color
 import com.android.sample.model.booking.name
 import com.android.sample.model.listing.ListingType
+import com.android.sample.ui.components.RatingStarsInput
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -61,6 +64,11 @@ object BookingDetailsTestTag {
   const val STATUS = "booking_status"
   const val ROW = "booking_detail_row"
   const val COMPLETE_BUTTON = "booking_complete_button"
+
+  const val RATING_SECTION = "booking_rating_section"
+  const val RATING_TUTOR = "booking_rating_tutor"
+  const val RATING_LISTING = "booking_rating_listing"
+  const val RATING_SUBMIT_BUTTON = "booking_rating_submit"
 }
 
 /**
@@ -99,6 +107,9 @@ fun BookingDetailsScreen(
           uiState = uiState,
           onCreatorClick = { profileId -> onCreatorClick(profileId) },
           onMarkCompleted = { bkgViewModel.markBookingAsCompleted() },
+          onSubmitStudentRatings = { tutorStars, listingStars ->
+            bkgViewModel.submitStudentRatings(tutorStars, listingStars)
+          },
           modifier = Modifier.padding(paddingValues).fillMaxSize().padding(16.dp))
     }
   }
@@ -123,6 +134,7 @@ fun BookingDetailsContent(
     uiState: BookingUIState,
     onCreatorClick: (String) -> Unit,
     onMarkCompleted: () -> Unit,
+    onSubmitStudentRatings: (Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -154,6 +166,11 @@ fun BookingDetailsContent(
     // Let the student mark the session as completed once it is confirmed
     if (uiState.booking.status == BookingStatus.CONFIRMED) {
       ConfirmCompletionSection(onMarkCompleted)
+    }
+
+    // Once the session is completed, allow the student to rate the tutor and listing
+    if (uiState.booking.status == BookingStatus.COMPLETED) {
+      StudentRatingSection(onSubmitStudentRatings = onSubmitStudentRatings)
     }
   }
 }
@@ -405,6 +422,73 @@ private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
             onClick = onMarkCompleted,
             modifier = Modifier.testTag(BookingDetailsTestTag.COMPLETE_BUTTON)) {
               Text(text = "Mark as completed")
+            }
+      }
+}
+
+/**
+ * UI section allowing the student to rate the tutor and the listing after the session has been
+ * completed.
+ *
+ * The user selects 1–5 stars for:
+ * - the tutor
+ * - the listing
+ *
+ * When the "Submit ratings" button is pressed, the selected values are passed to
+ * [onSubmitStudentRatings].
+ */
+@Composable
+private fun StudentRatingSection(
+    onSubmitStudentRatings: (Int, Int) -> Unit,
+) {
+  var tutorStars by remember { mutableStateOf(0) } // start EMPTY
+  var listingStars by remember { mutableStateOf(0) } // start EMPTY
+  var hasSubmitted by remember { mutableStateOf(false) }
+
+  // Once submitted, hide the whole section
+  if (hasSubmitted) return
+
+  Column(
+      modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.RATING_SECTION),
+      verticalArrangement = Arrangement.spacedBy(12.dp),
+      horizontalAlignment = Alignment.Start) {
+        Text(
+            text = "Rate your experience",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+
+        // Tutor rating
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_TUTOR)) {
+              Text(text = "Tutor", style = MaterialTheme.typography.bodyMedium)
+              RatingStarsInput(
+                  selectedStars = tutorStars,
+                  onSelected = { tutorStars = it },
+              )
+            }
+
+        // Listing rating
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_LISTING)) {
+              Text(text = "Listing", style = MaterialTheme.typography.bodyMedium)
+              RatingStarsInput(
+                  selectedStars = listingStars,
+                  onSelected = { listingStars = it }, // IMPORTANT: listingStars, not tutorStars
+              )
+            }
+
+        Button(
+            onClick = {
+              // you can also enforce "no 0" if you want:
+              // if (tutorStars > 0 && listingStars > 0) { ... }
+              onSubmitStudentRatings(tutorStars, listingStars)
+              hasSubmitted = true
+            },
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
+              Text("Submit ratings")
             }
       }
 }

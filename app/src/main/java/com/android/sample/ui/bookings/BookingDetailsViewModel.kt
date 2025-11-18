@@ -6,10 +6,16 @@ import androidx.lifecycle.viewModelScope
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.rating.RatingType
+import com.android.sample.model.rating.StarRating
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
@@ -32,6 +38,9 @@ class BookingDetailsViewModel(
 ) : ViewModel() {
 
   private val _bookingUiState = MutableStateFlow(BookingUIState())
+  // New: rating repository, obtained from provider (no constructor change needed)
+  private val ratingRepository: RatingRepository = RatingRepositoryProvider.repository
+
   // Public read-only state flow for the UI to observe
   val bookingUiState: StateFlow<BookingUIState> = _bookingUiState.asStateFlow()
 
@@ -94,4 +103,70 @@ class BookingDetailsViewModel(
       }
     }
   }
+
+  fun submitStudentRatings(tutorStars: Int, listingStars: Int) {
+    val booking = bookingUiState.value.booking
+
+    // No booking loaded or not completed -> do nothing
+    if (booking.bookingId.isBlank()) return
+    if (booking.status != BookingStatus.COMPLETED) return
+
+    val tutorRatingEnum = tutorStars.toStarRating()
+    val listingRatingEnum = listingStars.toStarRating()
+
+    viewModelScope.launch {
+      try {
+        // Student = booker, Tutor = listing creator
+        val fromUserId = booking.bookerId // person giving the rating
+        val tutorUserId = booking.listingCreatorId // person receiving tutor + listing rating
+
+        // 1) Student rates the tutor
+        val tutorRating =
+            Rating(
+                ratingId = ratingRepository.getNewUid(),
+                fromUserId = fromUserId,
+                toUserId = tutorUserId,
+                starRating = tutorRatingEnum,
+                comment = "",
+                ratingType = RatingType.TUTOR,
+                targetObjectId = tutorUserId,
+            )
+
+        // 2) Student rates the listing
+        val listingRating =
+            Rating(
+                ratingId = ratingRepository.getNewUid(),
+                fromUserId = fromUserId,
+                toUserId = tutorUserId,
+                starRating = listingRatingEnum,
+                comment = "",
+                ratingType = RatingType.LISTING,
+                targetObjectId = booking.associatedListingId,
+            )
+
+        tutorRating.validate()
+        listingRating.validate()
+
+        ratingRepository.addRating(tutorRating)
+        ratingRepository.addRating(listingRating)
+
+        // optional: you could add a flag in UI state to hide rating UI after submit
+        // _bookingUiState.value = bookingUiState.value.copy(ratingSubmitted = true)
+
+      } catch (e: Exception) {
+        Log.e("BookingDetailsViewModel", "Error submitting student ratings", e)
+        _bookingUiState.value = bookingUiState.value.copy(loadError = true)
+      }
+    }
+  }
+
+  private fun Int.toStarRating(): StarRating =
+      when (this) {
+        1 -> StarRating.ONE
+        2 -> StarRating.TWO
+        3 -> StarRating.THREE
+        4 -> StarRating.FOUR
+        5 -> StarRating.FIVE
+        else -> StarRating.FIVE // fallback
+      }
 }
