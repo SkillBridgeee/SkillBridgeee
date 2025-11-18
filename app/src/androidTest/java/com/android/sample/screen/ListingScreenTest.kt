@@ -353,37 +353,38 @@ class ListingScreenTest {
   @Test
   fun push_book_button() {
     val vm =
-      createViewModel(
-        listing = sampleRequest, creator = sampleCreator.copy(userId = "creator-789"))
+        createViewModel(
+            listing = sampleRequest, creator = sampleCreator.copy(userId = "creator-789"))
 
     compose.setContent {
       ListingScreen(
-        listingId = sampleRequest.listingId,
-        onNavigateBack = {},
-        onEditListing = {},
-        viewModel = vm)
+          listingId = sampleRequest.listingId,
+          onNavigateBack = {},
+          onEditListing = {},
+          viewModel = vm)
     }
 
     // wait for compose to settle and for the book button to appear
     compose.waitForIdle()
     compose.waitUntil(5_000) {
-      compose.onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON, useUnmergedTree = true).performClick()
 
     // wait for dialog to appear
     compose.waitUntil(5_000) {
-      compose.onAllNodesWithTag(ListingScreenTestTags.BOOKING_DIALOG, useUnmergedTree = true)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOKING_DIALOG, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.BOOKING_DIALOG).assertIsDisplayed()
   }
-
 
   @Test
   fun listingScreen_navigationCallback_isProvided() {
