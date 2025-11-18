@@ -11,6 +11,8 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
+import androidx.test.espresso.action.ViewActions.swipeUp
 import com.android.sample.model.listing.ListingType
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
@@ -73,6 +75,12 @@ class NewListingScreenTestFUN : AppTest() {
     composeTestRule
         .onNodeWithTag(NewListingScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
+
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.SCROLLABLE_SCREEN).performTouchInput {
+      swipeUp() // swipe up = scroll down
+    }
+    composeTestRule.waitForIdle()
+
     composeTestRule
         .onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
@@ -89,8 +97,11 @@ class NewListingScreenTestFUN : AppTest() {
     // Important en CI :
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
 
+    composeTestRule.onNodeWithTag(NewListingScreenTestTag.SCROLLABLE_SCREEN).performTouchInput {
+      swipeUp() // swipe up = scroll down
+    }
+    composeTestRule.waitForIdle()
     // --- WAIT FOR VALIDATION ERRORS ---
-    // Indispensable : attendre que les erreurs apparaissent dans l’arbre
     composeTestRule.waitUntil(timeoutMillis = 10_000) {
       composeTestRule
           .onAllNodesWithTag(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)

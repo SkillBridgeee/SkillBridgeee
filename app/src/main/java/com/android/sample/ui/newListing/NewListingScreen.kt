@@ -6,6 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
@@ -51,6 +53,8 @@ object NewListingScreenTestTag {
   const val BUTTON_USE_MY_LOCATION = "buttonUseMyLocation"
 
   const val INPUT_LOCATION_FIELD = "inputLocationField"
+
+  const val SCROLLABLE_SCREEN = "scrollNewListing"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -105,10 +109,15 @@ fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewLi
           listingViewModel.onLocationPermissionDenied()
         }
       }
+  val scrollState = rememberScrollState()
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
-      modifier = Modifier.fillMaxWidth().padding(pd)) {
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(pd)
+              .verticalScroll(scrollState)
+              .testTag(NewListingScreenTestTag.SCROLLABLE_SCREEN)) {
         Spacer(Modifier.height(20.dp))
 
         Box(
