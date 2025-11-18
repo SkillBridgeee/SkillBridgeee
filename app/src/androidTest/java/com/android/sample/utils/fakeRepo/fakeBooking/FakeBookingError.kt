@@ -4,7 +4,7 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingStatus
 import java.io.IOException
 
-class BookingFakeRepoError : FakeBookingRepo {
+class FakeBookingError : FakeBookingRepo {
   override fun getNewUid(): String {
     throw IllegalStateException("Failed to generate UID (mock error).")
   }

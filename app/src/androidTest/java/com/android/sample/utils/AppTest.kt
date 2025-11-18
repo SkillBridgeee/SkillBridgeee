@@ -34,12 +34,12 @@ import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
-import com.android.sample.utils.fakeRepo.fakeBooking.BookingFakeRepoWorking
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingRepo
+import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingWorking
 import com.android.sample.utils.fakeRepo.fakeListing.FakeListingRepo
-import com.android.sample.utils.fakeRepo.fakeListing.ListingFakeRepoWorking
+import com.android.sample.utils.fakeRepo.fakeListing.FakeListingWorking
 import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
-import com.android.sample.utils.fakeRepo.fakeProfile.ProfileFakeWorking
+import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileWorking
 import com.android.sample.utils.fakeRepo.fakeRating.FakeRatingRepo
 import com.android.sample.utils.fakeRepo.fakeRating.RatingFakeRepoWorking
 import kotlin.collections.contains
@@ -49,15 +49,15 @@ import org.junit.Before
 abstract class AppTest() {
 
   open fun createInitializedProfileRepo(): FakeProfileRepo {
-    return ProfileFakeWorking()
+    return FakeProfileWorking()
   }
 
   open fun createInitializedListingRepo(): FakeListingRepo {
-    return ListingFakeRepoWorking()
+    return FakeListingWorking()
   }
 
   open fun createInitializedBookingRepo(): FakeBookingRepo {
-    return BookingFakeRepoWorking()
+    return FakeBookingWorking()
   }
 
   open fun createInitializedRatingRepo(): FakeRatingRepo {

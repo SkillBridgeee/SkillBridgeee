@@ -22,7 +22,7 @@ import java.util.UUID
  * - Testing UI rendering of booking lists with different statuses.
  * - Simulating user actions like confirming, completing, or cancelling bookings.
  */
-class BookingFakeRepoWorking : FakeBookingRepo {
+class FakeBookingWorking : FakeBookingRepo {
 
   val initialNumBooking = 2
 

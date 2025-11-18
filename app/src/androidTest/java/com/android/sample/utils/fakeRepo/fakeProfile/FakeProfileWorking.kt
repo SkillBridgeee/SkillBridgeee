@@ -24,7 +24,7 @@ import java.util.UUID
  * - Testing UI rendering of tutors and students.
  * - Simulating user interactions such as profile lookup.
  */
-class ProfileFakeWorking : FakeProfileRepo {
+class FakeProfileWorking : FakeProfileRepo {
 
   private val profiles: List<Profile> =
       listOf(

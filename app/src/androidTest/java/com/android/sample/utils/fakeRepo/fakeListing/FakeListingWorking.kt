@@ -26,7 +26,7 @@ import java.util.UUID
  * - Testing UI rendering of proposals and requests.
  * - Simulating user actions such as adding or deactivating listings.
  */
-class ListingFakeRepoWorking() : FakeListingRepo {
+class FakeListingWorking() : FakeListingRepo {
 
   private var lastListingCreated: Listing? = null
   private val listings =

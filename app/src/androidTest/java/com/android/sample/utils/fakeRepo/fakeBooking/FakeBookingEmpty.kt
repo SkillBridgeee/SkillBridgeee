@@ -4,7 +4,7 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingStatus
 import java.util.UUID
 
-class BookingFakeRepoEmpty : FakeBookingRepo {
+class FakeBookingEmpty : FakeBookingRepo {
 
   private val bookings = mutableListOf<Booking>()
 
