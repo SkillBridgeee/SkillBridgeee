@@ -88,7 +88,8 @@ class MainActivity : ComponentActivity() {
   }
 }
 
-class MyViewModelFactory(private val userId: String) : ViewModelProvider.Factory {
+class MyViewModelFactory(private val sessionManager: UserSessionManager) :
+    ViewModelProvider.Factory {
   @Suppress("UNCHECKED_CAST")
   override fun <T : ViewModel> create(modelClass: Class<T>): T {
     return when (modelClass) {
@@ -96,7 +97,7 @@ class MyViewModelFactory(private val userId: String) : ViewModelProvider.Factory
         MyBookingsViewModel() as T
       }
       MyProfileViewModel::class.java -> {
-        MyProfileViewModel(userId = userId) as T
+        MyProfileViewModel(sessionManager = sessionManager) as T
       }
       MainPageViewModel::class.java -> {
         MainPageViewModel() as T
@@ -155,8 +156,8 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val currentRoute = navBackStackEntry?.destination?.route
 
   // Get current user ID from UserSessionManager
-  val currentUserId = UserSessionManager.getCurrentUserId() ?: "guest"
-  val factory = MyViewModelFactory(currentUserId)
+  val sessionManager = UserSessionManager
+  val factory = MyViewModelFactory(sessionManager)
 
   val bookingsViewModel: MyBookingsViewModel = viewModel(factory = factory)
   val profileViewModel: MyProfileViewModel = viewModel(factory = factory)
