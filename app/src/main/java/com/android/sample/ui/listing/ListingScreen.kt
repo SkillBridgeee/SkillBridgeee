@@ -56,6 +56,10 @@ object ListingScreenTestTags {
   const val DATE_PICKER_CANCEL_BUTTON = "listingScreenDatePickerCancelButton"
   const val TIME_PICKER_OK_BUTTON = "listingScreenTimePickerOkButton"
   const val TIME_PICKER_CANCEL_BUTTON = "listingScreenTimePickerCancelButton"
+
+  const val TUTOR_RATING_SECTION = "listing_tutor_rating_section"
+  const val TUTOR_RATING_STARS = "listing_tutor_rating_stars"
+  const val TUTOR_RATING_SUBMIT = "listing_tutor_rating_submit"
 }
 
 /**
@@ -129,10 +133,9 @@ fun ListingScreen(
         ListingContent(
             uiState = uiState,
             onBook = { start, end -> viewModel.createBooking(start, end) },
-            onApproveBooking = { bookingId -> viewModel.approveBooking(bookingId) },
-            onRejectBooking = { bookingId -> viewModel.rejectBooking(bookingId) },
-            modifier = Modifier.padding(padding),
-            autoFillDatesForTesting = autoFillDatesForTesting)
+            onApproveBooking = { viewModel.approveBooking(it) },
+            onRejectBooking = { viewModel.rejectBooking(it) },
+            onSubmitTutorRating = { stars -> viewModel.submitTutorRating(stars) })
       }
     }
   }
