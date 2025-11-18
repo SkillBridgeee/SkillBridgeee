@@ -61,17 +61,10 @@ abstract class AppTest() {
     return RatingFakeRepoWorking()
   }
 
-  val profileRepository: FakeProfileRepo
-    get() = createInitializedProfileRepo()
-
-  val listingRepository: FakeListingRepo
-    get() = createInitializedListingRepo()
-
-  val bookingRepository: FakeBookingRepo
-    get() = createInitializedBookingRepo()
-
-  val ratingRepository: FakeRatingRepo
-    get() = createInitializedRatingRepo()
+  lateinit var listingRepository: FakeListingRepo
+  lateinit var profileRepository: FakeProfileRepo
+  lateinit var bookingRepository: FakeBookingRepo
+  lateinit var ratingRepository: FakeRatingRepo
 
   lateinit var authViewModel: AuthenticationViewModel
   lateinit var bookingsViewModel: MyBookingsViewModel
@@ -83,6 +76,12 @@ abstract class AppTest() {
 
   @Before
   open fun setUp() {
+
+    profileRepository = createInitializedProfileRepo()
+    listingRepository = createInitializedListingRepo()
+    bookingRepository = createInitializedBookingRepo()
+    ratingRepository = createInitializedRatingRepo()
+
     val currentUserId = profileRepository.getCurrentUserId()
     UserSessionManager.setCurrentUserId(currentUserId)
 
