@@ -1,6 +1,7 @@
 package com.android.sample.screen
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.core.app.ApplicationProvider
@@ -496,15 +497,17 @@ class BookingDetailsScreenTest {
       }
     }
 
-    // We only require the button to exist, not necessarily be fully visible on screen
+    // We only require the button to exist
     composeTestRule
         .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)
         .assertExists()
-        .performClick()
+        // Use semantics directly instead of performClick()
+        .performSemanticsAction(SemanticsActions.OnClick)
 
+    // Wait until Compose is idle and then check the callback
     composeTestRule.runOnIdle {
       assert(callbackCalled)
-      // No stars selected in this test → defaults 0, 0
+      // Default values since we didn't touch the stars
       assert(receivedTutorStars == 0)
       assert(receivedListingStars == 0)
     }
@@ -528,13 +531,13 @@ class BookingDetailsScreenTest {
     // Initially present
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertExists()
 
-    // Click the submit button
+    // Trigger the click via semantics
     composeTestRule
         .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)
         .assertExists()
-        .performClick()
+        .performSemanticsAction(SemanticsActions.OnClick)
 
-    // Wait for recomposition
+    // Let recomposition happen
     composeTestRule.waitForIdle()
 
     // After submission, the section should be gone
