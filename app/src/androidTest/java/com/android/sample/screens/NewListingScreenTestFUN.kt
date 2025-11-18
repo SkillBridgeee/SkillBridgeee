@@ -12,7 +12,10 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.android.sample.model.listing.ListingType
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.map.Location
 import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.Skill
 import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.components.LocationInputFieldTestTags
@@ -29,7 +32,7 @@ class NewListingScreenTestFUN : AppTest() {
   @Before
   override fun setUp() {
     super.setUp()
-    composeTestRule.setContent { CreateEveryThing() }
+    composeTestRule.setContent { CreateAppContent() }
     composeTestRule.navigateToNewListing()
   }
 
@@ -192,48 +195,30 @@ class NewListingScreenTestFUN : AppTest() {
 
   @Test
   fun testTextInput() {
+    val newListing =
+        Proposal(
+            title = "Piano Lessons",
+            description = "Description",
+            hourlyRate = 12.0,
+            skill = Skill(mainSubject = MainSubject.MUSIC, skill = "PIANO"),
+            location = Location(name = "Paris"),
+        )
 
-    val numMainSub = 0
-    val mainSub = MainSubject.entries[numMainSub]
-
-    val numSubSkill = 0
-    // Enter Title
-    composeTestRule.enterText(NewListingScreenTestTag.INPUT_COURSE_TITLE, "Piano Lessons")
-
-    // Enter Desc
-    composeTestRule.enterText(NewListingScreenTestTag.INPUT_DESCRIPTION, "Description")
-
-    // Enter Price
-    composeTestRule.enterText(NewListingScreenTestTag.INPUT_PRICE, "12")
-
-    // Choose ListingType
-    composeTestRule.multipleChooseExposeMenu(
-        NewListingScreenTestTag.LISTING_TYPE_FIELD,
-        "${NewListingScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_$numMainSub")
-
-    // Choose Main subject
-    composeTestRule.multipleChooseExposeMenu(
-        NewListingScreenTestTag.SUBJECT_FIELD,
-        "${NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_0")
-
-    // Choose sub skill
-    composeTestRule.multipleChooseExposeMenu(
-        NewListingScreenTestTag.SUB_SKILL_FIELD,
-        "${NewListingScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_$numSubSkill")
-
-    // Enter Location
-    composeTestRule.enterAndChooseLocation(
-        enterText = "Pari",
-        selectText = "Paris",
-        inputLocationTestTag = LocationInputFieldTestTags.INPUT_LOCATION)
-
+    // Fill all the Listing Info in the screen
+    composeTestRule.fillNewListing(newListing)
+    // Save the newSkill
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
-
+    // Check if the user is back to the home Page
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
 
     val lastListing = listingRepository.getLastListingCreated()
     if (lastListing != null) {
-      assert(lastListing.title == "Piano Lessons")
+      assert(lastListing.title == newListing.title)
+      assert(lastListing.description == newListing.description)
+      assert(lastListing.hourlyRate == newListing.hourlyRate)
+      assert(lastListing.location.name == newListing.location.name)
+      assert(lastListing.skill.mainSubject == newListing.skill.mainSubject)
+      assert(lastListing.skill.skill == newListing.skill.skill)
     } else {
       assert(false)
     }

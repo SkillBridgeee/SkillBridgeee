@@ -17,7 +17,7 @@ class MyBookingsTestFUN : AppTest() {
   @Before
   override fun setUp() {
     super.setUp()
-    composeTestRule.setContent { CreateEveryThing() }
+    composeTestRule.setContent { CreateAppContent() }
     composeTestRule.navigateToMyBookings()
   }
 

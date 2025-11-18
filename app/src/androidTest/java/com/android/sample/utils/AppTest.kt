@@ -19,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.listing.Listing
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsViewModel
@@ -26,9 +27,11 @@ import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BookingCardTestTag
 import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.ui.components.BottomNavBar
+import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
+import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.utils.fakeRepo.fakeBooking.BookingFakeRepoWorking
@@ -112,7 +115,7 @@ abstract class AppTest() {
   }
 
   @Composable
-  fun CreateEveryThing() {
+  fun CreateAppContent() {
     val navController = rememberNavController()
 
     val mainScreenRoutes =
@@ -186,7 +189,6 @@ abstract class AppTest() {
       differentChoiceTestTag: String
   ) {
     onNodeWithTag(multipleTestTag).performClick()
-
     onNodeWithTag(differentChoiceTestTag).performClick()
   }
 
@@ -202,5 +204,36 @@ abstract class AppTest() {
       onAllNodesWithText(selectText).fetchSemanticsNodes().isNotEmpty()
     }
     onAllNodesWithText(selectText)[0].performClick()
+  }
+
+  // HelperMethode for Testing NewListing
+  fun ComposeTestRule.fillNewListing(newListing: Listing) {
+
+    // Enter Title
+    enterText(NewListingScreenTestTag.INPUT_COURSE_TITLE, newListing.title)
+    // Enter Desc
+    enterText(NewListingScreenTestTag.INPUT_DESCRIPTION, newListing.description)
+    // Enter Price
+    enterText(NewListingScreenTestTag.INPUT_PRICE, newListing.hourlyRate.toString())
+
+    // Choose ListingType
+    multipleChooseExposeMenu(
+        NewListingScreenTestTag.LISTING_TYPE_FIELD,
+        "${NewListingScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_${newListing.type.ordinal}")
+
+    // Choose Main subject
+    multipleChooseExposeMenu(
+        NewListingScreenTestTag.SUBJECT_FIELD,
+        "${NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_${newListing.skill.mainSubject.ordinal}")
+
+    // Choose sub skill // todo hardcoded value for subskill (idk possible to do it other good way)
+    multipleChooseExposeMenu(
+        NewListingScreenTestTag.SUB_SKILL_FIELD,
+        "${NewListingScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_0")
+
+    enterAndChooseLocation(
+        enterText = newListing.location.name.dropLast(1),
+        selectText = newListing.location.name,
+        inputLocationTestTag = LocationInputFieldTestTags.INPUT_LOCATION)
   }
 }
