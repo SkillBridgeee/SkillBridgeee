@@ -51,7 +51,6 @@ object NewListingScreenTestTag {
   const val BUTTON_USE_MY_LOCATION = "buttonUseMyLocation"
 
   const val INPUT_LOCATION_FIELD = "inputLocationField"
-  const val INVALID_LOCATION_MSG = "invalidLocationMsg"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -242,15 +241,6 @@ fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewLi
                               contentDescription = "Use my location",
                               tint = MaterialTheme.colorScheme.primary)
                         }
-                  }
-
-                  // Show tagged error text if invalidLocationMsg is set
-                  listingUIState.invalidLocationMsg?.let { msg ->
-                    Text(
-                        text = msg,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_LOCATION_MSG))
                   }
                 }
               }
