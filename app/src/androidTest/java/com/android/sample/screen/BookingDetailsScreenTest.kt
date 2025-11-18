@@ -218,9 +218,17 @@ class BookingDetailsScreenTest {
             status = BookingStatus.COMPLETED,
         )
 
+    val listing =
+        Proposal(
+            listingId = "listing-rating",
+            description = "Some course",
+            skill = Skill(skill = "Algebra", mainSubject = MainSubject.ACADEMICS),
+            location = Location(name = "Geneva"),
+        )
+
     return BookingUIState(
         booking = booking,
-        listing = Proposal(), // dummy listing is fine
+        listing = listing,
         creatorProfile = Profile(),
         loadError = false,
     )
