@@ -13,6 +13,8 @@ import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.*
 import java.util.*
+import kotlin.and
+import kotlin.collections.get
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
@@ -392,7 +394,6 @@ class BookingDetailsScreenTest {
 
   @Test
   fun ratingSection_callsCallback_andHidesAfterSubmit() {
-    // given: a COMPLETED booking so the rating section is shown
     val booking =
         Booking(
             bookingId = "b-rating",
@@ -413,32 +414,41 @@ class BookingDetailsScreenTest {
     var receivedTutorStars = -1
     var receivedListingStars = -1
 
+    // Ensure the same Material theme used by the app is applied so layout/measurement is stable on
+    // CI
     composeTestRule.setContent {
-      BookingDetailsContent(
-          uiState = uiState,
-          onCreatorClick = {},
-          onMarkCompleted = {},
-          onSubmitStudentRatings = { tutor, listing ->
-            receivedTutorStars = tutor
-            receivedListingStars = listing
-          },
-      )
+      androidx.compose.material3.MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { tutor, listing ->
+              receivedTutorStars = tutor
+              receivedListingStars = listing
+            },
+        )
+      }
     }
 
-    // rating section visible
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertIsDisplayed()
+    // Give compose time to finish composition on CI
+    composeTestRule.waitForIdle()
 
-    // choose some stars – this depends on how RatingStarsInput is implemented.
-    // Example: click the first clickable child inside tutor & listing sections.
+    // Wait/assert node exists before checking visibility to avoid race
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.RATING_SECTION)
+        .assertExists()
+        .assertIsDisplayed()
+
+    // Interact with rating stars (depends on RatingStarsInput implementation)
     composeTestRule
         .onAllNodes(hasClickAction() and hasParent(hasTestTag(BookingDetailsTestTag.RATING_TUTOR)))
         .onFirst()
-        .performClick() // sets tutorStars = 1 (assuming first star)
+        .performClick()
 
     composeTestRule
         .onAllNodes(
             hasClickAction() and hasParent(hasTestTag(BookingDetailsTestTag.RATING_LISTING)))
-        .get(2) // e.g. 3rd star -> 3
+        .get(2)
         .performClick()
 
     // submit
@@ -447,11 +457,11 @@ class BookingDetailsScreenTest {
         .assertIsDisplayed()
         .performClick()
 
-    // callback received correct values
+    composeTestRule.waitForIdle()
+
+    // verify callback and that the section is hidden after submit
     assert(receivedTutorStars == 1)
     assert(receivedListingStars == 3)
-
-    // section is hidden after submit
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertDoesNotExist()
   }
 }
