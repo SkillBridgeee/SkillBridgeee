@@ -391,4 +391,92 @@ class BookingDetailsScreenTest {
     // then: button should not exist in the tree
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertDoesNotExist()
   }
+
+  @Test
+  fun studentRatingSection_notVisible_whenBookingNotCompleted() {
+    // given: a booking that is still PENDING
+    val booking =
+        Booking(
+            bookingId = "booking-rating-pending",
+            associatedListingId = "listing-rating",
+            listingCreatorId = "creator-rating",
+            bookerId = "student-rating",
+            status = BookingStatus.PENDING,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(),
+            creatorProfile = Profile(),
+            loadError = false,
+        )
+
+    composeTestRule.setContent {
+      BookingDetailsContent(
+          uiState = uiState,
+          onCreatorClick = {},
+          onMarkCompleted = {},
+          onSubmitStudentRatings = { _, _ -> },
+      )
+    }
+
+    // then: the rating section should not be in the tree
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertDoesNotExist()
+  }
+
+  @Test
+  fun studentRatingSection_submit_callsCallbackAndHidesSection() {
+    // given: a COMPLETED booking (rating section should be visible)
+    val booking =
+        Booking(
+            bookingId = "booking-rating-completed",
+            associatedListingId = "listing-rating",
+            listingCreatorId = "creator-rating",
+            bookerId = "student-rating",
+            status = BookingStatus.COMPLETED,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(),
+            creatorProfile = Profile(),
+            loadError = false,
+        )
+
+    var callbackCalled = false
+    var receivedTutorStars = -1
+    var receivedListingStars = -1
+
+    composeTestRule.setContent {
+      BookingDetailsContent(
+          uiState = uiState,
+          onCreatorClick = {},
+          onMarkCompleted = {},
+          onSubmitStudentRatings = { tutorStars, listingStars ->
+            callbackCalled = true
+            receivedTutorStars = tutorStars
+            receivedListingStars = listingStars
+          },
+      )
+    }
+
+    // section + button are initially visible
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertIsDisplayed()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_TUTOR).assertIsDisplayed()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_LISTING).assertIsDisplayed()
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)
+        .assertIsDisplayed()
+        .performClick()
+
+    // then: callback was invoked with the current star values (initially 0, 0)
+    assert(callbackCalled)
+    assert(receivedTutorStars == 0)
+    assert(receivedListingStars == 0)
+
+    // and: after submitting, the whole rating section is hidden
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertDoesNotExist()
+  }
 }
