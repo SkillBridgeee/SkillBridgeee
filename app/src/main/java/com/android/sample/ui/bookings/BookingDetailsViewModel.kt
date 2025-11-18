@@ -35,14 +35,17 @@ class BookingDetailsViewModel(
     private val bookingRepository: BookingRepository = BookingRepositoryProvider.repository,
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
+    private val ratingRepository: RatingRepository = RatingRepositoryProvider.repository, // added
+    initialState: BookingUIState = BookingUIState()
 ) : ViewModel() {
 
   private val _bookingUiState = MutableStateFlow(BookingUIState())
-  // New: rating repository, obtained from provider (no constructor change needed)
-  private val ratingRepository: RatingRepository = RatingRepositoryProvider.repository
-
   // Public read-only state flow for the UI to observe
   val bookingUiState: StateFlow<BookingUIState> = _bookingUiState.asStateFlow()
+
+  fun setUiStateForTest(state: BookingUIState) {
+    _bookingUiState.value = state
+  }
 
   fun load(bookingId: String) {
     viewModelScope.launch {

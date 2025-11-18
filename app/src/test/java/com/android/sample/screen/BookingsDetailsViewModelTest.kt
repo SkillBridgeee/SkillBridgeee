@@ -9,7 +9,17 @@ import com.android.sample.mockRepository.profileRepo.ProfileFakeRepoWorking
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.rating.RatingType
+import com.android.sample.model.rating.StarRating
+import com.android.sample.model.user.Profile
 import com.android.sample.ui.bookings.BookingDetailsViewModel
+import com.android.sample.ui.bookings.BookingUIState
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -47,7 +57,53 @@ class BookingsDetailsViewModelTest {
 
     profileRepoWorking = ProfileFakeRepoWorking()
     errorProfileRepo = ProfileFakeRepoError()
+
+    RatingRepositoryProvider.setForTests(fakeRatingRepository())
   }
+
+  class FakeRatingRepositoryImpl : RatingRepository {
+    val addedRatings = mutableListOf<Rating>()
+    private val store = ConcurrentHashMap<String, Rating>()
+
+    override fun getNewUid(): String = UUID.randomUUID().toString()
+
+    override suspend fun getAllRatings(): List<Rating> = store.values.toList()
+
+    override suspend fun getRating(ratingId: String): Rating? = store[ratingId]
+
+    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> =
+        store.values.filter { it.fromUserId == fromUserId }
+
+    override suspend fun getRatingsByToUser(toUserId: String): List<Rating> =
+        store.values.filter { it.toUserId == toUserId }
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> =
+        store.values.filter { it.targetObjectId == listingId }
+
+    override suspend fun addRating(rating: Rating) {
+      store[rating.ratingId] = rating
+      addedRatings.add(rating)
+    }
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {
+      if (store.containsKey(ratingId)) store[ratingId] = rating
+    }
+
+    override suspend fun deleteRating(ratingId: String) {
+      store.remove(ratingId)
+      addedRatings.removeIf { it.ratingId == ratingId }
+    }
+
+    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> =
+        store.values.filter { it.ratingType == RatingType.TUTOR && it.toUserId == userId }
+
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> =
+        store.values.filter { it.ratingType == RatingType.STUDENT && it.toUserId == userId }
+  }
+
+  // Replace the previous factory with one that returns the concrete fake so setup can still call
+  // it.
+  fun fakeRatingRepository(): FakeRatingRepositoryImpl = FakeRatingRepositoryImpl()
 
   @OptIn(ExperimentalCoroutinesApi::class)
   @After
@@ -260,5 +316,127 @@ class BookingsDetailsViewModelTest {
     val after = vm.bookingUiState.value.booking.status
 
     assertEquals(before, after)
+  }
+
+  @Test
+  fun submitStudentRatings_whenCompleted_sendsTwoRatings() = runTest {
+    val fakeRatingRepo = FakeRatingRepositoryImpl()
+
+    val booking =
+        Booking(
+            bookingId = "b1",
+            associatedListingId = "l1",
+            listingCreatorId = "tutor-1",
+            bookerId = "student-1",
+            status = BookingStatus.COMPLETED,
+        )
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = bookingRepoWorking,
+            listingRepository = listingRepoWorking,
+            profileRepository = profileRepoWorking,
+            ratingRepository = fakeRatingRepo,
+        )
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(),
+            creatorProfile = Profile(),
+            loadError = false,
+        ))
+
+    testDispatcher.scheduler.advanceUntilIdle()
+    vm.submitStudentRatings(tutorStars = 4, listingStars = 2)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    assert(fakeRatingRepo.addedRatings.size == 2)
+
+    val tutorRating = fakeRatingRepo.addedRatings.first { it.ratingType == RatingType.TUTOR }
+    val listingRating = fakeRatingRepo.addedRatings.first { it.ratingType == RatingType.LISTING }
+
+    assert(tutorRating.starRating == StarRating.FOUR)
+    assert(listingRating.starRating == StarRating.TWO)
+
+    assert(tutorRating.fromUserId == "student-1")
+    assert(tutorRating.toUserId == "tutor-1")
+    assert(tutorRating.targetObjectId == "tutor-1")
+
+    assert(listingRating.fromUserId == "student-1")
+    assert(listingRating.toUserId == "tutor-1")
+    assert(listingRating.targetObjectId == "l1")
+  }
+
+  @Test
+  fun submitStudentRatings_whenNotCompleted_doesNothing() = runTest {
+    val fakeRatingRepo = FakeRatingRepositoryImpl()
+
+    val booking =
+        Booking(
+            bookingId = "b2",
+            associatedListingId = "l2",
+            listingCreatorId = "tutor-2",
+            bookerId = "student-2",
+            status = BookingStatus.CONFIRMED,
+        )
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = bookingRepoWorking,
+            listingRepository = listingRepoWorking,
+            profileRepository = profileRepoWorking,
+            ratingRepository = fakeRatingRepo,
+        )
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(),
+            creatorProfile = Profile(),
+            loadError = false,
+        ))
+
+    testDispatcher.scheduler.advanceUntilIdle()
+    vm.submitStudentRatings(5, 5)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    assert(fakeRatingRepo.addedRatings.isEmpty())
+  }
+
+  @Test
+  fun submitStudentRatings_whenEmptyBookingId_doesNothing() = runTest {
+    val fakeRatingRepo = FakeRatingRepositoryImpl()
+
+    val booking =
+        Booking(
+            bookingId = "",
+            associatedListingId = "l3",
+            listingCreatorId = "tutor-3",
+            bookerId = "student-3",
+            status = BookingStatus.COMPLETED,
+        )
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = bookingRepoWorking,
+            listingRepository = listingRepoWorking,
+            profileRepository = profileRepoWorking,
+            ratingRepository = fakeRatingRepo,
+        )
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(),
+            creatorProfile = Profile(),
+            loadError = false,
+        ))
+
+    testDispatcher.scheduler.advanceUntilIdle()
+    vm.submitStudentRatings(3, 3)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    assert(fakeRatingRepo.addedRatings.isEmpty())
   }
 }

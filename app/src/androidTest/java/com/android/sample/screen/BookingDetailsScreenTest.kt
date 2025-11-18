@@ -2,9 +2,11 @@ package com.android.sample.screen
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.booking.*
 import com.android.sample.model.listing.*
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
@@ -12,6 +14,7 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.*
 import java.util.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -19,6 +22,17 @@ import org.junit.Test
 class BookingDetailsScreenTest {
 
   @get:Rule val composeTestRule = createComposeRule()
+
+  @Before
+  fun setUp() {
+    // Initialize provider in the test process so calls to the provider won't crash.
+    RatingRepositoryProvider.init(ApplicationProvider.getApplicationContext())
+
+    // Alternatively, if you have a fake repo:
+    // RatingRepositoryProvider.setForTests(FakeRatingRepository())
+
+    // Now it's safe to call setContent / launch the screen.
+  }
 
   // ----- FAKES -----
   private val fakeBookingRepo =
@@ -333,6 +347,7 @@ class BookingDetailsScreenTest {
           uiState = uiState,
           onCreatorClick = {},
           onMarkCompleted = { clicked = true },
+          onSubmitStudentRatings = { _, _ -> },
       )
     }
 
@@ -367,10 +382,76 @@ class BookingDetailsScreenTest {
           uiState = uiState,
           onCreatorClick = {},
           onMarkCompleted = {},
+          onSubmitStudentRatings = { _, _ -> },
       )
     }
 
     // then: button should not exist in the tree
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertDoesNotExist()
+  }
+
+  @Test
+  fun ratingSection_callsCallback_andHidesAfterSubmit() {
+    // given: a COMPLETED booking so the rating section is shown
+    val booking =
+        Booking(
+            bookingId = "b-rating",
+            associatedListingId = "listing-1",
+            listingCreatorId = "tutor-1",
+            bookerId = "student-1",
+            status = BookingStatus.COMPLETED,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(),
+            creatorProfile = Profile(),
+            loadError = false,
+        )
+
+    var receivedTutorStars = -1
+    var receivedListingStars = -1
+
+    composeTestRule.setContent {
+      BookingDetailsContent(
+          uiState = uiState,
+          onCreatorClick = {},
+          onMarkCompleted = {},
+          onSubmitStudentRatings = { tutor, listing ->
+            receivedTutorStars = tutor
+            receivedListingStars = listing
+          },
+      )
+    }
+
+    // rating section visible
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertIsDisplayed()
+
+    // choose some stars – this depends on how RatingStarsInput is implemented.
+    // Example: click the first clickable child inside tutor & listing sections.
+    composeTestRule
+        .onAllNodes(hasClickAction() and hasParent(hasTestTag(BookingDetailsTestTag.RATING_TUTOR)))
+        .onFirst()
+        .performClick() // sets tutorStars = 1 (assuming first star)
+
+    composeTestRule
+        .onAllNodes(
+            hasClickAction() and hasParent(hasTestTag(BookingDetailsTestTag.RATING_LISTING)))
+        .get(2) // e.g. 3rd star -> 3
+        .performClick()
+
+    // submit
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)
+        .assertIsDisplayed()
+        .performClick()
+
+    // callback received correct values
+    assert(receivedTutorStars == 1)
+    assert(receivedListingStars == 3)
+
+    // section is hidden after submit
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertDoesNotExist()
   }
 }
