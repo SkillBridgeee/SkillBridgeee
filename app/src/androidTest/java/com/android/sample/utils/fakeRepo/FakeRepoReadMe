@@ -21,6 +21,7 @@ This repository is used to test the UI when there is an error with the repositor
 - Empty Repository :
 Has no data during initialisation.
 This repository is used to test the UI when there is no data yet in a repository.
+The only initial date is the current user (userID -> creator_1)
 
 - Working Repository :
 Has data during initialisation.
