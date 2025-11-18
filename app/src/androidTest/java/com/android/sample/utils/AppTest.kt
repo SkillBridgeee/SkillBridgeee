@@ -99,8 +99,10 @@ abstract class AppTest() {
     profileViewModel =
         MyProfileViewModel(
             profileRepository = profileRepository,
+            bookingRepository = bookingRepository,
             listingRepository = listingRepository,
-            ratingsRepository = ratingRepository)
+            ratingsRepository = ratingRepository,
+            sessionManager = UserSessionManager)
     mainPageViewModel =
         MainPageViewModel(
             profileRepository = profileRepository, listingRepository = listingRepository)
