@@ -21,6 +21,7 @@ import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.HomePage.MainPageViewModel
+import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BookingCardTestTag
 import com.android.sample.ui.components.BottomBarTestTag
@@ -78,6 +79,8 @@ abstract class AppTest() {
   lateinit var mainPageViewModel: MainPageViewModel
   lateinit var newListingViewModel: NewListingViewModel
 
+  lateinit var bookingDetailsViewModel: BookingDetailsViewModel
+
   @Before
   open fun setUp() {
     val currentUserId = profileRepository.getCurrentUserId()
@@ -101,6 +104,12 @@ abstract class AppTest() {
             profileRepository = profileRepository, listingRepository = listingRepository)
 
     newListingViewModel = NewListingViewModel(listingRepository = listingRepository)
+
+    bookingDetailsViewModel =
+        BookingDetailsViewModel(
+            listingRepository = listingRepository,
+            bookingRepository = bookingRepository,
+            profileRepository = profileRepository)
   }
 
   @Composable
@@ -128,7 +137,8 @@ abstract class AppTest() {
                 mainPageViewModel = mainPageViewModel,
                 newListingViewModel = newListingViewModel,
                 authViewModel = authViewModel,
-                onGoogleSignIn = {})
+                onGoogleSignIn = {},
+                bookingDetailsViewModel = bookingDetailsViewModel)
           }
           LaunchedEffect(Unit) {
             navController.navigate(NavRoutes.HOME) { popUpTo(0) { inclusive = true } }
