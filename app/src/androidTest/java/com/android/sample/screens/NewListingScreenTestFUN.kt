@@ -9,10 +9,10 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTouchInput
-import androidx.test.espresso.action.ViewActions.swipeUp
 import com.android.sample.model.listing.ListingType
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
@@ -76,9 +76,11 @@ class NewListingScreenTestFUN : AppTest() {
         .onNodeWithTag(NewListingScreenTestTag.INVALID_DESC_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
 
-    composeTestRule.onNodeWithTag(NewListingScreenTestTag.SCROLLABLE_SCREEN).performTouchInput {
-      swipeUp() // swipe up = scroll down
-    }
+    // Scroll down
+    composeTestRule
+        .onNodeWithText(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
+        .performScrollTo()
+
     composeTestRule.waitForIdle()
 
     composeTestRule
@@ -97,9 +99,10 @@ class NewListingScreenTestFUN : AppTest() {
     // Important en CI :
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
 
-    composeTestRule.onNodeWithTag(NewListingScreenTestTag.SCROLLABLE_SCREEN).performTouchInput {
-      swipeUp() // swipe up = scroll down
-    }
+    composeTestRule
+        .onNodeWithText(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
+        .performScrollTo()
+
     composeTestRule.waitForIdle()
     // --- WAIT FOR VALIDATION ERRORS ---
     composeTestRule.waitUntil(timeoutMillis = 10_000) {
@@ -111,7 +114,7 @@ class NewListingScreenTestFUN : AppTest() {
 
     // --- ASSERT ERRORS ---
     composeTestRule
-        .onNodeWithTag(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
+        .onNodeWithText(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
         .assertIsDisplayed()
   }
 
