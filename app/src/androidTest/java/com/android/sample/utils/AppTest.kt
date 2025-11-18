@@ -9,6 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -191,6 +192,11 @@ abstract class AppTest() {
       differentChoiceTestTag: String
   ) {
     onNodeWithTag(multipleTestTag).performClick()
+    waitUntil(timeoutMillis = 10_000) {
+      onAllNodesWithTag(differentChoiceTestTag, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
     onNodeWithTag(differentChoiceTestTag).performClick()
   }
 
