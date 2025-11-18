@@ -84,6 +84,13 @@ fun ListingScreen(
   // Load listing when screen is displayed
   LaunchedEffect(listingId) { viewModel.loadListing(listingId) }
 
+  LaunchedEffect(uiState.listingDeleted) {
+    if (uiState.listingDeleted) {
+      onNavigateBack()
+      viewModel.clearListingDeleted()
+    }
+  }
+
   // Helper function to handle success dialog dismissal
   val handleSuccessDismiss: () -> Unit = {
     viewModel.clearBookingSuccess()
@@ -140,8 +147,7 @@ fun ListingScreen(
             onRejectBooking = { bookingId -> viewModel.rejectBooking(bookingId) },
             onDeleteListing = {
               scope.launch {
-                listingRepository.deleteListing(listingId)
-                onNavigateBack()
+                viewModel.deleteListing()
               }
             },
             onEditListing = onEditListing,
