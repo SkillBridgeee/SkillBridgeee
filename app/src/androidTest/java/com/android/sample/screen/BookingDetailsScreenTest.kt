@@ -208,6 +208,24 @@ class BookingDetailsScreenTest {
             emptyList<com.android.sample.model.skill.Skill>()
       }
 
+  private fun completedBookingUiState(): BookingUIState {
+    val booking =
+        Booking(
+            bookingId = "booking-rating-completed",
+            associatedListingId = "listing-rating",
+            listingCreatorId = "creator-rating",
+            bookerId = "student-rating",
+            status = BookingStatus.COMPLETED,
+        )
+
+    return BookingUIState(
+        booking = booking,
+        listing = Proposal(), // dummy listing is fine
+        creatorProfile = Profile(),
+        loadError = false,
+    )
+  }
+
   private fun fakeViewModelError() =
       BookingDetailsViewModel(
           bookingRepository = fakeBookingRepo,
@@ -426,24 +444,27 @@ class BookingDetailsScreenTest {
   }
 
   @Test
-  fun studentRatingSection_submit_callsCallbackAndHidesSection() {
-    // given: a COMPLETED booking (rating section should be visible)
-    val booking =
-        Booking(
-            bookingId = "booking-rating-completed",
-            associatedListingId = "listing-rating",
-            listingCreatorId = "creator-rating",
-            bookerId = "student-rating",
-            status = BookingStatus.COMPLETED,
-        )
+  fun studentRatingSection_visible_whenBookingCompleted() {
+    val uiState = completedBookingUiState()
 
-    val uiState =
-        BookingUIState(
-            booking = booking,
-            listing = Proposal(),
-            creatorProfile = Profile(),
-            loadError = false,
-        )
+    composeTestRule.setContent {
+      BookingDetailsContent(
+          uiState = uiState,
+          onCreatorClick = {},
+          onMarkCompleted = {},
+          onSubmitStudentRatings = { _, _ -> },
+      )
+    }
+
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertIsDisplayed()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_TUTOR).assertIsDisplayed()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_LISTING).assertIsDisplayed()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON).assertIsDisplayed()
+  }
+
+  @Test
+  fun studentRatingSection_submit_callsCallbackWithCurrentValues() {
+    val uiState = completedBookingUiState()
 
     var callbackCalled = false
     var receivedTutorStars = -1
@@ -462,21 +483,47 @@ class BookingDetailsScreenTest {
       )
     }
 
-    // section + button are initially visible
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertIsDisplayed()
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_TUTOR).assertIsDisplayed()
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_LISTING).assertIsDisplayed()
+    // Click the submit button
     composeTestRule
         .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)
         .assertIsDisplayed()
         .performClick()
 
-    // then: callback was invoked with the current star values (initially 0, 0)
-    assert(callbackCalled)
-    assert(receivedTutorStars == 0)
-    assert(receivedListingStars == 0)
+    // Wait for recomposition and then assert
+    composeTestRule.runOnIdle {
+      assert(callbackCalled)
+      // No stars selected in this test → default is 0, 0
+      assert(receivedTutorStars == 0)
+      assert(receivedListingStars == 0)
+    }
+  }
 
-    // and: after submitting, the whole rating section is hidden
+  @Test
+  fun studentRatingSection_submit_hidesSection() {
+    val uiState = completedBookingUiState()
+
+    composeTestRule.setContent {
+      BookingDetailsContent(
+          uiState = uiState,
+          onCreatorClick = {},
+          onMarkCompleted = {},
+          onSubmitStudentRatings = { _, _ -> },
+      )
+    }
+
+    // Initially visible
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertIsDisplayed()
+
+    // Click submit
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)
+        .assertIsDisplayed()
+        .performClick()
+
+    // Wait for recomposition
+    composeTestRule.waitForIdle()
+
+    // After submit, the section should be gone
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertDoesNotExist()
   }
 }
