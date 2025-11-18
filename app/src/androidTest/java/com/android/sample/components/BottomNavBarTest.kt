@@ -17,6 +17,7 @@ import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.MainPageViewModel
+import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.ui.components.BottomNavBar
@@ -111,6 +112,7 @@ class BottomNavBarTest {
       val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
 
       val newListingViewModel: NewListingViewModel = viewModel(factory = factory)
+      val bookingDetailsViewModel: BookingDetailsViewModel = viewModel(factory = factory)
 
       AppNavGraph(
           navController = controller,
@@ -120,6 +122,7 @@ class BottomNavBarTest {
           authViewModel =
               AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
           newListingViewModel = newListingViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
           onGoogleSignIn = {})
       BottomNavBar(navController = controller)
     }

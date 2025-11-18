@@ -168,9 +168,7 @@ abstract class AppTest() {
 
   fun ComposeTestRule.navigateToBookingDetails() {
     navigateToMyBookings()
-    onNodeWithTag(BookingCardTestTag.CARD) // merged tree par défaut
-        .assertExists()
-        .performClick()
+    onNodeWithTag(BookingCardTestTag.CARD).assertExists().performClick()
   }
 
   /////// Helper Method to test components

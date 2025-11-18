@@ -218,7 +218,8 @@ fun AppNavGraph(
           onCreatorClick = { profileId ->
             profileID.value = profileId
             navController.navigate(NavRoutes.OTHERS_PROFILE)
-          })
+          },
+          bkgViewModel = bookingDetailsViewModel)
     }
   }
 }
