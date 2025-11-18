@@ -26,8 +26,8 @@ import java.util.UUID
  */
 class FakeProfileWorking : FakeProfileRepo {
 
-  private val profiles: List<Profile> =
-      listOf(
+  private val profiles =
+      mutableListOf(
           Profile(
               userId = "creator_1",
               name = "Alice",
@@ -53,15 +53,20 @@ class FakeProfileWorking : FakeProfileRepo {
       profiles.first { profile -> profile.userId == userId }
 
   override suspend fun addProfile(profile: Profile) {
-    // immutable mock → pas de persistance
+    profiles.add(profile)
   }
 
   override suspend fun updateProfile(userId: String, profile: Profile) {
-    // immutable mock → pas de persistance
+    val index = profiles.indexOfFirst { it.userId == userId }
+
+    if (index == -1)
+        throw IllegalStateException("Failed to update profile: user $userId not found.")
+
+    profiles[index] = profile
   }
 
   override suspend fun deleteProfile(userId: String) {
-    // immutable mock → pas de persistance
+    profiles.removeAll { profile -> profile.userId == userId }
   }
 
   override suspend fun getAllProfiles(): List<Profile> = profiles
@@ -69,17 +74,17 @@ class FakeProfileWorking : FakeProfileRepo {
   override suspend fun searchProfilesByLocation(
       location: Location,
       radiusKm: Double
-  ): List<Profile> = profiles
+  ): List<Profile> = TODO("Not yet implemented")
 
-  override suspend fun getProfileById(userId: String): Profile? = null
+  override suspend fun getProfileById(userId: String): Profile? = TODO("Not yet implemented")
 
-  override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
+  override suspend fun getSkillsForUser(userId: String): List<Skill> = TODO("Not yet implemented")
 
   override fun getCurrentUserId(): String {
-    return profiles.get(0).userId
+    return profiles[0].userId
   }
 
   override fun getCurrentUserName(): String? {
-    return profiles.get(0).name
+    return profiles[0].name
   }
 }
