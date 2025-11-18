@@ -93,7 +93,7 @@ class NewListingScreenTestFUN : AppTest() {
     // Indispensable : attendre que les erreurs apparaissent dans l’arbre
     composeTestRule.waitUntil(timeoutMillis = 10_000) {
       composeTestRule
-          .onAllNodesWithTag(NewListingScreenTestTag.INVALID_TITLE_MSG, useUnmergedTree = true)
+          .onAllNodesWithTag(LocationInputFieldTestTags.ERROR_MSG, useUnmergedTree = true)
           .fetchSemanticsNodes()
           .isNotEmpty()
     }
