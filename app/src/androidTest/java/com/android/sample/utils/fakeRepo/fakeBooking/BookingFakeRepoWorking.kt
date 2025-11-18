@@ -76,9 +76,8 @@ class BookingFakeRepoWorking : FakeBookingRepo {
     return bookings.filter { booking -> booking.associatedListingId == listingId }
   }
 
-  // --- Mutations ---
   override suspend fun addBooking(booking: Booking) {
-    bookings.add(booking.copy(bookingId = getNewUid()))
+    bookings.add(booking)
   }
 
   override suspend fun updateBooking(bookingId: String, booking: Booking) {
