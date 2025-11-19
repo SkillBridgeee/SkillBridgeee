@@ -457,158 +457,24 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     needs: [Assemble, Compile-Debug-Failure, Coverage-Report]
+    if: always()
 
     steps:
-      # 1) Checkout
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      # 2) KVM acceleration
-      - name: Enable KVM group perms
+      - name: Check All Jobs
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      # 3) Java
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "17"
-
-      # 4) Gradle cache
-      - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v3
-
-      # 5) AVD cache
-      - name: AVD cache
-        uses: actions/cache@v4
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-34
-
-      - name: create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          target: google_apis
-          arch: x86_64
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: false
-          script: echo "Generated AVD snapshot for caching."
-
-      # 6) Make gradlew executable
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      # 7) Create local.properties
-      - name: Create local.properties
-        env:
-          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
-        run: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > ./local.properties
-          if [ -n "$LOCAL_PROPERTIES" ]; then
-            echo "$LOCAL_PROPERTIES" | base64 --decode >> ./local.properties
-            echo "✅ LOCAL_PROPERTIES decoded and configured"
-          else
-            echo "::warning::LOCAL_PROPERTIES not set. Creating fallback."
-            echo "MAPS_API_KEY=DEFAULT_API_KEY" >> ./local.properties
+          if [[ "${{ needs.Format-Check.result }}" != "success" || \
+                "${{ needs.Assemble.result }}" != "success" || \
+                "${{ needs.Compile-Debug-Failure.result }}" != "success" || \
+                "${{ needs.Android-Tests.result }}" != "success" || \
+                "${{ needs.Unit-Tests.result }}" != "success" || \
+                "${{ needs.Coverage-Report.result }}" != "success" ]]; then
+            echo "One or more jobs failed:"
+            echo "Format Check: ${{ needs.Format-Check.result }}"
+            echo "Assemble and Lint: ${{ needs.Assemble.result }}"
+            echo "Compile Debug: ${{ needs.Compile-Debug-Failure.result }}"
+            echo "Android Instrumentation Tests: ${{ needs.Android-Tests.result }}"
+            echo "Unit Tests: ${{ needs.Unit-Tests.result }}"
+            echo "Coverage Report: ${{ needs.Coverage-Report.result }}"
+            exit 1
           fi
-
-      # 8) Decode google-services.json
-      - name: Decode google-services.json
-        env:
-          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
-        run: |
-          if [ -n "$GOOGLE_SERVICES" ]; then
-            echo "$GOOGLE_SERVICES" | base64 --decode > ./app/google-services.json
-          else
-            echo "::warning::GOOGLE_SERVICES secret not set."
-          fi
-
-      # 9) Setup Node + Firebase
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-
-      - name: Start Firebase Emulators
-        run: |
-          firebase emulators:start --only firestore,auth --project demo-test --debug > firebase.log 2>&1 &
-          for i in $(seq 1 30); do
-            if grep -q "All emulators started" firebase.log || grep -q "HTTP server listening" firebase.log; then
-              echo "Firebase emulators ready"
-              break
-            fi
-            sleep 1
-          done
-
-      # 10) Formatting checks
-      - name: KTFmt Check
-        run: ./gradlew ktfmtCheck --stacktrace
-
-      # 11) Build + Lint
-      - name: Assemble
-        run: ./gradlew assemble lint --stacktrace --build-cache
-
-      # 12) Unit tests
-      - name: Run Unit Tests
-        run: ./gradlew check --stacktrace --build-cache
-        env:
-          CI: true
-
-      # 13) Instrumented tests
-      - name: Run Android Tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          target: google_apis
-          arch: x86_64
-          force-avd-creation: false
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
-          script: ./gradlew connectedCheck --stacktrace --build-cache
-
-      # 14) Coverage
-      - name: Generate Coverage Report
-        run: ./gradlew jacocoTestReport --stacktrace
-
-      # 15) SonarCloud
-      - name: Upload report to SonarCloud
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew sonar --stacktrace --build-cache
-
-      # 16) Debug logs & Artifacts when CI FAILS
-      - name: Debug output on failure
-        if: failure()
-        run: |
-          echo "========= CI FAILED - DEBUG INFO ========="
-          echo "----- Gradle Daemon Logs -----"
-          find ~/.gradle/daemon -type f -name "*.log" -exec tail -n 200 {} \; || true
-          
-          echo "----- Firebase Emulator Logs -----"
-          tail -n 200 firebase.log || true
-
-      - name: Upload test reports
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports
-          path: |
-            **/build/reports/
-            firebase.log
-            ~/.gradle/daemon/
+          echo "All CI jobs completed successfully!"
