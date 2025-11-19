@@ -1,4 +1,4 @@
-in this name: CI - Test Runner
+name: CI - Test Runner
 
 on:
   push:
