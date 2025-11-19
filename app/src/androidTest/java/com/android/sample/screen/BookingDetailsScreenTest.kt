@@ -1,17 +1,26 @@
 package com.android.sample.screen
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.booking.*
 import com.android.sample.model.listing.*
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.*
 import java.util.*
+import kotlin.and
+import kotlin.collections.get
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -19,6 +28,17 @@ import org.junit.Test
 class BookingDetailsScreenTest {
 
   @get:Rule val composeTestRule = createComposeRule()
+
+  @Before
+  fun setUp() {
+    // Initialize provider in the test process so calls to the provider won't crash.
+    RatingRepositoryProvider.init(ApplicationProvider.getApplicationContext())
+
+    // Alternatively, if you have a fake repo:
+    // RatingRepositoryProvider.setForTests(FakeRatingRepository())
+
+    // Now it's safe to call setContent / launch the screen.
+  }
 
   // ----- FAKES -----
   private val fakeBookingRepo =
@@ -192,6 +212,32 @@ class BookingDetailsScreenTest {
             emptyList<com.android.sample.model.skill.Skill>()
       }
 
+  private fun completedBookingUiState(): BookingUIState {
+    val booking =
+        Booking(
+            bookingId = "booking-rating-completed",
+            associatedListingId = "listing-rating",
+            listingCreatorId = "creator-rating",
+            bookerId = "student-rating",
+            status = BookingStatus.COMPLETED,
+        )
+
+    val listing =
+        Proposal(
+            listingId = "listing-rating",
+            description = "Some course",
+            skill = Skill(skill = "Algebra", mainSubject = MainSubject.ACADEMICS),
+            location = Location(name = "Geneva"),
+        )
+
+    return BookingUIState(
+        booking = booking,
+        listing = listing,
+        creatorProfile = Profile(),
+        loadError = false,
+    )
+  }
+
   private fun fakeViewModelError() =
       BookingDetailsViewModel(
           bookingRepository = fakeBookingRepo,
@@ -333,6 +379,7 @@ class BookingDetailsScreenTest {
           uiState = uiState,
           onCreatorClick = {},
           onMarkCompleted = { clicked = true },
+          onSubmitStudentRatings = { _, _ -> },
       )
     }
 
@@ -367,10 +414,104 @@ class BookingDetailsScreenTest {
           uiState = uiState,
           onCreatorClick = {},
           onMarkCompleted = {},
+          onSubmitStudentRatings = { _, _ -> },
       )
     }
 
     // then: button should not exist in the tree
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertDoesNotExist()
+  }
+
+  @Test
+  fun studentRatingSection_notVisible_whenBookingNotCompleted() {
+    // given: a booking that is still PENDING
+    val booking =
+        Booking(
+            bookingId = "booking-rating-pending",
+            associatedListingId = "listing-rating",
+            listingCreatorId = "creator-rating",
+            bookerId = "student-rating",
+            status = BookingStatus.PENDING,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(),
+            creatorProfile = Profile(),
+            loadError = false,
+        )
+
+    composeTestRule.setContent {
+      BookingDetailsContent(
+          uiState = uiState,
+          onCreatorClick = {},
+          onMarkCompleted = {},
+          onSubmitStudentRatings = { _, _ -> },
+      )
+    }
+
+    // then: the rating section should not be in the tree
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertDoesNotExist()
+  }
+
+  @Test
+  fun studentRatingSection_exists_whenBookingCompleted() {
+    val uiState = completedBookingUiState()
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+        )
+      }
+    }
+
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_TUTOR).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_LISTING).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON).assertExists()
+  }
+
+  @Test
+  fun studentRatingSection_submit_callsCallbackWithCurrentValues() {
+    val uiState = completedBookingUiState()
+
+    var callbackCalled = false
+    var receivedTutorStars = -1
+    var receivedListingStars = -1
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { tutorStars, listingStars ->
+              callbackCalled = true
+              receivedTutorStars = tutorStars
+              receivedListingStars = listingStars
+            },
+        )
+      }
+    }
+
+    // We only require the button to exist
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)
+        .assertExists()
+        // Use semantics directly instead of performClick()
+        .performSemanticsAction(SemanticsActions.OnClick)
+
+    // Wait until Compose is idle and then check the callback
+    composeTestRule.runOnIdle {
+      assert(callbackCalled)
+      // Default values since we didn't touch the stars
+      assert(receivedTutorStars == 0)
+      assert(receivedListingStars == 0)
+    }
   }
 }
