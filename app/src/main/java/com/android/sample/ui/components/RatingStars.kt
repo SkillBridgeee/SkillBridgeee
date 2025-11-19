@@ -18,6 +18,8 @@ object RatingStarsTestTags {
   const val OUTLINED_STAR = "RatingStarsTestTags.OUTLINED_STAR"
 }
 
+private const val MAX_STARS = 5
+
 /**
  * A composable that displays a star rating out of 5.
  *
@@ -63,7 +65,7 @@ fun RatingStarsInput(
     modifier: Modifier = Modifier,
 ) {
   Row(modifier = modifier) {
-    repeat(5) { index ->
+    repeat(MAX_STARS) { index ->
       val starNumber = index + 1
       val isFilled = starNumber <= selectedStars
 
