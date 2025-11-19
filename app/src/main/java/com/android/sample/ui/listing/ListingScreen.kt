@@ -150,9 +150,7 @@ fun ListingScreen(
             onRejectBooking = { bookingId -> viewModel.rejectBooking(bookingId) },
             onDeleteListing = { scope.launch { viewModel.deleteListing() } },
             onEditListing = onEditListing,
-            autoFillDatesForTesting = autoFillDatesForTesting)
-            onApproveBooking = { viewModel.approveBooking(it) },
-            onRejectBooking = { viewModel.rejectBooking(it) },
+            autoFillDatesForTesting = autoFillDatesForTesting,
             onSubmitTutorRating = { stars -> viewModel.submitTutorRating(stars) })
       }
     }

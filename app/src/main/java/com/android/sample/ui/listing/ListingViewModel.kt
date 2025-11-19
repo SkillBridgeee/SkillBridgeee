@@ -31,8 +31,7 @@ data class ListingUiState(
     val bookingSuccess: Boolean = false,
     val listingBookings: List<Booking> = emptyList(),
     val bookingsLoading: Boolean = false,
-    val bookerProfiles: Map<String, Profile> = emptyMap(),
-    val listingDeleted: Boolean = false
+    val listingDeleted: Boolean = false,
     val bookerProfiles: Map<String, Profile> = emptyMap(),
     val tutorRatingPending: Boolean = false
 )
