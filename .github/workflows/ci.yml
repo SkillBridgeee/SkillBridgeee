@@ -11,7 +11,9 @@ on:
       - reopened
 
 jobs:
-  format-check:
+
+  # 1) Checks for KTFMT formatting
+  Format-Check:
     name: Format Check
     runs-on: ubuntu-latest
 
@@ -37,10 +39,11 @@ jobs:
       - name: KTFmt Check
         run: ./gradlew ktfmtCheck --stacktrace
 
-  build:
+  # 2) Build and Lint
+  Assemble:
     name: Build and Lint
     runs-on: ubuntu-latest
-    needs: format-check
+    needs: Format-Check
 
     steps:
       - name: Checkout
@@ -90,14 +93,66 @@ jobs:
       - name: Debug output on failure
         if: failure()
         run: |
-          echo "========= BUILD & LINT FAILED - DEBUG INFO ========="
+          echo "========= ASSEMBLE FAILED - DEBUG INFO ========="
           echo "----- Gradle Daemon Logs -----"
           find ~/.gradle/daemon -type f -name "*.log" -exec tail -n 200 {} \; || true
 
-  unit-tests:
-    name: Unit Tests (with Firebase emulators)
+  # 3) Optional: Compile Debug failure logs (mostly redundant with Assemble)
+  Compile-Debug-Failure:
+    name: Compile Debug Classes
     runs-on: ubuntu-latest
-    needs: build
+    needs: Assemble
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Create local.properties
+        env:
+          LOCAL_PROPERTIES: ${{ secrets.LOCAL_PROPERTIES }}
+        run: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > ./local.properties
+          if [ -n "$LOCAL_PROPERTIES" ]; then
+            echo "$LOCAL_PROPERTIES" | base64 --decode >> ./local.properties
+            echo "✅ LOCAL_PROPERTIES decoded and configured"
+          else
+            echo "::warning::LOCAL_PROPERTIES not set. Creating fallback."
+            echo "MAPS_API_KEY=DEFAULT_API_KEY" >> ./local.properties
+          fi
+
+      - name: Decode google-services.json
+        env:
+          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES" ]; then
+            echo "$GOOGLE_SERVICES" | base64 --decode > ./app/google-services.json
+          else
+            echo "::warning::GOOGLE_SERVICES secret not set."
+          fi
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Compile Debug Classes
+        run: ./gradlew compileDebugSources --parallel --build-cache
+
+  # 4) Unit tests (with Firebase, no Android emulator)
+  Unit-Tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: Assemble
 
     steps:
       - name: Checkout
@@ -185,10 +240,10 @@ jobs:
             firebase.log
             ~/.gradle/daemon/
 
-  android-tests:
-    name: Android Instrumented Tests
+  Android-Tests:
+    name: Android Tests
     runs-on: ubuntu-latest
-    needs: build
+    needs: Assemble
 
     steps:
       - name: Checkout
@@ -201,7 +256,7 @@ jobs:
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
+          sudo udevadm trigger --name-match=kvm  
 
       - name: Setup JDK
         uses: actions/setup-java@v4
@@ -276,7 +331,7 @@ jobs:
               break
             fi
             sleep 1
-          done
+          done  
 
       - name: Run Android Tests
         uses: reactivecircus/android-emulator-runner@v2
@@ -322,10 +377,10 @@ jobs:
             firebase.log
             ~/.gradle/daemon/
 
-  coverage:
-    name: Coverage Report & SonarCloud
+  Coverage-Report:
+    name: Coverage Report
     runs-on: ubuntu-latest
-    needs: [unit-tests, android-tests]
+    needs: [Unit-Tests, Android-Tests]
 
     steps:
       - name: Checkout
@@ -364,7 +419,7 @@ jobs:
             echo "$GOOGLE_SERVICES" | base64 --decode > ./app/google-services.json
           else
             echo "::warning::GOOGLE_SERVICES secret not set."
-          fi
+          fi  
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
@@ -379,27 +434,29 @@ jobs:
         run: ./gradlew sonar --stacktrace --build-cache
 
   ci:
-    name: CI Summary
+    name: CI
     runs-on: ubuntu-latest
-    needs: [format-check, build, unit-tests, android-tests, coverage]
+    needs: [Format-Check, Assemble, Compile-Debug-Failure, Unit-Tests, Android-Tests, Coverage-Report]
     if: always()
 
     steps:
       - name: Check All Jobs
         run: |
-          echo "Format Check:        ${{ needs.format-check.result }}"
-          echo "Build & Lint:        ${{ needs.build.result }}"
-          echo "Unit Tests:          ${{ needs.unit-tests.result }}"
-          echo "Android Tests:       ${{ needs.android-tests.result }}"
-          echo "Coverage & Sonar:    ${{ needs.coverage.result }}"
+          echo "Format Check:              ${{ needs.Format-Check.result }}"
+          echo "Assemble and Lint:         ${{ needs.Assemble.result }}"
+          echo "Compile Debug:             ${{ needs.Compile-Debug-Failure.result }}"
+          echo "Unit Tests:                ${{ needs.Unit-Tests.result }}"
+          echo "Android Instrumented Tests:${{ needs.Android-Tests.result }}"
+          echo "Coverage Report:           ${{ needs.Coverage-Report.result }}"
 
-          if [[ "${{ needs.format-check.result }}" != "success" || \
-                "${{ needs.build.result }}" != "success" || \
-                "${{ needs.unit-tests.result }}" != "success" || \
-                "${{ needs.android-tests.result }}" != "success" || \
-                "${{ needs.coverage.result }}" != "success" ]]; then
-            echo "One or more jobs failed."
+          if [[ "${{ needs.Format-Check.result }}" != "success" || \
+                "${{ needs.Assemble.result }}" != "success" || \
+                "${{ needs.Compile-Debug-Failure.result }}" != "success" || \
+                "${{ needs.Unit-Tests.result }}" != "success" || \
+                "${{ needs.Android-Tests.result }}" != "success" || \
+                "${{ needs.Coverage-Report.result }}" != "success" ]]; then
+            echo "❌ One or more jobs failed."
             exit 1
           fi
 
-          echo "All CI jobs completed successfully!"
+          echo "✅ All CI jobs completed successfully!"
