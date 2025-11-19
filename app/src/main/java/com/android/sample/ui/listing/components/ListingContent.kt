@@ -294,7 +294,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.listing.ListingType
-import com.android.sample.ui.components.RatingStarsInput
 import com.android.sample.ui.listing.ListingScreenTestTags
 import com.android.sample.ui.listing.ListingUiState
 import java.text.SimpleDateFormat
@@ -316,7 +315,6 @@ fun ListingContent(
     onBook: (Date, Date) -> Unit,
     onApproveBooking: (String) -> Unit,
     onRejectBooking: (String) -> Unit,
-    onSubmitTutorRating: (Int) -> Unit,
     modifier: Modifier = Modifier,
     autoFillDatesForTesting: Boolean = false
 ) {
@@ -327,31 +325,38 @@ fun ListingContent(
   LazyColumn(
       modifier = modifier.fillMaxSize().padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(16.dp)) {
-
-        // Existing top content
         item {
           TypeBadge(listingType = listing.type)
 
+          // Title/Description
           Text(
               text = listing.displayTitle(),
               style = MaterialTheme.typography.headlineMedium,
               fontWeight = FontWeight.Bold,
               modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
 
+          // Description card (if present)
           DescriptionCard(listing.description)
+
+          // Creator info (if available)
           creator?.let { CreatorCard(it) }
+
+          // Skill details
           SkillDetailsCard(skill = listing.skill)
+
+          // Location
           LocationCard(locationName = listing.location.name)
+
+          // Hourly rate
           HourlyRateCard(hourlyRate = listing.hourlyRate)
+
+          // Created date
           PostedDate(listing.createdAt)
+
           Spacer(Modifier.height(8.dp))
         }
 
-        if (uiState.isOwnListing && uiState.tutorRatingPending) {
-          item { TutorRatingSection(onSubmitTutorRating = onSubmitTutorRating) }
-        }
-
-        // Action section
+        // Action section (book button or bookings management)
         actionSection(
             uiState = uiState,
             onShowBookingDialog = { showBookingDialog = true },
@@ -359,7 +364,7 @@ fun ListingContent(
             onRejectBooking = onRejectBooking)
       }
 
-  // Booking dialog (unchanged)
+  // Booking dialog
   if (showBookingDialog) {
     BookingDialog(
         onDismiss = { showBookingDialog = false },
@@ -502,36 +507,6 @@ private fun PostedDate(date: Date) {
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
-}
-
-@Composable
-private fun TutorRatingSection(onSubmitTutorRating: (Int) -> Unit) {
-  var stars by remember { mutableStateOf(0) }
-  var submitted by remember { mutableStateOf(false) }
-
-  if (submitted) return
-
-  Column(
-      modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.TUTOR_RATING_SECTION),
-      verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = "Rate your student",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold)
-
-        Column(modifier = Modifier.testTag(ListingScreenTestTags.TUTOR_RATING_STARS)) {
-          RatingStarsInput(selectedStars = stars, onSelected = { stars = it })
-        }
-
-        Button(
-            onClick = {
-              onSubmitTutorRating(stars)
-              submitted = true
-            },
-            modifier = Modifier.testTag(ListingScreenTestTags.TUTOR_RATING_SUBMIT)) {
-              Text("Submit rating")
-            }
-      }
 }
 
 /** Action button section (book now or bookings management) */
