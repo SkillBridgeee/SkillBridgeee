@@ -499,7 +499,7 @@ class ListingScreenTest {
           listingId = "listing-123",
           onNavigateBack = { navigatedBack = true },
           viewModel = vm,
-      )
+          onEditListing = {})
     }
 
     // Wait for content to load (title appears)

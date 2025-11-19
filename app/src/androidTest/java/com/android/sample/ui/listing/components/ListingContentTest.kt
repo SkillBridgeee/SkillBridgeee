@@ -84,7 +84,9 @@ class ListingContentTest {
             onBook = { _, _ -> },
             onApproveBooking = {},
             onRejectBooking = {},
-            onSubmitTutorRating = {})
+            onSubmitTutorRating = {},
+            onDeleteListing = {},
+            onEditListing = {})
       }
     }
 
@@ -103,7 +105,8 @@ class ListingContentTest {
             onApproveBooking = {},
             onRejectBooking = {},
             onSubmitTutorRating = {},
-        )
+            onEditListing = {},
+            onDeleteListing = {})
       }
     }
 
@@ -123,7 +126,8 @@ class ListingContentTest {
             onApproveBooking = {},
             onRejectBooking = {},
             onSubmitTutorRating = {},
-        )
+            onEditListing = {},
+            onDeleteListing = {})
       }
     }
 

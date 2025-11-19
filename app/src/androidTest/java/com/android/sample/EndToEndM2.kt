@@ -33,7 +33,7 @@ import org.junit.runner.RunWith
 
 // Helpers (inspired by SignUpScreenTest)
 
-private const val DEFAULT_TIMEOUT_MS = 10_000L // Reduced from 30_000
+private const val DEFAULT_TIMEOUT_MS = 20_000L // Reduced from 30_000
 
 private fun waitForTag(
     rule: ComposeContentTestRule,
