@@ -170,7 +170,9 @@ fun BookingDetailsContent(
 
     // Once the session is completed, allow the student to rate the tutor and listing
     if (uiState.booking.status == BookingStatus.COMPLETED) {
-      StudentRatingSection(onSubmitStudentRatings = onSubmitStudentRatings)
+      StudentRatingSection(
+          ratingSubmitted = uiState.ratingSubmitted,
+          onSubmitStudentRatings = onSubmitStudentRatings)
     }
   }
 }
@@ -427,6 +429,31 @@ private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
 }
 
 /**
+ * A reusable UI component that displays a rating input row consisting of:
+ * - A label (e.g., "Tutor", "Listing")
+ * - A star-based rating selector using [RatingStarsInput]
+ *
+ * This composable eliminates duplicated logic between the tutor and listing rating UI.
+ *
+ * @param label The descriptive label shown above the star rating (e.g., "Tutor").
+ * @param selected The currently selected star value (0–5).
+ * @param onSelected Callback invoked when the user selects a different number of stars.
+ * @param modifier Optional [Modifier] applied to the container.
+ */
+@Composable
+private fun RatingRow(
+    label: String,
+    selected: Int,
+    onSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+  Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier) {
+    Text(text = label, style = MaterialTheme.typography.bodyMedium)
+    RatingStarsInput(selectedStars = selected, onSelected = onSelected)
+  }
+}
+
+/**
  * UI section allowing the student to rate the tutor and the listing after the session has been
  * completed.
  *
@@ -439,54 +466,34 @@ private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
  */
 @Composable
 private fun StudentRatingSection(
+    ratingSubmitted: Boolean,
     onSubmitStudentRatings: (Int, Int) -> Unit,
 ) {
-  var tutorStars by remember { mutableStateOf(0) } // start EMPTY
-  var listingStars by remember { mutableStateOf(0) } // start EMPTY
-  var hasSubmitted by remember { mutableStateOf(false) }
+  if (ratingSubmitted) return
 
-  // Once submitted, hide the whole section
-  if (hasSubmitted) return
+  var tutorStars by remember { mutableStateOf(0) }
+  var listingStars by remember { mutableStateOf(0) }
+
+  val isButtonEnabled = tutorStars > 0 && listingStars > 0
 
   Column(
       modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.RATING_SECTION),
-      verticalArrangement = Arrangement.spacedBy(12.dp),
-      horizontalAlignment = Alignment.Start) {
-        Text(
-            text = "Rate your experience",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
+      verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        RatingRow(
+            label = "Tutor",
+            selected = tutorStars,
+            onSelected = { tutorStars = it },
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_TUTOR))
 
-        // Tutor rating
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_TUTOR)) {
-              Text(text = "Tutor", style = MaterialTheme.typography.bodyMedium)
-              RatingStarsInput(
-                  selectedStars = tutorStars,
-                  onSelected = { tutorStars = it },
-              )
-            }
-
-        // Listing rating
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_LISTING)) {
-              Text(text = "Listing", style = MaterialTheme.typography.bodyMedium)
-              RatingStarsInput(
-                  selectedStars = listingStars,
-                  onSelected = { listingStars = it }, // IMPORTANT: listingStars, not tutorStars
-              )
-            }
+        RatingRow(
+            label = "Listing",
+            selected = listingStars,
+            onSelected = { listingStars = it },
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_LISTING))
 
         Button(
-            onClick = {
-              // you can also enforce "no 0" if you want:
-              // if (tutorStars > 0 && listingStars > 0) { ... }
-              onSubmitStudentRatings(tutorStars, listingStars)
-              hasSubmitted = true
-            },
+            enabled = isButtonEnabled,
+            onClick = { onSubmitStudentRatings(tutorStars, listingStars) },
             modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
               Text("Submit ratings")
             }

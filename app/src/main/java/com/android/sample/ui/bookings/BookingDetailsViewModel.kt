@@ -28,15 +28,15 @@ data class BookingUIState(
     val booking: Booking = Booking(),
     val listing: Listing = Proposal(),
     val creatorProfile: Profile = Profile(),
-    val loadError: Boolean = false
+    val loadError: Boolean = false,
+    val ratingSubmitted: Boolean = false
 )
 
 class BookingDetailsViewModel(
     private val bookingRepository: BookingRepository = BookingRepositoryProvider.repository,
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
-    private val ratingRepository: RatingRepository = RatingRepositoryProvider.repository, // added
-    initialState: BookingUIState = BookingUIState()
+    private val ratingRepository: RatingRepository = RatingRepositoryProvider.repository,
 ) : ViewModel() {
 
   private val _bookingUiState = MutableStateFlow(BookingUIState())
@@ -107,12 +107,40 @@ class BookingDetailsViewModel(
     }
   }
 
+  /**
+   * Submits the student's ratings for both the tutor and the listing.
+   *
+   * This method:
+   * - Ensures a valid booking is loaded.
+   * - Ensures the booking has been completed (ratings allowed only after completion).
+   * - Validates that both star values are within the range [1–5].
+   * - Converts the raw star values into `StarRating` enums.
+   * - Creates and validates two `Rating` objects:
+   *     - a tutor rating (type = `TUTOR`)
+   *     - a listing rating (type = `LISTING`)
+   * - Persists both ratings via the `RatingRepository`.
+   *
+   * If any step fails (invalid input, missing booking, repository errors), the function logs a
+   * warning/error and updates the UI state with `loadError = true` so the UI can react.
+   *
+   * @param tutorStars The number of stars (1–5) that the student gives to the tutor.
+   * @param listingStars The number of stars (1–5) that the student gives to the listing/course.
+   */
   fun submitStudentRatings(tutorStars: Int, listingStars: Int) {
     val booking = bookingUiState.value.booking
 
     // No booking loaded or not completed -> do nothing
     if (booking.bookingId.isBlank()) return
     if (booking.status != BookingStatus.COMPLETED) return
+
+    // Validate inputs: both ratings must be between 1 and 5
+    if (tutorStars !in 1..5 || listingStars !in 1..5) {
+      Log.w(
+          "BookingDetailsViewModel",
+          "Ignoring invalid star values: tutor=$tutorStars, listing=$listingStars")
+      _bookingUiState.value = bookingUiState.value.copy(loadError = true)
+      return
+    }
 
     val tutorRatingEnum = tutorStars.toStarRating()
     val listingRatingEnum = listingStars.toStarRating()
@@ -153,9 +181,7 @@ class BookingDetailsViewModel(
         ratingRepository.addRating(tutorRating)
         ratingRepository.addRating(listingRating)
 
-        // optional: you could add a flag in UI state to hide rating UI after submit
-        // _bookingUiState.value = bookingUiState.value.copy(ratingSubmitted = true)
-
+        _bookingUiState.value = bookingUiState.value.copy(ratingSubmitted = true)
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error submitting student ratings", e)
         _bookingUiState.value = bookingUiState.value.copy(loadError = true)
@@ -163,6 +189,16 @@ class BookingDetailsViewModel(
     }
   }
 
+  /**
+   * Converts an integer star count into a `StarRating` enum.
+   *
+   * Accepts only values in the range 1–5. Calling this method with any other integer results in an
+   * [IllegalArgumentException], ensuring invalid values do not silently pass.
+   *
+   * @return The corresponding [StarRating] enum.
+   * @receiver The integer star value to convert.
+   * @throws IllegalArgumentException if the integer is not between 1 and 5.
+   */
   private fun Int.toStarRating(): StarRating =
       when (this) {
         1 -> StarRating.ONE
@@ -170,6 +206,6 @@ class BookingDetailsViewModel(
         3 -> StarRating.THREE
         4 -> StarRating.FOUR
         5 -> StarRating.FIVE
-        else -> StarRating.FIVE // fallback
+        else -> throw IllegalArgumentException("Invalid star value: $this")
       }
 }
