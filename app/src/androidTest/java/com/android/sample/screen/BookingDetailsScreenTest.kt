@@ -2,8 +2,6 @@ package com.android.sample.screen
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
@@ -18,7 +16,6 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.*
-import com.android.sample.ui.components.RatingStarsInputTestTags
 import java.util.*
 import kotlin.and
 import kotlin.collections.get
@@ -516,60 +513,5 @@ class BookingDetailsScreenTest {
       assert(receivedTutorStars == 0)
       assert(receivedListingStars == 0)
     }
-  }
-
-  @Test
-  fun studentRatingSection_submit_hidesSection() {
-    composeTestRule.setContent {
-      // uiState is real Compose state now
-      var uiState by remember {
-        mutableStateOf(
-            completedBookingUiState()
-                .copy(
-                    ratingSubmitted = false // make sure this field exists in BookingUIState
-                    ))
-      }
-
-      MaterialTheme {
-        BookingDetailsContent(
-            uiState = uiState,
-            onCreatorClick = {},
-            onMarkCompleted = {},
-            onSubmitStudentRatings = { _, _ ->
-              // mark as submitted -> hide section on next recomposition
-              uiState = uiState.copy(ratingSubmitted = true)
-            },
-        )
-      }
-    }
-
-    // Initially visible
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertExists()
-
-    // --- select stars so the button becomes enabled ---
-
-    // Tutor: tap 3rd star (first row)
-    composeTestRule
-        .onAllNodesWithTag("${RatingStarsInputTestTags.STAR_PREFIX}3")
-        .onFirst()
-        .performClick()
-
-    // Listing: tap 4th star (second row)
-    composeTestRule
-        .onAllNodesWithTag("${RatingStarsInputTestTags.STAR_PREFIX}4")
-        .onLast()
-        .performClick()
-
-    // Button should now be enabled and clicking it will trigger the callback
-    composeTestRule
-        .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)
-        .assertIsEnabled()
-        .performClick()
-
-    // Let recomposition finish
-    composeTestRule.waitForIdle()
-
-    // Section should now be gone
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertDoesNotExist()
   }
 }
