@@ -55,7 +55,7 @@ jobs:
       - name: KTFmt Check
         run: ./gradlew ktfmtCheck --stacktrace
 
-  Build and Lint:
+  Assemble:
     name: Build and Lint
     runs-on: ubuntu-latest
     needs: Format-Check
