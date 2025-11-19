@@ -1,68 +1,68 @@
-//package com.android.sample
+// package com.android.sample
 //
-//import androidx.compose.ui.test.assertIsDisplayed
-//import androidx.compose.ui.test.assertIsEnabled
-//import androidx.compose.ui.test.assertIsNotDisplayed
-//import androidx.compose.ui.test.assertIsNotEnabled
-//import androidx.compose.ui.test.assertTextContains
-//import androidx.compose.ui.test.hasTestTag
-//import androidx.compose.ui.test.hasText
-//import androidx.compose.ui.test.junit4.ComposeContentTestRule
-//import androidx.compose.ui.test.junit4.createAndroidComposeRule
-//import androidx.compose.ui.test.onAllNodesWithTag
-//import androidx.compose.ui.test.onNodeWithContentDescription
-//import androidx.compose.ui.test.onNodeWithTag
-//import androidx.compose.ui.test.onNodeWithText
-//import androidx.compose.ui.test.performClick
-//import androidx.compose.ui.test.performImeAction
-//import androidx.compose.ui.test.performScrollTo
-//import androidx.compose.ui.test.performTextClearance
-//import androidx.compose.ui.test.performTextInput
-//import androidx.test.ext.junit.runners.AndroidJUnit4
-//import com.android.sample.ui.HomePage.HomeScreenTestTags
-//import com.android.sample.ui.bookings.MyBookingsPageTestTag
-//import com.android.sample.ui.components.LocationInputFieldTestTags
-//import com.android.sample.ui.login.SignInScreenTestTags
-//import com.android.sample.ui.newListing.NewListingScreenTestTag
-//import com.android.sample.ui.profile.MyProfileScreenTestTag
-//import com.android.sample.ui.signup.SignUpScreenTestTags
-//import com.android.sample.ui.subject.SubjectListTestTags
-//import org.junit.Rule
-//import org.junit.Test
-//import org.junit.runner.RunWith
+// import androidx.compose.ui.test.assertIsDisplayed
+// import androidx.compose.ui.test.assertIsEnabled
+// import androidx.compose.ui.test.assertIsNotDisplayed
+// import androidx.compose.ui.test.assertIsNotEnabled
+// import androidx.compose.ui.test.assertTextContains
+// import androidx.compose.ui.test.hasTestTag
+// import androidx.compose.ui.test.hasText
+// import androidx.compose.ui.test.junit4.ComposeContentTestRule
+// import androidx.compose.ui.test.junit4.createAndroidComposeRule
+// import androidx.compose.ui.test.onAllNodesWithTag
+// import androidx.compose.ui.test.onNodeWithContentDescription
+// import androidx.compose.ui.test.onNodeWithTag
+// import androidx.compose.ui.test.onNodeWithText
+// import androidx.compose.ui.test.performClick
+// import androidx.compose.ui.test.performImeAction
+// import androidx.compose.ui.test.performScrollTo
+// import androidx.compose.ui.test.performTextClearance
+// import androidx.compose.ui.test.performTextInput
+// import androidx.test.ext.junit.runners.AndroidJUnit4
+// import com.android.sample.ui.HomePage.HomeScreenTestTags
+// import com.android.sample.ui.bookings.MyBookingsPageTestTag
+// import com.android.sample.ui.components.LocationInputFieldTestTags
+// import com.android.sample.ui.login.SignInScreenTestTags
+// import com.android.sample.ui.newListing.NewListingScreenTestTag
+// import com.android.sample.ui.profile.MyProfileScreenTestTag
+// import com.android.sample.ui.signup.SignUpScreenTestTags
+// import com.android.sample.ui.subject.SubjectListTestTags
+// import org.junit.Rule
+// import org.junit.Test
+// import org.junit.runner.RunWith
 //
 //// Helpers (inspired by SignUpScreenTest)
 //
-//private const val DEFAULT_TIMEOUT_MS = 10_000L // Reduced from 30_000
+// private const val DEFAULT_TIMEOUT_MS = 10_000L // Reduced from 30_000
 //
-//private fun waitForTag(
+// private fun waitForTag(
 //    rule: ComposeContentTestRule,
 //    tag: String,
 //    timeoutMs: Long = DEFAULT_TIMEOUT_MS
-//) {
+// ) {
 //  rule.waitUntil(timeoutMs) {
 //    rule.onAllNodes(hasTestTag(tag), useUnmergedTree = false).fetchSemanticsNodes().isNotEmpty()
 //  }
-//}
+// }
 //
-//private fun waitForText(
+// private fun waitForText(
 //    rule: ComposeContentTestRule,
 //    tag: String,
 //    timeoutMs: Long = DEFAULT_TIMEOUT_MS
-//) {
+// ) {
 //  rule.waitUntil(timeoutMs) {
 //    rule.onAllNodes(hasText(tag), useUnmergedTree = false).fetchSemanticsNodes().isNotEmpty()
 //  }
-//}
+// }
 //
-//private fun ComposeContentTestRule.nodeByTag(tag: String) =
+// private fun ComposeContentTestRule.nodeByTag(tag: String) =
 //    onNodeWithTag(tag, useUnmergedTree = false)
 //
-//private fun ComposeContentTestRule.nodeByText(text: String) =
+// private fun ComposeContentTestRule.nodeByText(text: String) =
 //    onNodeWithText(text, useUnmergedTree = false)
 //
-//@RunWith(AndroidJUnit4::class)
-//class EndToEndM2 {
+// @RunWith(AndroidJUnit4::class)
+// class EndToEndM2 {
 //
 //  @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 //
@@ -247,7 +247,8 @@
 //        .performClick()
 //        .performTextInput(TEST_TITLE)
 //
-//    compose.onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE).assertTextContains(TEST_TITLE)
+//
+// compose.onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE).assertTextContains(TEST_TITLE)
 //
 //    compose
 //        .onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION)
@@ -300,4 +301,4 @@
 //    waitForTag(compose, MyBookingsPageTestTag.EMPTY)
 //    compose.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
 //  }
-//}
+// }
