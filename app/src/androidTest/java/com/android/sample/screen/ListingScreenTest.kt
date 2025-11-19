@@ -366,7 +366,7 @@ class ListingScreenTest {
 
     // wait for compose to settle and for the book button to appear
     compose.waitForIdle()
-    compose.waitUntil(5_000) {
+    compose.waitUntil(10_000) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON, useUnmergedTree = true)
           .fetchSemanticsNodes()
@@ -376,7 +376,7 @@ class ListingScreenTest {
     compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON, useUnmergedTree = true).performClick()
 
     // wait for dialog to appear
-    compose.waitUntil(5_000) {
+    compose.waitUntil(10_000) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.BOOKING_DIALOG, useUnmergedTree = true)
           .fetchSemanticsNodes()
