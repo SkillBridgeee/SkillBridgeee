@@ -905,4 +905,67 @@ class ListingViewModelTest {
     assertFalse(state.tutorRatingPending)
     assertEquals(1, state.listingBookings.size)
   }
+
+  @Test
+  fun submitTutorRating_updatesState() = runTest {
+    // User is the owner
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    // A completed booking -> rating pending becomes TRUE
+    val completedBooking = sampleBooking.copy(status = BookingStatus.COMPLETED)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(mutableListOf(completedBooking))
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    // Load listing (this will load bookings and set tutorRatingPending = true)
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Sanity check: make sure it’s true before the test
+    assertTrue(viewModel.uiState.value.tutorRatingPending)
+
+    // Act
+    viewModel.submitTutorRating(5)
+    advanceUntilIdle()
+
+    // Assert
+    assertFalse(viewModel.uiState.value.tutorRatingPending)
+  }
+
+  @Test
+  fun createBooking_illegalArgumentException_setsInvalidBookingError() = runTest {
+    UserSessionManager.setCurrentUserId("user-123")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+
+    val bookingRepo =
+        object : FakeBookingRepo() {
+          override suspend fun addBooking(booking: Booking) {
+            throw IllegalArgumentException("Test invalid booking")
+          }
+        }
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    val sessionStart = Date()
+    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+
+    // Act
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    // Assert
+    val state = viewModel.uiState.value
+    assertNotNull(state.bookingError)
+    assertTrue(state.bookingError!!.contains("Invalid booking"))
+    assertFalse(state.bookingSuccess)
+  }
 }
