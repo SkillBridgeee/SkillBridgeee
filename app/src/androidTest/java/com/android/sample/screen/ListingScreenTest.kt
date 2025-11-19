@@ -375,13 +375,13 @@ class ListingScreenTest {
 
     compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON, useUnmergedTree = true).performClick()
 
-    // wait for dialog to appear
-    compose.waitUntil(10_000) {
-      compose
-          .onAllNodesWithTag(ListingScreenTestTags.BOOKING_DIALOG, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    //    // wait for dialog to appear
+    //    compose.waitUntil(10_000) {
+    //      compose
+    //          .onAllNodesWithTag(ListingScreenTestTags.BOOKING_DIALOG, useUnmergedTree = true)
+    //          .fetchSemanticsNodes()
+    //          .isNotEmpty()
+    //    }
 
     compose.onNodeWithTag(ListingScreenTestTags.BOOKING_DIALOG).assertIsDisplayed()
   }
