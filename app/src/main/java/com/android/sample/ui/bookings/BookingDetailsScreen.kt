@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,7 +27,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +46,7 @@ import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.booking.color
 import com.android.sample.model.booking.name
 import com.android.sample.model.listing.ListingType
+import com.android.sample.ui.components.RatingStarsInput
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -59,6 +63,12 @@ object BookingDetailsTestTag {
 
   const val STATUS = "booking_status"
   const val ROW = "booking_detail_row"
+  const val COMPLETE_BUTTON = "booking_complete_button"
+
+  const val RATING_SECTION = "booking_rating_section"
+  const val RATING_TUTOR = "booking_rating_tutor"
+  const val RATING_LISTING = "booking_rating_listing"
+  const val RATING_SUBMIT_BUTTON = "booking_rating_submit"
 }
 
 /**
@@ -96,6 +106,10 @@ fun BookingDetailsScreen(
       BookingDetailsContent(
           uiState = uiState,
           onCreatorClick = { profileId -> onCreatorClick(profileId) },
+          onMarkCompleted = { bkgViewModel.markBookingAsCompleted() },
+          onSubmitStudentRatings = { tutorStars, listingStars ->
+            bkgViewModel.submitStudentRatings(tutorStars, listingStars)
+          },
           modifier = Modifier.padding(paddingValues).fillMaxSize().padding(16.dp))
     }
   }
@@ -119,6 +133,8 @@ fun BookingDetailsScreen(
 fun BookingDetailsContent(
     uiState: BookingUIState,
     onCreatorClick: (String) -> Unit,
+    onMarkCompleted: () -> Unit,
+    onSubmitStudentRatings: (Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
   Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -145,6 +161,19 @@ fun BookingDetailsContent(
 
     // Description
     InfoDesc(uiState)
+
+    HorizontalDivider()
+    // Let the student mark the session as completed once it is confirmed
+    if (uiState.booking.status == BookingStatus.CONFIRMED) {
+      ConfirmCompletionSection(onMarkCompleted)
+    }
+
+    // Once the session is completed, allow the student to rate the tutor and listing
+    if (uiState.booking.status == BookingStatus.COMPLETED) {
+      StudentRatingSection(
+          ratingSubmitted = uiState.ratingSubmitted,
+          onSubmitStudentRatings = onSubmitStudentRatings)
+    }
   }
 }
 
@@ -368,4 +397,105 @@ private fun BookingStatus(status: BookingStatus) {
           Modifier.border(width = 1.dp, color = status.color(), shape = RoundedCornerShape(12.dp))
               .padding(horizontal = 12.dp, vertical = 6.dp)
               .testTag(BookingDetailsTestTag.STATUS))
+}
+
+/**
+ * UI section allowing a tutor to confirm that a booked learning session has been completed.
+ *
+ * This component displays a prompt text and a button. When the user taps the **"Mark as
+ * completed"** button, the `onMarkCompleted` callback is invoked.
+ *
+ * It is typically shown when a booking has the status `CONFIRMED` and the tutor can now validate
+ * that the session actually took place.
+ *
+ * @param onMarkCompleted Callback triggered when the user clicks the **Mark as completed** button.
+ */
+@Composable
+private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
+  Column(
+      modifier = Modifier.fillMaxWidth(),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "Has the session taken place?",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Button(
+            onClick = onMarkCompleted,
+            modifier = Modifier.testTag(BookingDetailsTestTag.COMPLETE_BUTTON)) {
+              Text(text = "Mark as completed")
+            }
+      }
+}
+
+/**
+ * A reusable UI component that displays a rating input row consisting of:
+ * - A label (e.g., "Tutor", "Listing")
+ * - A star-based rating selector using [RatingStarsInput]
+ *
+ * This composable eliminates duplicated logic between the tutor and listing rating UI.
+ *
+ * @param label The descriptive label shown above the star rating (e.g., "Tutor").
+ * @param selected The currently selected star value (0–5).
+ * @param onSelected Callback invoked when the user selects a different number of stars.
+ * @param modifier Optional [Modifier] applied to the container.
+ */
+@Composable
+private fun RatingRow(
+    label: String,
+    selected: Int,
+    onSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+  Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier) {
+    Text(text = label, style = MaterialTheme.typography.bodyMedium)
+    RatingStarsInput(selectedStars = selected, onSelected = onSelected)
+  }
+}
+
+/**
+ * UI section allowing the student to rate the tutor and the listing after the session has been
+ * completed.
+ *
+ * The user selects 1–5 stars for:
+ * - the tutor
+ * - the listing
+ *
+ * When the "Submit ratings" button is pressed, the selected values are passed to
+ * [onSubmitStudentRatings].
+ */
+@Composable
+private fun StudentRatingSection(
+    ratingSubmitted: Boolean,
+    onSubmitStudentRatings: (Int, Int) -> Unit,
+) {
+  if (ratingSubmitted) return
+
+  var tutorStars by remember { mutableStateOf(0) }
+  var listingStars by remember { mutableStateOf(0) }
+
+  val isButtonEnabled = tutorStars > 0 && listingStars > 0
+
+  Column(
+      modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.RATING_SECTION),
+      verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        RatingRow(
+            label = "Tutor",
+            selected = tutorStars,
+            onSelected = { tutorStars = it },
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_TUTOR))
+
+        RatingRow(
+            label = "Listing",
+            selected = listingStars,
+            onSelected = { listingStars = it },
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_LISTING))
+
+        Button(
+            enabled = isButtonEnabled,
+            onClick = { onSubmitStudentRatings(tutorStars, listingStars) },
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
+              Text("Submit ratings")
+            }
+      }
 }

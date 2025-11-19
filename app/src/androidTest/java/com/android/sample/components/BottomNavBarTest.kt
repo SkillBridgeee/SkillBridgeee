@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.MyViewModelFactory
 import com.android.sample.model.authentication.AuthenticationViewModel
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
@@ -103,7 +104,7 @@ class BottomNavBarTest {
       val controller = rememberNavController()
       navController = controller
       val currentUserId = "test"
-      val factory = MyViewModelFactory(currentUserId)
+      val factory = MyViewModelFactory(UserSessionManager)
 
       val bookingsViewModel: MyBookingsViewModel = viewModel(factory = factory)
       val profileViewModel: MyProfileViewModel = viewModel(factory = factory)

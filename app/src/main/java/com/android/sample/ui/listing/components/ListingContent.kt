@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.ListingType
+import com.android.sample.ui.components.RatingStarsInput
 import com.android.sample.ui.listing.ListingScreenTestTags
 import com.android.sample.ui.listing.ListingUiState
 import java.text.SimpleDateFormat
@@ -64,6 +65,7 @@ fun ListingContent(
     onRejectBooking: (String) -> Unit,
     onDeleteListing: () -> Unit,
     onEditListing: () -> Unit,
+    onSubmitTutorRating: (Int) -> Unit,
     modifier: Modifier = Modifier,
     autoFillDatesForTesting: Boolean = false
 ) {
@@ -109,11 +111,16 @@ fun ListingContent(
 
         item { // Created date
           PostedDate(listing.createdAt)
+          Spacer(Modifier.height(8.dp))
         }
 
         item { Spacer(Modifier.height(8.dp)) }
 
-        // Action section (book button or bookings management)
+        if (uiState.isOwnListing && uiState.tutorRatingPending) {
+          item { TutorRatingSection(onSubmitTutorRating = onSubmitTutorRating) }
+        }
+
+        // Action section
         actionSection(
             uiState = uiState,
             onShowBookingDialog = { showBookingDialog = true },
@@ -123,7 +130,7 @@ fun ListingContent(
             onEditListing = onEditListing)
       }
 
-  // Booking dialog
+  // Booking dialog (unchanged)
   if (showBookingDialog) {
     BookingDialog(
         onDismiss = { showBookingDialog = false },
@@ -266,6 +273,36 @@ private fun PostedDate(date: Date) {
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
+}
+
+@Composable
+private fun TutorRatingSection(onSubmitTutorRating: (Int) -> Unit) {
+  var stars by remember { mutableStateOf(0) }
+  var submitted by remember { mutableStateOf(false) }
+
+  if (submitted) return
+
+  Column(
+      modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.TUTOR_RATING_SECTION),
+      verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "Rate your student",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold)
+
+        Column(modifier = Modifier.testTag(ListingScreenTestTags.TUTOR_RATING_STARS)) {
+          RatingStarsInput(selectedStars = stars, onSelected = { stars = it })
+        }
+
+        Button(
+            onClick = {
+              onSubmitTutorRating(stars)
+              submitted = true
+            },
+            modifier = Modifier.testTag(ListingScreenTestTags.TUTOR_RATING_SUBMIT)) {
+              Text("Submit rating")
+            }
+      }
 }
 
 /** Action button section (book now or bookings management) */

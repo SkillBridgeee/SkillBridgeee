@@ -6,6 +6,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
+import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.booking.Booking
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
@@ -19,8 +24,6 @@ import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -57,12 +60,15 @@ data class MyProfileUIState(
     val loadError: String? = null,
     val updateError: String? = null,
     val listings: List<Listing> = emptyList(),
+    val bookings: List<Booking> = emptyList(),
+    val profilesById: Map<String, Profile> = emptyMap(),
     val listingsLoading: Boolean = false,
     val listingsLoadError: String? = null,
     val ratings: List<Rating> = emptyList(),
     val ratingsLoading: Boolean = false,
     val ratingsLoadError: String? = null,
-    val updateSuccess: Boolean = false
+    val updateSuccess: Boolean = false,
+    val completedBookings: List<Booking> = emptyList()
 ) {
   /** True if all required fields are valid */
   val isValid: Boolean
@@ -101,7 +107,8 @@ class MyProfileViewModel(
         NominatimLocationRepository(HttpClientProvider.client),
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val ratingsRepository: RatingRepository = RatingRepositoryProvider.repository,
-    private val userId: String = Firebase.auth.currentUser?.uid ?: ""
+    private val bookingRepository: BookingRepository = BookingRepositoryProvider.repository,
+    sessionManager: UserSessionManager,
 ) : ViewModel() {
 
   companion object {
@@ -120,6 +127,8 @@ class MyProfileViewModel(
   private val descMsgError = "Description cannot be empty"
 
   private var originalProfile: Profile? = null
+
+  private val userId: String = sessionManager.getCurrentUserId() ?: ""
 
   /** Loads the profile data (to be implemented) */
   fun loadProfile(profileUserId: String? = null) {
@@ -147,6 +156,9 @@ class MyProfileViewModel(
         loadUserListings(currentId)
         // Load ratings received by this user
         loadUserRatings(currentId)
+        // Load bookings made by this user
+        loadUserBookings(currentId)
+        loadTutorBookings(currentId)
       } catch (e: Exception) {
         Log.e(TAG, "Error loading MyProfile by ID: $currentId", e)
       }
@@ -199,6 +211,27 @@ class MyProfileViewModel(
               ratingsLoading = false,
               ratingsLoadError = "Failed to load ratings.")
         }
+      }
+    }
+  }
+
+  fun loadTutorBookings(userId: String = _uiState.value.userId ?: this.userId) {
+    viewModelScope.launch {
+      try {
+        val tutorBookings = bookingRepository.getBookingsByTutor(userId)
+
+        _uiState.update { state ->
+          val merged = (state.bookings + tutorBookings).distinctBy { it.bookingId }
+
+          state.copy(
+              bookings = merged,
+              completedBookings = merged.filter { it.status == BookingStatus.COMPLETED })
+        }
+
+        loadProfilesForBookings(tutorBookings)
+        loadListingsForBookings(tutorBookings)
+      } catch (e: Exception) {
+        Log.e(TAG, "Error loading tutor bookings for user: $userId", e)
       }
     }
   }
@@ -420,5 +453,76 @@ class MyProfileViewModel(
   /** Clears the update success flag in the UI state. */
   fun clearUpdateSuccess() {
     _uiState.update { it.copy(updateSuccess = false) }
+  }
+
+  /**
+   * Loads bookings made by the given user and updates UI state.
+   *
+   * @param ownerId The ID of the user whose bookings should be loaded.
+   */
+  fun loadUserBookings(ownerId: String = _uiState.value.userId ?: userId) {
+    viewModelScope.launch {
+      try {
+        val items = bookingRepository.getBookingsByUserId(ownerId)
+
+        _uiState.update {
+          it.copy(
+              bookings = items,
+              completedBookings = items.filter { b -> b.status == BookingStatus.COMPLETED })
+        }
+
+        loadProfilesForBookings(items)
+        loadListingsForBookings(items)
+      } catch (e: Exception) {
+        Log.e(TAG, "Error loading bookings for $ownerId", e)
+      }
+    }
+  }
+
+  /**
+   * Loads profiles for the given bookings and updates UI state.
+   *
+   * @param bookings The list of bookings to load profiles for.
+   */
+  private fun loadProfilesForBookings(bookings: List<Booking>) {
+    viewModelScope.launch {
+      try {
+        val creatorIds = bookings.map { it.listingCreatorId }.distinct()
+
+        val profiles =
+            creatorIds.mapNotNull { id ->
+              runCatching { profileRepository.getProfile(id) }.getOrNull()
+            }
+
+        _uiState.update { it.copy(profilesById = profiles.associateBy { p -> p.userId }) }
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to load profile creators", e)
+      }
+    }
+  }
+
+  /**
+   * Loads listings for the given bookings and updates UI state.
+   *
+   * @param bookings The list of bookings to load listings for.
+   */
+  private fun loadListingsForBookings(bookings: List<Booking>) {
+    viewModelScope.launch {
+      try {
+        val listingIds = bookings.map { it.associatedListingId }.distinct()
+
+        val listings =
+            listingIds.mapNotNull { id ->
+              runCatching { listingRepository.getListing(id) }.getOrNull()
+            }
+
+        val mergedListings =
+            (_uiState.value.listings + listings).associateBy { it.listingId }.values.toList()
+
+        _uiState.update { it.copy(listings = mergedListings) }
+      } catch (e: Exception) {
+        Log.e(TAG, "Failed to load listings for bookings", e)
+      }
+    }
   }
 }

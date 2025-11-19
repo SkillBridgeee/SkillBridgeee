@@ -1,5 +1,5 @@
 package com.android.sample
-/*
+
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
@@ -23,7 +23,7 @@ import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.login.SignInScreenTestTags
-import com.android.sample.ui.newListing.NewSkillScreenTestTag
+import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.android.sample.ui.subject.SubjectListTestTags
@@ -66,14 +66,31 @@ class EndToEndM2 {
 
   @get:Rule val compose = createAndroidComposeRule<MainActivity>()
 
+  companion object {
+    private val TEST_PASSWORD = "testPassword123!"
+    private val TEST_DESC = "Happy"
+    private val TEST_DESC_APPEND = " Man"
+    private val TEST_DESC_FULL = "Happy Man"
+    private val TEST_TITLE = "Math Class"
+    private val TEST_EMAIL = "guillaume.lepinuuuuusu@epfl.ch"
+    private val TEST_NAME = "Lepin"
+    private val TEST_SURNAME = "Guillaume"
+    private val TEST_FULL_NAME = "Lepin Guillaume"
+    private val TEST_LOCATION = "London Street 1"
+    private val TEST_EDUCATION = "CS, 3rd year"
+    private val TEST_PROPOSAL = "PROPOSAL"
+    private val TEST_PROPOSAL_DESCRIPTION = "Learn math with me"
+    private val TEST_PROPOSAL_PRICE = "50"
+    private val TEST_PROPOSAL_SUBJECT = "ACADEMICS"
+    private val TEST_BACK_BUTTON = "Back"
+  }
+
   @Test
   fun userSignsInAndDiscoversApp() {
 
     compose.waitForIdle()
 
     // --------User Sign-Up, Sign-In and Profile Update Flow--------//
-    val testEmail = "guillaume.lepinuuus@epfl.ch"
-    val testPassword = "testPassword123!"
 
     waitForTag(compose, SignInScreenTestTags.SIGN_IN_BUTTON)
 
@@ -88,47 +105,55 @@ class EndToEndM2 {
         .onNodeWithTag(SignUpScreenTestTags.NAME)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput("Lepin")
+        .performTextInput(TEST_NAME)
     compose
         .onNodeWithTag(SignUpScreenTestTags.SURNAME)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput("Guillaume")
+        .performTextInput(TEST_SURNAME)
     compose
         .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
-        .performTextInput("London Street 1")
+        .performTextInput(TEST_LOCATION)
     compose
         .onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput("CS, 3rd year")
+        .performTextInput(TEST_EDUCATION)
     compose
         .onNodeWithTag(SignUpScreenTestTags.DESCRIPTION)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput("Gay")
+        .performTextInput(TEST_DESC)
 
     compose
         .onNodeWithTag(SignUpScreenTestTags.EMAIL)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput(testEmail)
+        .performTextInput(TEST_EMAIL)
+
+    compose.waitUntil(timeoutMillis = 10000) {
+      compose
+          .onAllNodes(hasTestTag(SignUpScreenTestTags.PASSWORD))
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
     compose
         .onNodeWithTag(SignUpScreenTestTags.PASSWORD)
+        .performScrollTo()
         .assertIsDisplayed()
         .performClick()
-        .performTextInput(testPassword)
+        .performTextInput(TEST_PASSWORD)
 
     compose.onNodeWithTag(SignUpScreenTestTags.PASSWORD).performImeAction()
 
     compose.waitForIdle()
 
-    compose.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
     compose.onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
-
+    compose.waitForIdle()
     // Wait for navigation to home screen
 
-    compose.onNodeWithContentDescription("Back").performClick()
+    compose.onNodeWithContentDescription(TEST_BACK_BUTTON).performClick()
     waitForTag(compose, SignInScreenTestTags.SIGN_IN_BUTTON)
 
     // Now sign in with the created user
@@ -136,13 +161,13 @@ class EndToEndM2 {
         .onNodeWithTag(SignInScreenTestTags.EMAIL_INPUT)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput(testEmail)
+        .performTextInput(TEST_EMAIL)
 
     compose
         .onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput(testPassword)
+        .performTextInput(TEST_PASSWORD)
 
     compose.onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).assertIsEnabled().performClick()
 
@@ -157,17 +182,17 @@ class EndToEndM2 {
     compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
 
     waitForTag(compose, MyProfileScreenTestTag.INPUT_PROFILE_NAME)
-    waitForText(compose, "Lepin Guillaume")
+    waitForText(compose, TEST_FULL_NAME)
 
     compose
         .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME)
         .assertIsDisplayed()
-        .assertTextContains("Lepin Guillaume")
+        .assertTextContains(TEST_FULL_NAME)
 
     compose
         .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
         .assertIsDisplayed()
-        .assertTextContains("Gay")
+        .assertTextContains(TEST_DESC)
 
     compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertIsNotEnabled()
 
@@ -175,24 +200,24 @@ class EndToEndM2 {
         .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput(" Man")
+        .performTextInput(TEST_DESC_APPEND)
 
     compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertIsEnabled().performClick()
 
-    waitForText(compose, "Gay Man")
+    waitForText(compose, TEST_DESC_FULL)
     compose
         .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
         .assertIsDisplayed()
-        .assertTextContains("Gay Man")
+        .assertTextContains(TEST_DESC_FULL)
     compose
         .onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC)
         .performClick()
         .performTextClearance()
-    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC).performTextInput("Gay")
+    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC).performTextInput(TEST_DESC)
 
     compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertIsEnabled().performClick()
 
-    waitForText(compose, "Gay")
+    waitForText(compose, TEST_DESC)
 
     compose.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).assertIsDisplayed().performClick()
 
@@ -204,50 +229,55 @@ class EndToEndM2 {
 
     compose.onNodeWithTag(HomeScreenTestTags.FAB_ADD).assertIsDisplayed().performClick()
 
-    waitForTag(compose, NewSkillScreenTestTag.INPUT_COURSE_TITLE)
+    waitForTag(compose, NewListingScreenTestTag.INPUT_COURSE_TITLE)
 
     compose
-        .onNodeWithTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD)
+        .onNodeWithTag(NewListingScreenTestTag.LISTING_TYPE_FIELD)
         .assertIsDisplayed()
         .performClick()
-    compose.onNodeWithText("PROPOSAL").assertIsDisplayed().performClick()
-
-    compose.onNodeWithTag(NewSkillScreenTestTag.LISTING_TYPE_FIELD).assertTextContains("PROPOSAL")
+    compose.onNodeWithText(TEST_PROPOSAL).assertIsDisplayed().performClick()
 
     compose
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE)
+        .onNodeWithTag(NewListingScreenTestTag.LISTING_TYPE_FIELD)
+        .assertTextContains(TEST_PROPOSAL)
+
+    compose
+        .onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput("Math Class")
+        .performTextInput(TEST_TITLE)
 
-    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_COURSE_TITLE).assertTextContains("Math Class")
+    compose.onNodeWithTag(NewListingScreenTestTag.INPUT_COURSE_TITLE).assertTextContains(TEST_TITLE)
 
     compose
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION)
+        .onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput("Learn math with me")
+        .performTextInput(TEST_PROPOSAL_DESCRIPTION)
 
     compose
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_DESCRIPTION)
-        .assertTextContains("Learn math with me")
+        .onNodeWithTag(NewListingScreenTestTag.INPUT_DESCRIPTION)
+        .assertTextContains(TEST_PROPOSAL_DESCRIPTION)
 
     compose
-        .onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE)
+        .onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE)
         .assertIsDisplayed()
         .performClick()
-        .performTextInput("50")
-    compose.onNodeWithTag(NewSkillScreenTestTag.INPUT_PRICE).assertTextContains("50")
+        .performTextInput(TEST_PROPOSAL_PRICE)
+    compose
+        .onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE)
+        .assertTextContains(TEST_PROPOSAL_PRICE)
 
-    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).performClick()
+    compose.onNodeWithTag(NewListingScreenTestTag.SUBJECT_FIELD).performClick()
 
-    compose.onNodeWithText("ACADEMICS").performClick()
-    compose.onNodeWithTag(NewSkillScreenTestTag.SUBJECT_FIELD).assertTextContains("ACADEMICS")
+    compose.onNodeWithText(TEST_PROPOSAL_SUBJECT).performClick()
+    compose
+        .onNodeWithTag(NewListingScreenTestTag.SUBJECT_FIELD)
+        .assertTextContains(TEST_PROPOSAL_SUBJECT)
 
-    compose.onNodeWithTag(NewSkillScreenTestTag.SUB_SKILL_FIELD).performClick()
+    compose.onNodeWithTag(NewListingScreenTestTag.SUB_SKILL_FIELD).performClick()
 
-    compose.onNodeWithText("MATHEMATICS").performClick()
-    compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
+    compose.onNodeWithContentDescription(TEST_BACK_BUTTON).assertIsDisplayed().performClick()
 
     compose.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertIsDisplayed().performClick()
     waitForTag(compose, MyProfileScreenTestTag.PROFILE_ICON)
@@ -265,13 +295,9 @@ class EndToEndM2 {
     compose.onNodeWithTag(SubjectListTestTags.LISTING_CARD).assertIsNotDisplayed()
 
     // User goes to bookings
-    compose.onNodeWithContentDescription("Back").assertIsDisplayed().performClick()
+    compose.onNodeWithContentDescription(TEST_BACK_BUTTON).assertIsDisplayed().performClick()
     compose.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).assertIsDisplayed().performClick()
     waitForTag(compose, MyBookingsPageTestTag.EMPTY)
     compose.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
-    // done
-    //test
   }
-
-
-}*/
+}

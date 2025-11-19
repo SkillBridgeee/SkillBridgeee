@@ -58,6 +58,10 @@ object ListingScreenTestTags {
   const val DATE_PICKER_CANCEL_BUTTON = "listingScreenDatePickerCancelButton"
   const val TIME_PICKER_OK_BUTTON = "listingScreenTimePickerOkButton"
   const val TIME_PICKER_CANCEL_BUTTON = "listingScreenTimePickerCancelButton"
+
+  const val TUTOR_RATING_SECTION = "listing_tutor_rating_section"
+  const val TUTOR_RATING_STARS = "listing_tutor_rating_stars"
+  const val TUTOR_RATING_SUBMIT = "listing_tutor_rating_submit"
 }
 
 /**
@@ -147,6 +151,9 @@ fun ListingScreen(
             onDeleteListing = { scope.launch { viewModel.deleteListing() } },
             onEditListing = onEditListing,
             autoFillDatesForTesting = autoFillDatesForTesting)
+            onApproveBooking = { viewModel.approveBooking(it) },
+            onRejectBooking = { viewModel.rejectBooking(it) },
+            onSubmitTutorRating = { stars -> viewModel.submitTutorRating(stars) })
       }
     }
   }
