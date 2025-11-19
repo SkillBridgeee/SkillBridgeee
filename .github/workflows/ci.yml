@@ -1,4 +1,4 @@
-name: CI - Test Runner
+in this name: CI - Test Runner
 
 on:
   push:
@@ -136,9 +136,7 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: ./gradlew connectedCheck --stacktrace --build-cache`
-
-
+          script: ./gradlew connectedCheck --stacktrace --build-cache
 
       # 14) Coverage
       - name: Generate Coverage Report
