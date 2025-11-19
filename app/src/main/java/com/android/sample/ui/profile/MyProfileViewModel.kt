@@ -158,6 +158,7 @@ class MyProfileViewModel(
         loadUserRatings(currentId)
         // Load bookings made by this user
         loadUserBookings(currentId)
+        loadTutorBookings(currentId)
       } catch (e: Exception) {
         Log.e(TAG, "Error loading MyProfile by ID: $currentId", e)
       }
@@ -210,6 +211,27 @@ class MyProfileViewModel(
               ratingsLoading = false,
               ratingsLoadError = "Failed to load ratings.")
         }
+      }
+    }
+  }
+
+  fun loadTutorBookings(userId: String = _uiState.value.userId ?: this.userId) {
+    viewModelScope.launch {
+      try {
+        val tutorBookings = bookingRepository.getBookingsByTutor(userId)
+
+        _uiState.update { state ->
+          val merged = (state.bookings + tutorBookings).distinctBy { it.bookingId }
+
+          state.copy(
+              bookings = merged,
+              completedBookings = merged.filter { it.status == BookingStatus.COMPLETED })
+        }
+
+        loadProfilesForBookings(tutorBookings)
+        loadListingsForBookings(tutorBookings)
+      } catch (e: Exception) {
+        Log.e(TAG, "Error loading tutor bookings for user: $userId", e)
       }
     }
   }
