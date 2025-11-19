@@ -136,23 +136,9 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: |
-            echo "Waiting for emulator boot..."
-            adb wait-for-device
+          script: ./gradlew connectedCheck --stacktrace --build-cache`
 
-            # loop until sys.boot_completed = 1
-            for i in $(seq 1 30); do
-              BOOTED=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-              if [ "$BOOTED" = "1" ]; then
-                echo "Emulator fully booted."
-                break
-              fi
-              echo "Still booting... ($i/30)"
-              sleep 1
-            done
 
-            ./gradlew connectedCheck --stacktrace --build-cache
-      
 
       # 14) Coverage
       - name: Generate Coverage Report
