@@ -71,15 +71,6 @@ abstract class AppTest() {
   lateinit var newListingViewModel: NewListingViewModel
   lateinit var bookingDetailsViewModel: BookingDetailsViewModel
 
-  /**
-   * Composable function that sets up the main UI structure used during tests.
-   *
-   * This function creates a NavController and configures the app's navigation graph, top bar, and
-   * bottom navigation bar. It also initializes the start destination in the Home Page
-   *
-   * This function is typically used in UI tests to render the full app structure with fake
-   * repositories and pre-initialized ViewModels.
-   */
   @Before
   open fun setUp() {
 
@@ -119,6 +110,15 @@ abstract class AppTest() {
             profileRepository = profileRepository)
   }
 
+  /**
+   * Composable function that sets up the main UI structure used during tests.
+   *
+   * This function creates a NavController and configures the app's navigation graph, top bar, and
+   * bottom navigation bar. It also initializes the start destination in the Home Page
+   *
+   * This function is typically used in UI tests to render the full app structure with fake
+   * repositories and pre-initialized ViewModels.
+   */
   @Composable
   fun CreateAppContent() {
     val navController = rememberNavController()

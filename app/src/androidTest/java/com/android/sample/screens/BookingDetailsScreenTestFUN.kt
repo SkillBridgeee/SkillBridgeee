@@ -22,7 +22,6 @@ class BookingDetailsScreenTestFUN : AppTest() {
 
   @Test
   fun testGoodScreen() {
-
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertIsDisplayed()
   }
 }
