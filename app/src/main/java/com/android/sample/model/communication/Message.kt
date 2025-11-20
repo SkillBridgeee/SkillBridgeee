@@ -1,24 +1,28 @@
 package com.android.sample.model.communication
 
-import java.util.Date
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.ServerTimestamp
 
 /** Data class representing a message between users */
 data class Message(
+    @DocumentId var messageId: String = "", // Unique message ID (Firestore document ID)
+    val conversationId: String = "", // ID of the conversation this message belongs to
     val sentFrom: String = "", // UID of the sender
     val sentTo: String = "", // UID of the receiver
-    val sentTime: Date = Date(), // Date and time when message was sent
-    val receiveTime: Date? = null, // Date and time when message was received
-    val readTime: Date? = null, // Date and time when message was read for the first time
-    val message: String = "" // The actual message content
+    @ServerTimestamp var sentTime: Timestamp? = null, // Timestamp when message was sent
+    val receiveTime: Timestamp? = null, // Timestamp when message was received
+    val readTime: Timestamp? = null, // Timestamp when message was read for the first time
+    val content: String = "", // The actual message content
+    val isRead: Boolean = false // Flag to quickly check if message has been read
 ) {
-  init {
+
+  /** Validates the message data. Throws an [IllegalArgumentException] if the data is invalid. */
+  fun validate() {
+    require(sentFrom.isNotBlank()) { "Sender ID cannot be blank" }
+    require(sentTo.isNotBlank()) { "Receiver ID cannot be blank" }
     require(sentFrom != sentTo) { "Sender and receiver cannot be the same user" }
-    receiveTime?.let { require(!sentTime.after(it)) { "Receive time cannot be before sent time" } }
-    readTime?.let { readTime ->
-      require(!sentTime.after(readTime)) { "Read time cannot be before sent time" }
-      receiveTime?.let { receiveTime ->
-        require(!receiveTime.after(readTime)) { "Read time cannot be before receive time" }
-      }
-    }
+    require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+    require(content.isNotBlank()) { "Message content cannot be blank" }
   }
 }
