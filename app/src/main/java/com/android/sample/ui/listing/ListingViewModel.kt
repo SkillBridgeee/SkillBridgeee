@@ -11,9 +11,16 @@ import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.rating.FirestoreRatingRepository
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingType
+import com.android.sample.model.rating.StarRating
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.util.Date
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -60,7 +67,9 @@ data class ListingUiState(
 class ListingViewModel(
     private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
     private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
-    private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository
+    private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository,
+    private val ratingRepo: RatingRepository =
+        FirestoreRatingRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance())
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(ListingUiState())
@@ -255,13 +264,76 @@ class ListingViewModel(
     }
   }
 
+  private fun Int.toStarRating(): StarRating {
+    val values = StarRating.values()
+    val idx = (this - 1).coerceIn(0, values.size - 1)
+    return values.getOrNull(idx) ?: values.first()
+  }
+
   fun submitTutorRating(stars: Int) {
     viewModelScope.launch {
       try {
-        // TODO: store rating in repository when available
-        Log.d("ListingViewModel", "Tutor rating submitted: $stars stars")
+        val listing = _uiState.value.listing
+        if (listing == null) {
+          Log.w("ListingViewModel", "Cannot submit rating: listing missing")
+          return@launch
+        }
 
-        _uiState.update { it.copy(tutorRatingPending = false) }
+        val fromUserId =
+            FirebaseAuth.getInstance().currentUser?.uid ?: throw Exception("User not authenticated")
+
+        val completedBooking =
+            _uiState.value.listingBookings.firstOrNull {
+              it.status == BookingStatus.COMPLETED &&
+                  it.listingCreatorId == fromUserId // ensure tutor is the creator
+            }
+        if (completedBooking == null) {
+          Log.w("ListingViewModel", "No completed booking found to rate")
+          return@launch
+        }
+
+        val toUserId = completedBooking.bookerId
+
+        // Prevent duplicate rating: check existing before creating
+        val alreadyRated =
+            try {
+              ratingRepo.hasRating(
+                  fromUserId = fromUserId,
+                  toUserId = toUserId,
+                  ratingType = RatingType.TUTOR,
+                  targetObjectId = listing.listingId)
+            } catch (e: Exception) {
+              Log.w("ListingViewModel", "Error checking existing rating", e)
+              false
+            }
+
+        if (alreadyRated) {
+          Log.d("ListingViewModel", "Rating already exists; skipping submit")
+          // refresh bookings so UI hides rating
+          _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
+          return@launch
+        }
+
+        val ratingId = ratingRepo.getNewUid()
+        val starEnum = stars.toStarRating()
+
+        val rating =
+            Rating(
+                ratingId = ratingId,
+                fromUserId = fromUserId,
+                toUserId = toUserId,
+                starRating = starEnum,
+                comment = "",
+                ratingType = RatingType.TUTOR,
+                targetObjectId = listing.listingId)
+
+        // Await saving to Firestore
+        ratingRepo.addRating(rating)
+
+        Log.d("ListingViewModel", "Tutor rating persisted: $stars stars -> $toUserId")
+        // Refresh bookings; loadBookingsForListing will re-check Firestore and clear
+        // tutorRatingPending persistently
+        _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
       } catch (e: Exception) {
         Log.w("ListingViewModel", "Failed to submit tutor rating", e)
       }

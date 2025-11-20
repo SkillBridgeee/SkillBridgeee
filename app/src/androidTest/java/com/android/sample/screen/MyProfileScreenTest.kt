@@ -175,7 +175,19 @@ class MyProfileScreenTest {
   }
 
   private class FakeRatingRepo : RatingRepository {
+
     override fun getNewUid(): String = "fake-rating-id"
+
+    // NEW: required by RatingRepository
+    override suspend fun hasRating(
+        fromUserId: String,
+        toUserId: String,
+        ratingType: com.android.sample.model.rating.RatingType,
+        targetObjectId: String
+    ): Boolean {
+      // MyProfileScreen tests don't care about this, so always "no rating yet" is fine.
+      return false
+    }
 
     override suspend fun getAllRatings(): List<Rating> = emptyList()
 
@@ -193,10 +205,8 @@ class MyProfileScreenTest {
 
     override suspend fun deleteRating(ratingId: String) {}
 
-    /** Gets all tutor ratings for listings owned by this user */
     override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
 
-    /** Gets all student ratings received by this user */
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
   }
 
