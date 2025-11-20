@@ -8,12 +8,13 @@ class FakeBookingEmpty : FakeBookingRepo {
 
   private val bookings = mutableListOf<Booking>()
 
+  // --- Génération simple d'ID ---
   override fun getNewUid(): String {
     return "booking_${UUID.randomUUID()}"
   }
 
   override suspend fun getAllBookings(): List<Booking> {
-    return bookings
+    return bookings.toList()
   }
 
   override suspend fun getBooking(bookingId: String): Booking? {
@@ -21,7 +22,7 @@ class FakeBookingEmpty : FakeBookingRepo {
   }
 
   override suspend fun getBookingsByTutor(tutorId: String): List<Booking> {
-    TODO("Not yet implemented")
+    return bookings.filter { booking -> booking.listingCreatorId == tutorId }
   }
 
   override suspend fun getBookingsByUserId(userId: String): List<Booking> {
@@ -29,7 +30,7 @@ class FakeBookingEmpty : FakeBookingRepo {
   }
 
   override suspend fun getBookingsByStudent(studentId: String): List<Booking> {
-    TODO("Not yet implemented")
+    return bookings.filter { booking -> booking.listingCreatorId == studentId }
   }
 
   override suspend fun getBookingsByListing(listingId: String): List<Booking> {
@@ -41,26 +42,31 @@ class FakeBookingEmpty : FakeBookingRepo {
   }
 
   override suspend fun updateBooking(bookingId: String, booking: Booking) {
-    TODO("Not yet implemented")
+    val index = bookings.indexOfFirst { it.bookingId == bookingId }
+    if (index != -1) {
+      bookings[index] = booking.copy(bookingId = bookingId)
+    }
   }
 
   override suspend fun deleteBooking(bookingId: String) {
-    TODO("Not yet implemented")
+    bookings.removeAll { it.bookingId == bookingId }
   }
 
   override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
-    TODO("Not yet implemented")
+    val booking = bookings.find { it.bookingId == bookingId } ?: return
+    val updated = booking.copy(status = status)
+    updateBooking(bookingId, updated)
   }
 
   override suspend fun confirmBooking(bookingId: String) {
-    TODO("Not yet implemented")
+    updateBookingStatus(bookingId, BookingStatus.CONFIRMED)
   }
 
   override suspend fun completeBooking(bookingId: String) {
-    TODO("Not yet implemented")
+    updateBookingStatus(bookingId, BookingStatus.COMPLETED)
   }
 
   override suspend fun cancelBooking(bookingId: String) {
-    TODO("Not yet implemented")
+    updateBookingStatus(bookingId, BookingStatus.CANCELLED)
   }
 }
