@@ -20,6 +20,7 @@ import com.android.sample.ui.newListing.NewListingScreen
 import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.theme.SampleAppTheme
+import kotlin.collections.get
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -182,7 +183,15 @@ class NewSkillScreenTest {
   fun allFieldsRender() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -200,7 +209,15 @@ class NewSkillScreenTest {
   fun buttonText_changesBasedOnListingType() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -220,7 +237,15 @@ class NewSkillScreenTest {
   fun titleInput_acceptsText() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -233,7 +258,15 @@ class NewSkillScreenTest {
   fun descriptionInput_acceptsText() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -246,7 +279,15 @@ class NewSkillScreenTest {
   fun priceInput_acceptsText() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -259,7 +300,15 @@ class NewSkillScreenTest {
   fun listingTypeDropdown_showsOptions() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -274,7 +323,15 @@ class NewSkillScreenTest {
   fun listingTypeDropdown_selectsProposal() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -290,7 +347,15 @@ class NewSkillScreenTest {
   fun listingTypeDropdown_selectsRequest() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -306,7 +371,15 @@ class NewSkillScreenTest {
   fun subjectDropdown_showsAllSubjects() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -320,7 +393,15 @@ class NewSkillScreenTest {
   fun subjectDropdown_selectsSubject() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -335,7 +416,15 @@ class NewSkillScreenTest {
   fun emptyPrice_showsError() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -349,7 +438,15 @@ class NewSkillScreenTest {
   fun invalidPrice_showsError() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -363,7 +460,15 @@ class NewSkillScreenTest {
   fun negativePrice_showsError() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -377,7 +482,15 @@ class NewSkillScreenTest {
   fun missingSubject_showsError() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -392,7 +505,15 @@ class NewSkillScreenTest {
   fun subSkill_notVisible_untilSubjectSelected_thenVisible() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -412,7 +533,15 @@ class NewSkillScreenTest {
   fun subjectDropdown_open_selectItem_thenCloses() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -432,7 +561,15 @@ class NewSkillScreenTest {
   fun showsError_whenNoSubject_onSave() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -451,7 +588,15 @@ class NewSkillScreenTest {
   fun showsError_whenSubjectChosen_butNoSubSkill_onSave() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
     composeRule.setContent {
-      SampleAppTheme { NewListingScreen(vm, "test-user", createTestNavController()) }
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
+      }
     }
     composeRule.waitForIdle()
 
@@ -475,14 +620,22 @@ class NewSkillScreenTest {
   fun locationInputField_typingShowsSuggestions_andSelectingUpdatesField() {
     val vm = NewListingViewModel(fakeListingRepository, fakeLocationRepository)
 
-    vm.setLocationSuggestions(listOf(Location(name = "Paris"), Location(name = "Parc Astérix")))
-
     composeRule.setContent {
       SampleAppTheme {
         NewListingScreen(
-            skillViewModel = vm, profileId = "test-user", navController = createTestNavController())
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
       }
     }
+    // wait for initial composition/load to finish
+    composeRule.waitForIdle()
+
+    // set suggestions after composition so they are not cleared by load(...)
+    vm.setLocationSuggestions(listOf(Location(name = "Paris"), Location(name = "Parc Astérix")))
     composeRule.waitForIdle()
 
     composeRule
@@ -518,7 +671,13 @@ class NewSkillScreenTest {
               navigatorProvider.addNavigator(ComposeNavigator())
             }
 
-        NewListingScreen(skillViewModel = vm, profileId = "test", navController = nav)
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null, // pass null for create mode
+            navController = createTestNavController(),
+            onNavigateBack = {} // provide a no-op nav callback for tests
+            )
       }
     }
 
@@ -528,5 +687,29 @@ class NewSkillScreenTest {
         .onNodeWithTag(NewListingScreenTestTag.BUTTON_USE_MY_LOCATION)
         .assertExists()
         .performClick()
+  }
+
+  @Test
+  fun newListingScreen_showsEditMode_whenListingIdProvided() {
+    val vm = NewListingViewModel(FakeListingRepository(), FakeLocationRepository())
+    composeRule.setContent {
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = "existing-listing", // non-null to indicate edit mode
+            navController = createTestNavController(),
+            onNavigateBack = {})
+      }
+    }
+
+    composeRule.waitForIdle()
+
+    // Title should indicate edit mode
+    composeRule.onNodeWithTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE).assertIsDisplayed()
+    composeRule.onNodeWithText("Edit Listing").assertIsDisplayed()
+
+    // Floating action button should show save changes
+    composeRule.onNodeWithText("Save Changes").assertIsDisplayed()
   }
 }

@@ -150,14 +150,31 @@ fun AppNavGraph(
 
     composable(
         route = NavRoutes.NEW_SKILL,
-        arguments = listOf(navArgument("profileId") { type = NavType.StringType })) { backStackEntry
-          ->
+        arguments =
+            listOf(
+                navArgument("profileId") { type = NavType.StringType },
+                navArgument("listingId") {
+                  type = NavType.StringType
+                  nullable = true
+                  defaultValue = null
+                })) { backStackEntry ->
           val profileId = backStackEntry.arguments?.getString("profileId") ?: ""
+          val listingId = backStackEntry.arguments?.getString("listingId")
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.NEW_SKILL) }
           NewListingScreen(
               profileId = profileId,
+              listingId = listingId,
               navController = navController,
-              skillViewModel = newListingViewModel)
+              onNavigateBack = {
+                // Custom navigation logic
+                if (listingId != null) { // If editing, go to profile
+                  navController.navigate(NavRoutes.createProfileRoute(profileId)) {
+                    popUpTo(NavRoutes.createProfileRoute(profileId)) { inclusive = true }
+                  }
+                } else { // If creating, go back
+                  navController.popBackStack()
+                }
+              })
         }
 
     composable(
@@ -195,18 +212,20 @@ fun AppNavGraph(
           onProposalClick = { listingId -> navigateToListing(navController, listingId) },
           onRequestClick = { listingId -> navigateToListing(navController, listingId) })
     }
+
     composable(
         route = NavRoutes.LISTING,
         arguments = listOf(navArgument("listingId") { type = NavType.StringType })) { backStackEntry
           ->
           val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+          val currentUserId = UserSessionManager.getCurrentUserId()
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
           com.android.sample.ui.listing.ListingScreen(
               listingId = listingId,
-              onNavigateBack = {
-                navController.navigate(NavRoutes.HOME) {
-                  popUpTo(0) { inclusive = true }
-                  launchSingleTop = true
+              onNavigateBack = { navController.popBackStack() },
+              onEditListing = {
+                if (currentUserId != null) {
+                  navController.navigate(NavRoutes.createNewSkillRoute(currentUserId, listingId))
                 }
               })
         }

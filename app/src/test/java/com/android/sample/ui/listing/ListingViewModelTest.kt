@@ -1202,4 +1202,230 @@ class ListingViewModelTest {
     assertTrue(ratingRepo.hasRatingCalled)
     assertEquals(1, ratingRepo.addedRatings.size)
   }
+
+  // Tests for deleteListing()
+
+  @Test
+  fun deleteListing_noListing_setsError() = runTest {
+    val listingRepo = FakeListingRepo()
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.deleteListing()
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertEquals("Listing not found", state.error)
+    assertFalse(state.listingDeleted)
+  }
+
+  @Test
+  fun deleteListing_success_updatesState() = runTest {
+    var deleteListingCalled = false
+    val listingRepo =
+        object : FakeListingRepo(sampleProposal) {
+          override suspend fun deleteListing(listingId: String) {
+            deleteListingCalled = true
+          }
+        }
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.deleteListing()
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertTrue(deleteListingCalled)
+    assertNull(state.listing)
+    assertTrue(state.listingBookings.isEmpty())
+    assertFalse(state.isOwnListing)
+    assertFalse(state.isLoading)
+    assertNull(state.error)
+    assertTrue(state.listingDeleted)
+  }
+
+  @Test
+  fun deleteListing_cancelsNonCancelledBookings() = runTest {
+    val booking1 = sampleBooking.copy(bookingId = "b1", status = BookingStatus.PENDING)
+    val booking2 = sampleBooking.copy(bookingId = "b2", status = BookingStatus.CONFIRMED)
+    val booking3 = sampleBooking.copy(bookingId = "b3", status = BookingStatus.CANCELLED)
+
+    val cancelledBookings = mutableListOf<String>()
+    val bookingRepo =
+        object : FakeBookingRepo(mutableListOf(booking1, booking2, booking3)) {
+          override suspend fun cancelBooking(bookingId: String) {
+            cancelledBookings.add(bookingId)
+          }
+        }
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.deleteListing()
+    advanceUntilIdle()
+
+    assertEquals(2, cancelledBookings.size)
+    assertTrue(cancelledBookings.contains("b1"))
+    assertTrue(cancelledBookings.contains("b2"))
+    assertFalse(cancelledBookings.contains("b3"))
+  }
+
+  @Test
+  fun deleteListing_bookingFetchFails_continuesWithDeletion() = runTest {
+    var deleteListingCalled = false
+    val listingRepo =
+        object : FakeListingRepo(sampleProposal) {
+          override suspend fun deleteListing(listingId: String) {
+            deleteListingCalled = true
+          }
+        }
+
+    val bookingRepo =
+        object : FakeBookingRepo() {
+          override suspend fun getBookingsByListing(listingId: String): List<Booking> {
+            throw RuntimeException("Database connection failed")
+          }
+        }
+
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.deleteListing()
+    advanceUntilIdle()
+
+    assertTrue(deleteListingCalled)
+    assertTrue(viewModel.uiState.value.listingDeleted)
+  }
+
+  @Test
+  fun deleteListing_bookingCancellationFails_continuesWithDeletion() = runTest {
+    val booking1 = sampleBooking.copy(bookingId = "b1", status = BookingStatus.PENDING)
+    val booking2 = sampleBooking.copy(bookingId = "b2", status = BookingStatus.CONFIRMED)
+
+    var deleteListingCalled = false
+    val listingRepo =
+        object : FakeListingRepo(sampleProposal) {
+          override suspend fun deleteListing(listingId: String) {
+            deleteListingCalled = true
+          }
+        }
+
+    val cancelAttempts = mutableListOf<String>()
+    val bookingRepo =
+        object : FakeBookingRepo(mutableListOf(booking1, booking2)) {
+          override suspend fun cancelBooking(bookingId: String) {
+            cancelAttempts.add(bookingId)
+            if (bookingId == "b1") {
+              throw RuntimeException("Cancellation service unavailable")
+            }
+          }
+        }
+
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.deleteListing()
+    advanceUntilIdle()
+
+    assertEquals(2, cancelAttempts.size)
+    assertTrue(deleteListingCalled)
+    assertTrue(viewModel.uiState.value.listingDeleted)
+  }
+
+  @Test
+  fun deleteListing_repositoryFails_setsError() = runTest {
+    val listingRepo =
+        object : FakeListingRepo(sampleProposal) {
+          override suspend fun deleteListing(listingId: String) {
+            throw RuntimeException("Repository deletion failed")
+          }
+        }
+
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.deleteListing()
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertFalse(state.listingDeleted)
+    assertNotNull(state.error)
+    assertTrue(state.error!!.contains("Failed to delete listing"))
+    assertFalse(state.isLoading)
+  }
+
+  @Test
+  fun deleteListing_setsLoadingState() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    assertFalse(viewModel.uiState.value.isLoading)
+
+    viewModel.deleteListing()
+    advanceUntilIdle()
+
+    assertFalse(viewModel.uiState.value.isLoading)
+  }
+
+  // Tests for clearListingDeleted()
+
+  @Test
+  fun clearListingDeleted_updatesState() = runTest {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.deleteListing()
+    advanceUntilIdle()
+
+    assertTrue(viewModel.uiState.value.listingDeleted)
+
+    viewModel.clearListingDeleted()
+    advanceUntilIdle()
+
+    assertFalse(viewModel.uiState.value.listingDeleted)
+  }
+
+  @Test
+  fun clearListingDeleted_whenAlreadyFalse_doesNothing() = runTest {
+    val listingRepo = FakeListingRepo()
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+
+    assertFalse(viewModel.uiState.value.listingDeleted)
+
+    viewModel.clearListingDeleted()
+    advanceUntilIdle()
+
+    assertFalse(viewModel.uiState.value.listingDeleted)
+  }
 }

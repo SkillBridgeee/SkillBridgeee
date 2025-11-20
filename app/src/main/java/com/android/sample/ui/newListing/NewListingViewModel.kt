@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
 import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.ListingType
@@ -41,6 +42,7 @@ import kotlinx.coroutines.launch
  * - invalid*Msg: per-field validation messages
  */
 data class ListingUIState(
+    val listingId: String? = null,
     val title: String = "",
     val description: String = "",
     val price: String = "",
@@ -109,18 +111,35 @@ class NewListingViewModel(
   private val subSkillMsgError = "You must choose a sub-subject"
   private val locationMsgError = "You must choose a location"
 
-  /**
-   * Placeholder to load an existing skill.
-   *
-   * Kept as a coroutine scope for future asynchronous loading.
-   */
-  fun load() {
-    // Intentionally left empty.
-    // This is a stable public API used by the UI to trigger loading an existing skill in the
-    // future.
-    // Currently this ViewModel only supports creating new skills, so no loading logic is required.
-    // Keeping this no-op preserves API/behavior stability and provides a clear extension point
-    // for adding asynchronous load logic later (e.g. pre-fill fields when editing).
+  fun load(listingId: String?) {
+    if (listingId == null) {
+      _uiState.value = ListingUIState() // Reset state for new listing
+      return
+    }
+
+    viewModelScope.launch {
+      try {
+        val listing = listingRepository.getListing(listingId)
+        if (listing != null) {
+          val subSkillOptions = SkillsHelper.getSkillNames(listing.skill.mainSubject)
+          _uiState.update {
+            it.copy(
+                listingId = listing.listingId,
+                title = listing.title,
+                description = listing.description,
+                price = listing.hourlyRate.toString(),
+                subject = listing.skill.mainSubject,
+                selectedSubSkill = listing.skill.skill,
+                subSkillOptions = subSkillOptions,
+                listingType = listing.type,
+                selectedLocation = listing.location,
+                locationQuery = listing.location.name)
+          }
+        }
+      } catch (e: Exception) {
+        Log.e("NewListingViewModel", "Failed to load listing", e)
+      }
+    }
   }
 
   fun addListing() {
@@ -166,53 +185,43 @@ class NewListingViewModel(
     }
 
     val newSkill = Skill(mainSubject = mainSubject, skill = specificSkill)
+    val isEditMode = state.listingId != null
 
-    when (listingType) {
-      ListingType.PROPOSAL -> {
-        val newProposal =
-            Proposal(
-                listingId = listingRepository.getNewUid(),
-                creatorUserId = userId,
-                skill = newSkill,
-                title = state.title,
-                description = state.description,
-                location = selectedLocation,
-                hourlyRate = price)
-        addProposalToRepository(proposal = newProposal)
-      }
-      ListingType.REQUEST -> {
-        val newRequest =
-            Request(
-                listingId = listingRepository.getNewUid(),
-                creatorUserId = userId,
-                skill = newSkill,
-                title = state.title,
-                description = state.description,
-                location = selectedLocation,
-                hourlyRate = price)
-        addRequestToRepository(request = newRequest)
-      }
-    }
-  }
+    val listing: Listing =
+        when (listingType) {
+          ListingType.PROPOSAL ->
+              Proposal(
+                  listingId = state.listingId ?: listingRepository.getNewUid(),
+                  creatorUserId = userId,
+                  skill = newSkill,
+                  title = state.title,
+                  description = state.description,
+                  location = selectedLocation,
+                  hourlyRate = price)
+          ListingType.REQUEST ->
+              Request(
+                  listingId = state.listingId ?: listingRepository.getNewUid(),
+                  creatorUserId = userId,
+                  skill = newSkill,
+                  title = state.title,
+                  description = state.description,
+                  location = selectedLocation,
+                  hourlyRate = price)
+        }
 
-  private fun addProposalToRepository(proposal: Proposal) {
     viewModelScope.launch {
       try {
-        listingRepository.addProposal(proposal)
+        if (isEditMode) {
+          listingRepository.updateListing(listing.listingId, listing)
+        } else {
+          when (listing) {
+            is Proposal -> listingRepository.addProposal(listing)
+            is Request -> listingRepository.addRequest(listing)
+          }
+        }
         _uiState.update { it.copy(addSuccess = true) }
       } catch (e: Exception) {
-        Log.e("NewSkillViewModel", "Network error adding Proposal", e)
-      }
-    }
-  }
-
-  private fun addRequestToRepository(request: Request) {
-    viewModelScope.launch {
-      try {
-        listingRepository.addRequest(request)
-        _uiState.update { it.copy(addSuccess = true) }
-      } catch (e: Exception) {
-        Log.e("NewSkillViewModel", "Network error adding Request", e)
+        Log.e("NewListingViewModel", "Error saving listing", e)
       }
     }
   }
@@ -222,19 +231,13 @@ class NewListingViewModel(
   fun setError() {
     _uiState.update { currentState ->
       val invalidTitle = if (currentState.title.isBlank()) titleMsgError else null
-
       val invalidDesc = if (currentState.description.isBlank()) descMsgError else null
-
       val invalidPrice =
           if (currentState.price.isBlank()) priceEmptyMsg
           else if (!isPosNumber(currentState.price)) priceInvalidMsg else null
-
       val invalidSubject = if (currentState.subject == null) subjectMsgError else null
-
       val invalidSubSkill = computeInvalidSubSkill(currentState)
-
       val invalidListingType = if (currentState.listingType == null) listingTypeMsgError else null
-
       val invalidLocation = if (currentState.selectedLocation == null) locationMsgError else null
 
       currentState.copy(
@@ -339,9 +342,7 @@ class NewListingViewModel(
    */
   fun setLocationQuery(query: String) {
     _uiState.update { it.copy(locationQuery = query) }
-
     locationSearchJob?.cancel()
-
     if (query.isNotBlank()) {
       locationSearchJob =
           viewModelScope.launch {
@@ -389,13 +390,11 @@ class NewListingViewModel(
     viewModelScope.launch {
       try {
         val androidLoc = provider.getCurrentLocation()
-
         if (androidLoc != null) {
           val geocoder = Geocoder(context, Locale.getDefault())
           val addresses: List<Address> =
               geocoder.getFromLocation(androidLoc.latitude, androidLoc.longitude, 1)?.toList()
                   ?: emptyList()
-
           val addressText =
               if (addresses.isNotEmpty()) {
                 val address = addresses[0]
@@ -404,13 +403,11 @@ class NewListingViewModel(
               } else {
                 "${androidLoc.latitude}, ${androidLoc.longitude}"
               }
-
           val mapLocation =
               Location(
                   latitude = androidLoc.latitude,
                   longitude = androidLoc.longitude,
                   name = addressText)
-
           _uiState.update {
             it.copy(
                 selectedLocation = mapLocation,
