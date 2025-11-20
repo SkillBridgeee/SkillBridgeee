@@ -1,8 +1,14 @@
 package com.android.sample.ui.listing.components
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.ExpertiseLevel
@@ -52,23 +58,35 @@ class ListingContentTest {
       )
 
   private fun uiState(
-      isOwnListing: Boolean = false,
-      tutorRatingPending: Boolean = false
-  ): ListingUiState =
-      ListingUiState(
-          listing = sampleListing,
-          creator = sampleCreator,
-          isLoading = false,
-          error = null,
-          isOwnListing = isOwnListing,
-          bookingInProgress = false,
-          bookingError = null,
-          bookingSuccess = false,
-          listingBookings = emptyList(),
-          bookingsLoading = false,
-          bookerProfiles = emptyMap(),
-          tutorRatingPending = tutorRatingPending,
-      )
+    listing: Proposal = sampleListing,
+    creator: Profile? = sampleCreator,
+    isLoading: Boolean = false,
+    error: String? = null,
+    isOwnListing: Boolean = false,
+    bookingInProgress: Boolean = false,
+    bookingError: String? = null,
+    bookingSuccess: Boolean = false,
+    tutorRatingPending: Boolean = false,
+    bookingsLoading: Boolean = false,
+    listingBookings: List<com.android.sample.model.booking.Booking> = emptyList(),
+    bookerProfiles: Map<String, Profile> = emptyMap()
+  ): ListingUiState {
+    return ListingUiState(
+      listing = listing,
+      creator = creator,
+      isLoading = isLoading,
+      error = error,
+      isOwnListing = isOwnListing,
+      bookingInProgress = bookingInProgress,
+      bookingError = bookingError,
+      bookingSuccess = bookingSuccess,
+      tutorRatingPending = tutorRatingPending,
+      bookingsLoading = bookingsLoading,
+      listingBookings = listingBookings,
+      bookerProfiles = bookerProfiles,
+      listingDeleted = false)
+  }
+
 
   // ---------- Tests ----------
 
@@ -157,5 +175,258 @@ class ListingContentTest {
 
     // Own listing but no pending rating → section must not exist
     compose.onNodeWithTag(ListingScreenTestTags.TUTOR_RATING_SECTION).assertDoesNotExist()
+  }
+
+  @Test
+  fun listingContent_showsEditButton_whenOwnListing() {
+    val state = uiState(isOwnListing = true)
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = {},
+          onSubmitTutorRating = {})
+      }
+    }
+
+    compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertExists()
+  }
+
+  @Test
+  fun listingContent_editButtonEnabled_whenNoActiveBookings() {
+    val state = uiState(isOwnListing = true, bookingsLoading = false)
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = {},
+          onSubmitTutorRating = {})
+      }
+    }
+
+    compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertIsEnabled()
+  }
+
+  @Test
+  fun listingContent_editButtonDisabled_whenBookingsLoading() {
+    val state = uiState(isOwnListing = true, bookingsLoading = true)
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = {},
+          onSubmitTutorRating = {})
+      }
+    }
+
+    compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertIsNotEnabled()
+  }
+
+  @Test
+  fun listingContent_editButtonDisabled_whenHasActiveBookings() {
+    val activeBooking =
+      com.android.sample.model.booking.Booking(
+        bookingId = "b1",
+        associatedListingId = "listing-1",
+        listingCreatorId = "creator-1",
+        bookerId = "booker-1",
+        sessionStart = Date(),
+        sessionEnd = Date(System.currentTimeMillis() + 3600000),
+        status = com.android.sample.model.booking.BookingStatus.PENDING,
+        price = 42.5)
+
+    val state =
+      uiState(isOwnListing = true, bookingsLoading = false, listingBookings = listOf(activeBooking))
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onSubmitTutorRating = {},
+          onDeleteListing = {},
+          onEditListing = {})
+      }
+    }
+
+    compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
+
+    compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertIsNotEnabled()
+  }
+
+
+  @Test
+  fun listingContent_editButtonEnabled_whenOnlyCancelledBookings() {
+    val cancelledBooking =
+      com.android.sample.model.booking.Booking(
+        bookingId = "b1",
+        associatedListingId = "listing-1",
+        listingCreatorId = "creator-1",
+        bookerId = "booker-1",
+        sessionStart = Date(),
+        sessionEnd = Date(System.currentTimeMillis() + 3600000),
+        status = com.android.sample.model.booking.BookingStatus.CANCELLED,
+        price = 42.5)
+
+    val state =
+      uiState(isOwnListing = true, bookingsLoading = false).copy(listingBookings = listOf(cancelledBooking))
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = {},
+          onSubmitTutorRating = {})
+      }
+    }
+
+    compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
+
+    compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertIsEnabled()
+  }
+
+  @Test
+  fun listingContent_showsDeleteButton_whenOwnListing() {
+    val state = uiState(isOwnListing = true)
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = {},
+          onSubmitTutorRating = {})
+      }
+    }
+
+    compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
+
+
+    compose.onNodeWithTag(ListingContentTestTags.DELETE_BUTTON).assertExists()
+  }
+
+  @Test
+  fun listingContent_clickDeleteButton_showsConfirmationDialog() {
+    val state = uiState(isOwnListing = true)
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = {},
+          onSubmitTutorRating = {})
+      }
+    }
+
+    compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
+
+    compose.onNodeWithTag(ListingContentTestTags.DELETE_BUTTON).performClick()
+
+    // Check for the dialog's body text instead (unique to the dialog)
+    compose.onNodeWithText("Are you sure you want to delete this listing? This action cannot be undone.").assertExists()
+
+    // Or check for both "Delete" and "Cancel" buttons in the dialog
+    compose.onNodeWithText("Delete").assertExists()
+    compose.onNodeWithText("Cancel").assertExists()
+  }
+
+
+  @Test
+  fun listingContent_deleteDialogConfirm_callsCallback() {
+    val state = uiState(isOwnListing = true)
+    var deleteCalled = false
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = { deleteCalled = true },
+          onEditListing = {},
+          onSubmitTutorRating = {})
+      }
+    }
+
+    compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
+
+
+    compose.onNodeWithTag(ListingContentTestTags.DELETE_BUTTON).performClick()
+    compose.onNodeWithText("Delete").performClick()
+
+    assert(deleteCalled)
+  }
+
+  @Test
+  fun listingContent_clickEditButton_callsCallback() {
+    val state = uiState(isOwnListing = true)
+    var editCalled = false
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = { editCalled = true },
+          onSubmitTutorRating = {})
+      }
+    }
+
+    compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).performClick()
+
+    assert(editCalled)
+  }
+
+  @Test
+  fun listingContent_doesNotShowEditDeleteButtons_whenNotOwnListing() {
+    val state = uiState(isOwnListing = false)
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = {},
+          onSubmitTutorRating = {})
+      }
+    }
+
+    compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertDoesNotExist()
+    compose.onNodeWithTag(ListingContentTestTags.DELETE_BUTTON).assertDoesNotExist()
   }
 }

@@ -74,7 +74,7 @@ fun ListingContent(
   var showBookingDialog by remember { mutableStateOf(false) }
 
   LazyColumn(
-      modifier = modifier.fillMaxSize().padding(16.dp),
+      modifier = modifier.fillMaxSize().padding(16.dp).testTag("listingContentLazyColumn"),
       verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { TypeBadge(listingType = listing.type) }
 
@@ -327,7 +327,7 @@ private fun LazyListScope.actionSection(
     val canEdit = !uiState.bookingsLoading && !hasActiveBookings
 
     item {
-      Button(onClick = onEditListing, modifier = Modifier.fillMaxWidth(), enabled = canEdit) {
+      Button(onClick = onEditListing, modifier = Modifier.fillMaxWidth().testTag(ListingContentTestTags.EDIT_BUTTON), enabled = canEdit) {
         Text("Edit Listing")
       }
     }
@@ -351,7 +351,7 @@ private fun LazyListScope.actionSection(
 
       Button(
           onClick = { showDeleteDialog = true },
-          modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().testTag(ListingContentTestTags.DELETE_BUTTON),
           colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
             Text("Delete Listing")
           }
