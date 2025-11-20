@@ -46,7 +46,8 @@ data class ListingUiState(
     val bookingSuccess: Boolean = false,
     val listingBookings: List<Booking> = emptyList(),
     val bookingsLoading: Boolean = false,
-    val bookerProfiles: Map<String, Profile> = emptyMap()
+    val bookerProfiles: Map<String, Profile> = emptyMap(),
+    val tutorRatingPending: Boolean = false
 )
 
 /**
@@ -124,7 +125,12 @@ class ListingViewModel(
         }
 
         _uiState.update {
-          it.copy(listingBookings = bookings, bookerProfiles = profiles, bookingsLoading = false)
+          it.copy(
+              listingBookings = bookings,
+              bookerProfiles = profiles,
+              bookingsLoading = false,
+              tutorRatingPending =
+                  bookings.any { booking -> booking.status == BookingStatus.COMPLETED })
         }
       } catch (_: Exception) {
         _uiState.update { it.copy(bookingsLoading = false) }
@@ -245,6 +251,19 @@ class ListingViewModel(
         _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
       } catch (e: Exception) {
         Log.w("ListingViewModel", "Couldnt reject the booking", e)
+      }
+    }
+  }
+
+  fun submitTutorRating(stars: Int) {
+    viewModelScope.launch {
+      try {
+        // TODO: store rating in repository when available
+        Log.d("ListingViewModel", "Tutor rating submitted: $stars stars")
+
+        _uiState.update { it.copy(tutorRatingPending = false) }
+      } catch (e: Exception) {
+        Log.w("ListingViewModel", "Failed to submit tutor rating", e)
       }
     }
   }
