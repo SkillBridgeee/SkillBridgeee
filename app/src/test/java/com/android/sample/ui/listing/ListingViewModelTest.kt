@@ -18,6 +18,12 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -106,6 +112,7 @@ class ListingViewModelTest {
   fun tearDown() {
     Dispatchers.resetMain()
     UserSessionManager.clearSession()
+    unmockkStatic(FirebaseAuth::class)
   }
 
   // Fake Repositories
@@ -272,6 +279,60 @@ class ListingViewModelTest {
     override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+  }
+
+  private class RecordingRatingRepo(
+      private val hasRatingResult: Boolean = false,
+      private val throwOnHasRating: Boolean = false
+  ) : RatingRepository {
+
+    val addedRatings = mutableListOf<Rating>()
+    var hasRatingCalled = false
+
+    override fun getNewUid(): String = "fake-rating-id"
+
+    override suspend fun hasRating(
+        fromUserId: String,
+        toUserId: String,
+        ratingType: RatingType,
+        targetObjectId: String
+    ): Boolean {
+      hasRatingCalled = true
+      if (throwOnHasRating) throw RuntimeException("test hasRating error")
+      return hasRatingResult
+    }
+
+    override suspend fun addRating(rating: Rating) {
+      addedRatings.add(rating)
+    }
+
+    override suspend fun getAllRatings(): List<Rating> = emptyList()
+
+    override suspend fun getRating(ratingId: String): Rating? = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsByToUser(toUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+    override suspend fun deleteRating(ratingId: String) {}
+
+    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+  }
+
+  private fun mockFirebaseAuthUser(uid: String) {
+    mockkStatic(FirebaseAuth::class)
+    val auth = mockk<FirebaseAuth>()
+    val user = mockk<FirebaseUser>()
+
+    every { FirebaseAuth.getInstance() } returns auth
+    every { auth.currentUser } returns user
+    every { user.uid } returns uid
   }
 
   // Tests for loadListing()
@@ -1058,5 +1119,117 @@ class ListingViewModelTest {
 
     // No rating added, no crash
     assertTrue(ratingRepo.addedRatings.isEmpty())
+  }
+
+  @Test
+  fun submitTutorRating_noCompletedBooking_doesNothing() = runTest {
+    // Current user is the listing creator (tutor)
+    UserSessionManager.setCurrentUserId("creator-456")
+    mockFirebaseAuthUser("creator-456")
+
+    // Only PENDING booking → no COMPLETED booking to rate
+    val pendingBooking = sampleBooking.copy(status = BookingStatus.PENDING)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(mutableListOf(pendingBooking))
+    val ratingRepo = RecordingRatingRepo(hasRatingResult = false)
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Act
+    viewModel.submitTutorRating(5)
+    advanceUntilIdle()
+
+    // Assert – no rating call, no rating saved
+    assertFalse(ratingRepo.hasRatingCalled)
+    assertTrue(ratingRepo.addedRatings.isEmpty())
+  }
+
+  @Test
+  fun submitTutorRating_alreadyRated_skipsAdding() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+    mockFirebaseAuthUser("creator-456")
+
+    val completedBooking = sampleBooking.copy(status = BookingStatus.COMPLETED)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(mutableListOf(completedBooking))
+    val ratingRepo = RecordingRatingRepo(hasRatingResult = true)
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.submitTutorRating(4)
+    advanceUntilIdle()
+
+    assertTrue(ratingRepo.hasRatingCalled)
+    assertTrue(ratingRepo.addedRatings.isEmpty()) // nothing persisted
+  }
+
+  @Test
+  fun submitTutorRating_createsTutorRating_whenNotAlreadyRated() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+    mockFirebaseAuthUser("creator-456")
+
+    val completedBooking = sampleBooking.copy(status = BookingStatus.COMPLETED)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(mutableListOf(completedBooking))
+    val ratingRepo = RecordingRatingRepo(hasRatingResult = false)
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.submitTutorRating(5)
+    advanceUntilIdle()
+
+    assertTrue(ratingRepo.hasRatingCalled)
+    assertEquals(1, ratingRepo.addedRatings.size)
+
+    val rating = ratingRepo.addedRatings.first()
+    assertEquals("creator-456", rating.fromUserId)
+    assertEquals("booker-789", rating.toUserId)
+    assertEquals(RatingType.TUTOR, rating.ratingType)
+    assertEquals("listing-123", rating.targetObjectId)
+    assertEquals(StarRating.FIVE, rating.starRating)
+  }
+
+  @Test
+  fun submitTutorRating_hasRatingThrows_stillAddsRating() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+    mockFirebaseAuthUser("creator-456")
+
+    val completedBooking = sampleBooking.copy(status = BookingStatus.COMPLETED)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(mutableListOf(completedBooking))
+    val ratingRepo = RecordingRatingRepo(hasRatingResult = false, throwOnHasRating = true)
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.submitTutorRating(3)
+    advanceUntilIdle()
+
+    // hasRating was called and threw, but code should treat it as "not already rated"
+    assertTrue(ratingRepo.hasRatingCalled)
+    assertEquals(1, ratingRepo.addedRatings.size)
   }
 }
