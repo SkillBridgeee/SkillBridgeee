@@ -35,8 +35,8 @@ class MessageViewModel(
   private val _uiState = MutableStateFlow(MessageUiState())
   val uiState: StateFlow<MessageUiState> = _uiState.asStateFlow()
 
-  private val currentUserId: String
-    get() = UserSessionManager.getCurrentUserId() ?: ""
+  private val currentUserId: String?
+    get() = UserSessionManager.getCurrentUserId()
 
   init {
     loadMessages()
@@ -47,6 +47,10 @@ class MessageViewModel(
     viewModelScope.launch {
       _uiState.update { it.copy(isLoading = true, error = null) }
       try {
+        if (currentUserId == null) {
+          _uiState.update { it.copy(isLoading = false, error = "User not authenticated") }
+          return@launch
+        }
         val messages = messageRepository.getMessagesInConversation(conversationId)
         _uiState.update { it.copy(isLoading = false, messages = messages) }
       } catch (e: Exception) {
@@ -67,10 +71,16 @@ class MessageViewModel(
     val content = _uiState.value.currentMessage.trim()
     if (content.isEmpty()) return
 
+    val userId = currentUserId
+    if (userId == null) {
+      _uiState.update { it.copy(error = "User not authenticated") }
+      return
+    }
+
     val message =
         Message(
             conversationId = conversationId,
-            sentFrom = currentUserId,
+            sentFrom = userId,
             sentTo = otherUserId,
             content = content)
 
