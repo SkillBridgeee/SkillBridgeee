@@ -33,7 +33,7 @@ class FakeProfileEmpty : FakeProfileRepo {
   }
 
   override suspend fun getProfile(userId: String): Profile? =
-      profiles.first { profile -> profile.userId == userId }
+      profiles.find { profile -> profile.userId == userId }
 
   override suspend fun addProfile(profile: Profile) {
     profiles.add(profile)
@@ -52,7 +52,7 @@ class FakeProfileEmpty : FakeProfileRepo {
     profiles.removeAll { profile -> profile.userId == userId }
   }
 
-  override suspend fun getAllProfiles(): List<Profile> = profiles
+  override suspend fun getAllProfiles(): List<Profile> = profiles.toList()
 
   override suspend fun searchProfilesByLocation(
       location: Location,
