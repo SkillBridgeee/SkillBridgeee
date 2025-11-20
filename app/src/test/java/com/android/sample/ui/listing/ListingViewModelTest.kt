@@ -1010,37 +1010,6 @@ class ListingViewModelTest {
     assertEquals(1, state.listingBookings.size)
   }
 
-  //  @Test
-  //  fun submitTutorRating_updatesState() = runTest {
-  //    // User is the owner
-  //    UserSessionManager.setCurrentUserId("creator-456")
-  //
-  //    // A completed booking -> rating pending becomes TRUE
-  //    val completedBooking = sampleBooking.copy(status = BookingStatus.COMPLETED)
-  //
-  //    val listingRepo = FakeListingRepo(sampleProposal)
-  //    val profileRepo =
-  //        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to
-  // sampleBookerProfile))
-  //    val bookingRepo = FakeBookingRepo(mutableListOf(completedBooking))
-  //
-  //    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
-  //
-  //    // Load listing (this will load bookings and set tutorRatingPending = true)
-  //    viewModel.loadListing("listing-123")
-  //    advanceUntilIdle()
-  //
-  //    // Sanity check: make sure it’s true before the test
-  //    assertTrue(viewModel.uiState.value.tutorRatingPending)
-  //
-  //    // Act
-  //    viewModel.submitTutorRating(5)
-  //    advanceUntilIdle()
-  //
-  //    // Assert
-  //    assertFalse(viewModel.uiState.value.tutorRatingPending)
-  //  }
-
   @Test
   fun createBooking_illegalArgumentException_setsInvalidBookingError() = runTest {
     UserSessionManager.setCurrentUserId("user-123")
@@ -1176,7 +1145,7 @@ class ListingViewModelTest {
   }
 
   @Test
-  fun submitTutorRating_createsTutorRating_whenNotAlreadyRated() = runTest {
+  fun submitTutorRating_createsStudentRating_whenNotAlreadyRated() = runTest {
     UserSessionManager.setCurrentUserId("creator-456")
     mockFirebaseAuthUser("creator-456")
 
@@ -1202,7 +1171,8 @@ class ListingViewModelTest {
     val rating = ratingRepo.addedRatings.first()
     assertEquals("creator-456", rating.fromUserId)
     assertEquals("booker-789", rating.toUserId)
-    assertEquals(RatingType.TUTOR, rating.ratingType)
+    // 👇 this is the important change
+    assertEquals(RatingType.STUDENT, rating.ratingType)
     assertEquals("listing-123", rating.targetObjectId)
     assertEquals(StarRating.FIVE, rating.starRating)
   }

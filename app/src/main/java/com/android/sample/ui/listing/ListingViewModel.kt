@@ -300,7 +300,7 @@ class ListingViewModel(
               ratingRepo.hasRating(
                   fromUserId = fromUserId,
                   toUserId = toUserId,
-                  ratingType = RatingType.TUTOR,
+                  ratingType = RatingType.STUDENT, // 👈 changed
                   targetObjectId = listing.listingId)
             } catch (e: Exception) {
               Log.w("ListingViewModel", "Error checking existing rating", e)
@@ -309,7 +309,6 @@ class ListingViewModel(
 
         if (alreadyRated) {
           Log.d("ListingViewModel", "Rating already exists; skipping submit")
-          // refresh bookings so UI hides rating
           _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
           return@launch
         }
@@ -324,15 +323,12 @@ class ListingViewModel(
                 toUserId = toUserId,
                 starRating = starEnum,
                 comment = "",
-                ratingType = RatingType.TUTOR,
+                ratingType = RatingType.STUDENT, // 👈 changed
                 targetObjectId = listing.listingId)
 
-        // Await saving to Firestore
         ratingRepo.addRating(rating)
 
         Log.d("ListingViewModel", "Tutor rating persisted: $stars stars -> $toUserId")
-        // Refresh bookings; loadBookingsForListing will re-check Firestore and clear
-        // tutorRatingPending persistently
         _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
       } catch (e: Exception) {
         Log.w("ListingViewModel", "Failed to submit tutor rating", e)
