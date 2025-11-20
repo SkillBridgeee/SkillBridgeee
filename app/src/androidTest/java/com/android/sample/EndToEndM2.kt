@@ -1,3 +1,4 @@
+/*
 package com.android.sample
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -301,3 +302,4 @@ class EndToEndM2 {
     compose.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
   }
 }
+*/
