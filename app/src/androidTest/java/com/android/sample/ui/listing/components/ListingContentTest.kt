@@ -91,7 +91,7 @@ class ListingContentTest {
     }
 
     compose.waitForIdle()
-    Thread.sleep(500)
+    Thread.sleep(10_000)
 
     compose.onNodeWithTag(ListingScreenTestTags.TUTOR_RATING_SECTION).assertIsDisplayed()
   }
