@@ -67,6 +67,22 @@ class BookingsDetailsViewModelTest {
 
     override fun getNewUid(): String = UUID.randomUUID().toString()
 
+    override suspend fun hasRating(
+        fromUserId: String,
+        toUserId: String,
+        ratingType: RatingType,
+        targetObjectId: String
+    ): Boolean {
+      // For these tests we can just say "no duplicate yet"
+      // or actually check in the local store if you prefer.
+      return store.values.any {
+        it.fromUserId == fromUserId &&
+            it.toUserId == toUserId &&
+            it.ratingType == ratingType &&
+            it.targetObjectId == targetObjectId
+      }
+    }
+
     override suspend fun getAllRatings(): List<Rating> = store.values.toList()
 
     override suspend fun getRating(ratingId: String): Rating? = store[ratingId]

@@ -35,6 +35,7 @@ import com.android.sample.ui.theme.PrimaryColor
 object HomeScreenTestTags {
   const val WELCOME_SECTION = "welcomeSection"
   const val EXPLORE_SKILLS_SECTION = "exploreSkillsSection"
+  const val ALL_SUBJECT_LIST = "allSubjectList"
   const val SKILL_CARD = "skillCard"
   const val TOP_TUTOR_SECTION = "topTutorSection"
   const val TUTOR_CARD = "tutorCard"
@@ -120,7 +121,7 @@ fun ExploreSubjects(subjects: List<MainSubject>, onSubjectCardClicked: (MainSubj
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth()) {
+            modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.ALL_SUBJECT_LIST)) {
               items(subjects) {
                 val subjectColor = SkillsHelper.getColorForSubject(it)
                 SubjectCard(subject = it, color = subjectColor, onSubjectCardClicked)

@@ -6,6 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
@@ -26,9 +28,10 @@ import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.LocationInputField
+import com.android.sample.ui.navigation.NavRoutes
 
 object NewListingScreenTestTag {
-  const val BUTTON_SAVE_SKILL = "buttonSaveSkill"
+  const val BUTTON_SAVE_LISTING = "buttonSaveListing"
   const val CREATE_LESSONS_TITLE = "createLessonsTitle"
   const val INPUT_COURSE_TITLE = "inputCourseTitle"
   const val INVALID_TITLE_MSG = "invalidTitleMsg"
@@ -51,7 +54,8 @@ object NewListingScreenTestTag {
   const val BUTTON_USE_MY_LOCATION = "buttonUseMyLocation"
 
   const val INPUT_LOCATION_FIELD = "inputLocationField"
-  const val INVALID_LOCATION_MSG = "invalidLocationMsg"
+
+  const val SCROLLABLE_SCREEN = "scrollNewListing"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,41 +63,65 @@ object NewListingScreenTestTag {
 fun NewListingScreen(
     skillViewModel: NewListingViewModel = viewModel(),
     profileId: String,
-    navController: NavController
+    listingId: String?,
+    navController: NavController,
+    onNavigateBack: () -> Unit
 ) {
   val listingUIState by skillViewModel.uiState.collectAsState()
+  val isEditMode = listingId != null
 
   LaunchedEffect(listingUIState.addSuccess) {
     if (listingUIState.addSuccess) {
-      navController.popBackStack()
+      if (isEditMode) {
+        navController.navigate(NavRoutes.createProfileRoute(profileId)) {
+          popUpTo(NavRoutes.createProfileRoute(profileId)) { inclusive = true }
+        }
+      } else {
+        navController.popBackStack()
+      }
       skillViewModel.clearAddSuccess()
     }
   }
 
   val buttonText =
-      when (listingUIState.listingType) {
-        ListingType.PROPOSAL -> "Create Proposal"
-        ListingType.REQUEST -> "Create Request"
-        null -> "Create Listing"
-      }
+      if (isEditMode) "Save Changes"
+      else
+          when (listingUIState.listingType) {
+            ListingType.PROPOSAL -> "Create Proposal"
+            ListingType.REQUEST -> "Create Request"
+            null -> "Create Listing"
+          }
+
+  val titleText = if (isEditMode) "Edit Listing" else "Create Your Listing"
 
   Scaffold(
       floatingActionButton = {
         AppButton(
             text = buttonText,
             onClick = { skillViewModel.addListing() },
-            testTag = NewListingScreenTestTag.BUTTON_SAVE_SKILL)
+            testTag = NewListingScreenTestTag.BUTTON_SAVE_LISTING)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
-        ListingContent(pd = pd, profileId = profileId, listingViewModel = skillViewModel)
+        ListingContent(
+            pd = pd,
+            profileId = profileId,
+            listingId = listingId,
+            listingViewModel = skillViewModel,
+            titleText = titleText)
       }
 }
 
 @Composable
-fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewListingViewModel) {
+fun ListingContent(
+    pd: PaddingValues,
+    profileId: String,
+    listingId: String?,
+    listingViewModel: NewListingViewModel,
+    titleText: String
+) {
   val listingUIState by listingViewModel.uiState.collectAsState()
 
-  LaunchedEffect(profileId) { listingViewModel.load() }
+  LaunchedEffect(profileId, listingId) { listingViewModel.load(listingId) }
 
   val context = LocalContext.current
   val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -106,10 +134,15 @@ fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewLi
           listingViewModel.onLocationPermissionDenied()
         }
       }
+  val scrollState = rememberScrollState()
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
-      modifier = Modifier.fillMaxWidth().padding(pd)) {
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(pd)
+              .verticalScroll(scrollState)
+              .testTag(NewListingScreenTestTag.SCROLLABLE_SCREEN)) {
         Spacer(Modifier.height(20.dp))
 
         Box(
@@ -124,7 +157,7 @@ fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewLi
                     .padding(16.dp)) {
               Column {
                 Text(
-                    text = "Create Your Listing",
+                    text = titleText,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.testTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE))
 
@@ -242,15 +275,6 @@ fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewLi
                               contentDescription = "Use my location",
                               tint = MaterialTheme.colorScheme.primary)
                         }
-                  }
-
-                  // Show tagged error text if invalidLocationMsg is set
-                  listingUIState.invalidLocationMsg?.let { msg ->
-                    Text(
-                        text = msg,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_LOCATION_MSG))
                   }
                 }
               }

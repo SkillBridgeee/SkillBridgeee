@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.ui.components.BookingCard
 
 object MyBookingsPageTestTag {
+  const val MY_BOOKINGS_SCREEN = "myBookingsScreenScreen"
   const val LOADING = "myBookingsLoading"
   const val ERROR = "myBookingsError"
   const val EMPTY = "myBookingsEmpty"
@@ -52,7 +53,7 @@ fun MyBookingsScreen(
     viewModel: MyBookingsViewModel = viewModel(),
     onBookingClick: (String) -> Unit
 ) {
-  Scaffold { inner ->
+  Scaffold(modifier = modifier.testTag(MyBookingsPageTestTag.MY_BOOKINGS_SCREEN)) { inner ->
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.load() }

@@ -14,11 +14,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.ui.listing.components.ListingContent
+import kotlinx.coroutines.launch
 
 /** Test tags for the listing screen */
 object ListingScreenTestTags {
@@ -74,13 +76,23 @@ object ListingScreenTestTags {
 fun ListingScreen(
     listingId: String,
     onNavigateBack: () -> Unit,
+    onEditListing: () -> Unit,
     viewModel: ListingViewModel = viewModel(),
     autoFillDatesForTesting: Boolean = false
 ) {
   val uiState by viewModel.uiState.collectAsState()
+  val scope = rememberCoroutineScope()
+  //  val listingRepository = ListingRepositoryProvider.repository
 
   // Load listing when screen is displayed
   LaunchedEffect(listingId) { viewModel.loadListing(listingId) }
+
+  LaunchedEffect(uiState.listingDeleted) {
+    if (uiState.listingDeleted) {
+      onNavigateBack()
+      viewModel.clearListingDeleted()
+    }
+  }
 
   // Helper function to handle success dialog dismissal
   val handleSuccessDismiss: () -> Unit = {
@@ -132,9 +144,13 @@ fun ListingScreen(
       uiState.listing != null -> {
         ListingContent(
             uiState = uiState,
+            modifier = Modifier.padding(padding),
             onBook = { start, end -> viewModel.createBooking(start, end) },
-            onApproveBooking = { viewModel.approveBooking(it) },
-            onRejectBooking = { viewModel.rejectBooking(it) },
+            onApproveBooking = { bookingId -> viewModel.approveBooking(bookingId) },
+            onRejectBooking = { bookingId -> viewModel.rejectBooking(bookingId) },
+            onDeleteListing = { scope.launch { viewModel.deleteListing() } },
+            onEditListing = onEditListing,
+            autoFillDatesForTesting = autoFillDatesForTesting,
             onSubmitTutorRating = { stars -> viewModel.submitTutorRating(stars) })
       }
     }

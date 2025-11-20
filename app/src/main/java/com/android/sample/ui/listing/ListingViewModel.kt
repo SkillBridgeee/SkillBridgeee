@@ -11,9 +11,16 @@ import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.rating.FirestoreRatingRepository
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingType
+import com.android.sample.model.rating.StarRating
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import java.util.Date
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +53,7 @@ data class ListingUiState(
     val bookingSuccess: Boolean = false,
     val listingBookings: List<Booking> = emptyList(),
     val bookingsLoading: Boolean = false,
+    val listingDeleted: Boolean = false,
     val bookerProfiles: Map<String, Profile> = emptyMap(),
     val tutorRatingPending: Boolean = false
 )
@@ -60,7 +68,9 @@ data class ListingUiState(
 class ListingViewModel(
     private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
     private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
-    private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository
+    private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository,
+    private val ratingRepo: RatingRepository =
+        FirestoreRatingRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance())
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(ListingUiState())
@@ -194,10 +204,8 @@ class ListingViewModel(
                 status = BookingStatus.PENDING,
                 price = price)
 
-        // Validate booking
         booking.validate()
 
-        // Add booking to repository
         bookingRepo.addBooking(booking)
 
         _uiState.update {
@@ -255,13 +263,72 @@ class ListingViewModel(
     }
   }
 
+  private fun Int.toStarRating(): StarRating {
+    val values = StarRating.values()
+    val idx = (this - 1).coerceIn(0, values.size - 1)
+    return values.getOrNull(idx) ?: values.first()
+  }
+
   fun submitTutorRating(stars: Int) {
     viewModelScope.launch {
       try {
-        // TODO: store rating in repository when available
-        Log.d("ListingViewModel", "Tutor rating submitted: $stars stars")
+        val listing = _uiState.value.listing
+        if (listing == null) {
+          Log.w("ListingViewModel", "Cannot submit rating: listing missing")
+          return@launch
+        }
 
-        _uiState.update { it.copy(tutorRatingPending = false) }
+        val fromUserId =
+            FirebaseAuth.getInstance().currentUser?.uid ?: throw Exception("User not authenticated")
+
+        val completedBooking =
+            _uiState.value.listingBookings.firstOrNull {
+              it.status == BookingStatus.COMPLETED &&
+                  it.listingCreatorId == fromUserId // ensure tutor is the creator
+            }
+        if (completedBooking == null) {
+          Log.w("ListingViewModel", "No completed booking found to rate")
+          return@launch
+        }
+
+        val toUserId = completedBooking.bookerId
+
+        // Prevent duplicate rating: check existing before creating
+        val alreadyRated =
+            try {
+              ratingRepo.hasRating(
+                  fromUserId = fromUserId,
+                  toUserId = toUserId,
+                  ratingType = RatingType.STUDENT, // 👈 changed
+                  targetObjectId = listing.listingId)
+            } catch (e: Exception) {
+              Log.w("ListingViewModel", "Error checking existing rating", e)
+              false
+            }
+
+        if (alreadyRated) {
+          Log.d("ListingViewModel", "Rating already exists; skipping submit")
+          _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
+          return@launch
+        }
+
+        val ratingId = ratingRepo.getNewUid()
+        val starEnum = stars.toStarRating()
+
+        val rating =
+            Rating(
+                ratingId = ratingId,
+                fromUserId = fromUserId,
+                toUserId = toUserId,
+                starRating = starEnum,
+                comment = "",
+                ratingType = RatingType.STUDENT, // 👈 changed
+                targetObjectId = listing.listingId)
+
+        ratingRepo.addRating(rating)
+
+        Log.d("ListingViewModel", "Tutor rating persisted: $stars stars -> $toUserId")
+        _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
       } catch (e: Exception) {
         Log.w("ListingViewModel", "Failed to submit tutor rating", e)
       }
@@ -284,5 +351,68 @@ class ListingViewModel(
 
   fun showBookingError(message: String) {
     _uiState.update { it.copy(bookingError = message) }
+  }
+
+  /**
+   * Delete the current listing. Before deletion, cancel all bookings associated with the listing
+   * (any booking not already CANCELLED will be set to CANCELLED).
+   */
+  fun deleteListing() {
+    val listing = _uiState.value.listing
+    if (listing == null) {
+      _uiState.update { it.copy(error = "Listing not found") }
+      return
+    }
+
+    viewModelScope.launch {
+      _uiState.update { it.copy(isLoading = true, error = null, listingDeleted = false) }
+      try {
+        // fetch bookings for listing
+        val bookings =
+            try {
+              bookingRepo.getBookingsByListing(listing.listingId)
+            } catch (e: Exception) {
+              // If fetching bookings fails, continue but log; we still attempt deletion
+              Log.w("ListingViewModel", "Failed to fetch bookings for cancellation", e)
+              emptyList()
+            }
+
+        // Cancel each non-cancelled booking. Log errors but continue.
+        bookings
+            .filter { it.status != BookingStatus.CANCELLED }
+            .forEach { booking ->
+              try {
+                bookingRepo.cancelBooking(booking.bookingId)
+              } catch (e: Exception) {
+                Log.w("ListingViewModel", "Failed to cancel booking ${booking.bookingId}", e)
+              }
+            }
+
+        // Delete the listing
+        listingRepo.deleteListing(listing.listingId)
+
+        // Update UI state: listing removed and bookings cleared
+        _uiState.update {
+          it.copy(
+              listing = null,
+              listingBookings = emptyList(),
+              isOwnListing = false,
+              isLoading = false,
+              error = null,
+              listingDeleted = true)
+        }
+      } catch (e: Exception) {
+        _uiState.update {
+          it.copy(
+              isLoading = false,
+              error = "Failed to delete listing: ${e.message}",
+              listingDeleted = false)
+        }
+      }
+    }
+  }
+
+  fun clearListingDeleted() {
+    _uiState.update { it.copy(listingDeleted = false) }
   }
 }

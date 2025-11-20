@@ -15,8 +15,29 @@ class FirestoreRatingRepository(
   private val currentUserId: String
     get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
 
+  private val collection = db.collection(RATINGS_COLLECTION_PATH)
+
   override fun getNewUid(): String {
     return UUID.randomUUID().toString()
+  }
+  // Returns true if a rating already exists from *fromUserId* to *toUserId* for the given
+  // target/type
+  override suspend fun hasRating(
+      fromUserId: String,
+      toUserId: String,
+      ratingType: RatingType,
+      targetObjectId: String
+  ): Boolean {
+    val querySnapshot =
+        collection
+            .whereEqualTo("fromUserId", fromUserId)
+            .whereEqualTo("toUserId", toUserId)
+            .whereEqualTo("ratingType", ratingType.name)
+            .whereEqualTo("targetObjectId", targetObjectId)
+            .limit(1)
+            .get()
+            .await()
+    return !querySnapshot.isEmpty
   }
 
   override suspend fun getAllRatings(): List<Rating> {

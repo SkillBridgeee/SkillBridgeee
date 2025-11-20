@@ -3,10 +3,14 @@ package com.android.sample.ui.newListing
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingType
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.Skill
 import io.mockk.*
+import kotlin.text.contains
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -469,5 +473,123 @@ class NewListingViewModelTest {
     // Verify first search was never executed (cancelled)
     coVerify(exactly = 0) { mockLocationRepository.search("First") }
     coVerify(exactly = 1) { mockLocationRepository.search("Second") }
+  }
+
+  // ========== Load Listing Tests ==========
+
+  @Test
+  fun load_withNullListingId_resetsState() = runTest {
+    // Arrange: Set some state first
+    viewModel.setTitle("Existing Title")
+    viewModel.setDescription("Existing Description")
+
+    // Act
+    viewModel.load(null)
+    advanceUntilIdle()
+
+    // Assert: State should be reset
+    val state = viewModel.uiState.first()
+    assertEquals("", state.title)
+    assertEquals("", state.description)
+    assertNull(state.listingId)
+  }
+
+  @Test
+  fun load_withValidProposalId_loadsListingData() = runTest {
+    // Arrange
+    val mockProposal =
+        mockk<Proposal>(relaxed = true) {
+          every { listingId } returns "listing-123"
+          every { title } returns "Advanced Math Tutoring"
+          every { description } returns "Calculus and Linear Algebra"
+          every { hourlyRate } returns 35.50
+          every { type } returns ListingType.PROPOSAL
+          every { location } returns testLocation
+          every { skill } returns Skill(MainSubject.ACADEMICS, "Calculus")
+        }
+
+    coEvery { mockListingRepository.getListing("listing-123") } returns mockProposal
+
+    // Act
+    viewModel.load("listing-123")
+    advanceUntilIdle()
+
+    // Assert
+    val state = viewModel.uiState.first()
+    assertEquals("listing-123", state.listingId)
+    assertEquals("Advanced Math Tutoring", state.title)
+    assertEquals("Calculus and Linear Algebra", state.description)
+    assertEquals("35.5", state.price)
+    assertEquals(MainSubject.ACADEMICS, state.subject)
+    assertEquals("Calculus", state.selectedSubSkill)
+    assertEquals(ListingType.PROPOSAL, state.listingType)
+    assertEquals(testLocation, state.selectedLocation)
+    assertEquals("Lausanne", state.locationQuery)
+    assertTrue(state.subSkillOptions.isNotEmpty())
+  }
+
+  @Test
+  fun load_withValidRequestId_loadsListingData() = runTest {
+    // Arrange
+    val mockRequest =
+        mockk<Request>(relaxed = true) {
+          every { listingId } returns "request-456"
+          every { title } returns "Need Physics Help"
+          every { description } returns "Struggling with quantum mechanics"
+          every { hourlyRate } returns 28.00
+          every { type } returns ListingType.REQUEST
+          every { location } returns testLocation
+          every { skill } returns Skill(MainSubject.ACADEMICS, "Physics")
+        }
+
+    coEvery { mockListingRepository.getListing("request-456") } returns mockRequest
+
+    // Act
+    viewModel.load("request-456")
+    advanceUntilIdle()
+
+    // Assert
+    val state = viewModel.uiState.first()
+    assertEquals("request-456", state.listingId)
+    assertEquals("Need Physics Help", state.title)
+    assertEquals("Struggling with quantum mechanics", state.description)
+    assertEquals("28.0", state.price)
+    assertEquals(MainSubject.ACADEMICS, state.subject)
+    assertEquals("Physics", state.selectedSubSkill)
+    assertEquals(ListingType.REQUEST, state.listingType)
+    assertEquals(testLocation, state.selectedLocation)
+    assertEquals("Lausanne", state.locationQuery)
+  }
+
+  @Test
+  fun load_withNonExistentId_doesNotUpdateState() = runTest {
+    // Arrange
+    coEvery { mockListingRepository.getListing("non-existent") } returns null
+
+    // Act
+    viewModel.load("non-existent")
+    advanceUntilIdle()
+
+    // Assert: State should remain at defaults
+    val state = viewModel.uiState.first()
+    assertNull(state.listingId)
+    assertEquals("", state.title)
+    assertEquals("", state.description)
+  }
+
+  @Test
+  fun load_whenRepositoryThrowsException_doesNotCrash() = runTest {
+    // Arrange
+    coEvery { mockListingRepository.getListing("error-id") } throws
+        RuntimeException("Database error")
+
+    // Act & Assert: Should not crash
+    viewModel.load("error-id")
+    advanceUntilIdle()
+
+    // State should remain unchanged
+    val state = viewModel.uiState.first()
+    assertNull(state.listingId)
+    assertEquals("", state.title)
   }
 }
