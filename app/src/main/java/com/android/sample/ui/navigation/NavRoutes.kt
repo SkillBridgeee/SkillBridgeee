@@ -40,7 +40,7 @@ object NavRoutes {
   const val OTHERS_PROFILE = "profile"
   const val BOOKING_DETAILS = "bookingDetails"
 
-  fun createProfileRoute(profileId: String) = "myProfile/$profileId"
+  fun createProfileRoute(profileId: String) = "profile/$profileId"
 
   fun createListingRoute(listingId: String) = "listing/$listingId"
 

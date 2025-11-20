@@ -26,6 +26,7 @@ import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.LocationInputField
+import com.android.sample.ui.navigation.NavRoutes
 
 object NewListingScreenTestTag {
   const val BUTTON_SAVE_SKILL = "buttonSaveSkill"
@@ -68,7 +69,13 @@ fun NewListingScreen(
 
   LaunchedEffect(listingUIState.addSuccess) {
     if (listingUIState.addSuccess) {
-      navController.popBackStack()
+      if (isEditMode) {
+        navController.navigate(NavRoutes.createProfileRoute(profileId)) {
+          popUpTo(NavRoutes.createProfileRoute(profileId)) { inclusive = true }
+        }
+      } else {
+        navController.popBackStack()
+      }
       skillViewModel.clearAddSuccess()
     }
   }
