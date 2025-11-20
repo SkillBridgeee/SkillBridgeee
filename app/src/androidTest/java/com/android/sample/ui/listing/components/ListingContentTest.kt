@@ -90,6 +90,9 @@ class ListingContentTest {
       }
     }
 
+    compose.waitForIdle()
+    Thread.sleep(500)
+
     compose.onNodeWithTag(ListingScreenTestTags.TUTOR_RATING_SECTION).assertIsDisplayed()
   }
 
