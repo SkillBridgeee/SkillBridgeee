@@ -46,7 +46,7 @@ class NavRoutesTest {
   @Test
   fun createProfileRoute_createsCorrectRoute() {
     val route = NavRoutes.createProfileRoute("user456")
-    assertEquals("myProfile/user456", route)
+    assertEquals("profile/user456", route)
   }
 
   @Test

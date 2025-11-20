@@ -26,6 +26,7 @@ import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.AppButton
 import com.android.sample.ui.components.LocationInputField
+import com.android.sample.ui.navigation.NavRoutes
 
 object NewListingScreenTestTag {
   const val BUTTON_SAVE_SKILL = "buttonSaveSkill"
@@ -59,23 +60,36 @@ object NewListingScreenTestTag {
 fun NewListingScreen(
     skillViewModel: NewListingViewModel = viewModel(),
     profileId: String,
-    navController: NavController
+    listingId: String?,
+    navController: NavController,
+    onNavigateBack: () -> Unit
 ) {
   val listingUIState by skillViewModel.uiState.collectAsState()
+  val isEditMode = listingId != null
 
   LaunchedEffect(listingUIState.addSuccess) {
     if (listingUIState.addSuccess) {
-      navController.popBackStack()
+      if (isEditMode) {
+        navController.navigate(NavRoutes.createProfileRoute(profileId)) {
+          popUpTo(NavRoutes.createProfileRoute(profileId)) { inclusive = true }
+        }
+      } else {
+        navController.popBackStack()
+      }
       skillViewModel.clearAddSuccess()
     }
   }
 
   val buttonText =
-      when (listingUIState.listingType) {
-        ListingType.PROPOSAL -> "Create Proposal"
-        ListingType.REQUEST -> "Create Request"
-        null -> "Create Listing"
-      }
+      if (isEditMode) "Save Changes"
+      else
+          when (listingUIState.listingType) {
+            ListingType.PROPOSAL -> "Create Proposal"
+            ListingType.REQUEST -> "Create Request"
+            null -> "Create Listing"
+          }
+
+  val titleText = if (isEditMode) "Edit Listing" else "Create Your Listing"
 
   Scaffold(
       floatingActionButton = {
@@ -85,15 +99,26 @@ fun NewListingScreen(
             testTag = NewListingScreenTestTag.BUTTON_SAVE_SKILL)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
-        ListingContent(pd = pd, profileId = profileId, listingViewModel = skillViewModel)
+        ListingContent(
+            pd = pd,
+            profileId = profileId,
+            listingId = listingId,
+            listingViewModel = skillViewModel,
+            titleText = titleText)
       }
 }
 
 @Composable
-fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewListingViewModel) {
+fun ListingContent(
+    pd: PaddingValues,
+    profileId: String,
+    listingId: String?,
+    listingViewModel: NewListingViewModel,
+    titleText: String
+) {
   val listingUIState by listingViewModel.uiState.collectAsState()
 
-  LaunchedEffect(profileId) { listingViewModel.load() }
+  LaunchedEffect(profileId, listingId) { listingViewModel.load(listingId) }
 
   val context = LocalContext.current
   val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -124,7 +149,7 @@ fun ListingContent(pd: PaddingValues, profileId: String, listingViewModel: NewLi
                     .padding(16.dp)) {
               Column {
                 Text(
-                    text = "Create Your Listing",
+                    text = titleText,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.testTag(NewListingScreenTestTag.CREATE_LESSONS_TITLE))
 

@@ -53,6 +53,7 @@ data class ListingUiState(
     val bookingSuccess: Boolean = false,
     val listingBookings: List<Booking> = emptyList(),
     val bookingsLoading: Boolean = false,
+    val listingDeleted: Boolean = false,
     val bookerProfiles: Map<String, Profile> = emptyMap(),
     val tutorRatingPending: Boolean = false
 )
@@ -203,10 +204,8 @@ class ListingViewModel(
                 status = BookingStatus.PENDING,
                 price = price)
 
-        // Validate booking
         booking.validate()
 
-        // Add booking to repository
         bookingRepo.addBooking(booking)
 
         _uiState.update {
@@ -352,5 +351,68 @@ class ListingViewModel(
 
   fun showBookingError(message: String) {
     _uiState.update { it.copy(bookingError = message) }
+  }
+
+  /**
+   * Delete the current listing. Before deletion, cancel all bookings associated with the listing
+   * (any booking not already CANCELLED will be set to CANCELLED).
+   */
+  fun deleteListing() {
+    val listing = _uiState.value.listing
+    if (listing == null) {
+      _uiState.update { it.copy(error = "Listing not found") }
+      return
+    }
+
+    viewModelScope.launch {
+      _uiState.update { it.copy(isLoading = true, error = null, listingDeleted = false) }
+      try {
+        // fetch bookings for listing
+        val bookings =
+            try {
+              bookingRepo.getBookingsByListing(listing.listingId)
+            } catch (e: Exception) {
+              // If fetching bookings fails, continue but log; we still attempt deletion
+              Log.w("ListingViewModel", "Failed to fetch bookings for cancellation", e)
+              emptyList()
+            }
+
+        // Cancel each non-cancelled booking. Log errors but continue.
+        bookings
+            .filter { it.status != BookingStatus.CANCELLED }
+            .forEach { booking ->
+              try {
+                bookingRepo.cancelBooking(booking.bookingId)
+              } catch (e: Exception) {
+                Log.w("ListingViewModel", "Failed to cancel booking ${booking.bookingId}", e)
+              }
+            }
+
+        // Delete the listing
+        listingRepo.deleteListing(listing.listingId)
+
+        // Update UI state: listing removed and bookings cleared
+        _uiState.update {
+          it.copy(
+              listing = null,
+              listingBookings = emptyList(),
+              isOwnListing = false,
+              isLoading = false,
+              error = null,
+              listingDeleted = true)
+        }
+      } catch (e: Exception) {
+        _uiState.update {
+          it.copy(
+              isLoading = false,
+              error = "Failed to delete listing: ${e.message}",
+              listingDeleted = false)
+        }
+      }
+    }
+  }
+
+  fun clearListingDeleted() {
+    _uiState.update { it.copy(listingDeleted = false) }
   }
 }
