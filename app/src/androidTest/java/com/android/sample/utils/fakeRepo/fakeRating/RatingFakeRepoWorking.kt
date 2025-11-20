@@ -1,6 +1,7 @@
 package com.android.sample.utils.fakeRepo.fakeRating
 
 import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingType
 
 // todo implementer ce file
 class RatingFakeRepoWorking : FakeRatingRepo {
@@ -45,6 +46,15 @@ class RatingFakeRepoWorking : FakeRatingRepo {
   }
 
   override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun hasRating(
+      fromUserId: String,
+      toUserId: String,
+      ratingType: RatingType,
+      targetObjectId: String
+  ): Boolean {
     TODO("Not yet implemented")
   }
 }
