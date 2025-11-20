@@ -7,6 +7,14 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import java.io.IOException
 
+/**
+ * A fake implementation of FakeListingRepo that intentionally simulates failures.
+ *
+ * Every method in this repository throws an exception, making it useful for testing error handling,
+ * UI fallback behavior, and robustness against data loading or network failures during development.
+ *
+ * No listings are stored, created, or returned — all operations result in mock errors.
+ */
 class FakeListingError : FakeListingRepo {
 
   override fun getLastListingCreated(): Listing? {

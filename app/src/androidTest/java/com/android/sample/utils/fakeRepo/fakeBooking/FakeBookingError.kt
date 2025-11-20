@@ -4,6 +4,15 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingStatus
 import java.io.IOException
 
+/**
+ * A fake implementation of FakeBookingRepo that intentionally simulates failures.
+ *
+ * Every method in this repository throws an exception, allowing developers to test error handling,
+ * failure states, and UI resilience without interacting with real booking data or backend services.
+ *
+ * No bookings are stored, retrieved, or updated — all operations result in predictable mock errors
+ * used for testing robustness.
+ */
 class FakeBookingError : FakeBookingRepo {
   override fun getNewUid(): String {
     throw IllegalStateException("Failed to generate UID (mock error).")

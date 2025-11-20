@@ -7,6 +7,15 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import java.util.UUID
 
+/**
+ * A minimal in-memory implementation of FakeListingRepo.
+ *
+ * This fake repository stores listings locally in a simple mutable list and provides basic
+ * CRUD-like operations without any persistence or backend logic.
+ *
+ * It contains no predefined data—only what is added at runtime—and is mainly intended for
+ * lightweight testing, UI previews, or isolated development scenarios.
+ */
 class FakeListingEmpty : FakeListingRepo {
   private var lastListingCreated: Listing? = null
   private val listings = mutableListOf<Listing>()

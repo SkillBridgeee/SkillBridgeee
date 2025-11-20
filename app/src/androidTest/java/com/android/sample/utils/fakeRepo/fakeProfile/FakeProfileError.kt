@@ -4,6 +4,14 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 
+/**
+ * A fake implementation of FakeProfileRepo that simulates consistent failures.
+ *
+ * Every method in this repository throws an IllegalStateException, making it useful for testing
+ * error handling, failure states, and fallback UI behavior.
+ *
+ * No data is stored, returned, or processed — all calls result in mock errors.
+ */
 class FakeProfileError : FakeProfileRepo {
 
   override fun getCurrentUserId(): String {

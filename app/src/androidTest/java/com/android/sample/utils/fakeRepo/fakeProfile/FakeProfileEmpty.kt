@@ -6,6 +6,15 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import java.util.UUID
 
+/**
+ * A minimal in-memory implementation of FakeProfileRepo.
+ *
+ * This fake repository contains only one predefined "current user" profile and does not provide
+ * real data persistence or business logic.
+ *
+ * Most operations return static or very limited data, making it suitable for simple UI previews,
+ * isolated tests, or placeholder behavior.
+ */
 class FakeProfileEmpty : FakeProfileRepo {
 
   private val profiles =

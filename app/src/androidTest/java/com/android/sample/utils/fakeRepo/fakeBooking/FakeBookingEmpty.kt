@@ -4,6 +4,15 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingStatus
 import java.util.UUID
 
+/**
+ * A lightweight in-memory implementation of FakeBookingRepo.
+ *
+ * This repository keeps bookings in a simple mutable list and provides minimal CRUD operations
+ * without any persistence, networking, or validation logic.
+ *
+ * It contains no predefined booking data—only what is added at runtime—making it suitable for UI
+ * previews, isolated component tests, or local development scenarios.
+ */
 class FakeBookingEmpty : FakeBookingRepo {
 
   private val bookings = mutableListOf<Booking>()
