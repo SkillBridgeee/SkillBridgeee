@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollTo
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.ExpertiseLevel
@@ -90,10 +91,16 @@ class ListingContentTest {
       }
     }
 
+    // Let compose settle, then scroll the node into view (nearest scrollable ancestor)
     compose.waitForIdle()
-    Thread.sleep(10_000)
+    compose
+        .onNodeWithTag(ListingScreenTestTags.TUTOR_RATING_SECTION, useUnmergedTree = true)
+        .performScrollTo()
+    compose.waitForIdle()
 
-    compose.onNodeWithTag(ListingScreenTestTags.TUTOR_RATING_SECTION).assertIsDisplayed()
+    compose
+        .onNodeWithTag(ListingScreenTestTags.TUTOR_RATING_SECTION, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   @Test
