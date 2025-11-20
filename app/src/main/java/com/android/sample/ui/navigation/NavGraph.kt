@@ -164,6 +164,7 @@ fun AppNavGraph(
           NewListingScreen(
               profileId = profileId,
               listingId = listingId,
+              skillViewModel = newListingViewModel,
               navController = navController,
               onNavigateBack = {
                 // Custom navigation logic
