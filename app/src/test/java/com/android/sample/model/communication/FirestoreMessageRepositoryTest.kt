@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import io.mockk.every
 import io.mockk.mockk
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
@@ -99,15 +100,15 @@ class FirestoreMessageRepositoryTest : RepositoryTest() {
   fun getOrCreateConversationFailsWhenUserNotAuthenticated() = runTest {
     every { auth.currentUser } returns null
 
-    assertThrows(Exception::class.java) {
-      runTest { messageRepository.getOrCreateConversation(testUser1Id, testUser2Id) }
+    assertFailsWith<Exception> {
+      messageRepository.getOrCreateConversation(testUser1Id, testUser2Id)
     }
   }
 
   @Test
   fun getOrCreateConversationFailsWhenCurrentUserNotParticipant() = runTest {
-    assertThrows(Exception::class.java) {
-      runTest { messageRepository.getOrCreateConversation("otherUser1", "otherUser2") }
+    assertFailsWith<Exception> {
+      messageRepository.getOrCreateConversation("otherUser1", "otherUser2")
     }
   }
 
@@ -146,9 +147,7 @@ class FirestoreMessageRepositoryTest : RepositoryTest() {
 
   @Test
   fun getConversationsForUserFailsWhenNotCurrentUser() = runTest {
-    assertThrows(Exception::class.java) {
-      runTest { messageRepository.getConversationsForUser("other-user") }
-    }
+    assertFailsWith<Exception> { messageRepository.getConversationsForUser("other-user") }
   }
 
   @Test
@@ -204,7 +203,7 @@ class FirestoreMessageRepositoryTest : RepositoryTest() {
             sentTo = testUser2Id,
             content = "Test")
 
-    assertThrows(Exception::class.java) { runTest { messageRepository.sendMessage(message) } }
+    assertFailsWith<Exception> { messageRepository.sendMessage(message) }
   }
 
   @Test
@@ -218,7 +217,7 @@ class FirestoreMessageRepositoryTest : RepositoryTest() {
             sentTo = testUser2Id,
             content = "") // Empty content
 
-    assertThrows(Exception::class.java) { runTest { messageRepository.sendMessage(message) } }
+    assertFailsWith<Exception> { messageRepository.sendMessage(message) }
   }
 
   @Test
@@ -295,9 +294,7 @@ class FirestoreMessageRepositoryTest : RepositoryTest() {
     val messageId = messageRepository.sendMessage(message)
 
     // Try to mark as read when current user is sender (should fail)
-    assertThrows(Exception::class.java) {
-      runTest { messageRepository.markMessageAsRead(messageId, Timestamp.now()) }
-    }
+    assertFailsWith<Exception> { messageRepository.markMessageAsRead(messageId, Timestamp.now()) }
   }
 
   @Test
@@ -337,7 +334,7 @@ class FirestoreMessageRepositoryTest : RepositoryTest() {
     val messageId = messageRepo2.sendMessage(message)
 
     // User1 tries to delete (should fail)
-    assertThrows(Exception::class.java) { runTest { messageRepository.deleteMessage(messageId) } }
+    assertFailsWith<Exception> { messageRepository.deleteMessage(messageId) }
   }
 
   @Test

@@ -1,5 +1,6 @@
 package com.android.sample.model.communication
 
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.*
@@ -128,7 +129,7 @@ class FakeMessageRepositoryTest {
             sentTo = testUser2Id,
             content = "Test")
 
-    assertThrows(Exception::class.java) { runTest { repository.sendMessage(message) } }
+    assertFailsWith<IllegalArgumentException> { repository.sendMessage(message) }
   }
 
   @Test

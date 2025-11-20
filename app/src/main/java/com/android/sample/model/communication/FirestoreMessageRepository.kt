@@ -17,6 +17,10 @@ class FirestoreMessageRepository(
 
   private companion object {
     private const val MESSAGE_MAX_LENGTH = 5000 // Max message content length
+    private const val ERROR_CONVERSATION_ID_BLANK = "Conversation ID cannot be blank"
+    private const val ERROR_MESSAGE_ID_BLANK = "Message ID cannot be blank"
+    private const val ERROR_NOT_PARTICIPANT =
+        "Access denied: You are not a participant in this conversation."
   }
 
   private val currentUserId: String
@@ -30,7 +34,7 @@ class FirestoreMessageRepository(
 
   override suspend fun getMessagesInConversation(conversationId: String): List<Message> {
     return try {
-      require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+      require(conversationId.isNotBlank()) { ERROR_CONVERSATION_ID_BLANK }
 
       val snapshot =
           db.collection(MESSAGES_COLLECTION_PATH)
@@ -47,7 +51,7 @@ class FirestoreMessageRepository(
 
   override suspend fun getMessage(messageId: String): Message? {
     return try {
-      require(messageId.isNotBlank()) { "Message ID cannot be blank" }
+      require(messageId.isNotBlank()) { ERROR_MESSAGE_ID_BLANK }
 
       val document = db.collection(MESSAGES_COLLECTION_PATH).document(messageId).get().await()
 
@@ -73,7 +77,8 @@ class FirestoreMessageRepository(
 
       // Generate message ID if not provided
       val messageId = message.messageId.ifBlank { getNewUid() }
-      val messageToSend = message.copy(messageId = messageId)
+      val messageToSend =
+          message.copy(messageId = messageId, sentTime = message.sentTime ?: Timestamp.now())
 
       // Save message to Firestore
       db.collection(MESSAGES_COLLECTION_PATH).document(messageId).set(messageToSend).await()
@@ -89,7 +94,7 @@ class FirestoreMessageRepository(
 
   override suspend fun markMessageAsRead(messageId: String, readTime: Timestamp) {
     try {
-      require(messageId.isNotBlank()) { "Message ID cannot be blank" }
+      require(messageId.isNotBlank()) { ERROR_MESSAGE_ID_BLANK }
 
       val message = getMessage(messageId) ?: throw Exception("Message not found")
 
@@ -108,7 +113,7 @@ class FirestoreMessageRepository(
 
   override suspend fun deleteMessage(messageId: String) {
     try {
-      require(messageId.isNotBlank()) { "Message ID cannot be blank" }
+      require(messageId.isNotBlank()) { ERROR_MESSAGE_ID_BLANK }
 
       val message = getMessage(messageId) ?: throw Exception("Message not found")
 
@@ -128,7 +133,7 @@ class FirestoreMessageRepository(
       userId: String
   ): List<Message> {
     return try {
-      require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+      require(conversationId.isNotBlank()) { ERROR_CONVERSATION_ID_BLANK }
       require(userId == currentUserId) {
         "Access denied: You can only get your own unread messages."
       }
@@ -180,7 +185,7 @@ class FirestoreMessageRepository(
 
   override suspend fun getConversation(conversationId: String): Conversation? {
     return try {
-      require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+      require(conversationId.isNotBlank()) { ERROR_CONVERSATION_ID_BLANK }
 
       val document =
           db.collection(CONVERSATIONS_COLLECTION_PATH).document(conversationId).get().await()
@@ -192,11 +197,7 @@ class FirestoreMessageRepository(
       val conversation = document.toObject(Conversation::class.java)
 
       // Verify current user is a participant
-      conversation?.let {
-        require(it.isParticipant(currentUserId)) {
-          "Access denied: You are not a participant in this conversation."
-        }
-      }
+      conversation?.let { require(it.isParticipant(currentUserId)) { ERROR_NOT_PARTICIPANT } }
 
       conversation
     } catch (e: Exception) {
@@ -250,9 +251,7 @@ class FirestoreMessageRepository(
 
   override suspend fun updateConversation(conversation: Conversation) {
     try {
-      require(conversation.isParticipant(currentUserId)) {
-        "Access denied: You are not a participant in this conversation."
-      }
+      require(conversation.isParticipant(currentUserId)) { ERROR_NOT_PARTICIPANT }
 
       conversation.validate()
 
@@ -267,7 +266,7 @@ class FirestoreMessageRepository(
 
   override suspend fun markConversationAsRead(conversationId: String, userId: String) {
     try {
-      require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+      require(conversationId.isNotBlank()) { ERROR_CONVERSATION_ID_BLANK }
       require(userId == currentUserId) {
         "Access denied: You can only mark your own messages as read."
       }
@@ -275,16 +274,14 @@ class FirestoreMessageRepository(
       val conversation =
           getConversation(conversationId) ?: throw Exception("Conversation not found")
 
-      require(conversation.isParticipant(userId)) {
-        "Access denied: You are not a participant in this conversation."
-      }
+      require(conversation.isParticipant(userId)) { ERROR_NOT_PARTICIPANT }
 
       // Update unread count for the user
       val updates =
           when (userId) {
             conversation.participant1Id -> mapOf("unreadCountUser1" to 0)
             conversation.participant2Id -> mapOf("unreadCountUser2" to 0)
-            else -> throw IllegalStateException("User is not a participant")
+            else -> error("User is not a participant")
           }
 
       db.collection(CONVERSATIONS_COLLECTION_PATH).document(conversationId).update(updates).await()
@@ -300,14 +297,12 @@ class FirestoreMessageRepository(
 
   override suspend fun deleteConversation(conversationId: String) {
     try {
-      require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+      require(conversationId.isNotBlank()) { ERROR_CONVERSATION_ID_BLANK }
 
       val conversation =
           getConversation(conversationId) ?: throw Exception("Conversation not found")
 
-      require(conversation.isParticipant(currentUserId)) {
-        "Access denied: You are not a participant in this conversation."
-      }
+      require(conversation.isParticipant(currentUserId)) { ERROR_NOT_PARTICIPANT }
 
       // Delete all messages in the conversation
       val messages = getMessagesInConversation(conversationId)
@@ -337,14 +332,13 @@ class FirestoreMessageRepository(
    */
   private suspend fun updateConversationAfterMessage(message: Message) {
     try {
-      val conversation = getConversation(message.conversationId)
+      var conversation = getConversation(message.conversationId)
 
       if (conversation == null) {
         // Create conversation if it doesn't exist
-        getOrCreateConversation(message.sentFrom, message.sentTo)
+        conversation = getOrCreateConversation(message.sentFrom, message.sentTo)
       }
 
-      // Determine which user's unread count to increment
       val updates =
           mutableMapOf<String, Any>(
               "lastMessageContent" to message.content,
@@ -352,15 +346,11 @@ class FirestoreMessageRepository(
               "lastMessageSenderId" to message.sentFrom,
               "updatedAt" to Timestamp.now())
 
-      conversation?.let {
-        when (message.sentTo) {
-          it.participant1Id -> {
-            updates["unreadCountUser1"] = it.unreadCountUser1 + 1
-          }
-          it.participant2Id -> {
-            updates["unreadCountUser2"] = it.unreadCountUser2 + 1
-          }
-        }
+      when (message.sentTo) {
+        conversation.participant1Id ->
+            updates["unreadCountUser1"] = conversation.unreadCountUser1 + 1
+        conversation.participant2Id ->
+            updates["unreadCountUser2"] = conversation.unreadCountUser2 + 1
       }
 
       db.collection(CONVERSATIONS_COLLECTION_PATH)

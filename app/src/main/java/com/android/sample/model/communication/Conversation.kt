@@ -10,19 +10,17 @@ import com.google.firebase.firestore.ServerTimestamp
  * This model helps organize messages and provides quick access to conversation metadata
  */
 data class Conversation(
-    @DocumentId val conversationId: String = "", // Unique conversation ID
+    @DocumentId var conversationId: String = "", // Unique conversation ID
     val participant1Id: String = "", // First participant (tutor or student)
     val participant2Id: String = "", // Second participant (tutor or student)
     val lastMessageContent: String = "", // Preview of the last message
-    @ServerTimestamp val lastMessageTime: Timestamp? = null, // Time of the last message
+    @ServerTimestamp var lastMessageTime: Timestamp? = null, // Time of the last message
     val lastMessageSenderId: String = "", // Who sent the last message
     val unreadCountUser1: Int = 0, // Number of unread messages for participant1
     val unreadCountUser2: Int = 0, // Number of unread messages for participant2
-    @ServerTimestamp val createdAt: Timestamp? = null, // When the conversation was created
-    @ServerTimestamp val updatedAt: Timestamp? = null // Last time conversation was updated
+    @ServerTimestamp var createdAt: Timestamp? = null, // When the conversation was created
+    @ServerTimestamp var updatedAt: Timestamp? = null // Last time conversation was updated
 ) {
-  // No-argument constructor for Firestore deserialization
-  constructor() : this("", "", "", "", null, "", 0, 0, null, null)
 
   /** Validates the conversation data. Throws an [IllegalArgumentException] if invalid. */
   fun validate() {

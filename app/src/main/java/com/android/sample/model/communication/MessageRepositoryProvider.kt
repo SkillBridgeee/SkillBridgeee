@@ -1,22 +1,17 @@
 package com.android.sample.model.communication
 
+import android.content.Context
+import com.android.sample.model.RepositoryProvider
+import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
-object MessageRepositoryProvider {
-  private var repository: MessageRepository? = null
-
-  fun getRepository(): MessageRepository {
-    return repository
-        ?: FirestoreMessageRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance())
-            .also { repository = it }
-  }
-
-  fun setRepository(repo: MessageRepository) {
-    repository = repo
-  }
-
-  fun reset() {
-    repository = null
+object MessageRepositoryProvider : RepositoryProvider<MessageRepository>() {
+  override fun init(context: Context, useEmulator: Boolean) {
+    if (FirebaseApp.getApps(context).isEmpty()) {
+      FirebaseApp.initializeApp(context)
+    }
+    _repository = FirestoreMessageRepository(Firebase.firestore, FirebaseAuth.getInstance())
   }
 }

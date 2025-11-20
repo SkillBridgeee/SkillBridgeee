@@ -6,18 +6,16 @@ import com.google.firebase.firestore.ServerTimestamp
 
 /** Data class representing a message between users */
 data class Message(
-    @DocumentId val messageId: String = "", // Unique message ID (Firestore document ID)
+    @DocumentId var messageId: String = "", // Unique message ID (Firestore document ID)
     val conversationId: String = "", // ID of the conversation this message belongs to
     val sentFrom: String = "", // UID of the sender
     val sentTo: String = "", // UID of the receiver
-    @ServerTimestamp val sentTime: Timestamp? = null, // Timestamp when message was sent
+    @ServerTimestamp var sentTime: Timestamp? = null, // Timestamp when message was sent
     val receiveTime: Timestamp? = null, // Timestamp when message was received
     val readTime: Timestamp? = null, // Timestamp when message was read for the first time
     val content: String = "", // The actual message content
     val isRead: Boolean = false // Flag to quickly check if message has been read
 ) {
-  // No-argument constructor for Firestore deserialization
-  constructor() : this("", "", "", "", null, null, null, "", false)
 
   /** Validates the message data. Throws an [IllegalArgumentException] if the data is invalid. */
   fun validate() {

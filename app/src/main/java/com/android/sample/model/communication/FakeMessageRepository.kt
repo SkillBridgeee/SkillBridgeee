@@ -3,10 +3,19 @@ package com.android.sample.model.communication
 import com.google.firebase.Timestamp
 
 /** Simple in-memory fake repository for tests and previews. */
-class FakeMessageRepository(private val currentUserId: String = "test-user-1") : MessageRepository {
-  private val messages = mutableMapOf<String, Message>()
-  private val conversations = mutableMapOf<String, Conversation>()
+class FakeMessageRepository(
+    private val currentUserId: String = "test-user-1",
+    private val messages: MutableMap<String, Message> = mutableMapOf(),
+    private val conversations: MutableMap<String, Conversation> = mutableMapOf()
+) : MessageRepository {
   private var messageCounter = 0
+
+  companion object {
+    private const val ERROR_CONVERSATION_ID_BLANK = "Conversation ID cannot be blank"
+    private const val ERROR_MESSAGE_ID_BLANK = "Message ID cannot be blank"
+    private const val ERROR_NOT_PARTICIPANT =
+        "Access denied: You are not a participant in this conversation."
+  }
 
   override fun getNewUid(): String =
       synchronized(this) {
@@ -17,7 +26,7 @@ class FakeMessageRepository(private val currentUserId: String = "test-user-1") :
   // ========== Message Operations ==========
 
   override suspend fun getMessagesInConversation(conversationId: String): List<Message> {
-    require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+    require(conversationId.isNotBlank()) { ERROR_CONVERSATION_ID_BLANK }
 
     return synchronized(this) {
       messages.values
@@ -27,7 +36,7 @@ class FakeMessageRepository(private val currentUserId: String = "test-user-1") :
   }
 
   override suspend fun getMessage(messageId: String): Message? {
-    require(messageId.isNotBlank()) { "Message ID cannot be blank" }
+    require(messageId.isNotBlank()) { ERROR_MESSAGE_ID_BLANK }
     return synchronized(this) { messages[messageId] }
   }
 
@@ -51,7 +60,7 @@ class FakeMessageRepository(private val currentUserId: String = "test-user-1") :
   }
 
   override suspend fun markMessageAsRead(messageId: String, readTime: Timestamp) {
-    require(messageId.isNotBlank()) { "Message ID cannot be blank" }
+    require(messageId.isNotBlank()) { ERROR_MESSAGE_ID_BLANK }
 
     val message = getMessage(messageId) ?: throw Exception("Message not found")
 
@@ -65,7 +74,7 @@ class FakeMessageRepository(private val currentUserId: String = "test-user-1") :
   }
 
   override suspend fun deleteMessage(messageId: String) {
-    require(messageId.isNotBlank()) { "Message ID cannot be blank" }
+    require(messageId.isNotBlank()) { ERROR_MESSAGE_ID_BLANK }
 
     val message = getMessage(messageId) ?: throw Exception("Message not found")
 
@@ -80,7 +89,7 @@ class FakeMessageRepository(private val currentUserId: String = "test-user-1") :
       conversationId: String,
       userId: String
   ): List<Message> {
-    require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+    require(conversationId.isNotBlank()) { ERROR_CONVERSATION_ID_BLANK }
     require(userId == currentUserId) { "Access denied: You can only get your own unread messages." }
 
     return synchronized(this) {
@@ -103,15 +112,11 @@ class FakeMessageRepository(private val currentUserId: String = "test-user-1") :
   }
 
   override suspend fun getConversation(conversationId: String): Conversation? {
-    require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+    require(conversationId.isNotBlank()) { ERROR_CONVERSATION_ID_BLANK }
 
     val conversation = synchronized(this) { conversations[conversationId] }
 
-    conversation?.let {
-      require(it.isParticipant(currentUserId)) {
-        "Access denied: You are not a participant in this conversation."
-      }
-    }
+    conversation?.let { require(it.isParticipant(currentUserId)) { ERROR_NOT_PARTICIPANT } }
 
     return conversation
   }
@@ -151,9 +156,7 @@ class FakeMessageRepository(private val currentUserId: String = "test-user-1") :
   }
 
   override suspend fun updateConversation(conversation: Conversation) {
-    require(conversation.isParticipant(currentUserId)) {
-      "Access denied: You are not a participant in this conversation."
-    }
+    require(conversation.isParticipant(currentUserId)) { ERROR_NOT_PARTICIPANT }
 
     conversation.validate()
 
@@ -161,23 +164,21 @@ class FakeMessageRepository(private val currentUserId: String = "test-user-1") :
   }
 
   override suspend fun markConversationAsRead(conversationId: String, userId: String) {
-    require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+    require(conversationId.isNotBlank()) { ERROR_CONVERSATION_ID_BLANK }
     require(userId == currentUserId) {
       "Access denied: You can only mark your own messages as read."
     }
 
     val conversation = getConversation(conversationId) ?: throw Exception("Conversation not found")
 
-    require(conversation.isParticipant(userId)) {
-      "Access denied: You are not a participant in this conversation."
-    }
+    require(conversation.isParticipant(userId)) { ERROR_NOT_PARTICIPANT }
 
     // Update conversation unread count
     val updatedConversation =
         when (userId) {
           conversation.participant1Id -> conversation.copy(unreadCountUser1 = 0)
           conversation.participant2Id -> conversation.copy(unreadCountUser2 = 0)
-          else -> throw IllegalStateException("User is not a participant")
+          else -> error("User is not a participant")
         }
 
     synchronized(this) { conversations[conversationId] = updatedConversation }
@@ -189,13 +190,11 @@ class FakeMessageRepository(private val currentUserId: String = "test-user-1") :
   }
 
   override suspend fun deleteConversation(conversationId: String) {
-    require(conversationId.isNotBlank()) { "Conversation ID cannot be blank" }
+    require(conversationId.isNotBlank()) { ERROR_CONVERSATION_ID_BLANK }
 
     val conversation = getConversation(conversationId) ?: throw Exception("Conversation not found")
 
-    require(conversation.isParticipant(currentUserId)) {
-      "Access denied: You are not a participant in this conversation."
-    }
+    require(conversation.isParticipant(currentUserId)) { ERROR_NOT_PARTICIPANT }
 
     // Delete all messages in the conversation
     val messagesToDelete = getMessagesInConversation(conversationId)
@@ -208,37 +207,35 @@ class FakeMessageRepository(private val currentUserId: String = "test-user-1") :
   // ========== Helper Methods ==========
 
   private suspend fun updateConversationAfterMessage(message: Message) {
-    val conversation = synchronized(this) { conversations[message.conversationId] }
+    var conversation = synchronized(this) { conversations[message.conversationId] }
 
     if (conversation == null) {
       // Create conversation if it doesn't exist
-      getOrCreateConversation(message.sentFrom, message.sentTo)
+      conversation = getOrCreateConversation(message.sentFrom, message.sentTo)
     }
 
-    conversation?.let {
-      val updatedConversation =
-          when (message.sentTo) {
-            it.participant1Id -> {
-              it.copy(
-                  lastMessageContent = message.content,
-                  lastMessageTime = message.sentTime,
-                  lastMessageSenderId = message.sentFrom,
-                  unreadCountUser1 = it.unreadCountUser1 + 1,
-                  updatedAt = Timestamp.now())
-            }
-            it.participant2Id -> {
-              it.copy(
-                  lastMessageContent = message.content,
-                  lastMessageTime = message.sentTime,
-                  lastMessageSenderId = message.sentFrom,
-                  unreadCountUser2 = it.unreadCountUser2 + 1,
-                  updatedAt = Timestamp.now())
-            }
-            else -> it
+    val updatedConversation =
+        when (message.sentTo) {
+          conversation.participant1Id -> {
+            conversation.copy(
+                lastMessageContent = message.content,
+                lastMessageTime = message.sentTime,
+                lastMessageSenderId = message.sentFrom,
+                unreadCountUser1 = conversation.unreadCountUser1 + 1,
+                updatedAt = Timestamp.now())
           }
+          conversation.participant2Id -> {
+            conversation.copy(
+                lastMessageContent = message.content,
+                lastMessageTime = message.sentTime,
+                lastMessageSenderId = message.sentFrom,
+                unreadCountUser2 = conversation.unreadCountUser2 + 1,
+                updatedAt = Timestamp.now())
+          }
+          else -> conversation
+        }
 
-      synchronized(this) { conversations[message.conversationId] = updatedConversation }
-    }
+    synchronized(this) { conversations[message.conversationId] = updatedConversation }
   }
 
   // ========== Test Helper Methods ==========
