@@ -61,7 +61,7 @@ class FakeBookingWorking : FakeBookingRepo {
   }
 
   override suspend fun getBookingsByTutor(tutorId: String): List<Booking> {
-    TODO("Not yet implemented")
+    return bookings.filter { booking -> booking.listingCreatorId == tutorId }
   }
 
   override suspend fun getBookingsByUserId(userId: String): List<Booking> {
@@ -69,7 +69,7 @@ class FakeBookingWorking : FakeBookingRepo {
   }
 
   override suspend fun getBookingsByStudent(studentId: String): List<Booking> {
-    TODO("Not yet implemented")
+    return bookings.filter { booking -> booking.listingCreatorId == studentId }
   }
 
   override suspend fun getBookingsByListing(listingId: String): List<Booking> {
