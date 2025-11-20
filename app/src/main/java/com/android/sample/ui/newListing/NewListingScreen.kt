@@ -6,6 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
@@ -29,7 +31,7 @@ import com.android.sample.ui.components.LocationInputField
 import com.android.sample.ui.navigation.NavRoutes
 
 object NewListingScreenTestTag {
-  const val BUTTON_SAVE_SKILL = "buttonSaveSkill"
+  const val BUTTON_SAVE_LISTING = "buttonSaveListing"
   const val CREATE_LESSONS_TITLE = "createLessonsTitle"
   const val INPUT_COURSE_TITLE = "inputCourseTitle"
   const val INVALID_TITLE_MSG = "invalidTitleMsg"
@@ -52,7 +54,8 @@ object NewListingScreenTestTag {
   const val BUTTON_USE_MY_LOCATION = "buttonUseMyLocation"
 
   const val INPUT_LOCATION_FIELD = "inputLocationField"
-  const val INVALID_LOCATION_MSG = "invalidLocationMsg"
+
+  const val SCROLLABLE_SCREEN = "scrollNewListing"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,7 +99,7 @@ fun NewListingScreen(
         AppButton(
             text = buttonText,
             onClick = { skillViewModel.addListing() },
-            testTag = NewListingScreenTestTag.BUTTON_SAVE_SKILL)
+            testTag = NewListingScreenTestTag.BUTTON_SAVE_LISTING)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
         ListingContent(
@@ -131,10 +134,15 @@ fun ListingContent(
           listingViewModel.onLocationPermissionDenied()
         }
       }
+  val scrollState = rememberScrollState()
 
   Column(
       horizontalAlignment = Alignment.CenterHorizontally,
-      modifier = Modifier.fillMaxWidth().padding(pd)) {
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(pd)
+              .verticalScroll(scrollState)
+              .testTag(NewListingScreenTestTag.SCROLLABLE_SCREEN)) {
         Spacer(Modifier.height(20.dp))
 
         Box(
@@ -267,15 +275,6 @@ fun ListingContent(
                               contentDescription = "Use my location",
                               tint = MaterialTheme.colorScheme.primary)
                         }
-                  }
-
-                  // Show tagged error text if invalidLocationMsg is set
-                  listingUIState.invalidLocationMsg?.let { msg ->
-                    Text(
-                        text = msg,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_LOCATION_MSG))
                   }
                 }
               }

@@ -17,11 +17,13 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.HomePage.HomeScreen
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsScreen
+import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.newListing.NewListingScreen
+import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.profile.ProfileScreen
@@ -69,7 +71,9 @@ fun AppNavGraph(
     bookingsViewModel: MyBookingsViewModel,
     profileViewModel: MyProfileViewModel,
     mainPageViewModel: MainPageViewModel,
+    newListingViewModel: NewListingViewModel,
     authViewModel: AuthenticationViewModel,
+    bookingDetailsViewModel: BookingDetailsViewModel,
     onGoogleSignIn: () -> Unit
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
@@ -140,7 +144,8 @@ fun AppNavGraph(
           onBookingClick = { bkgId ->
             bookingId.value = bkgId
             navController.navigate(NavRoutes.BOOKING_DETAILS)
-          })
+          },
+          viewModel = bookingsViewModel)
     }
 
     composable(
@@ -159,6 +164,7 @@ fun AppNavGraph(
           NewListingScreen(
               profileId = profileId,
               listingId = listingId,
+              skillViewModel = newListingViewModel,
               navController = navController,
               onNavigateBack = {
                 // Custom navigation logic
@@ -232,7 +238,8 @@ fun AppNavGraph(
           onCreatorClick = { profileId ->
             profileID.value = profileId
             navController.navigate(NavRoutes.OTHERS_PROFILE)
-          })
+          },
+          bkgViewModel = bookingDetailsViewModel)
     }
   }
 }

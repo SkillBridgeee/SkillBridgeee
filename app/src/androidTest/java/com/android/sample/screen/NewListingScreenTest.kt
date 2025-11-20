@@ -202,7 +202,7 @@ class NewSkillScreenTest {
     composeRule.onNodeWithTag(NewListingScreenTestTag.INPUT_PRICE).assertIsDisplayed()
     composeRule.onNodeWithTag(NewListingScreenTestTag.SUBJECT_FIELD).assertIsDisplayed()
     composeRule.onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, true).assertIsDisplayed()
-    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_SKILL).assertIsDisplayed()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).assertIsDisplayed()
   }
 
   @Test
@@ -428,7 +428,7 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
 
     composeRule.onNodeWithTag(NewListingScreenTestTag.INVALID_PRICE_MSG, true).assertIsDisplayed()
     composeRule.onNodeWithText("Price cannot be empty", true).assertIsDisplayed()
@@ -494,7 +494,7 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
 
     composeRule.onNodeWithTag(NewListingScreenTestTag.INVALID_SUBJECT_MSG, true).assertIsDisplayed()
 
@@ -573,7 +573,7 @@ class NewSkillScreenTest {
     }
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
     composeRule.waitForIdle()
 
     val nodes =
@@ -605,7 +605,7 @@ class NewSkillScreenTest {
         itemTagPrefix = NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
         index = 0)
 
-    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_SKILL).performClick()
+    composeRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
     composeRule.waitForIdle()
 
     val nodes =

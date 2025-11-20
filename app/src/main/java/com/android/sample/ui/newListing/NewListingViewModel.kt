@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
@@ -20,8 +21,6 @@ import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.skill.SkillsHelper
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -93,7 +92,7 @@ class NewListingViewModel(
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val locationRepository: LocationRepository =
         NominatimLocationRepository(HttpClientProvider.client),
-    private val userId: String = Firebase.auth.currentUser?.uid ?: ""
+    private val userId: String = UserSessionManager.getCurrentUserId() ?: ""
 ) : ViewModel() {
   // Internal mutable UI state
   private val _uiState = MutableStateFlow(ListingUIState())
