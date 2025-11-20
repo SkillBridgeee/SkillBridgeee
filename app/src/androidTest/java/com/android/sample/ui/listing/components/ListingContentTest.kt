@@ -182,16 +182,17 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-            uiState = state,
-            onBook = { _, _ -> },
-            onApproveBooking = {},
-            onRejectBooking = {},
-            onDeleteListing = {},
-            onEditListing = {},
-            onSubmitTutorRating = {})
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = {},
+          onSubmitTutorRating = {})
       }
     }
 
+    compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
     compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertExists()
   }
 
@@ -202,16 +203,17 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-            uiState = state,
-            onBook = { _, _ -> },
-            onApproveBooking = {},
-            onRejectBooking = {},
-            onDeleteListing = {},
-            onEditListing = {},
-            onSubmitTutorRating = {})
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = {},
+          onSubmitTutorRating = {})
       }
     }
 
+    compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
     compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertIsEnabled()
   }
 
@@ -222,16 +224,17 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-            uiState = state,
-            onBook = { _, _ -> },
-            onApproveBooking = {},
-            onRejectBooking = {},
-            onDeleteListing = {},
-            onEditListing = {},
-            onSubmitTutorRating = {})
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = {},
+          onSubmitTutorRating = {})
       }
     }
 
+    compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
     compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertIsNotEnabled()
   }
 
@@ -387,25 +390,26 @@ class ListingContentTest {
 
   @Test
   fun listingContent_clickEditButton_callsCallback() {
+    var editClicked = false
     val state = uiState(isOwnListing = true)
-    var editCalled = false
 
     compose.setContent {
       MaterialTheme {
         ListingContent(
-            uiState = state,
-            onBook = { _, _ -> },
-            onApproveBooking = {},
-            onRejectBooking = {},
-            onDeleteListing = {},
-            onEditListing = { editCalled = true },
-            onSubmitTutorRating = {})
+          uiState = state,
+          onBook = { _, _ -> },
+          onApproveBooking = {},
+          onRejectBooking = {},
+          onDeleteListing = {},
+          onEditListing = { editClicked = true },
+          onSubmitTutorRating = {})
       }
     }
 
+    compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
     compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).performClick()
 
-    assert(editCalled)
+    assert(editClicked)
   }
 
   @Test
