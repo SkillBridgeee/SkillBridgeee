@@ -173,6 +173,15 @@ private fun MyProfileContent(
         }
 
         item { ProfileLogout(onLogout = onLogout) }
+
+        item{
+            Text(
+                text = "Your Listings",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp))
+
+        }
       }
 }
 
