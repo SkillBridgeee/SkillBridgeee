@@ -463,28 +463,35 @@ jobs:
 
 
 
-  ci:
-    name: CI
-    runs-on: ubuntu-latest
-    needs: [Assemble, Compile-Debug-Failure, Coverage-Report]
-    if: always()
+ci:
+  name: CI
+  runs-on: ubuntu-latest
+  needs:
+    - Format-Check
+    - Assemble
+    - Compile-Debug-Failure
+    - Android-Tests
+    - Unit-Tests
+    - Coverage-Report
+  if: always()
 
-    steps:
-      - name: Check All Jobs
-        run: |
-          if [[ "${{ needs.Format-Check.result }}" != "success" || \
-                "${{ needs.Assemble.result }}" != "success" || \
-                "${{ needs.Compile-Debug-Failure.result }}" != "success" || \
-                "${{ needs.Android-Tests.result }}" != "success" || \
-                "${{ needs.Unit-Tests.result }}" != "success" || \
-                "${{ needs.Coverage-Report.result }}" != "success" ]]; then
-            echo "One or more jobs failed:"
-            echo "Format Check: ${{ needs.Format-Check.result }}"
-            echo "Assemble and Lint: ${{ needs.Assemble.result }}"
-            echo "Compile Debug: ${{ needs.Compile-Debug-Failure.result }}"
-            echo "Android Instrumentation Tests: ${{ needs.Android-Tests.result }}"
-            echo "Unit Tests: ${{ needs.Unit-Tests.result }}"
-            echo "Coverage Report: ${{ needs.Coverage-Report.result }}"
-            exit 1
-          fi
-          echo "All CI jobs completed successfully!"
+  steps:
+    - name: Check All Jobs
+      run: |
+        if [[ "${{ needs.Format-Check.result }}" != "success" || \
+              "${{ needs.Assemble.result }}" != "success" || \
+              "${{ needs.Compile-Debug-Failure.result }}" != "success" || \
+              "${{ needs.Android-Tests.result }}" != "success" || \
+              "${{ needs.Unit-Tests.result }}" != "success" || \
+              "${{ needs.Coverage-Report.result }}" != "success" ]]; then
+          echo "One or more jobs failed:"
+          echo "Format Check: ${{ needs.Format-Check.result }}"
+          echo "Assemble and Lint: ${{ needs.Assemble.result }}"
+          echo "Compile Debug: ${{ needs.Compile-Debug-Failure.result }}"
+          echo "Android Instrumentation Tests: ${{ needs.Android-Tests.result }}"
+          echo "Unit Tests: ${{ needs.Unit-Tests.result }}"
+          echo "Coverage Report: ${{ needs.Coverage-Report.result }}"
+          exit 1
+        fi
+        echo "All CI jobs completed successfully!"
+
