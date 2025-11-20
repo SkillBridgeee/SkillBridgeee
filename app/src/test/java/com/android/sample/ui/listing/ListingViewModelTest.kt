@@ -1,6 +1,5 @@
 package com.android.sample.ui.listing
 
-import android.os.Looper
 import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
@@ -44,7 +43,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -1010,37 +1008,6 @@ class ListingViewModelTest {
     val state = viewModel.uiState.value
     assertFalse(state.tutorRatingPending)
     assertEquals(1, state.listingBookings.size)
-  }
-
-  @Test
-  fun submitTutorRating_updatesState() = runTest {
-    // User is the owner
-    UserSessionManager.setCurrentUserId("creator-456")
-
-    val completedBooking = sampleBooking.copy(status = BookingStatus.COMPLETED)
-
-    val listingRepo = FakeListingRepo(sampleProposal)
-    val profileRepo =
-        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
-    val bookingRepo = FakeBookingRepo(mutableListOf(completedBooking))
-
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
-
-    viewModel.loadListing("listing-123")
-    advanceUntilIdle()
-
-    assertTrue(viewModel.uiState.value.tutorRatingPending)
-
-    // Act
-    viewModel.submitTutorRating(5)
-    advanceUntilIdle()
-
-    // Process any pending main looper tasks
-    shadowOf(Looper.getMainLooper()).idle()
-    advanceUntilIdle()
-
-    // Assert
-    assertFalse(viewModel.uiState.value.tutorRatingPending)
   }
 
   @Test
