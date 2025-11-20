@@ -107,7 +107,8 @@ abstract class AppTest() {
         BookingDetailsViewModel(
             listingRepository = listingRepository,
             bookingRepository = bookingRepository,
-            profileRepository = profileRepository)
+            profileRepository = profileRepository,
+            ratingRepository = ratingRepository)
   }
 
   /**
