@@ -2,6 +2,7 @@ package com.android.sample.ui.listing.components
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
@@ -91,16 +92,32 @@ class ListingContentTest {
       }
     }
 
-    // Let compose settle, then scroll the node into view (nearest scrollable ancestor)
-    compose.waitForIdle()
-    compose
-        .onNodeWithTag(ListingScreenTestTags.TUTOR_RATING_SECTION, useUnmergedTree = true)
-        .performScrollTo()
-    compose.waitForIdle()
+    // Wait up to 5s for the node to appear in either the unmerged or merged semantics tree,
+    // then pick the tree that contains it and perform the scroll.
+    val tag = ListingScreenTestTags.TUTOR_RATING_SECTION
+    compose.waitUntil(5000) {
+      compose
+          .onAllNodes(hasTestTag(tag), useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty() ||
+          compose
+              .onAllNodes(hasTestTag(tag), useUnmergedTree = false)
+              .fetchSemanticsNodes()
+              .isNotEmpty()
+    }
 
-    compose
-        .onNodeWithTag(ListingScreenTestTags.TUTOR_RATING_SECTION, useUnmergedTree = true)
-        .assertIsDisplayed()
+    val node =
+        if (compose
+            .onAllNodes(hasTestTag(tag), useUnmergedTree = true)
+            .fetchSemanticsNodes()
+            .isNotEmpty()) {
+          compose.onNodeWithTag(tag, useUnmergedTree = true)
+        } else {
+          compose.onNodeWithTag(tag, useUnmergedTree = false)
+        }
+
+    node.performScrollTo()
+    node.assertIsDisplayed()
   }
 
   @Test
