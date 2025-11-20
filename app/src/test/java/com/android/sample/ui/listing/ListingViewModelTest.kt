@@ -1,5 +1,6 @@
 package com.android.sample.ui.listing
 
+import android.os.Looper
 import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
@@ -43,6 +44,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -1015,7 +1017,6 @@ class ListingViewModelTest {
     // User is the owner
     UserSessionManager.setCurrentUserId("creator-456")
 
-    // A completed booking -> rating pending becomes TRUE
     val completedBooking = sampleBooking.copy(status = BookingStatus.COMPLETED)
 
     val listingRepo = FakeListingRepo(sampleProposal)
@@ -1025,15 +1026,17 @@ class ListingViewModelTest {
 
     val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
 
-    // Load listing (this will load bookings and set tutorRatingPending = true)
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
 
-    // Sanity check: make sure it’s true before the test
     assertTrue(viewModel.uiState.value.tutorRatingPending)
 
     // Act
     viewModel.submitTutorRating(5)
+    advanceUntilIdle()
+
+    // Process any pending main looper tasks
+    shadowOf(Looper.getMainLooper()).idle()
     advanceUntilIdle()
 
     // Assert
