@@ -7,7 +7,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
@@ -58,35 +57,34 @@ class ListingContentTest {
       )
 
   private fun uiState(
-    listing: Proposal = sampleListing,
-    creator: Profile? = sampleCreator,
-    isLoading: Boolean = false,
-    error: String? = null,
-    isOwnListing: Boolean = false,
-    bookingInProgress: Boolean = false,
-    bookingError: String? = null,
-    bookingSuccess: Boolean = false,
-    tutorRatingPending: Boolean = false,
-    bookingsLoading: Boolean = false,
-    listingBookings: List<com.android.sample.model.booking.Booking> = emptyList(),
-    bookerProfiles: Map<String, Profile> = emptyMap()
+      listing: Proposal = sampleListing,
+      creator: Profile? = sampleCreator,
+      isLoading: Boolean = false,
+      error: String? = null,
+      isOwnListing: Boolean = false,
+      bookingInProgress: Boolean = false,
+      bookingError: String? = null,
+      bookingSuccess: Boolean = false,
+      tutorRatingPending: Boolean = false,
+      bookingsLoading: Boolean = false,
+      listingBookings: List<com.android.sample.model.booking.Booking> = emptyList(),
+      bookerProfiles: Map<String, Profile> = emptyMap()
   ): ListingUiState {
     return ListingUiState(
-      listing = listing,
-      creator = creator,
-      isLoading = isLoading,
-      error = error,
-      isOwnListing = isOwnListing,
-      bookingInProgress = bookingInProgress,
-      bookingError = bookingError,
-      bookingSuccess = bookingSuccess,
-      tutorRatingPending = tutorRatingPending,
-      bookingsLoading = bookingsLoading,
-      listingBookings = listingBookings,
-      bookerProfiles = bookerProfiles,
-      listingDeleted = false)
+        listing = listing,
+        creator = creator,
+        isLoading = isLoading,
+        error = error,
+        isOwnListing = isOwnListing,
+        bookingInProgress = bookingInProgress,
+        bookingError = bookingError,
+        bookingSuccess = bookingSuccess,
+        tutorRatingPending = tutorRatingPending,
+        bookingsLoading = bookingsLoading,
+        listingBookings = listingBookings,
+        bookerProfiles = bookerProfiles,
+        listingDeleted = false)
   }
-
 
   // ---------- Tests ----------
 
@@ -184,13 +182,13 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 
@@ -204,13 +202,13 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 
@@ -224,13 +222,13 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 
@@ -240,29 +238,30 @@ class ListingContentTest {
   @Test
   fun listingContent_editButtonDisabled_whenHasActiveBookings() {
     val activeBooking =
-      com.android.sample.model.booking.Booking(
-        bookingId = "b1",
-        associatedListingId = "listing-1",
-        listingCreatorId = "creator-1",
-        bookerId = "booker-1",
-        sessionStart = Date(),
-        sessionEnd = Date(System.currentTimeMillis() + 3600000),
-        status = com.android.sample.model.booking.BookingStatus.PENDING,
-        price = 42.5)
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing-1",
+            listingCreatorId = "creator-1",
+            bookerId = "booker-1",
+            sessionStart = Date(),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            status = com.android.sample.model.booking.BookingStatus.PENDING,
+            price = 42.5)
 
     val state =
-      uiState(isOwnListing = true, bookingsLoading = false, listingBookings = listOf(activeBooking))
+        uiState(
+            isOwnListing = true, bookingsLoading = false, listingBookings = listOf(activeBooking))
 
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onSubmitTutorRating = {},
-          onDeleteListing = {},
-          onEditListing = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onSubmitTutorRating = {},
+            onDeleteListing = {},
+            onEditListing = {})
       }
     }
 
@@ -271,33 +270,33 @@ class ListingContentTest {
     compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertIsNotEnabled()
   }
 
-
   @Test
   fun listingContent_editButtonEnabled_whenOnlyCancelledBookings() {
     val cancelledBooking =
-      com.android.sample.model.booking.Booking(
-        bookingId = "b1",
-        associatedListingId = "listing-1",
-        listingCreatorId = "creator-1",
-        bookerId = "booker-1",
-        sessionStart = Date(),
-        sessionEnd = Date(System.currentTimeMillis() + 3600000),
-        status = com.android.sample.model.booking.BookingStatus.CANCELLED,
-        price = 42.5)
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing-1",
+            listingCreatorId = "creator-1",
+            bookerId = "booker-1",
+            sessionStart = Date(),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            status = com.android.sample.model.booking.BookingStatus.CANCELLED,
+            price = 42.5)
 
     val state =
-      uiState(isOwnListing = true, bookingsLoading = false).copy(listingBookings = listOf(cancelledBooking))
+        uiState(isOwnListing = true, bookingsLoading = false)
+            .copy(listingBookings = listOf(cancelledBooking))
 
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 
@@ -313,18 +312,17 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 
     compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
-
 
     compose.onNodeWithTag(ListingContentTestTags.DELETE_BUTTON).assertExists()
   }
@@ -336,13 +334,13 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 
@@ -351,13 +349,15 @@ class ListingContentTest {
     compose.onNodeWithTag(ListingContentTestTags.DELETE_BUTTON).performClick()
 
     // Check for the dialog's body text instead (unique to the dialog)
-    compose.onNodeWithText("Are you sure you want to delete this listing? This action cannot be undone.").assertExists()
+    compose
+        .onNodeWithText(
+            "Are you sure you want to delete this listing? This action cannot be undone.")
+        .assertExists()
 
     // Or check for both "Delete" and "Cancel" buttons in the dialog
     compose.onNodeWithText("Delete").assertExists()
     compose.onNodeWithText("Cancel").assertExists()
   }
-
 
   @Test
   fun listingContent_deleteDialogConfirm_callsCallback() {
@@ -367,18 +367,17 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = { deleteCalled = true },
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = { deleteCalled = true },
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 
     compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
-
 
     compose.onNodeWithTag(ListingContentTestTags.DELETE_BUTTON).performClick()
     compose.onNodeWithText("Delete").performClick()
@@ -394,13 +393,13 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = { editCalled = true },
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = { editCalled = true },
+            onSubmitTutorRating = {})
       }
     }
 
@@ -416,13 +415,13 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 

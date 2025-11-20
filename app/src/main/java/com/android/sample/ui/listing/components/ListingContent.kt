@@ -327,9 +327,12 @@ private fun LazyListScope.actionSection(
     val canEdit = !uiState.bookingsLoading && !hasActiveBookings
 
     item {
-      Button(onClick = onEditListing, modifier = Modifier.fillMaxWidth().testTag(ListingContentTestTags.EDIT_BUTTON), enabled = canEdit) {
-        Text("Edit Listing")
-      }
+      Button(
+          onClick = onEditListing,
+          modifier = Modifier.fillMaxWidth().testTag(ListingContentTestTags.EDIT_BUTTON),
+          enabled = canEdit) {
+            Text("Edit Listing")
+          }
     }
 
     // If editing is disabled, show a short explanation
@@ -351,7 +354,7 @@ private fun LazyListScope.actionSection(
 
       Button(
           onClick = { showDeleteDialog = true },
-        modifier = Modifier.fillMaxWidth().testTag(ListingContentTestTags.DELETE_BUTTON),
+          modifier = Modifier.fillMaxWidth().testTag(ListingContentTestTags.DELETE_BUTTON),
           colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
             Text("Delete Listing")
           }

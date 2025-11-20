@@ -969,7 +969,7 @@ class ListingViewModelTest {
     assertFalse(state.bookingSuccess)
   }
 
-// Tests for deleteListing()
+  // Tests for deleteListing()
 
   @Test
   fun deleteListing_noListing_setsError() = runTest {
@@ -990,11 +990,11 @@ class ListingViewModelTest {
   fun deleteListing_success_updatesState() = runTest {
     var deleteListingCalled = false
     val listingRepo =
-      object : FakeListingRepo(sampleProposal) {
-        override suspend fun deleteListing(listingId: String) {
-          deleteListingCalled = true
+        object : FakeListingRepo(sampleProposal) {
+          override suspend fun deleteListing(listingId: String) {
+            deleteListingCalled = true
+          }
         }
-      }
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
     val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
@@ -1023,11 +1023,11 @@ class ListingViewModelTest {
 
     val cancelledBookings = mutableListOf<String>()
     val bookingRepo =
-      object : FakeBookingRepo(mutableListOf(booking1, booking2, booking3)) {
-        override suspend fun cancelBooking(bookingId: String) {
-          cancelledBookings.add(bookingId)
+        object : FakeBookingRepo(mutableListOf(booking1, booking2, booking3)) {
+          override suspend fun cancelBooking(bookingId: String) {
+            cancelledBookings.add(bookingId)
+          }
         }
-      }
 
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
@@ -1049,18 +1049,18 @@ class ListingViewModelTest {
   fun deleteListing_bookingFetchFails_continuesWithDeletion() = runTest {
     var deleteListingCalled = false
     val listingRepo =
-      object : FakeListingRepo(sampleProposal) {
-        override suspend fun deleteListing(listingId: String) {
-          deleteListingCalled = true
+        object : FakeListingRepo(sampleProposal) {
+          override suspend fun deleteListing(listingId: String) {
+            deleteListingCalled = true
+          }
         }
-      }
 
     val bookingRepo =
-      object : FakeBookingRepo() {
-        override suspend fun getBookingsByListing(listingId: String): List<Booking> {
-          throw RuntimeException("Database connection failed")
+        object : FakeBookingRepo() {
+          override suspend fun getBookingsByListing(listingId: String): List<Booking> {
+            throw RuntimeException("Database connection failed")
+          }
         }
-      }
 
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
@@ -1082,22 +1082,22 @@ class ListingViewModelTest {
 
     var deleteListingCalled = false
     val listingRepo =
-      object : FakeListingRepo(sampleProposal) {
-        override suspend fun deleteListing(listingId: String) {
-          deleteListingCalled = true
+        object : FakeListingRepo(sampleProposal) {
+          override suspend fun deleteListing(listingId: String) {
+            deleteListingCalled = true
+          }
         }
-      }
 
     val cancelAttempts = mutableListOf<String>()
     val bookingRepo =
-      object : FakeBookingRepo(mutableListOf(booking1, booking2)) {
-        override suspend fun cancelBooking(bookingId: String) {
-          cancelAttempts.add(bookingId)
-          if (bookingId == "b1") {
-            throw RuntimeException("Cancellation service unavailable")
+        object : FakeBookingRepo(mutableListOf(booking1, booking2)) {
+          override suspend fun cancelBooking(bookingId: String) {
+            cancelAttempts.add(bookingId)
+            if (bookingId == "b1") {
+              throw RuntimeException("Cancellation service unavailable")
+            }
           }
         }
-      }
 
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
@@ -1116,11 +1116,11 @@ class ListingViewModelTest {
   @Test
   fun deleteListing_repositoryFails_setsError() = runTest {
     val listingRepo =
-      object : FakeListingRepo(sampleProposal) {
-        override suspend fun deleteListing(listingId: String) {
-          throw RuntimeException("Repository deletion failed")
+        object : FakeListingRepo(sampleProposal) {
+          override suspend fun deleteListing(listingId: String) {
+            throw RuntimeException("Repository deletion failed")
+          }
         }
-      }
 
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
@@ -1157,7 +1157,7 @@ class ListingViewModelTest {
     assertFalse(viewModel.uiState.value.isLoading)
   }
 
-// Tests for clearListingDeleted()
+  // Tests for clearListingDeleted()
 
   @Test
   fun clearListingDeleted_updatesState() = runTest {
