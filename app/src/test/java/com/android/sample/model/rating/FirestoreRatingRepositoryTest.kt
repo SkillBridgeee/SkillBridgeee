@@ -404,4 +404,58 @@ class FirestoreRatingRepositoryTest : RepositoryTest() {
     retrieved = ratingRepository.getRating("rating1")
     assertNull(retrieved)
   }
+
+  @Test
+  fun `hasRating returns true when matching rating exists`() = runTest {
+    val rating =
+        Rating(
+            ratingId = "rating-has-1",
+            fromUserId = testUserId,
+            toUserId = otherUserId,
+            starRating = StarRating.FOUR,
+            comment = "Great!",
+            ratingType = RatingType.TUTOR,
+            targetObjectId = "listing-has-1",
+        )
+
+    // Insert directly in Firestore so hasRating queries it
+    firestore.collection(RATINGS_COLLECTION_PATH).document(rating.ratingId).set(rating).await()
+
+    val exists =
+        ratingRepository.hasRating(
+            fromUserId = testUserId,
+            toUserId = otherUserId,
+            ratingType = RatingType.TUTOR,
+            targetObjectId = "listing-has-1",
+        )
+
+    assertTrue(exists)
+  }
+
+  @Test
+  fun `hasRating returns false when no matching rating exists`() = runTest {
+    // Make sure collection is empty or contains only non-matching ratings
+    val rating =
+        Rating(
+            ratingId = "rating-has-2",
+            fromUserId = testUserId,
+            toUserId = otherUserId,
+            starRating = StarRating.THREE,
+            comment = "Irrelevant",
+            ratingType = RatingType.TUTOR,
+            targetObjectId = "some-other-listing",
+        )
+
+    firestore.collection(RATINGS_COLLECTION_PATH).document(rating.ratingId).set(rating).await()
+
+    val exists =
+        ratingRepository.hasRating(
+            fromUserId = testUserId,
+            toUserId = otherUserId,
+            ratingType = RatingType.TUTOR,
+            targetObjectId = "listing-has-1", // different target
+        )
+
+    assertFalse(exists)
+  }
 }

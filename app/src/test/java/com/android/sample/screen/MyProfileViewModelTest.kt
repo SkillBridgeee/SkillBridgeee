@@ -17,6 +17,7 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingType
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -179,6 +180,16 @@ class MyProfileViewModelTest {
   private class FakeRatingRepos : RatingRepository {
     override fun getNewUid(): String = "fake-rating-id"
 
+    override suspend fun hasRating(
+        fromUserId: String,
+        toUserId: String,
+        ratingType: RatingType,
+        targetObjectId: String
+    ): Boolean {
+      // For these VM tests we don't care about duplicates, so "no rating yet" is fine.
+      return false
+    }
+
     override suspend fun getAllRatings(): List<Rating> = emptyList()
 
     override suspend fun getRating(ratingId: String): Rating? = null
@@ -196,10 +207,8 @@ class MyProfileViewModelTest {
 
     override suspend fun deleteRating(ratingId: String) = Unit
 
-    /** Gets all tutor ratings for listings owned by this user */
     override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
 
-    /** Gets all student ratings received by this user */
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
   }
 
