@@ -21,6 +21,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
+import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.login.SignInScreenTestTags
 import com.android.sample.ui.newListing.NewListingScreenTestTag
@@ -176,7 +177,7 @@ class EndToEndM2 {
     compose.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
 
     // Go to my profile
-    compose.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertIsDisplayed().performClick()
+    compose.onNodeWithTag(BottomBarTestTag.NAV_PROFILE).assertIsDisplayed().performClick()
 
     waitForTag(compose, MyProfileScreenTestTag.PROFILE_ICON)
     compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
@@ -219,7 +220,7 @@ class EndToEndM2 {
 
     waitForText(compose, TEST_DESC)
 
-    compose.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).assertIsDisplayed().performClick()
+    compose.onNodeWithTag(BottomBarTestTag.NAV_HOME).assertIsDisplayed().performClick()
 
     waitForTag(compose, HomeScreenTestTags.WELCOME_SECTION)
 
@@ -279,7 +280,7 @@ class EndToEndM2 {
 
     compose.onNodeWithContentDescription(TEST_BACK_BUTTON).assertIsDisplayed().performClick()
 
-    compose.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).assertIsDisplayed().performClick()
+    compose.onNodeWithTag(BottomBarTestTag.NAV_PROFILE).assertIsDisplayed().performClick()
     waitForTag(compose, MyProfileScreenTestTag.PROFILE_ICON)
     compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).assertIsDisplayed().performClick()
     waitForTag(compose, MyProfileScreenTestTag.LISTINGS_SECTION)
@@ -288,7 +289,7 @@ class EndToEndM2 {
     compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
 
     // Go back to home page
-    compose.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).assertIsDisplayed().performClick()
+    compose.onNodeWithTag(BottomBarTestTag.NAV_HOME).assertIsDisplayed().performClick()
 
     compose.onAllNodesWithTag(HomeScreenTestTags.SKILL_CARD)[0].assertIsDisplayed().performClick()
     waitForTag(compose, SubjectListTestTags.CATEGORY_SELECTOR)
@@ -296,7 +297,7 @@ class EndToEndM2 {
 
     // User goes to bookings
     compose.onNodeWithContentDescription(TEST_BACK_BUTTON).assertIsDisplayed().performClick()
-    compose.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).assertIsDisplayed().performClick()
+    compose.onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).assertIsDisplayed().performClick()
     waitForTag(compose, MyBookingsPageTestTag.EMPTY)
     compose.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
   }
