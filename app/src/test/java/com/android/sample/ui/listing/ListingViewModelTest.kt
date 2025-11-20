@@ -9,6 +9,10 @@ import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingType
+import com.android.sample.model.rating.StarRating
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
@@ -229,6 +233,45 @@ class ListingViewModelTest {
       cancelBookingCalled = true
       updateBookingStatus(bookingId, BookingStatus.CANCELLED)
     }
+  }
+
+  private class FakeRatingRepo : RatingRepository {
+    val addedRatings = mutableListOf<Rating>()
+    var hasRatingCalls = 0
+
+    override fun getNewUid(): String = "fake-rating-id"
+
+    override suspend fun hasRating(
+        fromUserId: String,
+        toUserId: String,
+        ratingType: RatingType,
+        targetObjectId: String
+    ): Boolean {
+      hasRatingCalls++
+      return false
+    }
+
+    override suspend fun addRating(rating: Rating) {
+      addedRatings += rating
+    }
+
+    override suspend fun getAllRatings(): List<Rating> = emptyList()
+
+    override suspend fun getRating(ratingId: String): Rating? = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsByToUser(toUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+    override suspend fun deleteRating(ratingId: String) {}
+
+    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
   }
 
   // Tests for loadListing()
@@ -968,5 +1011,52 @@ class ListingViewModelTest {
     assertNotNull(state.bookingError)
     assertTrue(state.bookingError!!.contains("Invalid booking"))
     assertFalse(state.bookingSuccess)
+  }
+
+  @Test
+  fun toStarRating_mapsIntsIntoEnumSafely() {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val ratingRepo = FakeRatingRepo()
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    // Access the private extension function Int.toStarRating() via reflection
+    val method =
+        ListingViewModel::class.java.getDeclaredMethod("toStarRating", Int::class.javaPrimitiveType)
+    method.isAccessible = true
+
+    fun call(arg: Int): StarRating = method.invoke(viewModel, arg) as StarRating
+
+    // 1 → FIRST enum (usually ONE)
+    assertEquals(StarRating.ONE, call(1))
+    // 4 → FOUR
+    assertEquals(StarRating.FOUR, call(4))
+    // 0 → clamped to first
+    assertEquals(StarRating.ONE, call(0))
+    // Big value → clamped to last
+    assertEquals(StarRating.values().last(), call(999))
+  }
+
+  @Test
+  fun submitTutorRating_whenListingMissing_doesNotCrash() = runTest {
+    val listingRepo = FakeListingRepo(null) // no listing
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val ratingRepo = FakeRatingRepo()
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    // listing is null in uiState by default
+    assertNull(viewModel.uiState.value.listing)
+
+    // Just verify this doesn't throw or crash; it should hit the
+    // "listing == null" path and return.
+    viewModel.submitTutorRating(5)
+    advanceUntilIdle()
+
+    // No rating added, no crash
+    assertTrue(ratingRepo.addedRatings.isEmpty())
   }
 }
