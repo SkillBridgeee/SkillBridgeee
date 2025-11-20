@@ -13,14 +13,14 @@ class FakeListingEmpty : FakeListingRepo {
 
   override fun getNewUid(): String = "listing_${UUID.randomUUID()}"
 
-  override suspend fun getAllListings(): List<Listing> = listings
+  override suspend fun getAllListings(): List<Listing> = listings.toList()
 
   override suspend fun getProposals(): List<Proposal> = listings.filterIsInstance<Proposal>()
 
   override suspend fun getRequests(): List<Request> = listings.filterIsInstance<Request>()
 
   override suspend fun getListing(listingId: String): Listing? =
-      listings.first { listing -> listing.listingId == listingId }
+      listings.find { listing -> listing.listingId == listingId }
 
   override suspend fun getListingsByUser(userId: String): List<Listing> =
       listings.filter { it.creatorUserId == userId }
@@ -35,11 +35,53 @@ class FakeListingEmpty : FakeListingRepo {
     listings.add(request)
   }
 
-  override suspend fun updateListing(listingId: String, listing: Listing) {}
+  override suspend fun updateListing(listingId: String, listing: Listing) {
+    val index = listings.indexOfFirst { it.listingId == listingId }
+    if (index != -1) {
+      listings[index] = listing
+    }
+  }
 
-  override suspend fun deleteListing(listingId: String) {}
+  override suspend fun deleteListing(listingId: String) {
+    listings.removeAll { it.listingId == listingId }
+  }
 
-  override suspend fun deactivateListing(listingId: String) {}
+  override suspend fun deactivateListing(listingId: String) {
+    val index = listings.indexOfFirst { it.listingId == listingId }
+    if (index == -1) return
+
+    val old = listings[index]
+
+    val newListing: Listing =
+        when (old) {
+          is Proposal ->
+              Proposal(
+                  listingId = old.listingId,
+                  creatorUserId = old.creatorUserId,
+                  skill = old.skill,
+                  title = old.title,
+                  description = old.description,
+                  location = old.location,
+                  createdAt = old.createdAt,
+                  isActive = false,
+                  hourlyRate = old.hourlyRate,
+                  type = old.type)
+          is Request ->
+              Request(
+                  listingId = old.listingId,
+                  creatorUserId = old.creatorUserId,
+                  skill = old.skill,
+                  title = old.title,
+                  description = old.description,
+                  location = old.location,
+                  createdAt = old.createdAt,
+                  isActive = false,
+                  hourlyRate = old.hourlyRate,
+                  type = old.type)
+        }
+
+    listings[index] = newListing
+  }
 
   override suspend fun searchBySkill(skill: Skill): List<Listing> {
     return listings.filter { listing -> listing.skill == skill }
