@@ -46,6 +46,7 @@ class MessageScreenTest {
   @Before
   fun setup() {
     UserSessionManager.clearSession()
+    UserSessionManager.setCurrentUserId(currentUserId)
   }
 
   @After
@@ -56,7 +57,7 @@ class MessageScreenTest {
   @Test
   fun messageScreen_displaysMessages() {
     val repository = FakeMessageRepository(sampleMessages)
-    val viewModel = MessageViewModel(repository, conversationId, currentUserId, otherUserId)
+    val viewModel = MessageViewModel(repository, conversationId, otherUserId)
 
     compose.setContent { MessageScreen(viewModel = viewModel, currentUserId = currentUserId) }
 
@@ -70,7 +71,7 @@ class MessageScreenTest {
   @Test
   fun messageScreen_displaysEmptyState() {
     val repository = FakeMessageRepository(emptyList())
-    val viewModel = MessageViewModel(repository, conversationId, currentUserId, otherUserId)
+    val viewModel = MessageViewModel(repository, conversationId, otherUserId)
 
     compose.setContent { MessageScreen(viewModel = viewModel, currentUserId = currentUserId) }
 
@@ -83,7 +84,7 @@ class MessageScreenTest {
   @Test
   fun messageInput_allowsTyping() {
     val repository = FakeMessageRepository(emptyList())
-    val viewModel = MessageViewModel(repository, conversationId, currentUserId, otherUserId)
+    val viewModel = MessageViewModel(repository, conversationId, otherUserId)
 
     compose.setContent { MessageScreen(viewModel = viewModel, currentUserId = currentUserId) }
 
@@ -101,7 +102,7 @@ class MessageScreenTest {
   @Test
   fun messageInput_sendButton_isDisabledWhenEmpty() {
     val repository = FakeMessageRepository(emptyList())
-    val viewModel = MessageViewModel(repository, conversationId, currentUserId, otherUserId)
+    val viewModel = MessageViewModel(repository, conversationId, otherUserId)
 
     compose.setContent { MessageScreen(viewModel = viewModel, currentUserId = currentUserId) }
 
@@ -114,7 +115,7 @@ class MessageScreenTest {
   @Test
   fun messageInput_sendButton_isEnabledWhenTextExists() {
     val repository = FakeMessageRepository(emptyList())
-    val viewModel = MessageViewModel(repository, conversationId, currentUserId, otherUserId)
+    val viewModel = MessageViewModel(repository, conversationId, otherUserId)
 
     compose.setContent { MessageScreen(viewModel = viewModel, currentUserId = currentUserId) }
 
@@ -132,7 +133,7 @@ class MessageScreenTest {
   @Test
   fun messageInput_sendButton_sendsMessage() {
     val repository = FakeMessageRepository(emptyList())
-    val viewModel = MessageViewModel(repository, conversationId, currentUserId, otherUserId)
+    val viewModel = MessageViewModel(repository, conversationId, otherUserId)
 
     compose.setContent { MessageScreen(viewModel = viewModel, currentUserId = currentUserId) }
 
@@ -153,7 +154,7 @@ class MessageScreenTest {
   @Test
   fun messageBubbles_displayDifferentStylesForUsers() {
     val repository = FakeMessageRepository(sampleMessages)
-    val viewModel = MessageViewModel(repository, conversationId, currentUserId, otherUserId)
+    val viewModel = MessageViewModel(repository, conversationId, otherUserId)
 
     compose.setContent { MessageScreen(viewModel = viewModel, currentUserId = currentUserId) }
 
@@ -167,7 +168,7 @@ class MessageScreenTest {
   @Test
   fun messageScreen_displaysError() {
     val repository = FakeMessageRepository(emptyList(), shouldThrowError = true)
-    val viewModel = MessageViewModel(repository, conversationId, currentUserId, otherUserId)
+    val viewModel = MessageViewModel(repository, conversationId, otherUserId)
 
     compose.setContent { MessageScreen(viewModel = viewModel, currentUserId = currentUserId) }
 
@@ -182,7 +183,7 @@ class MessageScreenTest {
   @Test
   fun messageScreen_displaysLoadingState() {
     val repository = FakeMessageRepository(emptyList(), delayLoading = true)
-    val viewModel = MessageViewModel(repository, conversationId, currentUserId, otherUserId)
+    val viewModel = MessageViewModel(repository, conversationId, otherUserId)
 
     compose.setContent { MessageScreen(viewModel = viewModel, currentUserId = currentUserId) }
 
@@ -193,7 +194,7 @@ class MessageScreenTest {
   @Test
   fun messageScreen_multilineInput() {
     val repository = FakeMessageRepository(emptyList())
-    val viewModel = MessageViewModel(repository, conversationId, currentUserId, otherUserId)
+    val viewModel = MessageViewModel(repository, conversationId, otherUserId)
 
     compose.setContent { MessageScreen(viewModel = viewModel, currentUserId = currentUserId) }
 

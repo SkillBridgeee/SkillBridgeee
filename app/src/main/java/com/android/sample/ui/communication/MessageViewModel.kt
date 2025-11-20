@@ -2,6 +2,7 @@ package com.android.sample.ui.communication
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.Message
 import com.android.sample.model.communication.MessageRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,18 +24,19 @@ data class MessageUiState(
  *
  * @param messageRepository Repository for fetching and sending messages.
  * @param conversationId The ID of the conversation to display.
- * @param currentUserId The ID of the currently logged-in user.
  * @param otherUserId The ID of the other user in the conversation.
  */
 class MessageViewModel(
     private val messageRepository: MessageRepository,
     private val conversationId: String,
-    private val currentUserId: String,
     private val otherUserId: String
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(MessageUiState())
   val uiState: StateFlow<MessageUiState> = _uiState.asStateFlow()
+
+  private val currentUserId: String
+    get() = UserSessionManager.getCurrentUserId() ?: ""
 
   init {
     loadMessages()
@@ -53,11 +55,6 @@ class MessageViewModel(
         }
       }
     }
-  }
-
-  /** Refreshes the messages from the repository. */
-  fun refreshMessages() {
-    loadMessages()
   }
 
   /** Updates the text for the new message being composed. */

@@ -45,7 +45,9 @@ fun MessageScreen(viewModel: MessageViewModel, currentUserId: String) {
           }
 
           if (uiState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+              CircularProgressIndicator()
+            }
           } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
@@ -102,11 +104,7 @@ fun MessageInput(message: String, onMessageChanged: (String) -> Unit, onSendClic
               maxLines = 4,
               singleLine = false)
           IconButton(
-              onClick = {
-                if (message.isNotBlank()) {
-                  onSendClicked()
-                }
-              },
+              onClick = onSendClicked,
               enabled = message.isNotBlank(),
               modifier = Modifier.size(48.dp)) {
                 Icon(
@@ -154,7 +152,6 @@ fun MessageScreenPreview() {
       MessageViewModel(
           messageRepository = fakeRepository,
           conversationId = "preview_conv",
-          currentUserId = "user1",
           otherUserId = "user2")
   MaterialTheme { MessageScreen(viewModel = viewModel, currentUserId = "user1") }
 }

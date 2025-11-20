@@ -72,18 +72,19 @@ class MessageViewModelTest {
   @Before
   fun setup() {
     Dispatchers.setMain(testDispatcher)
+    com.android.sample.model.authentication.UserSessionManager.setCurrentUserId(currentUserId)
     fakeRepository = FakeMessageRepository()
     viewModel =
         MessageViewModel(
             messageRepository = fakeRepository,
             conversationId = conversationId,
-            currentUserId = currentUserId,
             otherUserId = otherUserId)
   }
 
   @After
   fun tearDown() {
     Dispatchers.resetMain()
+    com.android.sample.model.authentication.UserSessionManager.clearSession()
   }
 
   @Test
@@ -102,10 +103,15 @@ class MessageViewModelTest {
   fun loadMessages_success_updatesState() = runTest {
     fakeRepository.setMessages(sampleMessages)
 
-    viewModel.refreshMessages()
+    // Create a new viewModel to trigger loadMessages in init
+    val testViewModel =
+        MessageViewModel(
+            messageRepository = fakeRepository,
+            conversationId = conversationId,
+            otherUserId = otherUserId)
     advanceUntilIdle()
 
-    val state = viewModel.uiState.value
+    val state = testViewModel.uiState.value
     assertFalse(state.isLoading)
     assertEquals(3, state.messages.size)
     assertEquals("Hello!", state.messages[0].content)
@@ -116,10 +122,15 @@ class MessageViewModelTest {
   fun loadMessages_failure_setsError() = runTest {
     fakeRepository.setShouldThrowError(true)
 
-    viewModel.refreshMessages()
+    // Create a new viewModel to trigger loadMessages in init
+    val testViewModel =
+        MessageViewModel(
+            messageRepository = fakeRepository,
+            conversationId = conversationId,
+            otherUserId = otherUserId)
     advanceUntilIdle()
 
-    val state = viewModel.uiState.value
+    val state = testViewModel.uiState.value
     assertFalse(state.isLoading)
     assertNotNull(state.error)
     assertTrue(state.error!!.contains("Failed to load messages"))
@@ -206,56 +217,38 @@ class MessageViewModelTest {
   @Test
   fun clearError_removesErrorMessage() = runTest {
     fakeRepository.setShouldThrowError(true)
-    viewModel.refreshMessages()
+
+    // Create a new viewModel to trigger loadMessages in init which will set error
+    val testViewModel =
+        MessageViewModel(
+            messageRepository = fakeRepository,
+            conversationId = conversationId,
+            otherUserId = otherUserId)
     advanceUntilIdle()
 
-    var state = viewModel.uiState.value
+    var state = testViewModel.uiState.value
     assertNotNull(state.error)
 
-    viewModel.clearError()
+    testViewModel.clearError()
     advanceUntilIdle()
 
-    state = viewModel.uiState.value
+    state = testViewModel.uiState.value
     assertNull(state.error)
-  }
-
-  @Test
-  fun refreshMessages_reloadsMessagesFromRepository() = runTest {
-    fakeRepository.setMessages(sampleMessages)
-
-    viewModel.refreshMessages()
-    advanceUntilIdle()
-
-    var state = viewModel.uiState.value
-    assertEquals(3, state.messages.size)
-
-    // Add more messages
-    val updatedMessages =
-        sampleMessages +
-            Message(
-                messageId = "msg-4",
-                conversationId = conversationId,
-                sentFrom = otherUserId,
-                sentTo = currentUserId,
-                content = "New message",
-                sentTime = Timestamp.now())
-    fakeRepository.setMessages(updatedMessages)
-
-    viewModel.refreshMessages()
-    advanceUntilIdle()
-
-    state = viewModel.uiState.value
-    assertEquals(4, state.messages.size)
   }
 
   @Test
   fun messageViewModel_handlesEmptyConversation() = runTest {
     fakeRepository.setMessages(emptyList())
 
-    viewModel.refreshMessages()
+    // Create a new viewModel to trigger loadMessages in init
+    val testViewModel =
+        MessageViewModel(
+            messageRepository = fakeRepository,
+            conversationId = conversationId,
+            otherUserId = otherUserId)
     advanceUntilIdle()
 
-    val state = viewModel.uiState.value
+    val state = testViewModel.uiState.value
     assertTrue(state.messages.isEmpty())
     assertFalse(state.isLoading)
     assertNull(state.error)
