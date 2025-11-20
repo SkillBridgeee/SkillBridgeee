@@ -69,7 +69,7 @@ class FakeProfileWorking : FakeProfileRepo {
     profiles.removeAll { profile -> profile.userId == userId }
   }
 
-  override suspend fun getAllProfiles(): List<Profile> = profiles
+  override suspend fun getAllProfiles(): List<Profile> = profiles.toList()
 
   override suspend fun searchProfilesByLocation(
       location: Location,
