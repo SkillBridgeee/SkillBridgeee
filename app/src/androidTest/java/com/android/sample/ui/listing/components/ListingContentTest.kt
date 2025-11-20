@@ -182,13 +182,13 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 
@@ -203,13 +203,13 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 
@@ -224,13 +224,13 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = {},
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            onSubmitTutorRating = {})
       }
     }
 
@@ -396,13 +396,13 @@ class ListingContentTest {
     compose.setContent {
       MaterialTheme {
         ListingContent(
-          uiState = state,
-          onBook = { _, _ -> },
-          onApproveBooking = {},
-          onRejectBooking = {},
-          onDeleteListing = {},
-          onEditListing = { editClicked = true },
-          onSubmitTutorRating = {})
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = { editClicked = true },
+            onSubmitTutorRating = {})
       }
     }
 
