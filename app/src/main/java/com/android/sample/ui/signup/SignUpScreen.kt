@@ -30,17 +30,16 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.ui.components.EllipsizingTextField
 import com.android.sample.ui.components.EllipsizingTextFieldStyle
 import com.android.sample.ui.components.RoundEdgedLocationInputField
+import com.android.sample.ui.components.ScrollDownHint
 import com.android.sample.ui.theme.DisabledContent
 import com.android.sample.ui.theme.FieldContainer
 import com.android.sample.ui.theme.GrayE6
-import com.android.sample.ui.theme.SampleAppTheme
 import com.android.sample.ui.theme.TurquoiseEnd
 import com.android.sample.ui.theme.TurquoisePrimary
 import com.android.sample.ui.theme.TurquoiseStart
@@ -85,207 +84,216 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
           unfocusedTextColor = MaterialTheme.colorScheme.onSurface)
 
   val scrollState = rememberScrollState()
-
-  Column(
-      modifier =
-          Modifier.fillMaxSize()
-              .verticalScroll(scrollState)
-              .padding(horizontal = 20.dp, vertical = 16.dp),
-      verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(
-            "SkillBridge",
-            modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.TITLE),
-            textAlign = TextAlign.Center,
-            style =
-                MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.ExtraBold, color = TurquoisePrimary))
-
-        Text(
-            "Personal Informations",
-            modifier = Modifier.testTag(SignUpScreenTestTags.SUBTITLE),
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
-
-        Box(modifier = Modifier.fillMaxWidth()) {
-          EllipsizingTextField(
-              value = state.name,
-              onValueChange = { vm.onEvent(SignUpEvent.NameChanged(it)) },
-              placeholder = "Enter your Name",
-              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.NAME),
-              maxPreviewLength = 45,
+  Box(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier =
+            Modifier.fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)) {
+          Text(
+              "SkillBridge",
+              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.TITLE),
+              textAlign = TextAlign.Center,
               style =
-                  EllipsizingTextFieldStyle(
-                      shape = fieldShape, colors = fieldColors
-                      // keyboardOptions = ... // not needed for name
-                      ))
-        }
+                  MaterialTheme.typography.headlineLarge.copy(
+                      fontWeight = FontWeight.ExtraBold, color = TurquoisePrimary))
 
-        EllipsizingTextField(
-            value = state.surname,
-            onValueChange = { vm.onEvent(SignUpEvent.SurnameChanged(it)) },
-            placeholder = "Enter your Surname",
-            modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.SURNAME),
-            maxPreviewLength = 45,
-            style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
+          Text(
+              "Personal Information",
+              modifier = Modifier.testTag(SignUpScreenTestTags.SUBTITLE),
+              style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
 
-        // Location input with Nominatim search and dropdown
-        val context = LocalContext.current
-        val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
+          Box(modifier = Modifier.fillMaxWidth()) {
+            EllipsizingTextField(
+                value = state.name,
+                onValueChange = { vm.onEvent(SignUpEvent.NameChanged(it)) },
+                placeholder = "Enter your Name",
+                modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.NAME),
+                maxPreviewLength = 45,
+                style =
+                    EllipsizingTextFieldStyle(
+                        shape = fieldShape, colors = fieldColors
+                        // keyboardOptions = ... // not needed for name
+                        ))
+          }
 
-        val permissionLauncher =
-            rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted
-              ->
-              if (granted) {
-                vm.fetchLocationFromGps(GpsLocationProvider(context), context)
-              } else {
-                vm.onLocationPermissionDenied()
-              }
-            }
+          EllipsizingTextField(
+              value = state.surname,
+              onValueChange = { vm.onEvent(SignUpEvent.SurnameChanged(it)) },
+              placeholder = "Enter your Surname",
+              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.SURNAME),
+              maxPreviewLength = 45,
+              style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
 
-        Box(modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.ADDRESS)) {
-          RoundEdgedLocationInputField(
-              locationQuery = state.locationQuery,
-              locationSuggestions = state.locationSuggestions,
-              onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },
-              onLocationSelected = { location ->
-                vm.onEvent(SignUpEvent.LocationSelected(location))
-              },
-              shape = fieldShape,
-              colors = fieldColors)
+          // Location input with Nominatim search and dropdown
+          val context = LocalContext.current
+          val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
 
-          IconButton(
-              onClick = {
-                val granted =
-                    ContextCompat.checkSelfPermission(context, permission) ==
-                        PackageManager.PERMISSION_GRANTED
+          val permissionLauncher =
+              rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                  granted ->
                 if (granted) {
                   vm.fetchLocationFromGps(GpsLocationProvider(context), context)
                 } else {
-                  permissionLauncher.launch(permission)
+                  vm.onLocationPermissionDenied()
+                }
+              }
+
+          Box(modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.ADDRESS)) {
+            RoundEdgedLocationInputField(
+                locationQuery = state.locationQuery,
+                locationSuggestions = state.locationSuggestions,
+                onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },
+                onLocationSelected = { location ->
+                  vm.onEvent(SignUpEvent.LocationSelected(location))
+                },
+                shape = fieldShape,
+                colors = fieldColors)
+
+            IconButton(
+                onClick = {
+                  val granted =
+                      ContextCompat.checkSelfPermission(context, permission) ==
+                          PackageManager.PERMISSION_GRANTED
+                  if (granted) {
+                    vm.fetchLocationFromGps(GpsLocationProvider(context), context)
+                  } else {
+                    permissionLauncher.launch(permission)
+                  }
+                },
+                modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
+                  Icon(
+                      imageVector = Icons.Filled.MyLocation,
+                      contentDescription = SignUpScreenTestTags.PIN_CONTENT_DESC,
+                      tint = MaterialTheme.colorScheme.primary)
+                }
+          }
+
+          TextField(
+              value = state.levelOfEducation,
+              onValueChange = { vm.onEvent(SignUpEvent.LevelOfEducationChanged(it)) },
+              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION),
+              placeholder = {
+                Text("Major, Year (e.g. CS, 3rd year)", fontWeight = FontWeight.Bold)
+              },
+              singleLine = true,
+              shape = fieldShape,
+              colors = fieldColors)
+
+          TextField(
+              value = state.description,
+              onValueChange = { vm.onEvent(SignUpEvent.DescriptionChanged(it)) },
+              modifier =
+                  Modifier.fillMaxWidth()
+                      .heightIn(min = 112.dp)
+                      .testTag(SignUpScreenTestTags.DESCRIPTION),
+              placeholder = { Text("Short description of yourself", fontWeight = FontWeight.Bold) },
+              shape = fieldShape,
+              colors = fieldColors)
+
+          TextField(
+              value = state.email,
+              onValueChange = {
+                if (!state.isGoogleSignUp) {
+                  vm.onEvent(SignUpEvent.EmailChanged(it))
                 }
               },
-              modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
-                Icon(
-                    imageVector = Icons.Filled.MyLocation,
-                    contentDescription = SignUpScreenTestTags.PIN_CONTENT_DESC,
-                    tint = MaterialTheme.colorScheme.primary)
-              }
-        }
-
-        TextField(
-            value = state.levelOfEducation,
-            onValueChange = { vm.onEvent(SignUpEvent.LevelOfEducationChanged(it)) },
-            modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION),
-            placeholder = { Text("Major, Year (e.g. CS, 3rd year)", fontWeight = FontWeight.Bold) },
-            singleLine = true,
-            shape = fieldShape,
-            colors = fieldColors)
-
-        TextField(
-            value = state.description,
-            onValueChange = { vm.onEvent(SignUpEvent.DescriptionChanged(it)) },
-            modifier =
-                Modifier.fillMaxWidth()
-                    .heightIn(min = 112.dp)
-                    .testTag(SignUpScreenTestTags.DESCRIPTION),
-            placeholder = { Text("Short description of yourself", fontWeight = FontWeight.Bold) },
-            shape = fieldShape,
-            colors = fieldColors)
-
-        TextField(
-            value = state.email,
-            onValueChange = {
-              if (!state.isGoogleSignUp) {
-                vm.onEvent(SignUpEvent.EmailChanged(it))
-              }
-            },
-            modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.EMAIL),
-            placeholder = { Text("Email Address", fontWeight = FontWeight.Bold) },
-            singleLine = true,
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
-            shape = fieldShape,
-            colors = fieldColors,
-            enabled = !state.isGoogleSignUp, // Disable email field if pre-filled from Google
-            readOnly = state.isGoogleSignUp) // Make it read-only for Google sign-ups
-
-        // Only show password field if user is not signing up via Google
-        if (!state.isGoogleSignUp) {
-          TextField(
-              value = state.password,
-              onValueChange = { vm.onEvent(SignUpEvent.PasswordChanged(it)) },
-              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.PASSWORD),
-              placeholder = { Text("Password", fontWeight = FontWeight.Bold) },
+              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.EMAIL),
+              placeholder = { Text("Email Address", fontWeight = FontWeight.Bold) },
               singleLine = true,
-              leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-              visualTransformation = PasswordVisualTransformation(),
+              leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
               shape = fieldShape,
               colors = fieldColors,
-              keyboardOptions =
-                  KeyboardOptions.Default.copy(
-                      imeAction = ImeAction.Done, keyboardType = KeyboardType.Password),
-              keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }))
+              enabled = !state.isGoogleSignUp, // Disable email field if pre-filled from Google
+              readOnly = state.isGoogleSignUp) // Make it read-only for Google sign-ups
+
+          // Only show password field if user is not signing up via Google
+          if (!state.isGoogleSignUp) {
+            TextField(
+                value = state.password,
+                onValueChange = { vm.onEvent(SignUpEvent.PasswordChanged(it)) },
+                modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.PASSWORD),
+                placeholder = { Text("Password", fontWeight = FontWeight.Bold) },
+                singleLine = true,
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                visualTransformation = PasswordVisualTransformation(),
+                shape = fieldShape,
+                colors = fieldColors,
+                keyboardOptions =
+                    KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done, keyboardType = KeyboardType.Password),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }))
+
+            Spacer(Modifier.height(6.dp))
+
+            // Password requirement checklist from ViewModel state
+            val reqs = state.passwordRequirements
+
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+              RequirementItem(met = reqs.minLength, text = "At least 8 characters")
+              RequirementItem(met = reqs.hasLetter, text = "Contains a letter")
+              RequirementItem(met = reqs.hasDigit, text = "Contains a digit")
+              RequirementItem(met = reqs.hasSpecial, text = "Contains a special character")
+            }
+          }
+
+          // Display error message if present
+          state.error?.let { errorMessage ->
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
+          }
 
           Spacer(Modifier.height(6.dp))
 
-          // Password requirement checklist from ViewModel state
-          val reqs = state.passwordRequirements
+          val gradient = Brush.horizontalGradient(listOf(TurquoiseStart, TurquoiseEnd))
+          val disabledBrush = Brush.linearGradient(listOf(GrayE6, GrayE6))
 
-          Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-            RequirementItem(met = reqs.minLength, text = "At least 8 characters")
-            RequirementItem(met = reqs.hasLetter, text = "Contains a letter")
-            RequirementItem(met = reqs.hasDigit, text = "Contains a digit")
-            RequirementItem(met = reqs.hasSpecial, text = "Contains a special character")
-          }
+          // For Google sign-up, password requirements don't apply
+          val enabled =
+              if (state.isGoogleSignUp) {
+                state.canSubmit && !state.submitting
+              } else {
+                // Use passwordRequirements from ViewModel state
+                state.canSubmit && state.passwordRequirements.allMet && !state.submitting
+              }
+
+          val buttonColors =
+              ButtonDefaults.buttonColors(
+                  containerColor = Color.Transparent,
+                  contentColor = Color.White, // <-- white text when enabled
+                  disabledContainerColor = Color.Transparent,
+                  disabledContentColor = DisabledContent // <-- gray text when disabled
+                  )
+
+          Button(
+              onClick = { vm.onEvent(SignUpEvent.Submit) },
+              enabled = enabled,
+              modifier =
+                  Modifier.fillMaxWidth()
+                      .height(52.dp)
+                      .clip(RoundedCornerShape(24.dp))
+                      .background(
+                          if (enabled) gradient else disabledBrush, RoundedCornerShape(24.dp))
+                      .testTag(SignUpScreenTestTags.SIGN_UP),
+              colors = buttonColors,
+              contentPadding = PaddingValues(0.dp)) {
+                Text(
+                    if (state.submitting) "Submitting…" else "Sign Up",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold)
+              }
         }
+    val showHint by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
 
-        // Display error message if present
-        state.error?.let { errorMessage ->
-          Spacer(Modifier.height(8.dp))
-          Text(
-              text = errorMessage,
-              color = MaterialTheme.colorScheme.error,
-              style = MaterialTheme.typography.bodyMedium,
-              modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
-        }
-
-        Spacer(Modifier.height(6.dp))
-
-        val gradient = Brush.horizontalGradient(listOf(TurquoiseStart, TurquoiseEnd))
-        val disabledBrush = Brush.linearGradient(listOf(GrayE6, GrayE6))
-
-        // For Google sign-up, password requirements don't apply
-        val enabled =
-            if (state.isGoogleSignUp) {
-              state.canSubmit && !state.submitting
-            } else {
-              // Use passwordRequirements from ViewModel state
-              state.canSubmit && state.passwordRequirements.allMet && !state.submitting
-            }
-
-        val buttonColors =
-            ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = Color.White, // <-- white text when enabled
-                disabledContainerColor = Color.Transparent,
-                disabledContentColor = DisabledContent // <-- gray text when disabled
-                )
-
-        Button(
-            onClick = { vm.onEvent(SignUpEvent.Submit) },
-            enabled = enabled,
-            modifier =
-                Modifier.fillMaxWidth()
-                    .height(52.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(if (enabled) gradient else disabledBrush, RoundedCornerShape(24.dp))
-                    .testTag(SignUpScreenTestTags.SIGN_UP),
-            colors = buttonColors,
-            contentPadding = PaddingValues(0.dp)) {
-              Text(
-                  if (state.submitting) "Submitting…" else "Sign Up",
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = FontWeight.Bold)
-            }
-      }
+    ScrollDownHint(
+        visible = showHint,
+        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
+  }
 }
 
 @Composable
@@ -306,10 +314,4 @@ private fun RequirementItem(met: Boolean, text: String) {
             style = MaterialTheme.typography.bodySmall,
             color = if (met) MaterialTheme.colorScheme.onSurface else DisabledContent)
       }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PreviewSignUpScreen() {
-  SampleAppTheme { SignUpScreen(vm = SignUpViewModel()) }
 }
