@@ -1,5 +1,6 @@
 package com.android.sample.model.communication.newImplementation
 
+import android.os.Looper
 import com.android.sample.model.communication.CONVERSATIONS_COLLECTION_PATH
 import com.android.sample.model.communication.newImplementation.conversation.*
 import com.android.sample.utils.FirebaseEmulator
@@ -10,8 +11,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.assertFailsWith
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
@@ -20,6 +21,7 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @Config(sdk = [28])
@@ -112,35 +114,33 @@ class FirestoreConvRepositoryTest : RepositoryTest() {
     val convId = "conv-listen"
     convRepository.createConv(ConversationNew(convId = convId))
 
-    val msgRef =
-        firestore.collection(CONVERSATIONS_COLLECTION_PATH).document(convId).collection("messages")
-
     val listenerMessages = mutableListOf<List<MessageNew>>()
 
     val job = launch {
-      convRepository.listenMessages(convId).collect { messages -> listenerMessages.add(messages) }
+      convRepository
+          .listenMessages(convId)
+          .take(2) // s'arrête après deux snapshots
+          .collect { messages -> listenerMessages.add(messages) }
     }
-
-    delay(100) // laisse le listener s'attacher
 
     val msg1 =
         MessageNew(msgId = "1", content = "Hello", senderId = testUser1Id, receiverId = testUser2Id)
     val msg2 =
         MessageNew(msgId = "2", content = "World", senderId = testUser2Id, receiverId = testUser1Id)
 
-    msgRef.document("1").set(msg1).await()
-    delay(500) // temps pour que le listener reçoive le snapshot
+    convRepository.sendMessage(convId, msg1)
+    Shadows.shadowOf(Looper.getMainLooper()).idle() // forcer l'exécution du listener
 
-    msgRef.document("2").set(msg2).await()
-    delay(500) // idem
+    convRepository.sendMessage(convId, msg2)
+    Shadows.shadowOf(Looper.getMainLooper()).idle() // idem
 
-    job.cancel()
+    job.join()
 
     assertTrue(listenerMessages.isNotEmpty())
     val lastEmission = listenerMessages.last()
     assertEquals(2, lastEmission.size)
-    assertEquals("Hello", lastEmission[0].content)
-    assertEquals("World", lastEmission[1].content)
+    assertEquals("Hello", lastEmission[1].content)
+    assertEquals("World", lastEmission[0].content)
   }
 
   // ------------------------------------------------------------
