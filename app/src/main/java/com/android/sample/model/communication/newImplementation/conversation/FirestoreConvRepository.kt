@@ -49,17 +49,16 @@ class FirestoreConvRepository(
     }
 
     val msgToSend =
-      if (message.msgId.isBlank()) {
-        message.copy(msgId = getNewUid())
-      } else {
-        message
-      }
+        if (message.msgId.isBlank()) {
+          message.copy(msgId = getNewUid())
+        } else {
+          message
+        }
 
     messagesRef.document(msgToSend.msgId).set(msgToSend).await()
 
     convRef.update(mapOf("updatedAt" to msgToSend.createdAt)).await()
   }
-
 
   override fun listenMessages(convId: String): Flow<List<MessageNew>> {
     return callbackFlow {
