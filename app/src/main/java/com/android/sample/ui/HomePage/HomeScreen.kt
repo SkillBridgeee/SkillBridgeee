@@ -1,5 +1,6 @@
 package com.android.sample.ui.HomePage
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -24,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.model.user.Profile
+import com.android.sample.ui.components.HorizontalScrollHint
 import com.android.sample.ui.components.TutorCard
 import com.android.sample.ui.theme.PrimaryColor
 
@@ -110,8 +113,12 @@ fun GreetingSection(welcomeMessage: String) {
  * @param subjects The list of [MainSubject] items to display.
  * @param onSubjectCardClicked Callback invoked when a subject card is clicked for navigation.
  */
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun ExploreSubjects(subjects: List<MainSubject>, onSubjectCardClicked: (MainSubject) -> Unit = {}) {
+  val listState = rememberLazyListState()
+  val showHint by derivedStateOf { listState.canScrollForward }
+
   Column(
       modifier =
           Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.EXPLORE_SKILLS_SECTION)) {
@@ -119,14 +126,24 @@ fun ExploreSubjects(subjects: List<MainSubject>, onSubjectCardClicked: (MainSubj
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.ALL_SUBJECT_LIST)) {
-              items(subjects) {
-                val subjectColor = SkillsHelper.getColorForSubject(it)
-                SubjectCard(subject = it, color = subjectColor, onSubjectCardClicked)
+        Box(modifier = Modifier.fillMaxWidth()) {
+          LazyRow(
+              state = listState,
+              horizontalArrangement = Arrangement.spacedBy(10.dp),
+              modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.ALL_SUBJECT_LIST)) {
+                items(subjects) { subject ->
+                  val subjectColor = SkillsHelper.getColorForSubject(subject)
+                  SubjectCard(
+                      subject = subject,
+                      color = subjectColor,
+                      onSubjectCardClicked = onSubjectCardClicked)
+                }
               }
-            }
+
+          HorizontalScrollHint(
+              visible = showHint,
+              modifier = Modifier.align(Alignment.CenterEnd).padding(end = 4.dp))
+        }
       }
 }
 

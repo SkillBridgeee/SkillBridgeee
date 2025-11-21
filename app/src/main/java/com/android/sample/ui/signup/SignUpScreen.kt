@@ -36,7 +36,7 @@ import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.ui.components.EllipsizingTextField
 import com.android.sample.ui.components.EllipsizingTextFieldStyle
 import com.android.sample.ui.components.RoundEdgedLocationInputField
-import com.android.sample.ui.components.ScrollDownHint
+import com.android.sample.ui.components.VerticalScrollHint
 import com.android.sample.ui.theme.DisabledContent
 import com.android.sample.ui.theme.FieldContainer
 import com.android.sample.ui.theme.GrayE6
@@ -290,7 +290,7 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
         }
     val showHint by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
 
-    ScrollDownHint(
+    VerticalScrollHint(
         visible = showHint,
         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
   }

@@ -57,7 +57,7 @@ import com.android.sample.ui.components.LocationInputField
 import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RatingCard
 import com.android.sample.ui.components.RequestCard
-import com.android.sample.ui.components.ScrollDownHint
+import com.android.sample.ui.components.VerticalScrollHint
 import com.android.sample.ui.theme.bkgConfirmedColor
 
 /**
@@ -186,7 +186,7 @@ private fun MyProfileContent(
           item { ProfileLogout(onLogout = onLogout) }
         }
 
-    ScrollDownHint(
+    VerticalScrollHint(
         visible = showHint,
         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
   }

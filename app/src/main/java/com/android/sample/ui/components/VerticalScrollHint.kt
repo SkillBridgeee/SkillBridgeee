@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ScrollDownHint(visible: Boolean, modifier: Modifier = Modifier) {
+fun VerticalScrollHint(visible: Boolean, modifier: Modifier = Modifier) {
   AnimatedVisibility(visible = visible, modifier = modifier) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
       Box(
