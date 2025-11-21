@@ -39,6 +39,7 @@ class FirestoreConvRepository(
 
   override suspend fun sendMessage(convId: String, message: MessageNew) {
     require(convId.isNotBlank()) { "Conversation ID cannot be blank" }
+    require(message.msgId.isNotBlank()) { "Message ID cannot be blank" }
 
     val convRef = conversationsRef.document(convId)
     val messagesRef = convRef.collection("messages")
@@ -48,16 +49,9 @@ class FirestoreConvRepository(
       throw IllegalArgumentException("Conversation $convId does not exist")
     }
 
-    val msgToSend =
-        if (message.msgId.isBlank()) {
-          message.copy(msgId = getNewUid())
-        } else {
-          message
-        }
+    messagesRef.document(message.msgId).set(message).await()
 
-    messagesRef.document(msgToSend.msgId).set(msgToSend).await()
-
-    convRef.update(mapOf("updatedAt" to msgToSend.createdAt)).await()
+    convRef.update(mapOf("updatedAt" to message.createdAt)).await()
   }
 
   override fun listenMessages(convId: String): Flow<List<MessageNew>> {
