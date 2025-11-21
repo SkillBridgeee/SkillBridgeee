@@ -1,6 +1,8 @@
-package com.android.sample.model.communication.newImplementation
+package com.android.sample.model.communication.newImplementation.OverViewConv
 
-data class ConvOverView(
+import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+
+data class OverViewConversation(
     val previewId: String = "",
     val linkedConvId: String = "",
     val convName: String = "",

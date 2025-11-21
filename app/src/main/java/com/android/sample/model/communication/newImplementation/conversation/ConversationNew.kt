@@ -1,4 +1,4 @@
-package com.android.sample.model.communication.newImplementation
+package com.android.sample.model.communication.newImplementation.conversation
 
 data class ConversationNew(
     val convId: String = "",

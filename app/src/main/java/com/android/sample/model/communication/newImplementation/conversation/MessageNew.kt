@@ -1,4 +1,4 @@
-package com.android.sample.model.communication.newImplementation
+package com.android.sample.model.communication.newImplementation.conversation
 
 import java.util.Date
 
