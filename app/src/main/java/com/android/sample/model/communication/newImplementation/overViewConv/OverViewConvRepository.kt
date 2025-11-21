@@ -1,4 +1,4 @@
-package com.android.sample.model.communication.newImplementation.OverViewConv
+package com.android.sample.model.communication.newImplementation.overViewConv
 
 interface OverViewConvRepository {
 
