@@ -12,5 +12,7 @@ interface ConvRepository {
 
   suspend fun deleteConv(convId: String)
 
+  suspend fun sendMessage(convId: String, message: MessageNew)
+
   fun listenMessages(convId: String): Flow<List<MessageNew>>
 }

@@ -20,7 +20,6 @@ class FirestoreConvRepository(
     return UUID.randomUUID().toString()
   }
 
-  // -------- GET A SINGLE CONVERSATION ------------
   override suspend fun getConv(convId: String): ConversationNew? {
     if (convId.isBlank()) return null
 
@@ -28,19 +27,40 @@ class FirestoreConvRepository(
     return snapshot.toObject(ConversationNew::class.java)
   }
 
-  // -------- CREATE A CONVERSATION ------------
   override suspend fun createConv(conversation: ConversationNew) {
     require(conversation.convId.isNotBlank()) { "Conversation ID cannot be blank" }
 
     conversationsRef.document(conversation.convId).set(conversation).await()
   }
 
-  // -------- DELETE A CONVERSATION ------------
   override suspend fun deleteConv(convId: String) {
     conversationsRef.document(convId).delete().await()
   }
 
-  // -------- LISTEN TO MESSAGES IN REAL TIME ------------
+  override suspend fun sendMessage(convId: String, message: MessageNew) {
+    require(convId.isNotBlank()) { "Conversation ID cannot be blank" }
+
+    val convRef = conversationsRef.document(convId)
+    val messagesRef = convRef.collection("messages")
+
+    val convSnapshot = convRef.get().await()
+    if (!convSnapshot.exists()) {
+      throw IllegalArgumentException("Conversation $convId does not exist")
+    }
+
+    val msgToSend =
+      if (message.msgId.isBlank()) {
+        message.copy(msgId = getNewUid())
+      } else {
+        message
+      }
+
+    messagesRef.document(msgToSend.msgId).set(msgToSend).await()
+
+    convRef.update(mapOf("updatedAt" to msgToSend.createdAt)).await()
+  }
+
+
   override fun listenMessages(convId: String): Flow<List<MessageNew>> {
     return callbackFlow {
       if (convId.isBlank()) {
