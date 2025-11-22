@@ -3,7 +3,7 @@ package com.android.sample.model.communication.newImplementation.overViewConv
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 
 data class OverViewConversation(
-    val previewId: String = "",
+    val overViewId: String = "",
     val linkedConvId: String = "",
     val convName: String = "",
     val lastMsg: MessageNew = MessageNew(),
