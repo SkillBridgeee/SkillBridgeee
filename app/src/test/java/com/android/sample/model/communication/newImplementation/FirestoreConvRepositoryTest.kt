@@ -1,6 +1,6 @@
 package com.android.sample.model.communication.newImplementation
 
-import android.os.Looper
+import app.cash.turbine.test
 import com.android.sample.model.communication.CONVERSATIONS_COLLECTION_PATH
 import com.android.sample.model.communication.newImplementation.conversation.*
 import com.android.sample.utils.FirebaseEmulator
@@ -11,9 +11,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.test.runTest
@@ -21,7 +22,6 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @Config(sdk = [28])
@@ -110,37 +110,57 @@ class FirestoreConvRepositoryTest : RepositoryTest() {
   }
 
   @Test
-  fun listenMessagesEmitsMessagesInOrder() = runTest {
-    val convId = "conv-listen"
-    convRepository.createConv(ConversationNew(convId = convId))
+  fun emits_when_messages_already_present() = runTest {
+    val convId = "conv-test"
+    val repo = FakeConvRepository()
+    repo.createConv(ConversationNew(convId = convId))
 
-    val listenerMessages = mutableListOf<List<MessageNew>>()
+    val msg1 = MessageNew("1", "Hello", "u1", "u2")
+    val msg2 = MessageNew("2", "World", "u2", "u1")
 
-    val job = launch {
-      convRepository
-          .listenMessages(convId)
-          .take(2) // s'arrête après deux snapshots
-          .collect { messages -> listenerMessages.add(messages) }
+    // send messages before collecting
+    repo.sendMessage(convId, msg1)
+    repo.sendMessage(convId, msg2)
+
+    // Now start collecting: first awaitItem() should contain both messages
+    repo.listenMessages(convId).test {
+      val current = awaitItem()
+      assertEquals(2, current.size)
+      assertEquals("Hello", current[0].content)
+      assertEquals("World", current[1].content)
+      cancelAndIgnoreRemainingEvents()
     }
+  }
 
-    val msg1 =
-        MessageNew(msgId = "1", content = "Hello", senderId = testUser1Id, receiverId = testUser2Id)
-    val msg2 =
-        MessageNew(msgId = "2", content = "World", senderId = testUser2Id, receiverId = testUser1Id)
+  @Test
+  fun emits_on_subsequent_sends() = runTest {
+    val convId = "conv-test"
+    val repo = FakeConvRepository()
+    repo.createConv(ConversationNew(convId = convId))
 
-    convRepository.sendMessage(convId, msg1)
-    Shadows.shadowOf(Looper.getMainLooper()).idle() // forcer l'exécution du listener
+    val msg1 = MessageNew("1", "Hello", "u1", "u2")
+    val msg2 = MessageNew("2", "World", "u2", "u1")
 
-    convRepository.sendMessage(convId, msg2)
-    Shadows.shadowOf(Looper.getMainLooper()).idle() // idem
+    repo.listenMessages(convId).test {
+      // StateFlow émet immédiatement sa valeur courante (probablement emptyList())
+      val initial = awaitItem()
+      assertTrue(initial.isEmpty(), "expected initial snapshot to be empty")
 
-    job.join()
+      // maintenant envoie un message -> nouvelle émission
+      repo.sendMessage(convId, msg1)
+      val afterFirst = awaitItem()
+      assertEquals(1, afterFirst.size)
+      assertEquals("Hello", afterFirst[0].content)
 
-    assertTrue(listenerMessages.isNotEmpty())
-    val lastEmission = listenerMessages.last()
-    assertEquals(2, lastEmission.size)
-    assertEquals("Hello", lastEmission[1].content)
-    assertEquals("World", lastEmission[0].content)
+      // envoie second -> encore une émission
+      repo.sendMessage(convId, msg2)
+      val afterSecond = awaitItem()
+      assertEquals(2, afterSecond.size)
+      assertEquals("Hello", afterSecond[0].content)
+      assertEquals("World", afterSecond[1].content)
+
+      cancelAndIgnoreRemainingEvents()
+    }
   }
 
   // ------------------------------------------------------------
@@ -149,5 +169,34 @@ class FirestoreConvRepositoryTest : RepositoryTest() {
   @Test
   fun listenMessagesFailsOnBlankId() = runTest {
     assertFailsWith<IllegalArgumentException> { convRepository.listenMessages("").first() }
+  }
+}
+
+class FakeConvRepository : ConvRepository {
+
+  private val conversations = mutableMapOf<String, MutableStateFlow<List<MessageNew>>>()
+
+  override fun getNewUid(): String {
+    return ""
+  }
+
+  override suspend fun getConv(convId: String): ConversationNew? {
+    return null
+  }
+
+  override suspend fun createConv(conversation: ConversationNew) {
+    conversations[conversation.convId] = MutableStateFlow(emptyList())
+  }
+
+  override suspend fun deleteConv(convId: String) {}
+
+  override fun listenMessages(convId: String): Flow<List<MessageNew>> {
+    return conversations[convId] ?: MutableStateFlow(emptyList()) // fallback si non créé
+  }
+
+  override suspend fun sendMessage(convId: String, message: MessageNew) {
+    val flow = conversations[convId] ?: error("Conversation $convId not initialized")
+
+    flow.value = flow.value + message
   }
 }

@@ -219,6 +219,8 @@ dependencies {
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
     androidTestImplementation(libs.androidx.navigation.testing)
 
+    testImplementation("app.cash.turbine:turbine:1.0.0")
+
     // Google Play Services for Google Sign-In
     implementation(libs.play.services.auth)
 
