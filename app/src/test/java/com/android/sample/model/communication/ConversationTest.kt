@@ -1,10 +1,10 @@
-package com.android.sample.model.communication.newImplementation
+package com.android.sample.model.communication
 
 import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import org.junit.Test
 
 class ConversationTest {
 
@@ -12,11 +12,11 @@ class ConversationTest {
   fun `default ConversationNew values`() {
     val conv = ConversationNew()
 
-    assertEquals("", conv.convId)
-    assertEquals("", conv.convCreatorId)
-    assertEquals("", conv.otherPersonId)
-    assertEquals("", conv.convName)
-    assertTrue(conv.messages.isEmpty())
+      assertEquals("", conv.convId)
+      assertEquals("", conv.convCreatorId)
+      assertEquals("", conv.otherPersonId)
+      assertEquals("", conv.convName)
+      assertTrue(conv.messages.isEmpty())
   }
 
   @Test
@@ -30,14 +30,15 @@ class ConversationTest {
             convCreatorId = "user1",
             otherPersonId = "user2",
             convName = "Test Chat",
-            messages = listOf(msg1, msg2))
+            messages = listOf(msg1, msg2)
+        )
 
-    assertEquals("conv123", conv.convId)
-    assertEquals("user1", conv.convCreatorId)
-    assertEquals("user2", conv.otherPersonId)
-    assertEquals("Test Chat", conv.convName)
-    assertEquals(2, conv.messages.size)
-    assertEquals("Hello", conv.messages[0].content)
-    assertEquals("World", conv.messages[1].content)
+      assertEquals("conv123", conv.convId)
+      assertEquals("user1", conv.convCreatorId)
+      assertEquals("user2", conv.otherPersonId)
+      assertEquals("Test Chat", conv.convName)
+      assertEquals(2, conv.messages.size)
+      assertEquals("Hello", conv.messages[0].content)
+      assertEquals("World", conv.messages[1].content)
   }
 }

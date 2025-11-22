@@ -1,7 +1,6 @@
-package com.android.sample.model.communication.newImplementation
+package com.android.sample.model.communication
 
 import app.cash.turbine.test
-import com.android.sample.model.communication.CONVERSATIONS_COLLECTION_PATH
 import com.android.sample.model.communication.newImplementation.conversation.*
 import com.android.sample.utils.FirebaseEmulator
 import com.android.sample.utils.RepositoryTest
