@@ -18,6 +18,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+/**
+ * A composable that shows a vertical scroll hint with a downward arrow and gradient overlay.
+ *
+ * @param visible Controls the visibility of the scroll hint.
+ * @param modifier Optional [Modifier] for styling.
+ */
 @Composable
 fun VerticalScrollHint(visible: Boolean, modifier: Modifier = Modifier) {
   AnimatedVisibility(visible = visible, modifier = modifier) {

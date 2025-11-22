@@ -288,6 +288,7 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
                     fontWeight = FontWeight.Bold)
               }
         }
+      // True if can scroll down further or false if at bottom of the page
     val showHint by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
 
     VerticalScrollHint(
