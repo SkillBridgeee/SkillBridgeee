@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun VerticalScrollHint(visible: Boolean, modifier: Modifier = Modifier) {
-  AnimatedVisibility(visible = visible, modifier = modifier) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+  AnimatedVisibility(visible = visible) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
       Box(
           modifier =
               Modifier.fillMaxWidth()
@@ -35,6 +35,7 @@ fun VerticalScrollHint(visible: Boolean, modifier: Modifier = Modifier) {
                   .background(
                       Brush.verticalGradient(
                           colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.08f)))))
+
       Spacer(modifier = Modifier.height(10.dp))
 
       Icon(

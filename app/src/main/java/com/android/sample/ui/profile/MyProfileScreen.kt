@@ -1,6 +1,5 @@
 package com.android.sample.ui.profile
 
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
@@ -134,7 +133,6 @@ fun MyProfileScreen(
   }
 }
 
-@SuppressLint("UnrememberedMutableState")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 /**
@@ -158,7 +156,7 @@ private fun MyProfileContent(
 ) {
   val fieldSpacing = 8.dp
   val listState = rememberLazyListState()
-  val showHint by derivedStateOf { listState.canScrollForward }
+  val showHint by remember { derivedStateOf { listState.canScrollForward } }
 
   Box(modifier = Modifier.fillMaxSize()) {
     LazyColumn(

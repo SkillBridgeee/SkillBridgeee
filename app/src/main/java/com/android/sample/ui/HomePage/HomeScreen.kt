@@ -1,6 +1,5 @@
 package com.android.sample.ui.HomePage
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -113,11 +112,10 @@ fun GreetingSection(welcomeMessage: String) {
  * @param subjects The list of [MainSubject] items to display.
  * @param onSubjectCardClicked Callback invoked when a subject card is clicked for navigation.
  */
-@SuppressLint("UnrememberedMutableState")
 @Composable
 fun ExploreSubjects(subjects: List<MainSubject>, onSubjectCardClicked: (MainSubject) -> Unit = {}) {
   val listState = rememberLazyListState()
-  val showHint by derivedStateOf { listState.canScrollForward }
+  val showHint by remember { derivedStateOf { listState.canScrollForward } }
 
   Column(
       modifier =
