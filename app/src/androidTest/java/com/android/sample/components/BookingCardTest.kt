@@ -83,7 +83,7 @@ class BookingCardTest {
     val profile = mockProfile()
 
     composeTestRule.setContent {
-        BookingCard(booking = booking, listing = listing, creator = profile)
+      BookingCard(booking = booking, listing = listing, creator = profile)
     }
 
     composeTestRule
@@ -99,7 +99,7 @@ class BookingCardTest {
     val profile = mockProfile()
 
     composeTestRule.setContent {
-        BookingCard(booking = booking, listing = listing, creator = profile)
+      BookingCard(booking = booking, listing = listing, creator = profile)
     }
 
     composeTestRule.onNodeWithText("Student for Math Tutoring").assertIsDisplayed()
@@ -112,7 +112,7 @@ class BookingCardTest {
     val profile = mockProfile(name = "Bob Teacher")
 
     composeTestRule.setContent {
-        BookingCard(booking = booking, listing = listing, creator = profile)
+      BookingCard(booking = booking, listing = listing, creator = profile)
     }
 
     composeTestRule.onNodeWithText("by Bob Teacher").assertIsDisplayed()
@@ -125,7 +125,7 @@ class BookingCardTest {
     val profile = mockProfile()
 
     composeTestRule.setContent {
-        BookingCard(booking = booking, listing = listing, creator = profile)
+      BookingCard(booking = booking, listing = listing, creator = profile)
     }
 
     composeTestRule
@@ -146,11 +146,11 @@ class BookingCardTest {
     var clickedId: String? = null
 
     composeTestRule.setContent {
-        BookingCard(
-            booking = booking,
-            listing = listing,
-            creator = profile,
-            onClickBookingCard = { clickedId = it })
+      BookingCard(
+          booking = booking,
+          listing = listing,
+          creator = profile,
+          onClickBookingCard = { clickedId = it })
     }
 
     composeTestRule.onNodeWithTag(BookingCardTestTag.CARD).performClick()
