@@ -23,20 +23,17 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun HorizontalScrollHint(visible: Boolean, modifier: Modifier = Modifier) {
-    AnimatedVisibility(visible = visible, modifier = modifier) {
-        Box(
-            modifier =
-                Modifier
-                    .width(32.dp)
-                    .height(56.dp)
-                    .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = "Scroll for more subjects",
-                tint = MaterialTheme.colorScheme.primary
-            )
+  AnimatedVisibility(visible = visible, modifier = modifier) {
+    Box(
+        modifier =
+            Modifier.width(32.dp)
+                .height(56.dp)
+                .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)),
+        contentAlignment = Alignment.Center) {
+          Icon(
+              imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+              contentDescription = "Scroll for more subjects",
+              tint = MaterialTheme.colorScheme.primary)
         }
-    }
+  }
 }
