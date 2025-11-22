@@ -16,7 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+
+const val VERTICAL_SCROLL_HINT_BOX_TAG = "verticalScrollHintBox"
+const val VERTICAL_SCROLL_HINT_ICON_TAG = "verticalScrollHintIcon"
 
 /**
  * A composable that shows a vertical scroll hint with a downward arrow and gradient overlay.
@@ -26,11 +30,12 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun VerticalScrollHint(visible: Boolean, modifier: Modifier = Modifier) {
-  AnimatedVisibility(visible = visible) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+  AnimatedVisibility(visible = visible, modifier = modifier) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
       Box(
           modifier =
-              Modifier.fillMaxWidth()
+              Modifier.testTag(VERTICAL_SCROLL_HINT_BOX_TAG)
+                  .fillMaxWidth()
                   .height(32.dp)
                   .background(
                       Brush.verticalGradient(
@@ -39,6 +44,7 @@ fun VerticalScrollHint(visible: Boolean, modifier: Modifier = Modifier) {
       Spacer(modifier = Modifier.height(10.dp))
 
       Icon(
+          modifier = Modifier.testTag(VERTICAL_SCROLL_HINT_ICON_TAG),
           imageVector = Icons.Default.ArrowDownward,
           contentDescription = "Scroll down",
           tint = MaterialTheme.colorScheme.primary)
