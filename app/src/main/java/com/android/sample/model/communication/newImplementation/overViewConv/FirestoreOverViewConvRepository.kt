@@ -25,7 +25,6 @@ class FirestoreOverViewConvRepository(
 
   override suspend fun addOverViewConvUser(overView: OverViewConversation) {
     val docId = overView.overViewId.ifBlank { getNewUid() }
-
     overViewRef.document(docId).set(overView).await()
   }
 
@@ -53,8 +52,6 @@ class FirestoreOverViewConvRepository(
 
   override fun listenOverView(userId: String): Flow<List<OverViewConversation>> = callbackFlow {
     require(userId.isNotBlank()) { close(IllegalArgumentException("User ID cannot be blank")) }
-
-    val query = overViewRef.whereIn("convCreatorId", listOf(userId))
 
     val listenerCreator: ListenerRegistration =
         overViewRef
