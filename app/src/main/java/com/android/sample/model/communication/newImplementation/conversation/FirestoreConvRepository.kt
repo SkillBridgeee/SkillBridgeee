@@ -77,6 +77,7 @@ class FirestoreConvRepository(
             val messages = snapshot?.toObjects(MessageNew::class.java).orEmpty()
             trySend(messages)
           }
+      trySend(emptyList())
 
       awaitClose { listenerRegistration.remove() }
     }
