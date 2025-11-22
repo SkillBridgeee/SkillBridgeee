@@ -1,4 +1,4 @@
-package com.android.sample.ui.components
+package com.android.sample.components
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -14,6 +14,8 @@ import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
+import com.android.sample.ui.components.BookingCard
+import com.android.sample.ui.components.BookingCardTestTag
 import java.util.*
 import org.junit.Rule
 import org.junit.Test
@@ -81,7 +83,7 @@ class BookingCardTest {
     val profile = mockProfile()
 
     composeTestRule.setContent {
-      BookingCard(booking = booking, listing = listing, creator = profile)
+        BookingCard(booking = booking, listing = listing, creator = profile)
     }
 
     composeTestRule
@@ -97,7 +99,7 @@ class BookingCardTest {
     val profile = mockProfile()
 
     composeTestRule.setContent {
-      BookingCard(booking = booking, listing = listing, creator = profile)
+        BookingCard(booking = booking, listing = listing, creator = profile)
     }
 
     composeTestRule.onNodeWithText("Student for Math Tutoring").assertIsDisplayed()
@@ -110,7 +112,7 @@ class BookingCardTest {
     val profile = mockProfile(name = "Bob Teacher")
 
     composeTestRule.setContent {
-      BookingCard(booking = booking, listing = listing, creator = profile)
+        BookingCard(booking = booking, listing = listing, creator = profile)
     }
 
     composeTestRule.onNodeWithText("by Bob Teacher").assertIsDisplayed()
@@ -123,7 +125,7 @@ class BookingCardTest {
     val profile = mockProfile()
 
     composeTestRule.setContent {
-      BookingCard(booking = booking, listing = listing, creator = profile)
+        BookingCard(booking = booking, listing = listing, creator = profile)
     }
 
     composeTestRule
@@ -144,11 +146,11 @@ class BookingCardTest {
     var clickedId: String? = null
 
     composeTestRule.setContent {
-      BookingCard(
-          booking = booking,
-          listing = listing,
-          creator = profile,
-          onClickBookingCard = { clickedId = it })
+        BookingCard(
+            booking = booking,
+            listing = listing,
+            creator = profile,
+            onClickBookingCard = { clickedId = it })
     }
 
     composeTestRule.onNodeWithTag(BookingCardTestTag.CARD).performClick()
