@@ -23,8 +23,19 @@ class FirestoreConvRepository(
   override suspend fun getConv(convId: String): ConversationNew? {
     if (convId.isBlank()) return null
 
-    val snapshot = conversationsRef.document(convId).get().await()
-    return snapshot.toObject(ConversationNew::class.java)
+    val convRef = conversationsRef.document(convId)
+
+    val convSnapshot = convRef.get().await()
+    if (!convSnapshot.exists()) return null
+
+    val conv = convSnapshot.toObject(ConversationNew::class.java)!!.copy(convId = convId)
+
+    // Load messages
+    val messagesSnapshot = convRef.collection("messages").orderBy("createdAt").get().await()
+
+    val messages = messagesSnapshot.documents.mapNotNull { it.toObject(MessageNew::class.java) }
+
+    return conv.copy(messages = messages)
   }
 
   override suspend fun createConv(conversation: ConversationNew) {
