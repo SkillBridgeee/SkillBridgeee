@@ -83,7 +83,7 @@ class FirestoreOverViewConvRepositoryTest {
 
     val flow = repo.listenOverView(userA)
 
-    val emitted = flow.first { it.isNotEmpty() && it.any { it.linkedConvId == convId } }
+    val emitted = flow.first { it -> it.isNotEmpty() && it.any { it.linkedConvId == convId } }
     assertTrue(emitted.any { it.linkedConvId == convId })
   }
 }

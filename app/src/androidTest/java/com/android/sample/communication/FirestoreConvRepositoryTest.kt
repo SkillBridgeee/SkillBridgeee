@@ -5,6 +5,7 @@ import com.android.sample.model.communication.newImplementation.conversation.Con
 import com.android.sample.model.communication.newImplementation.conversation.FirestoreConvRepository
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import com.android.sample.utils.TestFirestore
+import java.util.UUID
 import junit.framework.TestCase.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -143,5 +144,35 @@ class FirestoreConvRepositoryTest {
     assertEquals(msg2.content, returned2.content)
     assertEquals(msg2.senderId, returned2.senderId)
     assertEquals(msg2.receiverId, returned2.receiverId)
+  }
+
+  @Test
+  fun testGetNewUid() = runTest {
+    val id1 = repo.getNewUid()
+    val id2 = repo.getNewUid()
+
+    assertTrue("ID1 should not be blank", id1.isNotBlank())
+    assertTrue("ID2 should not be blank", id2.isNotBlank())
+
+    assertNotSame("Each generated UID must be unique", id1, id2)
+
+    try {
+      UUID.fromString(id1)
+      UUID.fromString(id2)
+    } catch (e: Exception) {
+      fail("Generated IDs are not valid UUIDs: $e")
+    }
+  }
+
+  @Test
+  fun testListenMessagesInvalidConvId() = runTest {
+    val invalidConvId = ""
+
+    try {
+      repo.listenMessages(invalidConvId).first()
+      fail("Expected IllegalArgumentException but no exception was thrown.")
+    } catch (e: IllegalArgumentException) {
+      assertEquals("Conversation ID cannot be blank", e.message)
+    }
   }
 }
