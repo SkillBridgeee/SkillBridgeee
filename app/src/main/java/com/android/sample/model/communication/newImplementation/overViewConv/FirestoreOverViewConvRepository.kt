@@ -11,21 +11,42 @@ import kotlinx.coroutines.tasks.await
 
 const val OVERVIEW_CONV_COLLECTION_PATH = "overViewConv"
 
+/**
+ * Repository implementation for managing conversation overviews in Firestore. Each overview
+ * represents a lightweight snapshot of a conversation for a specific user.
+ */
 class FirestoreOverViewConvRepository(
     db: FirebaseFirestore,
 ) : OverViewConvRepository {
 
   private val overViewRef = db.collection(OVERVIEW_CONV_COLLECTION_PATH)
 
+  /**
+   * Generates a new unique ID for an overview document.
+   *
+   * @return a random UUID string.
+   */
   override fun getNewUid(): String {
     return UUID.randomUUID().toString()
   }
 
+  /**
+   * Creates or updates a conversation overview for a user. If `overViewId` is blank, a new document
+   * ID is generated automatically.
+   *
+   * @param overView the overview model to store.
+   */
   override suspend fun addOverViewConvUser(overView: OverViewConversation) {
     val docId = overView.overViewId.ifBlank { getNewUid() }
     overViewRef.document(docId).set(overView).await()
   }
 
+  /**
+   * Deletes all overview documents associated with a given conversation ID. Used when a
+   * conversation is removed entirely.
+   *
+   * @param convId the linked conversation ID.
+   */
   override suspend fun deleteOverViewConvUser(convId: String) {
     val querySnapshot = overViewRef.whereEqualTo("linkedConvId", convId).get().await()
 
@@ -34,6 +55,13 @@ class FirestoreOverViewConvRepository(
     }
   }
 
+  /**
+   * Retrieves all overview conversations for a specific user. A user can appear either as the
+   * creator or as the other participant.
+   *
+   * @param userId the user's identifier.
+   * @return a sorted list of OverViewConversation, ordered by last message timestamp.
+   */
   override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
     require(userId.isNotBlank()) { "User ID cannot be blank" }
 
@@ -48,6 +76,16 @@ class FirestoreOverViewConvRepository(
     return allOverviews.sortedByDescending { it.lastMsg.createdAt.time }
   }
 
+  /**
+   * Observes all overview conversations for a specific user in real-time. Emits a list of overviews
+   * whenever a change occurs in Firestore.
+   *
+   * Two listeners are registered since the user may be the conversation creator or the other
+   * participant.
+   *
+   * @param userId the user's identifier.
+   * @return a Flow emitting updated lists of OverViewConversation.
+   */
   override fun listenOverView(userId: String): Flow<List<OverViewConversation>> = callbackFlow {
     require(userId.isNotBlank()) { close(IllegalArgumentException("User ID cannot be blank")) }
 
@@ -79,7 +117,7 @@ class FirestoreOverViewConvRepository(
               trySend(messages)
             }
 
-    // Clean up
+    // Remove listeners when the Flow is cancelled.
     awaitClose {
       listenerCreator.remove()
       listenerOther.remove()
