@@ -20,18 +20,8 @@ object TestFirestore {
           .writeTimeout(3, TimeUnit.SECONDS)
           .build()
 
-  private var initialized = false
-  private lateinit var _db: FirebaseFirestore
-
-  val db: FirebaseFirestore
-    get() {
-      if (!initialized) connect()
-      return _db
-    }
-
-  fun connect() {
-    if (initialized) return
-
+  // Singleton Firestore instance, lazy-initialized
+  val db: FirebaseFirestore by lazy {
     if (!isEmulatorRunning()) {
       throw IllegalStateException(
           "Firestore emulator is not running. Start it with:\n\nfirebase emulators:start")
@@ -40,6 +30,8 @@ object TestFirestore {
     Log.i("TestFirestore", "Connecting Firestore to emulator...")
 
     val instance = FirebaseFirestore.getInstance()
+
+    // ⚠ Must be called BEFORE any Firestore usage
     instance.useEmulator(HOST, FIRESTORE_PORT)
 
     // Disable persistence for deterministic tests
@@ -47,10 +39,9 @@ object TestFirestore {
 
     instance.firestoreSettings = settings
 
-    _db = instance
-    initialized = true
-
     Log.i("TestFirestore", "Firestore emulator connected successfully.")
+
+    instance
   }
 
   private fun isEmulatorRunning(): Boolean {
