@@ -220,6 +220,8 @@ dependencies {
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
     androidTestImplementation(libs.androidx.navigation.testing)
 
+    androidTestImplementation("org.hamcrest:hamcrest:2.2")
+
     testImplementation("app.cash.turbine:turbine:1.0.0")
 
     // Google Play Services for Google Sign-In
