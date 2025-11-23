@@ -2,7 +2,6 @@ package com.android.sample.model.communication.newImplementation.overViewConv
 
 import android.content.Context
 import com.android.sample.model.RepositoryProvider
-import com.android.sample.model.communication.newImplementation.overview.FirestoreOverViewConvRepository
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.firestore
