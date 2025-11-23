@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -30,11 +31,13 @@ import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.components.TopAppBar
+import com.android.sample.ui.login.SignInScreenTestTags
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
+import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingRepo
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingWorking
 import com.android.sample.utils.fakeRepo.fakeListing.FakeListingRepo
@@ -246,5 +249,107 @@ abstract class AppTest() {
         enterText = newListing.location.name.dropLast(1),
         selectText = newListing.location.name,
         inputLocationTestTag = LocationInputFieldTestTags.INPUT_LOCATION)
+  }
+
+  /**
+   * Helper function to sign up a new user via the UI.
+   * Navigates to signup screen, fills the form, and submits.
+   * Returns to login screen after successful signup.
+   * Automatically scrolls to ensure fields are visible on smaller screens.
+   */
+  fun ComposeTestRule.signUpNewUser(
+    name: String,
+    surname: String,
+    address: String,
+    levelOfEducation: String,
+    description: String,
+    email: String,
+    password: String
+  ) {
+    // Navigate to signup screen from login
+    onNodeWithTag(SignInScreenTestTags.SIGNUP_LINK).performClick()
+    waitForIdle()
+
+    // Fill signup form with scrolling
+    onNodeWithTag(SignUpScreenTestTags.NAME).performScrollTo()
+    enterText(SignUpScreenTestTags.NAME, name)
+
+    onNodeWithTag(SignUpScreenTestTags.SURNAME).performScrollTo()
+    enterText(SignUpScreenTestTags.SURNAME, surname)
+
+    onNodeWithTag(SignUpScreenTestTags.ADDRESS).performScrollTo()
+    enterAndChooseLocation(
+      enterText = address,
+      selectText = address,
+      inputLocationTestTag = SignUpScreenTestTags.ADDRESS)
+
+    onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performScrollTo()
+    enterText(SignUpScreenTestTags.LEVEL_OF_EDUCATION, levelOfEducation)
+
+    onNodeWithTag(SignUpScreenTestTags.DESCRIPTION).performScrollTo()
+    enterText(SignUpScreenTestTags.DESCRIPTION, description)
+
+    // Email is pre-filled if coming from Google Sign-In, otherwise fill it
+    if (email.isNotEmpty()) {
+      onNodeWithTag(SignUpScreenTestTags.EMAIL).performScrollTo()
+      enterText(SignUpScreenTestTags.EMAIL, email)
+    }
+
+    // Password (only if not Google sign-up)
+    if (password.isNotEmpty()) {
+      onNodeWithTag(SignUpScreenTestTags.PASSWORD).performScrollTo()
+      enterText(SignUpScreenTestTags.PASSWORD, password)
+    }
+
+    // Scroll to submit button and click
+    onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo()
+    clickOn(SignUpScreenTestTags.SIGN_UP)
+    waitForIdle()
+  }
+
+  /**
+   * Helper function to login a user via the UI.
+   * Fills email and password fields and clicks sign in button.
+   * Includes scrolling for smaller screens.
+   */
+  fun ComposeTestRule.loginUser(email: String, password: String) {
+    // Make sure we're on login screen
+    onNodeWithTag(SignInScreenTestTags.TITLE).assertExists()
+
+    // Fill login form with scrolling
+    onNodeWithTag(SignInScreenTestTags.EMAIL_INPUT).performScrollTo()
+    enterText(SignInScreenTestTags.EMAIL_INPUT, email)
+
+    onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT).performScrollTo()
+    enterText(SignInScreenTestTags.PASSWORD_INPUT, password)
+
+    // Scroll to sign in button and click
+    onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).performScrollTo()
+    clickOn(SignInScreenTestTags.SIGN_IN_BUTTON)
+    waitForIdle()
+  }
+
+  /**
+   * Helper function for complete signup and login flow.
+   * Signs up a new user, waits for return to login, then logs in.
+   * Handles scrolling automatically for CI compatibility.
+   */
+  fun ComposeTestRule.signUpAndLogin(
+    name: String,
+    surname: String,
+    address: String,
+    levelOfEducation: String,
+    description: String,
+    email: String,
+    password: String
+  ) {
+    signUpNewUser(name, surname, address, levelOfEducation, description, email, password)
+
+    // After signup, should be back on login screen
+    waitForIdle()
+    onNodeWithTag(SignInScreenTestTags.TITLE).assertExists()
+
+    // Now login with the same credentials
+    loginUser(email, password)
   }
 }
