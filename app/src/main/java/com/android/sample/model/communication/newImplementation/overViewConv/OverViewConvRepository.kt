@@ -1,6 +1,5 @@
 package com.android.sample.model.communication.newImplementation.overViewConv
 
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import kotlinx.coroutines.flow.Flow
 
 interface OverViewConvRepository {
@@ -14,12 +13,4 @@ interface OverViewConvRepository {
   suspend fun deleteOverViewConvUser(convId: String)
 
   fun listenOverView(userId: String): Flow<List<OverViewConversation>>
-
-  suspend fun updateOverViewConvUser(overView: OverViewConversation)
-
-  suspend fun updateLastMessage(convId: String, lastMsg: MessageNew)
-
-  suspend fun updateUnreadCount(convId: String, count: Int)
-
-  suspend fun updateConvName(convId: String, newName: String)
 }

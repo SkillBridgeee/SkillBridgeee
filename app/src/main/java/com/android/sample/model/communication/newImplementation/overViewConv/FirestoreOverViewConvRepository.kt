@@ -1,6 +1,5 @@
 package com.android.sample.model.communication.newImplementation.overViewConv
 
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -85,43 +84,5 @@ class FirestoreOverViewConvRepository(
       listenerCreator.remove()
       listenerOther.remove()
     }
-  }
-
-  override suspend fun updateOverViewConvUser(overView: OverViewConversation) {
-    val docId =
-        getDocIdForConv(overView.linkedConvId)
-            ?: throw IllegalArgumentException(
-                "No overview found for convId: ${overView.linkedConvId}")
-
-    overViewRef.document(docId).set(overView).await()
-  }
-
-  override suspend fun updateLastMessage(convId: String, lastMsg: MessageNew) {
-    val docId =
-        getDocIdForConv(convId)
-            ?: throw IllegalArgumentException("No overview found for convId: $convId")
-
-    overViewRef.document(docId).update("lastMsg", lastMsg).await()
-  }
-
-  override suspend fun updateUnreadCount(convId: String, count: Int) {
-    val docId =
-        getDocIdForConv(convId)
-            ?: throw IllegalArgumentException("No overview found for convId: $convId")
-
-    overViewRef.document(docId).update("nonReadMsgNumber", count).await()
-  }
-
-  override suspend fun updateConvName(convId: String, newName: String) {
-    val docId =
-        getDocIdForConv(convId)
-            ?: throw IllegalArgumentException("No overview found for convId: $convId")
-
-    overViewRef.document(docId).update("convName", newName).await()
-  }
-
-  private suspend fun getDocIdForConv(convId: String): String? {
-    val snapshot = overViewRef.whereEqualTo("linkedConvId", convId).get().await()
-    return snapshot.documents.firstOrNull()?.id
   }
 }
