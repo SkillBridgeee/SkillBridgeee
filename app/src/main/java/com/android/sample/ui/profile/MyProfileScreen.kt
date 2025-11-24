@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
@@ -19,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -54,6 +56,8 @@ import com.android.sample.ui.components.LocationInputField
 import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RatingCard
 import com.android.sample.ui.components.RequestCard
+import com.android.sample.ui.components.VerticalScrollHint
+import com.android.sample.ui.theme.bkgConfirmedColor
 
 /**
  * Test tags used by UI tests and screenshot tests on the My Profile screen.
@@ -151,29 +155,39 @@ private fun MyProfileContent(
     onListingClick: (String) -> Unit
 ) {
   val fieldSpacing = 8.dp
+  val listState = rememberLazyListState()
+  val showHint by remember { derivedStateOf { listState.canScrollForward } }
 
-  LazyColumn(
-      modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
-      contentPadding = pd) {
-        if (ui.updateSuccess) {
-          item {
-            Text(
-                text = "Profile successfully updated!",
-                color = Color(0xFF2E7D32),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+  Box(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.ROOT_LIST),
+        contentPadding = pd) {
+          if (ui.updateSuccess) {
+            item {
+              Text(
+                  text = "Profile successfully updated!",
+                  color = bkgConfirmedColor,
+                  style = MaterialTheme.typography.bodyMedium,
+                  textAlign = TextAlign.Center,
+                  modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+            }
           }
-        }
-        item { ProfileHeader(name = ui.name) }
 
-        item {
-          Spacer(modifier = Modifier.height(12.dp))
-          ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
+          item { ProfileHeader(name = ui.name) }
+
+          item {
+            Spacer(modifier = Modifier.height(12.dp))
+            ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
+          }
+
+          item { ProfileLogout(onLogout = onLogout) }
         }
 
-        item { ProfileLogout(onLogout = onLogout) }
-      }
+    VerticalScrollHint(
+        visible = showHint,
+        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
+  }
 }
 
 @Composable
