@@ -142,6 +142,22 @@ class SubjectListScreenTest {
           override suspend fun getProfileById(userId: String): Profile = profile1
 
           override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
+
+          override suspend fun updateTutorRatingFields(
+              userId: String,
+              averageRating: Double,
+              totalRatings: Int
+          ) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updateStudentRatingFields(
+              userId: String,
+              averageRating: Double,
+              totalRatings: Int
+          ) {
+            TODO("Not yet implemented")
+          }
         }
 
     return SubjectListViewModel(listingRepo = listingRepo, profileRepo = profileRepo)
