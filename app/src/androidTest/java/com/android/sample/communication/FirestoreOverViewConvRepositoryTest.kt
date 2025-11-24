@@ -33,7 +33,7 @@ class FirestoreOverViewConvRepositoryTest {
         OverViewConversation(
             linkedConvId = "conv1",
             convName = "Conversation 1",
-            convCreatorId = userA,
+            overViewOwnerId = userA,
             otherPersonId = userB)
 
     repo.addOverViewConvUser(overview)
@@ -55,7 +55,7 @@ class FirestoreOverViewConvRepositoryTest {
         OverViewConversation(
             linkedConvId = convId,
             convName = "Conversation 5",
-            convCreatorId = userA,
+            overViewOwnerId = userA,
             otherPersonId = userB)
 
     repo.addOverViewConvUser(overview)
@@ -76,7 +76,7 @@ class FirestoreOverViewConvRepositoryTest {
         OverViewConversation(
             linkedConvId = convId,
             convName = "Conversation 6",
-            convCreatorId = userA,
+            overViewOwnerId = userA,
             otherPersonId = userB)
 
     repo.addOverViewConvUser(overview)
@@ -97,7 +97,7 @@ class FirestoreOverViewConvRepositoryTest {
         OverViewConversation(
             linkedConvId = convId,
             convName = "Conversation 7",
-            convCreatorId = userA,
+            overViewOwnerId = userA,
             otherPersonId = userB)
 
     repo.addOverViewConvUser(overview)

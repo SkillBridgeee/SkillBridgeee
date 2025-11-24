@@ -91,7 +91,7 @@ class FirestoreOverViewConvRepository(
 
     val listenerCreator: ListenerRegistration =
         overViewRef
-            .whereEqualTo("convCreatorId", userId)
+            .whereEqualTo("overViewOwnerId", userId)
             .orderBy("lastMsg.createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
               if (error != null) {
