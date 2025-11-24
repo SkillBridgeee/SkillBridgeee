@@ -126,7 +126,14 @@ fun AppNavGraph(
             academicSubject.value = subject
             navController.navigate(NavRoutes.SKILLS)
           },
-          onNavigateToAddNewListing = { navController.navigate(NavRoutes.NEW_SKILL) })
+          onNavigateToAddNewListing = {
+              val currentUserId = UserSessionManager.getCurrentUserId()
+              if (currentUserId != null) {
+                  navController.navigate(
+                      NavRoutes.createNewSkillRoute(currentUserId)
+                  )
+              }
+          })
     }
 
     composable(NavRoutes.SKILLS) { backStackEntry ->
@@ -166,16 +173,7 @@ fun AppNavGraph(
               listingId = listingId,
               skillViewModel = newListingViewModel,
               navController = navController,
-              onNavigateBack = {
-                // Custom navigation logic
-                if (listingId != null) { // If editing, go to profile
-                  navController.navigate(NavRoutes.createProfileRoute(profileId)) {
-                    popUpTo(NavRoutes.createProfileRoute(profileId)) { inclusive = true }
-                  }
-                } else { // If creating, go back
-                  navController.popBackStack()
-                }
-              })
+              )
         }
 
     composable(

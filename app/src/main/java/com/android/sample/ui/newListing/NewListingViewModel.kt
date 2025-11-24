@@ -92,12 +92,14 @@ class NewListingViewModel(
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val locationRepository: LocationRepository =
         NominatimLocationRepository(HttpClientProvider.client),
-    private val userId: String = UserSessionManager.getCurrentUserId() ?: ""
 ) : ViewModel() {
   // Internal mutable UI state
   private val _uiState = MutableStateFlow(ListingUIState())
   // Public read-only state flow for the UI to observe
   val uiState: StateFlow<ListingUIState> = _uiState.asStateFlow()
+
+  private val userId: String
+    get() = UserSessionManager.getCurrentUserId() ?: ""
 
   private var locationSearchJob: Job? = null
   private val locationSearchDelayTime: Long = 1000
@@ -432,5 +434,9 @@ class NewListingViewModel(
   /** Sets the list of location suggestions in the UI state. */
   fun setLocationSuggestions(list: List<Location>) {
     _uiState.update { it.copy(locationSuggestions = list) }
+  }
+
+  fun startCreateMode() {
+    _uiState.value = ListingUIState()
   }
 }

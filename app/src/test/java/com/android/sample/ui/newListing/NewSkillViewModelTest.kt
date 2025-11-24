@@ -9,8 +9,9 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import io.mockk.*
-import kotlin.text.contains
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -40,17 +41,27 @@ class NewListingViewModelTest {
   fun setUp() {
     Dispatchers.setMain(testDispatcher)
 
+    mockkStatic(FirebaseAuth::class)
+
+    val mockAuth = mockk<FirebaseAuth>(relaxed = true)
+    val mockUser = mockk<FirebaseUser>()
+
+    every { mockUser.uid } returns testUserId
+    every { mockAuth.currentUser } returns mockUser
+    every { FirebaseAuth.getInstance() } returns mockAuth
+
     mockListingRepository = mockk(relaxed = true)
     mockLocationRepository = mockk(relaxed = true)
 
     every { mockListingRepository.getNewUid() } returns "listing-123"
 
     viewModel =
-        NewListingViewModel(
-            listingRepository = mockListingRepository,
-            locationRepository = mockLocationRepository,
-            userId = testUserId)
+      NewListingViewModel(
+        listingRepository = mockListingRepository,
+        locationRepository = mockLocationRepository)
   }
+
+
 
   @After
   fun tearDown() {
@@ -327,46 +338,36 @@ class NewListingViewModelTest {
 
   @Test
   fun addListing_withValidProposal_callsAddProposal() = runTest {
-    val mainDispatcher = StandardTestDispatcher(testScheduler)
-    Dispatchers.setMain(mainDispatcher)
-    try {
-      // construct ViewModel after setting Main so viewModelScope uses the test dispatcher
-      viewModel =
-          NewListingViewModel(
-              listingRepository = mockListingRepository,
-              locationRepository = mockLocationRepository,
-              userId = testUserId)
+    viewModel =
+      NewListingViewModel(
+        listingRepository = mockListingRepository,
+        locationRepository = mockLocationRepository)
 
-      // Arrange
-      viewModel.setTitle("Math Tutoring")
-      viewModel.setDescription("Expert tutor")
-      viewModel.setPrice("30.00")
-      viewModel.setListingType(ListingType.PROPOSAL)
-      viewModel.setSubject(MainSubject.ACADEMICS)
-      viewModel.setSubSkill("Algebra")
-      viewModel.setLocation(testLocation)
+    // Arrange
+    viewModel.setTitle("Math Tutoring")
+    viewModel.setDescription("Expert tutor")
+    viewModel.setPrice("30.00")
+    viewModel.setListingType(ListingType.PROPOSAL)
+    viewModel.setSubject(MainSubject.ACADEMICS)
+    viewModel.setSubSkill("Algebra")
+    viewModel.setLocation(testLocation)
 
-      // Act
-      viewModel.addListing()
+    viewModel.addListing()
 
-      // Let scheduled coroutines run on the test scheduler
-      advanceUntilIdle()
+    testDispatcher.scheduler.advanceUntilIdle()
 
-      // Assert
-      coVerify(exactly = 1) {
-        mockListingRepository.addProposal(
-            match { proposal ->
-              proposal.creatorUserId == testUserId &&
+    coVerify(exactly = 1) {
+      mockListingRepository.addProposal(
+        match { proposal ->
+          proposal.creatorUserId == testUserId &&
                   proposal.description == "Expert tutor" &&
                   proposal.hourlyRate == 30.00 &&
                   proposal.skill.mainSubject == MainSubject.ACADEMICS &&
                   proposal.location == testLocation
-            })
-      }
-    } finally {
-      Dispatchers.resetMain()
+        })
     }
   }
+
 
   @Test
   fun addListing_withValidRequest_callsAddRequest() = runTest {
@@ -402,40 +403,28 @@ class NewListingViewModelTest {
 
   @Test
   fun addListing_whenRepositoryThrowsException_doesNotCrash() = runTest {
-    val mainDispatcher = StandardTestDispatcher(testScheduler)
-    Dispatchers.setMain(mainDispatcher)
-    try {
-      // Make repo throw when adding a proposal
-      coEvery { mockListingRepository.addProposal(any()) } throws RuntimeException("boom")
+    coEvery { mockListingRepository.addProposal(any()) } throws RuntimeException("boom")
 
-      // construct ViewModel after setting Main so viewModelScope uses the test dispatcher
-      viewModel =
-          NewListingViewModel(
-              listingRepository = mockListingRepository,
-              locationRepository = mockLocationRepository,
-              userId = testUserId)
+    viewModel =
+      NewListingViewModel(
+        listingRepository = mockListingRepository,
+        locationRepository = mockLocationRepository)
 
-      // Arrange valid state
-      viewModel.setTitle("Math Tutoring")
-      viewModel.setDescription("Expert tutor")
-      viewModel.setPrice("30.00")
-      viewModel.setListingType(ListingType.PROPOSAL)
-      viewModel.setSubject(MainSubject.ACADEMICS)
-      viewModel.setSubSkill("Algebra")
-      viewModel.setLocation(testLocation)
+    viewModel.setTitle("Math Tutoring")
+    viewModel.setDescription("Expert tutor")
+    viewModel.setPrice("30.00")
+    viewModel.setListingType(ListingType.PROPOSAL)
+    viewModel.setSubject(MainSubject.ACADEMICS)
+    viewModel.setSubSkill("Algebra")
+    viewModel.setLocation(testLocation)
 
-      // Act
-      viewModel.addListing()
+    viewModel.addListing()
 
-      // Let scheduled coroutines run (the thrown exception will be caught inside VM)
-      advanceUntilIdle()
+    testDispatcher.scheduler.advanceUntilIdle()
 
-      // Assert repository was invoked (exception was handled by ViewModel)
-      coVerify(exactly = 1) { mockListingRepository.addProposal(any()) }
-    } finally {
-      Dispatchers.resetMain()
-    }
+    coVerify(exactly = 1) { mockListingRepository.addProposal(any()) }
   }
+
   // ========== Edge Cases ==========
 
   @Test

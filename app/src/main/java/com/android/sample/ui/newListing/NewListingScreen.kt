@@ -65,7 +65,6 @@ fun NewListingScreen(
     profileId: String,
     listingId: String?,
     navController: NavController,
-    onNavigateBack: () -> Unit
 ) {
   val listingUIState by skillViewModel.uiState.collectAsState()
   val isEditMode = listingId != null
@@ -104,7 +103,6 @@ fun NewListingScreen(
       floatingActionButtonPosition = FabPosition.Center) { pd ->
         ListingContent(
             pd = pd,
-            profileId = profileId,
             listingId = listingId,
             listingViewModel = skillViewModel,
             titleText = titleText)
@@ -114,14 +112,19 @@ fun NewListingScreen(
 @Composable
 fun ListingContent(
     pd: PaddingValues,
-    profileId: String,
     listingId: String?,
     listingViewModel: NewListingViewModel,
     titleText: String
 ) {
   val listingUIState by listingViewModel.uiState.collectAsState()
 
-  LaunchedEffect(profileId, listingId) { listingViewModel.load(listingId) }
+  LaunchedEffect(listingId) {
+    if (listingId == null) {
+      listingViewModel.startCreateMode()
+    } else {
+      listingViewModel.load(listingId)
+    }
+  }
 
   val context = LocalContext.current
   val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
