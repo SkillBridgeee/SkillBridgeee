@@ -176,4 +176,17 @@ class FirestoreProfileRepository(
         hourlyRate = normalizedRate // "" or normalized number
         )
   }
+
+  override suspend fun updateTutorRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    val updates =
+        mapOf(
+            "tutorRating.averageRating" to averageRating,
+            "tutorRating.totalRatings" to totalRatings)
+
+    db.collection(PROFILES_COLLECTION_PATH).document(userId).update(updates).await()
+  }
 }

@@ -180,6 +180,7 @@ class BookingDetailsViewModel(
 
         ratingRepository.addRating(tutorRating)
         ratingRepository.addRating(listingRating)
+        recomputeTutorAggregateRating(tutorUserId)
 
         _bookingUiState.value = bookingUiState.value.copy(ratingSubmitted = true)
       } catch (e: Exception) {
@@ -187,6 +188,26 @@ class BookingDetailsViewModel(
         _bookingUiState.value = bookingUiState.value.copy(loadError = true)
       }
     }
+  }
+
+  private suspend fun recomputeTutorAggregateRating(tutorUserId: String) {
+    // 1. Get all tutor ratings of that user
+    val ratings = ratingRepository.getTutorRatingsOfUser(tutorUserId)
+    val count = ratings.size
+
+    if (count == 0) {
+      profileRepository.updateTutorRatingFields(
+          userId = tutorUserId, averageRating = 0.0, totalRatings = 0)
+      return
+    }
+
+    // 2. Convert StarRating -> Int and sum
+    val sum = ratings.sumOf { it.starRating.toInt() }
+    val avg = sum.toDouble() / count.toDouble()
+
+    // 3. Write to profile
+    profileRepository.updateTutorRatingFields(
+        userId = tutorUserId, averageRating = avg, totalRatings = count)
   }
 
   /**
@@ -207,5 +228,14 @@ class BookingDetailsViewModel(
         4 -> StarRating.FOUR
         5 -> StarRating.FIVE
         else -> throw IllegalArgumentException("Invalid star value: $this")
+      }
+
+  private fun StarRating.toInt(): Int =
+      when (this) {
+        StarRating.ONE -> 1
+        StarRating.TWO -> 2
+        StarRating.THREE -> 3
+        StarRating.FOUR -> 4
+        StarRating.FIVE -> 5
       }
 }
