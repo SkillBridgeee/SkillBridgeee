@@ -327,6 +327,9 @@ class ListingViewModel(
 
         ratingRepo.addRating(rating)
 
+        // Recompute the student's global rating and store on their profile
+        recomputeStudentAggregateRating(toUserId)
+
         Log.d("ListingViewModel", "Tutor rating persisted: $stars stars -> $toUserId")
         _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
       } catch (e: Exception) {
@@ -334,6 +337,35 @@ class ListingViewModel(
       }
     }
   }
+
+  private suspend fun recomputeStudentAggregateRating(studentUserId: String) {
+    // 1. Get all STUDENT ratings received by this user
+    val ratings = ratingRepo.getStudentRatingsOfUser(studentUserId)
+    val count = ratings.size
+
+    if (count == 0) {
+      profileRepo.updateStudentRatingFields(
+          userId = studentUserId, averageRating = 0.0, totalRatings = 0)
+      return
+    }
+
+    // 2. Convert StarRating -> Int and sum
+    val sum = ratings.sumOf { it.starRating.toInt() }
+    val avg = sum.toDouble() / count.toDouble()
+
+    // 3. Write aggregated values into the student's profile
+    profileRepo.updateStudentRatingFields(
+        userId = studentUserId, averageRating = avg, totalRatings = count)
+  }
+
+  private fun StarRating.toInt(): Int =
+      when (this) {
+        StarRating.ONE -> 1
+        StarRating.TWO -> 2
+        StarRating.THREE -> 3
+        StarRating.FOUR -> 4
+        StarRating.FIVE -> 5
+      }
 
   /** Clears the booking success state. */
   fun clearBookingSuccess() {

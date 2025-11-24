@@ -189,4 +189,21 @@ class FirestoreProfileRepository(
 
     db.collection(PROFILES_COLLECTION_PATH).document(userId).update(updates).await()
   }
+
+  override suspend fun updateStudentRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    try {
+      val updates =
+          mapOf(
+              "studentRating.averageRating" to averageRating,
+              "studentRating.totalRatings" to totalRatings)
+
+      db.collection(PROFILES_COLLECTION_PATH).document(userId).update(updates).await()
+    } catch (e: Exception) {
+      throw Exception("Failed to update student rating for user $userId: ${e.message}")
+    }
+  }
 }

@@ -64,6 +64,19 @@ class FakeProfileRepository : ProfileRepository {
     data[userId] = updated
   }
 
+  override suspend fun updateStudentRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    val p = data[userId] ?: return
+    val updated =
+        p.copy(
+            studentRating =
+                p.studentRating.copy(averageRating = averageRating, totalRatings = totalRatings))
+    data[userId] = updated
+  }
+
   private fun distanceKm(a: Location, b: Location): Double {
     // Use the actual coordinate property names on Location (latitude / longitude)
     val R = 6371.0
