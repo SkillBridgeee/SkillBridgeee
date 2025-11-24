@@ -31,6 +31,7 @@ import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.components.TopAppBar
+import com.android.sample.ui.components.TopAppBarTestTags
 import com.android.sample.ui.login.SignInScreenTestTags
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
@@ -169,12 +170,20 @@ abstract class AppTest() {
     onNodeWithTag(BottomBarTestTag.NAV_PROFILE).performClick()
   }
 
+  fun ComposeTestRule.navigateToHome() {
+    onNodeWithTag(BottomBarTestTag.NAV_HOME).performClick()
+  }
+
   fun ComposeTestRule.navigateToMyBookings() {
     onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).performClick()
   }
 
   fun ComposeTestRule.navigateToMap() {
     onNodeWithTag(BottomBarTestTag.NAV_MAP).performClick()
+  }
+
+  fun ComposeTestRule.clickTopAppBarBack() {
+    onNodeWithTag(TopAppBarTestTags.BACK_BUTTON).performClick()
   }
 
   fun ComposeTestRule.navigateToBookingDetails() {

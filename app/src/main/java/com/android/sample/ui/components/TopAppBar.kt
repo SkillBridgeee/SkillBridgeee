@@ -6,11 +6,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
+
+object TopAppBarTestTags {
+  const val BACK_BUTTON = "topAppBarBack"
+}
 
 /**
  * TopAppBar - Reusable top navigation bar component for SkillBridge app
@@ -98,7 +103,8 @@ fun TopAppBar(navController: NavController) {
                     navController.navigateUp()
                   }
                 }
-              }) {
+              },
+            modifier = Modifier.testTag(TopAppBarTestTags.BACK_BUTTON)) {
                 Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
               }
         }
