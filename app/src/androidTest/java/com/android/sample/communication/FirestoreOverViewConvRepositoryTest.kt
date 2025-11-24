@@ -67,10 +67,10 @@ class FirestoreOverViewConvRepositoryTest {
   }
 
   // ----------------------------------------------------------
-  // TEST 3 : LISTEN OVERVIEW FLOW
+  // TEST 3 : LISTEN OVERVIEW FLOW (Current User)
   // ----------------------------------------------------------
   @Test
-  fun testListenOverviewFlow() = runTest {
+  fun testListenOverviewFlowCurrentUser() = runTest {
     val convId = "conv6"
     val overview =
         OverViewConversation(
@@ -82,6 +82,27 @@ class FirestoreOverViewConvRepositoryTest {
     repo.addOverViewConvUser(overview)
 
     val flow = repo.listenOverView(userA)
+
+    val emitted = flow.first { it -> it.isNotEmpty() && it.any { it.linkedConvId == convId } }
+    assertTrue(emitted.any { it.linkedConvId == convId })
+  }
+
+  // ----------------------------------------------------------
+  // TEST 4 : LISTEN OVERVIEW FLOW (Other User)
+  // ----------------------------------------------------------
+  @Test
+  fun testListenOverviewFlowCurrentOtherUSer() = runTest {
+    val convId = "conv7"
+    val overview =
+        OverViewConversation(
+            linkedConvId = convId,
+            convName = "Conversation 7",
+            convCreatorId = userA,
+            otherPersonId = userB)
+
+    repo.addOverViewConvUser(overview)
+
+    val flow = repo.listenOverView(userB)
 
     val emitted = flow.first { it -> it.isNotEmpty() && it.any { it.linkedConvId == convId } }
     assertTrue(emitted.any { it.linkedConvId == convId })
