@@ -1,0 +1,53 @@
+package com.android.sample.ui.components
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+
+const val VERTICAL_SCROLL_HINT_BOX_TAG = "verticalScrollHintBox"
+const val VERTICAL_SCROLL_HINT_ICON_TAG = "verticalScrollHintIcon"
+
+/**
+ * A composable that shows a vertical scroll hint with a downward arrow and gradient overlay.
+ *
+ * @param visible Controls the visibility of the scroll hint.
+ * @param modifier Optional [Modifier] for styling.
+ */
+@Composable
+fun VerticalScrollHint(visible: Boolean, modifier: Modifier = Modifier) {
+  AnimatedVisibility(visible = visible, modifier = modifier) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+      Box(
+          modifier =
+              Modifier.testTag(VERTICAL_SCROLL_HINT_BOX_TAG)
+                  .fillMaxWidth()
+                  .height(32.dp)
+                  .background(
+                      Brush.verticalGradient(
+                          colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.08f)))))
+
+      Spacer(modifier = Modifier.height(10.dp))
+
+      Icon(
+          modifier = Modifier.testTag(VERTICAL_SCROLL_HINT_ICON_TAG),
+          imageVector = Icons.Default.ArrowDownward,
+          contentDescription = "Scroll down",
+          tint = MaterialTheme.colorScheme.primary)
+    }
+  }
+}

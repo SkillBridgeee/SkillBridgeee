@@ -25,11 +25,13 @@ import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.MainPageViewModel
+import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
+import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -100,6 +102,12 @@ class MyViewModelFactory(private val sessionManager: UserSessionManager) :
       MainPageViewModel::class.java -> {
         MainPageViewModel() as T
       }
+      NewListingViewModel::class.java -> {
+        NewListingViewModel() as T
+      }
+      BookingDetailsViewModel::class.java -> {
+        BookingDetailsViewModel() as T
+      }
       else -> throw IllegalArgumentException("Unknown ViewModel class")
     }
   }
@@ -154,6 +162,8 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val bookingsViewModel: MyBookingsViewModel = viewModel(factory = factory)
   val profileViewModel: MyProfileViewModel = viewModel(factory = factory)
   val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
+  val newListingViewModel: NewListingViewModel = viewModel(factory = factory)
+  val bookingDetailsViewModel: BookingDetailsViewModel = viewModel(factory = factory)
 
   // Define main screens that should show bottom nav
   val mainScreenRoutes =
@@ -173,8 +183,10 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
           AppNavGraph(
               navController = navController,
               bookingsViewModel = bookingsViewModel,
-              profileViewModel,
-              mainPageViewModel,
+              profileViewModel = profileViewModel,
+              mainPageViewModel = mainPageViewModel,
+              newListingViewModel = newListingViewModel,
+              bookingDetailsViewModel = bookingDetailsViewModel,
               authViewModel = authViewModel,
               onGoogleSignIn = onGoogleSignIn)
         }

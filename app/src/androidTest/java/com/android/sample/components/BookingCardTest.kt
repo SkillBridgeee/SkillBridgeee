@@ -1,4 +1,4 @@
-package com.android.sample.ui.components
+package com.android.sample.components
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -14,6 +14,8 @@ import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
+import com.android.sample.ui.components.BookingCard
+import com.android.sample.ui.components.BookingCardTestTag
 import java.util.*
 import org.junit.Rule
 import org.junit.Test

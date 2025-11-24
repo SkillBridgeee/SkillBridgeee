@@ -18,12 +18,14 @@ import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.MainPageViewModel
-import com.android.sample.ui.bookings.MyBookingsPageTestTag
+import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.map.MapScreenTestTags
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
+import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -110,6 +112,9 @@ class BottomNavBarTest {
       val profileViewModel: MyProfileViewModel = viewModel(factory = factory)
       val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
 
+      val newListingViewModel: NewListingViewModel = viewModel(factory = factory)
+      val bookingDetailsViewModel: BookingDetailsViewModel = viewModel(factory = factory)
+
       AppNavGraph(
           navController = controller,
           bookingsViewModel = bookingsViewModel,
@@ -117,17 +122,19 @@ class BottomNavBarTest {
           mainPageViewModel = mainPageViewModel,
           authViewModel =
               AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
+          newListingViewModel = newListingViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
           onGoogleSignIn = {})
       BottomNavBar(navController = controller)
     }
 
     // Use test tags for clicks to target the clickable NavigationBarItem (avoids touch injection)
-    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_HOME).performClick()
+    composeTestRule.onNodeWithTag(BottomBarTestTag.NAV_HOME).performClick()
     composeTestRule.waitForIdle()
     var route = navController?.currentBackStackEntry?.destination?.route
     assertEquals("Expected HOME route", NavRoutes.HOME, route)
 
-    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_MAP).performClick()
+    composeTestRule.onNodeWithTag(BottomBarTestTag.NAV_MAP).performClick()
     composeTestRule.waitForIdle()
     // Wait for map screen to fully compose before checking route
     composeTestRule.waitUntil(timeoutMillis = 10_000) {
@@ -141,12 +148,12 @@ class BottomNavBarTest {
     route = navController?.currentBackStackEntry?.destination?.route
     assertEquals("Expected MAP route", NavRoutes.MAP, route)
 
-    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_BOOKINGS).performClick()
+    composeTestRule.onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).performClick()
     composeTestRule.waitForIdle()
     route = navController?.currentBackStackEntry?.destination?.route
     assertEquals("Expected BOOKINGS route", NavRoutes.BOOKINGS, route)
 
-    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.NAV_PROFILE).performClick()
+    composeTestRule.onNodeWithTag(BottomBarTestTag.NAV_PROFILE).performClick()
     composeTestRule.waitForIdle()
     route = navController?.currentBackStackEntry?.destination?.route
     assertEquals("Expected PROFILE route", NavRoutes.PROFILE, route)

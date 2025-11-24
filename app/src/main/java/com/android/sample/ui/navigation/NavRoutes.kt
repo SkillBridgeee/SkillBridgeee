@@ -31,7 +31,7 @@ object NavRoutes {
   const val MAP = "map"
 
   // Secondary pages
-  const val NEW_SKILL = "new_skill/{profileId}"
+  const val NEW_SKILL = "new_skill/{profileId}?listingId={listingId}"
   const val MESSAGES = "messages"
   const val SIGNUP = "signup?email={email}"
   const val SIGNUP_BASE = "signup"
@@ -40,7 +40,7 @@ object NavRoutes {
   const val OTHERS_PROFILE = "profile"
   const val BOOKING_DETAILS = "bookingDetails"
 
-  fun createProfileRoute(profileId: String) = "myProfile/$profileId"
+  fun createProfileRoute(profileId: String) = "profile/$profileId"
 
   fun createListingRoute(listingId: String) = "listing/$listingId"
 
@@ -53,6 +53,15 @@ object NavRoutes {
       "signup?email=$encodedEmail"
     } else {
       "signup"
+    }
+  }
+
+  fun createNewSkillRoute(profileId: String, listingId: String? = null): String {
+    val route = "new_skill/$profileId"
+    return if (listingId != null) {
+      "$route?listingId=$listingId"
+    } else {
+      route
     }
   }
 }
