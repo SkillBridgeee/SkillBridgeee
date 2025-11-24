@@ -56,12 +56,9 @@ class NewListingViewModelTest {
     every { mockListingRepository.getNewUid() } returns "listing-123"
 
     viewModel =
-      NewListingViewModel(
-        listingRepository = mockListingRepository,
-        locationRepository = mockLocationRepository)
+        NewListingViewModel(
+            listingRepository = mockListingRepository, locationRepository = mockLocationRepository)
   }
-
-
 
   @After
   fun tearDown() {
@@ -339,9 +336,8 @@ class NewListingViewModelTest {
   @Test
   fun addListing_withValidProposal_callsAddProposal() = runTest {
     viewModel =
-      NewListingViewModel(
-        listingRepository = mockListingRepository,
-        locationRepository = mockLocationRepository)
+        NewListingViewModel(
+            listingRepository = mockListingRepository, locationRepository = mockLocationRepository)
 
     // Arrange
     viewModel.setTitle("Math Tutoring")
@@ -358,16 +354,15 @@ class NewListingViewModelTest {
 
     coVerify(exactly = 1) {
       mockListingRepository.addProposal(
-        match { proposal ->
-          proposal.creatorUserId == testUserId &&
-                  proposal.description == "Expert tutor" &&
-                  proposal.hourlyRate == 30.00 &&
-                  proposal.skill.mainSubject == MainSubject.ACADEMICS &&
-                  proposal.location == testLocation
-        })
+          match { proposal ->
+            proposal.creatorUserId == testUserId &&
+                proposal.description == "Expert tutor" &&
+                proposal.hourlyRate == 30.00 &&
+                proposal.skill.mainSubject == MainSubject.ACADEMICS &&
+                proposal.location == testLocation
+          })
     }
   }
-
 
   @Test
   fun addListing_withValidRequest_callsAddRequest() = runTest {
@@ -406,9 +401,8 @@ class NewListingViewModelTest {
     coEvery { mockListingRepository.addProposal(any()) } throws RuntimeException("boom")
 
     viewModel =
-      NewListingViewModel(
-        listingRepository = mockListingRepository,
-        locationRepository = mockLocationRepository)
+        NewListingViewModel(
+            listingRepository = mockListingRepository, locationRepository = mockLocationRepository)
 
     viewModel.setTitle("Math Tutoring")
     viewModel.setDescription("Expert tutor")

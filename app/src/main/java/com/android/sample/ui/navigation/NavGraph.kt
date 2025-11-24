@@ -127,12 +127,10 @@ fun AppNavGraph(
             navController.navigate(NavRoutes.SKILLS)
           },
           onNavigateToAddNewListing = {
-              val currentUserId = UserSessionManager.getCurrentUserId()
-              if (currentUserId != null) {
-                  navController.navigate(
-                      NavRoutes.createNewSkillRoute(currentUserId)
-                  )
-              }
+            val currentUserId = UserSessionManager.getCurrentUserId()
+            if (currentUserId != null) {
+              navController.navigate(NavRoutes.createNewSkillRoute(currentUserId))
+            }
           })
     }
 
@@ -173,7 +171,7 @@ fun AppNavGraph(
               listingId = listingId,
               skillViewModel = newListingViewModel,
               navController = navController,
-              )
+          )
         }
 
     composable(

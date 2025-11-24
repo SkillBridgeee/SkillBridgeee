@@ -188,7 +188,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -213,7 +213,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -240,7 +240,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -260,7 +260,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -280,7 +280,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -300,7 +300,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -322,7 +322,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -345,7 +345,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -368,7 +368,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -389,7 +389,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -411,7 +411,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -432,7 +432,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -453,7 +453,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -474,7 +474,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -496,7 +496,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -523,7 +523,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -550,7 +550,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -576,7 +576,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -608,7 +608,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
     // wait for initial composition/load to finish
@@ -646,16 +646,14 @@ class NewSkillScreenTest {
     composeRule.setContent {
       SampleAppTheme {
         val context = LocalContext.current
-          TestNavHostController(context).apply {
-            navigatorProvider.addNavigator(ComposeNavigator())
-          }
+        TestNavHostController(context).apply { navigatorProvider.addNavigator(ComposeNavigator()) }
 
         NewListingScreen(
             skillViewModel = vm,
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            )
+        )
       }
     }
 
@@ -676,7 +674,8 @@ class NewSkillScreenTest {
             skillViewModel = vm,
             profileId = "test-user",
             listingId = "existing-listing", // non-null to indicate edit mode
-            navController = createTestNavController(),)
+            navController = createTestNavController(),
+        )
       }
     }
 
