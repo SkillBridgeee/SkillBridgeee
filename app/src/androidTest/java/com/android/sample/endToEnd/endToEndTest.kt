@@ -1,23 +1,13 @@
 package com.android.sample.endToEnd
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextClearance
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.MainActivity
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.bookings.MyBookingsPageTestTag
-import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.utils.AppTest
 import org.junit.Rule
@@ -55,22 +45,19 @@ class EndToEndTest : AppTest() {
     val password = "TestPassword123!"
 
     composeTestRule.signUpAndLogin(
-      name = TEST_NAME,
-      surname = TEST_SURNAME,
-      address = TEST_LOCATION,
-      levelOfEducation = TEST_EDUCATION,
-      description = TEST_DESC,
-      email = TEST_EMAIL,
-      password = TEST_PASSWORD
-    )
-
-
+        name = TEST_NAME,
+        surname = TEST_SURNAME,
+        address = TEST_LOCATION,
+        levelOfEducation = TEST_EDUCATION,
+        description = TEST_DESC,
+        email = TEST_EMAIL,
+        password = TEST_PASSWORD)
 
     composeTestRule.waitUntil {
       composeTestRule
-        .onAllNodesWithTag(HomeScreenTestTags.WELCOME_SECTION)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+          .onAllNodesWithTag(HomeScreenTestTags.WELCOME_SECTION)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
     // Verify navigation to home screen
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
@@ -78,29 +65,37 @@ class EndToEndTest : AppTest() {
     // Navigate to My Profile
     composeTestRule.navigateToMyProfile()
     composeTestRule.waitUntil {
-      composeTestRule.onAllNodesWithTag(MyProfileScreenTestTag.PROFILE_ICON).fetchSemanticsNodes().isNotEmpty()
+      composeTestRule
+          .onAllNodesWithTag(MyProfileScreenTestTag.PROFILE_ICON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
     composeTestRule.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
 
     // Navigate to My Bookings
     composeTestRule.navigateToMyBookings()
     composeTestRule.waitUntil {
-      composeTestRule.onAllNodesWithTag(MyBookingsPageTestTag.EMPTY).fetchSemanticsNodes().isNotEmpty()
+      composeTestRule
+          .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
     composeTestRule.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
 
     // Navigate to Map
-//    composeTestRule.navigateToMap()
+    //    composeTestRule.navigateToMap()
 
     // Go back to home page
     composeTestRule.navigateToHome()
     composeTestRule.waitUntil {
-      composeTestRule.onAllNodesWithTag(HomeScreenTestTags.WELCOME_SECTION).fetchSemanticsNodes().isNotEmpty()
+      composeTestRule
+          .onAllNodesWithTag(HomeScreenTestTags.WELCOME_SECTION)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
   }
 }
-
 
 // package com.android.sample
 //
