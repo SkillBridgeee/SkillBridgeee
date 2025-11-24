@@ -65,7 +65,7 @@ class FirestoreOverViewConvRepository(
   override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
     require(userId.isNotBlank()) { "User ID cannot be blank" }
 
-    val snapshotCreator = overViewRef.whereEqualTo("convCreatorId", userId).get().await()
+    val snapshotCreator = overViewRef.whereEqualTo("overViewOwnerId", userId).get().await()
 
     val snapshotOther = overViewRef.whereEqualTo("otherPersonId", userId).get().await()
 
