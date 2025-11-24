@@ -16,7 +16,7 @@ class HomeScreenTestAppTest : AppTest() {
   @Before
   override fun setUp() {
     super.setUp()
-    composeTestRule.setContent { CreateAppContent() }
+    composeTestRule.setContent { CreateAppContentHome() }
   }
 
   @Test
