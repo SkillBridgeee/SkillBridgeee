@@ -341,6 +341,104 @@ class ListingViewModelTest {
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
   }
 
+  private class RecordingProfileRepo(private val profiles: Map<String, Profile>) :
+      ProfileRepository {
+
+    var lastStudentUserId: String? = null
+    var lastStudentAvg: Double? = null
+    var lastStudentTotal: Int? = null
+
+    override fun getNewUid() = "fake-profile-id"
+
+    override suspend fun getProfile(userId: String) = profiles[userId]
+
+    override suspend fun addProfile(profile: Profile) {}
+
+    override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+    override suspend fun deleteProfile(userId: String) {}
+
+    override suspend fun getAllProfiles() = profiles.values.toList()
+
+    override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+        emptyList<Profile>()
+
+    override suspend fun getProfileById(userId: String) = profiles[userId]
+
+    override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
+
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      // not needed for this test
+    }
+
+    override suspend fun updateStudentRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      lastStudentUserId = userId
+      lastStudentAvg = averageRating
+      lastStudentTotal = totalRatings
+    }
+  }
+
+  private class AggregatingRatingRepo(
+      ratingsByStudent: Map<String, List<Rating>>,
+      private val alreadyRated: Boolean = false
+  ) : RatingRepository {
+
+    val addedRatings = mutableListOf<Rating>()
+    var hasRatingCalled = false
+
+    // mutable copy so we can add the new rating and then aggregate over all of them
+    private val ratingsByStudentMutable: MutableMap<String, MutableList<Rating>> =
+        ratingsByStudent.mapValues { (_, v) -> v.toMutableList() }.toMutableMap()
+
+    override fun getNewUid() = "fake-rating-id"
+
+    override suspend fun hasRating(
+        fromUserId: String,
+        toUserId: String,
+        ratingType: RatingType,
+        targetObjectId: String
+    ): Boolean {
+      hasRatingCalled = true
+      return alreadyRated
+    }
+
+    override suspend fun addRating(rating: Rating) {
+      addedRatings += rating
+      if (rating.ratingType == RatingType.STUDENT) {
+        val list = ratingsByStudentMutable.getOrPut(rating.toUserId) { mutableListOf() }
+        list += rating
+      }
+    }
+
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> =
+        ratingsByStudentMutable[userId] ?: emptyList()
+
+    // the rest can be no-op:
+    override suspend fun getAllRatings() = emptyList<Rating>()
+
+    override suspend fun getRating(ratingId: String) = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String) = emptyList<Rating>()
+
+    override suspend fun getRatingsByToUser(toUserId: String) = emptyList<Rating>()
+
+    override suspend fun getRatingsOfListing(listingId: String) = emptyList<Rating>()
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+    override suspend fun deleteRating(ratingId: String) {}
+
+    override suspend fun getTutorRatingsOfUser(userId: String) = emptyList<Rating>()
+  }
+
   private fun mockFirebaseAuthUser(uid: String) {
     mockkStatic(FirebaseAuth::class)
     val auth = mockk<FirebaseAuth>()
@@ -1443,5 +1541,65 @@ class ListingViewModelTest {
     advanceUntilIdle()
 
     assertFalse(viewModel.uiState.value.listingDeleted)
+  }
+
+  @Test
+  fun submitTutorRating_recomputesStudentAverage_andUpdatesProfile() = runTest {
+    // Tutor is the listing creator
+    UserSessionManager.setCurrentUserId("creator-456")
+    mockFirebaseAuthUser("creator-456")
+
+    // Completed booking so rating is allowed
+    val completedBooking = sampleBooking.copy(status = BookingStatus.COMPLETED)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+
+    val profileRepo =
+        RecordingProfileRepo(
+            mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+
+    // Existing ratings for this student: 4 and 2 stars
+    val existingRatings =
+        listOf(
+            Rating(
+                ratingId = "r1",
+                fromUserId = "tutor-1",
+                toUserId = "booker-789",
+                ratingType = RatingType.STUDENT,
+                targetObjectId = "listing-x",
+                starRating = StarRating.FOUR,
+            ),
+            Rating(
+                ratingId = "r2",
+                fromUserId = "tutor-2",
+                toUserId = "booker-789",
+                ratingType = RatingType.STUDENT,
+                targetObjectId = "listing-y",
+                starRating = StarRating.TWO,
+            ),
+        )
+
+    val ratingRepo =
+        AggregatingRatingRepo(
+            ratingsByStudent = mapOf("booker-789" to existingRatings), alreadyRated = false)
+
+    val bookingRepo = FakeBookingRepo(mutableListOf(completedBooking))
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    // Load listing so submitTutorRating can find the completed booking + student
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // New rating from this tutor: 5 stars
+    viewModel.submitTutorRating(5)
+    advanceUntilIdle()
+
+    // We had 4, 2, and now 5 -> (4 + 2 + 5) / 3 = 11 / 3
+    val expectedAvg = 11.0 / 3.0
+
+    assertEquals("booker-789", profileRepo.lastStudentUserId)
+    assertEquals(3, profileRepo.lastStudentTotal)
+    assertEquals(expectedAvg, profileRepo.lastStudentAvg!!, 0.001)
   }
 }
