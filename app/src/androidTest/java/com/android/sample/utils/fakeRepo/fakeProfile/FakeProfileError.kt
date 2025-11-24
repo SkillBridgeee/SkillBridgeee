@@ -61,4 +61,20 @@ class FakeProfileError : FakeProfileRepo {
   override suspend fun getSkillsForUser(userId: String): List<Skill> {
     throw IllegalStateException("Failed to get skills for user: $userId (mock error).")
   }
+
+  override suspend fun updateTutorRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    throw IllegalStateException("Failed to update tutor rating fields for $userId (mock error).")
+  }
+
+  override suspend fun updateStudentRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    throw IllegalStateException("Failed to update student rating fields for $userId (mock error).")
+  }
 }
