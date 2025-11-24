@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -82,8 +83,23 @@ class MainActivity : ComponentActivity() {
         GoogleSignInHelper(this) { result -> authViewModel.handleGoogleSignInResult(result) }
 
     setContent {
+      val sessionManager = UserSessionManager
+      val factory = MyViewModelFactory(sessionManager)
+
+      val bookingsViewModel: MyBookingsViewModel = viewModel(factory = factory)
+      val profileViewModel: MyProfileViewModel = viewModel(factory = factory)
+      val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
+      val newListingViewModel: NewListingViewModel = viewModel(factory = factory)
+      val bookingDetailsViewModel: BookingDetailsViewModel = viewModel(factory = factory)
+
       MainApp(
-          authViewModel = authViewModel, onGoogleSignIn = { googleSignInHelper.signInWithGoogle() })
+          authViewModel = authViewModel,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          onGoogleSignIn = { googleSignInHelper.signInWithGoogle() })
     }
   }
 }
@@ -127,7 +143,15 @@ class MyViewModelFactory(private val sessionManager: UserSessionManager) :
  * viewModel.getGoogleSignInClient().signInIntent googleSignInLauncher.launch(signInIntent) }) }
  */
 @Composable
-fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) {
+fun MainApp(
+    authViewModel: AuthenticationViewModel,
+    bookingsViewModel: MyBookingsViewModel,
+    profileViewModel: MyProfileViewModel,
+    mainPageViewModel: MainPageViewModel,
+    newListingViewModel: NewListingViewModel,
+    bookingDetailsViewModel: BookingDetailsViewModel,
+    onGoogleSignIn: () -> Unit
+) {
   val navController = rememberNavController()
   val authResult by authViewModel.authResult.collectAsStateWithLifecycle()
 
@@ -155,16 +179,6 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val navBackStackEntry by navController.currentBackStackEntryAsState()
   val currentRoute = navBackStackEntry?.destination?.route
 
-  // Get current user ID from UserSessionManager
-  val sessionManager = UserSessionManager
-  val factory = MyViewModelFactory(sessionManager)
-
-  val bookingsViewModel: MyBookingsViewModel = viewModel(factory = factory)
-  val profileViewModel: MyProfileViewModel = viewModel(factory = factory)
-  val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
-  val newListingViewModel: NewListingViewModel = viewModel(factory = factory)
-  val bookingDetailsViewModel: BookingDetailsViewModel = viewModel(factory = factory)
-
   // Define main screens that should show bottom nav
   val mainScreenRoutes =
       listOf(NavRoutes.HOME, NavRoutes.BOOKINGS, NavRoutes.PROFILE, NavRoutes.MAP)
@@ -179,7 +193,7 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
           BottomNavBar(navController)
         }
       }) { paddingValues ->
-        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(paddingValues)) {
+        Box(modifier = Modifier.padding(paddingValues)) {
           AppNavGraph(
               navController = navController,
               bookingsViewModel = bookingsViewModel,

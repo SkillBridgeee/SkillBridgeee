@@ -104,7 +104,7 @@ fun TopAppBar(navController: NavController) {
                   }
                 }
               },
-            modifier = Modifier.testTag(TopAppBarTestTags.BACK_BUTTON)) {
+              modifier = Modifier.testTag(TopAppBarTestTags.BACK_BUTTON)) {
                 Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
               }
         }

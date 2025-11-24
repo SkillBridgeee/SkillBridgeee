@@ -13,12 +13,13 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
+import com.android.sample.MainApp
+import com.android.sample.model.authentication.AuthResult
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.listing.Listing
@@ -38,6 +39,7 @@ import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
+import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingRepo
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingWorking
@@ -88,31 +90,31 @@ abstract class AppTest() {
 
     val context = ApplicationProvider.getApplicationContext<Context>()
     authViewModel =
-        AuthenticationViewModel(context = context, profileRepository = profileRepository)
+      AuthenticationViewModel(context = context, profileRepository = profileRepository)
     bookingsViewModel =
-        MyBookingsViewModel(
-            bookingRepo = bookingRepository,
-            listingRepo = listingRepository,
-            profileRepo = profileRepository)
+      MyBookingsViewModel(
+        bookingRepo = bookingRepository,
+        listingRepo = listingRepository,
+        profileRepo = profileRepository)
     profileViewModel =
-        MyProfileViewModel(
-            profileRepository = profileRepository,
-            bookingRepository = bookingRepository,
-            listingRepository = listingRepository,
-            ratingsRepository = ratingRepository,
-            sessionManager = UserSessionManager)
+      MyProfileViewModel(
+        profileRepository = profileRepository,
+        bookingRepository = bookingRepository,
+        listingRepository = listingRepository,
+        ratingsRepository = ratingRepository,
+        sessionManager = UserSessionManager)
     mainPageViewModel =
-        MainPageViewModel(
-            profileRepository = profileRepository, listingRepository = listingRepository)
+      MainPageViewModel(
+        profileRepository = profileRepository, listingRepository = listingRepository)
 
     newListingViewModel = NewListingViewModel(listingRepository = listingRepository)
 
     bookingDetailsViewModel =
-        BookingDetailsViewModel(
-            listingRepository = listingRepository,
-            bookingRepository = bookingRepository,
-            profileRepository = profileRepository,
-            ratingRepository = ratingRepository)
+      BookingDetailsViewModel(
+        listingRepository = listingRepository,
+        bookingRepository = bookingRepository,
+        profileRepository = profileRepository,
+        ratingRepository = ratingRepository)
   }
 
   /**
@@ -125,37 +127,49 @@ abstract class AppTest() {
    * repositories and pre-initialized ViewModels.
    */
   @Composable
-  fun CreateAppContent() {
+  fun CreateAppContentHome() {
     val navController = rememberNavController()
 
     val mainScreenRoutes =
-        listOf(NavRoutes.HOME, NavRoutes.BOOKINGS, NavRoutes.PROFILE, NavRoutes.MAP)
+      listOf(NavRoutes.HOME, NavRoutes.BOOKINGS, NavRoutes.PROFILE, NavRoutes.MAP)
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomNav = mainScreenRoutes.contains(currentRoute)
 
     Scaffold(
-        topBar = { TopAppBar(navController) },
-        bottomBar = {
-          if (showBottomNav) {
-            BottomNavBar(navController)
-          }
-        }) { paddingValues ->
-          Box(modifier = Modifier.padding(paddingValues)) {
-            AppNavGraph(
-                navController = navController,
-                bookingsViewModel = bookingsViewModel,
-                profileViewModel = profileViewModel,
-                mainPageViewModel = mainPageViewModel,
-                newListingViewModel = newListingViewModel,
-                authViewModel = authViewModel,
-                onGoogleSignIn = {},
-                bookingDetailsViewModel = bookingDetailsViewModel)
-          }
-          LaunchedEffect(Unit) {
-            navController.navigate(NavRoutes.HOME) { popUpTo(0) { inclusive = true } }
-          }
+      topBar = { TopAppBar(navController) },
+      bottomBar = {
+        if (showBottomNav) {
+          BottomNavBar(navController)
         }
+      }) { paddingValues ->
+      Box(modifier = Modifier.padding(paddingValues)) {
+        AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          onGoogleSignIn = {},
+          bookingDetailsViewModel = bookingDetailsViewModel)
+      }
+      LaunchedEffect(Unit) {
+        navController.navigate(NavRoutes.HOME) { popUpTo(0) { inclusive = true } }
+      }
+    }
+  }
+
+  @Composable
+  fun CreateAppContentLogin() {
+    MainApp(
+      authViewModel = authViewModel,
+      bookingsViewModel = bookingsViewModel,
+      profileViewModel = profileViewModel,
+      mainPageViewModel = mainPageViewModel,
+      newListingViewModel = newListingViewModel,
+      bookingDetailsViewModel = bookingDetailsViewModel,
+      onGoogleSignIn = {})
   }
 
   @After open fun tearDown() {}
@@ -194,8 +208,7 @@ abstract class AppTest() {
   /////// Helper Method to test components
 
   fun ComposeTestRule.enterText(testTag: String, text: String) {
-    onNodeWithTag(testTag).performTextClearance()
-    onNodeWithTag(testTag).performTextInput(text)
+    onNodeWithTag(testTag).performClick().performTextInput(text)
   }
 
   fun ComposeTestRule.clickOn(testTag: String) {
@@ -203,30 +216,24 @@ abstract class AppTest() {
   }
 
   fun ComposeTestRule.multipleChooseExposeMenu(
-      multipleTestTag: String,
-      differentChoiceTestTag: String
+    multipleTestTag: String,
+    differentChoiceTestTag: String
   ) {
     onNodeWithTag(multipleTestTag).performClick()
     waitUntil(timeoutMillis = 10_000) {
       onAllNodesWithTag(differentChoiceTestTag, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
+        .fetchSemanticsNodes()
+        .isNotEmpty()
     }
     onNodeWithTag(differentChoiceTestTag).performClick()
   }
 
   fun ComposeTestRule.enterAndChooseLocation(
-      enterText: String,
-      selectText: String,
-      inputLocationTestTag: String
+    enterText: String,
+    selectText: String,
+    inputLocationTestTag: String
   ) {
-
     onNodeWithTag(inputLocationTestTag, useUnmergedTree = true).performTextInput(enterText)
-
-    waitUntil(timeoutMillis = 20_000) {
-      onAllNodesWithText(selectText).fetchSemanticsNodes().isNotEmpty()
-    }
-    onAllNodesWithText(selectText)[0].performClick()
   }
 
   // HelperMethode for Testing NewListing
@@ -241,30 +248,29 @@ abstract class AppTest() {
 
     // Choose ListingType
     multipleChooseExposeMenu(
-        NewListingScreenTestTag.LISTING_TYPE_FIELD,
-        "${NewListingScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_${newListing.type.ordinal}")
+      NewListingScreenTestTag.LISTING_TYPE_FIELD,
+      "${NewListingScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_${newListing.type.ordinal}")
 
     // Choose Main subject
     multipleChooseExposeMenu(
-        NewListingScreenTestTag.SUBJECT_FIELD,
-        "${NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_${newListing.skill.mainSubject.ordinal}")
+      NewListingScreenTestTag.SUBJECT_FIELD,
+      "${NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_${newListing.skill.mainSubject.ordinal}")
 
     // Choose sub skill // todo hardcoded value for subskill (idk possible to do it other good way)
     multipleChooseExposeMenu(
-        NewListingScreenTestTag.SUB_SKILL_FIELD,
-        "${NewListingScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_0")
+      NewListingScreenTestTag.SUB_SKILL_FIELD,
+      "${NewListingScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_0")
 
     enterAndChooseLocation(
-        enterText = newListing.location.name.dropLast(1),
-        selectText = newListing.location.name,
-        inputLocationTestTag = LocationInputFieldTestTags.INPUT_LOCATION)
+      enterText = newListing.location.name,
+      selectText = newListing.location.name,
+      inputLocationTestTag = LocationInputFieldTestTags.INPUT_LOCATION)
   }
 
   /**
-   * Helper function to sign up a new user via the UI.
-   * Navigates to signup screen, fills the form, and submits.
-   * Returns to login screen after successful signup.
-   * Automatically scrolls to ensure fields are visible on smaller screens.
+   * Helper function to sign up a new user via the UI. Navigates to signup screen, fills the form,
+   * and submits. Returns to login screen after successful signup. Automatically scrolls to ensure
+   * fields are visible on smaller screens.
    */
   fun ComposeTestRule.signUpNewUser(
     name: String,
@@ -279,69 +285,46 @@ abstract class AppTest() {
     onNodeWithTag(SignInScreenTestTags.SIGNUP_LINK).performClick()
     waitForIdle()
 
-    // Fill signup form with scrolling
-    onNodeWithTag(SignUpScreenTestTags.NAME).performScrollTo()
+    // Fill signup form
     enterText(SignUpScreenTestTags.NAME, name)
-
-    onNodeWithTag(SignUpScreenTestTags.SURNAME).performScrollTo()
     enterText(SignUpScreenTestTags.SURNAME, surname)
-
-    onNodeWithTag(SignUpScreenTestTags.ADDRESS).performScrollTo()
     enterAndChooseLocation(
       enterText = address,
       selectText = address,
-      inputLocationTestTag = SignUpScreenTestTags.ADDRESS)
-
-    onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performScrollTo()
+      inputLocationTestTag = LocationInputFieldTestTags.INPUT_LOCATION)
     enterText(SignUpScreenTestTags.LEVEL_OF_EDUCATION, levelOfEducation)
-
-    onNodeWithTag(SignUpScreenTestTags.DESCRIPTION).performScrollTo()
     enterText(SignUpScreenTestTags.DESCRIPTION, description)
+    enterText(SignUpScreenTestTags.EMAIL, email)
+    enterText(SignUpScreenTestTags.PASSWORD, password)
 
-    // Email is pre-filled if coming from Google Sign-In, otherwise fill it
-    if (email.isNotEmpty()) {
-      onNodeWithTag(SignUpScreenTestTags.EMAIL).performScrollTo()
-      enterText(SignUpScreenTestTags.EMAIL, email)
-    }
-
-    // Password (only if not Google sign-up)
-    if (password.isNotEmpty()) {
-      onNodeWithTag(SignUpScreenTestTags.PASSWORD).performScrollTo()
-      enterText(SignUpScreenTestTags.PASSWORD, password)
-    }
-
-    // Scroll to submit button and click
-    onNodeWithTag(SignUpScreenTestTags.SIGN_UP).performScrollTo()
+    // Submit form
     clickOn(SignUpScreenTestTags.SIGN_UP)
     waitForIdle()
   }
 
   /**
-   * Helper function to login a user via the UI.
-   * Fills email and password fields and clicks sign in button.
-   * Includes scrolling for smaller screens.
+   * Helper function to login a user via the UI. Fills email and password fields and clicks sign in
+   * button. Includes scrolling for smaller screens.
    */
   fun ComposeTestRule.loginUser(email: String, password: String) {
     // Make sure we're on login screen
+    waitUntil {
+      onAllNodesWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).fetchSemanticsNodes().isNotEmpty()
+    }
     onNodeWithTag(SignInScreenTestTags.TITLE).assertExists()
 
-    // Fill login form with scrolling
-    onNodeWithTag(SignInScreenTestTags.EMAIL_INPUT).performScrollTo()
+    // Fill login form
     enterText(SignInScreenTestTags.EMAIL_INPUT, email)
-
-    onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT).performScrollTo()
     enterText(SignInScreenTestTags.PASSWORD_INPUT, password)
 
-    // Scroll to sign in button and click
-    onNodeWithTag(SignInScreenTestTags.SIGN_IN_BUTTON).performScrollTo()
+    // Click sign in button
     clickOn(SignInScreenTestTags.SIGN_IN_BUTTON)
     waitForIdle()
   }
 
   /**
-   * Helper function for complete signup and login flow.
-   * Signs up a new user, waits for return to login, then logs in.
-   * Handles scrolling automatically for CI compatibility.
+   * Helper function for complete signup and login flow. Signs up a new user, waits for return to
+   * login, then logs in. Handles scrolling automatically for CI compatibility.
    */
   fun ComposeTestRule.signUpAndLogin(
     name: String,
@@ -353,6 +336,12 @@ abstract class AppTest() {
     password: String
   ) {
     signUpNewUser(name, surname, address, levelOfEducation, description, email, password)
+
+    // After signup, if we are still on the signup screen, it means the user already exists.
+    // In that case, go back to the login screen.
+    if (onAllNodesWithTag(SignUpScreenTestTags.TITLE).fetchSemanticsNodes().isNotEmpty()) {
+      clickTopAppBarBack()
+    }
 
     // After signup, should be back on login screen
     waitForIdle()
