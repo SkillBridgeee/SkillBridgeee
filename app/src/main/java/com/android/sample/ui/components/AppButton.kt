@@ -18,6 +18,13 @@ import androidx.compose.ui.unit.dp
 import com.android.sample.ui.theme.BlueApp
 import com.android.sample.ui.theme.GreenApp
 
+/**
+ * A button with a gradient background.
+ *
+ * @param text The text to display inside the button.
+ * @param onClick The action to perform when the button is clicked.
+ * @param testTag The test tag for UI testing.
+ */
 @Composable
 fun AppButton(text: String, onClick: () -> Unit, testTag: String) {
   Box(
