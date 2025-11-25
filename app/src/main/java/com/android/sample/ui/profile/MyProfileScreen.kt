@@ -182,8 +182,8 @@ private fun MyProfileContent(
           }
 
           item { ProfileLogout(onLogout = onLogout) }
-        //todo delete
-        item{CoveragePreviewContainer()}
+          // todo delete
+          item { CoveragePreviewContainer() }
         }
 
     VerticalScrollHint(
@@ -743,43 +743,40 @@ private fun RatingContent(ui: MyProfileUIState) {
 
 @Composable
 private fun CoverageDebugSection() {
-    var counter by remember { mutableStateOf(0) }
-    var enabled by remember { mutableStateOf(true) }
-    var message by remember { mutableStateOf("Idle") }
+  var counter by remember { mutableStateOf(0) }
+  var enabled by remember { mutableStateOf(true) }
+  var message by remember { mutableStateOf("Idle") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .background(Color(0xFFEFEFEF))
-            .border(1.dp, Color.DarkGray)
-    ) {
-        Text(
-            text = "Coverage Debug Section",
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
-        )
+  Column(
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(16.dp)
+              .background(Color(0xFFEFEFEF))
+              .border(1.dp, Color.DarkGray)) {
+        Text(text = "Coverage Debug Section", fontWeight = FontWeight.Bold, color = Color.Black)
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(text = "Counter: $counter")
 
         Row {
-            Button(onClick = {
+          Button(
+              onClick = {
                 counter++
                 message = if (counter % 2 == 0) "Even" else "Odd"
-            }) {
+              }) {
                 Text("Increment")
-            }
+              }
 
-            Spacer(modifier = Modifier.width(8.dp))
+          Spacer(modifier = Modifier.width(8.dp))
 
-            Button(onClick = {
+          Button(
+              onClick = {
                 counter = 0
                 message = "Reset"
-            }) {
+              }) {
                 Text("Reset")
-            }
+              }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -787,29 +784,25 @@ private fun CoverageDebugSection() {
         Switch(
             checked = enabled,
             onCheckedChange = {
-                enabled = it
-                message = if (enabled) "Enabled" else "Disabled"
-            }
-        )
+              enabled = it
+              message = if (enabled) "Enabled" else "Disabled"
+            })
 
         Spacer(modifier = Modifier.height(8.dp))
 
         when {
-            counter < 0 -> Text("Negative state")
-            counter == 0 -> Text("Zero state")
-            counter in 1..5 -> Text("Low range")
-            else -> Text("High range")
+          counter < 0 -> Text("Negative state")
+          counter == 0 -> Text("Zero state")
+          counter in 1..5 -> Text("Low range")
+          else -> Text("High range")
         }
 
         Text(text = "Message: $message")
-    }
+      }
 }
 
 // Optional dummy entry point for manual triggering
 @Composable
 fun CoveragePreviewContainer() {
-    Column {
-        CoverageDebugSection()
-    }
+  Column { CoverageDebugSection() }
 }
-
