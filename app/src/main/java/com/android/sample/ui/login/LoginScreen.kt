@@ -379,8 +379,7 @@ private fun PasswordResetDialog(
                     contentDescription = null)
               },
               modifier =
-                  Modifier.fillMaxWidth()
-                      .testTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT))
+                  Modifier.fillMaxWidth().testTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT))
 
           // Error message
           error?.let {

@@ -1149,5 +1149,3 @@ class AuthenticationViewModelTest {
     coVerify(exactly = 2) { mockRepository.sendPasswordResetEmail("test@example.com") }
   }
 }
-
-

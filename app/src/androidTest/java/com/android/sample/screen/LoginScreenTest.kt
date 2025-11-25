@@ -405,8 +405,6 @@ class LoginScreenTest {
   }
 
   @Test
-  fun successMessageDisplayedWhenSet() {
-    lateinit var viewModel: AuthenticationViewModel
   fun passwordResetDialog_emailInputAcceptsText() {
     composeRule.setContent {
       val context = LocalContext.current
@@ -417,10 +415,15 @@ class LoginScreenTest {
     composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
 
     val email = "test@example.com"
-    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performTextInput(email)
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT)
+        .performTextInput(email)
 
     // Verify text was entered
-    val enteredText = composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).readEditableText()
+    val enteredText =
+        composeRule
+            .onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT)
+            .readEditableText()
     assert(enteredText == email)
   }
 
@@ -447,7 +450,9 @@ class LoginScreenTest {
     }
 
     composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
-    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performTextInput("test@example.com")
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT)
+        .performTextInput("test@example.com")
 
     // Button should be enabled with valid email
     composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_SEND_BUTTON).assertIsEnabled()
@@ -493,7 +498,9 @@ class LoginScreenTest {
     }
 
     composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
-    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performTextInput("invalid-email")
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT)
+        .performTextInput("invalid-email")
     composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_SEND_BUTTON).performClick()
 
     // Wait a bit for error to appear
@@ -540,7 +547,11 @@ class LoginScreenTest {
 
     composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
 
-    composeRule.onNodeWithText("Enter your email address and we'll send you a link to reset your password.", substring = true).assertIsDisplayed()
+    composeRule
+        .onNodeWithText(
+            "Enter your email address and we'll send you a link to reset your password.",
+            substring = true)
+        .assertIsDisplayed()
   }
 
   @Test
@@ -553,7 +564,9 @@ class LoginScreenTest {
 
     // Open dialog and enter email
     composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
-    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performTextInput("first@example.com")
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT)
+        .performTextInput("first@example.com")
 
     // Close dialog
     composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_CANCEL_BUTTON).performClick()
@@ -562,7 +575,10 @@ class LoginScreenTest {
     composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
 
     // Email field should be empty
-    val enteredText = composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).readEditableText()
+    val enteredText =
+        composeRule
+            .onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT)
+            .readEditableText()
     assert(enteredText.isEmpty())
   }
 
@@ -577,7 +593,9 @@ class LoginScreenTest {
     composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
 
     // Enter first email
-    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performTextInput("user1@example.com")
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT)
+        .performTextInput("user1@example.com")
 
     // Clear and enter second email (simulating user editing)
     composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performClick()
@@ -595,7 +613,9 @@ class LoginScreenTest {
     }
 
     // Enter login credentials
-    composeRule.onNodeWithTag(SignInScreenTestTags.EMAIL_INPUT).performTextInput("login@example.com")
+    composeRule
+        .onNodeWithTag(SignInScreenTestTags.EMAIL_INPUT)
+        .performTextInput("login@example.com")
     composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT).performTextInput("password123")
 
     // Open password reset dialog
@@ -612,5 +632,3 @@ class LoginScreenTest {
     composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT).assertIsDisplayed()
   }
 }
-
-
