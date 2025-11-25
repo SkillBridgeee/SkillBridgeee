@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -37,6 +38,7 @@ import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
+import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingRepo
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingWorking
@@ -216,8 +218,20 @@ abstract class AppTest() {
     onNodeWithTag(testTag).performScrollTo().performClick().performTextInput(text)
   }
 
-  fun ComposeTestRule.scrollAndClickOn(testTag: String) {
-    onNodeWithTag(testTag = testTag).performScrollTo().performClick()
+  fun ComposeTestRule.scrollAndClickOn(
+    clickTag: String,
+    scrollToTag: String? = null,
+    useContentDesc: Boolean = false
+  ) {
+    if (scrollToTag != null) {
+      onNodeWithTag(scrollToTag).performScrollTo()
+    }
+
+    if (useContentDesc) {
+      onNodeWithContentDescription(clickTag).performClick()
+    } else {
+      onNodeWithTag(clickTag).performScrollTo().performClick()
+    }
   }
 
   fun ComposeTestRule.multipleChooseExposeMenu(
@@ -244,6 +258,7 @@ abstract class AppTest() {
   }
 
   // HelperMethode for Testing NewListing
+  // HelperMethode for Testing NewListing
   fun ComposeTestRule.fillNewListing(newListing: Listing) {
 
     // Enter Title
@@ -255,23 +270,23 @@ abstract class AppTest() {
 
     // Choose ListingType
     multipleChooseExposeMenu(
-        NewListingScreenTestTag.LISTING_TYPE_FIELD,
-        "${NewListingScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_${newListing.type.ordinal}")
+      NewListingScreenTestTag.LISTING_TYPE_FIELD,
+      "${NewListingScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_${newListing.type.ordinal}")
+
+    scrollAndClickOn(
+      clickTag = NewListingScreenTestTag.BUTTON_USE_MY_LOCATION,
+      scrollToTag = NewListingScreenTestTag.INPUT_LOCATION_FIELD)
+    waitForIdle()
 
     // Choose Main subject
     multipleChooseExposeMenu(
-        NewListingScreenTestTag.SUBJECT_FIELD,
-        "${NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_${newListing.skill.mainSubject.ordinal}")
+      NewListingScreenTestTag.SUBJECT_FIELD,
+      "${NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_${newListing.skill.mainSubject.ordinal}")
 
     // Choose sub skill // todo hardcoded value for subskill (idk possible to do it other good way)
     multipleChooseExposeMenu(
-        NewListingScreenTestTag.SUB_SKILL_FIELD,
-        "${NewListingScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_0")
-
-    enterAndChooseLocation(
-        enterText = newListing.location.name,
-        selectText = newListing.location.name,
-        inputLocationTestTag = LocationInputFieldTestTags.INPUT_LOCATION)
+      NewListingScreenTestTag.SUB_SKILL_FIELD,
+      "${NewListingScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_0")
   }
 
   /**
@@ -295,10 +310,11 @@ abstract class AppTest() {
     // Fill signup form
     scrollAndEnterText(SignUpScreenTestTags.NAME, name)
     scrollAndEnterText(SignUpScreenTestTags.SURNAME, surname)
-    enterAndChooseLocation(
-        enterText = address,
-        selectText = address,
-        inputLocationTestTag = LocationInputFieldTestTags.INPUT_LOCATION)
+    scrollAndClickOn(
+      clickTag = SignUpScreenTestTags.PIN_CONTENT_DESC,
+      scrollToTag = SignUpScreenTestTags.ADDRESS,
+      useContentDesc = true)
+    waitForIdle()
     scrollAndEnterText(SignUpScreenTestTags.LEVEL_OF_EDUCATION, levelOfEducation)
     scrollAndEnterText(SignUpScreenTestTags.DESCRIPTION, description)
     scrollAndEnterText(SignUpScreenTestTags.EMAIL, email)
