@@ -733,4 +733,3 @@ private fun RatingContent(ui: MyProfileUIState) {
     }
   }
 }
-
