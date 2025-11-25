@@ -19,6 +19,7 @@ import com.android.sample.model.rating.StarRating
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.components.RatingAggregationHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.Date
@@ -326,6 +327,9 @@ class ListingViewModel(
                 targetObjectId = listing.listingId)
 
         ratingRepo.addRating(rating)
+
+        RatingAggregationHelper.recomputeStudentAggregateRating(
+            studentUserId = toUserId, ratingRepo = ratingRepo, profileRepo = profileRepo)
 
         Log.d("ListingViewModel", "Tutor rating persisted: $stars stars -> $toUserId")
         _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }

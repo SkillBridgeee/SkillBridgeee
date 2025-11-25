@@ -101,6 +101,22 @@ class MyProfileViewModelTest {
         storedProfile ?: error("Profile not found")
 
     override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
+
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      // no-op in this test fake
+    }
+
+    override suspend fun updateStudentRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      // no-op in this test fake
+    }
   }
 
   private class FakeLocationRepo(
@@ -976,6 +992,22 @@ class MyProfileViewModelTest {
           }
 
           override fun getNewUid() = "x"
+
+          override suspend fun updateTutorRatingFields(
+              userId: String,
+              averageRating: Double,
+              totalRatings: Int
+          ) {
+            // not needed in this test
+          }
+
+          override suspend fun updateStudentRatingFields(
+              userId: String,
+              averageRating: Double,
+              totalRatings: Int
+          ) {
+            // not needed in this test
+          }
         }
     UserSessionManager.setCurrentUserId("demo")
     val vm =

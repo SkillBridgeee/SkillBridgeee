@@ -60,7 +60,8 @@ data class ListingUIState(
     val invalidSubSkillMsg: String? = null,
     val invalidListingTypeMsg: String? = null,
     val invalidLocationMsg: String? = null,
-    val addSuccess: Boolean = false
+    val addSuccess: Boolean = false,
+    val isSaving: Boolean = false
 ) {
 
   /** Indicates whether the current UI state is valid for submission. */
@@ -97,6 +98,9 @@ class NewListingViewModel(
   private val _uiState = MutableStateFlow(ListingUIState())
   // Public read-only state flow for the UI to observe
   val uiState: StateFlow<ListingUIState> = _uiState.asStateFlow()
+
+  private val userId: String
+    get() = UserSessionManager.getCurrentUserId() ?: ""
 
   private var locationSearchJob: Job? = null
   private val locationSearchDelayTime: Long = 1000
@@ -141,47 +145,26 @@ class NewListingViewModel(
     }
   }
 
+  /**
+   * Attempts to add a new listing based on the current UI state. Validates the input fields and, if
+   * valid, creates a new Listing object (either a Proposal or Request) and saves it to the
+   * repository.
+   */
   fun addListing() {
     val state = _uiState.value
+
+    if (state.isSaving) return
+
     if (!state.isValid) {
       setError()
       return
     }
 
-    val price = state.price.toDoubleOrNull()
-    if (price == null) {
-      Log.e("NewSkillViewModel", "Unexpected invalid price despite isValid")
-      setError()
-      return
-    }
-
-    val specificSkill = state.selectedSubSkill
-    if (specificSkill.isNullOrBlank()) {
-      Log.e("NewSkillViewModel", "Missing selectedSubSkill despite isValid")
-      setError()
-      return
-    }
-
-    val mainSubject = state.subject
-    if (mainSubject == null) {
-      Log.e("NewSkillViewModel", "Missing subject despite isValid")
-      setError()
-      return
-    }
-
-    val listingType = state.listingType
-    if (listingType == null) {
-      Log.e("NewSkillViewModel", "Missing listingType despite isValid")
-      setError()
-      return
-    }
-
-    val selectedLocation = state.selectedLocation
-    if (selectedLocation == null) {
-      Log.e("NewSkillViewModel", "Missing selectedLocation despite isValid")
-      setError()
-      return
-    }
+    val price = state.price.toDouble()
+    val specificSkill = state.selectedSubSkill!!
+    val mainSubject = state.subject!!
+    val listingType = state.listingType!!
+    val selectedLocation = state.selectedLocation!!
 
     val currentUserId = UserSessionManager.getCurrentUserId()
     if (currentUserId.isNullOrBlank()) {
@@ -214,6 +197,7 @@ class NewListingViewModel(
                   hourlyRate = price)
         }
 
+    _uiState.update { it.copy(isSaving = true) }
     viewModelScope.launch {
       try {
         if (isEditMode) {
@@ -224,8 +208,9 @@ class NewListingViewModel(
             is Request -> listingRepository.addRequest(listing)
           }
         }
-        _uiState.update { it.copy(addSuccess = true) }
+        _uiState.update { it.copy(addSuccess = true, isSaving = false) }
       } catch (e: Exception) {
+        _uiState.update { it.copy(isSaving = false) }
         Log.e("NewListingViewModel", "Error saving listing", e)
       }
     }

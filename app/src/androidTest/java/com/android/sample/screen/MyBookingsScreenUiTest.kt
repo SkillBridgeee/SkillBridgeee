@@ -142,6 +142,22 @@ class MyBookingsScreenUiTest {
 
                 override suspend fun getSkillsForUser(userId: String) =
                     emptyList<com.android.sample.model.skill.Skill>()
+
+                override suspend fun updateTutorRatingFields(
+                    userId: String,
+                    averageRating: Double,
+                    totalRatings: Int
+                ) {
+                  TODO("Not yet implemented")
+                }
+
+                override suspend fun updateStudentRatingFields(
+                    userId: String,
+                    averageRating: Double,
+                    totalRatings: Int
+                ) {
+                  TODO("Not yet implemented")
+                }
               })
 
   @Test
@@ -227,6 +243,22 @@ class MyBookingsScreenUiTest {
 
           override suspend fun getSkillsForUser(userId: String) =
               emptyList<com.android.sample.model.skill.Skill>()
+
+          override suspend fun updateTutorRatingFields(
+              userId: String,
+              averageRating: Double,
+              totalRatings: Int
+          ) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updateStudentRatingFields(
+              userId: String,
+              averageRating: Double,
+              totalRatings: Int
+          ) {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =

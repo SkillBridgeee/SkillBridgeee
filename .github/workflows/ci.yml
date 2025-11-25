@@ -265,15 +265,13 @@ jobs:
           echo "----- Firebase Emulator Logs -----"
           tail -n 200 firebase.log || true
 
-      - name: Upload test reports
-        if: failure()
+      - name: Upload Unit Test coverage
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: unit-test-results
           path: |
-            **/build/reports/
-            firebase.log
-            ~/.gradle/daemon/   
+            **/build/
+  
 
   Android-Tests:
     name: Android Tests
@@ -390,15 +388,14 @@ jobs:
           echo "----- Firebase Emulator Logs -----"
           tail -n 200 firebase.log || true
 
-      - name: Upload test reports
-        if: failure()
+      - name: Upload Android Test coverage
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: android-test-results
           path: |
-            **/build/reports/
-            firebase.log
-            ~/.gradle/daemon/
+            **/build/
+  
+  
 
   Coverage-Report:
     name: Coverage Report
@@ -433,6 +430,18 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
+      - name: Download Unit test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-test-results
+          path: .
+
+      - name: Download Android test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-test-results
+          path: .
+
       - name: Decode google-services.json
         env:
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
@@ -441,13 +450,10 @@ jobs:
             echo "$GOOGLE_SERVICES" | base64 --decode > ./app/google-services.json
           else
             echo "::warning::GOOGLE_SERVICES secret not set."
-          fi  
+          fi
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      - name: Generate Coverage Report
-        run: ./gradlew jacocoTestReport --stacktrace --build-cache
+      - name: Build JaCoCo report from downloaded data
+        run: ./gradlew jacocoTestReport --stacktrace
 
       - name: Upload report to SonarCloud
         env:
@@ -458,11 +464,6 @@ jobs:
             --stacktrace \
             --parallel \
             --build-cache
-  
-  
-  
-  
-  
   
 
   ci:

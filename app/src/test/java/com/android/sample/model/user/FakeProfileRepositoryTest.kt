@@ -1,6 +1,7 @@
 package com.android.sample.model.user
 
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.RatingInfo
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
@@ -46,5 +47,57 @@ class FakeProfileRepositoryTest {
     // ~2 km => Center + Near
     val names = repo.searchProfilesByLocation(center, 2.0).map { it.name }.toSet()
     assertEquals(setOf("Center", "Near"), names)
+  }
+
+  @Test
+  fun updateTutorRatingFields_updatesOnlyTutorRating() = runTest {
+    val repo = FakeProfileRepository()
+
+    val p =
+        Profile(
+            userId = "",
+            name = "Alice",
+            email = "a@a.com",
+            tutorRating = RatingInfo(4.0, 2),
+            studentRating = RatingInfo(3.5, 4))
+    repo.addProfile(p)
+
+    val saved = repo.getAllProfiles().single()
+
+    repo.updateTutorRatingFields(saved.userId, 4.7, 9)
+
+    val updated = repo.getProfile(saved.userId)!!
+    assertEquals(4.7, updated.tutorRating.averageRating, 0.001)
+    assertEquals(9, updated.tutorRating.totalRatings)
+
+    // Student rating unchanged
+    assertEquals(3.5, updated.studentRating.averageRating, 0.001)
+    assertEquals(4, updated.studentRating.totalRatings)
+  }
+
+  @Test
+  fun updateStudentRatingFields_updatesOnlyStudentRating() = runTest {
+    val repo = FakeProfileRepository()
+
+    val p =
+        Profile(
+            userId = "",
+            name = "Alice",
+            email = "a@a.com",
+            tutorRating = RatingInfo(4.2, 5),
+            studentRating = RatingInfo(2.5, 1))
+    repo.addProfile(p)
+
+    val saved = repo.getAllProfiles().single()
+
+    repo.updateStudentRatingFields(saved.userId, 3.8, 7)
+
+    val updated = repo.getProfile(saved.userId)!!
+    assertEquals(3.8, updated.studentRating.averageRating, 0.001)
+    assertEquals(7, updated.studentRating.totalRatings)
+
+    // Tutor rating unchanged
+    assertEquals(4.2, updated.tutorRating.averageRating, 0.001)
+    assertEquals(5, updated.tutorRating.totalRatings)
   }
 }

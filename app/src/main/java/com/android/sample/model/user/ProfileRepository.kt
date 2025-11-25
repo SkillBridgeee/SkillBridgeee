@@ -23,4 +23,8 @@ interface ProfileRepository {
   suspend fun getProfileById(userId: String): Profile?
 
   suspend fun getSkillsForUser(userId: String): List<Skill>
+
+  suspend fun updateTutorRatingFields(userId: String, averageRating: Double, totalRatings: Int)
+
+  suspend fun updateStudentRatingFields(userId: String, averageRating: Double, totalRatings: Int)
 }

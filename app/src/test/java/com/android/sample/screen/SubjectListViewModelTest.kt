@@ -145,6 +145,18 @@ class SubjectListViewModelTest {
     override suspend fun getProfileById(userId: String): Profile? = profiles[userId]
 
     override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
+
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {}
+
+    override suspend fun updateStudentRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {}
   }
 
   private val fakeBookingRepo =
