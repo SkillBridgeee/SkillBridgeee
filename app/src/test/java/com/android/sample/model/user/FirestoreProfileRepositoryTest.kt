@@ -163,4 +163,67 @@ class FirestoreProfileRepositoryTest : RepositoryTest() {
     val skills = profileRepository.getSkillsForUser(testUserId)
     assertTrue(skills.isEmpty())
   }
+
+  @Test
+  fun updateTutorRatingFields_updatesValuesCorrectly() = runTest {
+    // Arrange
+    val profile =
+        Profile(
+            userId = testUserId,
+            name = "John Doe",
+            tutorRating = RatingInfo(1.0, 1),
+            studentRating = RatingInfo(2.0, 3))
+    profileRepository.addProfile(profile)
+
+    // Act
+    profileRepository.updateTutorRatingFields(
+        userId = testUserId, averageRating = 4.7, totalRatings = 12)
+
+    // Assert
+    val updated = profileRepository.getProfile(testUserId)
+    assertNotNull(updated)
+    assertEquals(4.7, updated!!.tutorRating.averageRating, 0.001)
+    assertEquals(12, updated.tutorRating.totalRatings)
+
+    // Student rating must remain unchanged
+    assertEquals(2.0, updated.studentRating.averageRating, 0.001)
+    assertEquals(3, updated.studentRating.totalRatings)
+  }
+
+  @Test
+  fun updateStudentRatingFields_updatesValuesCorrectly() = runTest {
+    // Arrange
+    val profile =
+        Profile(
+            userId = testUserId,
+            name = "John Doe",
+            tutorRating = RatingInfo(3.0, 4),
+            studentRating = RatingInfo(1.5, 1))
+    profileRepository.addProfile(profile)
+
+    // Act
+    profileRepository.updateStudentRatingFields(
+        userId = testUserId, averageRating = 4.2, totalRatings = 15)
+
+    // Assert
+    val updated = profileRepository.getProfile(testUserId)
+    assertNotNull(updated)
+    assertEquals(4.2, updated!!.studentRating.averageRating, 0.001)
+    assertEquals(15, updated.studentRating.totalRatings)
+
+    // Tutor rating must remain unchanged
+    assertEquals(3.0, updated.tutorRating.averageRating, 0.001)
+    assertEquals(4, updated.tutorRating.totalRatings)
+  }
+
+  @Test
+  fun updateStudentRatingFields_throwsExceptionWhenFirestoreFails() = runTest {
+    // using a fake userId that doesn't exist causes the Firestore update to fail
+    assertThrows(Exception::class.java) {
+      runBlocking {
+        profileRepository.updateStudentRatingFields(
+            userId = "nonexistent-user", averageRating = 4.0, totalRatings = 10)
+      }
+    }
+  }
 }

@@ -121,6 +121,22 @@ class ListingScreenTest {
         emptyList<Profile>()
 
     override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
+
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      // no-op
+    }
+
+    override suspend fun updateStudentRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      // no-op
+    }
   }
 
   private class FakeBookingRepo(

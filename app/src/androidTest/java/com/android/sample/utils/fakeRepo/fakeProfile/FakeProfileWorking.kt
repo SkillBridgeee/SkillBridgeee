@@ -87,4 +87,28 @@ class FakeProfileWorking : FakeProfileRepo {
   override fun getCurrentUserName(): String? {
     return profiles[0].name
   }
+
+  override suspend fun updateTutorRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    val index = profiles.indexOfFirst { it.userId == userId }
+    if (index != -1) {
+      val p = profiles[index]
+      profiles[index] = p.copy(tutorRating = RatingInfo(averageRating, totalRatings))
+    }
+  }
+
+  override suspend fun updateStudentRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    val index = profiles.indexOfFirst { it.userId == userId }
+    if (index != -1) {
+      val p = profiles[index]
+      profiles[index] = p.copy(studentRating = RatingInfo(averageRating, totalRatings))
+    }
+  }
 }
