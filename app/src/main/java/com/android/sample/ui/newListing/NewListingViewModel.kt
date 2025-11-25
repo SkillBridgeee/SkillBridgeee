@@ -60,7 +60,8 @@ data class ListingUIState(
     val invalidSubSkillMsg: String? = null,
     val invalidListingTypeMsg: String? = null,
     val invalidLocationMsg: String? = null,
-    val addSuccess: Boolean = false
+    val addSuccess: Boolean = false,
+    val isSaving: Boolean = false
 ) {
 
   /** Indicates whether the current UI state is valid for submission. */
@@ -146,6 +147,9 @@ class NewListingViewModel(
 
   fun addListing() {
     val state = _uiState.value
+
+    if (state.isSaving) return
+
     if (!state.isValid) {
       setError()
       return
@@ -211,6 +215,7 @@ class NewListingViewModel(
                   hourlyRate = price)
         }
 
+    _uiState.update { it.copy(isSaving = true) }
     viewModelScope.launch {
       try {
         if (isEditMode) {

@@ -98,6 +98,7 @@ fun NewListingScreen(
         AppButton(
             text = buttonText,
             onClick = { skillViewModel.addListing() },
+            // enabled = !listingUIState.isSaving,
             testTag = NewListingScreenTestTag.BUTTON_SAVE_LISTING)
       },
       floatingActionButtonPosition = FabPosition.Center) { pd ->
