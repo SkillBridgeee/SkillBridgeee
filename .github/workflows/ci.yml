@@ -403,7 +403,7 @@ jobs:
   Coverage-Report:
     name: Coverage Report
     runs-on: ubuntu-latest
-    needs: [Unit-Tests, Android-Tests]
+    needs: [ Unit-Tests, Android-Tests ]
 
     steps:
       - name: Checkout
@@ -446,22 +446,24 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Compile source code for Jacoco
-        run: ./gradlew compileDebugKotlin --parallel --build-cache
-
       - name: Generate Coverage Report
-        run: ./gradlew jacocoTestReport --stacktrace
+        run: ./gradlew jacocoTestReport --stacktrace --build-cache
 
       - name: Upload report to SonarCloud
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew sonar --stacktrace --build-cache
-
-
-
-
-
+        run: |
+          ./gradlew sonar \
+            --stacktrace \
+            --parallel \
+            --build-cache
+  
+  
+  
+  
+  
+  
 
   ci:
     name: CI
