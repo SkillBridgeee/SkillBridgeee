@@ -24,8 +24,6 @@ import com.google.firebase.auth.auth
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.tasks.await
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -149,21 +147,17 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
     // Wait for signup to complete by observing ViewModel state
+    // Now expects verificationEmailSent instead of submitSuccess (email verification feature)
     composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
-      vm.state.value.submitSuccess || vm.state.value.error != null
+      vm.state.value.verificationEmailSent || vm.state.value.error != null
     }
 
-    // Verify success path in VM
-    assertTrue("Signup should succeed", vm.state.value.submitSuccess)
+    // Verify success path in VM - verification email should be sent for new signups
+    assertTrue("Signup should send verification email", vm.state.value.verificationEmailSent)
 
-    // Wait for Firebase Auth to reflect the current user
-    composeRule.waitUntil(15_000) { auth.currentUser != null }
-
-    // Verify Firebase Auth account was created (normalize for comparison)
-    assertNotNull("User should be authenticated", auth.currentUser)
-    val actualEmail = auth.currentUser?.email?.trim()?.lowercase()
-    val expectedEmail = testEmail.trim().lowercase()
-    assertEquals(expectedEmail, actualEmail)
+    // Note: With email verification, the user is signed out after account creation
+    // They need to verify their email before they can log in
+    // So we don't expect auth.currentUser to be set
   }
 
   @Test
@@ -193,13 +187,13 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
     composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
-      vm.state.value.submitSuccess || vm.state.value.error != null
+      vm.state.value.verificationEmailSent || vm.state.value.error != null
     }
 
-    assertTrue("Signup should succeed", vm.state.value.submitSuccess)
+    assertTrue("Signup should send verification email", vm.state.value.verificationEmailSent)
 
-    composeRule.waitUntil(15_000) { auth.currentUser != null }
-    assertNotNull("User should be authenticated", auth.currentUser)
+    // Note: With email verification, the user is signed out after account creation
+    // They need to verify their email before they can log in
   }
 
   @Test
