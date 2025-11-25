@@ -45,15 +45,32 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
   }
 
   /**
-   * Sign in with email and password
+   * Sign in with email and password. Checks if email is verified before allowing sign in.
    *
    * @return Result containing FirebaseUser on success or Exception on failure
    */
   suspend fun signInWithEmail(email: String, password: String): Result<FirebaseUser> {
     return try {
       val result = auth.signInWithEmailAndPassword(email, password).await()
-      result.user?.let { Result.success(it) }
-          ?: Result.failure(Exception("Sign in failed: No user"))
+      val user = result.user
+
+      if (user == null) {
+        return Result.failure(Exception("Sign in failed: No user"))
+      }
+
+      // Reload user to get latest verification status
+      user.reload().await()
+
+      // Check if email is verified
+      if (!user.isEmailVerified) {
+        // Sign out unverified user
+        auth.signOut()
+        return Result.failure(
+            Exception(
+                "Please verify your email before logging in. Check your inbox for the verification link."))
+      }
+
+      Result.success(user)
     } catch (e: Exception) {
       Result.failure(normalizeAuthException(e))
     }
@@ -110,5 +127,100 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
    */
   fun isUserSignedIn(): Boolean {
     return auth.currentUser != null
+  }
+
+  /**
+   * Send email verification to the current user
+   *
+   * @return Result indicating success or failure
+   */
+  suspend fun sendEmailVerification(): Result<Unit> {
+    return try {
+      val user = auth.currentUser
+      if (user == null) {
+        return Result.failure(Exception("No user is currently signed in"))
+      }
+
+      user.sendEmailVerification().await()
+      Result.success(Unit)
+    } catch (e: Exception) {
+      Result.failure(normalizeAuthException(e))
+    }
+  }
+
+  /**
+   * Check if the current user's email is verified
+   *
+   * @return true if email is verified, false otherwise or if no user is signed in
+   */
+  @Suppress("unused")
+  suspend fun isEmailVerified(): Boolean {
+    val user = auth.currentUser ?: return false
+
+    // Reload user to get latest verification status from server
+    try {
+      user.reload().await()
+    } catch (_: Exception) {
+      return false
+    }
+
+    return user.isEmailVerified
+  }
+
+  /**
+   * Reload the current user's data from the server
+   *
+   * @return Result indicating success or failure
+   */
+  @Suppress("unused")
+  suspend fun reloadUser(): Result<Unit> {
+    return try {
+      val user = auth.currentUser
+      if (user == null) {
+        return Result.failure(Exception("No user is currently signed in"))
+      }
+
+      user.reload().await()
+      Result.success(Unit)
+    } catch (e: Exception) {
+      Result.failure(normalizeAuthException(e))
+    }
+  }
+
+  /**
+   * Resend verification email for a specific email/password combination. Signs in the user
+   * temporarily to send the email, then signs out.
+   *
+   * @return Result indicating success or failure
+   */
+  suspend fun resendVerificationEmail(email: String, password: String): Result<Unit> {
+    return try {
+      // Sign in to get the user object
+      val result = auth.signInWithEmailAndPassword(email, password).await()
+      val user = result.user
+
+      if (user == null) {
+        return Result.failure(Exception("Failed to sign in"))
+      }
+
+      // Reload to check current verification status
+      user.reload().await()
+
+      if (user.isEmailVerified) {
+        // Already verified, sign out and return success
+        auth.signOut()
+        return Result.failure(Exception("Email is already verified. You can now log in."))
+      }
+
+      // Send verification email
+      user.sendEmailVerification().await()
+
+      // Sign out the user
+      auth.signOut()
+
+      Result.success(Unit)
+    } catch (e: Exception) {
+      Result.failure(normalizeAuthException(e))
+    }
   }
 }

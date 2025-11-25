@@ -124,11 +124,16 @@ class AuthenticationViewModelTest {
 
   @Test
   fun signIn_withValidCredentials_succeeds() = runTest {
-    val mockUser = mockk<FirebaseUser>()
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    every { mockUser.uid } returns "test-uid-123"
+    every { mockUser.email } returns "test@example.com"
+
     viewModel.updateEmail("test@example.com")
     viewModel.updatePassword("password123")
 
     coEvery { mockRepository.signInWithEmail(any(), any()) } returns Result.success(mockUser)
+    // Mock that profile exists for this user
+    coEvery { mockProfileRepository.getProfile("test-uid-123") } returns mockk(relaxed = true)
 
     viewModel.signIn()
     testDispatcher.scheduler.advanceUntilIdle()
@@ -714,5 +719,117 @@ class AuthenticationViewModelTest {
     assertNull(uiState.error)
     assertEquals("", uiState.email)
     assertEquals("", uiState.password)
+  }
+
+  // -------- Email Verification Tests (NEW) -----------------------------------------------
+
+  @Test
+  fun `resendVerificationEmail success updates UI state with success message`() = runTest {
+    // Given
+    coEvery { mockRepository.resendVerificationEmail("test@example.com", "password123") } returns
+        Result.success(Unit)
+
+    viewModel.updateEmail("test@example.com")
+    viewModel.updatePassword("password123")
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // When
+    viewModel.resendVerificationEmail("test@example.com", "password123")
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val uiState = viewModel.uiState.first()
+    assertFalse(uiState.isLoading)
+    assertNull(uiState.error)
+    assertEquals("Verification email sent! Please check your inbox.", uiState.message)
+  }
+
+  @Test
+  fun `resendVerificationEmail failure updates UI state with error message`() = runTest {
+    // Given
+    coEvery { mockRepository.resendVerificationEmail(any(), any()) } returns
+        Result.failure(Exception("Network error"))
+
+    // When
+    viewModel.resendVerificationEmail("test@example.com", "password123")
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val uiState = viewModel.uiState.first()
+    assertFalse(uiState.isLoading)
+    assertEquals("Network error", uiState.error)
+  }
+
+  @Test
+  fun `resendVerificationEmail with empty email shows error`() = runTest {
+    // When
+    viewModel.resendVerificationEmail("", "password123")
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val uiState = viewModel.uiState.first()
+    assertEquals("Email and password are required to resend verification", uiState.error)
+    // Should not call repository
+    coVerify(exactly = 0) { mockRepository.resendVerificationEmail(any(), any()) }
+  }
+
+  @Test
+  fun `resendVerificationEmail with empty password shows error`() = runTest {
+    // When
+    viewModel.resendVerificationEmail("test@example.com", "")
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val uiState = viewModel.uiState.first()
+    assertEquals("Email and password are required to resend verification", uiState.error)
+    // Should not call repository
+    coVerify(exactly = 0) { mockRepository.resendVerificationEmail(any(), any()) }
+  }
+
+  @Test
+  fun `resendVerificationEmail with blank credentials shows error`() = runTest {
+    // When
+    viewModel.resendVerificationEmail("   ", "   ")
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val uiState = viewModel.uiState.first()
+    assertEquals("Email and password are required to resend verification", uiState.error)
+    coVerify(exactly = 0) { mockRepository.resendVerificationEmail(any(), any()) }
+  }
+
+  @Test
+  fun `resendVerificationEmail sets loading state`() = runTest {
+    // Given - delay the repository response
+    coEvery { mockRepository.resendVerificationEmail(any(), any()) } coAnswers
+        {
+          kotlinx.coroutines.delay(100)
+          Result.success(Unit)
+        }
+
+    // When
+    viewModel.resendVerificationEmail("test@example.com", "password123")
+
+    // Then - should be loading
+    var uiState = viewModel.uiState.first()
+    assertTrue(uiState.isLoading)
+
+    // After completion
+    testDispatcher.scheduler.advanceUntilIdle()
+    uiState = viewModel.uiState.first()
+    assertFalse(uiState.isLoading)
+  }
+
+  @Test
+  fun `resendVerificationEmail calls repository with correct parameters`() = runTest {
+    // Given
+    coEvery { mockRepository.resendVerificationEmail(any(), any()) } returns Result.success(Unit)
+
+    // When
+    viewModel.resendVerificationEmail("user@example.com", "mypassword")
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    coVerify { mockRepository.resendVerificationEmail("user@example.com", "mypassword") }
   }
 }

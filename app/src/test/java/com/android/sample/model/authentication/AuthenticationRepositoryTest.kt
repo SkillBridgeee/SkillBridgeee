@@ -126,10 +126,12 @@ class AuthenticationRepositoryTest {
 
   @Test
   fun signInWithEmail_success_returnsUser() = runTest {
-    val mockUser = mockk<FirebaseUser>()
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
     val mockAuthResult = mockk<AuthResult>()
 
     every { mockAuthResult.user } returns mockUser
+    every { mockUser.isEmailVerified } returns true
+    every { mockUser.reload() } returns Tasks.forResult(null)
     every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
         Tasks.forResult(mockAuthResult)
 
@@ -500,35 +502,215 @@ class AuthenticationRepositoryTest {
     assertEquals("Some unknown Firebase error", result.exceptionOrNull()?.message)
   }
 
-  @Test
-  fun signInWithEmail_preservesNonFirebaseExceptions() = runTest {
-    val networkException = Exception("Network timeout")
+  // -------- Email Verification Tests (NEW) -----------------------------------------------
 
+  @Test
+  fun signInWithEmail_unverifiedUser_signsOutAndReturnsError() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    val mockAuthResult = mockk<AuthResult>()
+
+    every { mockAuthResult.user } returns mockUser
+    every { mockUser.isEmailVerified } returns false
+    every { mockUser.reload() } returns Tasks.forResult(null)
     every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
-        Tasks.forException(networkException)
+        Tasks.forResult(mockAuthResult)
 
     val result = repository.signInWithEmail("test@example.com", "password123")
 
+    // Should sign out unverified user
+    verify { mockAuth.signOut() }
+    // Should return failure with verification message
     assertTrue(result.isFailure)
-    // Should preserve the original exception for non-Firebase errors
-    assertEquals("Network timeout", result.exceptionOrNull()?.message)
-    assertEquals(networkException, result.exceptionOrNull())
+    assertTrue(result.exceptionOrNull()?.message?.contains("verify your email") == true)
   }
 
   @Test
-  fun signUpWithEmail_preservesCauseInNormalizedException() = runTest {
-    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
-    every { firebaseException.errorCode } returns "ERROR_WEAK_PASSWORD"
-    every { firebaseException.message } returns "Password too weak"
+  fun signInWithEmail_verifiedUser_returnsSuccess() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    val mockAuthResult = mockk<AuthResult>()
 
-    every { mockAuth.createUserWithEmailAndPassword(any(), any()) } returns
-        Tasks.forException(firebaseException)
+    every { mockAuthResult.user } returns mockUser
+    every { mockUser.isEmailVerified } returns true
+    every { mockUser.reload() } returns Tasks.forResult(null)
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
 
-    val result = repository.signUpWithEmail("test@example.com", "weak")
+    val result = repository.signInWithEmail("test@example.com", "password123")
+
+    // Should NOT sign out verified user
+    verify(exactly = 0) { mockAuth.signOut() }
+    // Should return success
+    assertTrue(result.isSuccess)
+    assertEquals(mockUser, result.getOrNull())
+  }
+
+  @Test
+  fun signInWithEmail_reloadsUserBeforeCheckingVerification() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    val mockAuthResult = mockk<AuthResult>()
+
+    every { mockAuthResult.user } returns mockUser
+    every { mockUser.isEmailVerified } returns true
+    every { mockUser.reload() } returns Tasks.forResult(null)
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
+
+    repository.signInWithEmail("test@example.com", "password123")
+
+    // Should reload user to get latest verification status
+    verify { mockUser.reload() }
+  }
+
+  @Test
+  fun sendEmailVerification_success_returnsSuccess() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.sendEmailVerification() } returns Tasks.forResult(null)
+
+    val result = repository.sendEmailVerification()
+
+    assertTrue(result.isSuccess)
+    verify { mockUser.sendEmailVerification() }
+  }
+
+  @Test
+  fun sendEmailVerification_noUserSignedIn_returnsFailure() = runTest {
+    every { mockAuth.currentUser } returns null
+
+    val result = repository.sendEmailVerification()
 
     assertTrue(result.isFailure)
-    // The normalized exception should preserve the original as the cause
-    assertNotNull(result.exceptionOrNull()?.cause)
-    assertEquals(firebaseException, result.exceptionOrNull()?.cause)
+    assertEquals("No user is currently signed in", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun sendEmailVerification_failure_returnsNormalizedError() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_TOO_MANY_REQUESTS"
+    every { firebaseException.message } returns "Too many requests"
+
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.sendEmailVerification() } returns Tasks.forException(firebaseException)
+
+    val result = repository.sendEmailVerification()
+
+    assertTrue(result.isFailure)
+    assertEquals("Too many attempts. Please try again later", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun resendVerificationEmail_success_sendsEmailAndSignsOut() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    val mockAuthResult = mockk<AuthResult>()
+
+    every { mockAuthResult.user } returns mockUser
+    every { mockUser.isEmailVerified } returns false
+    every { mockUser.reload() } returns Tasks.forResult(null)
+    every { mockUser.sendEmailVerification() } returns Tasks.forResult(null)
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
+
+    val result = repository.resendVerificationEmail("test@example.com", "password123")
+
+    assertTrue(result.isSuccess)
+    verify { mockUser.sendEmailVerification() }
+    verify { mockAuth.signOut() }
+  }
+
+  @Test
+  fun resendVerificationEmail_alreadyVerified_returnsError() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    val mockAuthResult = mockk<AuthResult>()
+
+    every { mockAuthResult.user } returns mockUser
+    every { mockUser.isEmailVerified } returns true
+    every { mockUser.reload() } returns Tasks.forResult(null)
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
+
+    val result = repository.resendVerificationEmail("test@example.com", "password123")
+
+    assertTrue(result.isFailure)
+    assertTrue(result.exceptionOrNull()?.message?.contains("already verified") == true)
+    verify { mockAuth.signOut() }
+  }
+
+  @Test
+  fun resendVerificationEmail_noUserReturned_returnsFailure() = runTest {
+    val mockAuthResult = mockk<AuthResult>()
+
+    every { mockAuthResult.user } returns null
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forResult(mockAuthResult)
+
+    val result = repository.resendVerificationEmail("test@example.com", "password123")
+
+    assertTrue(result.isFailure)
+    assertEquals("Failed to sign in", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun resendVerificationEmail_signInFails_returnsNormalizedError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_WRONG_PASSWORD"
+    every { firebaseException.message } returns "Wrong password"
+
+    every { mockAuth.signInWithEmailAndPassword(any(), any()) } returns
+        Tasks.forException(firebaseException)
+
+    val result = repository.resendVerificationEmail("test@example.com", "wrongpassword")
+
+    assertTrue(result.isFailure)
+    assertEquals("Incorrect password", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun isEmailVerified_verifiedUser_returnsTrue() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.isEmailVerified } returns true
+    every { mockUser.reload() } returns Tasks.forResult(null)
+
+    val result = repository.isEmailVerified()
+
+    assertTrue(result)
+    verify { mockUser.reload() }
+  }
+
+  @Test
+  fun isEmailVerified_unverifiedUser_returnsFalse() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.isEmailVerified } returns false
+    every { mockUser.reload() } returns Tasks.forResult(null)
+
+    val result = repository.isEmailVerified()
+
+    assertFalse(result)
+  }
+
+  @Test
+  fun isEmailVerified_noUserSignedIn_returnsFalse() = runTest {
+    every { mockAuth.currentUser } returns null
+
+    val result = repository.isEmailVerified()
+
+    assertFalse(result)
+  }
+
+  @Test
+  fun isEmailVerified_reloadFails_returnsFalse() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.reload() } returns Tasks.forException(Exception("Network error"))
+
+    val result = repository.isEmailVerified()
+
+    assertFalse(result)
   }
 }

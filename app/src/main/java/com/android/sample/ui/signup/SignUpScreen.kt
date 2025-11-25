@@ -63,7 +63,16 @@ object SignUpScreenTestTags {
 fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
   val state by vm.state.collectAsState()
 
+  // Navigate on success (for Google Sign-In users)
   LaunchedEffect(state.submitSuccess) { if (state.submitSuccess) onSubmitSuccess() }
+
+  // Also navigate when verification email is sent
+  LaunchedEffect(state.verificationEmailSent) {
+    if (state.verificationEmailSent) {
+      // Navigate to login screen after verification email is sent
+      onSubmitSuccess()
+    }
+  }
 
   // Clean up if user navigates away without completing signup
   DisposableEffect(Unit) { onDispose { vm.onSignUpAbandoned() } }
@@ -238,14 +247,37 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
             }
           }
 
-          // Display error message if present
-          state.error?.let { errorMessage ->
+          // Display verification email sent message or error message if present
+          if (state.verificationEmailSent) {
             Spacer(Modifier.height(8.dp))
-            Text(
-                text = errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors =
+                    CardDefaults.cardColors(containerColor = TurquoisePrimary.copy(alpha = 0.1f))) {
+                  Column(
+                      modifier = Modifier.padding(16.dp),
+                      verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "✓ Verification Email Sent!",
+                            color = TurquoisePrimary,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold)
+                        Text(
+                            text =
+                                "Please check your inbox at ${state.email} and click the verification link. After verifying, you can log in.",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyMedium)
+                      }
+                }
+          } else {
+            state.error?.let { errorMessage ->
+              Spacer(Modifier.height(8.dp))
+              Text(
+                  text = errorMessage,
+                  color = MaterialTheme.colorScheme.error,
+                  style = MaterialTheme.typography.bodyMedium,
+                  modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
+            }
           }
 
           Spacer(Modifier.height(6.dp))

@@ -48,6 +48,7 @@ data class SignUpUiState(
     val error: String? = null,
     val canSubmit: Boolean = false,
     val submitSuccess: Boolean = false,
+    val verificationEmailSent: Boolean = false, // True when verification email has been sent
     val isGoogleSignUp: Boolean = false, // True if user is already authenticated via Google
     val passwordRequirements: PasswordRequirements = PasswordRequirements()
 )
@@ -250,7 +251,10 @@ class SignUpViewModel(
     }
 
     viewModelScope.launch {
-      _state.update { it.copy(submitting = true, error = null, submitSuccess = false) }
+      _state.update {
+        it.copy(
+            submitting = true, error = null, submitSuccess = false, verificationEmailSent = false)
+      }
       val current = _state.value
 
       // Create request object from current state
@@ -272,10 +276,21 @@ class SignUpViewModel(
       // Update UI state based on result
       when (result) {
         is SignUpResult.Success -> {
-          _state.update { it.copy(submitting = false, submitSuccess = true) }
+          // Success for Google Sign-In users who already have auth
+          _state.update {
+            it.copy(submitting = false, submitSuccess = true, verificationEmailSent = false)
+          }
+        }
+        is SignUpResult.VerificationEmailSent -> {
+          // Verification email sent - show message to check email
+          _state.update {
+            it.copy(submitting = false, submitSuccess = false, verificationEmailSent = true)
+          }
         }
         is SignUpResult.Error -> {
-          _state.update { it.copy(submitting = false, error = result.message) }
+          _state.update {
+            it.copy(submitting = false, error = result.message, verificationEmailSent = false)
+          }
         }
       }
     }

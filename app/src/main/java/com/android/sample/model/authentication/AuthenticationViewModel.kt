@@ -80,8 +80,26 @@ class AuthenticationViewModel(
       val result = repository.signInWithEmail(email, password)
       result.fold(
           onSuccess = { user ->
-            _authResult.value = AuthResult.Success(user)
-            clearLoading()
+            // Check if profile exists for this user
+            val profile =
+                try {
+                  profileRepository.getProfile(user.uid)
+                } catch (_: Exception) {
+                  null
+                }
+
+            if (profile == null) {
+              // No profile exists - this is a verified user logging in for the first time
+              // They need to complete sign up to create their profile
+              val userEmail = user.email ?: email
+              Log.d(TAG, "Verified user needs to complete profile. Email: $userEmail")
+              _authResult.value = AuthResult.RequiresSignUp(userEmail, user)
+              clearLoading()
+            } else {
+              // Profile exists - successful login
+              _authResult.value = AuthResult.Success(user)
+              clearLoading()
+            }
           },
           onFailure = { exception ->
             val errorMessage = exception.message ?: "Sign in failed"
@@ -192,5 +210,32 @@ class AuthenticationViewModel(
   /** Show or hide success message */
   fun showSuccessMessage(show: Boolean) {
     _uiState.update { it.copy(showSuccessMessage = show) }
+  }
+
+  /** Resend verification email to an unverified user */
+  fun resendVerificationEmail(email: String, password: String) {
+    if (email.isBlank() || password.isBlank()) {
+      _uiState.update { it.copy(error = "Email and password are required to resend verification") }
+      return
+    }
+
+    setLoading()
+
+    viewModelScope.launch {
+      val result = repository.resendVerificationEmail(email, password)
+      result.fold(
+          onSuccess = {
+            _uiState.update {
+              it.copy(
+                  isLoading = false,
+                  error = null,
+                  message = "Verification email sent! Please check your inbox.")
+            }
+          },
+          onFailure = { exception ->
+            val errorMessage = exception.message ?: "Failed to resend verification email"
+            setErrorState(errorMessage)
+          })
+    }
   }
 }

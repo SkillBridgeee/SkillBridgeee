@@ -130,26 +130,33 @@ class SignUpUseCaseTest {
     assertEquals("456 Oak Ave", profile.location.name)
   }
 
-  // Tests for new users (regular email/password flow)
+  // Tests for new users (regular email/password flow with email verification)
 
   @Test
-  fun execute_newUser_createsAuthAndProfile() = runTest {
+  fun execute_newUser_createsAuthAndProfileAndSendsVerificationEmail() = runTest {
     every { mockAuthRepository.getCurrentUser() } returns null
 
     val mockUser = mockk<FirebaseUser>()
     every { mockUser.uid } returns "new-user-123"
     coEvery { mockAuthRepository.signUpWithEmail(any(), any()) } returns Result.success(mockUser)
     coEvery { mockProfileRepository.addProfile(any()) } returns Unit
+    coEvery { mockAuthRepository.sendEmailVerification() } returns Result.success(Unit)
+    coEvery { mockAuthRepository.signOut() } returns Unit
 
     val request = createTestRequest()
     val result = signUpUseCase.execute(request)
 
     // Should create auth account
     coVerify(exactly = 1) { mockAuthRepository.signUpWithEmail("john@example.com", "password123!") }
-    // Should create profile
+    // Should create profile BEFORE signing out
     coVerify(exactly = 1) { mockProfileRepository.addProfile(any()) }
-    // Should return success
-    assertTrue(result is SignUpResult.Success)
+    // Should send verification email
+    coVerify(exactly = 1) { mockAuthRepository.sendEmailVerification() }
+    // Should sign out the user
+    coVerify(exactly = 1) { mockAuthRepository.signOut() }
+    // Should return VerificationEmailSent
+    assertTrue(result is SignUpResult.VerificationEmailSent)
+    assertEquals("john@example.com", (result as SignUpResult.VerificationEmailSent).email)
   }
 
   @Test
@@ -169,7 +176,7 @@ class SignUpUseCaseTest {
   }
 
   @Test
-  fun execute_newUser_profileCreationFails_returnsSpecificError() = runTest {
+  fun execute_newUser_profileCreationFails_signsOutAndReturnsError() = runTest {
     every { mockAuthRepository.getCurrentUser() } returns null
 
     val mockUser = mockk<FirebaseUser>()
@@ -177,13 +184,19 @@ class SignUpUseCaseTest {
     coEvery { mockAuthRepository.signUpWithEmail(any(), any()) } returns Result.success(mockUser)
     coEvery { mockProfileRepository.addProfile(any()) } throws
         Exception("Firestore permission denied")
+    coEvery { mockAuthRepository.signOut() } returns Unit
 
     val request = createTestRequest()
     val result = signUpUseCase.execute(request)
 
+    // Should sign out the user when profile creation fails
+    coVerify(exactly = 1) { mockAuthRepository.signOut() }
+    // Should NOT send verification email since profile failed
+    coVerify(exactly = 0) { mockAuthRepository.sendEmailVerification() }
+    // Should return specific error
     assertTrue(result is SignUpResult.Error)
     assertEquals(
-        "Account created but profile failed: Firestore permission denied",
+        "Account created but profile creation failed: Firestore permission denied",
         (result as SignUpResult.Error).message)
   }
 
@@ -454,6 +467,8 @@ class SignUpUseCaseTest {
 
     val capturedProfile = slot<com.android.sample.model.user.Profile>()
     coEvery { mockProfileRepository.addProfile(capture(capturedProfile)) } returns Unit
+    coEvery { mockAuthRepository.sendEmailVerification() } returns Result.success(Unit)
+    coEvery { mockAuthRepository.signOut() } returns Unit
 
     val request =
         createTestRequest(
@@ -467,8 +482,9 @@ class SignUpUseCaseTest {
 
     val result = signUpUseCase.execute(request)
 
-    // Verify result
-    assertTrue(result is SignUpResult.Success)
+    // Verify result - email/password users get VerificationEmailSent, not Success
+    assertTrue(result is SignUpResult.VerificationEmailSent)
+    assertEquals("complete@example.com", (result as SignUpResult.VerificationEmailSent).email)
 
     // Verify auth was called with correct params
     coVerify { mockAuthRepository.signUpWithEmail("complete@example.com", "SecurePass123!") }
@@ -518,5 +534,106 @@ class SignUpUseCaseTest {
     assertEquals("Bachelors", profile.levelOfEducation)
     assertEquals("Mobile developer", profile.description)
     assertEquals("321 Mobile Ave", profile.location.name)
+  }
+
+  // Tests for email verification flow (NEW - covers newly added code)
+
+  @Test
+  fun execute_newUser_completeEmailPasswordSignUpFlow() = runTest {
+    every { mockAuthRepository.getCurrentUser() } returns null
+
+    val mockUser = mockk<FirebaseUser>()
+    every { mockUser.uid } returns "complete-email-user"
+    coEvery {
+      mockAuthRepository.signUpWithEmail("complete@email.com", "SecurePassword123!")
+    } returns Result.success(mockUser)
+
+    val capturedProfile = slot<com.android.sample.model.user.Profile>()
+    coEvery { mockProfileRepository.addProfile(capture(capturedProfile)) } returns Unit
+    coEvery { mockAuthRepository.sendEmailVerification() } returns Result.success(Unit)
+    coEvery { mockAuthRepository.signOut() } returns Unit
+
+    val request =
+        createTestRequest(
+            name = "Complete",
+            surname = "Email",
+            email = "complete@email.com",
+            password = "SecurePassword123!",
+            levelOfEducation = "Masters",
+            description = "Software Engineer",
+            address = "456 Tech Lane")
+
+    val result = signUpUseCase.execute(request)
+
+    // Verify complete flow and order
+    coVerifyOrder {
+      mockAuthRepository.signUpWithEmail("complete@email.com", "SecurePassword123!")
+      mockProfileRepository.addProfile(any())
+      mockAuthRepository.sendEmailVerification()
+      mockAuthRepository.signOut()
+    }
+
+    // Verify profile created with all user data
+    val profile = capturedProfile.captured
+    assertEquals("complete-email-user", profile.userId)
+    assertEquals("Complete Email", profile.name)
+    assertEquals("complete@email.com", profile.email)
+    assertEquals("Masters", profile.levelOfEducation)
+    assertEquals("Software Engineer", profile.description)
+    assertEquals("456 Tech Lane", profile.location.name)
+
+    // Verify correct result returned
+    assertTrue(result is SignUpResult.VerificationEmailSent)
+    assertEquals("complete@email.com", (result as SignUpResult.VerificationEmailSent).email)
+  }
+
+  @Test
+  fun execute_newUser_verificationEmailFailsToSend_signsOutAndReturnsError() = runTest {
+    every { mockAuthRepository.getCurrentUser() } returns null
+
+    val mockUser = mockk<FirebaseUser>()
+    every { mockUser.uid } returns "email-fail-user"
+    coEvery { mockAuthRepository.signUpWithEmail(any(), any()) } returns Result.success(mockUser)
+    coEvery { mockProfileRepository.addProfile(any()) } returns Unit
+    coEvery { mockAuthRepository.sendEmailVerification() } returns
+        Result.failure(Exception("SMTP server unavailable"))
+    coEvery { mockAuthRepository.signOut() } returns Unit
+
+    val request = createTestRequest()
+    val result = signUpUseCase.execute(request)
+
+    // Verify profile and auth were created, then signed out
+    coVerify(exactly = 1) { mockProfileRepository.addProfile(any()) }
+    coVerify(exactly = 1) { mockAuthRepository.signOut() }
+
+    // Should return error with specific message
+    assertTrue(result is SignUpResult.Error)
+    assertEquals(
+        "Account created but verification email failed: SMTP server unavailable",
+        (result as SignUpResult.Error).message)
+  }
+
+  @Test
+  fun execute_newUser_exceptionDuringVerificationFlow_signsOutAndReturnsError() = runTest {
+    every { mockAuthRepository.getCurrentUser() } returns null
+
+    val mockUser = mockk<FirebaseUser>()
+    every { mockUser.uid } returns "exception-user"
+    coEvery { mockAuthRepository.signUpWithEmail(any(), any()) } returns Result.success(mockUser)
+    coEvery { mockProfileRepository.addProfile(any()) } returns Unit
+    coEvery { mockAuthRepository.sendEmailVerification() } throws
+        RuntimeException("Unexpected verification error")
+    coEvery { mockAuthRepository.signOut() } returns Unit
+
+    val request = createTestRequest()
+    val result = signUpUseCase.execute(request)
+
+    // Should sign out the user
+    coVerify(exactly = 1) { mockAuthRepository.signOut() }
+    // Should return error
+    assertTrue(result is SignUpResult.Error)
+    assertEquals(
+        "Failed to complete sign up: Unexpected verification error",
+        (result as SignUpResult.Error).message)
   }
 }
