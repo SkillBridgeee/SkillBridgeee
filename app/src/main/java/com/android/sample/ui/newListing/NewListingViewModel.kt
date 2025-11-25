@@ -417,9 +417,4 @@ class NewListingViewModel(
   fun setLocationSuggestions(list: List<Location>) {
     _uiState.update { it.copy(locationSuggestions = list) }
   }
-
-  /** Resets the UI state to start creating a new listing. */
-  fun startCreateMode() {
-    _uiState.value = ListingUIState()
-  }
 }

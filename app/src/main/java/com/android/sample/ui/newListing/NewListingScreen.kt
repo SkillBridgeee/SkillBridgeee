@@ -223,11 +223,7 @@ private fun ListingLoader(
     listingViewModel: NewListingViewModel,
 ) {
   LaunchedEffect(listingId) {
-    if (listingId == null) {
-      listingViewModel.startCreateMode()
-    } else {
       listingViewModel.load(listingId)
-    }
   }
 }
 
