@@ -29,7 +29,7 @@ class EndToEndTest : AppTest() {
 
   @get:Rule
   val permissionRule: GrantPermissionRule =
-    GrantPermissionRule.grant(Manifest.permission.ACCESS_FINE_LOCATION)
+      GrantPermissionRule.grant(Manifest.permission.ACCESS_FINE_LOCATION)
 
   companion object {
     private const val TEST_PASSWORD = "testPassword123!"

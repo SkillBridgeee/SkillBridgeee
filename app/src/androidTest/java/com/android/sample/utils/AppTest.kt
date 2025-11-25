@@ -29,7 +29,6 @@ import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.components.BookingCardTestTag
 import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.ui.components.BottomNavBar
-import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.components.TopAppBarTestTags
 import com.android.sample.ui.login.SignInScreenTestTags
@@ -38,7 +37,6 @@ import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
-import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpScreenTestTags
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingRepo
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingWorking
@@ -219,9 +217,9 @@ abstract class AppTest() {
   }
 
   fun ComposeTestRule.scrollAndClickOn(
-    clickTag: String,
-    scrollToTag: String? = null,
-    useContentDesc: Boolean = false
+      clickTag: String,
+      scrollToTag: String? = null,
+      useContentDesc: Boolean = false
   ) {
     if (scrollToTag != null) {
       onNodeWithTag(scrollToTag).performScrollTo()
@@ -270,23 +268,23 @@ abstract class AppTest() {
 
     // Choose ListingType
     multipleChooseExposeMenu(
-      NewListingScreenTestTag.LISTING_TYPE_FIELD,
-      "${NewListingScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_${newListing.type.ordinal}")
+        NewListingScreenTestTag.LISTING_TYPE_FIELD,
+        "${NewListingScreenTestTag.LISTING_TYPE_DROPDOWN_ITEM_PREFIX}_${newListing.type.ordinal}")
 
     scrollAndClickOn(
-      clickTag = NewListingScreenTestTag.BUTTON_USE_MY_LOCATION,
-      scrollToTag = NewListingScreenTestTag.INPUT_LOCATION_FIELD)
+        clickTag = NewListingScreenTestTag.BUTTON_USE_MY_LOCATION,
+        scrollToTag = NewListingScreenTestTag.INPUT_LOCATION_FIELD)
     waitForIdle()
 
     // Choose Main subject
     multipleChooseExposeMenu(
-      NewListingScreenTestTag.SUBJECT_FIELD,
-      "${NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_${newListing.skill.mainSubject.ordinal}")
+        NewListingScreenTestTag.SUBJECT_FIELD,
+        "${NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX}_${newListing.skill.mainSubject.ordinal}")
 
     // Choose sub skill // todo hardcoded value for subskill (idk possible to do it other good way)
     multipleChooseExposeMenu(
-      NewListingScreenTestTag.SUB_SKILL_FIELD,
-      "${NewListingScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_0")
+        NewListingScreenTestTag.SUB_SKILL_FIELD,
+        "${NewListingScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_0")
   }
 
   /**
@@ -311,9 +309,9 @@ abstract class AppTest() {
     scrollAndEnterText(SignUpScreenTestTags.NAME, name)
     scrollAndEnterText(SignUpScreenTestTags.SURNAME, surname)
     scrollAndClickOn(
-      clickTag = SignUpScreenTestTags.PIN_CONTENT_DESC,
-      scrollToTag = SignUpScreenTestTags.ADDRESS,
-      useContentDesc = true)
+        clickTag = SignUpScreenTestTags.PIN_CONTENT_DESC,
+        scrollToTag = SignUpScreenTestTags.ADDRESS,
+        useContentDesc = true)
     waitForIdle()
     scrollAndEnterText(SignUpScreenTestTags.LEVEL_OF_EDUCATION, levelOfEducation)
     scrollAndEnterText(SignUpScreenTestTags.DESCRIPTION, description)
