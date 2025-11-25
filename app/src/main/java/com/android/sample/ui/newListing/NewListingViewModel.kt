@@ -202,8 +202,9 @@ class NewListingViewModel(
             is Request -> listingRepository.addRequest(listing)
           }
         }
-        _uiState.update { it.copy(addSuccess = true) }
+        _uiState.update { it.copy(addSuccess = true, isSaving = false) }
       } catch (e: Exception) {
+        _uiState.update { it.copy(isSaving = false) }
         Log.e("NewListingViewModel", "Error saving listing", e)
       }
     }
