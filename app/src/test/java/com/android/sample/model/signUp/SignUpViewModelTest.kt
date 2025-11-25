@@ -410,7 +410,8 @@ class SignUpViewModelTest {
     // For email/password sign-up, expect verificationEmailSent, not submitSuccess
     assertTrue(vm.state.value.verificationEmailSent)
 
-    // Change a field -> validate runs, verificationEmailSent flag remains true (until next submit call resets it)
+    // Change a field -> validate runs, verificationEmailSent flag remains true (until next submit
+    // call resets it)
     vm.onEvent(SignUpEvent.AddressChanged("S2"))
     assertTrue(vm.state.value.verificationEmailSent)
   }
