@@ -45,18 +45,22 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-    // Conversations collection
-    match /conversations/{conversationId} {
-      // Allow all operations for emulator/testing
-      // TODO: Tighten these rules before production deployment
+
+    // ConversationNews collection
+    match /conversations/{convId} {
+        // Allow all operations for emulator/testing
+        // TODO: Tighten these rules before production deployment
+        allow read, write: if true;
+    }
+
+    match /conversations/{convId}/messages/{msgId} {
       allow read, write: if true;
     }
 
-    // Messages collection
-    match /messages/{messageId} {
-      // Allow all operations for emulator/testing
-      // TODO: Tighten these rules before production deployment
-      allow read, write: if true;
+    match /overViewConv/{overviewId} {
+        // Allow all operations for emulator/testing
+        // TODO: Tighten these rules before production deployment
+        allow read, write: if true;
     }
 
     // Default deny all other collections
