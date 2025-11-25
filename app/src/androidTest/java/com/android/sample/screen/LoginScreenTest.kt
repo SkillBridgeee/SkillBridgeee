@@ -405,6 +405,8 @@ class LoginScreenTest {
   }
 
   @Test
+  fun successMessageDisplayedWhenSet() {
+    lateinit var viewModel: AuthenticationViewModel
   fun passwordResetDialog_emailInputAcceptsText() {
     composeRule.setContent {
       val context = LocalContext.current
