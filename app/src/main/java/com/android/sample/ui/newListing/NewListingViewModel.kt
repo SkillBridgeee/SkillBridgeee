@@ -145,6 +145,11 @@ class NewListingViewModel(
     }
   }
 
+  /**
+   * Attempts to add a new listing based on the current UI state. Validates the input fields and, if
+   * valid, creates a new Listing object (either a Proposal or Request) and saves it to the
+   * repository.
+   */
   fun addListing() {
     val state = _uiState.value
 
@@ -155,40 +160,11 @@ class NewListingViewModel(
       return
     }
 
-    val price = state.price.toDoubleOrNull()
-    if (price == null) {
-      Log.e("NewSkillViewModel", "Unexpected invalid price despite isValid")
-      setError()
-      return
-    }
-
-    val specificSkill = state.selectedSubSkill
-    if (specificSkill.isNullOrBlank()) {
-      Log.e("NewSkillViewModel", "Missing selectedSubSkill despite isValid")
-      setError()
-      return
-    }
-
-    val mainSubject = state.subject
-    if (mainSubject == null) {
-      Log.e("NewSkillViewModel", "Missing subject despite isValid")
-      setError()
-      return
-    }
-
-    val listingType = state.listingType
-    if (listingType == null) {
-      Log.e("NewSkillViewModel", "Missing listingType despite isValid")
-      setError()
-      return
-    }
-
-    val selectedLocation = state.selectedLocation
-    if (selectedLocation == null) {
-      Log.e("NewSkillViewModel", "Missing selectedLocation despite isValid")
-      setError()
-      return
-    }
+    val price = state.price.toDouble()
+    val specificSkill = state.selectedSubSkill!!
+    val mainSubject = state.subject!!
+    val listingType = state.listingType!!
+    val selectedLocation = state.selectedLocation!!
 
     val newSkill = Skill(mainSubject = mainSubject, skill = specificSkill)
     val isEditMode = state.listingId != null
@@ -441,6 +417,7 @@ class NewListingViewModel(
     _uiState.update { it.copy(locationSuggestions = list) }
   }
 
+  /** Resets the UI state to start creating a new listing. */
   fun startCreateMode() {
     _uiState.value = ListingUIState()
   }
