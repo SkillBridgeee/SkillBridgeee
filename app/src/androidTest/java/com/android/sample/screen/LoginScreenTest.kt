@@ -359,7 +359,7 @@ class LoginScreenTest {
 
   @Test
   fun successMessageDisplayedWhenSet() {
-    var viewModel: AuthenticationViewModel? = null
+    lateinit var viewModel: AuthenticationViewModel
     composeRule.setContent {
       val context = LocalContext.current
       viewModel = AuthenticationViewModel(context)
