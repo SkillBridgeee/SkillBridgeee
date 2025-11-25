@@ -58,4 +58,20 @@ class ProfileFakeRepoEmpty : ProfileRepository {
   override suspend fun getSkillsForUser(userId: String): List<Skill> {
     TODO("Not yet implemented")
   }
+
+  override suspend fun updateTutorRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    // no-op for empty fake
+  }
+
+  override suspend fun updateStudentRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    // no-op for empty fake
+  }
 }

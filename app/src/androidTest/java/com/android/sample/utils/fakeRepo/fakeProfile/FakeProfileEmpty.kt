@@ -71,4 +71,24 @@ class FakeProfileEmpty : FakeProfileRepo {
   override suspend fun getProfileById(userId: String): Profile? = TODO("Not yet implemented")
 
   override suspend fun getSkillsForUser(userId: String): List<Skill> = TODO("Not yet implemented")
+
+  override suspend fun updateTutorRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    val profile = profiles.find { it.userId == userId } ?: return
+    val updated = profile.copy(tutorRating = RatingInfo(averageRating, totalRatings))
+    updateProfile(userId, updated)
+  }
+
+  override suspend fun updateStudentRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    val profile = profiles.find { it.userId == userId } ?: return
+    val updated = profile.copy(studentRating = RatingInfo(averageRating, totalRatings))
+    updateProfile(userId, updated)
+  }
 }

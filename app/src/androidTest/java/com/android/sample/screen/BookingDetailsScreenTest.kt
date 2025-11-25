@@ -139,6 +139,22 @@ class BookingDetailsScreenTest {
 
         override suspend fun getSkillsForUser(userId: String) =
             emptyList<com.android.sample.model.skill.Skill>()
+
+        override suspend fun updateTutorRatingFields(
+            userId: String,
+            averageRating: Double,
+            totalRatings: Int
+        ) {
+          // no-op
+        }
+
+        override suspend fun updateStudentRatingFields(
+            userId: String,
+            averageRating: Double,
+            totalRatings: Int
+        ) {
+          // no-op
+        }
       }
 
   private fun fakeViewModel() =
@@ -210,6 +226,22 @@ class BookingDetailsScreenTest {
 
         override suspend fun getSkillsForUser(userId: String) =
             emptyList<com.android.sample.model.skill.Skill>()
+
+        override suspend fun updateTutorRatingFields(
+            userId: String,
+            averageRating: Double,
+            totalRatings: Int
+        ) {
+          throw IllegalStateException("test")
+        }
+
+        override suspend fun updateStudentRatingFields(
+            userId: String,
+            averageRating: Double,
+            totalRatings: Int
+        ) {
+          throw IllegalStateException("test")
+        }
       }
 
   private fun completedBookingUiState(): BookingUIState {

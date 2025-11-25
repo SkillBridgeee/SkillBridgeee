@@ -10,12 +10,15 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Proposal
+import com.android.sample.model.map.Location
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.rating.RatingType
 import com.android.sample.model.rating.StarRating
+import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.BookingUIState
 import java.util.UUID
@@ -115,6 +118,55 @@ class BookingsDetailsViewModelTest {
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> =
         store.values.filter { it.ratingType == RatingType.STUDENT && it.toUserId == userId }
+  }
+
+  class CapturingProfileRepo : ProfileRepository {
+
+    var lastTutorUserId: String? = null
+    var lastTutorAverage: Double? = null
+    var lastTutorTotal: Int? = null
+
+    // the method your ViewModel calls when recomputing tutor rating
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      lastTutorUserId = userId
+      lastTutorAverage = averageRating
+      lastTutorTotal = totalRatings
+    }
+
+    // --- required, but unused in this test: simple stubs ---
+
+    override fun getNewUid(): String = "uid"
+
+    override suspend fun getProfile(userId: String): Profile? = null
+
+    override suspend fun addProfile(profile: Profile) {}
+
+    override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+    override suspend fun deleteProfile(userId: String) {}
+
+    override suspend fun getAllProfiles(): List<Profile> = emptyList()
+
+    override suspend fun searchProfilesByLocation(
+        location: Location,
+        radiusKm: Double
+    ): List<Profile> = emptyList()
+
+    override suspend fun getProfileById(userId: String): Profile? = null
+
+    override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
+
+    override suspend fun updateStudentRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      // not needed for this test
+    }
   }
 
   // Replace the previous factory with one that returns the concrete fake so setup can still call
@@ -454,5 +506,49 @@ class BookingsDetailsViewModelTest {
     testDispatcher.scheduler.advanceUntilIdle()
 
     assert(fakeRatingRepo.addedRatings.isEmpty())
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Test
+  fun submitStudentRatings_updatesTutorProfileAggregate() = runTest {
+    val ratingRepo = FakeRatingRepositoryImpl()
+    val profileRepo = CapturingProfileRepo()
+
+    // booking where student-1 rates tutor-1
+    val booking =
+        Booking(
+            bookingId = "b-agg",
+            associatedListingId = "l-agg",
+            listingCreatorId = "tutor-1",
+            bookerId = "student-1",
+            status = BookingStatus.COMPLETED,
+        )
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = bookingRepoWorking,
+            listingRepository = listingRepoWorking,
+            profileRepository = profileRepo,
+            ratingRepository = ratingRepo,
+        )
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(),
+            creatorProfile = Profile(),
+            loadError = false,
+        ))
+
+    // student gives the tutor 4 stars (listing stars don’t matter here)
+    vm.submitStudentRatings(tutorStars = 4, listingStars = 5)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // since this is the FIRST tutor rating:
+    //   average should be 4.0
+    //   totalRatings should be 1
+    assertEquals("tutor-1", profileRepo.lastTutorUserId)
+    assertEquals(4.0, profileRepo.lastTutorAverage!!, 0.0001)
+    assertEquals(1, profileRepo.lastTutorTotal)
   }
 }

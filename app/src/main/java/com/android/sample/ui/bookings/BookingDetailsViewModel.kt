@@ -19,6 +19,7 @@ import com.android.sample.model.rating.StarRating
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.components.RatingAggregationHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -180,6 +181,10 @@ class BookingDetailsViewModel(
 
         ratingRepository.addRating(tutorRating)
         ratingRepository.addRating(listingRating)
+        RatingAggregationHelper.recomputeTutorAggregateRating(
+            tutorUserId = tutorUserId,
+            ratingRepo = ratingRepository,
+            profileRepo = profileRepository)
 
         _bookingUiState.value = bookingUiState.value.copy(ratingSubmitted = true)
       } catch (e: Exception) {
