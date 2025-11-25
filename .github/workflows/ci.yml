@@ -446,6 +446,21 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Download Unit Test Coverage
+        uses: actions/download-artifact@v4
+        with:
+            name: unit-test-coverage
+            path: app/build/outputs/unit_test_code_coverage/
+
+      - name: Download Instrumentation Test Coverage
+        uses: actions/download-artifact@v4
+        with:
+            name: instrumentation-coverage
+            path: app/build/outputs/code_coverage/
+
+      - name: Compile source code for Jacoco
+        run: ./gradlew compileDebugKotlin --parallel --build-cache
+
       - name: Generate Coverage Report
         run: ./gradlew jacocoTestReport --stacktrace --build-cache
 
