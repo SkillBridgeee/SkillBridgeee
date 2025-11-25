@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
@@ -278,5 +279,85 @@ class SignUpScreenTest {
 
     // Verify form validation failed via VM (button enablement is derived from it)
     assertTrue("Weak password should prevent form submission", !vm.state.value.canSubmit)
+  }
+
+  @Test
+  fun verification_email_sent_message_displays() {
+    val vm = SignUpViewModel()
+    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
+    composeRule.waitForIdle()
+
+    waitForTag(composeRule, SignUpScreenTestTags.NAME)
+
+    val testEmail = "verify${System.currentTimeMillis()}@test.com"
+
+    composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Test")
+    composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("User")
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .performTextInput("Street 1")
+    composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
+    composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(testEmail)
+    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("ValidPass123!")
+
+    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
+    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
+
+    // Wait for verification email sent state
+    composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
+      vm.state.value.verificationEmailSent || vm.state.value.error != null
+    }
+
+    // Verify that verification email sent message is displayed
+    assertTrue("Verification email should be sent", vm.state.value.verificationEmailSent)
+
+    // Verify the success message text is displayed
+    composeRule.onNodeWithText("✓ Verification Email Sent!", useUnmergedTree = true).assertExists()
+    composeRule
+        .onNodeWithText(
+            "Please check your inbox at $testEmail and click the verification link. After verifying, you can log in.",
+            substring = true,
+            useUnmergedTree = true)
+        .assertExists()
+  }
+
+  @Test
+  fun error_message_displays_on_signup_failure() {
+    // Use a unique email for this test
+    val duplicateEmail = "error${System.currentTimeMillis()}@test.com"
+
+    // First, create a user programmatically to cause duplicate email error
+    runBlocking {
+      createUserProgrammatically(auth, duplicateEmail, "FirstPass123!")
+      composeRule.waitUntil(10_000) { auth.currentUser != null }
+      auth.signOut()
+    }
+    composeRule.waitUntil(3_000) { auth.currentUser == null }
+
+    // Try to sign up with duplicate email
+    val vm = SignUpViewModel()
+    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
+    composeRule.waitForIdle()
+
+    waitForTag(composeRule, SignUpScreenTestTags.NAME)
+
+    composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("John")
+    composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Doe")
+    composeRule
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .performTextInput("Street 1")
+    composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
+    composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(duplicateEmail)
+    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("SecondPass123!")
+
+    composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
+    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
+
+    // Wait for error state
+    composeRule.waitUntil(DEFAULT_TIMEOUT_MS) { vm.state.value.error != null }
+
+    // Verify error message is displayed on screen
+    val errorMsg = vm.state.value.error!!
+    composeRule.onNodeWithText(errorMsg, useUnmergedTree = true).assertExists()
   }
 }
