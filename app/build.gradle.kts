@@ -48,7 +48,9 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.android.sample.TestRunner"
+        // todo delete ça si ça marche
+        //testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -170,12 +172,16 @@ fun DependencyHandlerScope.globalTestImplementation(dep: Any) {
     androidTestImplementation(dep)
     testImplementation(dep)
 }
+val hamcrestVersion = "2.2"
+val turbineVersion = "1.0.0"
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(platform(libs.compose.bom))
+    implementation(libs.androidx.junit.ktx)
     testImplementation(libs.junit)
     globalTestImplementation(libs.androidx.junit)
     globalTestImplementation(libs.androidx.espresso.core)
@@ -218,6 +224,9 @@ dependencies {
     androidTestImplementation("androidx.test:rules:1.5.0")
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
     androidTestImplementation(libs.androidx.navigation.testing)
+
+    androidTestImplementation("org.hamcrest:hamcrest:$hamcrestVersion")
+    testImplementation("app.cash.turbine:turbine:$turbineVersion")
 
     // Google Play Services for Google Sign-In
     implementation(libs.play.services.auth)
