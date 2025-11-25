@@ -1,7 +1,6 @@
 package com.android.sample.endToEnd
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.MainActivity
@@ -50,12 +49,14 @@ class EndToEndTest : AppTest() {
         email = TEST_EMAIL,
         password = TEST_PASSWORD)
 
-    composeTestRule.waitUntil {
-      composeTestRule
-          .onAllNodesWithTag(HomeScreenTestTags.WELCOME_SECTION)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    composeTestRule.waitForIdle()
+
+    //    composeTestRule.waitUntil {
+    //      composeTestRule
+    //          .onAllNodesWithTag(HomeScreenTestTags.WELCOME_SECTION)
+    //          .fetchSemanticsNodes()
+    //          .isNotEmpty()
+    //    }
     // Verify navigation to home screen
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
 

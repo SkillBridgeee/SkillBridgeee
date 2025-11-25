@@ -12,6 +12,7 @@ import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -211,6 +212,14 @@ abstract class AppTest() {
     onNodeWithTag(testTag = testTag).performClick()
   }
 
+  fun ComposeTestRule.scrollAndEnterText(testTag: String, text: String) {
+    onNodeWithTag(testTag).performScrollTo().performClick().performTextInput(text)
+  }
+
+  fun ComposeTestRule.scrollAndClickOn(testTag: String) {
+    onNodeWithTag(testTag = testTag).performScrollTo().performClick()
+  }
+
   fun ComposeTestRule.multipleChooseExposeMenu(
       multipleTestTag: String,
       differentChoiceTestTag: String
@@ -229,7 +238,9 @@ abstract class AppTest() {
       selectText: String,
       inputLocationTestTag: String
   ) {
-    onNodeWithTag(inputLocationTestTag, useUnmergedTree = true).performTextInput(enterText)
+    onNodeWithTag(inputLocationTestTag, useUnmergedTree = true)
+        .performScrollTo()
+        .performTextInput(enterText)
   }
 
   // HelperMethode for Testing NewListing
@@ -278,23 +289,23 @@ abstract class AppTest() {
       password: String
   ) {
     // Navigate to signup screen from login
-    onNodeWithTag(SignInScreenTestTags.SIGNUP_LINK).performClick()
+    clickOn(SignInScreenTestTags.SIGNUP_LINK)
     waitForIdle()
 
     // Fill signup form
-    enterText(SignUpScreenTestTags.NAME, name)
-    enterText(SignUpScreenTestTags.SURNAME, surname)
+    scrollAndEnterText(SignUpScreenTestTags.NAME, name)
+    scrollAndEnterText(SignUpScreenTestTags.SURNAME, surname)
     enterAndChooseLocation(
         enterText = address,
         selectText = address,
         inputLocationTestTag = LocationInputFieldTestTags.INPUT_LOCATION)
-    enterText(SignUpScreenTestTags.LEVEL_OF_EDUCATION, levelOfEducation)
-    enterText(SignUpScreenTestTags.DESCRIPTION, description)
-    enterText(SignUpScreenTestTags.EMAIL, email)
-    enterText(SignUpScreenTestTags.PASSWORD, password)
+    scrollAndEnterText(SignUpScreenTestTags.LEVEL_OF_EDUCATION, levelOfEducation)
+    scrollAndEnterText(SignUpScreenTestTags.DESCRIPTION, description)
+    scrollAndEnterText(SignUpScreenTestTags.EMAIL, email)
+    scrollAndEnterText(SignUpScreenTestTags.PASSWORD, password)
 
     // Submit form
-    clickOn(SignUpScreenTestTags.SIGN_UP)
+    scrollAndClickOn(SignUpScreenTestTags.SIGN_UP)
     waitForIdle()
   }
 
