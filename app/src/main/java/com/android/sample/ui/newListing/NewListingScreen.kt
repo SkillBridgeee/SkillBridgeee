@@ -65,7 +65,6 @@ fun NewListingScreen(
     profileId: String,
     listingId: String?,
     navController: NavController,
-    onNavigateBack: () -> Unit
 ) {
   val listingUIState by skillViewModel.uiState.collectAsState()
   val isEditMode = listingId != null
@@ -104,36 +103,31 @@ fun NewListingScreen(
       floatingActionButtonPosition = FabPosition.Center) { pd ->
         ListingContent(
             pd = pd,
-            profileId = profileId,
             listingId = listingId,
             listingViewModel = skillViewModel,
             titleText = titleText)
       }
 }
 
+/**
+ * The content of the New Listing screen, including all input fields and dropdowns.
+ *
+ * @param pd The padding values provided by the Scaffold.
+ * @param listingId The ID of the listing being edited, or null if creating a new listing.
+ * @param listingViewModel The ViewModel managing the state of the listing.
+ * @param titleText The title text to display at the top of the screen.
+ */
 @Composable
 fun ListingContent(
     pd: PaddingValues,
-    profileId: String,
     listingId: String?,
     listingViewModel: NewListingViewModel,
     titleText: String
 ) {
   val listingUIState by listingViewModel.uiState.collectAsState()
 
-  LaunchedEffect(profileId, listingId) { listingViewModel.load(listingId) }
+  ListingLoader(listingId = listingId, listingViewModel = listingViewModel)
 
-  val context = LocalContext.current
-  val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
-
-  val permissionLauncher =
-      rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) {
-          listingViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
-        } else {
-          listingViewModel.onLocationPermissionDenied()
-        }
-      }
   val scrollState = rememberScrollState()
 
   Column(
@@ -170,56 +164,27 @@ fun ListingContent(
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = listingUIState.title,
-                    onValueChange = listingViewModel::setTitle,
-                    label = { Text("Course Title") },
-                    placeholder = { Text("Title") },
-                    isError = listingUIState.invalidTitleMsg != null,
-                    supportingText = {
-                      listingUIState.invalidTitleMsg?.let {
-                        Text(
-                            text = it,
-                            modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_TITLE_MSG))
-                      }
-                    },
-                    modifier =
-                        Modifier.fillMaxWidth().testTag(NewListingScreenTestTag.INPUT_COURSE_TITLE))
+                TitleField(
+                    title = listingUIState.title,
+                    invalidTitleMsg = listingUIState.invalidTitleMsg,
+                    onTitleChange = listingViewModel::setTitle,
+                )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = listingUIState.description,
-                    onValueChange = listingViewModel::setDescription,
-                    label = { Text("Description") },
-                    placeholder = { Text("Description of the skill") },
-                    isError = listingUIState.invalidDescMsg != null,
-                    supportingText = {
-                      listingUIState.invalidDescMsg?.let {
-                        Text(
-                            text = it,
-                            modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_DESC_MSG))
-                      }
-                    },
-                    modifier =
-                        Modifier.fillMaxWidth().testTag(NewListingScreenTestTag.INPUT_DESCRIPTION))
+                DescriptionField(
+                    description = listingUIState.description,
+                    invalidDescMsg = listingUIState.invalidDescMsg,
+                    onDescriptionChange = listingViewModel::setDescription,
+                )
 
                 Spacer(Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = listingUIState.price,
-                    onValueChange = listingViewModel::setPrice,
-                    label = { Text("Hourly Rate") },
-                    placeholder = { Text("Price per Hour") },
-                    isError = listingUIState.invalidPriceMsg != null,
-                    supportingText = {
-                      listingUIState.invalidPriceMsg?.let {
-                        Text(
-                            text = it,
-                            modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_PRICE_MSG))
-                      }
-                    },
-                    modifier = Modifier.fillMaxWidth().testTag(NewListingScreenTestTag.INPUT_PRICE))
+                PriceField(
+                    price = listingUIState.price,
+                    invalidPriceMsg = listingUIState.invalidPriceMsg,
+                    onPriceChange = listingViewModel::setPrice,
+                )
 
                 Spacer(Modifier.height(8.dp))
 
@@ -238,48 +203,171 @@ fun ListingContent(
                       errorMsg = listingUIState.invalidSubSkillMsg)
                 }
 
-                // Location input with test tags
-                Column {
-                  // Tag the entire field container
-                  Box(modifier = Modifier.testTag(NewListingScreenTestTag.INPUT_LOCATION_FIELD)) {
-                    LocationInputField(
-                        locationQuery = listingUIState.locationQuery,
-                        locationSuggestions = listingUIState.locationSuggestions,
-                        onLocationQueryChange = listingViewModel::setLocationQuery,
-                        errorMsg = listingUIState.invalidLocationMsg,
-                        onLocationSelected = { location ->
-                          listingViewModel.setLocationQuery(location.name)
-                          listingViewModel.setLocation(location)
-                        })
-
-                    IconButton(
-                        onClick = {
-                          val granted =
-                              ContextCompat.checkSelfPermission(context, permission) ==
-                                  PackageManager.PERMISSION_GRANTED
-
-                          if (granted) {
-                            listingViewModel.fetchLocationFromGps(
-                                GpsLocationProvider(context), context)
-                          } else {
-                            permissionLauncher.launch(permission)
-                          }
-                        },
-                        modifier =
-                            Modifier.align(Alignment.CenterEnd)
-                                .offset(y = (-5).dp)
-                                .size(36.dp)
-                                .testTag(NewListingScreenTestTag.BUTTON_USE_MY_LOCATION)) {
-                          Icon(
-                              imageVector = Icons.Default.MyLocation,
-                              contentDescription = "Use my location",
-                              tint = MaterialTheme.colorScheme.primary)
-                        }
-                  }
-                }
+                LocationSection(listingViewModel = listingViewModel)
               }
             }
       }
+}
+
+/**
+ * Loads the listing data if editing an existing listing, or initializes for creation if no ID is
+ * provided.
+ *
+ * @param listingId The ID of the listing to load, or null to create a new listing.
+ * @param listingViewModel The ViewModel responsible for managing the listing state.
+ */
+@Composable
+private fun ListingLoader(
+    listingId: String?,
+    listingViewModel: NewListingViewModel,
+) {
+  LaunchedEffect(listingId) { listingViewModel.load(listingId) }
+}
+
+/**
+ * Composable function for the Title input field in the New Listing screen.
+ *
+ * @param title The current title value.
+ * @param invalidTitleMsg An optional error message to display if the title is invalid.
+ * @param onTitleChange Callback function to handle title changes.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TitleField(
+    title: String,
+    invalidTitleMsg: String?,
+    onTitleChange: (String) -> Unit,
+) {
+  OutlinedTextField(
+      value = title,
+      onValueChange = onTitleChange,
+      label = { Text("Course Title") },
+      placeholder = { Text("Title") },
+      isError = invalidTitleMsg != null,
+      supportingText = {
+        invalidTitleMsg?.let {
+          Text(text = it, modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_TITLE_MSG))
+        }
+      },
+      modifier = Modifier.fillMaxWidth().testTag(NewListingScreenTestTag.INPUT_COURSE_TITLE))
+}
+
+/**
+ * Composable function for the Description input field in the New Listing screen.
+ *
+ * @param description The current description value.
+ * @param invalidDescMsg An optional error message to display if the description is invalid.
+ * @param onDescriptionChange Callback function to handle description changes.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DescriptionField(
+    description: String,
+    invalidDescMsg: String?,
+    onDescriptionChange: (String) -> Unit,
+) {
+  OutlinedTextField(
+      value = description,
+      onValueChange = onDescriptionChange,
+      label = { Text("Description") },
+      placeholder = { Text("Description of the skill") },
+      isError = invalidDescMsg != null,
+      supportingText = {
+        invalidDescMsg?.let {
+          Text(text = it, modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_DESC_MSG))
+        }
+      },
+      modifier = Modifier.fillMaxWidth().testTag(NewListingScreenTestTag.INPUT_DESCRIPTION))
+}
+
+/**
+ * Composable function for the Price input field in the New Listing screen.
+ *
+ * @param price The current price value.
+ * @param invalidPriceMsg An optional error message to display if the price is invalid.
+ * @param onPriceChange Callback function to handle price changes.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PriceField(
+    price: String,
+    invalidPriceMsg: String?,
+    onPriceChange: (String) -> Unit,
+) {
+  OutlinedTextField(
+      value = price,
+      onValueChange = onPriceChange,
+      label = { Text("Hourly Rate") },
+      placeholder = { Text("Price per Hour") },
+      isError = invalidPriceMsg != null,
+      supportingText = {
+        invalidPriceMsg?.let {
+          Text(text = it, modifier = Modifier.testTag(NewListingScreenTestTag.INVALID_PRICE_MSG))
+        }
+      },
+      modifier = Modifier.fillMaxWidth().testTag(NewListingScreenTestTag.INPUT_PRICE))
+}
+
+/**
+ * Composable function for the Location section in the New Listing screen. Includes a location input
+ * field and a button to use the device's current location.
+ *
+ * @param listingViewModel The ViewModel managing the state of the listing.
+ */
+@Composable
+private fun LocationSection(
+    listingViewModel: NewListingViewModel,
+) {
+  val listingUIState by listingViewModel.uiState.collectAsState()
+
+  val context = LocalContext.current
+  val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
+
+  val permissionLauncher =
+      rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+          listingViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
+        } else {
+          listingViewModel.onLocationPermissionDenied()
+        }
+      }
+
+  Column {
+    Box(modifier = Modifier.testTag(NewListingScreenTestTag.INPUT_LOCATION_FIELD)) {
+      LocationInputField(
+          locationQuery = listingUIState.locationQuery,
+          locationSuggestions = listingUIState.locationSuggestions,
+          onLocationQueryChange = listingViewModel::setLocationQuery,
+          errorMsg = listingUIState.invalidLocationMsg,
+          onLocationSelected = { location ->
+            listingViewModel.setLocationQuery(location.name)
+            listingViewModel.setLocation(location)
+          })
+
+      IconButton(
+          onClick = {
+            val granted =
+                ContextCompat.checkSelfPermission(context, permission) ==
+                    PackageManager.PERMISSION_GRANTED
+
+            if (granted) {
+              listingViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
+            } else {
+              permissionLauncher.launch(permission)
+            }
+          },
+          modifier =
+              Modifier.align(Alignment.CenterEnd)
+                  .offset(y = (-5).dp)
+                  .size(36.dp)
+                  .testTag(NewListingScreenTestTag.BUTTON_USE_MY_LOCATION)) {
+            Icon(
+                imageVector = Icons.Default.MyLocation,
+                contentDescription = "Use my location",
+                tint = MaterialTheme.colorScheme.primary)
+          }
+    }
+  }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

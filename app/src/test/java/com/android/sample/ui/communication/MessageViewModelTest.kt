@@ -1,6 +1,7 @@
 package com.android.sample.ui.communication
 
 import com.android.sample.model.authentication.FirebaseTestRule
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.Conversation
 import com.android.sample.model.communication.Message
 import com.android.sample.model.communication.MessageRepository
@@ -72,7 +73,7 @@ class MessageViewModelTest {
   @Before
   fun setup() {
     Dispatchers.setMain(testDispatcher)
-    com.android.sample.model.authentication.UserSessionManager.setCurrentUserId(currentUserId)
+    UserSessionManager.setCurrentUserId(currentUserId)
     fakeRepository = FakeMessageRepository()
     viewModel =
         MessageViewModel(
@@ -84,7 +85,7 @@ class MessageViewModelTest {
   @After
   fun tearDown() {
     Dispatchers.resetMain()
-    com.android.sample.model.authentication.UserSessionManager.clearSession()
+    UserSessionManager.clearSession()
   }
 
   @Test

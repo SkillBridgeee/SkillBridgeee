@@ -71,36 +71,9 @@ fun TopAppBar(navController: NavController) {
       title = { Text(text = title, fontWeight = FontWeight.SemiBold) },
       navigationIcon = {
         if (canNavigateBack) {
-          IconButton(
-              onClick = {
-                // If current route is one of the 4 main pages -> go to Home (resetting the stack)
-                if (RouteStackManager.isMainRoute(currentRoute)) {
-                  // If already home -> just navigateUp (or exit)
-                  if (currentRoute == NavRoutes.HOME) {
-                    navController.navigateUp()
-                  } else {
-                    RouteStackManager.clear()
-                    RouteStackManager.addRoute(NavRoutes.HOME)
-                    navController.navigate(NavRoutes.HOME) {
-                      // pop everything above home and go to home
-                      popUpTo(NavRoutes.HOME) { inclusive = false }
-                      launchSingleTop = true
-                      restoreState = true
-                    }
-                  }
-                } else {
-                  // Secondary page -> pop custom stack and navigate to previous route
-                  val previous = RouteStackManager.popAndGetPrevious()
-                  if (previous != null) {
-                    navController.navigate(previous) { launchSingleTop = true }
-                  } else {
-                    // fallback
-                    navController.navigateUp()
-                  }
-                }
-              }) {
-                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-              }
+          IconButton(onClick = { navController.popBackStack() }) {
+            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+          }
         }
       })
 }
