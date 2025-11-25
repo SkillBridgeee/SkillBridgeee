@@ -105,6 +105,22 @@ class MyProfileScreenTest {
 
     override suspend fun getSkillsForUser(userId: String): List<Skill> =
         skillsByUser[userId] ?: emptyList()
+
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      // no-op
+    }
+
+    override suspend fun updateStudentRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      // no-op
+    }
   }
 
   // Minimal Fake ListingRepository to avoid initializing real Firebase/Firestore in tests

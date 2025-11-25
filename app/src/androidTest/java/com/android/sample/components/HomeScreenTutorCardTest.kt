@@ -74,6 +74,20 @@ class HomeScreenTutorCardTest {
               if (userId == sampleProfile.userId) sampleProfile else null
 
           override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
+
+          override suspend fun updateTutorRatingFields(
+              userId: String,
+              averageRating: Double,
+              totalRatings: Int
+          ) {}
+
+          override suspend fun updateStudentRatingFields(
+              userId: String,
+              averageRating: Double,
+              totalRatings: Int
+          ) {
+            TODO("Not yet implemented")
+          }
         }
 
     // Full fake ListingRepository implementation

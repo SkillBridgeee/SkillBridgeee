@@ -54,15 +54,15 @@ class ProfileFakeRepoWorking : ProfileRepository {
   override suspend fun getProfile(userId: String): Profile? = profiles[userId]
 
   override suspend fun addProfile(profile: Profile) {
-    // immutable mock → pas de persistance
+    /* no-op */
   }
 
   override suspend fun updateProfile(userId: String, profile: Profile) {
-    // immutable mock → pas de persistance
+    /* no-op */
   }
 
   override suspend fun deleteProfile(userId: String) {
-    // immutable mock → pas de persistance
+    /* no-op */
   }
 
   override suspend fun getAllProfiles(): List<Profile> = profiles.values.toList()
@@ -75,4 +75,20 @@ class ProfileFakeRepoWorking : ProfileRepository {
   override suspend fun getProfileById(userId: String): Profile? = profiles[userId]
 
   override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
+
+  override suspend fun updateTutorRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    /* no-op */
+  }
+
+  override suspend fun updateStudentRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    /* no-op */
+  }
 }

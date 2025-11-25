@@ -63,4 +63,20 @@ class ProfileFakeRepoError : ProfileRepository {
   override suspend fun getSkillsForUser(userId: String): List<Skill> {
     throw RuntimeException("Error fetching skills for userId: $userId")
   }
+
+  override suspend fun updateTutorRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    throw IllegalStateException("Error updating tutor rating fields for userId: $userId")
+  }
+
+  override suspend fun updateStudentRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {
+    throw IllegalStateException("Error updating student rating fields for userId: $userId")
+  }
 }
