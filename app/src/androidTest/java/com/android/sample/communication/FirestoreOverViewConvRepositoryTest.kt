@@ -31,6 +31,7 @@ class FirestoreOverViewConvRepositoryTest {
   fun testAddAndGetOverview() = runTest {
     val overview =
         OverViewConversation(
+            overViewId = "id1",
             linkedConvId = "conv1",
             convName = "Conversation 1",
             overViewOwnerId = userA,
@@ -53,6 +54,7 @@ class FirestoreOverViewConvRepositoryTest {
     val convId = "conv5"
     val overview =
         OverViewConversation(
+            overViewId = "id5",
             linkedConvId = convId,
             convName = "Conversation 5",
             overViewOwnerId = userA,
@@ -74,6 +76,7 @@ class FirestoreOverViewConvRepositoryTest {
     val convId = "conv6"
     val overview =
         OverViewConversation(
+            overViewId = "id6",
             linkedConvId = convId,
             convName = "Conversation 6",
             overViewOwnerId = userA,
@@ -95,6 +98,7 @@ class FirestoreOverViewConvRepositoryTest {
     val convId = "conv7"
     val overview =
         OverViewConversation(
+            overViewId = "id7",
             linkedConvId = convId,
             convName = "Conversation 7",
             overViewOwnerId = userA,
@@ -107,4 +111,45 @@ class FirestoreOverViewConvRepositoryTest {
     val emitted = flow.first { it -> it.isNotEmpty() && it.any { it.linkedConvId == convId } }
     assertTrue(emitted.any { it.linkedConvId == convId })
   }
+
+  // ----------------------------------------------------------
+  // TEST 5 : getNewUid() generates a valid and unique UUID
+  // ----------------------------------------------------------
+  @Test
+  fun testGetNewUid() {
+    val id1 = repo.getNewUid()
+    val id2 = repo.getNewUid()
+
+    assertTrue(id1.isNotBlank())
+    assertTrue(id2.isNotBlank())
+    assertNotSame("IDs should be unique", id1, id2)
+  }
+
+  // ----------------------------------------------------------
+  // TEST 6 : addOverViewConvUser - require failure
+  // ----------------------------------------------------------
+  @Test(expected = IllegalArgumentException::class)
+  fun testAddOverviewRequireFailsOnBlankId() = runTest {
+    val overview =
+        OverViewConversation(
+            overViewId = "",
+            linkedConvId = "convX",
+            convName = "Invalid Overview",
+            overViewOwnerId = userA,
+            otherPersonId = userB)
+
+    repo.addOverViewConvUser(overview)
+  }
+
+  // ----------------------------------------------------------
+  // TEST 7 : deleteOverViewConvUser - require failure
+  // ----------------------------------------------------------
+  @Test(expected = IllegalArgumentException::class)
+  fun testDeleteOverviewRequireFailsOnBlankConvId() = runTest { repo.deleteOverViewConvUser("") }
+
+  // ----------------------------------------------------------
+  // TEST 8 : getOverViewConvUser - require failure
+  // ----------------------------------------------------------
+  @Test(expected = IllegalArgumentException::class)
+  fun testGetOverviewRequireFailsOnBlankUserId() = runTest { repo.getOverViewConvUser("") }
 }

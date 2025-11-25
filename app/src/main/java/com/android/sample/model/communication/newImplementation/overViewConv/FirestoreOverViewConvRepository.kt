@@ -37,8 +37,8 @@ class FirestoreOverViewConvRepository(
    * @param overView the overview model to store.
    */
   override suspend fun addOverViewConvUser(overView: OverViewConversation) {
-    val docId = overView.overViewId.ifBlank { getNewUid() }
-    overViewRef.document(docId).set(overView).await()
+    require(overView.overViewId.isNotBlank()) { "OverView ID cannot be blank" }
+    overViewRef.document(overView.overViewId).set(overView).await()
   }
 
   /**
@@ -48,11 +48,19 @@ class FirestoreOverViewConvRepository(
    * @param convId the linked conversation ID.
    */
   override suspend fun deleteOverViewConvUser(convId: String) {
+    require(convId.isNotBlank()) { "Conv ID cannot be blank" }
+
     val querySnapshot = overViewRef.whereEqualTo("linkedConvId", convId).get().await()
 
+    if (querySnapshot.isEmpty) return
+
+    val batch = overViewRef.firestore.batch()
+
     for (doc in querySnapshot.documents) {
-      overViewRef.document(doc.id).delete().await()
+      batch.delete(doc.reference)
     }
+
+    batch.commit().await()
   }
 
   /**
