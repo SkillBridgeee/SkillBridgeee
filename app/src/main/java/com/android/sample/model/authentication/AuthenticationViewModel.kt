@@ -307,9 +307,9 @@ class AuthenticationViewModel(
   /** Start the 60-second cooldown timer for password reset */
   private fun startPasswordResetCooldown() {
     viewModelScope.launch {
-      for (i in 59 downTo 0) {
+      for (i in 60 downTo 1) {
         kotlinx.coroutines.delay(1000)
-        _uiState.update { it.copy(passwordResetCooldownSeconds = i) }
+        _uiState.update { it.copy(passwordResetCooldownSeconds = i - 1) }
       }
     }
   }

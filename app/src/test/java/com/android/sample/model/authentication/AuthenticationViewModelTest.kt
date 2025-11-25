@@ -925,7 +925,7 @@ class AuthenticationViewModelTest {
 
     // When
     viewModel.sendPasswordReset()
-    testDispatcher.scheduler.advanceUntilIdle()
+    testDispatcher.scheduler.runCurrent()
 
     // Then
     val state = viewModel.uiState.first()
@@ -993,7 +993,7 @@ class AuthenticationViewModelTest {
 
     // When
     viewModel.sendPasswordReset()
-    testDispatcher.scheduler.advanceUntilIdle()
+    testDispatcher.scheduler.runCurrent()
 
     // Check initial cooldown
     var state = viewModel.uiState.first()
@@ -1024,7 +1024,7 @@ class AuthenticationViewModelTest {
     viewModel.updateResetEmail("test@example.com")
     coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
     viewModel.sendPasswordReset()
-    testDispatcher.scheduler.advanceUntilIdle()
+    testDispatcher.scheduler.runCurrent()
 
     // Then - verify cooldown is active
     var state = viewModel.uiState.first()
@@ -1033,7 +1033,7 @@ class AuthenticationViewModelTest {
 
     // When - try to send again (button would be disabled in UI)
     viewModel.sendPasswordReset()
-    testDispatcher.scheduler.advanceUntilIdle()
+    testDispatcher.scheduler.runCurrent()
 
     // Then - still in cooldown, verify repository wasn't called again
     // (In real UI, button would be disabled, preventing the call)
@@ -1073,7 +1073,7 @@ class AuthenticationViewModelTest {
     viewModel.updateResetEmail("test@example.com")
     coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
     viewModel.sendPasswordReset()
-    testDispatcher.scheduler.advanceUntilIdle()
+    testDispatcher.scheduler.runCurrent()
 
     // When
     val state = viewModel.uiState.first()
@@ -1129,7 +1129,7 @@ class AuthenticationViewModelTest {
 
     // First send
     viewModel.sendPasswordReset()
-    testDispatcher.scheduler.advanceUntilIdle()
+    testDispatcher.scheduler.runCurrent()
     var state = viewModel.uiState.first()
     assertEquals(60, state.passwordResetCooldownSeconds)
 
@@ -1141,7 +1141,7 @@ class AuthenticationViewModelTest {
 
     // Second send
     viewModel.sendPasswordReset()
-    testDispatcher.scheduler.advanceUntilIdle()
+    testDispatcher.scheduler.runCurrent()
     state = viewModel.uiState.first()
     assertEquals(60, state.passwordResetCooldownSeconds)
 
