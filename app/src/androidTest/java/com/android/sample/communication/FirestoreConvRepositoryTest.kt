@@ -1,6 +1,7 @@
 package com.android.sample.communication
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.sample.model.communication.newImplementation.conversation.BLANK_CONVID_ERR_MSG
 import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
 import com.android.sample.model.communication.newImplementation.conversation.FirestoreConvRepository
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
@@ -172,7 +173,7 @@ class FirestoreConvRepositoryTest {
       repo.listenMessages(invalidConvId).first()
       fail("Expected IllegalArgumentException but no exception was thrown.")
     } catch (e: IllegalArgumentException) {
-      assertEquals("Conversation ID cannot be blank", e.message)
+      assertEquals(BLANK_CONVID_ERR_MSG, e.message)
     }
   }
 }

@@ -1,7 +1,6 @@
 package com.android.sample.model.communication.newImplementation.conversation
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import java.util.UUID
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -9,6 +8,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 const val CONVERSATIONS_COLLECTION_PATH = "conversations"
+const val BLANK_CONVID_ERR_MSG = "Conversation ID cannot be blank"
 
 class FirestoreConvRepository(
     db: FirebaseFirestore,
@@ -39,8 +39,7 @@ class FirestoreConvRepository(
     val convSnapshot = convRef.get().await()
     if (!convSnapshot.exists()) return null
 
-    val conv = convSnapshot.toObject(ConversationNew::class.java)
-      ?: return null
+    val conv = convSnapshot.toObject(ConversationNew::class.java) ?: return null
     val convWithId = conv.copy(convId = convId)
 
     // Load messages
@@ -57,7 +56,7 @@ class FirestoreConvRepository(
    * @throws IllegalArgumentException if the conversation ID is blank.
    */
   override suspend fun createConv(conversation: ConversationNew) {
-    require(conversation.convId.isNotBlank()) { "Conversation ID cannot be blank" }
+    require(conversation.convId.isNotBlank()) { BLANK_CONVID_ERR_MSG }
 
     conversationsRef.document(conversation.convId).set(conversation).await()
   }
@@ -68,7 +67,7 @@ class FirestoreConvRepository(
    * @param convId The ID of the conversation to delete.
    */
   override suspend fun deleteConv(convId: String) {
-    require(convId.isNotBlank()) { "Conv ID cannot be blank" }
+    require(convId.isNotBlank()) { BLANK_CONVID_ERR_MSG }
 
     val convRef = conversationsRef.document(convId)
     val messagesRef = convRef.collection("messages")
@@ -99,16 +98,14 @@ class FirestoreConvRepository(
    * @throws IllegalArgumentException if the conversation does not exist or IDs are blank.
    */
   override suspend fun sendMessage(convId: String, message: MessageNew) {
-    require(convId.isNotBlank()) { "Conversation ID cannot be blank" }
+    require(convId.isNotBlank()) { BLANK_CONVID_ERR_MSG }
     require(message.msgId.isNotBlank()) { "Message ID cannot be blank" }
 
     val convRef = conversationsRef.document(convId)
     val messagesRef = convRef.collection("messages")
 
     val convSnapshot = convRef.get().await()
-    if (!convSnapshot.exists()) {
-      throw IllegalArgumentException("Conversation $convId does not exist")
-    }
+    require(convSnapshot.exists()) { "Conversation $convId does not exist" }
 
     messagesRef.document(message.msgId).set(message).await()
 
@@ -126,14 +123,11 @@ class FirestoreConvRepository(
   override fun listenMessages(convId: String): Flow<List<MessageNew>> {
     return callbackFlow {
       if (convId.isBlank()) {
-        close(IllegalArgumentException("Conversation ID cannot be blank"))
+        close(IllegalArgumentException(BLANK_CONVID_ERR_MSG))
         return@callbackFlow
       }
 
-      val messagesRef =
-          conversationsRef
-              .document(convId)
-              .collection("messages")
+      val messagesRef = conversationsRef.document(convId).collection("messages")
 
       val listenerRegistration =
           messagesRef.addSnapshotListener { snapshot, error ->
