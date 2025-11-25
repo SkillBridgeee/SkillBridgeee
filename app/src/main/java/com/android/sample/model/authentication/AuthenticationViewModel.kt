@@ -238,4 +238,79 @@ class AuthenticationViewModel(
           })
     }
   }
+
+  /** Show password reset dialog */
+  fun showPasswordResetDialog() {
+    _uiState.update {
+      it.copy(
+          showPasswordResetDialog = true,
+          resetEmail = "",
+          passwordResetError = null,
+          passwordResetMessage = null)
+    }
+  }
+
+  /** Hide password reset dialog */
+  fun hidePasswordResetDialog() {
+    _uiState.update {
+      it.copy(
+          showPasswordResetDialog = false,
+          resetEmail = "",
+          passwordResetError = null,
+          passwordResetMessage = null)
+    }
+  }
+
+  /** Update reset email field */
+  fun updateResetEmail(email: String) {
+    _uiState.update { it.copy(resetEmail = email, passwordResetError = null) }
+  }
+
+  /** Send password reset email */
+  fun sendPasswordReset() {
+    val email = _uiState.value.resetEmail.trim()
+
+    if (email.isBlank()) {
+      _uiState.update { it.copy(passwordResetError = "Please enter your email address") }
+      return
+    }
+
+    // Basic email validation
+    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+      _uiState.update { it.copy(passwordResetError = "Please enter a valid email address") }
+      return
+    }
+
+    viewModelScope.launch {
+      val resetResult = repository.sendPasswordResetEmail(email)
+      resetResult.fold(
+          onSuccess = {
+            _uiState.update {
+              it.copy(
+                  passwordResetMessage =
+                      "If this email is registered, a password reset link has been sent.",
+                  passwordResetError = null,
+                  passwordResetCooldownSeconds = 60)
+            }
+            startPasswordResetCooldown()
+          },
+          onFailure = { exception ->
+            _uiState.update {
+              it.copy(
+                  passwordResetError =
+                      exception.message ?: "Failed to send reset email. Please try again.")
+            }
+          })
+    }
+  }
+
+  /** Start the 60-second cooldown timer for password reset */
+  private fun startPasswordResetCooldown() {
+    viewModelScope.launch {
+      for (i in 59 downTo 0) {
+        kotlinx.coroutines.delay(1000)
+        _uiState.update { it.copy(passwordResetCooldownSeconds = i) }
+      }
+    }
+  }
 }

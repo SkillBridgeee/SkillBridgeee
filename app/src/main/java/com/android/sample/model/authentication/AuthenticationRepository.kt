@@ -223,4 +223,19 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
       Result.failure(normalizeAuthException(e))
     }
   }
+
+  /**
+   * Send a password reset email to the specified email address.
+   *
+   * @param email The email address to send the reset link to
+   * @return Result indicating success or failure
+   */
+  suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+    return try {
+      auth.sendPasswordResetEmail(email).await()
+      Result.success(Unit)
+    } catch (e: Exception) {
+      Result.failure(normalizeAuthException(e))
+    }
+  }
 }

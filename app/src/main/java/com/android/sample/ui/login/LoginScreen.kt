@@ -35,6 +35,10 @@ object SignInScreenTestTags {
   const val AUTH_SECTION = "authSection"
   const val SUBTITLE = "subtitle"
   const val RESEND_VERIFICATION = "resendVerification"
+  const val PASSWORD_RESET_DIALOG = "passwordResetDialog"
+  const val PASSWORD_RESET_EMAIL_INPUT = "passwordResetEmailInput"
+  const val PASSWORD_RESET_SEND_BUTTON = "passwordResetSendButton"
+  const val PASSWORD_RESET_CANCEL_BUTTON = "passwordResetCancelButton"
 }
 
 @Composable
@@ -121,7 +125,7 @@ private fun LoginForm(
       password = uiState.password,
       onResendVerification = viewModel::resendVerificationEmail)
 
-  ForgotPasswordLink()
+  ForgotPasswordLink(onForgotPasswordClick = viewModel::showPasswordResetDialog)
   Spacer(modifier = Modifier.height(30.dp))
 
   SignInButton(
@@ -134,6 +138,18 @@ private fun LoginForm(
   Spacer(modifier = Modifier.height(20.dp))
 
   SignUpLink(onNavigateToSignUp = onNavigateToSignUp)
+
+  // Password reset dialog
+  if (uiState.showPasswordResetDialog) {
+    PasswordResetDialog(
+        resetEmail = uiState.resetEmail,
+        error = uiState.passwordResetError,
+        message = uiState.passwordResetMessage,
+        cooldownSeconds = uiState.passwordResetCooldownSeconds,
+        onEmailChange = viewModel::updateResetEmail,
+        onSendReset = viewModel::sendPasswordReset,
+        onDismiss = viewModel::hidePasswordResetDialog)
+  }
 }
 
 @Composable
@@ -224,7 +240,7 @@ private fun ErrorAndMessageDisplay(
 }
 
 @Composable
-private fun ForgotPasswordLink() {
+private fun ForgotPasswordLink(onForgotPasswordClick: () -> Unit = {}) {
   val extendedColors = MaterialTheme.extendedColors
 
   Spacer(modifier = Modifier.height(10.dp))
@@ -233,7 +249,7 @@ private fun ForgotPasswordLink() {
       modifier =
           Modifier.fillMaxWidth()
               .wrapContentWidth(Alignment.End)
-              .clickable { /* TODO: Implement when needed */}
+              .clickable { onForgotPasswordClick() }
               .testTag(SignInScreenTestTags.FORGOT_PASSWORD),
       fontSize = 14.sp,
       color = extendedColors.forgotPasswordGray)
@@ -316,6 +332,98 @@ private fun SignUpLink(onNavigateToSignUp: () -> Unit = {}) {
         modifier =
             Modifier.clickable { onNavigateToSignUp() }.testTag(SignInScreenTestTags.SIGNUP_LINK))
   }
+}
+
+@Composable
+private fun PasswordResetDialog(
+    resetEmail: String,
+    error: String?,
+    message: String?,
+    cooldownSeconds: Int,
+    onEmailChange: (String) -> Unit,
+    onSendReset: () -> Unit,
+    onDismiss: () -> Unit
+) {
+  val extendedColors = MaterialTheme.extendedColors
+
+  AlertDialog(
+      onDismissRequest = onDismiss,
+      modifier = Modifier.testTag(SignInScreenTestTags.PASSWORD_RESET_DIALOG),
+      title = {
+        Text(
+            text = "Reset Password",
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = extendedColors.loginTitleBlue)
+      },
+      text = {
+        Column(modifier = Modifier.fillMaxWidth()) {
+          Text(
+              text = "Enter your email address and we'll send you a link to reset your password.",
+              fontSize = 14.sp,
+              color = Color.Gray)
+
+          Spacer(modifier = Modifier.height(16.dp))
+
+          OutlinedTextField(
+              value = resetEmail,
+              onValueChange = onEmailChange,
+              label = { Text("Email") },
+              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+              singleLine = true,
+              maxLines = 1,
+              enabled = cooldownSeconds == 0,
+              leadingIcon = {
+                Icon(
+                    painter = painterResource(id = android.R.drawable.ic_dialog_email),
+                    contentDescription = null)
+              },
+              modifier =
+                  Modifier.fillMaxWidth()
+                      .testTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT))
+
+          // Error message
+          error?.let {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = it, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+          }
+
+          // Success message
+          message?.let {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = it, color = extendedColors.messageGreen, fontSize = 12.sp)
+          }
+
+          // Cooldown timer
+          if (cooldownSeconds > 0) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Please wait $cooldownSeconds seconds before sending another email",
+                color = extendedColors.forgotPasswordGray,
+                fontSize = 12.sp)
+          }
+        }
+      },
+      confirmButton = {
+        Button(
+            onClick = onSendReset,
+            enabled = resetEmail.isNotBlank() && cooldownSeconds == 0,
+            colors = ButtonDefaults.buttonColors(containerColor = extendedColors.signInButtonTeal),
+            modifier = Modifier.testTag(SignInScreenTestTags.PASSWORD_RESET_SEND_BUTTON)) {
+              if (cooldownSeconds > 0) {
+                Text("Wait ${cooldownSeconds}s")
+              } else {
+                Text("Send Reset Link")
+              }
+            }
+      },
+      dismissButton = {
+        TextButton(
+            onClick = onDismiss,
+            modifier = Modifier.testTag(SignInScreenTestTags.PASSWORD_RESET_CANCEL_BUTTON)) {
+              Text("Cancel", color = extendedColors.forgotPasswordGray)
+            }
+      })
 }
 
 // Legacy composable for backward compatibility and proper ViewModel creation

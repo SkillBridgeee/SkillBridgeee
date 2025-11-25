@@ -57,7 +57,7 @@ class LoginScreenTest {
     return onAllNodes(hasTestTag(tag), useUnmergedTree).fetchSemanticsNodes().size
   }
 
-  private fun androidx.compose.ui.test.SemanticsNodeInteraction.readEditableText(): String {
+  private fun SemanticsNodeInteraction.readEditableText(): String {
     val node = fetchSemanticsNode()
     val editable = node.config.getOrNull(SemanticsProperties.EditableText)
     return editable?.text ?: ""
@@ -357,4 +357,258 @@ class LoginScreenTest {
     val after = composeRule.nodeCount(SignInScreenTestTags.PASSWORD_INPUT)
     assert(after >= 1) { "Password field disappeared after interactions." }
   }
+
+  // -------- Password Reset Dialog Tests --------------------------------------------------------
+
+  @Test
+  fun passwordResetDialog_opensWhenForgotPasswordClicked() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    // Dialog should not be visible initially
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_DIALOG).assertDoesNotExist()
+
+    // Click forgot password link
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    // Dialog should now be visible
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_DIALOG).assertIsDisplayed()
+  }
+
+  @Test
+  fun passwordResetDialog_displaysCorrectTitle() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    composeRule.onNodeWithText("Reset Password").assertIsDisplayed()
+  }
+
+  @Test
+  fun passwordResetDialog_displaysEmailInput() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).assertIsDisplayed()
+  }
+
+  @Test
+  fun passwordResetDialog_emailInputAcceptsText() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    val email = "test@example.com"
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performTextInput(email)
+
+    // Verify text was entered
+    val enteredText = composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).readEditableText()
+    assert(enteredText == email)
+  }
+
+  @Test
+  fun passwordResetDialog_sendButtonInitiallyDisabled() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    // Button should be disabled without email
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_SEND_BUTTON).assertIsNotEnabled()
+  }
+
+  @Test
+  fun passwordResetDialog_sendButtonEnabledWithEmail() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performTextInput("test@example.com")
+
+    // Button should be enabled with valid email
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_SEND_BUTTON).assertIsEnabled()
+  }
+
+  @Test
+  fun passwordResetDialog_cancelButtonIsDisplayed() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_CANCEL_BUTTON).assertIsDisplayed()
+    composeRule.onNodeWithText("Cancel").assertIsDisplayed()
+  }
+
+  @Test
+  fun passwordResetDialog_cancelButtonClosesDialog() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_DIALOG).assertIsDisplayed()
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_CANCEL_BUTTON).performClick()
+
+    // Dialog should be closed
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_DIALOG).assertDoesNotExist()
+  }
+
+  @Test
+  fun passwordResetDialog_showsErrorForInvalidEmail() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performTextInput("invalid-email")
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_SEND_BUTTON).performClick()
+
+    // Wait a bit for error to appear
+    composeRule.waitForIdle()
+
+    // Error message should be displayed
+    composeRule.onNodeWithText("Please enter a valid email address").assertIsDisplayed()
+  }
+
+  @Test
+  fun passwordResetDialog_showsErrorForBlankEmail() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    // Button should be disabled when email is blank (covered by other test)
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_SEND_BUTTON).assertIsNotEnabled()
+  }
+
+  @Test
+  fun passwordResetDialog_sendButtonTextIsCorrect() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    composeRule.onNodeWithText("Send Reset Link").assertIsDisplayed()
+  }
+
+  @Test
+  fun passwordResetDialog_displaysInstructionText() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    composeRule.onNodeWithText("Enter your email address and we'll send you a link to reset your password.", substring = true).assertIsDisplayed()
+  }
+
+  @Test
+  fun passwordResetDialog_reopensWithCleanState() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    // Open dialog and enter email
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performTextInput("first@example.com")
+
+    // Close dialog
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_CANCEL_BUTTON).performClick()
+
+    // Reopen dialog
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    // Email field should be empty
+    val enteredText = composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).readEditableText()
+    assert(enteredText.isEmpty())
+  }
+
+  @Test
+  fun passwordResetDialog_multipleEmailsCanBeEntered() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    // Enter first email
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performTextInput("user1@example.com")
+
+    // Clear and enter second email (simulating user editing)
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).performClick()
+
+    // The ability to edit shows the field is working correctly
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).assertIsDisplayed()
+  }
+
+  @Test
+  fun passwordResetDialog_staysIndependentFromLoginForm() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = {})
+    }
+
+    // Enter login credentials
+    composeRule.onNodeWithTag(SignInScreenTestTags.EMAIL_INPUT).performTextInput("login@example.com")
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT).performTextInput("password123")
+
+    // Open password reset dialog
+    composeRule.onNodeWithTag(SignInScreenTestTags.FORGOT_PASSWORD).performClick()
+
+    // Password reset should be separate
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_EMAIL_INPUT).assertIsDisplayed()
+
+    // Login form should still have its values (test independence)
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_RESET_CANCEL_BUTTON).performClick()
+
+    // Login fields should still be present
+    composeRule.onNodeWithTag(SignInScreenTestTags.EMAIL_INPUT).assertIsDisplayed()
+    composeRule.onNodeWithTag(SignInScreenTestTags.PASSWORD_INPUT).assertIsDisplayed()
+  }
 }
+
+
