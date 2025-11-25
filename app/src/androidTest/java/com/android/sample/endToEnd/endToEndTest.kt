@@ -1,10 +1,13 @@
 package com.android.sample.endToEnd
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.MainActivity
 import com.android.sample.ui.HomePage.HomeScreenTestTags
+import com.android.sample.ui.bookings.MyBookingsPageTestTag
+import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.utils.AppTest
 import org.junit.Rule
 import org.junit.Test
@@ -36,10 +39,6 @@ class EndToEndTest : AppTest() {
 
   @Test
   fun userCanLoginAndNavigateThroughMainPages() {
-    // Get credentials from the fake repository
-    val email = "alice@example.com"
-    val password = "TestPassword123!"
-
     composeTestRule.signUpAndLogin(
         name = TEST_NAME,
         surname = TEST_SURNAME,
@@ -51,47 +50,18 @@ class EndToEndTest : AppTest() {
 
     composeTestRule.waitForIdle()
 
-    //    composeTestRule.waitUntil {
-    //      composeTestRule
-    //          .onAllNodesWithTag(HomeScreenTestTags.WELCOME_SECTION)
-    //          .fetchSemanticsNodes()
-    //          .isNotEmpty()
-    //    }
     // Verify navigation to home screen
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
 
-    //    // Navigate to My Profile
-    //    composeTestRule.navigateToMyProfile()
-    //    composeTestRule.waitUntil {
-    //      composeTestRule
-    //          .onAllNodesWithTag(MyProfileScreenTestTag.PROFILE_ICON)
-    //          .fetchSemanticsNodes()
-    //          .isNotEmpty()
-    //    }
-    //    composeTestRule.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
-    //
-    //    // Navigate to My Bookings
-    //    composeTestRule.navigateToMyBookings()
-    //    composeTestRule.waitUntil {
-    //      composeTestRule
-    //          .onAllNodesWithTag(MyBookingsPageTestTag.EMPTY)
-    //          .fetchSemanticsNodes()
-    //          .isNotEmpty()
-    //    }
-    //    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
-    //
-    //    // Navigate to Map
-    //    //    composeTestRule.navigateToMap()
-    //
-    //    // Go back to home page
-    //    composeTestRule.navigateToHome()
-    //    composeTestRule.waitUntil {
-    //      composeTestRule
-    //          .onAllNodesWithTag(HomeScreenTestTags.WELCOME_SECTION)
-    //          .fetchSemanticsNodes()
-    //          .isNotEmpty()
-    //    }
-    //    composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
+    // Navigate to My Profile
+    composeTestRule.navigateToMyProfile()
+    composeTestRule.waitForIdle()
+    composeTestRule.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
+
+    // Navigate to My Bookings
+    composeTestRule.navigateToMyBookings()
+    composeTestRule.waitForIdle()
+    composeTestRule.onNodeWithTag(MyBookingsPageTestTag.EMPTY).assertIsDisplayed()
   }
 }
 
