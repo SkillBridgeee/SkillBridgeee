@@ -39,13 +39,15 @@ class FirestoreConvRepository(
     val convSnapshot = convRef.get().await()
     if (!convSnapshot.exists()) return null
 
-    val conv = convSnapshot.toObject(ConversationNew::class.java)!!.copy(convId = convId)
+    val conv = convSnapshot.toObject(ConversationNew::class.java)
+      ?: return null
+    val convWithId = conv.copy(convId = convId)
 
     // Load messages
-    val messagesSnapshot = convRef.collection("messages").orderBy("createdAt").get().await()
+    val messagesSnapshot = convRef.collection("messages").get().await()
     val messages = messagesSnapshot.documents.mapNotNull { it.toObject(MessageNew::class.java) }
 
-    return conv.copy(messages = messages)
+    return convWithId.copy(messages = messages)
   }
 
   /**
@@ -66,7 +68,26 @@ class FirestoreConvRepository(
    * @param convId The ID of the conversation to delete.
    */
   override suspend fun deleteConv(convId: String) {
-    conversationsRef.document(convId).delete().await()
+    require(convId.isNotBlank()) { "Conv ID cannot be blank" }
+
+    val convRef = conversationsRef.document(convId)
+    val messagesRef = convRef.collection("messages")
+
+    // Fetch all messages
+    val messagesSnapshot = messagesRef.get().await()
+
+    // Use batch delete for performance
+    val batch = conversationsRef.firestore.batch()
+
+    for (doc in messagesSnapshot.documents) {
+      batch.delete(doc.reference)
+    }
+
+    // Delete parent conversation
+    batch.delete(convRef)
+
+    // Commit batch
+    batch.commit().await()
   }
 
   /**
@@ -113,7 +134,6 @@ class FirestoreConvRepository(
           conversationsRef
               .document(convId)
               .collection("messages")
-              .orderBy("createdAt", Query.Direction.ASCENDING)
 
       val listenerRegistration =
           messagesRef.addSnapshotListener { snapshot, error ->
