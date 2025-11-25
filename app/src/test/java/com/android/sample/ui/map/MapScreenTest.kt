@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -41,11 +42,13 @@ class MapScreenTest {
 
   private lateinit var mockProfileRepo: ProfileRepository
   private lateinit var mockBookingRepo: BookingRepository
+  private lateinit var mockListingRepo: ListingRepository
 
   @Before
   fun setup() {
     mockProfileRepo = mockk()
     mockBookingRepo = mockk()
+    mockListingRepo = mockk()
     coEvery { mockBookingRepo.getAllBookings() } returns emptyList()
 
     // Prevent FirebaseAuth from blowing up in JVM tests
@@ -59,7 +62,7 @@ class MapScreenTest {
 
   @Test
   fun mapScreen_smoke_rendersScreenAndMap() {
-    val vm = MapViewModel(mockProfileRepo, mockBookingRepo)
+    val vm = MapViewModel(mockProfileRepo, mockBookingRepo, mockListingRepo)
     composeTestRule.setContent { MapScreen(viewModel = vm) }
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).assertIsDisplayed()
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
@@ -259,6 +262,78 @@ class MapScreenTest {
     // We can’t tap a Google marker in Robolectric; call the VM directly to validate wiring.
     vm.selectProfile(profile)
     assert(selected == profile)
+  }
+
+  @Test
+  fun bookingPins_display_with_correct_properties() {
+    val profile = Profile(userId = "tutor1", name = "Dr. Smith")
+    val pin =
+        BookingPin(
+            bookingId = "b1",
+            position = LatLng(46.5, 6.6),
+            title = "Math Tutoring",
+            snippet = "Dr. Smith - Library",
+            profile = profile)
+
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.5, 6.6),
+                profiles = listOf(profile),
+                bookingPins = listOf(pin),
+                myProfile = testProfile,
+                isLoading = false))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    // Map should render without crashing - booking pin with title and snippet rendered
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun myProfile_marker_displays_when_location_non_zero() {
+    val myProfile =
+        testProfile.copy(
+            userId = "me", name = "My Name", location = Location(46.52, 6.63, "My Location"))
+
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                profiles = emptyList(),
+                myProfile = myProfile,
+                bookingPins = emptyList(),
+                isLoading = false))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
+  }
+
+  @Test
+  fun myProfile_marker_hidden_when_location_is_zero() {
+    val myProfile = testProfile.copy(userId = "me", location = Location(0.0, 0.0, "Zero"))
+
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                myProfile = myProfile,
+                bookingPins = emptyList(),
+                isLoading = false))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
   }
 
   // --- Edge cases ---

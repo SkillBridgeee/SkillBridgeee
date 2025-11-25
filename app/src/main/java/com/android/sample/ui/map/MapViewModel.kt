@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -62,10 +64,12 @@ data class BookingPin(
  *
  * @param profileRepository The repository used to fetch user profiles.
  * @param bookingRepository The repository used to fetch bookings.
+ * @param listingRepository The repository used to fetch listings.
  */
 class MapViewModel(
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
-    private val bookingRepository: BookingRepository = BookingRepositoryProvider.repository
+    private val bookingRepository: BookingRepository = BookingRepositoryProvider.repository,
+    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(MapUiState())
@@ -117,7 +121,10 @@ class MapViewModel(
 
         val pins =
             userBookings.mapNotNull { booking ->
-              // Show the location of the OTHER person in the booking
+              // Get the listing to show its location (where the session takes place)
+              val listing = listingRepository.getListing(booking.associatedListingId)
+
+              // Get the OTHER person in the booking for display info
               val otherUserId =
                   if (booking.bookerId == currentUserId) {
                     booking.listingCreatorId
@@ -126,13 +133,15 @@ class MapViewModel(
                   }
 
               val otherProfile = profileRepository.getProfileById(otherUserId)
-              val loc = otherProfile?.location
-              if (loc != null && isValidLatLng(loc.latitude, loc.longitude)) {
+
+              // Use the listing's location (where session takes place) instead of profile location
+              val loc = listing?.location
+              if (listing != null && loc != null && isValidLatLng(loc.latitude, loc.longitude)) {
                 BookingPin(
                     bookingId = booking.bookingId,
                     position = LatLng(loc.latitude, loc.longitude),
-                    title = otherProfile.name ?: "Session",
-                    snippet = otherProfile.description.takeIf { it.isNotBlank() },
+                    title = listing.title.ifBlank { otherProfile?.name ?: "Session" },
+                    snippet = "${otherProfile?.name ?: "Unknown"} - ${loc.name}",
                     profile = otherProfile)
               } else null
             }

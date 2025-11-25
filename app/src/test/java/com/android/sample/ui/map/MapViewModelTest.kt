@@ -2,6 +2,7 @@ package com.android.sample.ui.map
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -31,6 +32,7 @@ class MapViewModelTest {
 
   private lateinit var profileRepository: ProfileRepository
   private lateinit var bookingRepository: BookingRepository
+  private lateinit var listingRepository: ListingRepository
   private lateinit var viewModel: MapViewModel
 
   private val testProfile1 =
@@ -56,6 +58,7 @@ class MapViewModelTest {
     Dispatchers.setMain(testDispatcher)
     profileRepository = mockk()
     bookingRepository = mockk()
+    listingRepository = mockk()
     // Default for tests that don't care about bookings
     coEvery { bookingRepository.getAllBookings() } returns emptyList()
   }
@@ -71,7 +74,7 @@ class MapViewModelTest {
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     val state = viewModel.uiState.first()
 
     // Then
@@ -90,7 +93,7 @@ class MapViewModelTest {
     coEvery { profileRepository.getAllProfiles() } returns profiles
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     val state = viewModel.uiState.first()
 
     // Then
@@ -106,7 +109,7 @@ class MapViewModelTest {
     coEvery { profileRepository.getAllProfiles() } coAnswers { emptyList() }
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
 
     // Then - final state should have isLoading = false
     val finalState = viewModel.uiState.first()
@@ -119,7 +122,7 @@ class MapViewModelTest {
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     val state = viewModel.uiState.first()
 
     // Then
@@ -135,7 +138,7 @@ class MapViewModelTest {
     coEvery { bookingRepository.getAllBookings() } returns emptyList()
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
 
     // Let init{ loadProfiles(); loadBookings() } finish
     advanceUntilIdle()
@@ -152,7 +155,7 @@ class MapViewModelTest {
   fun `selectProfile updates selected profile in state`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
 
     // When
     viewModel.selectProfile(testProfile1)
@@ -166,7 +169,7 @@ class MapViewModelTest {
   fun `selectProfile with null clears selected profile`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     viewModel.selectProfile(testProfile1)
 
     // When
@@ -181,7 +184,7 @@ class MapViewModelTest {
   fun `moveToLocation updates camera position`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     val newLocation = Location(latitude = 47.3769, longitude = 8.5417, name = "Zurich")
 
     // When
@@ -196,7 +199,7 @@ class MapViewModelTest {
   fun `loadProfiles can be called manually after initialization`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
 
     // Change mock to return different data
     coEvery { profileRepository.getAllProfiles() } returns listOf(testProfile1)
@@ -215,7 +218,7 @@ class MapViewModelTest {
   fun `multiple profile selections update state correctly`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
 
     // When
     viewModel.selectProfile(testProfile1)
@@ -235,7 +238,7 @@ class MapViewModelTest {
     coEvery { profileRepository.getAllProfiles() } throws Exception("Error")
     coEvery { bookingRepository.getAllBookings() } returns emptyList()
 
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     var state = viewModel.uiState.first()
     assertNotNull(state.errorMessage)
 
@@ -260,7 +263,7 @@ class MapViewModelTest {
     coEvery { bookingRepository.getAllBookings() } returns emptyList()
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     val state = viewModel.uiState.first()
 
     // Then - no bookings loaded because no current user
@@ -279,7 +282,7 @@ class MapViewModelTest {
     coEvery { bookingRepository.getAllBookings() } returns emptyList()
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     val state = viewModel.uiState.first()
 
     // Then
@@ -295,7 +298,7 @@ class MapViewModelTest {
     coEvery { bookingRepository.getAllBookings() } throws Exception("Network down")
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
 
     // Let the coroutines complete
     advanceUntilIdle()
@@ -324,7 +327,7 @@ class MapViewModelTest {
         // Note: This test verifies the logic path, actual Firebase mocking would require more setup
 
         // When
-        viewModel = MapViewModel(profileRepository, bookingRepository)
+        viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -342,7 +345,7 @@ class MapViewModelTest {
     coEvery { profileRepository.getAllProfiles() } returns listOf(zeroProfile)
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
@@ -359,7 +362,7 @@ class MapViewModelTest {
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns emptyList()
 
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     // Validation is internal, but we can verify empty bookings don't crash
@@ -371,7 +374,7 @@ class MapViewModelTest {
   fun `moveToLocation with zero coordinates updates userLocation`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
 
     // When - move to 0,0
     val zeroLocation = Location(0.0, 0.0, "Origin")
@@ -387,7 +390,7 @@ class MapViewModelTest {
   fun `moveToLocation with negative coordinates works`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
 
     // When - move to negative coordinates (valid location)
     val negLocation = Location(-33.8688, 151.2093, "Sydney")
@@ -403,7 +406,7 @@ class MapViewModelTest {
   fun `moveToLocation with extreme valid coordinates works`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
 
     // When - move to extreme but valid coordinates
     val extremeLocation = Location(89.9, 179.9, "Near North Pole")
@@ -419,7 +422,7 @@ class MapViewModelTest {
   fun `selectProfile multiple times with different profiles`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
 
     // When - select multiple profiles in sequence
     viewModel.selectProfile(testProfile1)
@@ -436,7 +439,7 @@ class MapViewModelTest {
   fun `state maintains consistency after multiple operations`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns listOf(testProfile1, testProfile2)
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     // When - perform multiple operations
@@ -457,7 +460,7 @@ class MapViewModelTest {
   fun `loadProfiles twice updates profiles correctly`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns listOf(testProfile1)
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     assertEquals(1, viewModel.uiState.value.profiles.size)
@@ -480,7 +483,7 @@ class MapViewModelTest {
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
@@ -497,7 +500,7 @@ class MapViewModelTest {
     coEvery { bookingRepository.getAllBookings() } returns emptyList()
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
@@ -510,7 +513,7 @@ class MapViewModelTest {
   fun `multiple loadProfiles calls handle errors correctly`() = runTest {
     // Given - first call fails
     coEvery { profileRepository.getAllProfiles() } throws Exception("Error 1")
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     var state = viewModel.uiState.value
@@ -545,7 +548,7 @@ class MapViewModelTest {
     coEvery { bookingRepository.getAllBookings() } throws Exception("Booking error")
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
@@ -562,7 +565,7 @@ class MapViewModelTest {
     coEvery { bookingRepository.getAllBookings() } returns emptyList()
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
@@ -592,7 +595,7 @@ class MapViewModelTest {
     coEvery { bookingRepository.getAllBookings() } returns emptyList()
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
@@ -620,7 +623,7 @@ class MapViewModelTest {
     coEvery { bookingRepository.getAllBookings() } returns emptyList()
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
@@ -646,6 +649,15 @@ class MapViewModelTest {
             email = "other@test.com",
             location = Location(latitude = 47.0, longitude = 8.0, name = "Zurich"))
 
+    val listing =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing1",
+            creatorUserId = "other-user",
+            title = "Math Tutoring",
+            description = "Algebra lessons",
+            location = Location(latitude = 47.0, longitude = 8.0, name = "Zurich Library"),
+            hourlyRate = 25.0)
+
     val booking1 =
         com.android.sample.model.booking.Booking(
             bookingId = "b1",
@@ -658,17 +670,19 @@ class MapViewModelTest {
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking1)
     coEvery { profileRepository.getProfileById("other-user") } returns otherProfile
+    coEvery { listingRepository.getListing("listing1") } returns listing
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
 
-    // Then - booking pin created (lines 110-144)
+    // Then - booking pin created with listing location
     assertEquals(1, state.bookingPins.size)
     assertEquals("b1", state.bookingPins[0].bookingId)
-    assertEquals("Other User", state.bookingPins[0].title)
+    assertEquals("Math Tutoring", state.bookingPins[0].title)
+    assertEquals(LatLng(47.0, 8.0), state.bookingPins[0].position)
     assertEquals(otherProfile, state.bookingPins[0].profile)
   }
 
@@ -689,6 +703,15 @@ class MapViewModelTest {
             email = "student@test.com",
             location = Location(latitude = 46.0, longitude = 7.0, name = "Bern"))
 
+    val listing =
+        com.android.sample.model.listing.Request(
+            listingId = "listing1",
+            creatorUserId = "current-user",
+            title = "Need Math Help",
+            description = "Looking for calculus tutor",
+            location = Location(latitude = 46.0, longitude = 7.0, name = "Bern Cafe"),
+            hourlyRate = 30.0)
+
     val booking =
         com.android.sample.model.booking.Booking(
             bookingId = "b1",
@@ -701,16 +724,18 @@ class MapViewModelTest {
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
     coEvery { profileRepository.getProfileById("student-id") } returns studentProfile
+    coEvery { listingRepository.getListing("listing1") } returns listing
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
 
-    // Then - shows student's location (lines 120-126)
+    // Then - pin created with listing location and title
     assertEquals(1, state.bookingPins.size)
-    assertEquals("Student", state.bookingPins[0].title)
+    assertEquals("Need Math Help", state.bookingPins[0].title)
+    assertEquals(LatLng(46.0, 7.0), state.bookingPins[0].position)
   }
 
   @Test
@@ -723,11 +748,18 @@ class MapViewModelTest {
     every { mockAuth.currentUser } returns mockUser
     every { mockUser.uid } returns "current-user"
 
-    val profileWithInvalidLocation =
+    val profile =
         Profile(
             userId = "other",
             name = "Other",
             email = "other@test.com",
+            location = Location(latitude = 47.0, longitude = 8.0, name = "Zurich"))
+
+    val listingWithInvalidLocation =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing1",
+            creatorUserId = "other",
+            title = "Test Listing",
             location = Location(latitude = Double.NaN, longitude = 8.0, name = "Invalid"))
 
     val booking =
@@ -741,20 +773,21 @@ class MapViewModelTest {
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
-    coEvery { profileRepository.getProfileById("other") } returns profileWithInvalidLocation
+    coEvery { profileRepository.getProfileById("other") } returns profile
+    coEvery { listingRepository.getListing("listing1") } returns listingWithInvalidLocation
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
 
-    // Then - invalid location filtered out (line 129)
+    // Then - invalid listing location filtered out
     assertTrue(state.bookingPins.isEmpty())
   }
 
   @Test
-  fun `loadBookings filters out bookings with null profile`() = runTest {
+  fun `loadBookings filters out bookings with null listing`() = runTest {
     // Given
     val mockAuth = mockk<com.google.firebase.auth.FirebaseAuth>()
     val mockUser = mockk<com.google.firebase.auth.FirebaseUser>()
@@ -763,43 +796,10 @@ class MapViewModelTest {
     every { mockAuth.currentUser } returns mockUser
     every { mockUser.uid } returns "current-user"
 
-    val booking =
-        com.android.sample.model.booking.Booking(
-            bookingId = "b1",
-            associatedListingId = "listing1",
-            listingCreatorId = "other",
-            bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
-
-    coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
-    coEvery { profileRepository.getProfileById("other") } returns null
-
-    // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
-    advanceUntilIdle()
-
-    val state = viewModel.uiState.value
-
-    // Then - null profile filtered out (line 128)
-    assertTrue(state.bookingPins.isEmpty())
-  }
-
-  @Test
-  fun `loadBookings uses Session as default title when name is null`() = runTest {
-    // Given
-    val mockAuth = mockk<com.google.firebase.auth.FirebaseAuth>()
-    val mockUser = mockk<com.google.firebase.auth.FirebaseUser>()
-    mockkStatic(com.google.firebase.auth.FirebaseAuth::class)
-    every { com.google.firebase.auth.FirebaseAuth.getInstance() } returns mockAuth
-    every { mockAuth.currentUser } returns mockUser
-    every { mockUser.uid } returns "current-user"
-
-    val profileWithoutName =
+    val profile =
         Profile(
             userId = "other",
-            name = null,
+            name = "Other",
             email = "other@test.com",
             location = Location(latitude = 47.0, longitude = 8.0, name = "Zurich"))
 
@@ -814,21 +814,21 @@ class MapViewModelTest {
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
-    coEvery { profileRepository.getProfileById("other") } returns profileWithoutName
+    coEvery { profileRepository.getProfileById("other") } returns profile
+    coEvery { listingRepository.getListing("listing1") } returns null
 
     // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
 
-    // Then - uses "Session" as default title (line 132)
-    assertEquals(1, state.bookingPins.size)
-    assertEquals("Session", state.bookingPins[0].title)
+    // Then - null listing filtered out
+    assertTrue(state.bookingPins.isEmpty())
   }
 
   @Test
-  fun `loadBookings sets snippet to null when description is blank`() = runTest {
+  fun `loadBookings uses profile name as fallback when listing title is blank`() = runTest {
     // Given
     val mockAuth = mockk<com.google.firebase.auth.FirebaseAuth>()
     val mockUser = mockk<com.google.firebase.auth.FirebaseUser>()
@@ -837,13 +837,11 @@ class MapViewModelTest {
     every { mockAuth.currentUser } returns mockUser
     every { mockUser.uid } returns "current-user"
 
-    val profileWithBlankDesc =
-        Profile(
-            userId = "other",
-            name = "Other",
-            email = "other@test.com",
-            location = Location(latitude = 47.0, longitude = 8.0, name = "Zurich"),
-            description = "   ")
+    val listing =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing1",
+            title = "  ", // Blank
+            location = Location(latitude = 46.0, longitude = 7.0, name = "Lab"))
 
     val booking =
         com.android.sample.model.booking.Booking(
@@ -856,21 +854,18 @@ class MapViewModelTest {
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
-    coEvery { profileRepository.getProfileById("other") } returns profileWithBlankDesc
+    coEvery { listingRepository.getListing("listing1") } returns listing
+    coEvery { profileRepository.getProfileById("other") } returns
+        Profile(userId = "other", name = "Dr. Smith")
 
-    // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
-    val state = viewModel.uiState.value
-
-    // Then - snippet is null (line 133)
-    assertEquals(1, state.bookingPins.size)
-    assertNull(state.bookingPins[0].snippet)
+    assertEquals("Dr. Smith", viewModel.uiState.value.bookingPins[0].title)
   }
 
   @Test
-  fun `loadBookings filters out bookings where user is not involved`() = runTest {
+  fun `loadBookings uses Session when both listing title and profile name missing`() = runTest {
     // Given
     val mockAuth = mockk<com.google.firebase.auth.FirebaseAuth>()
     val mockUser = mockk<com.google.firebase.auth.FirebaseUser>()
@@ -879,25 +874,137 @@ class MapViewModelTest {
     every { mockAuth.currentUser } returns mockUser
     every { mockUser.uid } returns "current-user"
 
+    val listing =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing1",
+            title = "",
+            location = Location(latitude = 46.0, longitude = 7.0, name = "Lab"))
+
     val booking =
         com.android.sample.model.booking.Booking(
             bookingId = "b1",
             associatedListingId = "listing1",
-            listingCreatorId = "other-user",
-            bookerId = "another-user",
+            listingCreatorId = "other",
+            bookerId = "current-user",
             sessionStart = java.util.Date(),
             sessionEnd = java.util.Date())
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
+    coEvery { listingRepository.getListing("listing1") } returns listing
+    coEvery { profileRepository.getProfileById("other") } returns null
 
-    // When
-    viewModel = MapViewModel(profileRepository, bookingRepository)
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
-    val state = viewModel.uiState.value
+    assertEquals("Session", viewModel.uiState.value.bookingPins[0].title)
+  }
 
-    // Then - booking filtered out (lines 115-117)
-    assertTrue(state.bookingPins.isEmpty())
+  @Test
+  fun `loadBookings creates correct snippet with Unknown when profile null`() = runTest {
+    // Given
+    val mockAuth = mockk<com.google.firebase.auth.FirebaseAuth>()
+    val mockUser = mockk<com.google.firebase.auth.FirebaseUser>()
+    mockkStatic(com.google.firebase.auth.FirebaseAuth::class)
+    every { com.google.firebase.auth.FirebaseAuth.getInstance() } returns mockAuth
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.uid } returns "current-user"
+
+    val listing =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing1",
+            title = "Math",
+            location = Location(latitude = 46.0, longitude = 7.0, name = "Library"))
+
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "other",
+            bookerId = "current-user",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date())
+
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
+    coEvery { listingRepository.getListing("listing1") } returns listing
+    coEvery { profileRepository.getProfileById("other") } returns null
+
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+    advanceUntilIdle()
+
+    assertEquals("Unknown - Library", viewModel.uiState.value.bookingPins[0].snippet)
+  }
+
+  @Test
+  fun `loadBookings determines other user when current user is booker`() = runTest {
+    val mockAuth = mockk<com.google.firebase.auth.FirebaseAuth>()
+    val mockUser = mockk<com.google.firebase.auth.FirebaseUser>()
+    mockkStatic(com.google.firebase.auth.FirebaseAuth::class)
+    every { com.google.firebase.auth.FirebaseAuth.getInstance() } returns mockAuth
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.uid } returns "current-user"
+
+    val listing =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing1",
+            title = "Math",
+            location = Location(latitude = 46.0, longitude = 7.0, name = "Lab"))
+
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor-id",
+            bookerId = "current-user",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date())
+
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
+    coEvery { listingRepository.getListing("listing1") } returns listing
+    coEvery { profileRepository.getProfileById("tutor-id") } returns
+        Profile(userId = "tutor-id", name = "Tutor")
+
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+    advanceUntilIdle()
+
+    assertEquals("tutor-id", viewModel.uiState.value.bookingPins[0].profile?.userId)
+  }
+
+  @Test
+  fun `loadBookings determines other user when current user is creator`() = runTest {
+    val mockAuth = mockk<com.google.firebase.auth.FirebaseAuth>()
+    val mockUser = mockk<com.google.firebase.auth.FirebaseUser>()
+    mockkStatic(com.google.firebase.auth.FirebaseAuth::class)
+    every { com.google.firebase.auth.FirebaseAuth.getInstance() } returns mockAuth
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.uid } returns "current-user"
+
+    val listing =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing1",
+            title = "Math",
+            location = Location(latitude = 46.0, longitude = 7.0, name = "Lab"))
+
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "current-user",
+            bookerId = "student-id",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date())
+
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
+    coEvery { listingRepository.getListing("listing1") } returns listing
+    coEvery { profileRepository.getProfileById("student-id") } returns
+        Profile(userId = "student-id", name = "Student")
+
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+    advanceUntilIdle()
+
+    assertEquals("student-id", viewModel.uiState.value.bookingPins[0].profile?.userId)
   }
 }

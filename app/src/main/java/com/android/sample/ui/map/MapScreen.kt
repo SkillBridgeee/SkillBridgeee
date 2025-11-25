@@ -220,12 +220,13 @@ private fun MapView(
       cameraPositionState = cameraPositionState,
       uiSettings = mapUiSettings,
       properties = mapProperties) {
-        // Booking markers - show where the user has sessions
+        // Booking markers - show where the user has sessions (red markers)
         bookingPins.forEach { pin ->
           Marker(
               state = MarkerState(position = pin.position),
               title = pin.title,
               snippet = pin.snippet,
+              icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
               onClick = {
                 onBookingClicked(pin)
                 false
