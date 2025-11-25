@@ -20,7 +20,6 @@ import com.android.sample.ui.newListing.NewListingScreen
 import com.android.sample.ui.newListing.NewListingScreenTestTag
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.theme.SampleAppTheme
-import kotlin.collections.get
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -189,8 +188,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -215,8 +213,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -243,8 +240,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -264,8 +260,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -285,8 +280,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -306,8 +300,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -329,8 +322,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -353,8 +345,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -377,8 +368,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -399,8 +389,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -422,8 +411,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -444,8 +432,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -466,8 +453,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -488,8 +474,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -511,8 +496,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -539,8 +523,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -567,8 +550,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -594,8 +576,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     composeRule.waitForIdle()
@@ -627,8 +608,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
     // wait for initial composition/load to finish
@@ -666,18 +646,14 @@ class NewSkillScreenTest {
     composeRule.setContent {
       SampleAppTheme {
         val context = LocalContext.current
-        val nav =
-            TestNavHostController(context).apply {
-              navigatorProvider.addNavigator(ComposeNavigator())
-            }
+        TestNavHostController(context).apply { navigatorProvider.addNavigator(ComposeNavigator()) }
 
         NewListingScreen(
             skillViewModel = vm,
             profileId = "test-user",
             listingId = null, // pass null for create mode
             navController = createTestNavController(),
-            onNavigateBack = {} // provide a no-op nav callback for tests
-            )
+        )
       }
     }
 
@@ -699,7 +675,7 @@ class NewSkillScreenTest {
             profileId = "test-user",
             listingId = "existing-listing", // non-null to indicate edit mode
             navController = createTestNavController(),
-            onNavigateBack = {})
+        )
       }
     }
 
