@@ -117,8 +117,6 @@ private fun LoginForm(
   ErrorAndMessageDisplay(
       error = uiState.error,
       message = uiState.message,
-      email = uiState.email,
-      password = uiState.password,
       onResendVerification = viewModel::resendVerificationEmail)
 
   ForgotPasswordLink()
@@ -191,9 +189,7 @@ private fun EmailPasswordFields(
 private fun ErrorAndMessageDisplay(
     error: String?,
     message: String?,
-    email: String,
-    password: String,
-    onResendVerification: (String, String) -> Unit
+    onResendVerification: () -> Unit
 ) {
   val extendedColors = MaterialTheme.extendedColors
 
@@ -202,12 +198,10 @@ private fun ErrorAndMessageDisplay(
     Text(text = errorMessage, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
 
     // Show resend verification button if error is about unverified email
-    if (errorMessage.contains("verify your email", ignoreCase = true) &&
-        email.isNotBlank() &&
-        password.isNotBlank()) {
+    if (errorMessage.contains("verify your email", ignoreCase = true)) {
       Spacer(modifier = Modifier.height(8.dp))
       TextButton(
-          onClick = { onResendVerification(email, password) },
+          onClick = { onResendVerification() },
           modifier = Modifier.testTag(SignInScreenTestTags.RESEND_VERIFICATION)) {
             Text(
                 text = "Resend Verification Email",

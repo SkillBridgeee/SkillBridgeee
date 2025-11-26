@@ -11,11 +11,13 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel for managing authentication state and operations. Follows MVVM architecture pattern
@@ -80,10 +82,24 @@ class AuthenticationViewModel(
       val result = repository.signInWithEmail(email, password)
       result.fold(
           onSuccess = { user ->
+            // Check if email is verified
+            if (!user.isEmailVerified) {
+              // Keep user signed in but show unverified state
+              // They can now call resendVerificationEmail() without re-entering password
+              _authResult.value = AuthResult.UnverifiedEmail(user)
+              _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error =
+                        "Please verify your email to access all features. Check your inbox or click 'Resend Verification Email'.")
+              }
+              return@launch
+            }
+
             // Check if profile exists for this user
             val profile =
                 try {
-                  profileRepository.getProfile(user.uid)
+                  withContext(Dispatchers.IO) { profileRepository.getProfile(user.uid) }
                 } catch (_: Exception) {
                   null
                 }
@@ -128,7 +144,7 @@ class AuthenticationViewModel(
                 // Check if profile exists for this user
                 val profile =
                     try {
-                      profileRepository.getProfile(user.uid)
+                      withContext(Dispatchers.IO) { profileRepository.getProfile(user.uid) }
                     } catch (_: Exception) {
                       null
                     }
@@ -212,17 +228,18 @@ class AuthenticationViewModel(
     _uiState.update { it.copy(showSuccessMessage = show) }
   }
 
-  /** Resend verification email to an unverified user */
-  fun resendVerificationEmail(email: String, password: String) {
-    if (email.isBlank() || password.isBlank()) {
-      _uiState.update { it.copy(error = "Email and password are required to resend verification") }
-      return
-    }
-
+  /**
+   * Resend verification email to the currently signed-in user. This is the secure approach that
+   * uses the existing authenticated session without requiring password re-entry.
+   *
+   * SECURITY: This method never asks for or handles passwords, eliminating password exposure risks.
+   * Users should be kept signed in after signup so they can call this method easily.
+   */
+  fun resendVerificationEmail() {
     setLoading()
 
     viewModelScope.launch {
-      val result = repository.resendVerificationEmail(email, password)
+      val result = repository.resendVerificationEmail()
       result.fold(
           onSuccess = {
             _uiState.update {

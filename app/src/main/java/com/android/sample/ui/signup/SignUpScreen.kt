@@ -63,13 +63,9 @@ object SignUpScreenTestTags {
 fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
   val state by vm.state.collectAsState()
 
-  // Navigate on success (for Google Sign-In users)
-  LaunchedEffect(state.submitSuccess) { if (state.submitSuccess) onSubmitSuccess() }
-
-  // Also navigate when verification email is sent
-  LaunchedEffect(state.verificationEmailSent) {
-    if (state.verificationEmailSent) {
-      // Navigate to login screen after verification email is sent
+  // Navigate on success (Google Sign-In) or when verification email is sent (Email/Password)
+  LaunchedEffect(state.submitSuccess, state.verificationEmailSent) {
+    if (state.submitSuccess || state.verificationEmailSent) {
       onSubmitSuccess()
     }
   }

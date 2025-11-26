@@ -45,9 +45,14 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
   }
 
   /**
-   * Sign in with email and password. Checks if email is verified before allowing sign in.
+   * Sign in with email and password. Checks if email is verified before allowing full access.
    *
-   * @return Result containing FirebaseUser on success or Exception on failure
+   * SECURITY NOTE: User remains signed in even if unverified, but the app should restrict access to
+   * sensitive features until verification is complete. This allows users to resend verification
+   * emails without re-entering their password.
+   *
+   * @return Result containing FirebaseUser on success or Exception on failure. The FirebaseUser is
+   *   returned even if email is not verified - check user.isEmailVerified in the UI layer.
    */
   suspend fun signInWithEmail(email: String, password: String): Result<FirebaseUser> {
     return try {
@@ -61,15 +66,8 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
       // Reload user to get latest verification status
       user.reload().await()
 
-      // Check if email is verified
-      if (!user.isEmailVerified) {
-        // Sign out unverified user
-        auth.signOut()
-        return Result.failure(
-            Exception(
-                "Please verify your email before logging in. Check your inbox for the verification link."))
-      }
-
+      // Return the user even if unverified - let the UI layer handle the verification prompt
+      // This allows the user to call resendVerificationEmail() without re-entering their password
       Result.success(user)
     } catch (e: Exception) {
       Result.failure(normalizeAuthException(e))
@@ -168,55 +166,31 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
   }
 
   /**
-   * Reload the current user's data from the server
+   * Resend verification email for the currently signed-in user. This is the secure,
+   * Firebase-recommended approach that uses the existing authenticated session without requiring
+   * password re-entry.
+   *
+   * SECURITY: This method never asks for or handles passwords, eliminating password exposure risks.
    *
    * @return Result indicating success or failure
    */
-  @Suppress("unused")
-  suspend fun reloadUser(): Result<Unit> {
+  suspend fun resendVerificationEmail(): Result<Unit> {
     return try {
       val user = auth.currentUser
       if (user == null) {
-        return Result.failure(Exception("No user is currently signed in"))
-      }
-
-      user.reload().await()
-      Result.success(Unit)
-    } catch (e: Exception) {
-      Result.failure(normalizeAuthException(e))
-    }
-  }
-
-  /**
-   * Resend verification email for a specific email/password combination. Signs in the user
-   * temporarily to send the email, then signs out.
-   *
-   * @return Result indicating success or failure
-   */
-  suspend fun resendVerificationEmail(email: String, password: String): Result<Unit> {
-    return try {
-      // Sign in to get the user object
-      val result = auth.signInWithEmailAndPassword(email, password).await()
-      val user = result.user
-
-      if (user == null) {
-        return Result.failure(Exception("Failed to sign in"))
+        return Result.failure(
+            Exception("Please sign in first to resend verification email"))
       }
 
       // Reload to check current verification status
       user.reload().await()
 
       if (user.isEmailVerified) {
-        // Already verified, sign out and return success
-        auth.signOut()
-        return Result.failure(Exception("Email is already verified. You can now log in."))
+        return Result.failure(Exception("Email is already verified. You can now access all features."))
       }
 
       // Send verification email
       user.sendEmailVerification().await()
-
-      // Sign out the user
-      auth.signOut()
 
       Result.success(Unit)
     } catch (e: Exception) {
