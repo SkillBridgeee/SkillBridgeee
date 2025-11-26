@@ -135,13 +135,41 @@ class ListingViewModel(
           profileRepo.getProfile(userId)?.let { profile -> profiles[userId] = profile }
         }
 
+        // check if there is at least one COMPLETED booking not yet rated
+        val currentTutorId = FirebaseAuth.getInstance().currentUser?.uid
+
+        val hasPendingTutorRating =
+            if (currentTutorId == null) {
+              false
+            } else {
+              val completedForTutor =
+                  bookings.filter {
+                    it.status == BookingStatus.COMPLETED && it.listingCreatorId == currentTutorId
+                  }
+
+              completedForTutor.any { booking ->
+                val alreadyRated =
+                    try {
+                      ratingRepo.hasRating(
+                          fromUserId = currentTutorId,
+                          toUserId = booking.bookerId,
+                          ratingType = RatingType.STUDENT,
+                          targetObjectId = booking.bookingId, // 👈 per-booking
+                      )
+                    } catch (e: Exception) {
+                      Log.w("ListingViewModel", "Error checking existing rating", e)
+                      false
+                    }
+                !alreadyRated
+              }
+            }
+
         _uiState.update {
           it.copy(
               listingBookings = bookings,
               bookerProfiles = profiles,
               bookingsLoading = false,
-              tutorRatingPending =
-                  bookings.any { booking -> booking.status == BookingStatus.COMPLETED })
+              tutorRatingPending = hasPendingTutorRating)
         }
       } catch (_: Exception) {
         _uiState.update { it.copy(bookingsLoading = false) }
@@ -270,6 +298,36 @@ class ListingViewModel(
     return values.getOrNull(idx) ?: values.first()
   }
 
+  /**
+   * Submits a rating from the tutor (current user) to the student for **one completed booking** of
+   * this listing.
+   *
+   * Behaviour:
+   * - Requires a listing to be loaded and the current user to be authenticated (tutor).
+   * - Finds the first booking in `listingBookings` that:
+   *     - belongs to this listing,
+   *     - has status `COMPLETED`,
+   *     - has `listingCreatorId == current tutor id`.
+   * - Uses `ratingRepo.hasRating(...)` with `(fromUserId, toUserId, ratingType = STUDENT,
+   *   targetObjectId = bookingId)` to check if that specific booking has already been rated. If a
+   *   rating already exists, the function logs and returns without creating a duplicate.
+   * - Converts the raw `stars` (1–5) to a `StarRating` enum and builds a `Rating` object targeting
+   *   the student.
+   * - Persists the rating via `ratingRepo.addRating(...)`.
+   * - Recomputes the student's aggregate rating using
+   *   `RatingAggregationHelper.recomputeStudentAggregateRating(...)` and writes it to the student's
+   *   profile.
+   * - Updates `_uiState` so the tutor rating section can be hidden (`tutorRatingPending = false`)
+   *   and reloads bookings for the listing to reflect the updated state.
+   *
+   * Error handling:
+   * - If no listing is loaded, the user is not authenticated, or no matching completed booking is
+   *   found, the method logs a warning and exits early.
+   * - Any repository errors are caught and logged so the app does not crash; in that case the
+   *   rating might not be persisted and the UI state is left unchanged.
+   *
+   * @param stars The number of stars (1–5) that the tutor gives to the student for this booking.
+   */
   fun submitTutorRating(stars: Int) {
     viewModelScope.launch {
       try {
@@ -284,8 +342,7 @@ class ListingViewModel(
 
         val completedBooking =
             _uiState.value.listingBookings.firstOrNull {
-              it.status == BookingStatus.COMPLETED &&
-                  it.listingCreatorId == fromUserId // ensure tutor is the creator
+              it.status == BookingStatus.COMPLETED && it.listingCreatorId == fromUserId
             }
         if (completedBooking == null) {
           Log.w("ListingViewModel", "No completed booking found to rate")
@@ -294,21 +351,22 @@ class ListingViewModel(
 
         val toUserId = completedBooking.bookerId
 
-        // Prevent duplicate rating: check existing before creating
+        // unique per booking
         val alreadyRated =
             try {
               ratingRepo.hasRating(
                   fromUserId = fromUserId,
                   toUserId = toUserId,
-                  ratingType = RatingType.STUDENT, // 👈 changed
-                  targetObjectId = listing.listingId)
+                  ratingType = RatingType.STUDENT,
+                  targetObjectId = completedBooking.bookingId, // 👈 changed
+              )
             } catch (e: Exception) {
               Log.w("ListingViewModel", "Error checking existing rating", e)
               false
             }
 
         if (alreadyRated) {
-          Log.d("ListingViewModel", "Rating already exists; skipping submit")
+          Log.d("ListingViewModel", "Rating for this booking already exists; skipping submit")
           _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
           return@launch
         }
@@ -323,13 +381,16 @@ class ListingViewModel(
                 toUserId = toUserId,
                 starRating = starEnum,
                 comment = "",
-                ratingType = RatingType.STUDENT, // 👈 changed
-                targetObjectId = listing.listingId)
+                ratingType = RatingType.STUDENT,
+                targetObjectId = completedBooking.bookingId, // 👈 changed
+            )
 
         ratingRepo.addRating(rating)
 
         RatingAggregationHelper.recomputeStudentAggregateRating(
             studentUserId = toUserId, ratingRepo = ratingRepo, profileRepo = profileRepo)
+
+        _uiState.update { it.copy(tutorRatingPending = false) }
 
         Log.d("ListingViewModel", "Tutor rating persisted: $stars stars -> $toUserId")
         _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }

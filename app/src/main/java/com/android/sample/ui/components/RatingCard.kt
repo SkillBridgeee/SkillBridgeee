@@ -29,11 +29,9 @@ object RatingTestTags {
   const val CARD = "RatingCardTestTags.CARD"
   const val STARS = "RatingCardTestTags.STARS"
   const val COMMENT = "RatingCardTestTags.COMMENT"
-  const val CREATOR_NAME = "RatingCardTestTags.CREATOR_NAME"
-  const val CREATOR_GRADE = "RatingCardTestTags.CREATOR_GRADE"
+  const val RATER_NAME = "RatingCardTestTags.RATER_NAME"
   const val INFO_PART = "RatingCardTestTags.INFO_PART"
-
-  const val CREATOR_IMAGE = "RatingCardTestTags.CREATOR_IMAGE"
+  const val RATER_IMAGE = "RatingCardTestTags.RATER_IMAGE"
 }
 
 @Composable
@@ -55,7 +53,7 @@ fun RatingCard(
                       .background(MaterialTheme.colorScheme.surfaceVariant),
               contentAlignment = Alignment.Center) {
                 Text(
-                    modifier = Modifier.testTag(RatingTestTags.CREATOR_IMAGE),
+                    modifier = Modifier.testTag(RatingTestTags.RATER_IMAGE),
                     text = (rater?.name?.firstOrNull()?.uppercase() ?: "U"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold)
@@ -71,18 +69,11 @@ fun RatingCard(
                       text = "by ${rater?.name ?: "Unknown"}",
                       style = MaterialTheme.typography.titleMedium,
                       color = MaterialTheme.colorScheme.onSurfaceVariant,
-                      modifier = Modifier.testTag(RatingTestTags.CREATOR_NAME))
+                      modifier = Modifier.testTag(RatingTestTags.RATER_NAME))
 
                   Spacer(modifier = Modifier.weight(1f))
 
-                  // numeric grade 1..5 taken from the enum value
-                  val grade = rating.starRating.value
-                  Text(
-                      text = "($grade)",
-                      modifier =
-                          Modifier.align(Alignment.CenterVertically)
-                              .testTag(RatingTestTags.CREATOR_GRADE))
-                  Spacer(Modifier.width(4.dp))
+                  val grade = rating.starRating.value // 1..5
 
                   RatingStars(
                       ratingOutOfFive = grade.toDouble(),

@@ -33,7 +33,7 @@ fun RatingStars(ratingOutOfFive: Double, modifier: Modifier = Modifier) {
   val filled = ratingOutOfFive.coerceIn(0.0, 5.0).roundToInt()
 
   Row(modifier) {
-    repeat(5) { i ->
+    repeat(MAX_STARS) { i ->
       val isFilled = i < filled
 
       val imageVector = if (isFilled) Icons.Filled.Star else Icons.Outlined.Star
