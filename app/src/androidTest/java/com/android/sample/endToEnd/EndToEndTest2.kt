@@ -3,6 +3,8 @@ package com.android.sample.endToEnd
 import android.Manifest
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -47,7 +49,7 @@ class EndToEndTest2 {
     private const val TEST_DESC_UPDATED = "Very happy"
 
     private const val TEST_TITLE = "Math Class"
-    private const val TEST_EMAIL = "guillaume.lepinuuuuusu@epfl.ch"
+    private const val TEST_EMAIL = "test_mail@epfl.ch"
     private const val TEST_NAME = "Lepin"
     private const val TEST_SURNAME = "Guillaume"
     private const val TEST_LOCATION = "London Street 1"
@@ -122,10 +124,21 @@ class EndToEndTest2 {
 
     // Click the save button
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
-    composeTestRule.waitForIdle()
 
-    // Verify that we are back on the home screen
-    composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
+    // Verify that we are back on the home screen and the new listing is displayed
+    composeTestRule.waitUntil {
+      composeTestRule
+          .onAllNodesWithTag(HomeScreenTestTags.WELCOME_SECTION)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    // Assert that at least one node with the user's full name is displayed.
+    composeTestRule.waitUntil {
+      composeTestRule
+          .onAllNodesWithText("$TEST_NAME $TEST_SURNAME")
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
   }
 
   @Test
@@ -157,8 +170,6 @@ class EndToEndTest2 {
     testHelper.scrollAndClickOn(MyProfileScreenTestTag.SAVE_BUTTON)
 
     composeTestRule.waitForIdle()
-
-    Thread.sleep(20000)
 
     // Scroll to the success message and assert it is displayed.
     // This implicitly waits for the node to appear.

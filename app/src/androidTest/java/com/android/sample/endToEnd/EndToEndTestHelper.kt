@@ -42,6 +42,7 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
 
   private fun enterText(testTag: String, text: String) {
     composeTestRule.onNodeWithTag(testTag).performClick().performTextInput(text)
+    composeTestRule.waitForIdle()
   }
 
   private fun clickOn(testTag: String) {
@@ -50,6 +51,7 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
 
   private fun scrollAndEnterText(testTag: String, text: String) {
     composeTestRule.onNodeWithTag(testTag).performScrollTo().performClick().performTextInput(text)
+    composeTestRule.waitForIdle()
   }
 
   fun scrollAndClickOn(
@@ -62,7 +64,7 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
       // Cannot scroll to a content description, so we assume the view is scrollable
       // and the click target is within it. This is a limitation.
       // A better approach would be to scroll to a parent container with a testTag.
-      composeTestRule.onNodeWithContentDescription(clickTag).performClick()
+      composeTestRule.onNodeWithContentDescription(clickTag).performScrollTo().performClick()
     } else {
       composeTestRule.onNodeWithTag(tagToScroll).performScrollTo()
       composeTestRule.onNodeWithTag(clickTag).performClick()
@@ -92,7 +94,6 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
     scrollAndClickOn(
         clickTag = NewListingScreenTestTag.BUTTON_USE_MY_LOCATION,
         scrollToTag = NewListingScreenTestTag.INPUT_LOCATION_FIELD)
-    composeTestRule.waitForIdle()
 
     multipleChooseExposeMenu(
         NewListingScreenTestTag.SUBJECT_FIELD,
@@ -128,7 +129,6 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
     scrollAndEnterText(SignUpScreenTestTags.PASSWORD, password)
 
     scrollAndClickOn(SignUpScreenTestTags.SIGN_UP)
-    composeTestRule.waitForIdle()
   }
 
   fun loginUser(email: String, password: String) {
@@ -144,7 +144,6 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
     enterText(SignInScreenTestTags.PASSWORD_INPUT, password)
 
     clickOn(SignInScreenTestTags.SIGN_IN_BUTTON)
-    composeTestRule.waitForIdle()
   }
 
   fun signUpAndLogin(
@@ -174,7 +173,8 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
   }
 
   fun updateProfileField(testTag: String, newText: String) {
-    composeTestRule.onNodeWithTag(testTag).performScrollTo().performTextClearance()
+    composeTestRule.onNodeWithTag(testTag).performScrollTo().performClick().performTextClearance()
+    composeTestRule.waitForIdle()
     composeTestRule.onNodeWithTag(testTag).performTextInput(newText)
   }
 }
