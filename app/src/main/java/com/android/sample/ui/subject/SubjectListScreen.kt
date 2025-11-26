@@ -1,7 +1,9 @@
 package com.android.sample.ui.subject
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +17,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.android.sample.model.listing.ListingFilterType
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RequestCard
@@ -80,6 +84,28 @@ private fun ListingItem(
       RequestCard(
           request = listing, onClick = onListingClick, testTag = SubjectListTestTags.LISTING_CARD)
     }
+  }
+}
+
+@Composable
+private fun ListingTypeChips(
+    selectedType: ListingFilterType,
+    onTypeSelected: (ListingFilterType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+  Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FilterChip(
+        selected = selectedType == ListingFilterType.ALL,
+        onClick = { onTypeSelected(ListingFilterType.ALL) },
+        label = { Text("All") })
+    FilterChip(
+        selected = selectedType == ListingFilterType.PROPOSALS,
+        onClick = { onTypeSelected(ListingFilterType.PROPOSALS) },
+        label = { Text("Proposals") })
+    FilterChip(
+        selected = selectedType == ListingFilterType.REQUESTS,
+        onClick = { onTypeSelected(ListingFilterType.REQUESTS) },
+        label = { Text("Requests") })
   }
 }
 
@@ -159,6 +185,11 @@ fun SubjectListScreen(
               }
             }
           }
+
+      Spacer(Modifier.height(12.dp))
+
+      ListingTypeChips(
+          selectedType = ui.selectedListingType, onTypeSelected = viewModel::onListingTypeSelected)
 
       Spacer(Modifier.height(16.dp))
 
