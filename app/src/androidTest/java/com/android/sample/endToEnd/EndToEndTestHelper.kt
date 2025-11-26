@@ -101,7 +101,7 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
         "${NewListingScreenTestTag.SUB_SKILL_DROPDOWN_ITEM_PREFIX}_0")
   }
 
-  private fun signUpNewUser(
+  fun signUpNewUser(
       name: String,
       surname: String,
       address: String,
@@ -129,7 +129,7 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
     composeTestRule.waitForIdle()
   }
 
-  private fun loginUser(email: String, password: String) {
+  fun loginUser(email: String, password: String) {
     composeTestRule.waitUntil {
       composeTestRule
           .onAllNodesWithTag(SignInScreenTestTags.SIGN_IN_BUTTON)
@@ -155,11 +155,13 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
       password: String
   ) {
     signUpNewUser(name, surname, address, levelOfEducation, description, email, password)
+    composeTestRule.waitForIdle()
 
     if (composeTestRule
         .onAllNodesWithTag(SignUpScreenTestTags.TITLE)
         .fetchSemanticsNodes()
         .isNotEmpty()) {
+      composeTestRule.onNodeWithTag(SignUpScreenTestTags.NAME).performClick()
       clickTopAppBarBack()
     }
 

@@ -76,9 +76,11 @@ fun TopAppBar(navController: NavController) {
       title = { Text(text = title, fontWeight = FontWeight.SemiBold) },
       navigationIcon = {
         if (canNavigateBack) {
-          IconButton(onClick = { navController.popBackStack() }) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-          }
+          IconButton(
+              onClick = { navController.popBackStack() },
+              modifier = Modifier.testTag(TopAppBarTestTags.BACK_BUTTON)) {
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+              }
         }
       })
 }

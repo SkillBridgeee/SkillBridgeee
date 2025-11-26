@@ -121,8 +121,6 @@ class EndToEndTest2 {
     composeTestRule.onNodeWithTag(NewListingScreenTestTag.BUTTON_SAVE_LISTING).performClick()
     composeTestRule.waitForIdle()
 
-    Thread.sleep(20000)
-
     // Verify that we are back on the home screen
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
   }
