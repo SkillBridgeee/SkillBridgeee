@@ -119,7 +119,7 @@ class SignUpUseCase(
                   // from login.
                   authRepository.signOut()
                   SignUpResult.Error(
-                      "Account created but verification email failed: ${exception.message}")
+                      "Account created but verification email couldn't be sent: ${exception.message}")
                 })
           } catch (e: Exception) {
             authRepository.signOut()
