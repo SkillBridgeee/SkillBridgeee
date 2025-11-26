@@ -30,14 +30,24 @@ private const val MAX_STARS = 5
  */
 @Composable
 fun RatingStars(ratingOutOfFive: Double, modifier: Modifier = Modifier) {
-  // Coerce the rating to be within the range of 0 to 5 and round to the nearest integer
   val filled = ratingOutOfFive.coerceIn(0.0, 5.0).roundToInt()
+
   Row(modifier) {
     repeat(5) { i ->
       val isFilled = i < filled
+
+      val imageVector = if (isFilled) Icons.Filled.Star else Icons.Outlined.Star
+      val tint =
+          if (isFilled) {
+            MaterialTheme.colorScheme.primary
+          } else {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+          }
+
       Icon(
-          imageVector = if (i < filled) Icons.Filled.Star else Icons.Outlined.Star,
+          imageVector = imageVector,
           contentDescription = null,
+          tint = tint,
           modifier =
               Modifier.testTag(
                   if (isFilled) RatingStarsTestTags.FILLED_STAR

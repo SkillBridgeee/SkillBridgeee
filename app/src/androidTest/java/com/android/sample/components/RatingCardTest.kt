@@ -36,7 +36,7 @@ class RatingCardTest {
           description = "Experienced tutor")
 
   fun setUpContent() {
-    composeRule.setContent { RatingCard(rating = rating, creator = profile) }
+    composeRule.setContent { RatingCard(rating = rating, rater = profile) }
   }
 
   @Test
@@ -123,7 +123,7 @@ class RatingCardTest {
                   "listing-1",
                   StarRating.FIVE,
               ),
-          creator = profile)
+          rater = profile)
     }
     composeRule.waitForIdle()
 
@@ -141,7 +141,7 @@ class RatingCardTest {
         location = com.android.sample.model.map.Location(name = "New York"),
         hourlyRate = "30",
         description = "Experienced tutor")
-    composeRule.setContent { RatingCard(rating = rating, creator = profile) }
+    composeRule.setContent { RatingCard(rating = rating, rater = profile) }
 
     composeRule.waitForIdle()
 

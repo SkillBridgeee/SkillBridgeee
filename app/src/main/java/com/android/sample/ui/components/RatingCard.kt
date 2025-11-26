@@ -39,15 +39,15 @@ object RatingTestTags {
 @Composable
 @Preview
 fun RatingCard(
-    rating: Rating? = Rating(),
-    creator: Profile? = null,
+    rating: Rating = Rating(),
+    rater: Profile? = null,
 ) {
   Card(
       shape = MaterialTheme.shapes.large,
       colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
       modifier = Modifier.testTag(RatingTestTags.CARD)) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-          // Avatar circle with tutor initial
+          // Avatar circle with rater initial
           Box(
               modifier =
                   Modifier.size(48.dp)
@@ -56,40 +56,44 @@ fun RatingCard(
               contentAlignment = Alignment.Center) {
                 Text(
                     modifier = Modifier.testTag(RatingTestTags.CREATOR_IMAGE),
-                    text = (creator?.name?.firstOrNull()?.uppercase() ?: "U"),
+                    text = (rater?.name?.firstOrNull()?.uppercase() ?: "U"),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold)
               }
 
           Spacer(Modifier.width(6.dp))
 
-          Column() {
+          Column {
             Row(
                 modifier =
                     Modifier.fillMaxWidth().padding(4.dp).testTag(RatingTestTags.INFO_PART)) {
                   Text(
-                      text = "by ${creator?.name ?: "Unknown"}",
+                      text = "by ${rater?.name ?: "Unknown"}",
                       style = MaterialTheme.typography.titleMedium,
                       color = MaterialTheme.colorScheme.onSurfaceVariant,
                       modifier = Modifier.testTag(RatingTestTags.CREATOR_NAME))
 
                   Spacer(modifier = Modifier.weight(1f))
 
-                  val grade = rating?.starRating?.value?.toDouble() ?: 0.0
+                  // numeric grade 1..5 taken from the enum value
+                  val grade = rating.starRating.value
                   Text(
-                      text = "(${grade.toInt()})",
+                      text = "($grade)",
                       modifier =
                           Modifier.align(Alignment.CenterVertically)
                               .testTag(RatingTestTags.CREATOR_GRADE))
                   Spacer(Modifier.width(4.dp))
-                  RatingStars(grade, Modifier.testTag(RatingTestTags.STARS))
+
+                  RatingStars(
+                      ratingOutOfFive = grade.toDouble(),
+                      modifier = Modifier.testTag(RatingTestTags.STARS))
                 }
 
             Spacer(Modifier.height(8.dp))
 
             Text(
                 modifier = Modifier.testTag(RatingTestTags.COMMENT),
-                text = rating?.comment?.takeUnless { it.isEmpty() } ?: "No comment provided",
+                text = rating.comment.takeUnless { it.isBlank() } ?: "No comment provided",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
           }
