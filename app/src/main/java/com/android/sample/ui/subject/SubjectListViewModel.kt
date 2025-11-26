@@ -144,6 +144,7 @@ class SubjectListViewModel(
    * @param type The new listing type filter
    */
   fun onListingTypeSelected(type: ListingFilterType) {
+    if (type == _ui.value.selectedListingType) return
     _ui.update { it.copy(selectedListingType = type) }
     applyFilters()
   }
