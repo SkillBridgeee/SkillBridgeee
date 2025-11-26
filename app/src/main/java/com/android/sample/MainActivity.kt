@@ -35,6 +35,8 @@ import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.firestore
 import okhttp3.OkHttpClient
 
@@ -80,6 +82,16 @@ class MainActivity : ComponentActivity() {
     authViewModel = AuthenticationViewModel(this)
     googleSignInHelper =
         GoogleSignInHelper(this) { result -> authViewModel.handleGoogleSignInResult(result) }
+
+    //gets the firestore instance
+    val db = FirebaseFirestore.getInstance()
+
+    //sets the settings for the firestore instance which allows caching
+    val settings = FirebaseFirestoreSettings.Builder()
+      .setPersistenceEnabled(true)
+      .build()
+
+    db.firestoreSettings = settings
 
     setContent {
       MainApp(
