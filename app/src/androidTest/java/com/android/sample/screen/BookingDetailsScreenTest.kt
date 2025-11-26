@@ -192,7 +192,22 @@ class BookingDetailsScreenTest {
   @Test
   fun bookingDetailsScreen_clickMoreInfo_callsCallback() {
     var clickedId: String? = null
+
     val vm = fakeViewModel()
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    associatedListingId = "list-123",
+                ),
+            listing = Proposal(),
+            creatorProfile = Profile(userId = "u1", name = "Teacher"),
+        ))
+
     composeTestRule.setContent {
       BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = { clickedId = it })
     }

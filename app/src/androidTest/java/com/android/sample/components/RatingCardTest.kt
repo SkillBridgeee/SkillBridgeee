@@ -54,7 +54,7 @@ class RatingCardTest {
 
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag("RatingCardTestTags.CREATOR_NAME").assertExists()
+    composeRule.onNodeWithTag("RatingCardTestTags.RATER_NAME").assertExists()
   }
 
   @Test
@@ -63,7 +63,7 @@ class RatingCardTest {
 
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag("RatingCardTestTags.CREATOR_IMAGE").assertExists()
+    composeRule.onNodeWithTag("RatingCardTestTags.RATER_IMAGE").assertExists()
   }
 
   @Test
@@ -82,15 +82,6 @@ class RatingCardTest {
     composeRule.waitForIdle()
 
     composeRule.onNodeWithTag("RatingCardTestTags.STARS").assertExists()
-  }
-
-  @Test
-  fun ratingCard_displaysCreatorGrade() {
-    setUpContent()
-
-    composeRule.waitForIdle()
-
-    composeRule.onNodeWithTag("RatingCardTestTags.CREATOR_GRADE").assertExists()
   }
 
   @Test
@@ -145,17 +136,7 @@ class RatingCardTest {
 
     composeRule.waitForIdle()
 
-    composeRule.onNodeWithTag("RatingCardTestTags.CREATOR_NAME").assertIsDisplayed()
+    composeRule.onNodeWithTag("RatingCardTestTags.RATER_NAME").assertIsDisplayed()
     composeRule.onNodeWithText("by John Doe").assertExists()
-  }
-
-  @Test
-  fun ratingCard_displaysCorrectCreatorGrade() {
-    setUpContent()
-
-    composeRule.waitForIdle()
-
-    composeRule.onNodeWithTag("RatingCardTestTags.CREATOR_GRADE").assertIsDisplayed()
-    composeRule.onNodeWithText("(5)").assertExists()
   }
 }
