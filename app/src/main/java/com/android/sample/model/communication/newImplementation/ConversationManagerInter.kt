@@ -1,10 +1,11 @@
 package com.android.sample.model.communication.newImplementation
 
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import kotlinx.coroutines.flow.Flow
 
 interface ConversationManagerInter {
 
-  //  CONVERSATION LIFECYCLE
   suspend fun createConvAndOverviews(
       creatorId: String,
       otherUserId: String,
@@ -13,6 +14,11 @@ interface ConversationManagerInter {
 
   suspend fun deleteConvAndOverviews(convId: String)
 
-  // MESSAGES
   suspend fun sendMessage(convId: String, message: MessageNew)
+
+  suspend fun resetUnreadCount(convId: String, userId: String)
+
+  fun listenMessages(convId: String): Flow<List<MessageNew>>
+
+  fun listenConversationOverviews(userId: String): Flow<List<OverViewConversation>>
 }
