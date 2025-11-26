@@ -80,8 +80,40 @@ class AuthenticationViewModel(
       val result = repository.signInWithEmail(email, password)
       result.fold(
           onSuccess = { user ->
-            _authResult.value = AuthResult.Success(user)
-            clearLoading()
+            // Check if email is verified
+            if (!user.isEmailVerified) {
+              // Keep user signed in but show unverified state
+              // They can now call resendVerificationEmail() without re-entering password
+              _authResult.value = AuthResult.UnverifiedEmail(user)
+              _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error =
+                        "Please verify your email to access all features. Check your inbox or click 'Resend Verification Email'.")
+              }
+              return@launch
+            }
+
+            // Check if profile exists for this user
+            val profile =
+                try {
+                  profileRepository.getProfile(user.uid)
+                } catch (_: Exception) {
+                  null
+                }
+
+            if (profile == null) {
+              // No profile exists - this is a verified user logging in for the first time
+              // They need to complete sign up to create their profile
+              val userEmail = user.email ?: email
+              Log.d(TAG, "Verified user needs to complete profile. Email: $userEmail")
+              _authResult.value = AuthResult.RequiresSignUp(userEmail, user)
+              clearLoading()
+            } else {
+              // Profile exists - successful login
+              _authResult.value = AuthResult.Success(user)
+              clearLoading()
+            }
           },
           onFailure = { exception ->
             val errorMessage = exception.message ?: "Sign in failed"
@@ -107,6 +139,7 @@ class AuthenticationViewModel(
           val authResult = repository.signInWithCredential(firebaseCredential)
           authResult.fold(
               onSuccess = { user ->
+
                 // Check if profile exists for this user
                 val profile =
                     try {
@@ -192,5 +225,33 @@ class AuthenticationViewModel(
   /** Show or hide success message */
   fun showSuccessMessage(show: Boolean) {
     _uiState.update { it.copy(showSuccessMessage = show) }
+  }
+
+  /**
+   * Resend verification email to the currently signed-in user. This is the secure approach that
+   * uses the existing authenticated session without requiring password re-entry.
+   *
+   * SECURITY: This method never asks for or handles passwords, eliminating password exposure risks.
+   * Users should be kept signed in after signup so they can call this method easily.
+   */
+  fun resendVerificationEmail() {
+    setLoading()
+
+    viewModelScope.launch {
+      val result = repository.resendVerificationEmail()
+      result.fold(
+          onSuccess = {
+            _uiState.update {
+              it.copy(
+                  isLoading = false,
+                  error = null,
+                  message = "Verification email sent! Please check your inbox.")
+            }
+          },
+          onFailure = { exception ->
+            val errorMessage = exception.message ?: "Failed to resend verification email"
+            setErrorState(errorMessage)
+          })
+    }
   }
 }

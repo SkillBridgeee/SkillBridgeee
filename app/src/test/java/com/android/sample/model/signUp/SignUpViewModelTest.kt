@@ -316,7 +316,11 @@ class SignUpViewModelTest {
     val capturedProfile = slot<com.android.sample.model.user.Profile>()
     coEvery { mockRepo.addProfile(capture(capturedProfile)) } returns Unit
 
-    val vm = createViewModel(profileRepository = mockRepo)
+    val mockAuthRepo = createMockAuthRepository()
+    coEvery { mockAuthRepo.sendEmailVerification() } returns Result.success(Unit)
+    coEvery { mockAuthRepo.signOut() } returns Unit
+
+    val vm = createViewModel(authRepository = mockAuthRepo, profileRepository = mockRepo)
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
     vm.onEvent(SignUpEvent.SurnameChanged("Lovelace"))
     vm.onEvent(SignUpEvent.AddressChanged("Street 1"))
@@ -331,7 +335,9 @@ class SignUpViewModelTest {
 
     val s = vm.state.value
     assertFalse(s.submitting)
-    assertTrue(s.submitSuccess)
+    // For email/password sign-up, expect verificationEmailSent, not submitSuccess
+    assertTrue(s.verificationEmailSent)
+    assertFalse(s.submitSuccess)
     assertNull(s.error)
 
     // Verify profile was added
@@ -346,7 +352,11 @@ class SignUpViewModelTest {
     val mockRepo = mockk<ProfileRepository>()
     coEvery { mockRepo.addProfile(any()) } coAnswers { kotlinx.coroutines.delay(200) }
 
-    val vm = createViewModel(profileRepository = mockRepo)
+    val mockAuthRepo = createMockAuthRepository()
+    coEvery { mockAuthRepo.sendEmailVerification() } returns Result.success(Unit)
+    coEvery { mockAuthRepo.signOut() } returns Unit
+
+    val vm = createViewModel(authRepository = mockAuthRepo, profileRepository = mockRepo)
     vm.onEvent(SignUpEvent.NameChanged("Alan"))
     vm.onEvent(SignUpEvent.SurnameChanged("Turing"))
     vm.onEvent(SignUpEvent.AddressChanged("S2"))
@@ -359,7 +369,9 @@ class SignUpViewModelTest {
     assertTrue(vm.state.value.submitting)
     advanceUntilIdle()
     assertFalse(vm.state.value.submitting)
-    assertTrue(vm.state.value.submitSuccess)
+    // For email/password sign-up, expect verificationEmailSent, not submitSuccess
+    assertTrue(vm.state.value.verificationEmailSent)
+    assertFalse(vm.state.value.submitSuccess)
   }
 
   @Test
@@ -382,7 +394,11 @@ class SignUpViewModelTest {
 
   @Test
   fun changing_any_field_after_success_keeps_success_true_until_next_submit() = runTest {
-    val vm = createViewModel()
+    val mockAuthRepo = createMockAuthRepository()
+    coEvery { mockAuthRepo.sendEmailVerification() } returns Result.success(Unit)
+    coEvery { mockAuthRepo.signOut() } returns Unit
+
+    val vm = createViewModel(authRepository = mockAuthRepo)
     vm.onEvent(SignUpEvent.NameChanged("Ada"))
     vm.onEvent(SignUpEvent.SurnameChanged("Lovelace"))
     vm.onEvent(SignUpEvent.AddressChanged("S1"))
@@ -391,11 +407,13 @@ class SignUpViewModelTest {
     vm.onEvent(SignUpEvent.PasswordChanged("abcde12!"))
     vm.onEvent(SignUpEvent.Submit)
     advanceUntilIdle()
-    assertTrue(vm.state.value.submitSuccess)
+    // For email/password sign-up, expect verificationEmailSent, not submitSuccess
+    assertTrue(vm.state.value.verificationEmailSent)
 
-    // Change a field -> validate runs, success flag remains true (until next submit call resets it)
+    // Change a field -> validate runs, verificationEmailSent flag remains true (until next submit
+    // call resets it)
     vm.onEvent(SignUpEvent.AddressChanged("S2"))
-    assertTrue(vm.state.value.submitSuccess)
+    assertTrue(vm.state.value.verificationEmailSent)
   }
 
   @Test
@@ -439,8 +457,9 @@ class SignUpViewModelTest {
     advanceUntilIdle()
 
     assertFalse(vm.state.value.submitSuccess)
+    assertFalse(vm.state.value.verificationEmailSent)
     assertNotNull(vm.state.value.error)
-    assertTrue(vm.state.value.error!!.contains("Account created but profile failed"))
+    assertTrue(vm.state.value.error!!.contains("Account created but profile creation failed"))
   }
 
   @Test
@@ -1265,5 +1284,84 @@ class SignUpViewModelTest {
     advanceUntilIdle()
 
     assertEquals("123 Main St", capturedProfile.captured.location.name)
+  }
+
+  // -------- Email Verification State Tests -----------------------------------------------
+
+  @Test
+  fun submit_withVerificationEmailSent_setsVerificationEmailSentTrue() = runTest {
+    val mockAuthRepo = mockk<AuthenticationRepository>()
+    val mockUser = mockk<FirebaseUser>()
+    every { mockUser.uid } returns "test-uid"
+    every { mockAuthRepo.getCurrentUser() } returns null
+    every { mockAuthRepo.signOut() } returns Unit
+    coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns Result.success(mockUser)
+    coEvery { mockAuthRepo.sendEmailVerification() } returns Result.success(Unit)
+
+    val mockProfileRepo = createMockProfileRepository()
+
+    val vm = createViewModel(authRepository = mockAuthRepo, profileRepository = mockProfileRepo)
+    vm.onEvent(SignUpEvent.NameChanged("John"))
+    vm.onEvent(SignUpEvent.SurnameChanged("Doe"))
+    vm.onEvent(SignUpEvent.EmailChanged("test@example.com"))
+    vm.onEvent(SignUpEvent.PasswordChanged("abcde12!"))
+    vm.onEvent(SignUpEvent.LevelOfEducationChanged("CS"))
+    vm.onEvent(SignUpEvent.AddressChanged("123 St"))
+    vm.onEvent(SignUpEvent.Submit)
+    advanceUntilIdle()
+
+    assertTrue(vm.state.value.verificationEmailSent)
+    assertFalse(vm.state.value.submitSuccess)
+    assertFalse(vm.state.value.submitting)
+  }
+
+  @Test
+  fun submit_googleSignUp_setsSubmitSuccessTrueNotVerificationEmailSent() = runTest {
+    val mockUser = mockk<FirebaseUser>()
+    every { mockUser.uid } returns "google-uid"
+    val mockAuthRepo = mockk<AuthenticationRepository>()
+    every { mockAuthRepo.getCurrentUser() } returns mockUser
+    every { mockAuthRepo.signOut() } returns Unit
+
+    val mockProfileRepo = createMockProfileRepository()
+
+    val vm =
+        createViewModel(
+            initialEmail = "google@gmail.com",
+            authRepository = mockAuthRepo,
+            profileRepository = mockProfileRepo)
+    vm.onEvent(SignUpEvent.NameChanged("John"))
+    vm.onEvent(SignUpEvent.SurnameChanged("Doe"))
+    vm.onEvent(SignUpEvent.LevelOfEducationChanged("CS"))
+    vm.onEvent(SignUpEvent.AddressChanged("123 St"))
+    vm.onEvent(SignUpEvent.Submit)
+    advanceUntilIdle()
+
+    assertTrue(vm.state.value.submitSuccess)
+    assertFalse(vm.state.value.verificationEmailSent)
+    assertFalse(vm.state.value.submitting)
+  }
+
+  @Test
+  fun submit_withError_setsVerificationEmailSentFalse() = runTest {
+    val mockAuthRepo = mockk<AuthenticationRepository>()
+    every { mockAuthRepo.getCurrentUser() } returns null
+    every { mockAuthRepo.signOut() } returns Unit
+    coEvery { mockAuthRepo.signUpWithEmail(any(), any()) } returns
+        Result.failure(Exception("Auth failed"))
+
+    val vm = createViewModel(authRepository = mockAuthRepo)
+    vm.onEvent(SignUpEvent.NameChanged("John"))
+    vm.onEvent(SignUpEvent.SurnameChanged("Doe"))
+    vm.onEvent(SignUpEvent.EmailChanged("test@example.com"))
+    vm.onEvent(SignUpEvent.PasswordChanged("abcde12!"))
+    vm.onEvent(SignUpEvent.LevelOfEducationChanged("CS"))
+    vm.onEvent(SignUpEvent.AddressChanged("123 St"))
+    vm.onEvent(SignUpEvent.Submit)
+    advanceUntilIdle()
+
+    assertFalse(vm.state.value.verificationEmailSent)
+    assertFalse(vm.state.value.submitSuccess)
+    assertNotNull(vm.state.value.error)
   }
 }
