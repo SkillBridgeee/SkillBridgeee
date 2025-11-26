@@ -3,6 +3,7 @@ package com.android.sample.endToEnd
 import android.Manifest
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -43,6 +44,8 @@ class EndToEndTest2 {
   companion object {
     private const val TEST_PASSWORD = "testPassword123!"
     private const val TEST_DESC = "Happy"
+    private const val TEST_DESC_UPDATED = "Very happy"
+
     private const val TEST_TITLE = "Math Class"
     private const val TEST_EMAIL = "guillaume.lepinuuuuusu@epfl.ch"
     private const val TEST_NAME = "Lepin"
@@ -123,5 +126,40 @@ class EndToEndTest2 {
 
     // Verify that we are back on the home screen
     composeTestRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertExists()
+  }
+
+  @Test
+  fun testUpdateProfileDescription() {
+    testHelper.signUpAndLogin(
+        name = TEST_NAME,
+        surname = TEST_SURNAME,
+        address = TEST_LOCATION,
+        levelOfEducation = TEST_EDUCATION,
+        description = TEST_DESC,
+        email = TEST_EMAIL,
+        password = TEST_PASSWORD)
+
+    composeTestRule.waitForIdle()
+
+    // Navigate to the profile screen
+    testHelper.navigateToMyProfile()
+    composeTestRule.waitForIdle()
+
+    // Wait for the profile screen to be visible
+    composeTestRule.onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST).assertIsDisplayed()
+
+    // Update the description using the new helper function
+    testHelper.updateProfileField(MyProfileScreenTestTag.INPUT_PROFILE_DESC, TEST_DESC_UPDATED)
+
+    // Click the save button
+    testHelper.scrollAndClickOn(MyProfileScreenTestTag.SAVE_BUTTON)
+
+    // Verify that the profile was updated successfully by checking for the success message
+    composeTestRule.waitUntil(timeoutMillis = 5_000) {
+      composeTestRule
+          .onAllNodesWithText("Profile successfully updated!")
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
   }
 }

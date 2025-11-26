@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.android.sample.model.listing.Listing
 import com.android.sample.ui.HomePage.HomeScreenTestTags
@@ -51,7 +52,7 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
     composeTestRule.onNodeWithTag(testTag).performScrollTo().performClick().performTextInput(text)
   }
 
-  private fun scrollAndClickOn(
+  fun scrollAndClickOn(
       clickTag: String,
       scrollToTag: String? = null,
       useContentDesc: Boolean = false
@@ -169,5 +170,10 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
     composeTestRule.onNodeWithTag(SignInScreenTestTags.TITLE).assertExists()
 
     loginUser(email, password)
+  }
+
+  fun updateProfileField(testTag: String, newText: String) {
+    composeTestRule.onNodeWithTag(testTag).performScrollTo().performTextClearance()
+    composeTestRule.onNodeWithTag(testTag).performTextInput(newText)
   }
 }
