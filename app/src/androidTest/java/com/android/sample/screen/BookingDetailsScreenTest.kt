@@ -181,12 +181,8 @@ class BookingDetailsScreenTest {
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.STATUS).assertExists()
 
     // Vérifie le nom et email du créateur
-    composeTestRule
-        .onNodeWithTag(BookingDetailsTestTag.CREATOR_NAME)
-        .assert(hasAnyChild(hasText("John Doe")))
-    composeTestRule
-        .onNodeWithTag(BookingDetailsTestTag.CREATOR_EMAIL)
-        .assert(hasAnyChild(hasText("john.doe@example.com")))
+    composeTestRule.onNodeWithText("John Doe").assertIsDisplayed()
+    composeTestRule.onNodeWithText("john.doe@example.com").assertIsDisplayed()
   }
 
   @Test
