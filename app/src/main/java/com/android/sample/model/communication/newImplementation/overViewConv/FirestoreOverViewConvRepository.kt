@@ -31,8 +31,7 @@ class FirestoreOverViewConvRepository(
   }
 
   /**
-   * Creates or updates a conversation overview for a user. If `overViewId` is blank, a new document
-   * ID is generated automatically.
+   * Creates or updates a conversation overview for a user.
    *
    * @param overView the overview model to store.
    */
