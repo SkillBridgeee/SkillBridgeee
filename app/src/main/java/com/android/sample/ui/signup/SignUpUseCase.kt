@@ -20,8 +20,11 @@ data class SignUpRequest(
 
 /** Sealed class representing the result of a sign-up operation. */
 sealed class SignUpResult {
-  /** Sign-up completed successfully */
+  /** Sign-up completed successfully (for Google Sign-In users who don't need email verification) */
   object Success : SignUpResult()
+
+  /** Verification email sent - user needs to verify before logging in */
+  data class VerificationEmailSent(val email: String) : SignUpResult()
 
   /** Sign-up failed with an error */
   data class Error(val message: String) : SignUpResult()
@@ -81,21 +84,46 @@ class SignUpUseCase(
     }
   }
 
-  /** Creates a new Firebase Auth account and then creates the profile. */
+  /** Creates a new Firebase Auth account, creates profile, and sends verification email. */
   private suspend fun createNewUserWithProfile(request: SignUpRequest): SignUpResult {
     val authResult = authRepository.signUpWithEmail(request.email, request.password)
 
     return authResult.fold(
         onSuccess = { firebaseUser ->
-          // Auth successful - now create profile
+          // Auth successful - create profile first, then send verification email
           try {
+            // Step 1: Create the profile before signing out
             val profile = buildProfile(firebaseUser.uid, request)
-            profileRepository.addProfile(profile)
-            SignUpResult.Success
+            try {
+              profileRepository.addProfile(profile)
+            } catch (profileException: Exception) {
+              // Profile creation failed - sign out and return error
+              authRepository.signOut()
+              return SignUpResult.Error(
+                  "Account created but profile creation failed: ${profileException.message}")
+            }
+
+            // Step 2: Send verification email
+            val sendResult = authRepository.sendEmailVerification()
+
+            sendResult.fold(
+                onSuccess = {
+                  // Sign out the user - they need to verify before logging in
+                  // Profile is already created, so when they verify and log in, it will exist
+                  authRepository.signOut()
+                  SignUpResult.VerificationEmailSent(request.email)
+                },
+                onFailure = { exception ->
+                  // Verification email failed to send
+                  // Note: The Firebase Auth user and profile remain created. They can try to resend
+                  // from login.
+                  authRepository.signOut()
+                  SignUpResult.Error(
+                      "Account created but verification email couldn't be sent: ${exception.message}")
+                })
           } catch (e: Exception) {
-            // Profile creation failed after auth success
-            // Note: The Firebase Auth user remains created. Consider cleanup in future.
-            SignUpResult.Error("Account created but profile failed: ${e.message}")
+            authRepository.signOut()
+            SignUpResult.Error("Failed to complete sign up: ${e.message}")
           }
         },
         onFailure = { exception ->
