@@ -158,6 +158,8 @@ class EndToEndTest2 {
 
     composeTestRule.waitForIdle()
 
+    Thread.sleep(20000)
+
     // Scroll to the success message and assert it is displayed.
     // This implicitly waits for the node to appear.
     composeTestRule
