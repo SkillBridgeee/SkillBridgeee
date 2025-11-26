@@ -16,7 +16,7 @@ class MyProfileScreenTestAppTest : AppTest() {
   @Before
   override fun setUp() {
     super.setUp()
-    composeTestRule.setContent { CreateAppContent() }
+    composeTestRule.setContent { CreateAppContentHome() }
     composeTestRule.navigateToMyProfile()
   }
 

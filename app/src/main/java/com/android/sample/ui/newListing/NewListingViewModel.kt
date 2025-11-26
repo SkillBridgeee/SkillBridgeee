@@ -92,7 +92,7 @@ data class ListingUIState(
 class NewListingViewModel(
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val locationRepository: LocationRepository =
-        NominatimLocationRepository(HttpClientProvider.client),
+        NominatimLocationRepository(HttpClientProvider.client)
 ) : ViewModel() {
   // Internal mutable UI state
   private val _uiState = MutableStateFlow(ListingUIState())
@@ -166,6 +166,12 @@ class NewListingViewModel(
     val listingType = state.listingType!!
     val selectedLocation = state.selectedLocation!!
 
+    val currentUserId = UserSessionManager.getCurrentUserId()
+    if (currentUserId.isNullOrBlank()) {
+      Log.e("NewListingViewModel", "Cannot add listing, user is not logged in.")
+      return
+    }
+
     val newSkill = Skill(mainSubject = mainSubject, skill = specificSkill)
     val isEditMode = state.listingId != null
 
@@ -174,7 +180,7 @@ class NewListingViewModel(
           ListingType.PROPOSAL ->
               Proposal(
                   listingId = state.listingId ?: listingRepository.getNewUid(),
-                  creatorUserId = userId,
+                  creatorUserId = currentUserId,
                   skill = newSkill,
                   title = state.title,
                   description = state.description,
@@ -183,7 +189,7 @@ class NewListingViewModel(
           ListingType.REQUEST ->
               Request(
                   listingId = state.listingId ?: listingRepository.getNewUid(),
-                  creatorUserId = userId,
+                  creatorUserId = currentUserId,
                   skill = newSkill,
                   title = state.title,
                   description = state.description,

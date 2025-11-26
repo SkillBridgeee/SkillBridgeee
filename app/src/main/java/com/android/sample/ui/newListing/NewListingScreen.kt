@@ -71,13 +71,7 @@ fun NewListingScreen(
 
   LaunchedEffect(listingUIState.addSuccess) {
     if (listingUIState.addSuccess) {
-      if (isEditMode) {
-        navController.navigate(NavRoutes.createProfileRoute(profileId)) {
-          popUpTo(NavRoutes.createProfileRoute(profileId)) { inclusive = true }
-        }
-      } else {
-        navController.popBackStack()
-      }
+      navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.HOME) { inclusive = true } }
       skillViewModel.clearAddSuccess()
     }
   }
