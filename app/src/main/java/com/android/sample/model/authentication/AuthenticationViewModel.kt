@@ -11,13 +11,11 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * ViewModel for managing authentication state and operations. Follows MVVM architecture pattern
@@ -99,7 +97,7 @@ class AuthenticationViewModel(
             // Check if profile exists for this user
             val profile =
                 try {
-                  withContext(Dispatchers.IO) { profileRepository.getProfile(user.uid) }
+                  profileRepository.getProfile(user.uid)
                 } catch (_: Exception) {
                   null
                 }
@@ -141,10 +139,11 @@ class AuthenticationViewModel(
           val authResult = repository.signInWithCredential(firebaseCredential)
           authResult.fold(
               onSuccess = { user ->
+
                 // Check if profile exists for this user
                 val profile =
                     try {
-                      withContext(Dispatchers.IO) { profileRepository.getProfile(user.uid) }
+                      profileRepository.getProfile(user.uid)
                     } catch (_: Exception) {
                       null
                     }

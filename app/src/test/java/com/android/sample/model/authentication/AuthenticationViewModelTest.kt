@@ -199,6 +199,7 @@ class AuthenticationViewModelTest {
     } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
     every { mockAccount.idToken } returns "test-token"
     every { mockUser.uid } returns "test-uid"
+    every { mockUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockUser)
@@ -434,6 +435,7 @@ class AuthenticationViewModelTest {
     every { mockAccount.email } returns "test@gmail.com"
     every { mockFirebaseUser.uid } returns "user-123"
     every { mockFirebaseUser.email } returns "test@gmail.com"
+    every { mockFirebaseUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
@@ -475,6 +477,7 @@ class AuthenticationViewModelTest {
     every { mockAccount.email } returns "test@gmail.com"
     every { mockFirebaseUser.uid } returns "user-123"
     every { mockFirebaseUser.email } returns "test@gmail.com"
+    every { mockFirebaseUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
@@ -518,6 +521,7 @@ class AuthenticationViewModelTest {
     every { mockAccount.email } returns "test@gmail.com"
     every { mockFirebaseUser.uid } returns "user-123"
     every { mockFirebaseUser.email } returns "test@gmail.com"
+    every { mockFirebaseUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
@@ -555,6 +559,7 @@ class AuthenticationViewModelTest {
     every { mockAccount.email } returns "google@gmail.com"
     every { mockFirebaseUser.uid } returns "user-123"
     every { mockFirebaseUser.email } returns null // Firebase email is null
+    every { mockFirebaseUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
@@ -592,6 +597,7 @@ class AuthenticationViewModelTest {
     every { mockAccount.email } returns null
     every { mockFirebaseUser.uid } returns "user-123"
     every { mockFirebaseUser.email } returns null
+    every { mockFirebaseUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
