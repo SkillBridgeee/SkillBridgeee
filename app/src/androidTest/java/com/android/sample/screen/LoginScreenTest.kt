@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -356,5 +355,66 @@ class LoginScreenTest {
 
     val after = composeRule.nodeCount(SignInScreenTestTags.PASSWORD_INPUT)
     assert(after >= 1) { "Password field disappeared after interactions." }
+  }
+
+  @Test
+  fun successMessageDisplayedWhenSet() {
+    lateinit var viewModel: AuthenticationViewModel
+    composeRule.setContent {
+      val context = LocalContext.current
+      viewModel = AuthenticationViewModel(context)
+
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = { /* Test placeholder */})
+    }
+
+    // Use reflection to directly set the message in the ViewModel's _uiState
+    val uiStateField = AuthenticationViewModel::class.java.getDeclaredField("_uiState")
+    uiStateField.isAccessible = true
+    val mutableStateFlow =
+        uiStateField.get(viewModel) as kotlinx.coroutines.flow.MutableStateFlow<*>
+
+    @Suppress("UNCHECKED_CAST")
+    val typedFlow =
+        mutableStateFlow
+            as
+            kotlinx.coroutines.flow.MutableStateFlow<
+                com.android.sample.model.authentication.AuthenticationUiState>
+
+    // Set a message directly
+    typedFlow.value =
+        typedFlow.value.copy(message = "Verification email sent! Please check your inbox.")
+
+    // Wait for recomposition
+    composeRule.waitForIdle()
+
+    // The message should now be displayed
+    composeRule.onNodeWithText("Verification email sent", substring = true).assertIsDisplayed()
+  }
+
+  @Test
+  fun resendVerificationButtonDisplayedForUnverifiedEmailError() {
+    composeRule.setContent {
+      val context = LocalContext.current
+      val viewModel = AuthenticationViewModel(context)
+
+      // Set email and password
+      viewModel.updateEmail("test@example.com")
+      viewModel.updatePassword("password123")
+
+      // Set error that triggers resend verification button
+      viewModel.setError("Please verify your email before signing in")
+
+      LoginScreen(viewModel = viewModel, onGoogleSignIn = { /* Test placeholder */})
+    }
+
+    // Check that error message is displayed
+    composeRule.onNodeWithText("Please verify your email before signing in").assertIsDisplayed()
+
+    // Check that resend verification button is displayed
+    composeRule.onNodeWithTag(SignInScreenTestTags.RESEND_VERIFICATION).assertIsDisplayed()
+    composeRule.onNodeWithText("Resend Verification Email").assertIsDisplayed()
+
+    // Click the button to ensure it works
+    composeRule.onNodeWithTag(SignInScreenTestTags.RESEND_VERIFICATION).performClick()
   }
 }
