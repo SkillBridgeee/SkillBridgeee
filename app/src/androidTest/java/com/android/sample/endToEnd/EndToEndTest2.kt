@@ -3,9 +3,9 @@ package com.android.sample.endToEnd
 import android.Manifest
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.rule.GrantPermissionRule
 import com.android.sample.MainActivity
@@ -151,15 +151,18 @@ class EndToEndTest2 {
     // Update the description using the new helper function
     testHelper.updateProfileField(MyProfileScreenTestTag.INPUT_PROFILE_DESC, TEST_DESC_UPDATED)
 
+    composeTestRule.waitForIdle()
+
     // Click the save button
     testHelper.scrollAndClickOn(MyProfileScreenTestTag.SAVE_BUTTON)
 
-    // Verify that the profile was updated successfully by checking for the success message
-    composeTestRule.waitUntil(timeoutMillis = 5_000) {
-      composeTestRule
-          .onAllNodesWithText("Profile successfully updated!")
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    composeTestRule.waitForIdle()
+
+    // Scroll to the success message and assert it is displayed.
+    // This implicitly waits for the node to appear.
+    composeTestRule
+        .onNodeWithTag(MyProfileScreenTestTag.SUCCESS_MSG)
+        .performScrollTo()
+        .assertIsDisplayed()
   }
 }

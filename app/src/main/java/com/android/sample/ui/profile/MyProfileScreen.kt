@@ -77,6 +77,7 @@ object MyProfileScreenTestTag {
   const val LOGOUT_BUTTON = "logoutButton"
   const val ERROR_MSG = "errorMsg"
   const val PIN_CONTENT_DESC = "Use my location"
+  const val SUCCESS_MSG = "successMsg"
 
   const val INFO_RATING_BAR = "infoRankingBar"
   const val INFO_TAB = "infoTab"
@@ -170,7 +171,10 @@ private fun MyProfileContent(
                   color = bkgConfirmedColor,
                   style = MaterialTheme.typography.bodyMedium,
                   textAlign = TextAlign.Center,
-                  modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+                  modifier =
+                      Modifier.fillMaxWidth()
+                          .padding(vertical = 8.dp)
+                          .testTag(MyProfileScreenTestTag.SUCCESS_MSG))
             }
           }
 
