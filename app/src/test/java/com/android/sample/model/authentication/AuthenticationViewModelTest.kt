@@ -124,11 +124,17 @@ class AuthenticationViewModelTest {
 
   @Test
   fun signIn_withValidCredentials_succeeds() = runTest {
-    val mockUser = mockk<FirebaseUser>()
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    every { mockUser.uid } returns "test-uid-123"
+    every { mockUser.email } returns "test@example.com"
+    every { mockUser.isEmailVerified } returns true // User's email is verified
+
     viewModel.updateEmail("test@example.com")
     viewModel.updatePassword("password123")
 
     coEvery { mockRepository.signInWithEmail(any(), any()) } returns Result.success(mockUser)
+    // Mock that profile exists for this user
+    coEvery { mockProfileRepository.getProfile("test-uid-123") } returns mockk(relaxed = true)
 
     viewModel.signIn()
     testDispatcher.scheduler.advanceUntilIdle()
@@ -193,6 +199,7 @@ class AuthenticationViewModelTest {
     } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
     every { mockAccount.idToken } returns "test-token"
     every { mockUser.uid } returns "test-uid"
+    every { mockUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockUser)
@@ -428,6 +435,7 @@ class AuthenticationViewModelTest {
     every { mockAccount.email } returns "test@gmail.com"
     every { mockFirebaseUser.uid } returns "user-123"
     every { mockFirebaseUser.email } returns "test@gmail.com"
+    every { mockFirebaseUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
@@ -469,6 +477,7 @@ class AuthenticationViewModelTest {
     every { mockAccount.email } returns "test@gmail.com"
     every { mockFirebaseUser.uid } returns "user-123"
     every { mockFirebaseUser.email } returns "test@gmail.com"
+    every { mockFirebaseUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
@@ -512,6 +521,7 @@ class AuthenticationViewModelTest {
     every { mockAccount.email } returns "test@gmail.com"
     every { mockFirebaseUser.uid } returns "user-123"
     every { mockFirebaseUser.email } returns "test@gmail.com"
+    every { mockFirebaseUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
@@ -549,6 +559,7 @@ class AuthenticationViewModelTest {
     every { mockAccount.email } returns "google@gmail.com"
     every { mockFirebaseUser.uid } returns "user-123"
     every { mockFirebaseUser.email } returns null // Firebase email is null
+    every { mockFirebaseUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
@@ -586,6 +597,7 @@ class AuthenticationViewModelTest {
     every { mockAccount.email } returns null
     every { mockFirebaseUser.uid } returns "user-123"
     every { mockFirebaseUser.email } returns null
+    every { mockFirebaseUser.isEmailVerified } returns true // Google Sign-In users are verified
 
     every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
     coEvery { mockRepository.signInWithCredential(any()) } returns Result.success(mockFirebaseUser)
@@ -631,7 +643,9 @@ class AuthenticationViewModelTest {
     // Given - simulate successful authentication
     val mockUser = mockk<FirebaseUser>(relaxed = true)
     every { mockUser.uid } returns "user-123"
+    every { mockUser.isEmailVerified } returns true // User's email is verified
     coEvery { mockRepository.signInWithEmail(any(), any()) } returns Result.success(mockUser)
+    coEvery { mockProfileRepository.getProfile("user-123") } returns mockk(relaxed = true)
 
     viewModel.updateEmail("test@example.com")
     viewModel.updatePassword("password123")
@@ -714,5 +728,163 @@ class AuthenticationViewModelTest {
     assertNull(uiState.error)
     assertEquals("", uiState.email)
     assertEquals("", uiState.password)
+  }
+
+  // -------- Email Verification Tests (NEW) -----------------------------------------------
+
+  @Test
+  fun `resendVerificationEmail success updates UI state with success message`() = runTest {
+    // Given
+    coEvery { mockRepository.resendVerificationEmail() } returns Result.success(Unit)
+
+    // When
+    viewModel.resendVerificationEmail()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val uiState = viewModel.uiState.first()
+    assertFalse(uiState.isLoading)
+    assertNull(uiState.error)
+    assertEquals("Verification email sent! Please check your inbox.", uiState.message)
+  }
+
+  @Test
+  fun `resendVerificationEmail failure updates UI state with error message`() = runTest {
+    // Given
+    coEvery { mockRepository.resendVerificationEmail() } returns
+        Result.failure(Exception("Please sign in first to resend verification email"))
+
+    // When
+    viewModel.resendVerificationEmail()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val uiState = viewModel.uiState.first()
+    assertFalse(uiState.isLoading)
+    assertEquals("Please sign in first to resend verification email", uiState.error)
+  }
+
+  @Test
+  fun `resendVerificationEmail sets loading state`() = runTest {
+    // Given - delay the repository response
+    coEvery { mockRepository.resendVerificationEmail() } coAnswers
+        {
+          kotlinx.coroutines.delay(100)
+          Result.success(Unit)
+        }
+
+    // When
+    viewModel.resendVerificationEmail()
+
+    // Then - should be loading
+    var uiState = viewModel.uiState.first()
+    assertTrue(uiState.isLoading)
+
+    // After completion
+    testDispatcher.scheduler.advanceUntilIdle()
+    uiState = viewModel.uiState.first()
+    assertFalse(uiState.isLoading)
+  }
+
+  @Test
+  fun `resendVerificationEmail calls repository`() = runTest {
+    // Given
+    coEvery { mockRepository.resendVerificationEmail() } returns Result.success(Unit)
+
+    // When
+    viewModel.resendVerificationEmail()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    coVerify { mockRepository.resendVerificationEmail() }
+  }
+
+  @Test
+  fun `resendVerificationEmail with network error shows normalized error`() = runTest {
+    // Given
+    coEvery { mockRepository.resendVerificationEmail() } returns
+        Result.failure(Exception("Network connection failed"))
+
+    // When
+    viewModel.resendVerificationEmail()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val uiState = viewModel.uiState.first()
+    assertFalse(uiState.isLoading)
+    assertEquals("Network connection failed", uiState.error)
+  }
+
+  @Test
+  fun `signIn with unverified email returns UnverifiedEmail auth result`() = runTest {
+    // Given
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    every { mockUser.uid } returns "test-uid-123"
+    every { mockUser.email } returns "test@example.com"
+    every { mockUser.isEmailVerified } returns false
+
+    viewModel.updateEmail("test@example.com")
+    viewModel.updatePassword("password123")
+
+    coEvery { mockRepository.signInWithEmail(any(), any()) } returns Result.success(mockUser)
+
+    // When
+    viewModel.signIn()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val authResult = viewModel.authResult.first()
+    assertTrue(authResult is AuthResult.UnverifiedEmail)
+    assertEquals(mockUser, (authResult as AuthResult.UnverifiedEmail).user)
+  }
+
+  @Test
+  fun `signIn with unverified email shows error message`() = runTest {
+    // Given
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    every { mockUser.uid } returns "test-uid-123"
+    every { mockUser.email } returns "test@example.com"
+    every { mockUser.isEmailVerified } returns false
+
+    viewModel.updateEmail("test@example.com")
+    viewModel.updatePassword("password123")
+
+    coEvery { mockRepository.signInWithEmail(any(), any()) } returns Result.success(mockUser)
+
+    // When
+    viewModel.signIn()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val uiState = viewModel.uiState.first()
+    assertFalse(uiState.isLoading)
+    assertTrue(uiState.error?.contains("verify your email") == true)
+  }
+
+  @Test
+  fun `signIn with verified email and existing profile succeeds`() = runTest {
+    // Given
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    every { mockUser.uid } returns "test-uid-123"
+    every { mockUser.email } returns "test@example.com"
+    every { mockUser.isEmailVerified } returns true
+
+    viewModel.updateEmail("test@example.com")
+    viewModel.updatePassword("password123")
+
+    coEvery { mockRepository.signInWithEmail(any(), any()) } returns Result.success(mockUser)
+    coEvery { mockProfileRepository.getProfile("test-uid-123") } returns mockk(relaxed = true)
+
+    // When
+    viewModel.signIn()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val authResult = viewModel.authResult.first()
+    assertTrue(authResult is AuthResult.Success)
+    assertEquals(mockUser, (authResult as AuthResult.Success).user)
+    val uiState = viewModel.uiState.first()
+    assertFalse(uiState.isLoading)
+    assertNull(uiState.error)
   }
 }

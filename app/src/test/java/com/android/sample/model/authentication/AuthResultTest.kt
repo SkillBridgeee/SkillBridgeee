@@ -48,4 +48,12 @@ class AuthResultTest {
     assertEquals("", result.email)
     assertEquals(mockUser, result.user)
   }
+
+  @Test
+  fun authResultUnverifiedEmail_containsUser() {
+    val mockUser = mockk<FirebaseUser>()
+    val result = AuthResult.UnverifiedEmail(mockUser)
+
+    assertEquals(mockUser, result.user)
+  }
 }
