@@ -609,7 +609,7 @@ class SignUpUseCaseTest {
     // Should return error with specific message
     assertTrue(result is SignUpResult.Error)
     assertEquals(
-        "Account created but verification email failed: SMTP server unavailable",
+        "Account created but verification email couldn't be sent: SMTP server unavailable",
         (result as SignUpResult.Error).message)
   }
 
