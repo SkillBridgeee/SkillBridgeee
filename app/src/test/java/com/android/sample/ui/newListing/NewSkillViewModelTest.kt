@@ -333,93 +333,94 @@ class NewListingViewModelTest {
     coVerify(exactly = 0) { mockListingRepository.addRequest(any()) }
   }
 
-  //  @Test
-  //  fun addListing_withValidProposal_callsAddProposal() = runTest {
-  //    viewModel =
-  //        NewListingViewModel(
-  //            listingRepository = mockListingRepository, locationRepository =
-  // mockLocationRepository)
-  //
-  //    // Arrange
-  //    viewModel.setTitle("Math Tutoring")
-  //    viewModel.setDescription("Expert tutor")
-  //    viewModel.setPrice("30.00")
-  //    viewModel.setListingType(ListingType.PROPOSAL)
-  //    viewModel.setSubject(MainSubject.ACADEMICS)
-  //    viewModel.setSubSkill("Algebra")
-  //    viewModel.setLocation(testLocation)
-  //
-  //    viewModel.addListing()
-  //
-  //    testDispatcher.scheduler.advanceUntilIdle()
-  //
-  //    coVerify(exactly = 1) {
-  //      mockListingRepository.addProposal(
-  //          match { proposal ->
-  //            proposal.creatorUserId == testUserId &&
-  //                proposal.description == "Expert tutor" &&
-  //                proposal.hourlyRate == 30.00 &&
-  //                proposal.skill.mainSubject == MainSubject.ACADEMICS &&
-  //                proposal.location == testLocation
-  //          })
-  //    }
-  //  }
+  @Test
+  fun addListing_withValidProposal_callsAddProposal() = runTest {
+    // Arrange
+    viewModel.setTitle("Math Tutoring")
+    viewModel.setDescription("Expert tutor")
+    viewModel.setPrice("30.00")
+    viewModel.setListingType(ListingType.PROPOSAL)
+    viewModel.setSubject(MainSubject.ACADEMICS)
+    viewModel.setSubSkill("Algebra")
+    viewModel.setLocation(testLocation)
 
-  //  @Test
-  //  fun addListing_withValidRequest_callsAddRequest() = runTest {
-  //    // Arrange: populate ViewModel with the inputs the ViewModel maps into the Request
-  //    viewModel.setTitle("Need Math Help")
-  //    viewModel.setDescription("Looking for algebra tutor")
-  //    viewModel.setPrice("25.00")
-  //    viewModel.setListingType(ListingType.REQUEST)
-  //    viewModel.setSubject(MainSubject.ACADEMICS)
-  //    viewModel.setSubSkill("Algebra")
-  //    viewModel.setLocation(testLocation)
-  //
-  //    // Act: trigger addListing (which launches a coroutine on viewModelScope)
-  //    viewModel.addListing()
-  //
-  //    // Allow the ViewModelScope coroutine on Dispatchers.Main / test dispatcher to run
-  //    testDispatcher.scheduler.advanceUntilIdle()
-  //    advanceUntilIdle()
-  //
-  //    // Assert: repository was called with a Request that matches the mapped fields
-  //    coVerify(exactly = 1) {
-  //      mockListingRepository.addRequest(
-  //          match { request ->
-  //            request.creatorUserId == testUserId &&
-  //                request.skill.mainSubject == MainSubject.ACADEMICS &&
-  //                request.skill.skill == "Algebra" &&
-  //                request.description == "Looking for algebra tutor" &&
-  //                request.hourlyRate == 25.00 &&
-  //                request.location == testLocation
-  //          })
-  //    }
-  //  }
+    // Act
+    viewModel.addListing()
+    advanceUntilIdle()
 
-  //  @Test
-  //  fun addListing_whenRepositoryThrowsException_doesNotCrash() = runTest {
-  //    coEvery { mockListingRepository.addProposal(any()) } throws RuntimeException("boom")
-  //
-  //    viewModel =
-  //        NewListingViewModel(
-  //            listingRepository = mockListingRepository, locationRepository =
-  // mockLocationRepository)
-  //
-  //    viewModel.setTitle("Math Tutoring")
-  //    viewModel.setDescription("Expert tutor")
-  //    viewModel.setPrice("30.00")
-  //    viewModel.setListingType(ListingType.PROPOSAL)
-  //    viewModel.setSubject(MainSubject.ACADEMICS)
-  //    viewModel.setSubSkill("Algebra")
-  //    viewModel.setLocation(testLocation)
-  //
-  //    viewModel.addListing()
-  //
-  //    testDispatcher.scheduler.advanceUntilIdle()
-  //
-  //    coVerify(exactly = 1) { mockListingRepository.addProposal(any()) }
-  //  }
+    // Assert
+    coVerify(exactly = 1) {
+      mockListingRepository.addProposal(
+          match {
+            it.creatorUserId == testUserId &&
+                it.title == "Math Tutoring" &&
+                it.description == "Expert tutor" &&
+                it.hourlyRate == 30.00 &&
+                it.skill.mainSubject == MainSubject.ACADEMICS &&
+                it.skill.skill == "Algebra" &&
+                it.location == testLocation
+          })
+    }
+    val state = viewModel.uiState.first()
+    assertTrue(state.addSuccess)
+    assertFalse(state.isSaving)
+  }
+
+  @Test
+  fun addListing_withValidRequest_callsAddRequest() = runTest {
+    // Arrange
+    viewModel.setTitle("Need Math Help")
+    viewModel.setDescription("Looking for algebra tutor")
+    viewModel.setPrice("25.00")
+    viewModel.setListingType(ListingType.REQUEST)
+    viewModel.setSubject(MainSubject.ACADEMICS)
+    viewModel.setSubSkill("Algebra")
+    viewModel.setLocation(testLocation)
+
+    // Act
+    viewModel.addListing()
+    advanceUntilIdle()
+
+    // Assert
+    coVerify(exactly = 1) {
+      mockListingRepository.addRequest(
+          match {
+            it.creatorUserId == testUserId &&
+                it.title == "Need Math Help" &&
+                it.skill.mainSubject == MainSubject.ACADEMICS &&
+                it.skill.skill == "Algebra" &&
+                it.description == "Looking for algebra tutor" &&
+                it.hourlyRate == 25.00 &&
+                it.location == testLocation
+          })
+    }
+    val state = viewModel.uiState.first()
+    assertTrue(state.addSuccess)
+    assertFalse(state.isSaving)
+  }
+
+  @Test
+  fun addListing_whenRepositoryThrowsException_updatesStateCorrectly() = runTest {
+    // Arrange
+    coEvery { mockListingRepository.addProposal(any()) } throws RuntimeException("Database error")
+    viewModel.setTitle("Math Tutoring")
+    viewModel.setDescription("Expert tutor")
+    viewModel.setPrice("30.00")
+    viewModel.setListingType(ListingType.PROPOSAL)
+    viewModel.setSubject(MainSubject.ACADEMICS)
+    viewModel.setSubSkill("Algebra")
+    viewModel.setLocation(testLocation)
+
+    // Act
+    viewModel.addListing()
+    advanceUntilIdle()
+
+    // Assert
+    coVerify(exactly = 1) { mockListingRepository.addProposal(any()) }
+    val state = viewModel.uiState.first()
+    assertFalse(state.addSuccess)
+    assertFalse(state.isSaving)
+  }
 
   // ========== Edge Cases ==========
 
