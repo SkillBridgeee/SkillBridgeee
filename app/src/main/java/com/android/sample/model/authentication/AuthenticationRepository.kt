@@ -178,15 +178,15 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
     return try {
       val user = auth.currentUser
       if (user == null) {
-        return Result.failure(
-            Exception("Please sign in first to resend verification email"))
+        return Result.failure(Exception("Please sign in first to resend verification email"))
       }
 
       // Reload to check current verification status
       user.reload().await()
 
       if (user.isEmailVerified) {
-        return Result.failure(Exception("Email is already verified. You can now access all features."))
+        return Result.failure(
+            Exception("Email is already verified. You can now access all features."))
       }
 
       // Send verification email

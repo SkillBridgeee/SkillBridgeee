@@ -127,7 +127,7 @@ class AuthenticationViewModelTest {
     val mockUser = mockk<FirebaseUser>(relaxed = true)
     every { mockUser.uid } returns "test-uid-123"
     every { mockUser.email } returns "test@example.com"
-    every { mockUser.isEmailVerified } returns true  // User's email is verified
+    every { mockUser.isEmailVerified } returns true // User's email is verified
 
     viewModel.updateEmail("test@example.com")
     viewModel.updatePassword("password123")
@@ -637,7 +637,7 @@ class AuthenticationViewModelTest {
     // Given - simulate successful authentication
     val mockUser = mockk<FirebaseUser>(relaxed = true)
     every { mockUser.uid } returns "user-123"
-    every { mockUser.isEmailVerified } returns true  // User's email is verified
+    every { mockUser.isEmailVerified } returns true // User's email is verified
     coEvery { mockRepository.signInWithEmail(any(), any()) } returns Result.success(mockUser)
     coEvery { mockProfileRepository.getProfile("user-123") } returns mockk(relaxed = true)
 
