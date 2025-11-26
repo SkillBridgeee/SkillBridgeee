@@ -57,19 +57,20 @@ class EndToEndTestHelper(private val composeTestRule: ComposeTestRule) {
       scrollToTag: String? = null,
       useContentDesc: Boolean = false
   ) {
-    if (scrollToTag != null) {
-      composeTestRule.onNodeWithTag(scrollToTag).performScrollTo()
-    }
-
+    val tagToScroll = scrollToTag ?: clickTag
     if (useContentDesc) {
+      // Cannot scroll to a content description, so we assume the view is scrollable
+      // and the click target is within it. This is a limitation.
+      // A better approach would be to scroll to a parent container with a testTag.
       composeTestRule.onNodeWithContentDescription(clickTag).performClick()
     } else {
-      composeTestRule.onNodeWithTag(clickTag).performScrollTo().performClick()
+      composeTestRule.onNodeWithTag(tagToScroll).performScrollTo()
+      composeTestRule.onNodeWithTag(clickTag).performClick()
     }
   }
 
   private fun multipleChooseExposeMenu(multipleTestTag: String, differentChoiceTestTag: String) {
-    composeTestRule.onNodeWithTag(multipleTestTag).performClick()
+    composeTestRule.onNodeWithTag(multipleTestTag).performScrollTo().performClick()
     composeTestRule.waitUntil(timeoutMillis = 10_000) {
       composeTestRule
           .onAllNodesWithTag(differentChoiceTestTag, useUnmergedTree = true)
