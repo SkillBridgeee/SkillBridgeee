@@ -4,7 +4,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.map.Location
@@ -78,7 +77,6 @@ class MapScreenTest {
             MapUiState(
                 userLocation = LatLng(46.52, 6.63),
                 profiles = emptyList(),
-                selectedProfile = null,
                 isLoading = false,
                 errorMessage = null))
     every { vm.uiState } returns flow
@@ -105,7 +103,6 @@ class MapScreenTest {
             MapUiState(
                 userLocation = LatLng(46.52, 6.63),
                 profiles = emptyList(),
-                selectedProfile = null,
                 isLoading = false,
                 errorMessage = null))
     every { vm.uiState } returns flow
@@ -125,48 +122,133 @@ class MapScreenTest {
     composeTestRule.onNodeWithTag(MapScreenTestTags.ERROR_MESSAGE).assertDoesNotExist()
   }
 
-  // --- Profile card visibility and content ---
+  // --- Info window and booking details dialog visibility ---
 
   @Test
-  fun profileCard_toggles_withSelection() {
+  fun infoWindows_appear_when_pinPosition_selected() {
     val vm = mockk<MapViewModel>(relaxed = true)
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "user1",
+            bookerId = "user2",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date())
+    val pin =
+        BookingPin(
+            bookingId = "b1",
+            position = LatLng(46.52, 6.63),
+            title = "Math Session",
+            snippet = "EPFL",
+            profile = testProfile,
+            booking = booking)
     val flow =
         MutableStateFlow(
             MapUiState(
                 userLocation = LatLng(46.52, 6.63),
                 profiles = listOf(testProfile),
-                selectedProfile = null,
+                selectedPinPosition = null,
+                bookingPins = listOf(pin),
                 isLoading = false,
                 errorMessage = null))
     every { vm.uiState } returns flow
 
     composeTestRule.setContent { MapScreen(viewModel = vm) }
 
-    // Hidden when no selection
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertDoesNotExist()
+    // Hidden when no pin position selected
+    composeTestRule.onNodeWithTag(MapScreenTestTags.BOOKING_INFO_WINDOW + "b1").assertDoesNotExist()
 
-    // Appears when selected
-    flow.value = flow.value.copy(selectedProfile = testProfile)
+    // Appears when pin position selected
+    flow.value = flow.value.copy(selectedPinPosition = LatLng(46.52, 6.63))
     composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertIsDisplayed()
-    composeTestRule.onNodeWithText("John Doe").assertIsDisplayed()
-    composeTestRule.onNodeWithText("Lausanne").assertIsDisplayed()
+    composeTestRule.onNodeWithTag(MapScreenTestTags.BOOKING_INFO_WINDOW + "b1").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Math Session").assertIsDisplayed()
 
     // Disappears when cleared
-    flow.value = flow.value.copy(selectedProfile = null)
+    flow.value = flow.value.copy(selectedPinPosition = null)
     composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertDoesNotExist()
+    composeTestRule.onNodeWithTag(MapScreenTestTags.BOOKING_INFO_WINDOW + "b1").assertDoesNotExist()
   }
 
   @Test
-  fun profileCard_displays_optional_fields_whenPresent() {
+  fun bookingDetailsDialog_toggles_with_showBookingDetailsDialog() {
     val vm = mockk<MapViewModel>(relaxed = true)
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "user1",
+            bookerId = "user2",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date(),
+            price = 25.0)
+    val pin =
+        BookingPin(
+            bookingId = "b1",
+            position = LatLng(46.52, 6.63),
+            title = "Physics Tutoring",
+            snippet = "Library",
+            profile = testProfile,
+            booking = booking)
     val flow =
         MutableStateFlow(
             MapUiState(
                 userLocation = LatLng(46.52, 6.63),
                 profiles = listOf(testProfile),
-                selectedProfile = testProfile,
+                selectedBookingPin = null,
+                showBookingDetailsDialog = false,
+                isLoading = false,
+                errorMessage = null))
+    every { vm.uiState } returns flow
+
+    composeTestRule.setContent { MapScreen(viewModel = vm) }
+
+    // Hidden initially
+    composeTestRule.onNodeWithTag(MapScreenTestTags.BOOKING_DETAILS_DIALOG).assertDoesNotExist()
+
+    // Appears when dialog shown
+    flow.value = flow.value.copy(selectedBookingPin = pin, showBookingDetailsDialog = true)
+    composeTestRule.waitForIdle()
+    composeTestRule.onNodeWithTag(MapScreenTestTags.BOOKING_DETAILS_DIALOG).assertIsDisplayed()
+    composeTestRule.onNodeWithText("Booking Details").assertIsDisplayed()
+    composeTestRule.onNodeWithText("Physics Tutoring").assertIsDisplayed()
+
+    // Disappears when cleared
+    flow.value = flow.value.copy(showBookingDetailsDialog = false)
+    composeTestRule.waitForIdle()
+    composeTestRule.onNodeWithTag(MapScreenTestTags.BOOKING_DETAILS_DIALOG).assertDoesNotExist()
+  }
+
+  @Test
+  fun bookingDetailsDialog_displays_booking_time_and_price() {
+    val vm = mockk<MapViewModel>(relaxed = true)
+    val sessionStart = java.util.Date(1732600000000) // Nov 26, 2024 09:00:00 GMT
+    val sessionEnd = java.util.Date(1732610800000) // Nov 26, 2024 12:00:00 GMT
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "user1",
+            bookerId = "user2",
+            sessionStart = sessionStart,
+            sessionEnd = sessionEnd,
+            price = 45.50)
+    val pin =
+        BookingPin(
+            bookingId = "b1",
+            position = LatLng(46.52, 6.63),
+            title = "Calculus Help",
+            snippet = "Room 101",
+            profile = testProfile,
+            booking = booking)
+    val flow =
+        MutableStateFlow(
+            MapUiState(
+                userLocation = LatLng(46.52, 6.63),
+                profiles = listOf(testProfile),
+                selectedBookingPin = pin,
+                showBookingDetailsDialog = true,
                 isLoading = false,
                 errorMessage = null))
     every { vm.uiState } returns flow
@@ -174,53 +256,10 @@ class MapScreenTest {
     composeTestRule.setContent { MapScreen(viewModel = vm) }
     composeTestRule.waitForIdle()
 
-    composeTestRule.onNodeWithText("CS, 3rd year").assertIsDisplayed()
-    composeTestRule.onNodeWithText("Test user").assertIsDisplayed()
-  }
-
-  @Test
-  fun profileCard_hides_optional_fields_whenEmpty() {
-    val empty = testProfile.copy(levelOfEducation = "", description = "")
-    val vm = mockk<MapViewModel>(relaxed = true)
-    val flow =
-        MutableStateFlow(
-            MapUiState(
-                userLocation = LatLng(46.52, 6.63),
-                profiles = listOf(empty),
-                selectedProfile = empty,
-                isLoading = false,
-                errorMessage = null))
-    every { vm.uiState } returns flow
-
-    composeTestRule.setContent { MapScreen(viewModel = vm) }
-    composeTestRule.waitForIdle()
-
-    composeTestRule.onNodeWithText("CS, 3rd year").assertDoesNotExist()
-    composeTestRule.onNodeWithText("Test user").assertDoesNotExist()
-  }
-
-  // --- Interaction wiring ---
-
-  @Test
-  fun profileCard_click_propagatesUserId() {
-    val vm = mockk<MapViewModel>(relaxed = true)
-    val flow =
-        MutableStateFlow(
-            MapUiState(
-                userLocation = LatLng(46.52, 6.63),
-                profiles = listOf(testProfile),
-                selectedProfile = testProfile,
-                isLoading = false,
-                errorMessage = null))
-    every { vm.uiState } returns flow
-
-    var clickedId: String? = null
-    composeTestRule.setContent {
-      MapScreen(viewModel = vm, onProfileClick = { id -> clickedId = id })
-    }
-
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertIsDisplayed().performClick()
-    assert(clickedId == testProfile.userId)
+    // Dialog should display booking information
+    composeTestRule.onNodeWithTag(MapScreenTestTags.BOOKING_DETAILS_DIALOG).assertIsDisplayed()
+    composeTestRule.onNodeWithText("Calculus Help").assertIsDisplayed()
+    composeTestRule.onNodeWithText("$45.50", substring = true).assertIsDisplayed()
   }
 
   // --- Booking pins and logical selection wiring ---
@@ -246,22 +285,22 @@ class MapScreenTest {
   }
 
   @Test
-  fun clickingBookingPin_triggers_selectProfile_callback_path() {
+  fun clickingBookingPin_triggers_selectPinPosition_callback_path() {
     val profile = Profile(userId = "p1", name = "Tutor")
     val pin = BookingPin("b1", LatLng(46.5, 6.6), "Session", profile = profile)
     val state =
         MapUiState(
             userLocation = LatLng(46.5, 6.6), profiles = listOf(profile), bookingPins = listOf(pin))
-    var selected: Profile? = null
+    var selectedPos: LatLng? = null
     val vm = mockk<MapViewModel>(relaxed = true)
     every { vm.uiState } returns MutableStateFlow(state)
-    every { vm.selectProfile(any()) } answers { selected = firstArg() }
+    every { vm.selectPinPosition(any()) } answers { selectedPos = firstArg() }
 
     composeTestRule.setContent { MapScreen(viewModel = vm) }
 
-    // We can’t tap a Google marker in Robolectric; call the VM directly to validate wiring.
-    vm.selectProfile(profile)
-    assert(selected == profile)
+    // We can't tap a Google marker in Robolectric; call the VM directly to validate wiring.
+    vm.selectPinPosition(LatLng(46.5, 6.6))
+    assertEquals(LatLng(46.5, 6.6), selectedPos)
   }
 
   @Test
@@ -336,60 +375,6 @@ class MapScreenTest {
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
   }
 
-  // --- Edge cases ---
-
-  @Test
-  fun mapScreen_shows_error_and_profileCard_simultaneously() {
-    val vm = mockk<MapViewModel>(relaxed = true)
-    val flow =
-        MutableStateFlow(
-            MapUiState(
-                userLocation = LatLng(46.52, 6.63),
-                profiles = listOf(testProfile),
-                selectedProfile = testProfile,
-                isLoading = false,
-                errorMessage = "Boom"))
-    every { vm.uiState } returns flow
-
-    composeTestRule.setContent { MapScreen(viewModel = vm) }
-
-    composeTestRule.onNodeWithTag(MapScreenTestTags.ERROR_MESSAGE).assertIsDisplayed()
-    composeTestRule.onNodeWithText("Boom").assertIsDisplayed()
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertIsDisplayed()
-  }
-
-  @Test
-  fun profileCard_updates_when_selection_changes() {
-    val other =
-        testProfile.copy(
-            userId = "user2", name = "Jane Smith", location = Location(46.2, 6.1, "Geneva"))
-    val vm = mockk<MapViewModel>(relaxed = true)
-    val flow =
-        MutableStateFlow(
-            MapUiState(
-                userLocation = LatLng(46.52, 6.63),
-                profiles = listOf(testProfile, other),
-                selectedProfile = testProfile,
-                isLoading = false,
-                errorMessage = null))
-    every { vm.uiState } returns flow
-
-    composeTestRule.setContent { MapScreen(viewModel = vm) }
-
-    // Initial content
-    composeTestRule.onNodeWithText("John Doe").assertIsDisplayed()
-    composeTestRule.onNodeWithText("Lausanne").assertIsDisplayed()
-
-    // Change selection
-    flow.value = flow.value.copy(selectedProfile = other)
-    composeTestRule.waitForIdle()
-
-    // Updated content
-    composeTestRule.onNodeWithText("Jane Smith").assertIsDisplayed()
-    composeTestRule.onNodeWithText("Geneva").assertIsDisplayed()
-    composeTestRule.onNodeWithText("John Doe").assertDoesNotExist()
-  }
-
   // --- User profile marker tests ---
 
   @Test
@@ -434,27 +419,6 @@ class MapScreenTest {
   }
 
   // --- Additional comprehensive tests for high coverage ---
-
-  @Test
-  fun profileCard_displays_userName_when_name_is_null() {
-    val nullNameProfile = testProfile.copy(name = null)
-    val vm = mockk<MapViewModel>(relaxed = true)
-    val flow =
-        MutableStateFlow(
-            MapUiState(
-                userLocation = LatLng(46.52, 6.63),
-                profiles = listOf(nullNameProfile),
-                selectedProfile = nullNameProfile,
-                isLoading = false,
-                errorMessage = null))
-    every { vm.uiState } returns flow
-
-    composeTestRule.setContent { MapScreen(viewModel = vm) }
-    composeTestRule.waitForIdle()
-
-    // Should show "Unknown User" when name is null
-    composeTestRule.onNodeWithText("Unknown User").assertIsDisplayed()
-  }
 
   @Test
   fun mapScreen_withMyProfile_andZeroCoordinates_doesNotCrash() {
@@ -548,7 +512,6 @@ class MapScreenTest {
 
     composeTestRule.setContent { MapScreen(viewModel = vm) }
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertDoesNotExist()
   }
 
   @Test
@@ -567,31 +530,6 @@ class MapScreenTest {
 
     composeTestRule.onNodeWithTag(MapScreenTestTags.LOADING_INDICATOR).assertIsDisplayed()
     composeTestRule.onNodeWithTag(MapScreenTestTags.ERROR_MESSAGE).assertIsDisplayed()
-  }
-
-  @Test
-  fun profileCard_withBlankDescription_hidesDescription() {
-    val blankDescProfile = testProfile.copy(description = "   ", levelOfEducation = "CS, 3rd year")
-    val vm = mockk<MapViewModel>(relaxed = true)
-    val flow =
-        MutableStateFlow(
-            MapUiState(
-                userLocation = LatLng(46.52, 6.63),
-                profiles = listOf(blankDescProfile),
-                selectedProfile = blankDescProfile,
-                isLoading = false,
-                errorMessage = null))
-    every { vm.uiState } returns flow
-
-    composeTestRule.setContent { MapScreen(viewModel = vm) }
-    composeTestRule.waitForIdle()
-
-    // Profile card should be displayed
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertIsDisplayed()
-    // Education should be displayed (non-blank)
-    composeTestRule.onNodeWithText("CS, 3rd year").assertIsDisplayed()
-    // Blank description should not be displayed (isNotBlank() will hide it)
-    composeTestRule.onNodeWithText("   ").assertDoesNotExist()
   }
 
   // --- Permission handling tests ---
@@ -657,31 +595,6 @@ class MapScreenTest {
   }
 
   @Test
-  fun profileCard_withBlankEducation_hidesEducation() {
-    val blankEduProfile = testProfile.copy(levelOfEducation = "   ", description = "Test user")
-    val vm = mockk<MapViewModel>(relaxed = true)
-    val flow =
-        MutableStateFlow(
-            MapUiState(
-                userLocation = LatLng(46.52, 6.63),
-                profiles = listOf(blankEduProfile),
-                selectedProfile = blankEduProfile,
-                isLoading = false,
-                errorMessage = null))
-    every { vm.uiState } returns flow
-
-    composeTestRule.setContent { MapScreen(viewModel = vm) }
-    composeTestRule.waitForIdle()
-
-    // Profile card should be displayed
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertIsDisplayed()
-    // Description should be displayed (non-blank)
-    composeTestRule.onNodeWithText("Test user").assertIsDisplayed()
-    // Blank education should not be displayed (isNotBlank() will hide it)
-    composeTestRule.onNodeWithText("   ").assertDoesNotExist()
-  }
-
-  @Test
   fun mapScreen_withDifferentCenterLocation_renders() {
     val vm = mockk<MapViewModel>(relaxed = true)
     val flow =
@@ -739,29 +652,6 @@ class MapScreenTest {
   }
 
   @Test
-  fun profileCard_clickCallback_calledWithCorrectUserId() {
-    val vm = mockk<MapViewModel>(relaxed = true)
-    val flow =
-        MutableStateFlow(
-            MapUiState(
-                userLocation = LatLng(46.52, 6.63),
-                profiles = listOf(testProfile),
-                selectedProfile = testProfile,
-                isLoading = false,
-                errorMessage = null))
-    every { vm.uiState } returns flow
-
-    var clickedUserId: String? = null
-    composeTestRule.setContent {
-      MapScreen(viewModel = vm, onProfileClick = { userId -> clickedUserId = userId })
-    }
-
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).performClick()
-
-    assertEquals("user1", clickedUserId)
-  }
-
-  @Test
   fun mapScreen_withAllFieldsPopulated_renders() {
     val fullProfile =
         Profile(
@@ -779,7 +669,6 @@ class MapScreenTest {
                 userLocation = LatLng(46.52, 6.63),
                 myProfile = fullProfile,
                 profiles = listOf(fullProfile),
-                selectedProfile = fullProfile,
                 bookingPins =
                     listOf(BookingPin("b1", LatLng(46.52, 6.63), "Session", "Desc", fullProfile)),
                 isLoading = false,
@@ -790,10 +679,6 @@ class MapScreenTest {
 
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_SCREEN).assertIsDisplayed()
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertIsDisplayed()
-    composeTestRule.onNodeWithText("Full Name").assertIsDisplayed()
-    composeTestRule.onNodeWithText("Full Location").assertIsDisplayed()
-    composeTestRule.onNodeWithText("PhD Computer Science").assertIsDisplayed()
   }
 
   @Test
@@ -823,10 +708,10 @@ class MapScreenTest {
     composeTestRule.waitForIdle()
     composeTestRule.onNodeWithTag(MapScreenTestTags.ERROR_MESSAGE).assertIsDisplayed()
 
-    // Clear error, add profile selection
-    flow.value = flow.value.copy(errorMessage = null, selectedProfile = testProfile)
+    // Clear error
+    flow.value = flow.value.copy(errorMessage = null)
     composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertIsDisplayed()
+    composeTestRule.onNodeWithTag(MapScreenTestTags.ERROR_MESSAGE).assertDoesNotExist()
   }
 
   @Test
@@ -862,30 +747,6 @@ class MapScreenTest {
 
     composeTestRule.setContent { MapScreen(viewModel = vm) }
     composeTestRule.onNodeWithTag(MapScreenTestTags.MAP_VIEW).assertIsDisplayed()
-  }
-
-  @Test
-  fun profileCard_withLongDescription_displays() {
-    val longDesc =
-        "This is a very long description that goes on and on and should be truncated " +
-            "to two lines maximum according to the maxLines parameter in the UI component"
-    val longDescProfile = testProfile.copy(description = longDesc)
-    val vm = mockk<MapViewModel>(relaxed = true)
-    val flow =
-        MutableStateFlow(
-            MapUiState(
-                userLocation = LatLng(46.52, 6.63),
-                profiles = listOf(longDescProfile),
-                selectedProfile = longDescProfile,
-                isLoading = false,
-                errorMessage = null))
-    every { vm.uiState } returns flow
-
-    composeTestRule.setContent { MapScreen(viewModel = vm) }
-    composeTestRule.waitForIdle()
-
-    // Long description should be displayed (possibly truncated)
-    composeTestRule.onNodeWithTag(MapScreenTestTags.PROFILE_CARD).assertIsDisplayed()
   }
 
   @Test

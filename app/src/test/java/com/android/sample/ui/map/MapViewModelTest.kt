@@ -80,7 +80,6 @@ class MapViewModelTest {
     // Then
     assertEquals(LatLng(46.5196535, 6.6322734), state.userLocation)
     assertTrue(state.profiles.isEmpty())
-    assertNull(state.selectedProfile)
     assertFalse(state.isLoading)
     assertNull(state.errorMessage)
     assertTrue(state.bookingPins.isEmpty())
@@ -152,35 +151,6 @@ class MapViewModelTest {
   }
 
   @Test
-  fun `selectProfile updates selected profile in state`() = runTest {
-    // Given
-    coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
-
-    // When
-    viewModel.selectProfile(testProfile1)
-    val state = viewModel.uiState.first()
-
-    // Then
-    assertEquals(testProfile1, state.selectedProfile)
-  }
-
-  @Test
-  fun `selectProfile with null clears selected profile`() = runTest {
-    // Given
-    coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
-    viewModel.selectProfile(testProfile1)
-
-    // When
-    viewModel.selectProfile(null)
-    val state = viewModel.uiState.first()
-
-    // Then
-    assertNull(state.selectedProfile)
-  }
-
-  @Test
   fun `moveToLocation updates camera position`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
@@ -212,24 +182,6 @@ class MapViewModelTest {
     assertEquals(1, state.profiles.size)
     assertEquals(testProfile1, state.profiles[0])
     coVerify(exactly = 2) { profileRepository.getAllProfiles() }
-  }
-
-  @Test
-  fun `multiple profile selections update state correctly`() = runTest {
-    // Given
-    coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
-
-    // When
-    viewModel.selectProfile(testProfile1)
-    var state = viewModel.uiState.first()
-    assertEquals(testProfile1, state.selectedProfile)
-
-    viewModel.selectProfile(testProfile2)
-    state = viewModel.uiState.first()
-
-    // Then
-    assertEquals(testProfile2, state.selectedProfile)
   }
 
   @Test
@@ -419,23 +371,6 @@ class MapViewModelTest {
   }
 
   @Test
-  fun `selectProfile multiple times with different profiles`() = runTest {
-    // Given
-    coEvery { profileRepository.getAllProfiles() } returns emptyList()
-    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
-
-    // When - select multiple profiles in sequence
-    viewModel.selectProfile(testProfile1)
-    assertEquals(testProfile1, viewModel.uiState.first().selectedProfile)
-
-    viewModel.selectProfile(testProfile2)
-    assertEquals(testProfile2, viewModel.uiState.first().selectedProfile)
-
-    viewModel.selectProfile(null)
-    assertNull(viewModel.uiState.first().selectedProfile)
-  }
-
-  @Test
   fun `state maintains consistency after multiple operations`() = runTest {
     // Given
     coEvery { profileRepository.getAllProfiles() } returns listOf(testProfile1, testProfile2)
@@ -443,16 +378,15 @@ class MapViewModelTest {
     advanceUntilIdle()
 
     // When - perform multiple operations
-    viewModel.selectProfile(testProfile1)
     viewModel.moveToLocation(Location(47.3769, 8.5417, "Zurich"))
-    viewModel.selectProfile(testProfile2)
+    viewModel.selectPinPosition(LatLng(47.3769, 8.5417))
 
     val state = viewModel.uiState.first()
 
     // Then - all changes reflected in state
     assertEquals(2, state.profiles.size)
-    assertEquals(testProfile2, state.selectedProfile)
     assertEquals(LatLng(47.3769, 8.5417), state.userLocation)
+    assertEquals(LatLng(47.3769, 8.5417), state.selectedPinPosition)
     assertFalse(state.isLoading)
   }
 
@@ -1006,5 +940,279 @@ class MapViewModelTest {
     advanceUntilIdle()
 
     assertEquals("student-id", viewModel.uiState.value.bookingPins[0].profile?.userId)
+  }
+
+  // ----------------------------
+  // Tests for NEW functionality: selectPinPosition, selectBookingPin, hideBookingDetailsDialog,
+  // clearSelection
+  // ----------------------------
+
+  @Test
+  fun `selectPinPosition updates selectedPinPosition in state`() = runTest {
+    // Given
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+    val position = LatLng(46.5, 6.6)
+
+    // When
+    viewModel.selectPinPosition(position)
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertEquals(position, state.selectedPinPosition)
+  }
+
+  @Test
+  fun `selectPinPosition with null clears selectedPinPosition`() = runTest {
+    // Given
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+    viewModel.selectPinPosition(LatLng(46.5, 6.6))
+
+    // When
+    viewModel.selectPinPosition(null)
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertNull(state.selectedPinPosition)
+  }
+
+  @Test
+  fun `selectBookingPin updates selectedBookingPin and shows dialog`() = runTest {
+    // Given
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "user1",
+            bookerId = "user2",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date())
+
+    val bookingPin =
+        BookingPin(
+            bookingId = "b1",
+            position = LatLng(46.5, 6.6),
+            title = "Test Booking",
+            snippet = "Test Location",
+            profile = testProfile1,
+            booking = booking)
+
+    // When
+    viewModel.selectBookingPin(bookingPin)
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertEquals(bookingPin, state.selectedBookingPin)
+    assertTrue(state.showBookingDetailsDialog)
+  }
+
+  @Test
+  fun `hideBookingDetailsDialog hides the dialog`() = runTest {
+    // Given
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "user1",
+            bookerId = "user2",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date())
+
+    val bookingPin =
+        BookingPin(
+            bookingId = "b1",
+            position = LatLng(46.5, 6.6),
+            title = "Test Booking",
+            profile = testProfile1,
+            booking = booking)
+    viewModel.selectBookingPin(bookingPin)
+    assertTrue(viewModel.uiState.first().showBookingDetailsDialog)
+
+    // When
+    viewModel.hideBookingDetailsDialog()
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertFalse(state.showBookingDetailsDialog)
+  }
+
+  @Test
+  fun `clearSelection clears all selections and dialogs`() = runTest {
+    // Given
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "user1",
+            bookerId = "user2",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date())
+
+    val bookingPin =
+        BookingPin(
+            bookingId = "b1",
+            position = LatLng(46.5, 6.6),
+            title = "Test Booking",
+            profile = testProfile1,
+            booking = booking)
+
+    // Set up state with selections
+    viewModel.selectPinPosition(LatLng(46.5, 6.6))
+    viewModel.selectBookingPin(bookingPin)
+
+    var state = viewModel.uiState.first()
+    assertNotNull(state.selectedPinPosition)
+    assertNotNull(state.selectedBookingPin)
+    assertTrue(state.showBookingDetailsDialog)
+
+    // When
+    viewModel.clearSelection()
+    state = viewModel.uiState.first()
+
+    // Then
+    assertNull(state.selectedPinPosition)
+    assertNull(state.selectedBookingPin)
+    assertFalse(state.showBookingDetailsDialog)
+  }
+
+  @Test
+  fun `selectPinPosition multiple times updates state correctly`() = runTest {
+    // Given
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+    val position1 = LatLng(46.5, 6.6)
+    val position2 = LatLng(47.0, 7.0)
+
+    // When
+    viewModel.selectPinPosition(position1)
+    assertEquals(position1, viewModel.uiState.first().selectedPinPosition)
+
+    viewModel.selectPinPosition(position2)
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertEquals(position2, state.selectedPinPosition)
+  }
+
+  @Test
+  fun `selectBookingPin includes booking object in state`() = runTest {
+    // Given
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "user1",
+            bookerId = "user2",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date(),
+            price = 25.50)
+
+    val bookingPin =
+        BookingPin(
+            bookingId = "b1",
+            position = LatLng(46.5, 6.6),
+            title = "Math Tutoring",
+            snippet = "EPFL Library",
+            profile = testProfile1,
+            booking = booking)
+
+    // When
+    viewModel.selectBookingPin(bookingPin)
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertNotNull(state.selectedBookingPin)
+    assertNotNull(state.selectedBookingPin?.booking)
+    assertEquals(25.50, state.selectedBookingPin?.booking?.price ?: 0.0, 0.01)
+    assertEquals("Math Tutoring", state.selectedBookingPin?.title)
+  }
+
+  @Test
+  fun `loadBookings includes booking object in BookingPin`() = runTest {
+    // Given
+    val mockAuth = mockk<com.google.firebase.auth.FirebaseAuth>()
+    val mockUser = mockk<com.google.firebase.auth.FirebaseUser>()
+    mockkStatic(com.google.firebase.auth.FirebaseAuth::class)
+    every { com.google.firebase.auth.FirebaseAuth.getInstance() } returns mockAuth
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.uid } returns "current-user"
+
+    val booking =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "other",
+            bookerId = "current-user",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date(),
+            price = 30.0)
+
+    val listing =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing1",
+            title = "Physics Help",
+            location = Location(latitude = 46.5, longitude = 6.6, name = "Lab"))
+
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
+    coEvery { listingRepository.getListing("listing1") } returns listing
+    coEvery { profileRepository.getProfileById("other") } returns testProfile1
+
+    // When
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+
+    // Then
+    assertEquals(1, state.bookingPins.size)
+    assertNotNull(state.bookingPins[0].booking)
+    assertEquals(booking, state.bookingPins[0].booking)
+    assertEquals(30.0, state.bookingPins[0].booking?.price ?: 0.0, 0.01)
+  }
+
+  @Test
+  fun `clearSelection can be called multiple times safely`() = runTest {
+    // Given
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+
+    // When - clear when already clear
+    viewModel.clearSelection()
+    viewModel.clearSelection()
+    val state = viewModel.uiState.first()
+
+    // Then - no errors, state remains clean
+    assertNull(state.selectedPinPosition)
+    assertNull(state.selectedBookingPin)
+    assertFalse(state.showBookingDetailsDialog)
+  }
+
+  @Test
+  fun `initial state has null selectedPinPosition and selectedBookingPin`() = runTest {
+    // Given
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+
+    // When
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertNull(state.selectedPinPosition)
+    assertNull(state.selectedBookingPin)
+    assertFalse(state.showBookingDetailsDialog)
   }
 }
