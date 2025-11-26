@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
@@ -47,6 +48,12 @@ class SubjectListScreenTest {
           name = "Nora Q.",
           description = "Piano Lessons",
           tutorRating = RatingInfo(4.8, 15))
+  private val profile3 =
+      Profile(
+          userId = "debugUser3",
+          name = "Sam R.",
+          description = "Bass Lessons",
+          tutorRating = RatingInfo(4.7, 11))
 
   private val debugListings =
       listOf(
@@ -63,7 +70,14 @@ class SubjectListScreenTest {
               skill = Skill(MainSubject.MUSIC, "piano"),
               description = "Debug Piano Coaching",
               location = Location(45.7640, 4.8357, "Lyon"),
-              hourlyRate = 35.0))
+              hourlyRate = 35.0),
+          Request(
+              listingId = "sample3",
+              creatorUserId = "debugUser3",
+              skill = Skill(MainSubject.MUSIC, "bass"),
+              description = "Looking for Bass lessons",
+              location = Location(43.2965, 5.3698, "Marseille"),
+              hourlyRate = 25.0))
 
   /** ---- Fake repositories ---------------------------------------- */
   private fun makeViewModel(
@@ -125,8 +139,13 @@ class SubjectListScreenTest {
         object : ProfileRepository {
           override fun getNewUid(): String = "unused"
 
-          override suspend fun getProfile(userId: String): Profile =
-              if (userId == "debugUser1") profile1 else profile2
+          override suspend fun getProfile(userId: String): Profile? =
+              when (userId) {
+                "debugUser1" -> profile1
+                "debugUser2" -> profile2
+                "debugUser3" -> profile3
+                else -> null
+              }
 
           override suspend fun addProfile(profile: Profile) {}
 
@@ -184,11 +203,48 @@ class SubjectListScreenTest {
               hasTestTag(SubjectListTestTags.LISTING_CARD) and
                   hasAnyAncestor(hasTestTag(SubjectListTestTags.LISTING_LIST)))
           .fetchSemanticsNodes()
-          .isNotEmpty()
+          .size == 3
     }
 
     composeRule.onNodeWithText("Debug Guitar Lessons").assertIsDisplayed()
     composeRule.onNodeWithText("Debug Piano Coaching").assertIsDisplayed()
+    composeRule.onNodeWithText("Looking for Bass lessons").assertIsDisplayed()
+  }
+
+  @Test
+  fun filterChips_areDisplayed_andWork() {
+    val vm = makeViewModel()
+    composeRule.setContent { MaterialTheme { SubjectListScreen(vm, subject = MainSubject.MUSIC) } }
+
+    composeRule.waitUntil(5_000) {
+      composeRule
+          .onAllNodes(hasTestTag(SubjectListTestTags.LISTING_CARD))
+          .fetchSemanticsNodes()
+          .size == 3
+    }
+
+    // Chips are displayed
+    composeRule.onNodeWithText("All").assertIsDisplayed()
+    composeRule.onNodeWithText("Proposals").assertIsDisplayed()
+    composeRule.onNodeWithText("Requests").assertIsDisplayed()
+
+    // Click "Proposals"
+    composeRule.onNodeWithText("Proposals").performClick()
+    composeRule.onNodeWithText("Debug Guitar Lessons").assertIsDisplayed()
+    composeRule.onNodeWithText("Debug Piano Coaching").assertIsDisplayed()
+    composeRule.onNodeWithText("Looking for Bass lessons").assertDoesNotExist()
+
+    // Click "Requests"
+    composeRule.onNodeWithText("Requests").performClick()
+    composeRule.onNodeWithText("Debug Guitar Lessons").assertDoesNotExist()
+    composeRule.onNodeWithText("Debug Piano Coaching").assertDoesNotExist()
+    composeRule.onNodeWithText("Looking for Bass lessons").assertIsDisplayed()
+
+    // Click "All"
+    composeRule.onNodeWithText("All").performClick()
+    composeRule.onNodeWithText("Debug Guitar Lessons").assertIsDisplayed()
+    composeRule.onNodeWithText("Debug Piano Coaching").assertIsDisplayed()
+    composeRule.onNodeWithText("Looking for Bass lessons").assertIsDisplayed()
   }
 
   @Test

@@ -1,7 +1,9 @@
 package com.android.sample.ui.subject
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +17,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.android.sample.model.listing.ListingFilterType
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RequestCard
@@ -159,6 +163,23 @@ fun SubjectListScreen(
               }
             }
           }
+
+      Spacer(Modifier.height(12.dp))
+
+      Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(
+            selected = ui.selectedListingType == ListingFilterType.ALL,
+            onClick = { viewModel.onListingTypeSelected(ListingFilterType.ALL) },
+            label = { Text("All") })
+        FilterChip(
+            selected = ui.selectedListingType == ListingFilterType.PROPOSALS,
+            onClick = { viewModel.onListingTypeSelected(ListingFilterType.PROPOSALS) },
+            label = { Text("Proposals") })
+        FilterChip(
+            selected = ui.selectedListingType == ListingFilterType.REQUESTS,
+            onClick = { viewModel.onListingTypeSelected(ListingFilterType.REQUESTS) },
+            label = { Text("Requests") })
+      }
 
       Spacer(Modifier.height(16.dp))
 

@@ -3,8 +3,10 @@ package com.android.sample.ui.subject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingFilterType
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.listing.ListingType
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.SkillsHelper
@@ -31,6 +33,7 @@ import kotlinx.coroutines.supervisorScope
  * @param listings The filtered listings to display
  * @param isLoading Whether the data is currently loading
  * @param error Any error message to display
+ * @param selectedListingType The selected listing type filter
  */
 data class SubjectListUiState(
     val mainSubject: MainSubject = MainSubject.MUSIC,
@@ -40,7 +43,8 @@ data class SubjectListUiState(
     val allListings: List<ListingUiModel> = emptyList(),
     val listings: List<ListingUiModel> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val selectedListingType: ListingFilterType = ListingFilterType.ALL
 )
 
 /**
@@ -134,6 +138,16 @@ class SubjectListViewModel(
     applyFilters()
   }
 
+  /**
+   * Helper to be called when the listing type filter changes
+   *
+   * @param type The new listing type filter
+   */
+  fun onListingTypeSelected(type: ListingFilterType) {
+    _ui.update { it.copy(selectedListingType = type) }
+    applyFilters()
+  }
+
   /** Apply both query and skill filtering */
   private fun applyFilters() {
     val state = _ui.value
@@ -160,7 +174,14 @@ class SubjectListViewModel(
                   listing.skill.mainSubject == state.mainSubject &&
                       key(listing.skill.skill) == selectedSkillKey
 
-          matchesSubject && matchesQuery && matchesSkill
+          val matchesListingType =
+              when (state.selectedListingType) {
+                ListingFilterType.ALL -> true
+                ListingFilterType.PROPOSALS -> listing.type == ListingType.PROPOSAL
+                ListingFilterType.REQUESTS -> listing.type == ListingType.REQUEST
+              }
+
+          matchesSubject && matchesQuery && matchesSkill && matchesListingType
         }
 
     // Sort by creator rating
