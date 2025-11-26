@@ -72,40 +72,40 @@ private fun LoadingOrErrorSection(isLoading: Boolean, error: String?) {
 /** Composable for rendering a listing item (Proposal or Request card). */
 @Composable
 private fun ListingItem(
-  listing: com.android.sample.model.listing.Listing,
-  onListingClick: (String) -> Unit
+    listing: com.android.sample.model.listing.Listing,
+    onListingClick: (String) -> Unit
 ) {
   when (listing) {
     is com.android.sample.model.listing.Proposal -> {
       ProposalCard(
-        proposal = listing, onClick = onListingClick, testTag = SubjectListTestTags.LISTING_CARD)
+          proposal = listing, onClick = onListingClick, testTag = SubjectListTestTags.LISTING_CARD)
     }
     is com.android.sample.model.listing.Request -> {
       RequestCard(
-        request = listing, onClick = onListingClick, testTag = SubjectListTestTags.LISTING_CARD)
+          request = listing, onClick = onListingClick, testTag = SubjectListTestTags.LISTING_CARD)
     }
   }
 }
 
 @Composable
 private fun ListingTypeChips(
-  selectedType: ListingFilterType,
-  onTypeSelected: (ListingFilterType) -> Unit,
-  modifier: Modifier = Modifier
+    selectedType: ListingFilterType,
+    onTypeSelected: (ListingFilterType) -> Unit,
+    modifier: Modifier = Modifier
 ) {
   Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
     FilterChip(
-      selected = selectedType == ListingFilterType.ALL,
-      onClick = { onTypeSelected(ListingFilterType.ALL) },
-      label = { Text("All") })
+        selected = selectedType == ListingFilterType.ALL,
+        onClick = { onTypeSelected(ListingFilterType.ALL) },
+        label = { Text("All") })
     FilterChip(
-      selected = selectedType == ListingFilterType.PROPOSALS,
-      onClick = { onTypeSelected(ListingFilterType.PROPOSALS) },
-      label = { Text("Proposals") })
+        selected = selectedType == ListingFilterType.PROPOSALS,
+        onClick = { onTypeSelected(ListingFilterType.PROPOSALS) },
+        label = { Text("Proposals") })
     FilterChip(
-      selected = selectedType == ListingFilterType.REQUESTS,
-      onClick = { onTypeSelected(ListingFilterType.REQUESTS) },
-      label = { Text("Requests") })
+        selected = selectedType == ListingFilterType.REQUESTS,
+        onClick = { onTypeSelected(ListingFilterType.REQUESTS) },
+        label = { Text("Requests") })
   }
 }
 
@@ -119,9 +119,9 @@ private fun ListingTypeChips(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubjectListScreen(
-  viewModel: SubjectListViewModel,
-  subject: MainSubject?,
-  onListingClick: (String) -> Unit = {}
+    viewModel: SubjectListViewModel,
+    subject: MainSubject?,
+    onListingClick: (String) -> Unit = {}
 ) {
   val ui by viewModel.ui.collectAsState()
   LaunchedEffect(subject) { subject?.let { viewModel.refresh(it) } }
@@ -133,70 +133,70 @@ fun SubjectListScreen(
     Column(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)) {
       // Search
       OutlinedTextField(
-        value = ui.query,
-        onValueChange = viewModel::onQueryChanged,
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-        placeholder = { Text("Find a tutor about $mainSubjectString") },
-        singleLine = true,
-        modifier =
-          Modifier.fillMaxWidth().padding(top = 8.dp).testTag(SubjectListTestTags.SEARCHBAR))
+          value = ui.query,
+          onValueChange = viewModel::onQueryChanged,
+          leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+          placeholder = { Text("Find a tutor about $mainSubjectString") },
+          singleLine = true,
+          modifier =
+              Modifier.fillMaxWidth().padding(top = 8.dp).testTag(SubjectListTestTags.SEARCHBAR))
 
       Spacer(Modifier.height(12.dp))
 
       // Category selector (skills for current main subject)
       var expanded by remember { mutableStateOf(false) }
       ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-          readOnly = true,
-          onValueChange = {},
-          value =
-            ui.selectedSkill?.replace('_', ' ') ?: getCategoryPlaceholder(skillsForSubject),
-          label = { Text("Category") },
-          trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-          modifier =
-            Modifier.menuAnchor()
-              .fillMaxWidth()
-              .testTag(SubjectListTestTags.CATEGORY_SELECTOR))
+          expanded = expanded,
+          onExpandedChange = { expanded = !expanded },
+          modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                readOnly = true,
+                onValueChange = {},
+                value =
+                    ui.selectedSkill?.replace('_', ' ') ?: getCategoryPlaceholder(skillsForSubject),
+                label = { Text("Category") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                modifier =
+                    Modifier.menuAnchor()
+                        .fillMaxWidth()
+                        .testTag(SubjectListTestTags.CATEGORY_SELECTOR))
 
-        // Hide the menu when a dismiss happens (expanded = false)
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-          // "All" option -> no skill filter
-          DropdownMenuItem(
-            text = { Text("All") },
-            onClick = {
-              viewModel.onSkillSelected(null)
-              expanded = false
-            })
-          skillsForSubject.forEach { skillName ->
-            DropdownMenuItem(
-              text = {
-                Text(
-                  skillName.replace('_', ' ').lowercase().replaceFirstChar {
-                    it.titlecase()
+            // Hide the menu when a dismiss happens (expanded = false)
+            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+              // "All" option -> no skill filter
+              DropdownMenuItem(
+                  text = { Text("All") },
+                  onClick = {
+                    viewModel.onSkillSelected(null)
+                    expanded = false
                   })
-              },
-              onClick = {
-                viewModel.onSkillSelected(skillName)
-                expanded = false
-              })
+              skillsForSubject.forEach { skillName ->
+                DropdownMenuItem(
+                    text = {
+                      Text(
+                          skillName.replace('_', ' ').lowercase().replaceFirstChar {
+                            it.titlecase()
+                          })
+                    },
+                    onClick = {
+                      viewModel.onSkillSelected(skillName)
+                      expanded = false
+                    })
+              }
+            }
           }
-        }
-      }
 
       Spacer(Modifier.height(12.dp))
 
       ListingTypeChips(
-        selectedType = ui.selectedListingType, onTypeSelected = viewModel::onListingTypeSelected)
+          selectedType = ui.selectedListingType, onTypeSelected = viewModel::onListingTypeSelected)
 
       Spacer(Modifier.height(16.dp))
 
       Text(
-        "All $mainSubjectString lessons",
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.SemiBold)
+          "All $mainSubjectString lessons",
+          style = MaterialTheme.typography.labelLarge,
+          fontWeight = FontWeight.SemiBold)
 
       Spacer(Modifier.height(8.dp))
 
@@ -205,13 +205,13 @@ fun SubjectListScreen(
 
       // List of listings
       LazyColumn(
-        modifier = Modifier.fillMaxSize().testTag(SubjectListTestTags.LISTING_LIST),
-        contentPadding = PaddingValues(bottom = 24.dp)) {
-        items(ui.listings) { item ->
-          ListingItem(listing = item.listing, onListingClick = onListingClick)
-          Spacer(Modifier.height(16.dp))
-        }
-      }
+          modifier = Modifier.fillMaxSize().testTag(SubjectListTestTags.LISTING_LIST),
+          contentPadding = PaddingValues(bottom = 24.dp)) {
+            items(ui.listings) { item ->
+              ListingItem(listing = item.listing, onListingClick = onListingClick)
+              Spacer(Modifier.height(16.dp))
+            }
+          }
     }
   }
 }
