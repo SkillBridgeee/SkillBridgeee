@@ -9,6 +9,7 @@ import com.android.sample.utils.TestFirestore
 import junit.framework.TestCase.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,11 +21,20 @@ class ConversationManagerTest {
   private lateinit var ovRepo: FirestoreOverViewConvRepository
   private lateinit var manager: ConversationManager
 
+  private lateinit var convId: String
+
   @Before
   fun setup() {
     convRepo = FirestoreConvRepository(TestFirestore.db)
     ovRepo = FirestoreOverViewConvRepository(TestFirestore.db)
     manager = ConversationManager(convRepo, ovRepo)
+  }
+
+  @After
+  fun tearDown() = runTest {
+    if (::convId.isInitialized) {
+      manager.deleteConvAndOverviews(convId)
+    }
   }
 
   // ----------------------------------------------------------
@@ -36,7 +46,7 @@ class ConversationManagerTest {
     val other = "UserB-test1"
     val convName = "TestChat"
 
-    val convId = manager.createConvAndOverviews(creator, other, convName)
+    convId = manager.createConvAndOverviews(creator, other, convName)
 
     val conv = convRepo.getConv(convId)
     assertNotNull(conv)
@@ -63,7 +73,7 @@ class ConversationManagerTest {
     val creator = "A-test2"
     val other = "B-test"
 
-    val convId = manager.createConvAndOverviews(creator, other, "Chat")
+    convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     assertNotNull(convRepo.getConv(convId))
     assertEquals(1, ovRepo.getOverViewConvUser(creator).size)
@@ -83,7 +93,7 @@ class ConversationManagerTest {
     val creator = "A-test3"
     val other = "B-test3"
 
-    val convId = manager.createConvAndOverviews(creator, other, "Chat")
+    convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     val msg =
         MessageNew(msgId = "1-test3", content = "Hello", senderId = creator, receiverId = other)
@@ -108,7 +118,7 @@ class ConversationManagerTest {
   fun testResetUnreadCount() = runTest {
     val creator = "A-test4"
     val other = "B-test4"
-    val convId = manager.createConvAndOverviews(creator, other, "Chat")
+    convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     val msg = MessageNew("1-test4", "Hello", creator, other)
     manager.sendMessage(convId, msg)
@@ -129,7 +139,7 @@ class ConversationManagerTest {
     val creator = "A-test5"
     val other = "B-test5"
 
-    val convId = manager.createConvAndOverviews(creator, other, "Chat")
+    convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     val m1 = MessageNew("1-test5", "Msg1", creator, other)
     val m2 = MessageNew("2-test5", "Msg2", creator, other)
@@ -154,7 +164,7 @@ class ConversationManagerTest {
   fun testListenMessages() = runTest {
     val creator = "A-test6"
     val other = "B-test6"
-    val convId = manager.createConvAndOverviews(creator, other, "Chat")
+    convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     val flow = manager.listenMessages(convId)
 
@@ -174,7 +184,7 @@ class ConversationManagerTest {
   fun testListenConversationOverviews() = runTest {
     val creator = "A-test7"
     val other = "B-test7"
-    val convId = manager.createConvAndOverviews(creator, other, "Chat")
+    convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     val flow = manager.listenConversationOverviews(creator)
 
