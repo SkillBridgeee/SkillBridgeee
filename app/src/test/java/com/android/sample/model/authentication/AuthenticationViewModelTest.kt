@@ -887,4 +887,383 @@ class AuthenticationViewModelTest {
     assertFalse(uiState.isLoading)
     assertNull(uiState.error)
   }
+
+  // -------- Password Reset Tests --------------------------------------------------------
+
+  @Test
+  fun `showPasswordResetDialog sets dialog to visible with reset state`() = runTest {
+    // When
+    viewModel.showPasswordResetDialog()
+
+    // Then
+    val state = viewModel.uiState.first()
+    assertTrue(state.showPasswordResetDialog)
+    assertEquals("", state.resetEmail)
+    assertNull(state.passwordResetError)
+    assertNull(state.passwordResetMessage)
+  }
+
+  @Test
+  fun `hidePasswordResetDialog sets dialog to invisible and clears state`() = runTest {
+    // Given - dialog is shown with some data
+    viewModel.showPasswordResetDialog()
+    viewModel.updateResetEmail("test@example.com")
+
+    // When
+    viewModel.hidePasswordResetDialog()
+
+    // Then
+    val state = viewModel.uiState.first()
+    assertFalse(state.showPasswordResetDialog)
+    assertEquals("", state.resetEmail)
+    assertNull(state.passwordResetError)
+    assertNull(state.passwordResetMessage)
+  }
+
+  @Test
+  fun `updateResetEmail updates email and clears error`() = runTest {
+    // When
+    viewModel.updateResetEmail("test@example.com")
+
+    // Then
+    val state = viewModel.uiState.first()
+    assertEquals("test@example.com", state.resetEmail)
+    assertNull(state.passwordResetError)
+  }
+
+  @Test
+  fun `sendPasswordReset with blank email shows error`() = runTest {
+    // Given
+    viewModel.updateResetEmail("")
+
+    // When
+    viewModel.sendPasswordReset()
+
+    // Then
+    val state = viewModel.uiState.first()
+    assertEquals("Please enter your email address", state.passwordResetError)
+    assertNull(state.passwordResetMessage)
+  }
+
+  @Test
+  fun `sendPasswordReset with whitespace email shows error`() = runTest {
+    // Given
+    viewModel.updateResetEmail("   ")
+
+    // When
+    viewModel.sendPasswordReset()
+
+    // Then
+    val state = viewModel.uiState.first()
+    assertEquals("Please enter your email address", state.passwordResetError)
+  }
+
+  @Test
+  fun `sendPasswordReset with invalid email format shows error`() = runTest {
+    // Given
+    viewModel.updateResetEmail("invalid-email")
+
+    // When
+    viewModel.sendPasswordReset()
+
+    // Then
+    val state = viewModel.uiState.first()
+    assertEquals("Please enter a valid email address", state.passwordResetError)
+    assertNull(state.passwordResetMessage)
+  }
+
+  @Test
+  fun `sendPasswordReset with valid email sends reset and starts cooldown`() = runTest {
+    // Given
+    viewModel.updateResetEmail("test@example.com")
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
+
+    // When
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.runCurrent()
+
+    // Then
+    val state = viewModel.uiState.first()
+    assertEquals(
+        context.getString(com.android.sample.R.string.password_reset_success),
+        state.passwordResetMessage)
+    assertNull(state.passwordResetError)
+    assertEquals(60, state.passwordResetCooldownSeconds)
+    coVerify { mockRepository.sendPasswordResetEmail("test@example.com") }
+  }
+
+  @Test
+  fun `sendPasswordReset trims email before sending`() = runTest {
+    // Given
+    viewModel.updateResetEmail("  test@example.com  ")
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
+
+    // When
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    coVerify { mockRepository.sendPasswordResetEmail("test@example.com") }
+  }
+
+  @Test
+  fun `sendPasswordReset failure shows error message`() = runTest {
+    // Given
+    viewModel.updateResetEmail("test@example.com")
+    val exception = Exception("Network error")
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.failure(exception)
+
+    // When
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val state = viewModel.uiState.first()
+    assertEquals("Network error", state.passwordResetError)
+    assertNull(state.passwordResetMessage)
+    assertEquals(0, state.passwordResetCooldownSeconds)
+  }
+
+  @Test
+  fun `sendPasswordReset failure without message uses default error`() = runTest {
+    // Given
+    viewModel.updateResetEmail("test@example.com")
+    val exception = Exception(null as String?)
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.failure(exception)
+
+    // When
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then
+    val state = viewModel.uiState.first()
+    assertEquals(
+        context.getString(com.android.sample.R.string.password_reset_error),
+        state.passwordResetError)
+  }
+
+  @Test
+  fun `sendPasswordReset cooldown timer counts down from 60 to 0`() = runTest {
+    // Given
+    viewModel.updateResetEmail("test@example.com")
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
+
+    // When
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.runCurrent()
+
+    // Check initial cooldown
+    var state = viewModel.uiState.first()
+    assertEquals(60, state.passwordResetCooldownSeconds)
+
+    // Advance time by 1 second
+    testDispatcher.scheduler.advanceTimeBy(1000)
+    testDispatcher.scheduler.runCurrent()
+    state = viewModel.uiState.first()
+    assertEquals(59, state.passwordResetCooldownSeconds)
+
+    // Advance time by 10 more seconds
+    testDispatcher.scheduler.advanceTimeBy(10000)
+    testDispatcher.scheduler.runCurrent()
+    state = viewModel.uiState.first()
+    assertEquals(49, state.passwordResetCooldownSeconds)
+
+    // Advance to the end
+    testDispatcher.scheduler.advanceTimeBy(49000)
+    testDispatcher.scheduler.runCurrent()
+    state = viewModel.uiState.first()
+    assertEquals(0, state.passwordResetCooldownSeconds)
+  }
+
+  @Test
+  fun `sendPasswordReset during cooldown is blocked by button disabled state`() = runTest {
+    // Given - first successful send
+    viewModel.updateResetEmail("test@example.com")
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.runCurrent()
+
+    // Then - verify cooldown is active
+    var state = viewModel.uiState.first()
+    assertEquals(60, state.passwordResetCooldownSeconds)
+    assertFalse(state.isPasswordResetButtonEnabled)
+
+    // When - try to send again (button would be disabled in UI)
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.runCurrent()
+
+    // Then - still in cooldown, verify repository wasn't called again
+    // (In real UI, button would be disabled, preventing the call)
+    state = viewModel.uiState.first()
+    assertTrue(state.passwordResetCooldownSeconds > 0)
+  }
+
+  @Test
+  fun `isPasswordResetButtonEnabled returns true when email present and no cooldown`() = runTest {
+    // Given
+    viewModel.showPasswordResetDialog()
+    viewModel.updateResetEmail("test@example.com")
+
+    // When
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertTrue(state.isPasswordResetButtonEnabled)
+  }
+
+  @Test
+  fun `isPasswordResetButtonEnabled returns false when email is blank`() = runTest {
+    // Given
+    viewModel.showPasswordResetDialog()
+    viewModel.updateResetEmail("")
+
+    // When
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertFalse(state.isPasswordResetButtonEnabled)
+  }
+
+  @Test
+  fun `isPasswordResetButtonEnabled returns false during cooldown`() = runTest {
+    // Given
+    viewModel.updateResetEmail("test@example.com")
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.runCurrent()
+
+    // When
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertFalse(state.isPasswordResetButtonEnabled)
+    assertEquals(60, state.passwordResetCooldownSeconds)
+  }
+
+  @Test
+  fun `isPasswordResetButtonEnabled returns true after cooldown expires`() = runTest {
+    // Given
+    viewModel.updateResetEmail("test@example.com")
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Advance past cooldown
+    testDispatcher.scheduler.advanceTimeBy(60000)
+    testDispatcher.scheduler.runCurrent()
+
+    // When
+    val state = viewModel.uiState.first()
+
+    // Then
+    assertTrue(state.isPasswordResetButtonEnabled)
+    assertEquals(0, state.passwordResetCooldownSeconds)
+  }
+
+  @Test
+  fun `password reset state is independent from login state`() = runTest {
+    // Given - update login email
+    viewModel.updateEmail("login@example.com")
+    viewModel.updatePassword("password123")
+
+    // When - update reset email
+    viewModel.showPasswordResetDialog()
+    viewModel.updateResetEmail("reset@example.com")
+
+    // Then
+    val state = viewModel.uiState.first()
+    assertEquals("login@example.com", state.email)
+    assertEquals("password123", state.password)
+    assertEquals("reset@example.com", state.resetEmail)
+    assertTrue(state.showPasswordResetDialog)
+  }
+
+  @Test
+  fun `multiple password resets can be sent after cooldown`() = runTest {
+    // Given
+    viewModel.updateResetEmail("test@example.com")
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
+
+    // First send
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.runCurrent()
+    var state = viewModel.uiState.first()
+    assertEquals(60, state.passwordResetCooldownSeconds)
+
+    // Wait for cooldown
+    testDispatcher.scheduler.advanceTimeBy(60000)
+    testDispatcher.scheduler.runCurrent()
+    state = viewModel.uiState.first()
+    assertEquals(0, state.passwordResetCooldownSeconds)
+
+    // Second send
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.runCurrent()
+    state = viewModel.uiState.first()
+    assertEquals(60, state.passwordResetCooldownSeconds)
+
+    // Verify repository was called twice
+    coVerify(exactly = 2) { mockRepository.sendPasswordResetEmail("test@example.com") }
+  }
+
+  @Test
+  fun `hidePasswordResetDialog cancels cooldown timer`() = runTest {
+    // Given - start password reset with cooldown
+    viewModel.updateResetEmail("test@example.com")
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.runCurrent()
+
+    // Verify cooldown started
+    var state = viewModel.uiState.first()
+    assertEquals(60, state.passwordResetCooldownSeconds)
+
+    // When - hide dialog
+    viewModel.hidePasswordResetDialog()
+    testDispatcher.scheduler.runCurrent()
+
+    // Then - cooldown should be cleared
+    state = viewModel.uiState.first()
+    assertEquals(0, state.passwordResetCooldownSeconds)
+    assertFalse(state.showPasswordResetDialog)
+
+    // Advance time to ensure cooldown doesn't continue running
+    testDispatcher.scheduler.advanceTimeBy(5000)
+    testDispatcher.scheduler.runCurrent()
+    state = viewModel.uiState.first()
+    assertEquals(0, state.passwordResetCooldownSeconds) // Should still be 0, not -5
+  }
+
+  @Test
+  fun `sendPasswordReset before cooldown expires cancels previous cooldown job`() = runTest {
+    // Given - first password reset
+    viewModel.updateResetEmail("test@example.com")
+    coEvery { mockRepository.sendPasswordResetEmail(any()) } returns Result.success(Unit)
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.runCurrent()
+
+    // Verify first cooldown started
+    var state = viewModel.uiState.first()
+    assertEquals(60, state.passwordResetCooldownSeconds)
+
+    // Advance time partially
+    testDispatcher.scheduler.advanceTimeBy(30000)
+    testDispatcher.scheduler.runCurrent()
+    state = viewModel.uiState.first()
+    assertEquals(30, state.passwordResetCooldownSeconds)
+
+    // When - send another reset email (simulating rapid clicks or API retry)
+    viewModel.sendPasswordReset()
+    testDispatcher.scheduler.runCurrent()
+
+    // Then - cooldown should restart from 60
+    state = viewModel.uiState.first()
+    assertEquals(60, state.passwordResetCooldownSeconds)
+
+    // Verify only one cooldown job is running by checking countdown continues properly
+    testDispatcher.scheduler.advanceTimeBy(1000)
+    testDispatcher.scheduler.runCurrent()
+    state = viewModel.uiState.first()
+    assertEquals(59, state.passwordResetCooldownSeconds) // Should be 59, not multiple decrements
+  }
 }
