@@ -20,7 +20,6 @@ class ConversationManagerTest {
   private lateinit var convRepo: FirestoreConvRepository
   private lateinit var ovRepo: FirestoreOverViewConvRepository
   private lateinit var manager: ConversationManager
-
   private lateinit var convId: String
 
   @Before
@@ -194,5 +193,54 @@ class ConversationManagerTest {
 
     assertEquals(1, emitted.size)
     assertEquals("1-test7", emitted.first().lastMsg.msgId)
+  }
+
+  // test 8
+  @Test
+  fun testallDiscussion() = runTest {
+    val creator = "A-test8"
+    val other = "B-test8"
+    convId = manager.createConvAndOverviews(creator, other, "Chat")
+
+    val flowCreator = manager.listenMessages(convId)
+    val flowOther = manager.listenMessages(convId)
+
+    // Creator send a message
+
+    val msgCreator1 = MessageNew("msg1", "hello", creator, other)
+    manager.sendMessage(convId, msgCreator1)
+
+    var emittedCreator = flowCreator.first { it.isNotEmpty() }
+    var emittedOther = flowOther.first { it.isNotEmpty() }
+
+    assertEquals(0, manager.calculateUnreadCount(convId, creator))
+    assertEquals(1, manager.calculateUnreadCount(convId, other))
+    assertEquals(1, emittedCreator.size)
+    assertEquals(1, emittedOther.size)
+    assertEquals(msgCreator1, emittedCreator[0])
+    assertEquals(msgCreator1, emittedOther[0])
+
+    // Creator read the message and also send a message
+    manager.resetUnreadCount(convId, other)
+
+    assertEquals(0, manager.calculateUnreadCount(convId, other))
+
+    val msgOther1 = MessageNew("msg2", "hi", other, creator)
+    manager.sendMessage(convId, msgOther1)
+
+    assertEquals(1, manager.calculateUnreadCount(convId, creator))
+    assertEquals(0, manager.calculateUnreadCount(convId, other))
+
+    emittedCreator = flowCreator.first { it.isNotEmpty() }
+    emittedOther = flowOther.first { it.isNotEmpty() }
+
+    assertEquals(2, emittedCreator.size)
+    assertEquals(2, emittedOther.size)
+
+    assertEquals(msgCreator1, emittedCreator[0])
+    assertEquals(msgCreator1, emittedOther[0])
+
+    assertEquals(msgOther1, emittedCreator[1])
+    assertEquals(msgOther1, emittedOther[1])
   }
 }
