@@ -1,5 +1,6 @@
 package com.android.sample.ui.communication
 
+import android.R.attr.contentDescription
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+
+private const val DISMISS_ERROR_DESCRIPTION = "Dismiss error"
 
 @Composable
 fun DiscussionScreen(
@@ -44,7 +47,7 @@ fun DiscussionScreen(
                     IconButton(onClick = { viewModel.clearError() }) {
                       Icon(
                           imageVector = Icons.Default.Close,
-                          contentDescription = "Dismiss error",
+                          contentDescription = DISMISS_ERROR_DESCRIPTION,
                           tint = MaterialTheme.colorScheme.onErrorContainer)
                     }
                   }
@@ -84,6 +87,7 @@ fun ConversationItem(conversation: OverViewConversation, onClick: () -> Unit, in
           Modifier.fillMaxWidth()
               .background(backgroundColor)
               .clickable(onClick = onClick)
+              .testTag("conversation_item_${conversation.linkedConvId}")
               .padding(horizontal = 16.dp, vertical = 12.dp),
       verticalAlignment = Alignment.CenterVertically) {
         // Avatar placeholder

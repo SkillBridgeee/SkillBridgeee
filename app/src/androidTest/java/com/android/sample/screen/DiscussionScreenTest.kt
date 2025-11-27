@@ -100,8 +100,8 @@ class DiscussionScreenTest {
 
     compose.waitForIdle()
 
-    // Click on the first conversation
-    compose.onNodeWithText("John Doe").performClick()
+    // Click on the first conversation using testTag
+    compose.onNodeWithTag("conversation_item_conv1").performClick()
 
     compose.waitForIdle()
 
@@ -238,7 +238,7 @@ class DiscussionScreenTest {
 
     override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
       if (shouldThrowError) throw RuntimeException("Test error")
-      if (delayLoading) kotlinx.coroutines.delay(1000)
+      if (delayLoading) kotlinx.coroutines.delay(100)
       return conversations.filter { it.overViewOwnerId == userId || it.otherPersonId == userId }
     }
 

@@ -153,4 +153,33 @@ class DiscussionViewModelTest {
     assertTrue(state.conversations.isEmpty())
     assertNull(state.error)
   }
+
+  @Test
+  fun retry_successfullyReloadsAfterFailure() = runTest {
+    // Mock initial failure
+    `when`(mockRepository.listenOverView(currentUserId))
+        .thenReturn(flow { throw RuntimeException("Test error") })
+
+    val testViewModel = DiscussionViewModel(overViewConvRepository = mockRepository)
+    advanceUntilIdle()
+
+    // Assert error is set after initial load
+    var state = testViewModel.uiState.value
+    assertNotNull(state.error)
+    assertTrue(state.error!!.contains("An unexpected error occurred"))
+
+    // Change mock to return success
+    `when`(mockRepository.listenOverView(currentUserId)).thenReturn(flowOf(sampleConversations))
+
+    // Call retry
+    testViewModel.retry()
+    advanceUntilIdle()
+
+    // Assert conversations are loaded successfully
+    state = testViewModel.uiState.value
+    assertFalse(state.isLoading)
+    assertEquals(2, state.conversations.size)
+    assertEquals("John Doe", state.conversations[0].convName)
+    assertNull(state.error)
+  }
 }
