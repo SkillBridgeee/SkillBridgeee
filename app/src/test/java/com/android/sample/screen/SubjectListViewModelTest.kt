@@ -4,7 +4,9 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingFilterType
 import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingType
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
@@ -261,6 +263,38 @@ class SubjectListViewModelTest {
     vm.onSkillSelected("piano")
     val ui = vm.ui.value
     assertTrue(ui.listings.all { it.listing.skill.skill.equals("piano", true) })
+  }
+
+  @Test
+  fun listing_type_filter_works_correctly() = runTest {
+    val proposal = listing("p1", "A", "Guitar class", MainSubject.MUSIC, "guitar")
+    val request =
+        Request(
+            listingId = "r1",
+            creatorUserId = "B",
+            skill = Skill(MainSubject.MUSIC, "bass"),
+            description = "Bass lesson needed")
+    val listings = listOf(proposal, request)
+    val profiles = mapOf("A" to profile("A", "Alice", 4.9, 10), "B" to profile("B", "Bob", 4.8, 20))
+    val vm = newVm(listings, profiles)
+    vm.refresh(MainSubject.MUSIC)
+    advanceUntilIdle()
+
+    // Check "All" filter
+    vm.onListingTypeSelected(ListingFilterType.ALL)
+    assertEquals(2, vm.ui.value.listings.size)
+
+    // Check "Proposals" filter
+    vm.onListingTypeSelected(ListingFilterType.PROPOSALS)
+    var ui = vm.ui.value
+    assertEquals(1, ui.listings.size)
+    assertEquals(ListingType.PROPOSAL, ui.listings.first().listing.type)
+
+    // Check "Requests" filter
+    vm.onListingTypeSelected(ListingFilterType.REQUESTS)
+    ui = vm.ui.value
+    assertEquals(1, ui.listings.size)
+    assertEquals(ListingType.REQUEST, ui.listings.first().listing.type)
   }
 
   @Test

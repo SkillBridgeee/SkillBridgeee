@@ -65,12 +65,47 @@ class BookingDetailsViewModel(
             listingRepository.getListing(booking.associatedListingId)
                 ?: throw IllegalStateException("BookingDetailsViewModel : Listing not found")
 
+        val fromUserId = booking.bookerId
+        val tutorUserId = booking.listingCreatorId
+        val currentBookingId = booking.bookingId
+
+        val tutorAlreadyRated =
+            try {
+              ratingRepository.hasRating(
+                  fromUserId = fromUserId,
+                  toUserId = tutorUserId,
+                  ratingType = RatingType.TUTOR,
+                  targetObjectId = currentBookingId,
+              )
+            } catch (e: Exception) {
+              Log.w("BookingDetailsViewModel", "Error checking tutor rating", e)
+              false
+            }
+
+        val listingAlreadyRated =
+            try {
+              ratingRepository.hasRating(
+                  fromUserId = fromUserId,
+                  toUserId = tutorUserId,
+                  ratingType = RatingType.LISTING,
+                  targetObjectId = currentBookingId,
+              )
+            } catch (e: Exception) {
+              Log.w("BookingDetailsViewModel", "Error checking listing rating", e)
+              false
+            }
+
+        val alreadySubmitted = tutorAlreadyRated && listingAlreadyRated
+
+        // IMPORTANT: build a FRESH state, don't reuse old ratingSubmitted
         _bookingUiState.value =
-            bookingUiState.value.copy(
+            BookingUIState(
                 booking = booking,
                 listing = listing,
                 creatorProfile = creatorProfile,
-                loadError = false)
+                loadError = false,
+                ratingSubmitted = alreadySubmitted,
+            )
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error loading booking details for $bookingId", e)
         _bookingUiState.value = bookingUiState.value.copy(loadError = true)
@@ -148,11 +183,34 @@ class BookingDetailsViewModel(
 
     viewModelScope.launch {
       try {
-        // Student = booker, Tutor = listing creator
-        val fromUserId = booking.bookerId // person giving the rating
-        val tutorUserId = booking.listingCreatorId // person receiving tutor + listing rating
+        val fromUserId = booking.bookerId
+        val tutorUserId = booking.listingCreatorId
+        val bookingId = booking.bookingId
+        // --- prevent duplicates: one rating per booking ---
+        val tutorAlreadyRated =
+            ratingRepository.hasRating(
+                fromUserId = fromUserId,
+                toUserId = tutorUserId,
+                ratingType = RatingType.TUTOR,
+                targetObjectId = bookingId,
+            )
 
-        // 1) Student rates the tutor
+        val listingAlreadyRated =
+            ratingRepository.hasRating(
+                fromUserId = fromUserId,
+                toUserId = tutorUserId,
+                ratingType = RatingType.LISTING,
+                targetObjectId = bookingId,
+            )
+
+        if (tutorAlreadyRated && listingAlreadyRated) {
+          Log.d(
+              "BookingDetailsViewModel", "Ratings for this booking already exist; skipping submit")
+          _bookingUiState.value = bookingUiState.value.copy(ratingSubmitted = true)
+          return@launch
+        }
+
+        // 1) Student rates the tutor (for THIS booking)
         val tutorRating =
             Rating(
                 ratingId = ratingRepository.getNewUid(),
@@ -161,10 +219,10 @@ class BookingDetailsViewModel(
                 starRating = tutorRatingEnum,
                 comment = "",
                 ratingType = RatingType.TUTOR,
-                targetObjectId = tutorUserId,
+                targetObjectId = bookingId,
             )
 
-        // 2) Student rates the listing
+        // 2) Student rates the listing (for THIS booking)
         val listingRating =
             Rating(
                 ratingId = ratingRepository.getNewUid(),
@@ -173,14 +231,15 @@ class BookingDetailsViewModel(
                 starRating = listingRatingEnum,
                 comment = "",
                 ratingType = RatingType.LISTING,
-                targetObjectId = booking.associatedListingId,
+                targetObjectId = bookingId,
             )
 
         tutorRating.validate()
         listingRating.validate()
 
-        ratingRepository.addRating(tutorRating)
-        ratingRepository.addRating(listingRating)
+        if (!tutorAlreadyRated) ratingRepository.addRating(tutorRating)
+        if (!listingAlreadyRated) ratingRepository.addRating(listingRating)
+
         RatingAggregationHelper.recomputeTutorAggregateRating(
             tutorUserId = tutorUserId,
             ratingRepo = ratingRepository,

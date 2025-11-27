@@ -22,8 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.sample.model.authentication.*
-import com.android.sample.ui.components.EllipsizingTextField
-import com.android.sample.ui.components.EllipsizingTextFieldStyle
 import com.android.sample.ui.theme.extendedColors
 
 object SignInScreenTestTags {
@@ -36,6 +34,7 @@ object SignInScreenTestTags {
   const val FORGOT_PASSWORD = "forgotPassword"
   const val AUTH_SECTION = "authSection"
   const val SUBTITLE = "subtitle"
+  const val RESEND_VERIFICATION = "resendVerification"
 }
 
 @Composable
@@ -115,7 +114,10 @@ private fun LoginForm(
       onEmailChange = viewModel::updateEmail,
       onPasswordChange = viewModel::updatePassword)
 
-  ErrorAndMessageDisplay(error = uiState.error, message = uiState.message)
+  ErrorAndMessageDisplay(
+      error = uiState.error,
+      message = uiState.message,
+      onResendVerification = viewModel::resendVerificationEmail)
 
   ForgotPasswordLink()
   Spacer(modifier = Modifier.height(30.dp))
@@ -153,24 +155,19 @@ private fun EmailPasswordFields(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit
 ) {
-  EllipsizingTextField(
+  OutlinedTextField(
       value = email,
       onValueChange = onEmailChange,
-      placeholder = "Email",
-      style =
-          EllipsizingTextFieldStyle(
-              keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-              // you could also set shape/colors here if you want:
-              // shape = RoundedCornerShape(14.dp),
-              // colors = TextFieldDefaults.colors(...)
-              ),
+      label = { Text("Email") },
+      keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+      singleLine = true,
+      maxLines = 1,
       leadingIcon = {
         Icon(
             painter = painterResource(id = android.R.drawable.ic_dialog_email),
             contentDescription = null)
       },
-      modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT),
-      maxPreviewLength = 45)
+      modifier = Modifier.fillMaxWidth().testTag(SignInScreenTestTags.EMAIL_INPUT))
 
   Spacer(modifier = Modifier.height(10.dp))
 
@@ -189,12 +186,29 @@ private fun EmailPasswordFields(
 }
 
 @Composable
-private fun ErrorAndMessageDisplay(error: String?, message: String?) {
+private fun ErrorAndMessageDisplay(
+    error: String?,
+    message: String?,
+    onResendVerification: () -> Unit
+) {
   val extendedColors = MaterialTheme.extendedColors
 
   error?.let { errorMessage ->
     Spacer(modifier = Modifier.height(10.dp))
     Text(text = errorMessage, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
+
+    // Show resend verification button if error is about unverified email
+    if (errorMessage.contains("verify your email", ignoreCase = true)) {
+      Spacer(modifier = Modifier.height(8.dp))
+      TextButton(
+          onClick = { onResendVerification() },
+          modifier = Modifier.testTag(SignInScreenTestTags.RESEND_VERIFICATION)) {
+            Text(
+                text = "Resend Verification Email",
+                color = extendedColors.signUpLinkBlue,
+                fontSize = 14.sp)
+          }
+    }
   }
 
   message?.let { msg ->
