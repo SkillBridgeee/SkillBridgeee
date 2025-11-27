@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -22,7 +24,11 @@ import kotlinx.coroutines.launch
  * @param userLocation The current user's location (camera position)
  * @param profiles List of all user profiles to display on the map
  * @param myProfile The current user's profile to show on the map
- * @param selectedProfile The profile selected when clicking a booking marker
+ * @param selectedPinPosition The position of the selected pin (to show info windows for bookings at
+ *   that location)
+ * @param selectedBookingPin The booking pin selected when clicking on an info window (for showing
+ *   booking details)
+ * @param showBookingDetailsDialog Whether to show the booking details dialog
  * @param isLoading Whether data is currently being loaded
  * @param errorMessage Error message if loading fails
  * @param bookingPins List of booking pins for the current user's bookings
@@ -31,10 +37,13 @@ data class MapUiState(
     val userLocation: LatLng = LatLng(46.5196535, 6.6322734), // Default to Lausanne/EPFL
     val profiles: List<Profile> = emptyList(),
     val myProfile: Profile? = null,
-    val selectedProfile: Profile? = null,
+    val selectedPinPosition: LatLng? = null,
+    val selectedBookingPin: BookingPin? = null,
+    val showBookingDetailsDialog: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val bookingPins: List<BookingPin> = emptyList(),
+    val bookingsAtSelectedPosition: List<BookingPin> = emptyList(),
 )
 
 /**
@@ -45,13 +54,15 @@ data class MapUiState(
  * @param title The title to display on the pin
  * @param snippet An optional snippet to display on the pin
  * @param profile The associated user profile for the booking
+ * @param booking The full booking object for displaying details
  */
 data class BookingPin(
     val bookingId: String,
     val position: LatLng,
     val title: String,
     val snippet: String? = null,
-    val profile: Profile? = null
+    val profile: Profile? = null,
+    val booking: com.android.sample.model.booking.Booking? = null
 )
 
 /**
@@ -62,10 +73,12 @@ data class BookingPin(
  *
  * @param profileRepository The repository used to fetch user profiles.
  * @param bookingRepository The repository used to fetch bookings.
+ * @param listingRepository The repository used to fetch listings.
  */
 class MapViewModel(
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
-    private val bookingRepository: BookingRepository = BookingRepositoryProvider.repository
+    private val bookingRepository: BookingRepository = BookingRepositoryProvider.repository,
+    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(MapUiState())
@@ -82,14 +95,16 @@ class MapViewModel(
       _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
       try {
         val profiles = profileRepository.getAllProfiles()
-        _uiState.value = _uiState.value.copy(profiles = profiles, isLoading = false)
         val uid = runCatching { FirebaseAuth.getInstance().currentUser?.uid }.getOrNull()
         val me = profiles.firstOrNull { it.userId == uid }
+
+        // Update profiles and myProfile
+        _uiState.value = _uiState.value.copy(profiles = profiles, myProfile = me, isLoading = false)
+
+        // Update camera location if user has a valid location
         val loc = me?.location
         if (loc != null && (loc.latitude != 0.0 || loc.longitude != 0.0)) {
-          _uiState.value =
-              _uiState.value.copy(
-                  myProfile = me, userLocation = LatLng(loc.latitude, loc.longitude))
+          _uiState.value = _uiState.value.copy(userLocation = LatLng(loc.latitude, loc.longitude))
         }
       } catch (_: Exception) {
         _uiState.value =
@@ -117,7 +132,10 @@ class MapViewModel(
 
         val pins =
             userBookings.mapNotNull { booking ->
-              // Show the location of the OTHER person in the booking
+              // Get the listing to show its location (where the session takes place)
+              val listing = listingRepository.getListing(booking.associatedListingId)
+
+              // Get the OTHER person in the booking for display info
               val otherUserId =
                   if (booking.bookerId == currentUserId) {
                     booking.listingCreatorId
@@ -126,14 +144,17 @@ class MapViewModel(
                   }
 
               val otherProfile = profileRepository.getProfileById(otherUserId)
-              val loc = otherProfile?.location
-              if (loc != null && isValidLatLng(loc.latitude, loc.longitude)) {
+
+              // Use the listing's location (where session takes place) instead of profile location
+              val loc = listing?.location
+              if (listing != null && loc != null && isValidLatLng(loc.latitude, loc.longitude)) {
                 BookingPin(
                     bookingId = booking.bookingId,
                     position = LatLng(loc.latitude, loc.longitude),
-                    title = otherProfile.name ?: "Session",
-                    snippet = otherProfile.description.takeIf { it.isNotBlank() },
-                    profile = otherProfile)
+                    title = listing.title.ifBlank { otherProfile?.name ?: "Session" },
+                    snippet = "${loc.name} - with ${otherProfile?.name ?: "Unknown"}",
+                    profile = otherProfile,
+                    booking = booking)
               } else null
             }
         _uiState.value = _uiState.value.copy(bookingPins = pins)
@@ -150,13 +171,48 @@ class MapViewModel(
   }
 
   /**
-   * Selects a profile when a booking marker is clicked. This will show the profile card at the
-   * bottom of the map.
+   * Selects a pin position when a marker is clicked. This will show the info windows for all
+   * bookings at that location.
    *
-   * @param profile The profile to select, or null to deselect
+   * @param position The pin position to select, or null to deselect
    */
-  fun selectProfile(profile: Profile?) {
-    _uiState.value = _uiState.value.copy(selectedProfile = profile)
+  fun selectPinPosition(position: LatLng?) {
+    val bookingsAtPosition =
+        if (position != null) {
+          _uiState.value.bookingPins.filter { it.position == position }
+        } else {
+          emptyList()
+        }
+    _uiState.value =
+        _uiState.value.copy(
+            selectedPinPosition = position, bookingsAtSelectedPosition = bookingsAtPosition)
+  }
+
+  /**
+   * Selects a booking pin from an info window and shows the details dialog.
+   *
+   * @param pin The booking pin to select
+   */
+  fun selectBookingPin(pin: BookingPin) {
+    _uiState.value = _uiState.value.copy(selectedBookingPin = pin, showBookingDetailsDialog = true)
+  }
+
+  /** Hides the booking details dialog. */
+  fun hideBookingDetailsDialog() {
+    _uiState.value = _uiState.value.copy(showBookingDetailsDialog = false)
+  }
+
+  /**
+   * Clears all selections (pin position and booking pin). Called when clicking on the map or when
+   * dismissing dialogs.
+   */
+  fun clearSelection() {
+    _uiState.value =
+        _uiState.value.copy(
+            selectedPinPosition = null,
+            selectedBookingPin = null,
+            showBookingDetailsDialog = false,
+            bookingsAtSelectedPosition = emptyList())
   }
 
   /**
