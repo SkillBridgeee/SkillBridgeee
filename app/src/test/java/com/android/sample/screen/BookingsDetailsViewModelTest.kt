@@ -429,11 +429,13 @@ class BookingsDetailsViewModelTest {
 
     assert(tutorRating.fromUserId == "student-1")
     assert(tutorRating.toUserId == "tutor-1")
-    assert(tutorRating.targetObjectId == "tutor-1")
+    // 🔽 now per booking
+    assert(tutorRating.targetObjectId == "b1")
 
     assert(listingRating.fromUserId == "student-1")
     assert(listingRating.toUserId == "tutor-1")
-    assert(listingRating.targetObjectId == "l1")
+    // 🔽 now per booking as well
+    assert(listingRating.targetObjectId == "b1")
   }
 
   @Test
