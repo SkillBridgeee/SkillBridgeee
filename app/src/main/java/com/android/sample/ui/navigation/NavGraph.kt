@@ -93,11 +93,7 @@ fun AppNavGraph(
 
     composable(NavRoutes.MAP) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MAP) }
-      MapScreen(
-          requestLocationOnStart = true,
-          onProfileClick = { profileId ->
-            navController.navigate(NavRoutes.createProfileRoute(profileId))
-          })
+      MapScreen(requestLocationOnStart = true)
     }
 
     composable(NavRoutes.PROFILE) {
