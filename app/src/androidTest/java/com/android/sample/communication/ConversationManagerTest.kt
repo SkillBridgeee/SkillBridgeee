@@ -128,7 +128,6 @@ class ConversationManagerTest {
     val overview = ovRepo.getOverViewConvUser(creator).first()
 
     assertEquals("1-test4", overview.lastReadMessageId)
-    assertEquals(0, overview.nonReadMsgNumber)
   }
 
   // ----------------------------------------------------------

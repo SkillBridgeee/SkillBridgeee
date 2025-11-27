@@ -34,7 +34,6 @@ class ConversationManager(
             linkedConvId = convId,
             convName = convName,
             lastMsg = MessageNew(),
-            nonReadMsgNumber = 0,
             overViewOwnerId = creatorId,
             otherPersonId = otherUserId,
             lastReadMessageId = null)
@@ -81,8 +80,7 @@ class ConversationManager(
     val overviews = overViewRepo.getOverViewConvUser(userId)
     val overview = overviews.firstOrNull { it.linkedConvId == convId } ?: return
 
-    val updatedOverview =
-        overview.copy(lastReadMessageId = overview.lastMsg.msgId, nonReadMsgNumber = 0)
+    val updatedOverview = overview.copy(lastReadMessageId = overview.lastMsg.msgId)
     overViewRepo.addOverViewConvUser(updatedOverview)
   }
 
