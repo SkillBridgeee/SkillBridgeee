@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -21,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.sample.R
 import com.android.sample.model.authentication.*
 import com.android.sample.ui.theme.extendedColors
 
@@ -353,7 +355,7 @@ private fun PasswordResetDialog(
       text = {
         Column(modifier = Modifier.fillMaxWidth()) {
           Text(
-              text = "Enter your email address and we'll send you a link to reset your password.",
+              text = stringResource(R.string.password_reset_dialog_description),
               fontSize = 14.sp,
               color = Color.Gray)
 
@@ -391,7 +393,7 @@ private fun PasswordResetDialog(
           if (cooldownSeconds > 0) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Please wait $cooldownSeconds seconds before sending another email",
+                text = stringResource(R.string.password_reset_cooldown, cooldownSeconds),
                 color = extendedColors.forgotPasswordGray,
                 fontSize = 12.sp)
           }
@@ -406,7 +408,7 @@ private fun PasswordResetDialog(
               if (cooldownSeconds > 0) {
                 Text("Wait ${cooldownSeconds}s")
               } else {
-                Text("Send Reset Link")
+                Text(stringResource(R.string.password_reset_send_button))
               }
             }
       },

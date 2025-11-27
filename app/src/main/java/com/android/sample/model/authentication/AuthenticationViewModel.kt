@@ -7,10 +7,12 @@ import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.R
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +40,9 @@ class AuthenticationViewModel(
 
   private val _authResult = MutableStateFlow<AuthResult?>(null)
   val authResult: StateFlow<AuthResult?> = _authResult.asStateFlow()
+
+  // Job to track and cancel the password reset cooldown timer
+  private var cooldownJob: Job? = null
 
   /** Helper function to set loading state */
   private fun setLoading() {
@@ -268,12 +273,15 @@ class AuthenticationViewModel(
 
   /** Hide password reset dialog */
   fun hidePasswordResetDialog() {
+    cooldownJob?.cancel()
+    cooldownJob = null
     _uiState.update {
       it.copy(
           showPasswordResetDialog = false,
           resetEmail = "",
           passwordResetError = null,
-          passwordResetMessage = null)
+          passwordResetMessage = null,
+          passwordResetCooldownSeconds = 0)
     }
   }
 
@@ -303,8 +311,7 @@ class AuthenticationViewModel(
           onSuccess = {
             _uiState.update {
               it.copy(
-                  passwordResetMessage =
-                      "If this email is registered, a password reset link has been sent.",
+                  passwordResetMessage = context.getString(R.string.password_reset_success),
                   passwordResetError = null,
                   passwordResetCooldownSeconds = 60)
             }
@@ -314,7 +321,7 @@ class AuthenticationViewModel(
             _uiState.update {
               it.copy(
                   passwordResetError =
-                      exception.message ?: "Failed to send reset email. Please try again.")
+                      exception.message ?: context.getString(R.string.password_reset_error))
             }
           })
     }
@@ -322,11 +329,15 @@ class AuthenticationViewModel(
 
   /** Start the 60-second cooldown timer for password reset */
   private fun startPasswordResetCooldown() {
-    viewModelScope.launch {
-      for (i in 60 downTo 1) {
-        kotlinx.coroutines.delay(1000)
-        _uiState.update { it.copy(passwordResetCooldownSeconds = i - 1) }
-      }
-    }
+    // Cancel any existing cooldown job to prevent multiple coroutines
+    cooldownJob?.cancel()
+
+    cooldownJob =
+        viewModelScope.launch {
+          for (i in 60 downTo 1) {
+            kotlinx.coroutines.delay(1000)
+            _uiState.update { it.copy(passwordResetCooldownSeconds = i - 1) }
+          }
+        }
   }
 }
