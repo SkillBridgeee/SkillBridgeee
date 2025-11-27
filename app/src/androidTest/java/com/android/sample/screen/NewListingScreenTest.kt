@@ -510,6 +510,8 @@ class NewSkillScreenTest {
         itemTagPrefix = NewListingScreenTestTag.SUBJECT_DROPDOWN_ITEM_PREFIX,
         index = 0)
 
+    // Scroll to the SUB_SKILL_FIELD to ensure it's visible on smaller screens (CI)
+    composeRule.onNodeWithTag(NewListingScreenTestTag.SUB_SKILL_FIELD).performScrollTo()
     composeRule.onNodeWithTag(NewListingScreenTestTag.SUB_SKILL_FIELD).assertIsDisplayed()
   }
 

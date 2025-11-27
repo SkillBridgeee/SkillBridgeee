@@ -65,7 +65,6 @@ class MapScreenAndroidTest {
                 userLocation = LatLng(46.5196535, 6.6322734),
                 profiles = listOf(testProfile),
                 bookingPins = listOf(pin),
-                selectedProfile = null,
                 isLoading = false,
                 errorMessage = null))
     every { vm.uiState } returns state
@@ -83,7 +82,6 @@ class MapScreenAndroidTest {
                 userLocation = LatLng(46.0, 6.0), // center
                 profiles = listOf(testProfile),
                 bookingPins = emptyList(),
-                selectedProfile = null,
                 isLoading = false,
                 errorMessage = null))
     every { vm.uiState } returns flow
@@ -91,13 +89,14 @@ class MapScreenAndroidTest {
     composeRule.setContent { MapScreen(viewModel = vm, requestLocationOnStart = false) }
     composeRule.waitForIdle()
 
-    // Switch to valid profile -> target becomes profileLatLng, LaunchedEffect runs again
-    flow.value = flow.value.copy(selectedProfile = testProfile)
+    // Switch to valid profile location -> target becomes profileLatLng, LaunchedEffect runs again
+    val profileWithLocation = testProfile.copy(location = Location(46.52, 6.63, "Test Location"))
+    flow.value = flow.value.copy(profiles = listOf(profileWithLocation))
     composeRule.waitForIdle()
 
     // Now invalid (0,0) -> fallback to center path is executed
     val zero = testProfile.copy(location = Location(0.0, 0.0, ""))
-    flow.value = flow.value.copy(selectedProfile = zero)
+    flow.value = flow.value.copy(profiles = listOf(zero))
     composeRule.waitForIdle()
   }
 
@@ -110,7 +109,6 @@ class MapScreenAndroidTest {
                 userLocation = LatLng(46.5196535, 6.6322734),
                 profiles = emptyList(),
                 bookingPins = emptyList(),
-                selectedProfile = null,
                 isLoading = false,
                 errorMessage = null))
     every { vm.uiState } returns flow
@@ -133,7 +131,6 @@ class MapScreenAndroidTest {
                 userLocation = LatLng(46.5196535, 6.6322734),
                 profiles = emptyList(),
                 bookingPins = emptyList(),
-                selectedProfile = null,
                 isLoading = false,
                 errorMessage = null))
     every { vm.uiState } returns flow
@@ -157,7 +154,6 @@ class MapScreenAndroidTest {
                 profiles = listOf(profileWithLocation),
                 myProfile = profileWithLocation, // Set myProfile to cover lines 217-226
                 bookingPins = emptyList(),
-                selectedProfile = null,
                 isLoading = false,
                 errorMessage = null))
     every { vm.uiState } returns state
