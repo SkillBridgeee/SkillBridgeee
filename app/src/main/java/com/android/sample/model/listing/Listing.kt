@@ -9,6 +9,12 @@ enum class ListingType {
   REQUEST
 }
 
+enum class ListingFilterType {
+  ALL,
+  PROPOSALS,
+  REQUESTS
+}
+
 /** Base class for proposals and requests */
 sealed class Listing {
   abstract val listingId: String

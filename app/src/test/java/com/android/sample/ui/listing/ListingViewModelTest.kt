@@ -1084,6 +1084,8 @@ class ListingViewModelTest {
   @Test
   fun loadBookings_setsTutorRatingPending_true_whenCompletedBookingExists() = runTest {
     UserSessionManager.setCurrentUserId("creator-456")
+    // 🔽 ensure FirebaseAuth matches the session manager
+    mockFirebaseAuthUser("creator-456")
 
     val completedBooking =
         sampleBooking.copy(status = BookingStatus.COMPLETED, bookerId = "booker-789")
@@ -1092,14 +1094,15 @@ class ListingViewModelTest {
     val profileRepo =
         FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
     val bookingRepo = FakeBookingRepo(mutableListOf(completedBooking))
+    val ratingRepo = RecordingRatingRepo(hasRatingResult = false) // always “not yet rated”
 
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
 
     val state = viewModel.uiState.value
-    assertTrue(state.tutorRatingPending)
+    assertTrue(state.tutorRatingPending) // ✅ now true
     assertEquals(1, state.listingBookings.size)
   }
 
@@ -1285,9 +1288,9 @@ class ListingViewModelTest {
     val rating = ratingRepo.addedRatings.first()
     assertEquals("creator-456", rating.fromUserId)
     assertEquals("booker-789", rating.toUserId)
-    // 👇 this is the important change
     assertEquals(RatingType.STUDENT, rating.ratingType)
-    assertEquals("listing-123", rating.targetObjectId)
+    // 🔽 now per booking, not per listing
+    assertEquals(completedBooking.bookingId, rating.targetObjectId)
     assertEquals(StarRating.FIVE, rating.starRating)
   }
 
