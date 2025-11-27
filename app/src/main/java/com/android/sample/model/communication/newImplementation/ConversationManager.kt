@@ -28,23 +28,22 @@ class ConversationManager(
             messages = emptyList())
     convRepo.createConv(conversation)
 
-    val overview1 =
+    val overviewConvCreator =
         OverViewConversation(
             overViewId = overViewRepo.getNewUid(),
             linkedConvId = convId,
             convName = convName,
             lastMsg = MessageNew(),
             overViewOwnerId = creatorId,
-            otherPersonId = otherUserId,
-            lastReadMessageId = null)
-    val overview2 =
-        overview1.copy(
+            otherPersonId = otherUserId)
+    val overviewOtherPerson =
+        overviewConvCreator.copy(
             overViewId = overViewRepo.getNewUid(),
             overViewOwnerId = otherUserId,
             otherPersonId = creatorId)
 
-    overViewRepo.addOverViewConvUser(overview1)
-    overViewRepo.addOverViewConvUser(overview2)
+    overViewRepo.addOverViewConvUser(overviewConvCreator)
+    overViewRepo.addOverViewConvUser(overviewOtherPerson)
 
     return convId
   }
@@ -58,42 +57,27 @@ class ConversationManager(
   // Send message & update overview
   // ---------------------------
   override suspend fun sendMessage(convId: String, message: MessageNew) {
-    // Send message to the conv
     convRepo.sendMessage(convId, message)
 
     val participants = listOf(message.senderId, message.receiverId)
     participants.forEach { userId ->
-      val overviews = overViewRepo.getOverViewConvUser(userId)
-      val overview = overviews.firstOrNull { it.linkedConvId == convId } ?: return@forEach
+      val overview =
+          overViewRepo.getOverViewConvUser(userId).firstOrNull { it.linkedConvId == convId }
+              ?: return@forEach
 
-      var updatedOverview = overview.copy(lastMsg = message)
+      val updated =
+          if (userId == message.senderId) overview.copy(lastMsg = message)
+          else overview.copy(lastMsg = message, nonReadMsgNumber = overview.nonReadMsgNumber + 1)
 
-      // 3. If the user is the sender → he has read his own message
-      if (userId == message.senderId) {
-        updatedOverview = updatedOverview.copy(lastReadMessageId = message.msgId)
-      }
-      overViewRepo.addOverViewConvUser(updatedOverview)
+      overViewRepo.addOverViewConvUser(updated)
     }
   }
 
   override suspend fun resetUnreadCount(convId: String, userId: String) {
-    val overviews = overViewRepo.getOverViewConvUser(userId)
-    val overview = overviews.firstOrNull { it.linkedConvId == convId } ?: return
-
-    val updatedOverview = overview.copy(lastReadMessageId = overview.lastMsg.msgId)
-    overViewRepo.addOverViewConvUser(updatedOverview)
-  }
-
-  suspend fun calculateUnreadCount(convId: String, userId: String): Int {
-    val messages = convRepo.getConv(convId)?.messages ?: return 0
     val overview =
-        overViewRepo.getOverViewConvUser(userId).firstOrNull { it.linkedConvId == convId }
-
-    val lastReadId = overview?.lastReadMessageId
-    if (lastReadId == null) return messages.size
-
-    val index = messages.indexOfFirst { it.msgId == lastReadId }
-    return if (index == -1) messages.size else messages.size - index - 1
+        overViewRepo.getOverViewConvUser(userId).firstOrNull { it.linkedConvId == convId } ?: return
+    val updated = overview.copy(nonReadMsgNumber = 0)
+    overViewRepo.addOverViewConvUser(updated)
   }
 
   override fun listenMessages(convId: String): Flow<List<MessageNew>> {

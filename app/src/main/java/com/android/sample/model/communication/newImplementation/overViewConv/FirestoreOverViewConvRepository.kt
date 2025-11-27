@@ -1,7 +1,6 @@
 package com.android.sample.model.communication.newImplementation.overViewConv
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import java.util.UUID
 import kotlinx.coroutines.channels.awaitClose
@@ -90,9 +89,12 @@ class FirestoreOverViewConvRepository(
    * @return a Flow emitting updated lists of OverViewConversation.
    */
   override fun listenOverView(userId: String): Flow<List<OverViewConversation>> = callbackFlow {
-    require(userId.isNotBlank()) { close(IllegalArgumentException("User ID cannot be blank")) }
+    require(userId.isNotBlank()) {
+      close(IllegalArgumentException("User ID cannot be blank"))
+      return@callbackFlow
+    }
 
-    val listenerCreator: ListenerRegistration =
+    val listenerOwner =
         overViewRef
             .whereEqualTo("overViewOwnerId", userId)
             .orderBy("lastMsg.createdAt", Query.Direction.DESCENDING)
@@ -102,28 +104,10 @@ class FirestoreOverViewConvRepository(
                 return@addSnapshotListener
               }
 
-              val messages = snapshot?.toObjects(OverViewConversation::class.java).orEmpty()
-              trySend(messages)
+              val currentOverviews = snapshot?.toObjects(OverViewConversation::class.java).orEmpty()
+              trySend(currentOverviews)
             }
 
-    val listenerOther: ListenerRegistration =
-        overViewRef
-            .whereEqualTo("otherPersonId", userId)
-            .orderBy("lastMsg.createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-              if (error != null) {
-                close(error)
-                return@addSnapshotListener
-              }
-
-              val messages = snapshot?.toObjects(OverViewConversation::class.java).orEmpty()
-              trySend(messages)
-            }
-
-    // Remove listeners when the Flow is cancelled.
-    awaitClose {
-      listenerCreator.remove()
-      listenerOther.remove()
-    }
+    awaitClose { listenerOwner.remove() }
   }
 }

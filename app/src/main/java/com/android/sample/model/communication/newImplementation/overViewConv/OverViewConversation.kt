@@ -15,13 +15,14 @@ import com.android.sample.model.communication.newImplementation.conversation.Mes
  * @property nonReadMsgNumber The number of unread messages for the current user.
  * @property overViewOwnerId The ID of the user who created the conversation.
  * @property otherPersonId The ID of the other participant in the conversation (for 1:1 chats).
+ * @property lastReadMessageId The ID of the last message the overviewOwner has read
  */
 data class OverViewConversation(
     val overViewId: String = "",
     val linkedConvId: String = "",
     val convName: String = "",
+    val nonReadMsgNumber: Int = 0,
     val lastMsg: MessageNew = MessageNew(),
     val overViewOwnerId: String = "",
     val otherPersonId: String = "",
-    val lastReadMessageId: String? = null
 )
