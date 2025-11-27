@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -393,7 +394,9 @@ private fun PasswordResetDialog(
           if (cooldownSeconds > 0) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.password_reset_cooldown, cooldownSeconds),
+                text =
+                    pluralStringResource(
+                        R.plurals.password_reset_cooldown, cooldownSeconds, cooldownSeconds),
                 color = extendedColors.forgotPasswordGray,
                 fontSize = 12.sp)
           }

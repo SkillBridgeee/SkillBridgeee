@@ -9,6 +9,9 @@
     <string name="password_reset_success">If this email is registered, a password reset link has been sent.</string>
     <string name="password_reset_error">Failed to send reset email. Please try again.</string>
     <string name="password_reset_dialog_description">Enter your email address and we\'ll send you a link to reset your password.</string>
-    <string name="password_reset_cooldown">Please wait %d seconds before sending another email</string>
+    <plurals name="password_reset_cooldown">
+        <item quantity="one">Please wait %d second before sending another email</item>
+        <item quantity="other">Please wait %d seconds before sending another email</item>
+    </plurals>
     <string name="password_reset_send_button">Send Reset Link</string>
 </resources>
