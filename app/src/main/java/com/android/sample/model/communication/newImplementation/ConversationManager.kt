@@ -59,14 +59,20 @@ class ConversationManager(
   // Send message & update overview
   // ---------------------------
   override suspend fun sendMessage(convId: String, message: MessageNew) {
+    // Send message to the conv
     convRepo.sendMessage(convId, message)
 
-    // Update lastMsg in both overviews
     val participants = listOf(message.senderId, message.receiverId)
     participants.forEach { userId ->
       val overviews = overViewRepo.getOverViewConvUser(userId)
       val overview = overviews.firstOrNull { it.linkedConvId == convId } ?: return@forEach
-      val updatedOverview = overview.copy(lastMsg = message)
+
+      var updatedOverview = overview.copy(lastMsg = message)
+
+      // 3. If the user is the sender → he has read his own message
+      if (userId == message.senderId) {
+        updatedOverview = updatedOverview.copy(lastReadMessageId = message.msgId)
+      }
       overViewRepo.addOverViewConvUser(updatedOverview)
     }
   }

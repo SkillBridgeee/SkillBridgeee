@@ -139,15 +139,12 @@ class ConversationManagerTest {
     manager.sendMessage(convId, m2)
     manager.sendMessage(convId, m3)
 
-    // A marque le premier comme lu
-    manager.resetUnreadCount(convId, creator)
-
+    // User that send shouldn't have unseen message
     val unread = manager.calculateUnreadCount(convId, creator)
-
-    assertEquals(0, unread) // pour A → il est le sender donc lastRead est toujours mis à jour
+    assertEquals(0, unread)
 
     val unreadForB = manager.calculateUnreadCount(convId, other)
-    assertEquals(0, unreadForB)
+    assertEquals(3, unreadForB)
   }
 
   // ----------------------------------------------------------
