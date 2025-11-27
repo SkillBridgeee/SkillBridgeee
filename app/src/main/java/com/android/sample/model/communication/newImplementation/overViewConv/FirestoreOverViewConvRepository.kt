@@ -63,24 +63,20 @@ class FirestoreOverViewConvRepository(
   }
 
   /**
-   * Retrieves all overview conversations for a specific user. A user can appear either as the
-   * creator or as the other participant.
+   * Retrieves all overview conversations owned by a specific user.
    *
-   * @param userId the user's identifier.
-   * @return a sorted list of OverViewConversation, ordered by last message timestamp.
+   * @param userId The ID of the overview owner.
+   * @return A sorted list of OverViewConversation, ordered by last message timestamp.
    */
   override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
     require(userId.isNotBlank()) { "User ID cannot be blank" }
 
-    val snapshotCreator = overViewRef.whereEqualTo("overViewOwnerId", userId).get().await()
+    // Only fetch overview documents where the user is the OWNER
+    val snapshot = overViewRef.whereEqualTo("overViewOwnerId", userId).get().await()
 
-    val snapshotOther = overViewRef.whereEqualTo("otherPersonId", userId).get().await()
+    val overviews = snapshot.toObjects(OverViewConversation::class.java)
 
-    val allOverviews =
-        snapshotCreator.toObjects(OverViewConversation::class.java) +
-            snapshotOther.toObjects(OverViewConversation::class.java)
-
-    return allOverviews.sortedByDescending { it.lastMsg.createdAt.time }
+    return overviews.sortedByDescending { it.lastMsg.createdAt.time }
   }
 
   /**
