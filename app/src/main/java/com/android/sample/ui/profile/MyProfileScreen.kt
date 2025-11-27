@@ -722,11 +722,10 @@ private fun RatingContent(ui: MyProfileUIState) {
           modifier = Modifier.padding(horizontal = 16.dp))
     }
     else -> {
-      val creatorProfile = ui.toProfile
-
       LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         items(ui.ratings) { rating ->
-          RatingCard(rating = rating, creator = creatorProfile)
+          val raterProfile = ui.ratingRatersById[rating.fromUserId]
+          RatingCard(rating = rating, rater = raterProfile)
           Spacer(modifier = Modifier.height(8.dp))
         }
       }
