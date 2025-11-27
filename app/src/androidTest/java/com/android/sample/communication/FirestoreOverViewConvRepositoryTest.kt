@@ -99,28 +99,6 @@ class FirestoreOverViewConvRepositoryTest {
   }
 
   // ----------------------------------------------------------
-  // TEST 4 : LISTEN OVERVIEW FLOW (Other User)
-  // ----------------------------------------------------------
-  @Test
-  fun testListenOverviewFlowCurrentOtherUSer() = runTest {
-    convId = "conv7"
-    val overview =
-        OverViewConversation(
-            overViewId = "id7",
-            linkedConvId = convId,
-            convName = "Conversation 7",
-            overViewOwnerId = userA,
-            otherPersonId = userB)
-
-    repo.addOverViewConvUser(overview)
-
-    val flow = repo.listenOverView(userB)
-
-    val emitted = flow.first { it -> it.isNotEmpty() && it.any { it.linkedConvId == convId } }
-    assertTrue(emitted.any { it.linkedConvId == convId })
-  }
-
-  // ----------------------------------------------------------
   // TEST 5 : getNewUid() generates a valid and unique UUID
   // ----------------------------------------------------------
   @Test

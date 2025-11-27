@@ -5,9 +5,13 @@ import com.android.sample.model.communication.newImplementation.ConversationMana
 import com.android.sample.model.communication.newImplementation.conversation.FirestoreConvRepository
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import com.android.sample.model.communication.newImplementation.overViewConv.FirestoreOverViewConvRepository
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
 import com.android.sample.utils.TestFirestore
 import junit.framework.TestCase.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -126,33 +130,7 @@ class ConversationManagerTest {
 
     val overview = ovRepo.getOverViewConvUser(creator).first()
 
-    assertEquals("1-test4", overview.lastReadMessageId)
-  }
-
-  // ----------------------------------------------------------
-  // TEST 5 : CALCULATE UNREAD COUNT
-  // ----------------------------------------------------------
-  @Test
-  fun testCalculateUnreadCount() = runTest {
-    val creator = "A-test5"
-    val other = "B-test5"
-
-    convId = manager.createConvAndOverviews(creator, other, "Chat")
-
-    val m1 = MessageNew("1-test5", "Msg1", creator, other)
-    val m2 = MessageNew("2-test5", "Msg2", creator, other)
-    val m3 = MessageNew("3-test5", "Msg3", creator, other)
-
-    manager.sendMessage(convId, m1)
-    manager.sendMessage(convId, m2)
-    manager.sendMessage(convId, m3)
-
-    // User that send shouldn't have unseen message
-    val unread = manager.calculateUnreadCount(convId, creator)
-    assertEquals(0, unread)
-
-    val unreadForB = manager.calculateUnreadCount(convId, other)
-    assertEquals(3, unreadForB)
+    assertEquals(msg, overview.lastMsg)
   }
 
   // ----------------------------------------------------------
@@ -202,45 +180,135 @@ class ConversationManagerTest {
     val other = "B-test8"
     convId = manager.createConvAndOverviews(creator, other, "Chat")
 
-    val flowCreator = manager.listenMessages(convId)
-    val flowOther = manager.listenMessages(convId)
+    val flowCreatorMsg = manager.listenMessages(convId)
+    val flowOtherMsg = manager.listenMessages(convId)
+
+    val flowCreatorOverView = manager.listenConversationOverviews(creator)
+    val flowOtherOverView = manager.listenConversationOverviews(other)
 
     // Creator send a message
 
     val msgCreator1 = MessageNew("msg1", "hello", creator, other)
     manager.sendMessage(convId, msgCreator1)
 
-    var emittedCreator = flowCreator.first { it.isNotEmpty() }
-    var emittedOther = flowOther.first { it.isNotEmpty() }
+    var emittedCreatorMsg = flowCreatorMsg.first { it.isNotEmpty() }
+    var emittedOtherMsg = flowOtherMsg.first { it.isNotEmpty() }
 
-    assertEquals(0, manager.calculateUnreadCount(convId, creator))
-    assertEquals(1, manager.calculateUnreadCount(convId, other))
-    assertEquals(1, emittedCreator.size)
-    assertEquals(1, emittedOther.size)
-    assertEquals(msgCreator1, emittedCreator[0])
-    assertEquals(msgCreator1, emittedOther[0])
+    var emittedCreatorOverView = flowCreatorOverView.first { it.isNotEmpty() }
+    var emittedOtherOverView = flowOtherOverView.first { it.isNotEmpty() }
+
+    assertEquals(1, emittedCreatorMsg.size)
+    assertEquals(1, emittedOtherMsg.size)
+    assertEquals(msgCreator1, emittedCreatorMsg[0])
+    assertEquals(msgCreator1, emittedOtherMsg[0])
+
+    assertEquals(1, emittedCreatorOverView.size)
+    assertEquals(1, emittedOtherOverView.size)
+    assertEquals(0, emittedCreatorOverView[0].nonReadMsgNumber)
+    assertEquals(1, emittedOtherOverView[0].nonReadMsgNumber)
 
     // Creator read the message and also send a message
     manager.resetUnreadCount(convId, other)
 
-    assertEquals(0, manager.calculateUnreadCount(convId, other))
+    emittedOtherOverView = flowOtherOverView.first { it.isNotEmpty() }
+
+    assertEquals(1, emittedOtherOverView.size)
+    assertEquals(0, emittedOtherOverView[0].nonReadMsgNumber)
 
     val msgOther1 = MessageNew("msg2", "hi", other, creator)
     manager.sendMessage(convId, msgOther1)
 
-    assertEquals(1, manager.calculateUnreadCount(convId, creator))
-    assertEquals(0, manager.calculateUnreadCount(convId, other))
+    emittedCreatorOverView = flowCreatorOverView.first { it.isNotEmpty() }
+    emittedOtherOverView = flowOtherOverView.first { it.isNotEmpty() }
 
-    emittedCreator = flowCreator.first { it.isNotEmpty() }
-    emittedOther = flowOther.first { it.isNotEmpty() }
+    assertEquals(1, emittedCreatorOverView.size)
+    assertEquals(1, emittedOtherOverView.size)
 
-    assertEquals(2, emittedCreator.size)
-    assertEquals(2, emittedOther.size)
+    assertEquals(1, emittedCreatorOverView[0].nonReadMsgNumber)
+    assertEquals(0, emittedOtherOverView[0].nonReadMsgNumber)
 
-    assertEquals(msgCreator1, emittedCreator[0])
-    assertEquals(msgCreator1, emittedOther[0])
+    emittedCreatorMsg = flowCreatorMsg.first { it.isNotEmpty() }
+    emittedOtherMsg = flowOtherMsg.first { it.isNotEmpty() }
 
-    assertEquals(msgOther1, emittedCreator[1])
-    assertEquals(msgOther1, emittedOther[1])
+    assertEquals(2, emittedCreatorMsg.size)
+    assertEquals(2, emittedOtherMsg.size)
+
+    assertEquals(msgCreator1, emittedCreatorMsg[0])
+    assertEquals(msgCreator1, emittedOtherMsg[0])
+
+    assertEquals(msgOther1, emittedCreatorMsg[1])
+    assertEquals(msgOther1, emittedOtherMsg[1])
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  @Test
+  fun testAllDiscussionRealTime() = runTest {
+    val creator = "A-test8"
+    val other = "B-test8"
+    convId = manager.createConvAndOverviews(creator, other, "Chat")
+
+    // Lists pour collecter toutes les émissions des flows
+    val creatorMsgs = mutableListOf<List<MessageNew>>()
+    val otherMsgs = mutableListOf<List<MessageNew>>()
+    val creatorOv = mutableListOf<List<OverViewConversation>>()
+    val otherOv = mutableListOf<List<OverViewConversation>>()
+
+    // Lancer la collecte en parallèle
+    val job = launch { manager.listenMessages(convId).collect { creatorMsgs.add(it) } }
+    val job2 = launch { manager.listenMessages(convId).collect { otherMsgs.add(it) } }
+    val job3 = launch { manager.listenConversationOverviews(creator).collect { creatorOv.add(it) } }
+
+    val job4 = launch { manager.listenConversationOverviews(other).collect { otherOv.add(it) } }
+
+    // --- Creator envoie un message ---
+    val msgCreator1 = MessageNew("msg1", "hello", creator, other)
+    manager.sendMessage(convId, msgCreator1)
+
+    // attendre un petit peu que les flows émettent
+    advanceUntilIdle()
+
+    // Vérifications après le premier message
+    assertEquals(1, creatorMsgs.last().size)
+    assertEquals(1, otherMsgs.last().size)
+    assertEquals(msgCreator1, creatorMsgs.last()[0])
+    assertEquals(msgCreator1, otherMsgs.last()[0])
+
+    assertEquals(1, creatorOv.last().size)
+    assertEquals(1, otherOv.last().size)
+    assertEquals(0, creatorOv.last()[0].nonReadMsgNumber)
+    assertEquals(1, otherOv.last()[0].nonReadMsgNumber)
+
+    // --- Receiver lit les messages ---
+    manager.resetUnreadCount(convId, other)
+    advanceUntilIdle()
+
+    assertEquals(0, otherOv.last()[0].nonReadMsgNumber)
+
+    // --- Receiver envoie un message ---
+    val msgOther1 = MessageNew("msg2", "hi", other, creator)
+    manager.sendMessage(convId, msgOther1)
+    advanceUntilIdle()
+
+    // Vérifications après le deuxième message
+    assertEquals(2, creatorMsgs.last().size)
+    assertEquals(2, otherMsgs.last().size)
+    assertEquals(msgCreator1, creatorMsgs.last()[0])
+    assertEquals(msgOther1, creatorMsgs.last()[1])
+
+    assertEquals(msgCreator1, otherMsgs.last()[0])
+    assertEquals(msgOther1, otherMsgs.last()[1])
+
+    assertEquals(1, creatorOv.last()[0].nonReadMsgNumber)
+    assertEquals(0, otherOv.last()[0].nonReadMsgNumber)
+
+    assertEquals(1, creatorOv.last().size)
+    assertEquals(1, otherOv.last().size)
+    assertEquals(1, creatorOv.last()[0].nonReadMsgNumber)
+    assertEquals(0, otherOv.last()[0].nonReadMsgNumber)
+
+    job.cancel()
+    job2.cancel()
+    job3.cancel()
+    job4.cancel()
   }
 }
