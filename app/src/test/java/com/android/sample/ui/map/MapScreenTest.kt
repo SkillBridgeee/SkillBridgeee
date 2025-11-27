@@ -150,6 +150,7 @@ class MapScreenTest {
                 profiles = listOf(testProfile),
                 selectedPinPosition = null,
                 bookingPins = listOf(pin),
+                bookingsAtSelectedPosition = emptyList(),
                 isLoading = false,
                 errorMessage = null))
     every { vm.uiState } returns flow
@@ -160,13 +161,16 @@ class MapScreenTest {
     composeTestRule.onNodeWithTag(MapScreenTestTags.BOOKING_INFO_WINDOW + "b1").assertDoesNotExist()
 
     // Appears when pin position selected
-    flow.value = flow.value.copy(selectedPinPosition = LatLng(46.52, 6.63))
+    flow.value =
+        flow.value.copy(
+            selectedPinPosition = LatLng(46.52, 6.63), bookingsAtSelectedPosition = listOf(pin))
     composeTestRule.waitForIdle()
     composeTestRule.onNodeWithTag(MapScreenTestTags.BOOKING_INFO_WINDOW + "b1").assertIsDisplayed()
     composeTestRule.onNodeWithText("Math Session").assertIsDisplayed()
 
     // Disappears when cleared
-    flow.value = flow.value.copy(selectedPinPosition = null)
+    flow.value =
+        flow.value.copy(selectedPinPosition = null, bookingsAtSelectedPosition = emptyList())
     composeTestRule.waitForIdle()
     composeTestRule.onNodeWithTag(MapScreenTestTags.BOOKING_INFO_WINDOW + "b1").assertDoesNotExist()
   }

@@ -43,6 +43,7 @@ data class MapUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val bookingPins: List<BookingPin> = emptyList(),
+    val bookingsAtSelectedPosition: List<BookingPin> = emptyList(),
 )
 
 /**
@@ -94,14 +95,16 @@ class MapViewModel(
       _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
       try {
         val profiles = profileRepository.getAllProfiles()
-        _uiState.value = _uiState.value.copy(profiles = profiles, isLoading = false)
         val uid = runCatching { FirebaseAuth.getInstance().currentUser?.uid }.getOrNull()
         val me = profiles.firstOrNull { it.userId == uid }
+
+        // Update profiles and myProfile
+        _uiState.value = _uiState.value.copy(profiles = profiles, myProfile = me, isLoading = false)
+
+        // Update camera location if user has a valid location
         val loc = me?.location
         if (loc != null && (loc.latitude != 0.0 || loc.longitude != 0.0)) {
-          _uiState.value =
-              _uiState.value.copy(
-                  myProfile = me, userLocation = LatLng(loc.latitude, loc.longitude))
+          _uiState.value = _uiState.value.copy(userLocation = LatLng(loc.latitude, loc.longitude))
         }
       } catch (_: Exception) {
         _uiState.value =
@@ -149,7 +152,7 @@ class MapViewModel(
                     bookingId = booking.bookingId,
                     position = LatLng(loc.latitude, loc.longitude),
                     title = listing.title.ifBlank { otherProfile?.name ?: "Session" },
-                    snippet = "${otherProfile?.name ?: "Unknown"} - ${loc.name}",
+                    snippet = "${loc.name} - with ${otherProfile?.name ?: "Unknown"}",
                     profile = otherProfile,
                     booking = booking)
               } else null
@@ -174,7 +177,15 @@ class MapViewModel(
    * @param position The pin position to select, or null to deselect
    */
   fun selectPinPosition(position: LatLng?) {
-    _uiState.value = _uiState.value.copy(selectedPinPosition = position)
+    val bookingsAtPosition =
+        if (position != null) {
+          _uiState.value.bookingPins.filter { it.position == position }
+        } else {
+          emptyList()
+        }
+    _uiState.value =
+        _uiState.value.copy(
+            selectedPinPosition = position, bookingsAtSelectedPosition = bookingsAtPosition)
   }
 
   /**
@@ -198,7 +209,10 @@ class MapViewModel(
   fun clearSelection() {
     _uiState.value =
         _uiState.value.copy(
-            selectedPinPosition = null, selectedBookingPin = null, showBookingDetailsDialog = false)
+            selectedPinPosition = null,
+            selectedBookingPin = null,
+            showBookingDetailsDialog = false,
+            bookingsAtSelectedPosition = emptyList())
   }
 
   /**

@@ -35,7 +35,6 @@ class FirestoreBookingRepository(
       val creatorSnapshot =
           db.collection(BOOKINGS_COLLECTION_PATH)
               .whereEqualTo("listingCreatorId", currentUserId)
-              .orderBy("sessionStart", Query.Direction.ASCENDING)
               .get()
               .await()
 
@@ -101,7 +100,6 @@ class FirestoreBookingRepository(
       val creatorSnapshot =
           db.collection(BOOKINGS_COLLECTION_PATH)
               .whereEqualTo("listingCreatorId", userId)
-              .orderBy("sessionStart", Query.Direction.ASCENDING)
               .get()
               .await()
 

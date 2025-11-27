@@ -74,6 +74,19 @@ object MapScreenTestTags {
 }
 
 /**
+ * Configuration for location permissions in MapView.
+ *
+ * @param requestOnStart Whether to request location permission on first composition.
+ * @param permissionChecker Function to check if permission is granted. Useful for testing.
+ * @param permissionRequester Function to request a permission. Useful for testing.
+ */
+data class LocationPermissionConfig(
+    val requestOnStart: Boolean = false,
+    val permissionChecker: (@Composable () -> Boolean)? = null,
+    val permissionRequester: ((String) -> Unit)? = null
+)
+
+/**
  * MapScreen displays a Google Map centered on a specific location.
  *
  * Features:
@@ -85,17 +98,21 @@ object MapScreenTestTags {
  *
  * @param modifier Optional modifier for the screen
  * @param viewModel The MapViewModel instance
- * @param onProfileClick Callback when a profile card is clicked (for future navigation)
  * @param requestLocationOnStart Whether to request location permission on first composition
  */
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = viewModel(),
-    onProfileClick: (String) -> Unit = {},
     requestLocationOnStart: Boolean = false
 ) {
   val uiState by viewModel.uiState.collectAsState()
+
+  // Reload bookings when screen is displayed to ensure fresh data
+  LaunchedEffect(Unit) {
+    viewModel.loadBookings()
+    viewModel.loadProfiles()
+  }
 
   Scaffold(modifier = modifier.testTag(MapScreenTestTags.MAP_SCREEN)) { innerPadding ->
     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
@@ -108,7 +125,7 @@ fun MapScreen(
           myProfile = myProfile,
           onPinClicked = { position -> viewModel.selectPinPosition(position) },
           onMapClicked = { viewModel.clearSelection() },
-          requestLocationOnStart = requestLocationOnStart)
+          permissionConfig = LocationPermissionConfig(requestOnStart = requestLocationOnStart))
 
       // Loading indicator
       if (uiState.isLoading) {
@@ -135,10 +152,9 @@ fun MapScreen(
       }
 
       // Info windows for bookings at selected pin position
-      uiState.selectedPinPosition?.let { position ->
-        val bookingsAtPosition = uiState.bookingPins.filter { it.position == position }
+      uiState.selectedPinPosition?.let {
         BookingInfoWindows(
-            bookings = bookingsAtPosition,
+            bookings = uiState.bookingsAtSelectedPosition,
             onBookingClick = { pin -> viewModel.selectBookingPin(pin) },
             modifier = Modifier.align(Alignment.Center).padding(bottom = 100.dp))
       }
@@ -161,11 +177,8 @@ fun MapScreen(
  * @param myProfile The current user's profile to show on the map.
  * @param onPinClicked Callback when a pin position is clicked (to show info windows).
  * @param onMapClicked Callback when the map itself is clicked (to clear selections).
- * @param requestLocationOnStart Whether to request location permission on first composition.
- * @param permissionChecker Injectable function to check if permission is granted. Defaults to
- *   checking ACCESS_FINE_LOCATION via ContextCompat. Useful for testing.
- * @param permissionRequester Injectable function to request a permission. Defaults to using the
- *   permission launcher. Useful for testing.
+ * @param permissionConfig Configuration for location permissions, including checker and requester
+ *   functions for testing.
  */
 @Composable
 private fun MapView(
@@ -174,15 +187,19 @@ private fun MapView(
     myProfile: Profile?,
     onPinClicked: (LatLng) -> Unit,
     onMapClicked: () -> Unit = {},
-    requestLocationOnStart: Boolean = false,
-    permissionChecker: @Composable () -> Boolean = {
-      val context = androidx.compose.ui.platform.LocalContext.current
-      androidx.core.content.ContextCompat.checkSelfPermission(
-          context, Manifest.permission.ACCESS_FINE_LOCATION) ==
-          android.content.pm.PackageManager.PERMISSION_GRANTED
-    },
-    permissionRequester: ((String) -> Unit)? = null
+    permissionConfig: LocationPermissionConfig = LocationPermissionConfig()
 ) {
+  // Default permission checker
+  val defaultPermissionChecker: @Composable () -> Boolean = {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    androidx.core.content.ContextCompat.checkSelfPermission(
+        context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+        android.content.pm.PackageManager.PERMISSION_GRANTED
+  }
+
+  // Use provided checker or default
+  val permissionChecker = permissionConfig.permissionChecker ?: defaultPermissionChecker
+
   // Get initial permission state using the injected checker
   val initialPermissionState = permissionChecker()
 
@@ -198,13 +215,16 @@ private fun MapView(
 
   // Wire default requester to the launcher if the caller didn't override
   val requester =
-      remember(permissionLauncher, permissionRequester) {
-        permissionRequester ?: { permission: String -> permissionLauncher.launch(permission) }
+      remember(permissionLauncher, permissionConfig.permissionRequester) {
+        permissionConfig.permissionRequester
+            ?: { permission: String ->
+              permissionLauncher.launch(permission)
+            }
       }
 
-  // Request location permission - reacts to requestLocationOnStart and hasLocationPermission
-  LaunchedEffect(requestLocationOnStart, hasLocationPermission) {
-    if (requestLocationOnStart && !hasLocationPermission) {
+  // Request location permission - reacts to requestOnStart and hasLocationPermission
+  LaunchedEffect(permissionConfig.requestOnStart, hasLocationPermission) {
+    if (permissionConfig.requestOnStart && !hasLocationPermission) {
       try {
         requester(Manifest.permission.ACCESS_FINE_LOCATION)
       } catch (e: Exception) {

@@ -293,7 +293,14 @@ class MapViewModelTest {
   @Test
   fun `loadProfiles ignores profile with zero coordinates for myProfile`() = runTest {
     // Given - profile with 0,0 coordinates
-    val zeroProfile = testProfile1.copy(location = Location(0.0, 0.0, "Zero"))
+    val mockAuth = mockk<com.google.firebase.auth.FirebaseAuth>()
+    val mockUser = mockk<com.google.firebase.auth.FirebaseUser>()
+    mockkStatic(com.google.firebase.auth.FirebaseAuth::class)
+    every { com.google.firebase.auth.FirebaseAuth.getInstance() } returns mockAuth
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.uid } returns "user1"
+
+    val zeroProfile = testProfile1.copy(userId = "user1", location = Location(0.0, 0.0, "Zero"))
     coEvery { profileRepository.getAllProfiles() } returns listOf(zeroProfile)
 
     // When
@@ -302,8 +309,9 @@ class MapViewModelTest {
 
     val state = viewModel.uiState.value
 
-    // Then - profile loaded but location not used for camera (remains default)
+    // Then - profile loaded, myProfile set, but location not used for camera (remains default)
     assertEquals(1, state.profiles.size)
+    assertEquals(zeroProfile, state.myProfile)
     assertEquals(LatLng(46.5196535, 6.6322734), state.userLocation) // Default location
   }
 
@@ -867,7 +875,7 @@ class MapViewModelTest {
     viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
     advanceUntilIdle()
 
-    assertEquals("Unknown - Library", viewModel.uiState.value.bookingPins[0].snippet)
+    assertEquals("Library - with Unknown", viewModel.uiState.value.bookingPins[0].snippet)
   }
 
   @Test
@@ -960,6 +968,8 @@ class MapViewModelTest {
 
     // Then
     assertEquals(position, state.selectedPinPosition)
+    // Should be empty because no booking pins at this position
+    assertTrue(state.bookingsAtSelectedPosition.isEmpty())
   }
 
   @Test
@@ -975,6 +985,7 @@ class MapViewModelTest {
 
     // Then
     assertNull(state.selectedPinPosition)
+    assertTrue(state.bookingsAtSelectedPosition.isEmpty())
   }
 
   @Test
@@ -1083,6 +1094,7 @@ class MapViewModelTest {
     assertNull(state.selectedPinPosition)
     assertNull(state.selectedBookingPin)
     assertFalse(state.showBookingDetailsDialog)
+    assertTrue(state.bookingsAtSelectedPosition.isEmpty())
   }
 
   @Test
@@ -1102,6 +1114,99 @@ class MapViewModelTest {
 
     // Then
     assertEquals(position2, state.selectedPinPosition)
+    assertTrue(state.bookingsAtSelectedPosition.isEmpty())
+  }
+
+  @Test
+  fun `selectPinPosition filters bookings at selected position`() = runTest {
+    // Given - mock Firebase auth
+    val mockAuth = mockk<com.google.firebase.auth.FirebaseAuth>()
+    val mockUser = mockk<com.google.firebase.auth.FirebaseUser>()
+    mockkStatic(com.google.firebase.auth.FirebaseAuth::class)
+    every { com.google.firebase.auth.FirebaseAuth.getInstance() } returns mockAuth
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.uid } returns "current-user"
+
+    // Create listings at different positions
+    val position1 = LatLng(46.5, 6.6)
+    val position2 = LatLng(47.0, 7.0)
+
+    val listing1 =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing1",
+            title = "Math Tutoring",
+            location = Location(latitude = 46.5, longitude = 6.6, name = "Location 1"))
+
+    val listing2 =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing2",
+            title = "Physics Help",
+            location = Location(latitude = 46.5, longitude = 6.6, name = "Location 1"))
+
+    val listing3 =
+        com.android.sample.model.listing.Proposal(
+            listingId = "listing3",
+            title = "Chemistry Lab",
+            location = Location(latitude = 47.0, longitude = 7.0, name = "Location 2"))
+
+    // Create bookings at different positions
+    val booking1 =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b1",
+            associatedListingId = "listing1",
+            listingCreatorId = "other1",
+            bookerId = "current-user",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date())
+
+    val booking2 =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b2",
+            associatedListingId = "listing2",
+            listingCreatorId = "other2",
+            bookerId = "current-user",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date())
+
+    val booking3 =
+        com.android.sample.model.booking.Booking(
+            bookingId = "b3",
+            associatedListingId = "listing3",
+            listingCreatorId = "other3",
+            bookerId = "current-user",
+            sessionStart = java.util.Date(),
+            sessionEnd = java.util.Date())
+
+    coEvery { profileRepository.getAllProfiles() } returns emptyList()
+    coEvery { bookingRepository.getAllBookings() } returns listOf(booking1, booking2, booking3)
+    coEvery { listingRepository.getListing("listing1") } returns listing1
+    coEvery { listingRepository.getListing("listing2") } returns listing2
+    coEvery { listingRepository.getListing("listing3") } returns listing3
+    coEvery { profileRepository.getProfileById(any()) } returns testProfile1
+
+    viewModel = MapViewModel(profileRepository, bookingRepository, listingRepository)
+    advanceUntilIdle()
+
+    // Verify 3 booking pins were created
+    assertEquals(3, viewModel.uiState.value.bookingPins.size)
+
+    // When - select position1 (where 2 bookings are)
+    viewModel.selectPinPosition(position1)
+    var state = viewModel.uiState.first()
+
+    // Then - should have 2 bookings at position1
+    assertEquals(2, state.bookingsAtSelectedPosition.size)
+    assertTrue(state.bookingsAtSelectedPosition.any { it.bookingId == "b1" })
+    assertTrue(state.bookingsAtSelectedPosition.any { it.bookingId == "b2" })
+    assertFalse(state.bookingsAtSelectedPosition.any { it.bookingId == "b3" })
+
+    // When - select position2 (where 1 booking is)
+    viewModel.selectPinPosition(position2)
+    state = viewModel.uiState.first()
+
+    // Then - should have 1 booking at position2
+    assertEquals(1, state.bookingsAtSelectedPosition.size)
+    assertTrue(state.bookingsAtSelectedPosition.any { it.bookingId == "b3" })
   }
 
   @Test
