@@ -89,17 +89,18 @@ class ConversationManager(
    */
   override suspend fun sendMessage(convId: String, message: MessageNew) {
     convRepo.sendMessage(convId, message)
+    updateOverviewsAfterSend(convId, message)
+  }
 
+  private suspend fun updateOverviewsAfterSend(convId: String, message: MessageNew) {
     val participants = listOf(message.senderId, message.receiverId)
     participants.forEach { userId ->
       val overview =
           overViewRepo.getOverViewConvUser(userId).firstOrNull { it.linkedConvId == convId }
               ?: return@forEach
-
       val updated =
           if (userId == message.senderId) overview.copy(lastMsg = message)
           else overview.copy(lastMsg = message, nonReadMsgNumber = overview.nonReadMsgNumber + 1)
-
       overViewRepo.addOverViewConvUser(updated)
     }
   }
