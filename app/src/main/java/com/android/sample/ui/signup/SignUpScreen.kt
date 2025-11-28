@@ -12,7 +12,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.*
@@ -131,6 +130,21 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
               maxPreviewLength = 45,
               style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
 
+          TextField(
+              value = state.email,
+              onValueChange = {
+                if (!state.isGoogleSignUp) {
+                  vm.onEvent(SignUpEvent.EmailChanged(it))
+                }
+              },
+              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.EMAIL),
+              placeholder = { Text("Email Address") },
+              singleLine = true,
+              shape = fieldShape,
+              colors = fieldColors,
+              enabled = !state.isGoogleSignUp, // Disable email field if pre-filled from Google
+              readOnly = state.isGoogleSignUp) // Make it read-only for Google sign-ups
+
           // Location input with Nominatim search and dropdown
           val context = LocalContext.current
           val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -179,9 +193,7 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
               value = state.levelOfEducation,
               onValueChange = { vm.onEvent(SignUpEvent.LevelOfEducationChanged(it)) },
               modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION),
-              placeholder = {
-                Text("Major, Year (e.g. CS, 3rd year)", fontWeight = FontWeight.Bold)
-              },
+              placeholder = { Text("Major, Year (e.g. CS, 3rd year)") },
               singleLine = true,
               shape = fieldShape,
               colors = fieldColors)
@@ -193,25 +205,9 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
                   Modifier.fillMaxWidth()
                       .heightIn(min = 112.dp)
                       .testTag(SignUpScreenTestTags.DESCRIPTION),
-              placeholder = { Text("Short description of yourself", fontWeight = FontWeight.Bold) },
+              placeholder = { Text("Short description of yourself") },
               shape = fieldShape,
               colors = fieldColors)
-
-          TextField(
-              value = state.email,
-              onValueChange = {
-                if (!state.isGoogleSignUp) {
-                  vm.onEvent(SignUpEvent.EmailChanged(it))
-                }
-              },
-              modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.EMAIL),
-              placeholder = { Text("Email Address", fontWeight = FontWeight.Bold) },
-              singleLine = true,
-              leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
-              shape = fieldShape,
-              colors = fieldColors,
-              enabled = !state.isGoogleSignUp, // Disable email field if pre-filled from Google
-              readOnly = state.isGoogleSignUp) // Make it read-only for Google sign-ups
 
           // Only show password field if user is not signing up via Google
           if (!state.isGoogleSignUp) {
@@ -219,7 +215,7 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
                 value = state.password,
                 onValueChange = { vm.onEvent(SignUpEvent.PasswordChanged(it)) },
                 modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.PASSWORD),
-                placeholder = { Text("Password", fontWeight = FontWeight.Bold) },
+                placeholder = { Text("Password") },
                 singleLine = true,
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 visualTransformation = PasswordVisualTransformation(),
