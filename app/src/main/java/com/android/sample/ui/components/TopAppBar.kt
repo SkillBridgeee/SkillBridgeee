@@ -48,9 +48,6 @@ fun TopAppBar(navController: NavController) {
   val navBackStackEntry by navController.currentBackStackEntryAsState()
   val currentDestination = navBackStackEntry?.destination
   val currentRoute = currentDestination?.route
-
-  if (currentRoute == NavRoutes.LOGIN) return
-
   val title =
       when (currentRoute) {
         NavRoutes.HOME -> "Home"

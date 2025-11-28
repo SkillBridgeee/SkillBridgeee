@@ -172,8 +172,17 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   // Check if current route should show bottom nav
   val showBottomNav = mainScreenRoutes.contains(currentRoute)
 
+  val noTopBarRoutes =
+      setOf(
+          NavRoutes.LOGIN,
+      )
+
   Scaffold(
-      topBar = { TopAppBar(navController) },
+      topBar = {
+        if (!noTopBarRoutes.contains(currentRoute)) {
+          TopAppBar(navController)
+        }
+      },
       bottomBar = {
         if (showBottomNav) {
           BottomNavBar(navController)
