@@ -5,15 +5,28 @@ import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.Message
 import com.android.sample.model.communication.MessageRepository
+import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
+import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import java.util.Date
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** UI state for the message screen. */
 data class MessageUiState(
     val messages: List<Message> = emptyList(),
+    val currentMessage: String = "",
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+
+data class newSystem(
+    val messages: List<MessageNew> = emptyList(),
     val currentMessage: String = "",
     val isLoading: Boolean = false,
     val error: String? = null
@@ -29,7 +42,10 @@ data class MessageUiState(
 class MessageViewModel(
     private val messageRepository: MessageRepository,
     private val conversationId: String,
-    private val otherUserId: String
+    private val otherUserId: String,
+    // Ajout
+    private val convId: String = "",
+    private val convRepo: ConvRepository = ConversationRepositoryProvider.repository
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(MessageUiState())
@@ -99,5 +115,55 @@ class MessageViewModel(
   /** Clears the error message. */
   fun clearError() {
     _uiState.update { it.copy(error = null) }
+  }
+
+  // todo ajouté
+  private val _uiStateNew = MutableStateFlow(newSystem())
+  val uiStateNew: StateFlow<newSystem> = _uiStateNew
+
+  private var currentConvId: String? = null
+
+  /** Start listening to real-time messages for a given conversation ID. */
+  fun loadConversation(convId: String) {
+    currentConvId = convId
+
+    viewModelScope.launch {
+      convRepo
+          .listenMessages(convId)
+          .onStart { _uiStateNew.value = _uiStateNew.value.copy(isLoading = true, error = null) }
+          .catch { e ->
+            _uiStateNew.value = _uiStateNew.value.copy(isLoading = false, error = e.message)
+          }
+          .collect { messages ->
+            _uiStateNew.value =
+                _uiStateNew.value.copy(
+                    messages = messages.sortedBy { it.createdAt }, isLoading = false, error = null)
+          }
+    }
+  }
+
+  /** Send the current message and clear the input field. */
+  fun sendMessage(senderId: String, receiverId: String) {
+    val convId = currentConvId ?: return
+    val content = _uiState.value.currentMessage.trim()
+
+    if (content.isBlank()) return
+
+    val message =
+        MessageNew(
+            msgId = convRepo.getNewUid(),
+            senderId = senderId,
+            receiverId = receiverId,
+            content = content,
+            createdAt = Date())
+
+    viewModelScope.launch {
+      try {
+        convRepo.sendMessage(convId, message)
+        _uiState.value = _uiState.value.copy(currentMessage = "")
+      } catch (e: Exception) {
+        _uiState.value = _uiState.value.copy(error = e.message)
+      }
+    }
   }
 }
