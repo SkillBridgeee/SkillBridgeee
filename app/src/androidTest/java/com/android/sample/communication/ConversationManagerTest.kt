@@ -110,8 +110,8 @@ class ConversationManagerTest {
     val ovA = ovRepo.getOverViewConvUser(creator).first()
     val ovB = ovRepo.getOverViewConvUser(other).first()
 
-    assertEquals(msg.msgId, ovA.lastMsg.msgId)
-    assertEquals(msg.content, ovB.lastMsg.content)
+    assertEquals(msg.msgId, ovA.lastMsg!!.msgId)
+    assertEquals(msg.content, ovB.lastMsg!!.content)
   }
 
   // ----------------------------------------------------------
@@ -170,7 +170,7 @@ class ConversationManagerTest {
     val emitted = flow.first { it.isNotEmpty() }
 
     assertEquals(1, emitted.size)
-    assertEquals("1-test7", emitted.first().lastMsg.msgId)
+    assertEquals("1-test7", emitted.first().lastMsg!!.msgId)
   }
 
   // test 8

@@ -1,7 +1,6 @@
 package com.android.sample.model.communication.newImplementation.overViewConv
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import java.util.UUID
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -65,7 +64,7 @@ class FirestoreOverViewConvRepository(
    * Retrieves all overview conversations owned by a specific user.
    *
    * @param userId The ID of the overview owner.
-   * @return A sorted list of OverViewConversation, ordered by last message timestamp.
+   * @return A list of OverViewConversation
    */
   override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
     require(userId.isNotBlank()) { "User ID cannot be blank" }
@@ -75,7 +74,7 @@ class FirestoreOverViewConvRepository(
 
     val overviews = snapshot.toObjects(OverViewConversation::class.java)
 
-    return overviews.sortedByDescending { it.lastMsg.createdAt.time }
+    return overviews
   }
 
   /**
@@ -95,18 +94,15 @@ class FirestoreOverViewConvRepository(
     }
 
     val listenerOwner =
-        overViewRef
-            .whereEqualTo("overViewOwnerId", userId)
-            .orderBy("lastMsg.createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-              if (error != null) {
-                close(error)
-                return@addSnapshotListener
-              }
+        overViewRef.whereEqualTo("overViewOwnerId", userId).addSnapshotListener { snapshot, error ->
+          if (error != null) {
+            close(error)
+            return@addSnapshotListener
+          }
 
-              val currentOverviews = snapshot?.toObjects(OverViewConversation::class.java).orEmpty()
-              trySend(currentOverviews)
-            }
+          val currentOverviews = snapshot?.toObjects(OverViewConversation::class.java).orEmpty()
+          trySend(currentOverviews)
+        }
 
     awaitClose { listenerOwner.remove() }
   }
