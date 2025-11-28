@@ -7,10 +7,12 @@ import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.android.sample.R
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +40,9 @@ class AuthenticationViewModel(
 
   private val _authResult = MutableStateFlow<AuthResult?>(null)
   val authResult: StateFlow<AuthResult?> = _authResult.asStateFlow()
+
+  // Job to track and cancel the password reset cooldown timer
+  private var cooldownJob: Job? = null
 
   /** Helper function to set loading state */
   private fun setLoading() {
@@ -253,5 +258,86 @@ class AuthenticationViewModel(
             setErrorState(errorMessage)
           })
     }
+  }
+
+  /** Show password reset dialog */
+  fun showPasswordResetDialog() {
+    _uiState.update {
+      it.copy(
+          showPasswordResetDialog = true,
+          resetEmail = "",
+          passwordResetError = null,
+          passwordResetMessage = null)
+    }
+  }
+
+  /** Hide password reset dialog */
+  fun hidePasswordResetDialog() {
+    cooldownJob?.cancel()
+    cooldownJob = null
+    _uiState.update {
+      it.copy(
+          showPasswordResetDialog = false,
+          resetEmail = "",
+          passwordResetError = null,
+          passwordResetMessage = null,
+          passwordResetCooldownSeconds = 0)
+    }
+  }
+
+  /** Update reset email field */
+  fun updateResetEmail(email: String) {
+    _uiState.update { it.copy(resetEmail = email, passwordResetError = null) }
+  }
+
+  /** Send password reset email */
+  fun sendPasswordReset() {
+    val email = _uiState.value.resetEmail.trim()
+
+    if (email.isBlank()) {
+      _uiState.update { it.copy(passwordResetError = "Please enter your email address") }
+      return
+    }
+
+    // Basic email validation
+    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+      _uiState.update { it.copy(passwordResetError = "Please enter a valid email address") }
+      return
+    }
+
+    viewModelScope.launch {
+      val resetResult = repository.sendPasswordResetEmail(email)
+      resetResult.fold(
+          onSuccess = {
+            _uiState.update {
+              it.copy(
+                  passwordResetMessage = context.getString(R.string.password_reset_success),
+                  passwordResetError = null,
+                  passwordResetCooldownSeconds = 60)
+            }
+            startPasswordResetCooldown()
+          },
+          onFailure = { exception ->
+            _uiState.update {
+              it.copy(
+                  passwordResetError =
+                      exception.message ?: context.getString(R.string.password_reset_error))
+            }
+          })
+    }
+  }
+
+  /** Start the 60-second cooldown timer for password reset */
+  private fun startPasswordResetCooldown() {
+    // Cancel any existing cooldown job to prevent multiple coroutines
+    cooldownJob?.cancel()
+
+    cooldownJob =
+        viewModelScope.launch {
+          for (i in 60 downTo 1) {
+            kotlinx.coroutines.delay(1000)
+            _uiState.update { it.copy(passwordResetCooldownSeconds = i - 1) }
+          }
+        }
   }
 }
