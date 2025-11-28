@@ -12,6 +12,20 @@ class ConversationManager(
     private val overViewRepo: OverViewConvRepository,
 ) : ConversationManagerInter {
 
+  /**
+   * Creates a new conversation and the corresponding overview entries for both participants.
+   *
+   * @param creatorId The user ID of the conversation creator.
+   * @param otherUserId The user ID of the other participant.
+   * @param convName The display name of the conversation.
+   * @return The newly generated conversation ID.
+   *
+   * This method:
+   * 1. Generates a new conversation ID.
+   * 2. Creates the Conversation entity.
+   * 3. Creates two OverViewConversation entries (one per participant).
+   * 4. Saves both overview entries to the repository.
+   */
   override suspend fun createConvAndOverviews(
       creatorId: String,
       otherUserId: String,
@@ -48,14 +62,31 @@ class ConversationManager(
     return convId
   }
 
+  /**
+   * Deletes a conversation and all associated overview entries for every user.
+   *
+   * @param convId The ID of the conversation to delete.
+   *
+   * This removes:
+   * - The conversation itself.
+   * - All overview entries linked to this conversation.
+   */
   override suspend fun deleteConvAndOverviews(convId: String) {
     convRepo.deleteConv(convId)
     overViewRepo.deleteOverViewConvUser(convId)
   }
 
-  // ---------------------------
-  // Send message & update overview
-  // ---------------------------
+  /**
+   * Sends a message within a conversation and updates each participant’s conversation overview.
+   *
+   * @param convId The ID of the conversation.
+   * @param message The message to send.
+   *
+   * This method:
+   * 1. Saves the message to the conversation.
+   * 2. Updates the last message in each user's overview.
+   * 3. Increments the unread count for the message receiver.
+   */
   override suspend fun sendMessage(convId: String, message: MessageNew) {
     convRepo.sendMessage(convId, message)
 
@@ -73,6 +104,12 @@ class ConversationManager(
     }
   }
 
+  /**
+   * Resets the unread message counter for a given user in a specific conversation.
+   *
+   * @param convId The ID of the conversation.
+   * @param userId The ID of the user whose unread count should be reset.
+   */
   override suspend fun resetUnreadCount(convId: String, userId: String) {
     val overview =
         overViewRepo.getOverViewConvUser(userId).firstOrNull { it.linkedConvId == convId } ?: return
@@ -80,10 +117,22 @@ class ConversationManager(
     overViewRepo.addOverViewConvUser(updated)
   }
 
+  /**
+   * Listens to real-time updates of messages inside a conversation.
+   *
+   * @param convId The ID of the conversation.
+   * @return A Flow that emits the updated list of messages whenever a new message arrives.
+   */
   override fun listenMessages(convId: String): Flow<List<MessageNew>> {
     return convRepo.listenMessages(convId)
   }
 
+  /**
+   * Listens to real-time updates of all conversation overviews for a given user.
+   *
+   * @param userId The user whose conversation overviews we want to observe.
+   * @return A Flow emitting the list of updated OverViewConversation objects.
+   */
   override fun listenConversationOverviews(userId: String): Flow<List<OverViewConversation>> {
     return overViewRepo.listenOverView(userId)
   }
