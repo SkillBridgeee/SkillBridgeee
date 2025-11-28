@@ -2,6 +2,7 @@ package com.android.sample.communication
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.communication.newImplementation.ConversationManager
+import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
 import com.android.sample.model.communication.newImplementation.conversation.FirestoreConvRepository
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import com.android.sample.model.communication.newImplementation.overViewConv.FirestoreOverViewConvRepository
@@ -310,5 +311,35 @@ class ConversationManagerTest {
     job2.cancel()
     job3.cancel()
     job4.cancel()
+  }
+
+  @Test
+  fun testCreateAndGetConversation() = runTest {
+    val convId = "convCreateTest"
+    val conv = ConversationNew(convId)
+
+    convRepo.createConv(conv)
+
+    val result = manager.getConv(convId)
+    assertNotNull(result)
+    assertEquals(convId, result!!.convId)
+    assertTrue(result.messages.isEmpty())
+  }
+
+  @Test
+  fun testAddAndGetOverview() = runTest {
+    convId = "conv1"
+    val overview =
+        OverViewConversation(
+            overViewId = "id1",
+            linkedConvId = "conv1",
+            convName = "Conversation 1",
+            overViewOwnerId = "userA",
+            otherPersonId = "userB")
+
+    ovRepo.addOverViewConvUser(overview)
+
+    val result = manager.getOverViewConvUser("userA")
+    assertTrue(result.any { it.linkedConvId == "conv1" })
   }
 }

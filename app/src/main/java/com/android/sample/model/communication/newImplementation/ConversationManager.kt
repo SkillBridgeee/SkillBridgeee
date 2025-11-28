@@ -137,4 +137,12 @@ class ConversationManager(
   override fun listenConversationOverviews(userId: String): Flow<List<OverViewConversation>> {
     return overViewRepo.listenOverView(userId)
   }
+
+  override suspend fun getConv(convId: String): ConversationNew? {
+    return convRepo.getConv(convId)
+  }
+
+  override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
+    return overViewRepo.getOverViewConvUser(userId)
+  }
 }
