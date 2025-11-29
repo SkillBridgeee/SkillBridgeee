@@ -107,7 +107,7 @@ fun ConversationItem(conversation: OverViewConversation, onClick: () -> Unit, in
         Column(modifier = Modifier.weight(1f)) {
           Text(text = conversation.convName, style = MaterialTheme.typography.titleMedium)
           Text(
-              text = conversation.lastMsg.content,
+              text = conversation.lastMsg?.content ?: "",
               style = MaterialTheme.typography.bodyMedium,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
               maxLines = 1,
