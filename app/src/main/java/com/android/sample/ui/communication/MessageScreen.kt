@@ -9,18 +9,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.android.sample.model.communication.FakeMessageRepository
-import com.android.sample.model.communication.Message
+import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 
 @Composable
-fun MessageScreen(viewModel: MessageViewModel, currentUserId: String) {
+fun MessageScreen(viewModel: MessageViewModel = MessageViewModel(), convId: String) {
+
   val uiState by viewModel.uiState.collectAsState()
+
+  LaunchedEffect(convId) { viewModel.loadConversation(convId) }
 
   Scaffold(
       modifier = Modifier.fillMaxSize(),
@@ -55,7 +57,8 @@ fun MessageScreen(viewModel: MessageViewModel, currentUserId: String) {
                 ) {
                   items(uiState.messages.reversed()) { message ->
                     MessageBubble(
-                        message = message, isCurrentUser = message.sentFrom == currentUserId)
+                        message = message,
+                        isCurrentUser = message.senderId == uiState.currentUserId)
                   }
                 }
           }
@@ -64,7 +67,7 @@ fun MessageScreen(viewModel: MessageViewModel, currentUserId: String) {
 }
 
 @Composable
-fun MessageBubble(message: Message, isCurrentUser: Boolean) {
+fun MessageBubble(message: MessageNew, isCurrentUser: Boolean) {
   val alignment = if (isCurrentUser) Alignment.CenterEnd else Alignment.CenterStart
   val backgroundColor =
       if (isCurrentUser) MaterialTheme.colorScheme.primaryContainer
@@ -118,40 +121,41 @@ fun MessageInput(message: String, onMessageChanged: (String) -> Unit, onSendClic
   }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun MessageBubbleCurrentUserPreview() {
-  MessageBubble(
-      message = Message(content = "This is a message from the current user."), isCurrentUser = true)
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MessageBubbleOtherUserPreview() {
-  MessageBubble(
-      message = Message(content = "This is a message from another user."), isCurrentUser = false)
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MessageInputPreview() {
-  MessageInput(message = "Typing a message...", onMessageChanged = {}, onSendClicked = {})
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MessageInputEmptyPreview() {
-  MessageInput(message = "", onMessageChanged = {}, onSendClicked = {})
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MessageScreenPreview() {
-  val fakeRepository = FakeMessageRepository(currentUserId = "user1")
-  val viewModel =
-      MessageViewModel(
-          messageRepository = fakeRepository,
-          conversationId = "preview_conv",
-          otherUserId = "user2")
-  MaterialTheme { MessageScreen(viewModel = viewModel, currentUserId = "user1") }
-}
+// @Preview(showBackground = true)
+// @Composable
+// fun MessageBubbleCurrentUserPreview() {
+//  MessageBubble(
+//      message = Message(content = "This is a message from the current user."), isCurrentUser =
+// true)
+// }
+//
+// @Preview(showBackground = true)
+// @Composable
+// fun MessageBubbleOtherUserPreview() {
+//  MessageBubble(
+//      message = Message(content = "This is a message from another user."), isCurrentUser = false)
+// }
+//
+// @Preview(showBackground = true)
+// @Composable
+// fun MessageInputPreview() {
+//  MessageInput(message = "Typing a message...", onMessageChanged = {}, onSendClicked = {})
+// }
+//
+// @Preview(showBackground = true)
+// @Composable
+// fun MessageInputEmptyPreview() {
+//  MessageInput(message = "", onMessageChanged = {}, onSendClicked = {})
+// }
+//
+// @Preview(showBackground = true)
+// @Composable
+// fun MessageScreenPreview() {
+//  val fakeRepository = FakeMessageRepository(currentUserId = "user1")
+//  val viewModel =
+//      MessageViewModel(
+//          messageRepository = fakeRepository,
+//          conversationId = "preview_conv",
+//          otherUserId = "user2")
+//  MaterialTheme { MessageScreen(viewModel = viewModel, currentUserId = "user1") }
+// }

@@ -145,4 +145,8 @@ class ConversationManager(
   override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
     return overViewRepo.getOverViewConvUser(userId)
   }
+
+  override fun getMessageNewUid(): String {
+    return convRepo.getNewUid()
+  }
 }
