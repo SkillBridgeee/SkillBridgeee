@@ -105,6 +105,9 @@ class NewListingViewModel(
   private var locationSearchJob: Job? = null
   private val locationSearchDelayTime: Long = 1000
 
+  private val maxPrice = 200.0
+  private val priceTooHighMsg = "Price cannot be higher than 200"
+
   private val titleMsgError = "Title cannot be empty"
   private val descMsgError = "Description cannot be empty"
   private val priceEmptyMsg = "Price cannot be empty"
@@ -211,14 +214,17 @@ class NewListingViewModel(
   }
 
   // Set all messages error, if invalid field
-  // kotlin
   fun setError() {
     _uiState.update { currentState ->
       val invalidTitle = if (currentState.title.isBlank()) titleMsgError else null
       val invalidDesc = if (currentState.description.isBlank()) descMsgError else null
       val invalidPrice =
-          if (currentState.price.isBlank()) priceEmptyMsg
-          else if (!isPosNumber(currentState.price)) priceInvalidMsg else null
+          when {
+            currentState.price.isBlank() -> priceEmptyMsg
+            !isPosNumber(currentState.price) -> priceInvalidMsg
+            currentState.price.toDoubleOrNull()?.let { it > maxPrice } == true -> priceTooHighMsg
+            else -> null
+          }
       val invalidSubject = if (currentState.subject == null) subjectMsgError else null
       val invalidSubSkill = computeInvalidSubSkill(currentState)
       val invalidListingType = if (currentState.listingType == null) listingTypeMsgError else null
@@ -271,14 +277,19 @@ class NewListingViewModel(
    * Rules:
    * - empty -> "Price cannot be empty"
    * - non positive number or non-numeric -> "Price must be a positive number or null (0.0)"
+   * - > maxPrice -> "Price cannot be higher than $maxPrice"
    */
   fun setPrice(price: String) {
     _uiState.update { currentState ->
-      currentState.copy(
-          price = price,
-          invalidPriceMsg =
-              if (price.isBlank()) priceEmptyMsg
-              else if (!isPosNumber(price)) priceInvalidMsg else null)
+      val invalidPrice =
+          when {
+            price.isBlank() -> priceEmptyMsg
+            !isPosNumber(price) -> priceInvalidMsg
+            price.toDoubleOrNull()?.let { it > maxPrice } == true -> priceTooHighMsg
+            else -> null
+          }
+
+      currentState.copy(price = price, invalidPriceMsg = invalidPrice)
     }
   }
 
