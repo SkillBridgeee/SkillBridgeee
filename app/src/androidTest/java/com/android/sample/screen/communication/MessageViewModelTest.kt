@@ -41,7 +41,7 @@ class MessageViewModelTest {
   fun setup() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
 
-      UserSessionManager.setCurrentUserId(testUserId)
+    UserSessionManager.setCurrentUserId(testUserId)
 
     convRepo = FakeConvRepo()
     overViewRepo = FakeOverViewRepo()
@@ -50,7 +50,6 @@ class MessageViewModelTest {
     viewModel = MessageViewModel(manager)
 
     // Mock user session
-
 
     // Create conversation
     runBlocking {
