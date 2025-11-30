@@ -1,320 +1,200 @@
 package com.android.sample.ui.communication
 
-import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.Conversation
-import com.android.sample.model.communication.Message
-import com.android.sample.model.communication.MessageRepository
+import com.android.sample.model.communication.newImplementation.ConversationManager
+import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
+import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
+import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
 import com.google.firebase.Timestamp
+import java.util.Date
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@Suppress("DEPRECATION")
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
 class MessageViewModelTest {
 
-  @get:Rule val firebaseRule = FirebaseTestRule()
-
-  private val testDispatcher = StandardTestDispatcher()
-
-  private val currentUserId = "user-1"
-  private val otherUserId = "user-2"
-  private val conversationId = "conv-123"
-
-  private val sampleMessages =
-      listOf(
-          Message(
-              messageId = "msg-1",
-              conversationId = conversationId,
-              sentFrom = currentUserId,
-              sentTo = otherUserId,
-              content = "Hello!",
-              sentTime = Timestamp.now(),
-              isRead = false),
-          Message(
-              messageId = "msg-2",
-              conversationId = conversationId,
-              sentFrom = otherUserId,
-              sentTo = currentUserId,
-              content = "Hi there!",
-              sentTime = Timestamp.now(),
-              isRead = true),
-          Message(
-              messageId = "msg-3",
-              conversationId = conversationId,
-              sentFrom = currentUserId,
-              sentTo = otherUserId,
-              content = "How are you?",
-              sentTime = Timestamp.now(),
-              isRead = false))
-
-  private lateinit var fakeRepository: FakeMessageRepository
+  private lateinit var convRepo: ConvRepository
+  private lateinit var overViewRepo: OverViewConvRepository
+  private lateinit var manager: ConversationManager
   private lateinit var viewModel: MessageViewModel
+
+  private val testUserId = "userA"
+  private val otherUserId = "userB"
+  private val convId = "conv123"
 
   @Before
   fun setup() {
-    Dispatchers.setMain(testDispatcher)
-    UserSessionManager.setCurrentUserId(currentUserId)
-    fakeRepository = FakeMessageRepository()
-    viewModel =
-        MessageViewModel(
-            messageRepository = fakeRepository,
-            conversationId = conversationId,
-            otherUserId = otherUserId)
+    Dispatchers.setMain(UnconfinedTestDispatcher())
+
+    convRepo = FakeConvRepo()
+    overViewRepo = FakeOverViewRepo()
+    manager = ConversationManager(convRepo, overViewRepo)
+
+    viewModel = MessageViewModel(manager)
+
+    // Mock user session
+    UserSessionManager.setCurrentUserId(testUserId)
+
+    // Create conversation
+    runBlocking {
+      convRepo.createConv(
+          ConversationNew(convId = convId, convCreatorId = testUserId, otherPersonId = otherUserId))
+    }
   }
 
   @After
   fun tearDown() {
     Dispatchers.resetMain()
-    UserSessionManager.clearSession()
   }
 
+  // -----------------------------------------------------
+  // TEST 1 — loadConversation() écoute les messages
+  // -----------------------------------------------------
   @Test
-  fun initialState_isCorrect() = runTest {
-    advanceUntilIdle()
+  fun `test loadConversation receives messages`() = runTest {
+    viewModel.loadConversation(convId)
 
-    val state = viewModel.uiState.value
-    assertNotNull(state)
-    assertTrue(state.messages.isEmpty())
-    assertEquals("", state.currentMessage)
-    assertFalse(state.isLoading)
-    assertNull(state.error)
+    // Simule un message reçu
+    val msg =
+        MessageNew(
+            msgId = "m1",
+            senderId = otherUserId,
+            receiverId = testUserId,
+            content = "Hello!",
+            createdAt = Date())
+
+    manager.sendMessage(convId, msg)
+
+    val result = viewModel.uiState.value.messages
+
+    assertEquals(1, result.size)
+    assertEquals("Hello!", result.first().content)
   }
 
+  // -----------------------------------------------------
+  // TEST 2 — sendMessage() envoie un message
+  // -----------------------------------------------------
   @Test
-  fun loadMessages_success_updatesState() = runTest {
-    fakeRepository.setMessages(sampleMessages)
+  fun `test sendMessage sends a message`() = runTest {
+    viewModel.loadConversation(convId)
 
-    // Create a new viewModel to trigger loadMessages in init
-    val testViewModel =
-        MessageViewModel(
-            messageRepository = fakeRepository,
-            conversationId = conversationId,
-            otherUserId = otherUserId)
-    advanceUntilIdle()
-
-    val state = testViewModel.uiState.value
-    assertFalse(state.isLoading)
-    assertEquals(3, state.messages.size)
-    assertEquals("Hello!", state.messages[0].content)
-    assertNull(state.error)
-  }
-
-  @Test
-  fun loadMessages_failure_setsError() = runTest {
-    fakeRepository.setShouldThrowError(true)
-
-    // Create a new viewModel to trigger loadMessages in init
-    val testViewModel =
-        MessageViewModel(
-            messageRepository = fakeRepository,
-            conversationId = conversationId,
-            otherUserId = otherUserId)
-    advanceUntilIdle()
-
-    val state = testViewModel.uiState.value
-    assertFalse(state.isLoading)
-    assertNotNull(state.error)
-    assertTrue(state.error!!.contains("Failed to load messages"))
-  }
-
-  @Test
-  fun onMessageChange_updatesCurrentMessage() = runTest {
-    val newMessage = "Test message"
-
-    viewModel.onMessageChange(newMessage)
-    advanceUntilIdle()
-
-    val state = viewModel.uiState.value
-    assertEquals(newMessage, state.currentMessage)
-  }
-
-  @Test
-  fun sendMessage_success_clearsCurrentMessageAndRefreshes() = runTest {
-    fakeRepository.setMessages(sampleMessages)
-    viewModel.onMessageChange("New message")
-    advanceUntilIdle()
+    // Simule que l'utilisateur tape un message
+    viewModel.onMessageChange("Salut !")
 
     viewModel.sendMessage()
-    advanceUntilIdle()
 
-    val state = viewModel.uiState.value
-    assertEquals("", state.currentMessage)
-    assertTrue(fakeRepository.sentMessages.isNotEmpty())
-    assertEquals("New message", fakeRepository.sentMessages.last().content)
+    val messages = viewModel.uiState.value.messages
+    assertEquals(1, messages.size)
+    assertEquals("Salut !", messages.first().content)
+  }
+}
+
+class FakeConvRepo : ConvRepository {
+
+  // Stockage interne des conversations
+  private val conversations = mutableMapOf<String, ConversationNew>()
+
+  // Stockage des flows de messages par conversation
+  private val messageFlows = mutableMapOf<String, MutableStateFlow<List<MessageNew>>>()
+
+  override fun getNewUid(): String {
+    return UUID.randomUUID().toString()
   }
 
-  @Test
-  fun sendMessage_emptyMessage_doesNotSend() = runTest {
-    viewModel.onMessageChange("")
-    advanceUntilIdle()
-
-    viewModel.sendMessage()
-    advanceUntilIdle()
-
-    assertTrue(fakeRepository.sentMessages.isEmpty())
+  override suspend fun getConv(convId: String): ConversationNew? {
+    return conversations[convId]
   }
 
-  @Test
-  fun sendMessage_whitespaceOnly_doesNotSend() = runTest {
-    viewModel.onMessageChange("   ")
-    advanceUntilIdle()
+  override suspend fun createConv(conversation: ConversationNew) {
+    val convId = conversation.convId.ifEmpty { getNewUid() }
 
-    viewModel.sendMessage()
-    advanceUntilIdle()
+    val newConv = conversation.copy(convId = convId, updatedAt = Timestamp.now())
 
-    assertTrue(fakeRepository.sentMessages.isEmpty())
+    conversations[convId] = newConv
+    messageFlows[convId] = MutableStateFlow(newConv.messages)
   }
 
-  @Test
-  fun sendMessage_failure_setsError() = runTest {
-    fakeRepository.setShouldThrowError(true)
-    viewModel.onMessageChange("Test message")
-    advanceUntilIdle()
-
-    viewModel.sendMessage()
-    advanceUntilIdle()
-
-    val state = viewModel.uiState.value
-    assertNotNull(state.error)
-    assertTrue(state.error!!.contains("Failed to send message"))
+  override suspend fun deleteConv(convId: String) {
+    conversations.remove(convId)
+    messageFlows.remove(convId)
   }
 
-  @Test
-  fun sendMessage_createsCorrectMessageObject() = runTest {
-    val messageContent = "Test message content"
-    viewModel.onMessageChange(messageContent)
-    advanceUntilIdle()
+  override suspend fun sendMessage(convId: String, message: MessageNew) {
+    val conv = conversations[convId] ?: return
 
-    viewModel.sendMessage()
-    advanceUntilIdle()
+    // Nouveau message ajouté
+    val updatedMessages = conv.messages + message
 
-    val sentMessage = fakeRepository.sentMessages.last()
-    assertEquals(conversationId, sentMessage.conversationId)
-    assertEquals(currentUserId, sentMessage.sentFrom)
-    assertEquals(otherUserId, sentMessage.sentTo)
-    assertEquals(messageContent, sentMessage.content)
+    val updatedConv = conv.copy(messages = updatedMessages, updatedAt = Timestamp.now())
+
+    conversations[convId] = updatedConv
+
+    // Mise à jour du Flow
+    messageFlows[convId]?.value = updatedMessages
   }
 
-  @Test
-  fun clearError_removesErrorMessage() = runTest {
-    fakeRepository.setShouldThrowError(true)
+  override fun listenMessages(convId: String): Flow<List<MessageNew>> {
+    return messageFlows.getOrPut(convId) { MutableStateFlow(emptyList()) }
+  }
+}
 
-    // Create a new viewModel to trigger loadMessages in init which will set error
-    val testViewModel =
-        MessageViewModel(
-            messageRepository = fakeRepository,
-            conversationId = conversationId,
-            otherUserId = otherUserId)
-    advanceUntilIdle()
+class FakeOverViewRepo : OverViewConvRepository {
 
-    var state = testViewModel.uiState.value
-    assertNotNull(state.error)
+  // Toutes les overviews stockées en mémoire
+  private val overviews = mutableMapOf<String, OverViewConversation>()
 
-    testViewModel.clearError()
-    advanceUntilIdle()
+  // Flows par utilisateur
+  private val userFlows = mutableMapOf<String, MutableStateFlow<List<OverViewConversation>>>()
 
-    state = testViewModel.uiState.value
-    assertNull(state.error)
+  override fun getNewUid(): String {
+    return UUID.randomUUID().toString()
   }
 
-  @Test
-  fun messageViewModel_handlesEmptyConversation() = runTest {
-    fakeRepository.setMessages(emptyList())
-
-    // Create a new viewModel to trigger loadMessages in init
-    val testViewModel =
-        MessageViewModel(
-            messageRepository = fakeRepository,
-            conversationId = conversationId,
-            otherUserId = otherUserId)
-    advanceUntilIdle()
-
-    val state = testViewModel.uiState.value
-    assertTrue(state.messages.isEmpty())
-    assertFalse(state.isLoading)
-    assertNull(state.error)
+  override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
+    return overviews.values.filter { it.overViewOwnerId == userId }
   }
 
-  // Fake Repository for testing
-  private class FakeMessageRepository : MessageRepository {
-    private var messages: List<Message> = emptyList()
-    private var shouldThrowError = false
-    val sentMessages = mutableListOf<Message>()
+  override suspend fun addOverViewConvUser(overView: OverViewConversation) {
+    val id = overView.overViewId.ifEmpty { getNewUid() }
 
-    fun setMessages(newMessages: List<Message>) {
-      messages = newMessages
+    val newOverView = overView.copy(overViewId = id)
+    overviews[id] = newOverView
+
+    refreshUserFlow(newOverView.overViewOwnerId)
+  }
+
+  override suspend fun deleteOverViewConvUser(convId: String) {
+    val target = overviews.values.find { it.linkedConvId == convId }
+    target?.let {
+      overviews.remove(it.overViewId)
+      refreshUserFlow(it.overViewOwnerId)
     }
+  }
 
-    fun setShouldThrowError(value: Boolean) {
-      shouldThrowError = value
-    }
+  override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {
+    return userFlows.getOrPut(userId) { MutableStateFlow(emptyList()) }
+  }
 
-    override fun getNewUid() = "new-msg-id"
+  // ---------------------
+  // Helpers
+  // ---------------------
 
-    override suspend fun getMessagesInConversation(conversationId: String): List<Message> {
-      if (shouldThrowError) throw Exception("Test error")
-      return messages.filter { it.conversationId == conversationId }
-    }
-
-    override suspend fun getMessage(messageId: String): Message? {
-      return messages.find { it.messageId == messageId }
-    }
-
-    override suspend fun sendMessage(message: Message): String {
-      if (shouldThrowError) throw Exception("Test error")
-      sentMessages.add(message)
-      return message.messageId
-    }
-
-    override suspend fun markMessageAsRead(messageId: String, readTime: Timestamp) {}
-
-    override suspend fun deleteMessage(messageId: String) {}
-
-    override suspend fun getUnreadMessagesInConversation(
-        conversationId: String,
-        userId: String
-    ): List<Message> {
-      return messages.filter { it.conversationId == conversationId && !it.isRead }
-    }
-
-    override suspend fun getConversationsForUser(userId: String): List<Conversation> = emptyList()
-
-    override suspend fun getConversation(conversationId: String): Conversation? = null
-
-    override suspend fun getOrCreateConversation(userId1: String, userId2: String): Conversation {
-      return Conversation(
-          conversationId = "new-conv",
-          participant1Id = userId1,
-          participant2Id = userId2,
-          lastMessageContent = "",
-          lastMessageTime = Timestamp.now(),
-          lastMessageSenderId = userId1)
-    }
-
-    override suspend fun updateConversation(conversation: Conversation) {}
-
-    override suspend fun markConversationAsRead(conversationId: String, userId: String) {}
-
-    override suspend fun deleteConversation(conversationId: String) {}
+  private suspend fun refreshUserFlow(userId: String) {
+    val list = getOverViewConvUser(userId)
+    userFlows[userId]?.value = list
   }
 }
