@@ -1,4 +1,4 @@
-package com.android.sample.screen
+package com.android.sample.screen.communication
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.hasContentDescription
@@ -19,18 +19,19 @@ import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeOverViewRepo
-import java.util.Date
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Date
 
 @RunWith(AndroidJUnit4::class)
 class MessageScreenTest {
 
-  @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+  @get:Rule
+  val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
   private lateinit var convRepo: ConvRepository
   private lateinit var overViewRepo: OverViewConvRepository
@@ -51,10 +52,11 @@ class MessageScreenTest {
 
     UserSessionManager.setCurrentUserId(userA)
 
-    runBlocking {
-      convRepo.createConv(
-          ConversationNew(convId = convId, convCreatorId = userA, otherPersonId = userB))
-    }
+      runBlocking {
+          convRepo.createConv(
+              ConversationNew(convId = convId, convCreatorId = userA, otherPersonId = userB)
+          )
+      }
   }
 
   // -----------------------------------------------------
@@ -81,22 +83,25 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_showsIncomingMessage() = runTest {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+      composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
 
-    // Simule réception d’un message
-    manager.sendMessage(
-        convId,
-        MessageNew(
-            msgId = "xyz",
-            senderId = userB,
-            receiverId = userA,
-            content = "Salut utilisateur!",
-            createdAt = Date()))
+      // Simule réception d’un message
+      manager.sendMessage(
+          convId,
+          MessageNew(
+              msgId = "xyz",
+              senderId = userB,
+              receiverId = userA,
+              content = "Salut utilisateur!",
+              createdAt = Date()
+          )
+      )
 
-    composeTestRule.waitUntil(timeoutMillis = 1000) {
-      composeTestRule.onAllNodesWithText("Salut utilisateur!").fetchSemanticsNodes().isNotEmpty()
-    }
+      composeTestRule.waitUntil(timeoutMillis = 1000) {
+          composeTestRule.onAllNodesWithText("Salut utilisateur!").fetchSemanticsNodes()
+              .isNotEmpty()
+      }
 
-    composeTestRule.onNodeWithText("Salut utilisateur!").assertExists()
+      composeTestRule.onNodeWithText("Salut utilisateur!").assertExists()
   }
 }

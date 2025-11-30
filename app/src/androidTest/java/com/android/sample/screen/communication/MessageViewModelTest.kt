@@ -1,4 +1,4 @@
-package com.android.sample.ui.communication
+package com.android.sample.screen.communication
 
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.newImplementation.ConversationManager
@@ -7,6 +7,7 @@ import com.android.sample.model.communication.newImplementation.conversation.Con
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.ui.communication.MessageViewModel
 import com.google.firebase.Timestamp
 import java.util.Date
 import java.util.UUID
@@ -40,6 +41,8 @@ class MessageViewModelTest {
   fun setup() {
     Dispatchers.setMain(UnconfinedTestDispatcher())
 
+      UserSessionManager.setCurrentUserId(testUserId)
+
     convRepo = FakeConvRepo()
     overViewRepo = FakeOverViewRepo()
     manager = ConversationManager(convRepo, overViewRepo)
@@ -47,7 +50,7 @@ class MessageViewModelTest {
     viewModel = MessageViewModel(manager)
 
     // Mock user session
-    UserSessionManager.setCurrentUserId(testUserId)
+
 
     // Create conversation
     runBlocking {
@@ -65,7 +68,7 @@ class MessageViewModelTest {
   // TEST 1 — loadConversation() écoute les messages
   // -----------------------------------------------------
   @Test
-  fun `test loadConversation receives messages`() = runTest {
+  fun loadConversation() = runTest {
     viewModel.loadConversation(convId)
 
     // Simule un message reçu
@@ -89,7 +92,7 @@ class MessageViewModelTest {
   // TEST 2 — sendMessage() envoie un message
   // -----------------------------------------------------
   @Test
-  fun `test sendMessage sends a message`() = runTest {
+  fun sendMessage() = runTest {
     viewModel.loadConversation(convId)
 
     // Simule que l'utilisateur tape un message
