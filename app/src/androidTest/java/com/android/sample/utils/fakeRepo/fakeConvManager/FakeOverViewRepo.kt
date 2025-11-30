@@ -2,26 +2,52 @@ package com.android.sample.utils.fakeRepo.fakeConvManager
 
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
-import kotlinx.coroutines.flow.Flow
+import java.util.UUID
+import kotlinx.coroutines.flow.*
 
 class FakeOverViewRepo : OverViewConvRepository {
+
+  // Toutes les overviews stockées en mémoire
+  private val overviews = mutableMapOf<String, OverViewConversation>()
+
+  // Flows par utilisateur
+  private val userFlows = mutableMapOf<String, MutableStateFlow<List<OverViewConversation>>>()
+
   override fun getNewUid(): String {
-    TODO("Not yet implemented")
+    return UUID.randomUUID().toString()
   }
 
   override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
-    TODO("Not yet implemented")
+    return overviews.values.filter { it.overViewOwnerId == userId }
   }
 
   override suspend fun addOverViewConvUser(overView: OverViewConversation) {
-    TODO("Not yet implemented")
+    val id = overView.overViewId.ifEmpty { getNewUid() }
+
+    val newOverView = overView.copy(overViewId = id)
+    overviews[id] = newOverView
+
+    refreshUserFlow(newOverView.overViewOwnerId)
   }
 
   override suspend fun deleteOverViewConvUser(convId: String) {
-    TODO("Not yet implemented")
+    val target = overviews.values.find { it.linkedConvId == convId }
+    target?.let {
+      overviews.remove(it.overViewId)
+      refreshUserFlow(it.overViewOwnerId)
+    }
   }
 
   override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {
-    TODO("Not yet implemented")
+    return userFlows.getOrPut(userId) { MutableStateFlow(emptyList()) }
+  }
+
+  // ---------------------
+  // Helpers
+  // ---------------------
+
+  private suspend fun refreshUserFlow(userId: String) {
+    val list = getOverViewConvUser(userId)
+    userFlows[userId]?.value = list
   }
 }
