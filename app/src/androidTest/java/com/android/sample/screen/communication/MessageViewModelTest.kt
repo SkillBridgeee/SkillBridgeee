@@ -103,6 +103,33 @@ class MessageViewModelTest {
     assertEquals(1, messages.size)
     assertEquals("Salut !", messages.first().content)
   }
+
+  @Test
+  fun loadConversation_conversationNotFound_setsError() = runTest {
+    val invalidConvId = "does_not_exist"
+
+    viewModel.loadConversation(invalidConvId)
+
+    val state = viewModel.uiState.value
+    assertEquals("Conversation not found", state.error)
+    assertEquals(true, state.messages.isEmpty())
+  }
+
+  @Test
+  fun clearError_removesError() = runTest {
+    // On force une erreur dans l’état
+    viewModel.clearError() // juste pour reset
+    viewModel.loadConversation("invalid_id")
+
+    // Vérification initiale
+    assertEquals("Conversation not found", viewModel.uiState.value.error)
+
+    // Action
+    viewModel.clearError()
+
+    // L’erreur doit être supprimée
+    assertEquals(null, viewModel.uiState.value.error)
+  }
 }
 
 class FakeConvRepo : ConvRepository {
