@@ -8,7 +8,6 @@ import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.skill.MainSubject
-import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -97,20 +96,6 @@ class MainPageViewModel(
         }
         .onFailure { Log.w("HomePageViewModel", "Failed to get current profile", it) }
         .getOrNull()
-  }
-
-  /**
-   * Get all Profile that propose courses.
-   *
-   * @param proposals List of proposals submitted by users.
-   * @param profiles List of all available user profiles.
-   * @return A list of profiles corresponding to the creators of the given proposals.
-   */
-  private fun getTutors(proposals: List<Proposal>, profiles: List<Profile>): List<Profile> {
-    // TODO: Add sorting logic for tutors based on rating here.
-    return proposals
-        .mapNotNull { proposal -> profiles.find { it.userId == proposal.creatorUserId } }
-        .distinctBy { it.userId }
   }
 
   /**
