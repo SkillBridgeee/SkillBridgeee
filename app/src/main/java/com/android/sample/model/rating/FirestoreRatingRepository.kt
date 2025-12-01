@@ -1,5 +1,8 @@
 package com.android.sample.model.rating
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.UUID
@@ -9,11 +12,24 @@ const val RATINGS_COLLECTION_PATH = "ratings"
 
 class FirestoreRatingRepository(
     private val db: FirebaseFirestore,
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val context: Context
 ) : RatingRepository {
 
   private val currentUserId: String
     get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
+
+  private fun isOnline(): Boolean {
+    val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val network = connectivityManager.activeNetwork
+    val capabilities = connectivityManager.getNetworkCapabilities(network)
+
+    return capabilities != null &&
+        (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
+  }
 
   private val collection = db.collection(RATINGS_COLLECTION_PATH)
 
@@ -117,7 +133,12 @@ class FirestoreRatingRepository(
       if (rating.toUserId == currentUserId) {
         throw Exception("You cannot rate yourself.")
       }
-      db.collection(RATINGS_COLLECTION_PATH).document(rating.ratingId).set(rating).await()
+
+      if (isOnline()) {
+        db.collection(RATINGS_COLLECTION_PATH).document(rating.ratingId).set(rating).await()
+      } else {
+        db.collection(RATINGS_COLLECTION_PATH).document(rating.ratingId).set(rating)
+      }
     } catch (e: Exception) {
       throw Exception("Failed to add rating: ${e.message}")
     }
@@ -134,7 +155,11 @@ class FirestoreRatingRepository(
         }
       }
 
-      documentRef.set(rating).await()
+      if (isOnline()) {
+        documentRef.set(rating).await()
+      } else {
+        documentRef.set(rating)
+      }
     } catch (e: Exception) {
       throw Exception("Failed to update rating: ${e.message}")
     }
@@ -151,7 +176,11 @@ class FirestoreRatingRepository(
         }
       }
 
-      documentRef.delete().await()
+      if (isOnline()) {
+        documentRef.delete().await()
+      } else {
+        documentRef.delete()
+      }
     } catch (e: Exception) {
       throw Exception("Failed to delete rating: ${e.message}")
     }

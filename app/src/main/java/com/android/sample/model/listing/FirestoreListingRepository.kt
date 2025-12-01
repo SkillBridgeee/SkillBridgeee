@@ -1,5 +1,9 @@
 package com.android.sample.model.listing
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import com.android.sample.model.ValidationUtils
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
@@ -13,7 +17,8 @@ const val LISTINGS_COLLECTION_PATH = "listings"
 
 class FirestoreListingRepository(
     private val db: FirebaseFirestore,
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val context: Context
 ) : ListingRepository {
 
   private companion object {
@@ -25,6 +30,18 @@ class FirestoreListingRepository(
   private val currentUserId: String
     get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
 
+  private fun isOnline(): Boolean {
+    val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val network = connectivityManager.activeNetwork
+    val capabilities = connectivityManager.getNetworkCapabilities(network)
+
+    return capabilities != null &&
+        (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
+  }
+
   override fun getNewUid(): String {
     return UUID.randomUUID().toString()
   }
@@ -34,6 +51,7 @@ class FirestoreListingRepository(
       val snapshot = db.collection(LISTINGS_COLLECTION_PATH).get().await()
       snapshot.documents.mapNotNull { it.toListing() }
     } catch (e: Exception) {
+
       throw Exception("Failed to fetch all listings: ${e.message}")
     }
   }
@@ -95,6 +113,7 @@ class FirestoreListingRepository(
     addListing(request)
   }
 
+  @SuppressLint("ServiceCast")
   private suspend fun addListing(listing: Listing) {
     try {
       validateForWrite(listing)
@@ -102,9 +121,15 @@ class FirestoreListingRepository(
       if (listing.creatorUserId != currentUserId) {
         throw Exception("Access denied: You can only create listings for yourself.")
       }
-      db.collection(LISTINGS_COLLECTION_PATH).document(listing.listingId).set(listing).await()
+      if (isOnline()) {
+        db.collection(LISTINGS_COLLECTION_PATH).document(listing.listingId).set(listing).await()
+      } else {
+        db.collection(LISTINGS_COLLECTION_PATH).document(listing.listingId).set(listing)
+      }
     } catch (e: Exception) {
-      throw Exception("Failed to add listing: ${e.message}")
+      if (isOnline()) {
+        throw Exception("Failed to add listing: ${e.message}")
+      }
     }
   }
 
@@ -118,7 +143,11 @@ class FirestoreListingRepository(
       if (existingListing.creatorUserId != currentUserId) {
         throw Exception("Access denied: You can only update your own listings.")
       }
-      docRef.set(listing).await()
+      if (isOnline()) {
+        docRef.set(listing).await()
+      } else {
+        docRef.set(listing)
+      }
     } catch (e: Exception) {
       throw Exception("Failed to update listing: ${e.message}")
     }
@@ -132,7 +161,11 @@ class FirestoreListingRepository(
       if (existingListing.creatorUserId != currentUserId) {
         throw Exception("Access denied: You can only delete your own listings.")
       }
-      docRef.delete().await()
+      if (isOnline()) {
+        docRef.delete().await()
+      } else {
+        docRef.delete()
+      }
     } catch (e: Exception) {
       throw Exception("Failed to delete listing: ${e.message}")
     }
@@ -146,7 +179,12 @@ class FirestoreListingRepository(
       if (existingListing.creatorUserId != currentUserId) {
         throw Exception("Access denied: You can only deactivate your own listings.")
       }
-      docRef.update("isActive", false).await()
+
+      if (isOnline()) {
+        docRef.update("isActive", false).await()
+      } else {
+        docRef.update("isActive", false)
+      }
     } catch (e: Exception) {
       throw Exception("Failed to deactivate listing: ${e.message}")
     }

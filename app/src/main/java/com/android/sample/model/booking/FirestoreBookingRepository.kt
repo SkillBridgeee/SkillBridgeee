@@ -1,5 +1,8 @@
 package com.android.sample.model.booking
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -10,12 +13,25 @@ const val BOOKINGS_COLLECTION_PATH = "bookings"
 
 class FirestoreBookingRepository(
     private val db: FirebaseFirestore,
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val context: Context
 ) : BookingRepository {
 
   // Helper property to get current user ID
   private val currentUserId: String
     get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
+
+  private fun isOnline(): Boolean {
+    val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val network = connectivityManager.activeNetwork
+    val capabilities = connectivityManager.getNetworkCapabilities(network)
+
+    return capabilities != null &&
+        (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
+  }
 
   override fun getNewUid(): String {
     return UUID.randomUUID().toString()
@@ -140,8 +156,11 @@ class FirestoreBookingRepository(
       if (booking.bookerId != currentUserId) {
         throw Exception("Access denied: Can only create bookings for yourself")
       }
-
-      db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking).await()
+      if (isOnline()) {
+        db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking).await()
+      } else {
+        db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking)
+      }
     } catch (e: Exception) {
       throw Exception("Failed to add booking: ${e.message}")
     }
@@ -162,7 +181,11 @@ class FirestoreBookingRepository(
               "Access denied: Cannot update booking that doesn't belong to current user")
         }
 
-        documentRef.set(booking).await()
+        if (isOnline()) {
+          documentRef.set(booking).await()
+        } else {
+          documentRef.set(booking)
+        }
       } else {
         throw Exception("Booking with ID $bookingId not found")
       }
@@ -194,7 +217,11 @@ class FirestoreBookingRepository(
           throw Exception("Access denied: Cannot update booking status")
         }
 
-        documentRef.update("status", status).await()
+        if (isOnline()) {
+          documentRef.update("status", status).await()
+        } else {
+          documentRef.update("status", status)
+        }
       } else {
         throw Exception("Booking with ID $bookingId not found")
       }
