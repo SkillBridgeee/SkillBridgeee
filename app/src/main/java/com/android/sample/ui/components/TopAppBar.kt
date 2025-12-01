@@ -79,7 +79,7 @@ fun TopAppBar(navController: NavController) {
       },
       actions = {
           if (currentRoute == NavRoutes.HOME) {
-              IconButton(onClick = { navController.navigate(NavRoutes.MESSAGES) }) {
+              IconButton(onClick = { navController.navigate(NavRoutes.DISCUSSION) }) {
                   Icon(
                       imageVector = Icons.Filled.Email,
                       contentDescription = "Messages"

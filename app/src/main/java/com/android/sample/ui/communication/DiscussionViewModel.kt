@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +26,7 @@ data class DiscussionUiState(
  *
  * @param overViewConvRepository Repository for fetching conversation overviews.
  */
-class DiscussionViewModel(private val overViewConvRepository: OverViewConvRepository) :
+class DiscussionViewModel(private val overViewConvRepository: OverViewConvRepository = OverViewConvRepositoryProvider.repository) :
     ViewModel() {
 
   private val _uiState = MutableStateFlow(DiscussionUiState())

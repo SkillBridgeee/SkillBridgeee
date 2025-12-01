@@ -22,6 +22,8 @@ import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.communication.DiscussionScreen
 import com.android.sample.ui.communication.DiscussionViewModel
+import com.android.sample.ui.communication.MessageScreen
+import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.newListing.NewListingScreen
@@ -77,11 +79,13 @@ fun AppNavGraph(
     authViewModel: AuthenticationViewModel,
     bookingDetailsViewModel: BookingDetailsViewModel,
     discussionViewModel: DiscussionViewModel,
+    //messageViewModel: MessageViewModel,
     onGoogleSignIn: () -> Unit
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
   val profileID = remember { mutableStateOf("") }
   val bookingId = remember { mutableStateOf("") }
+    val convId = remember { mutableStateOf("") }
 
   NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
     composable(NavRoutes.LOGIN) {
@@ -237,13 +241,26 @@ fun AppNavGraph(
           bkgViewModel = bookingDetailsViewModel)
     }
 
-      composable(NavRoutes.MESSAGES) {
-          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MESSAGES) }
+      composable(NavRoutes.DISCUSSION) {
+          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.DISCUSSION) }
 
           DiscussionScreen(
               viewModel = discussionViewModel,
-              onConversationClick = {}
+              onConversationClick = { convIdClicked ->
+                  convId.value = convIdClicked
+                  navController.navigate(NavRoutes.MESSAGES)
+              }
           )
       }
+
+//      composable(NavRoutes.MESSAGES) {
+//          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MESSAGES) }
+//
+//          val currentUserId = UserSessionManager.getCurrentUserId() ?: ""
+//          MessageScreen(
+//              viewModel = messageViewModel,
+//              currentUserId = currentUserId
+//          )
+//      }
   }
 }

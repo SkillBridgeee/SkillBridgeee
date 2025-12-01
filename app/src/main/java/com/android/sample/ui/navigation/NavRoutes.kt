@@ -33,6 +33,7 @@ object NavRoutes {
   // Secondary pages
   const val NEW_SKILL = "new_skill/{profileId}?listingId={listingId}"
   const val MESSAGES = "messages"
+  const val DISCUSSION = "discussion"
   const val SIGNUP = "signup?email={email}"
   const val SIGNUP_BASE = "signup"
   const val LISTING = "listing/{listingId}"
