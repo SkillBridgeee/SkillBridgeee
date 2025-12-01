@@ -5,15 +5,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
-import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
-import com.android.sample.model.user.Profile
+import com.android.sample.model.skill.Skill
 import com.android.sample.ui.HomePage.ExploreSubjects
 import com.android.sample.ui.HomePage.GreetingSection
 import com.android.sample.ui.HomePage.HomeScreenTestTags
+import com.android.sample.ui.HomePage.ProposalsSection
 import com.android.sample.ui.HomePage.SubjectCard
-import com.android.sample.ui.HomePage.TutorsSection
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -62,37 +62,41 @@ class HomeScreenTest {
   }
 
   @Test
-  fun tutorsSection_displaysTutorsAndCallsBookCallback() {
-    var bookedTutor: String? = null
+  fun proposalsSection_displaysProposalsAndCallsClickCallback() {
+    var clickedProposalId: String? = null
 
-    val p1 =
-        Profile(
-            userId = "alice-id",
-            name = "Alice",
+    val proposal1 =
+        Proposal(
+            listingId = "proposal-alice",
+            creatorUserId = "alice-id",
             description = "Math tutor",
             location = Location(name = "CityA"),
-            tutorRating = RatingInfo(averageRating = 5.0, totalRatings = 10))
+            skill = Skill())
 
-    val p2 =
-        Profile(
-            userId = "bob-id",
-            name = "Bob",
+    val proposal2 =
+        Proposal(
+            listingId = "proposal-bob",
+            creatorUserId = "bob-id",
             description = "Music tutor",
             location = Location(name = "CityB"),
-            tutorRating = RatingInfo(averageRating = 4.0, totalRatings = 5))
+            skill = Skill())
 
-    val profiles = listOf(p1, p2)
+    val proposals = listOf(proposal1, proposal2)
 
-    composeRule.setContent { TutorsSection(profiles, onTutorClick = { bookedTutor = it }) }
+    composeRule.setContent {
+      MaterialTheme {
+        ProposalsSection(
+            proposals = proposals, onProposalClick = { p -> clickedProposalId = p.listingId })
+      }
+    }
 
     composeRule.onNodeWithTag(HomeScreenTestTags.TOP_TUTOR_SECTION).assertIsDisplayed()
     composeRule.onNodeWithTag(HomeScreenTestTags.TUTOR_LIST).assertIsDisplayed()
     composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD).assertCountEquals(2)
 
-    // Click the first tutor card (some UI implementations don't expose a separate "Book" button
-    // tag)
+    // Click the first proposal card
     composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD)[0].performClick()
-    assertEquals(p1.userId, bookedTutor)
+    assertEquals(proposal1.listingId, clickedProposalId)
   }
 
   @Test
@@ -103,8 +107,8 @@ class HomeScreenTest {
   }
 
   @Test
-  fun tutorsSection_handlesEmptyListGracefully() {
-    composeRule.setContent { TutorsSection(emptyList()) {} }
+  fun proposalsSection_handlesEmptyListGracefully() {
+    composeRule.setContent { MaterialTheme { ProposalsSection(emptyList()) { /* no-op */} } }
 
     composeRule.onNodeWithTag(HomeScreenTestTags.TOP_TUTOR_SECTION).assertIsDisplayed()
   }

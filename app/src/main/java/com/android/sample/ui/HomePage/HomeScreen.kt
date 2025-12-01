@@ -179,23 +179,21 @@ fun SubjectCard(
 fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (Proposal) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
-        text = "Top Rated Proposals",
+        text = "Top Listings",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
-        modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION) // can rename later
-        )
+        modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION))
 
     Spacer(modifier = Modifier.height(10.dp))
 
     LazyColumn(
-        modifier =
-            Modifier.testTag(HomeScreenTestTags.TUTOR_LIST) // reusing existing tag
-                .fillMaxWidth(),
+        modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_LIST).fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
           items(proposals) { proposal ->
             ProposalCard(
                 proposal = proposal,
-                onClick = { _ -> onProposalClick(proposal) }, // ignore listingId from ProposalCard
+                // ProposalCard gives us listingId (String), but we want Proposal -> ignore arg
+                onClick = { _ -> onProposalClick(proposal) },
                 modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_CARD))
           }
         }
