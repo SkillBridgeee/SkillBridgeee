@@ -78,6 +78,13 @@ class FirestoreListingRepositoryTest : RepositoryTest() {
   }
 
   @Test
+  fun isOnlineReturnsTrueWhenConnected() {
+    val repository = FirestoreListingRepository(firestore, auth, context)
+    assertTrue(repository.isOnline())
+  }
+
+
+  @Test
   fun getNewUidReturnsUniqueIds() {
     val uid1 = repository.getNewUid()
     val uid2 = repository.getNewUid()

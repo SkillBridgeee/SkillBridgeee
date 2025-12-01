@@ -59,6 +59,12 @@ class FirestoreRatingRepositoryTest : RepositoryTest() {
   }
 
   @Test
+  fun isOnlineReturnsTrueWhenOnline() {
+    val repo = FirestoreRatingRepository(firestore, auth, context)
+    assertTrue(repo.isOnline())
+  }
+
+  @Test
   fun `addRating and getRating work correctly`() = runTest {
     val rating =
         Rating(

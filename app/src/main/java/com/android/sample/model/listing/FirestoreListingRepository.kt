@@ -30,7 +30,7 @@ class FirestoreListingRepository(
   private val currentUserId: String
     get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
 
-  private fun isOnline(): Boolean {
+  fun isOnline(): Boolean {
     val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     val network = connectivityManager.activeNetwork
