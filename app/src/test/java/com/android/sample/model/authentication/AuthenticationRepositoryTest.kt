@@ -722,4 +722,97 @@ class AuthenticationRepositoryTest {
 
     assertFalse(result)
   }
+
+  // -------- Password Reset Tests --------------------------------------------------------
+
+  @Test
+  fun sendPasswordResetEmail_success_returnsSuccess() = runTest {
+    every { mockAuth.sendPasswordResetEmail(any()) } returns Tasks.forResult(null)
+
+    val result = repository.sendPasswordResetEmail("test@example.com")
+
+    assertTrue(result.isSuccess)
+    verify { mockAuth.sendPasswordResetEmail("test@example.com") }
+  }
+
+  @Test
+  fun sendPasswordResetEmail_failure_returnsNormalizedError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_USER_NOT_FOUND"
+    every { firebaseException.message } returns "No user found"
+
+    every { mockAuth.sendPasswordResetEmail(any()) } returns Tasks.forException(firebaseException)
+
+    val result = repository.sendPasswordResetEmail("test@example.com")
+
+    assertTrue(result.isFailure)
+    assertEquals("No account found with this email", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun sendPasswordResetEmail_invalidEmail_returnsNormalizedError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_INVALID_EMAIL"
+    every { firebaseException.message } returns "Invalid email"
+
+    every { mockAuth.sendPasswordResetEmail(any()) } returns Tasks.forException(firebaseException)
+
+    val result = repository.sendPasswordResetEmail("invalid-email")
+
+    assertTrue(result.isFailure)
+    assertEquals("Invalid email format", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun sendPasswordResetEmail_tooManyRequests_returnsNormalizedError() = runTest {
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+    every { firebaseException.errorCode } returns "ERROR_TOO_MANY_REQUESTS"
+    every { firebaseException.message } returns "Too many requests"
+
+    every { mockAuth.sendPasswordResetEmail(any()) } returns Tasks.forException(firebaseException)
+
+    val result = repository.sendPasswordResetEmail("test@example.com")
+
+    assertTrue(result.isFailure)
+    assertEquals("Too many attempts. Please try again later", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun sendPasswordResetEmail_networkError_returnsError() = runTest {
+    val exception = Exception("Network error")
+
+    every { mockAuth.sendPasswordResetEmail(any()) } returns Tasks.forException(exception)
+
+    val result = repository.sendPasswordResetEmail("test@example.com")
+
+    assertTrue(result.isFailure)
+    assertEquals("Network error", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun sendPasswordResetEmail_withDifferentEmails_callsCorrectMethod() = runTest {
+    every { mockAuth.sendPasswordResetEmail(any()) } returns Tasks.forResult(null)
+
+    val email1 = "user1@example.com"
+    repository.sendPasswordResetEmail(email1)
+    verify { mockAuth.sendPasswordResetEmail(email1) }
+
+    val email2 = "user2@example.com"
+    repository.sendPasswordResetEmail(email2)
+    verify { mockAuth.sendPasswordResetEmail(email2) }
+  }
+
+  @Test
+  fun sendPasswordResetEmail_multipleTimes_doesNotThrow() = runTest {
+    every { mockAuth.sendPasswordResetEmail(any()) } returns Tasks.forResult(null)
+
+    val result1 = repository.sendPasswordResetEmail("test@example.com")
+    val result2 = repository.sendPasswordResetEmail("test@example.com")
+    val result3 = repository.sendPasswordResetEmail("test@example.com")
+
+    assertTrue(result1.isSuccess)
+    assertTrue(result2.isSuccess)
+    assertTrue(result3.isSuccess)
+    verify(exactly = 3) { mockAuth.sendPasswordResetEmail("test@example.com") }
+  }
 }

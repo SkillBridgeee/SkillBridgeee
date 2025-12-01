@@ -21,6 +21,7 @@ import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.rating.RatingType
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
@@ -68,7 +69,8 @@ data class MyProfileUIState(
     val ratingsLoading: Boolean = false,
     val ratingsLoadError: String? = null,
     val updateSuccess: Boolean = false,
-    val completedBookings: List<Booking> = emptyList()
+    val completedBookings: List<Booking> = emptyList(),
+    val ratingRatersById: Map<String, Profile> = emptyMap(),
 ) {
   /** True if all required fields are valid */
   val isValid: Boolean
@@ -196,12 +198,31 @@ class MyProfileViewModel(
    */
   fun loadUserRatings(ownerId: String = _uiState.value.userId ?: userId) {
     viewModelScope.launch {
-      // set ratings loading state (does not affect full-screen isLoading)
       _uiState.update { it.copy(ratingsLoading = true, ratingsLoadError = null) }
       try {
-        val items = ratingsRepository.getRatingsByToUser(ownerId)
+        // 1. All ratings that target this user (as tutor OR as student)
+        val allRatings = ratingsRepository.getRatingsByToUser(ownerId)
+
+        // 2. Keep only "person" ratings: tutor or student (exclude listing ratings)
+        val personRatings =
+            allRatings.filter {
+              it.ratingType == RatingType.TUTOR || it.ratingType == RatingType.STUDENT
+            }
+
+        // 3. Load profiles of the raters (fromUserId)
+        val raterIds = personRatings.map { it.fromUserId }.distinct()
+        val raters =
+            raterIds
+                .mapNotNull { id -> runCatching { profileRepository.getProfile(id) }.getOrNull() }
+                .associateBy { it.userId }
+
+        // 4. Update state
         _uiState.update {
-          it.copy(ratings = items, ratingsLoading = false, ratingsLoadError = null)
+          it.copy(
+              ratings = personRatings,
+              ratingsLoading = false,
+              ratingsLoadError = null,
+              ratingRatersById = raters)
         }
       } catch (e: Exception) {
         Log.e(TAG, "Error loading ratings for user: $ownerId", e)
@@ -209,7 +230,8 @@ class MyProfileViewModel(
           it.copy(
               ratings = emptyList(),
               ratingsLoading = false,
-              ratingsLoadError = "Failed to load ratings.")
+              ratingsLoadError = "Failed to load ratings.",
+              ratingRatersById = emptyMap())
         }
       }
     }

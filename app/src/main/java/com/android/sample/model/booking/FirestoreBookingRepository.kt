@@ -23,13 +23,28 @@ class FirestoreBookingRepository(
 
   override suspend fun getAllBookings(): List<Booking> {
     try {
-      val snapshot =
+      // Query bookings where current user is the booker
+      val bookerSnapshot =
           db.collection(BOOKINGS_COLLECTION_PATH)
               .whereEqualTo("bookerId", currentUserId)
               .orderBy("sessionStart", Query.Direction.ASCENDING)
               .get()
               .await()
-      return snapshot.toObjects(Booking::class.java)
+
+      // Query bookings where current user is the listing creator
+      val creatorSnapshot =
+          db.collection(BOOKINGS_COLLECTION_PATH)
+              .whereEqualTo("listingCreatorId", currentUserId)
+              .get()
+              .await()
+
+      // Combine both lists and remove duplicates
+      val bookerBookings = bookerSnapshot.toObjects(Booking::class.java)
+      val creatorBookings = creatorSnapshot.toObjects(Booking::class.java)
+
+      return (bookerBookings + creatorBookings)
+          .distinctBy { it.bookingId }
+          .sortedBy { it.sessionStart }
     } catch (e: Exception) {
       throw Exception("Failed to fetch bookings: ${e.message}")
     }
@@ -73,13 +88,29 @@ class FirestoreBookingRepository(
 
   override suspend fun getBookingsByUserId(userId: String): List<Booking> {
     try {
-      val snapshot =
+      // Query bookings where user is the booker
+      val bookerSnapshot =
           db.collection(BOOKINGS_COLLECTION_PATH)
               .whereEqualTo("bookerId", userId)
               .orderBy("sessionStart", Query.Direction.ASCENDING)
               .get()
               .await()
-      return snapshot.toObjects(Booking::class.java)
+
+      // Query bookings where user is the listing creator
+      val creatorSnapshot =
+          db.collection(BOOKINGS_COLLECTION_PATH)
+              .whereEqualTo("listingCreatorId", userId)
+              .get()
+              .await()
+
+      // Combine both lists and remove duplicates (in case user is both booker and creator, though
+      // unlikely)
+      val bookerBookings = bookerSnapshot.toObjects(Booking::class.java)
+      val creatorBookings = creatorSnapshot.toObjects(Booking::class.java)
+
+      return (bookerBookings + creatorBookings)
+          .distinctBy { it.bookingId }
+          .sortedBy { it.sessionStart }
     } catch (e: Exception) {
       throw Exception("Failed to fetch bookings by user: ${e.message}")
     }

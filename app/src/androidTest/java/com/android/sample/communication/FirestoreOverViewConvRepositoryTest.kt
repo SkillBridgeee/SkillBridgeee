@@ -7,6 +7,7 @@ import com.android.sample.utils.TestFirestore
 import junit.framework.TestCase.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,9 +20,18 @@ class FirestoreOverViewConvRepositoryTest {
   private val userA = "userA"
   private val userB = "userB"
 
+  private lateinit var convId: String
+
   @Before
   fun setup() {
     repo = FirestoreOverViewConvRepository(TestFirestore.db)
+  }
+
+  @After
+  fun tearDown() = runTest {
+    if (::convId.isInitialized) {
+      repo.deleteOverViewConvUser(convId)
+    }
   }
 
   // ----------------------------------------------------------
@@ -29,6 +39,7 @@ class FirestoreOverViewConvRepositoryTest {
   // ----------------------------------------------------------
   @Test
   fun testAddAndGetOverview() = runTest {
+    convId = "conv1"
     val overview =
         OverViewConversation(
             overViewId = "id1",
@@ -41,9 +52,6 @@ class FirestoreOverViewConvRepositoryTest {
 
     val result = repo.getOverViewConvUser(userA)
     assertTrue(result.any { it.linkedConvId == "conv1" })
-
-    val resultOther = repo.getOverViewConvUser(userB)
-    assertTrue(resultOther.any { it.linkedConvId == "conv1" })
   }
 
   // ----------------------------------------------------------
@@ -51,7 +59,7 @@ class FirestoreOverViewConvRepositoryTest {
   // ----------------------------------------------------------
   @Test
   fun testDeleteOverview() = runTest {
-    val convId = "conv5"
+    convId = "conv5"
     val overview =
         OverViewConversation(
             overViewId = "id5",
@@ -73,7 +81,7 @@ class FirestoreOverViewConvRepositoryTest {
   // ----------------------------------------------------------
   @Test
   fun testListenOverviewFlowCurrentUser() = runTest {
-    val convId = "conv6"
+    convId = "conv6"
     val overview =
         OverViewConversation(
             overViewId = "id6",
@@ -85,28 +93,6 @@ class FirestoreOverViewConvRepositoryTest {
     repo.addOverViewConvUser(overview)
 
     val flow = repo.listenOverView(userA)
-
-    val emitted = flow.first { it -> it.isNotEmpty() && it.any { it.linkedConvId == convId } }
-    assertTrue(emitted.any { it.linkedConvId == convId })
-  }
-
-  // ----------------------------------------------------------
-  // TEST 4 : LISTEN OVERVIEW FLOW (Other User)
-  // ----------------------------------------------------------
-  @Test
-  fun testListenOverviewFlowCurrentOtherUSer() = runTest {
-    val convId = "conv7"
-    val overview =
-        OverViewConversation(
-            overViewId = "id7",
-            linkedConvId = convId,
-            convName = "Conversation 7",
-            overViewOwnerId = userA,
-            otherPersonId = userB)
-
-    repo.addOverViewConvUser(overview)
-
-    val flow = repo.listenOverView(userB)
 
     val emitted = flow.first { it -> it.isNotEmpty() && it.any { it.linkedConvId == convId } }
     assertTrue(emitted.any { it.linkedConvId == convId })

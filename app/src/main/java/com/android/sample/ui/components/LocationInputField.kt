@@ -22,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.android.sample.model.map.Location
@@ -145,7 +144,7 @@ fun RoundEdgedLocationInputField(
           onLocationQueryChange(it)
           showDropdown = true
         },
-        placeholder = { Text("Address", fontWeight = FontWeight.Bold) },
+        placeholder = { Text("Address") },
         singleLine = true,
         shape = shape,
         colors = colors,

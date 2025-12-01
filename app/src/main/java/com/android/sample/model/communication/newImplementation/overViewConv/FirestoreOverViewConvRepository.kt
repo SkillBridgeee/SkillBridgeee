@@ -1,8 +1,6 @@
 package com.android.sample.model.communication.newImplementation.overViewConv
 
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
 import java.util.UUID
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -31,8 +29,7 @@ class FirestoreOverViewConvRepository(
   }
 
   /**
-   * Creates or updates a conversation overview for a user. If `overViewId` is blank, a new document
-   * ID is generated automatically.
+   * Creates or updates a conversation overview for a user.
    *
    * @param overView the overview model to store.
    */
@@ -64,24 +61,20 @@ class FirestoreOverViewConvRepository(
   }
 
   /**
-   * Retrieves all overview conversations for a specific user. A user can appear either as the
-   * creator or as the other participant.
+   * Retrieves all overview conversations owned by a specific user.
    *
-   * @param userId the user's identifier.
-   * @return a sorted list of OverViewConversation, ordered by last message timestamp.
+   * @param userId The ID of the overview owner.
+   * @return A list of OverViewConversation
    */
   override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
     require(userId.isNotBlank()) { "User ID cannot be blank" }
 
-    val snapshotCreator = overViewRef.whereEqualTo("overViewOwnerId", userId).get().await()
+    // Only fetch overview documents where the user is the OWNER
+    val snapshot = overViewRef.whereEqualTo("overViewOwnerId", userId).get().await()
 
-    val snapshotOther = overViewRef.whereEqualTo("otherPersonId", userId).get().await()
+    val overviews = snapshot.toObjects(OverViewConversation::class.java)
 
-    val allOverviews =
-        snapshotCreator.toObjects(OverViewConversation::class.java) +
-            snapshotOther.toObjects(OverViewConversation::class.java)
-
-    return allOverviews.sortedByDescending { it.lastMsg.createdAt.time }
+    return overviews
   }
 
   /**
@@ -95,40 +88,22 @@ class FirestoreOverViewConvRepository(
    * @return a Flow emitting updated lists of OverViewConversation.
    */
   override fun listenOverView(userId: String): Flow<List<OverViewConversation>> = callbackFlow {
-    require(userId.isNotBlank()) { close(IllegalArgumentException("User ID cannot be blank")) }
-
-    val listenerCreator: ListenerRegistration =
-        overViewRef
-            .whereEqualTo("overViewOwnerId", userId)
-            .orderBy("lastMsg.createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-              if (error != null) {
-                close(error)
-                return@addSnapshotListener
-              }
-
-              val messages = snapshot?.toObjects(OverViewConversation::class.java).orEmpty()
-              trySend(messages)
-            }
-
-    val listenerOther: ListenerRegistration =
-        overViewRef
-            .whereEqualTo("otherPersonId", userId)
-            .orderBy("lastMsg.createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-              if (error != null) {
-                close(error)
-                return@addSnapshotListener
-              }
-
-              val messages = snapshot?.toObjects(OverViewConversation::class.java).orEmpty()
-              trySend(messages)
-            }
-
-    // Remove listeners when the Flow is cancelled.
-    awaitClose {
-      listenerCreator.remove()
-      listenerOther.remove()
+    require(userId.isNotBlank()) {
+      close(IllegalArgumentException("User ID cannot be blank"))
+      return@callbackFlow
     }
+
+    val listenerOwner =
+        overViewRef.whereEqualTo("overViewOwnerId", userId).addSnapshotListener { snapshot, error ->
+          if (error != null) {
+            close(error)
+            return@addSnapshotListener
+          }
+
+          val currentOverviews = snapshot?.toObjects(OverViewConversation::class.java).orEmpty()
+          trySend(currentOverviews)
+        }
+
+    awaitClose { listenerOwner.remove() }
   }
 }

@@ -20,8 +20,8 @@ data class OverViewConversation(
     val overViewId: String = "",
     val linkedConvId: String = "",
     val convName: String = "",
-    val lastMsg: MessageNew = MessageNew(),
     val nonReadMsgNumber: Int = 0,
+    val lastMsg: MessageNew? = null,
     val overViewOwnerId: String = "",
-    val otherPersonId: String = ""
+    val otherPersonId: String = "",
 )
