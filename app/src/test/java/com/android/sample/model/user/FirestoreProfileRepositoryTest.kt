@@ -63,6 +63,12 @@ class FirestoreProfileRepositoryTest : RepositoryTest() {
   }
 
   @Test
+  fun isOnlineReturnsTrueWhenOnline() {
+    val repo = FirestoreProfileRepository(firestore, auth, context)
+    assertTrue(repo.isOnline())
+  }
+
+  @Test
   fun addAndGetProfileWorkCorrectly() = runTest {
     val profile =
         Profile(

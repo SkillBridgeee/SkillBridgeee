@@ -83,7 +83,6 @@ class FirestoreListingRepositoryTest : RepositoryTest() {
     assertTrue(repository.isOnline())
   }
 
-
   @Test
   fun getNewUidReturnsUniqueIds() {
     val uid1 = repository.getNewUid()

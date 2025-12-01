@@ -615,8 +615,8 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
 
   @Test
   fun isOnlineReturnsTrueWhenOnline() {
-      val repo = FirestoreBookingRepository(firestore, auth, context)
-      assertEquals(repo.isOnline(), true)
+    val repo = FirestoreBookingRepository(firestore, auth, context)
+    assertEquals(repo.isOnline(), true)
   }
 
   @Test
