@@ -1,5 +1,7 @@
 package com.android.sample.model.rating
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.sample.utils.FirebaseEmulator
 import com.android.sample.utils.RepositoryTest
 import com.google.firebase.auth.FirebaseAuth
@@ -21,6 +23,8 @@ class FirestoreRatingRepositoryTest : RepositoryTest() {
   private lateinit var firestore: FirebaseFirestore
   private lateinit var auth: FirebaseAuth
 
+  private val context = ApplicationProvider.getApplicationContext<Context>()
+
   private val otherUserId = "other-user-id"
 
   @Before
@@ -34,7 +38,7 @@ class FirestoreRatingRepositoryTest : RepositoryTest() {
     every { auth.currentUser } returns mockUser
     every { mockUser.uid } returns testUserId // from RepositoryTest
 
-    ratingRepository = FirestoreRatingRepository(firestore, auth)
+    ratingRepository = FirestoreRatingRepository(firestore, auth, context)
   }
 
   @After
@@ -248,7 +252,7 @@ class FirestoreRatingRepositoryTest : RepositoryTest() {
   fun `currentUserId throws when user not authenticated`() {
     val authNoUser = mockk<FirebaseAuth>()
     every { authNoUser.currentUser } returns null
-    val repo = FirestoreRatingRepository(firestore, authNoUser)
+    val repo = FirestoreRatingRepository(firestore, authNoUser, context)
 
     val exception = assertThrows(Exception::class.java) { runBlocking { repo.getAllRatings() } }
     assertTrue(exception.message?.contains("not authenticated") == true)

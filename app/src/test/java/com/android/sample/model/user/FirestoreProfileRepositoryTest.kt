@@ -1,5 +1,7 @@
 package com.android.sample.model.user
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.utils.FirebaseEmulator
@@ -28,6 +30,8 @@ class FirestoreProfileRepositoryTest : RepositoryTest() {
   private lateinit var firestore: FirebaseFirestore
   private lateinit var auth: FirebaseAuth
 
+  private val context = ApplicationProvider.getApplicationContext<Context>()
+
   @Before
   override fun setUp() {
     super.setUp()
@@ -38,7 +42,7 @@ class FirestoreProfileRepositoryTest : RepositoryTest() {
     every { auth.currentUser } returns mockUser
     every { mockUser.uid } returns testUserId
 
-    profileRepository = FirestoreProfileRepository(firestore, auth)
+    profileRepository = FirestoreProfileRepository(firestore, auth, context)
   }
 
   @After
