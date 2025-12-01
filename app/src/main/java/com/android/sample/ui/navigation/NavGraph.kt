@@ -20,6 +20,8 @@ import com.android.sample.ui.bookings.BookingDetailsScreen
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.communication.DiscussionScreen
+import com.android.sample.ui.communication.DiscussionViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.newListing.NewListingScreen
@@ -74,6 +76,7 @@ fun AppNavGraph(
     newListingViewModel: NewListingViewModel,
     authViewModel: AuthenticationViewModel,
     bookingDetailsViewModel: BookingDetailsViewModel,
+    discussionViewModel: DiscussionViewModel,
     onGoogleSignIn: () -> Unit
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
@@ -233,5 +236,14 @@ fun AppNavGraph(
           },
           bkgViewModel = bookingDetailsViewModel)
     }
+
+      composable(NavRoutes.MESSAGES) {
+          LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MESSAGES) }
+
+          DiscussionScreen(
+              viewModel = discussionViewModel,
+              onConversationClick = {}
+          )
+      }
   }
 }
