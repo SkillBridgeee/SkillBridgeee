@@ -77,6 +77,7 @@ class MessageViewModel(
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Unknow error") }
               }
               .collect { messages ->
+                convManager.resetUnreadCount(convId = convId, userId = uiState.value.currentUserId)
                 _uiState.update {
                   it.copy(
                       messages = messages.sortedBy { msg -> msg.createdAt },
