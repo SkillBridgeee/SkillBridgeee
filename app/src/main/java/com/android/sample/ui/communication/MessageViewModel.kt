@@ -51,16 +51,17 @@ class MessageViewModel(
           // Get current user id
           val userId = UserSessionManager.getCurrentUserId()
           if (userId == null) {
-            _uiState.value = _uiState.value.copy(error = "User not logged in")
+              _uiState.update { it.copy(error = "User not logged in") }
             return@launch
           }
 
-          _uiState.value = _uiState.value.copy(currentUserId = userId)
+            _uiState.update { it.copy(currentUserId = userId) }
+
 
           // Fetch the conversation to find the other user
           val conversation = convManager.getConv(convId)
           if (conversation == null) {
-            _uiState.value = _uiState.value.copy(error = "Conversation not found")
+              _uiState.update { it.copy(error = "Conversation not found") }
             return@launch
           }
 
@@ -72,16 +73,18 @@ class MessageViewModel(
           // Start listening to messages
           convManager
               .listenMessages(convId)
-              .onStart { _uiState.value = _uiState.value.copy(isLoading = true, error = null) }
+              .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
               .catch { e ->
-                _uiState.value = _uiState.value.copy(isLoading = false, error = e.message)
+                  _uiState.update { it.copy(isLoading = false, error = e.message ?: "Unknow error") }
               }
               .collect { messages ->
-                _uiState.value =
-                    _uiState.value.copy(
-                        messages = messages.sortedBy { it.createdAt },
-                        isLoading = false,
-                        error = null)
+                  _uiState.update {
+                      it.copy(
+                          messages = messages.sortedBy { msg -> msg.createdAt },
+                          isLoading = false,
+                          error = null
+                      )
+                  }
               }
         }
   }
@@ -105,9 +108,9 @@ class MessageViewModel(
     viewModelScope.launch {
       try {
         convManager.sendMessage(convId, message)
-        _uiState.value = _uiState.value.copy(currentMessage = "")
+          _uiState.update { it.copy(currentMessage = "") }
       } catch (e: Exception) {
-        _uiState.value = _uiState.value.copy(error = e.message)
+          _uiState.update { it.copy(error = e.message ?: "Error to send Message") }
       }
     }
   }
