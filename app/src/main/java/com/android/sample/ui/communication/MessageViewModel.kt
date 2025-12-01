@@ -51,17 +51,16 @@ class MessageViewModel(
           // Get current user id
           val userId = UserSessionManager.getCurrentUserId()
           if (userId == null) {
-              _uiState.update { it.copy(error = "User not logged in") }
+            _uiState.update { it.copy(error = "User not logged in") }
             return@launch
           }
 
-            _uiState.update { it.copy(currentUserId = userId) }
-
+          _uiState.update { it.copy(currentUserId = userId) }
 
           // Fetch the conversation to find the other user
           val conversation = convManager.getConv(convId)
           if (conversation == null) {
-              _uiState.update { it.copy(error = "Conversation not found") }
+            _uiState.update { it.copy(error = "Conversation not found") }
             return@launch
           }
 
@@ -75,16 +74,15 @@ class MessageViewModel(
               .listenMessages(convId)
               .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
               .catch { e ->
-                  _uiState.update { it.copy(isLoading = false, error = e.message ?: "Unknow error") }
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Unknow error") }
               }
               .collect { messages ->
-                  _uiState.update {
-                      it.copy(
-                          messages = messages.sortedBy { msg -> msg.createdAt },
-                          isLoading = false,
-                          error = null
-                      )
-                  }
+                _uiState.update {
+                  it.copy(
+                      messages = messages.sortedBy { msg -> msg.createdAt },
+                      isLoading = false,
+                      error = null)
+                }
               }
         }
   }
@@ -108,9 +106,9 @@ class MessageViewModel(
     viewModelScope.launch {
       try {
         convManager.sendMessage(convId, message)
-          _uiState.update { it.copy(currentMessage = "") }
+        _uiState.update { it.copy(currentMessage = "") }
       } catch (e: Exception) {
-          _uiState.update { it.copy(error = e.message ?: "Error to send Message") }
+        _uiState.update { it.copy(error = e.message ?: "Error to send Message") }
       }
     }
   }
