@@ -26,8 +26,10 @@ data class DiscussionUiState(
  *
  * @param overViewConvRepository Repository for fetching conversation overviews.
  */
-class DiscussionViewModel(private val overViewConvRepository: OverViewConvRepository = OverViewConvRepositoryProvider.repository) :
-    ViewModel() {
+class DiscussionViewModel(
+    private val overViewConvRepository: OverViewConvRepository =
+        OverViewConvRepositoryProvider.repository
+) : ViewModel() {
 
   private val _uiState = MutableStateFlow(DiscussionUiState())
   val uiState: StateFlow<DiscussionUiState> = _uiState.asStateFlow()

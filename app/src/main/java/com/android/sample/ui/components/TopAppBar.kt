@@ -56,7 +56,7 @@ fun TopAppBar(navController: NavController) {
         NavRoutes.MAP -> "Map"
         NavRoutes.BOOKINGS -> "My Bookings"
         NavRoutes.LISTING -> "Listing Details"
-          NavRoutes.MESSAGES -> "Messages"
+        NavRoutes.MESSAGES -> "Messages"
         else -> "SkillBridge"
       }
 
@@ -78,14 +78,10 @@ fun TopAppBar(navController: NavController) {
         }
       },
       actions = {
-          if (currentRoute == NavRoutes.HOME) {
-              IconButton(onClick = { navController.navigate(NavRoutes.DISCUSSION) }) {
-                  Icon(
-                      imageVector = Icons.Filled.Email,
-                      contentDescription = "Messages"
-                  )
-              }
+        if (currentRoute == NavRoutes.HOME) {
+          IconButton(onClick = { navController.navigate(NavRoutes.DISCUSSION) }) {
+            Icon(imageVector = Icons.Filled.Email, contentDescription = "Messages")
           }
-      }
-  )
+        }
+      })
 }

@@ -1,7 +1,6 @@
 package com.android.sample
 
 import android.os.Bundle
-import android.os.Message
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -31,7 +30,6 @@ import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.communication.DiscussionViewModel
-import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.navigation.AppNavGraph
@@ -118,9 +116,9 @@ class MyViewModelFactory(private val sessionManager: UserSessionManager) :
       DiscussionViewModel::class.java -> {
         DiscussionViewModel() as T
       }
-//      MessageViewModel::class.java -> {
-//        MessageViewModel() as T
-//      }
+      //      MessageViewModel::class.java -> {
+      //        MessageViewModel() as T
+      //      }
       else -> throw IllegalArgumentException("Unknown ViewModel class")
     }
   }
@@ -211,8 +209,8 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
               newListingViewModel = newListingViewModel,
               bookingDetailsViewModel = bookingDetailsViewModel,
               authViewModel = authViewModel,
-            discussionViewModel = discussionViewModel,
-            //messageViewModel = ,
+              discussionViewModel = discussionViewModel,
+              // messageViewModel = ,
               onGoogleSignIn = onGoogleSignIn)
         }
       }
