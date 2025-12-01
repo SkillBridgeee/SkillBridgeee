@@ -30,12 +30,11 @@ class MessageViewModel(
             overViewRepo = OverViewConvRepositoryProvider.repository)
 ) : ViewModel() {
 
-  lateinit var otherId: String
-
   private val _uiState = MutableStateFlow(ConvUIState())
   val uiState: StateFlow<ConvUIState> = _uiState
 
   private var currentConvId: String? = null
+  private var otherId: String? = null
 
   /** Start listening to real-time messages for a given conversation ID. */
   fun loadConversation(convId: String) {
@@ -82,6 +81,7 @@ class MessageViewModel(
   fun sendMessage() {
     val convId = currentConvId ?: return
     val content = _uiState.value.currentMessage.trim()
+    val receiver = otherId ?: return
 
     if (content.isBlank()) return
 
@@ -89,7 +89,7 @@ class MessageViewModel(
         MessageNew(
             msgId = convManager.getMessageNewUid(),
             senderId = _uiState.value.currentUserId,
-            receiverId = otherId,
+            receiverId = receiver,
             content = content,
             createdAt = Date())
 
