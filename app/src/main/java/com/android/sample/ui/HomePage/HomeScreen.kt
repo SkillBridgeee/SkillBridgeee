@@ -22,11 +22,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.sample.model.listing.Proposal
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.SkillsHelper
-import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.HorizontalScrollHint
-import com.android.sample.ui.components.TutorCard
+import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.theme.PrimaryColor
 
 /**
@@ -84,8 +84,10 @@ fun HomeScreen(
           Spacer(modifier = Modifier.height(20.dp))
           ExploreSubjects(uiState.subjects, onNavigateToSubjectList)
           Spacer(modifier = Modifier.height(20.dp))
-          TutorsSection(
-              tutors = uiState.tutors, onTutorClick = { userId -> onNavigateToProfile(userId) })
+
+          ProposalsSection(
+              proposals = uiState.proposals,
+              onProposalClick = { proposal -> onNavigateToProfile(proposal.creatorUserId) })
         }
       }
 }
@@ -169,30 +171,32 @@ fun SubjectCard(
 }
 
 /**
- * Displays a list of all tutors.
+ * Displays a list of top proposal listings.
  *
- * Shows a section title and a scrollable list of tutor cards. When a tutor card is clicked,
- * triggers a callback with the tutor's user ID so the caller can navigate to the tutor’s profile.
+ * Shows a section title and a scrollable list of proposal cards.
  */
 @Composable
-fun TutorsSection(tutors: List<Profile>, onTutorClick: (String) -> Unit) {
+fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (Proposal) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
-        text = "All Tutors",
+        text = "Top Rated Proposals",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
-        modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION))
+        modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION) // can rename later
+        )
 
     Spacer(modifier = Modifier.height(10.dp))
 
     LazyColumn(
-        modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_LIST).fillMaxWidth(),
+        modifier =
+            Modifier.testTag(HomeScreenTestTags.TUTOR_LIST) // reusing existing tag
+                .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          items(tutors) { profile ->
-            TutorCard(
-                profile = profile,
-                onOpenProfile = { onTutorClick(profile.userId) },
-                cardTestTag = HomeScreenTestTags.TUTOR_CARD)
+          items(proposals) { proposal ->
+            ProposalCard(
+                proposal = proposal,
+                onClick = { _ -> onProposalClick(proposal) }, // ignore listingId from ProposalCard
+                modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_CARD))
           }
         }
   }

@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val welcomeMessage: String = "Welcome back!",
     val subjects: List<MainSubject> = MainSubject.entries.toList(),
-    var tutors: List<Profile> = emptyList()
+    val proposals: List<Proposal> = emptyList()
 )
 
 /**
@@ -62,14 +62,18 @@ class MainPageViewModel(
     viewModelScope.launch {
       try {
         val allProposals = listingRepository.getProposals()
-        val allProfiles = profileRepository.getAllProfiles()
-
-        val tutorProfiles = getTutors(allProposals, allProfiles)
         val welcomeMsg = getWelcomeMsg()
 
-        _uiState.value = HomeUiState(welcomeMessage = welcomeMsg, tutors = tutorProfiles)
+        // "Top" proposals: active + most recent first
+        val topProposals =
+            allProposals.filter { it.isActive }.sortedByDescending { it.createdAt }.take(10)
+
+        _uiState.value =
+            HomeUiState(
+                welcomeMessage = welcomeMsg,
+                subjects = MainSubject.entries.toList(),
+                proposals = topProposals)
       } catch (e: Exception) {
-        // Log the error for debugging while providing a safe fallback UI state
         Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
         _uiState.value = HomeUiState()
       }
