@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.authentication.AuthResult
@@ -126,6 +127,59 @@ class MyViewModelFactory(private val sessionManager: UserSessionManager) :
  * LoginScreen( viewModel = viewModel, onGoogleSignIn = { val signInIntent =
  * viewModel.getGoogleSignInClient().signInIntent googleSignInLauncher.launch(signInIntent) }) }
  */
+
+/**
+ * Performs auto-login by checking if user is authenticated and has a valid profile. Navigates to
+ * HOME if successful, or signs out the user if they don't have a profile or their email is not
+ * verified.
+ */
+internal suspend fun performAutoLogin(
+    navController: NavHostController,
+    authViewModel: AuthenticationViewModel
+) {
+  val currentUserId = UserSessionManager.getCurrentUserId()
+
+  if (currentUserId == null) {
+    Log.d("MainActivity", "Auto-login: No user authenticated - staying at LOGIN")
+    return
+  }
+
+  Log.d("MainActivity", "Auto-login: Found authenticated user: $currentUserId")
+
+  try {
+    handleAuthenticatedUser(currentUserId, navController, authViewModel)
+  } catch (e: Exception) {
+    Log.e("MainActivity", "Auto-login: Error checking profile - signing out", e)
+    authViewModel.signOut()
+  }
+}
+
+/** Handles an authenticated user by checking their profile and email verification status. */
+internal suspend fun handleAuthenticatedUser(
+    userId: String,
+    navController: NavHostController,
+    authViewModel: AuthenticationViewModel
+) {
+  val profile = ProfileRepositoryProvider.repository.getProfile(userId)
+
+  if (profile == null) {
+    Log.d("MainActivity", "Auto-login: User has no profile - signing out")
+    authViewModel.signOut()
+    return
+  }
+
+  val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+  val isEmailVerified = firebaseUser?.isEmailVerified ?: true
+
+  if (isEmailVerified) {
+    Log.d("MainActivity", "Auto-login: User has profile and is verified - navigating to HOME")
+    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+  } else {
+    Log.d("MainActivity", "Auto-login: Email not verified - signing out")
+    authViewModel.signOut()
+  }
+}
+
 @Composable
 fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) {
   val navController = rememberNavController()
@@ -133,45 +187,8 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
 
   // One-time auto-login check on app start
   LaunchedEffect(Unit) {
-    // Wait a brief moment for auth state to initialize
-    kotlinx.coroutines.delay(100)
-
-    val currentUserId = UserSessionManager.getCurrentUserId()
-    if (currentUserId != null) {
-      Log.d("MainActivity", "Auto-login: Found authenticated user: $currentUserId")
-
-      // Check if this user has a profile and is verified
-      try {
-        val profile = ProfileRepositoryProvider.repository.getProfile(currentUserId)
-        val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-
-        if (profile != null) {
-          // Check email verification for email/password users
-          val isEmailVerified = firebaseUser?.isEmailVerified ?: true
-
-          if (isEmailVerified) {
-            // User has profile and is verified - navigate to HOME
-            Log.d(
-                "MainActivity", "Auto-login: User has profile and is verified - navigating to HOME")
-            navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
-          } else {
-            // User has profile but email not verified - sign out and stay at LOGIN
-            Log.d("MainActivity", "Auto-login: Email not verified - signing out")
-            authViewModel.signOut()
-          }
-        } else {
-          // User is authenticated but has no profile - sign them out
-          Log.d("MainActivity", "Auto-login: User has no profile - signing out")
-          authViewModel.signOut()
-        }
-      } catch (e: Exception) {
-        // Error fetching profile - sign out to be safe
-        Log.e("MainActivity", "Auto-login: Error checking profile - signing out", e)
-        authViewModel.signOut()
-      }
-    } else {
-      Log.d("MainActivity", "Auto-login: No user authenticated - staying at LOGIN")
-    }
+    kotlinx.coroutines.delay(100) // Wait for auth state to initialize
+    performAutoLogin(navController, authViewModel)
   }
 
   // Navigate based on authentication result from explicit login/signup actions
