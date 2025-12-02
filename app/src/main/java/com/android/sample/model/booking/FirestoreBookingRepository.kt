@@ -203,6 +203,28 @@ class FirestoreBookingRepository(
     }
   }
 
+  override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {
+    try {
+      val documentRef = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId)
+      val documentSnapshot = documentRef.get().await()
+
+      if (documentSnapshot.exists()) {
+        val booking = documentSnapshot.toObject(Booking::class.java)
+
+        // Verify user has access
+        if (booking?.bookerId != currentUserId && booking?.listingCreatorId != currentUserId) {
+          throw Exception("Access denied: Cannot update payment status")
+        }
+
+        documentRef.update("paymentStatus", paymentStatus).await()
+      } else {
+        throw Exception("Booking with ID $bookingId not found")
+      }
+    } catch (e: Exception) {
+      throw Exception("Failed to update payment status: ${e.message}")
+    }
+  }
+
   override suspend fun confirmBooking(bookingId: String) {
     updateBookingStatus(bookingId, BookingStatus.CONFIRMED)
   }

@@ -26,7 +26,7 @@ class FirestoreProfileRepository(
         Regex("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", RegexOption.IGNORE_CASE)
   }
 
-  private val currentUserId: String
+  private val authenticatedUserId: String
     get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
 
   override fun getNewUid(): String {
@@ -47,7 +47,7 @@ class FirestoreProfileRepository(
 
   override suspend fun addProfile(profile: Profile) {
     try {
-      if (profile.userId != currentUserId) {
+      if (profile.userId != authenticatedUserId) {
         throw Exception("Access denied: You can only create a profile for yourself.")
       }
 
@@ -61,7 +61,7 @@ class FirestoreProfileRepository(
 
   override suspend fun updateProfile(userId: String, profile: Profile) {
     try {
-      if (userId != currentUserId) {
+      if (userId != authenticatedUserId) {
         throw Exception("Access denied: You can only update your own profile.")
       }
       ValidationUtils.requireId(userId, "userId")
@@ -74,7 +74,7 @@ class FirestoreProfileRepository(
 
   override suspend fun deleteProfile(userId: String) {
     try {
-      if (userId != currentUserId) {
+      if (userId != authenticatedUserId) {
         throw Exception("Access denied: You can only delete your own profile.")
       }
       db.collection(PROFILES_COLLECTION_PATH).document(userId).delete().await()
@@ -205,5 +205,9 @@ class FirestoreProfileRepository(
     } catch (e: Exception) {
       throw Exception("Failed to update student rating for user $userId: ${e.message}")
     }
+  }
+
+  override fun getCurrentUserId(): String {
+    return auth.currentUser?.uid ?: throw IllegalStateException("User not authenticated")
   }
 }

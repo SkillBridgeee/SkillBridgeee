@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.booking.PaymentStatus
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.listing.ListingScreenTestTags
 import java.text.SimpleDateFormat
@@ -42,6 +43,8 @@ private const val PROFILE_ICON_CONTENT_DESC = "Profile Icon"
  * @param bookerProfile Profile of the person who made the booking
  * @param onApprove Callback when approve button is clicked
  * @param onReject Callback when reject button is clicked
+ * @param onPaymentComplete Callback when payment complete button is clicked
+ * @param onPaymentReceived Callback when payment received button is clicked
  * @param modifier Modifier for the card
  */
 @Composable
@@ -50,6 +53,8 @@ fun BookingCard(
     bookerProfile: Profile?,
     onApprove: () -> Unit,
     onReject: () -> Unit,
+    onPaymentComplete: () -> Unit = {},
+    onPaymentReceived: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
   val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
@@ -144,6 +149,23 @@ fun BookingCard(
                             Text(REJECT_BUTTON_TEXT)
                           }
                     }
+              }
+
+              // Payment actions
+              if (booking.paymentStatus == PaymentStatus.PENDING_PAYMENT) {
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = onPaymentComplete,
+                    modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)) {
+                  Text("Payment Complete")
+                }
+              } else if (booking.paymentStatus == PaymentStatus.PAYED) {
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = onPaymentReceived,
+                    modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)) {
+                  Text("Payment Received")
+                }
               }
             }
       }
