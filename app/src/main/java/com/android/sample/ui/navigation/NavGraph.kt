@@ -115,10 +115,6 @@ fun AppNavGraph(
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.HOME) }
       HomeScreen(
           mainPageViewModel = mainPageViewModel,
-          onNavigateToProfile = { profileId ->
-            profileID.value = profileId
-            navController.navigate(NavRoutes.OTHERS_PROFILE)
-          },
           onNavigateToSubjectList = { subject ->
             academicSubject.value = subject
             navController.navigate(NavRoutes.SKILLS)
@@ -128,7 +124,8 @@ fun AppNavGraph(
             if (currentUserId != null) {
               navController.navigate(NavRoutes.createNewSkillRoute(currentUserId))
             }
-          })
+          },
+          onNavigateToListingDetails = { listingId -> navigateToListing(navController, listingId) })
     }
 
     composable(NavRoutes.SKILLS) { backStackEntry ->
