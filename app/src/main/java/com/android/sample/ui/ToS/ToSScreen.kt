@@ -26,9 +26,7 @@ object ToSTestTags {
  * @param onDecline callback when user declines ToS
  */
 @Composable
-fun ToSScreen(
-    onDecline: () -> Unit,
-) {
+fun ToSScreen() {
   Column(
       modifier =
           Modifier.fillMaxSize()
