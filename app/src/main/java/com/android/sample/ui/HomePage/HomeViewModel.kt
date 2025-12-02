@@ -7,6 +7,7 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
@@ -25,7 +26,8 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val welcomeMessage: String = "Welcome back!",
     val subjects: List<MainSubject> = MainSubject.entries.toList(),
-    val proposals: List<Proposal> = emptyList()
+    val proposals: List<Proposal> = emptyList(),
+    val requests: List<Request> = emptyList()
 )
 
 /**
@@ -49,29 +51,29 @@ class MainPageViewModel(
   }
 
   /**
-   * Loads all data required for the Home screen.
-   * - Fetches all listings and profiles
-   * - Matches listings with their creator profiles to build the tutor list
-   * - Retrieves the current user's name and builds a welcome message
-   * - Updates the UI state with the prepared data
+   * Loads and prepares data for the Home UI state.
    *
-   * In case of failure, logs the error and falls back to a default UI state.
+   * This function fetches proposals and requests from the listing repository, filters and sorts
+   * them to get the top 10 active items, and retrieves a personalized welcome message. It then
+   * updates the [uiState] with this data. In case of any errors during data fetching, it logs a
+   * warning and falls back to a default empty state.
    */
   fun load() {
     viewModelScope.launch {
       try {
         val allProposals = listingRepository.getProposals()
+        val allRequests = listingRepository.getRequests()
         val welcomeMsg = getWelcomeMsg()
 
-        // "Top" proposals: active + most recent first
         val topProposals =
             allProposals.filter { it.isActive }.sortedByDescending { it.createdAt }.take(10)
 
+        val topRequests =
+            allRequests.filter { it.isActive }.sortedByDescending { it.createdAt }.take(10)
+
         _uiState.value =
             HomeUiState(
-                welcomeMessage = welcomeMsg,
-                subjects = MainSubject.entries.toList(),
-                proposals = topProposals)
+                welcomeMessage = welcomeMsg, proposals = topProposals, requests = topRequests)
       } catch (e: Exception) {
         Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
         _uiState.value = HomeUiState()

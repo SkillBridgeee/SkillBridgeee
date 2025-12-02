@@ -23,10 +23,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.ui.components.HorizontalScrollHint
 import com.android.sample.ui.components.ProposalCard
+import com.android.sample.ui.components.RequestCard
 import com.android.sample.ui.theme.PrimaryColor
 
 /**
@@ -88,6 +90,15 @@ fun HomeScreen(
           ProposalsSection(
               proposals = uiState.proposals,
               onProposalClick = { proposal -> onNavigateToProfile(proposal.creatorUserId) })
+
+          Spacer(modifier = Modifier.height(20.dp))
+
+          RequestsSection(
+              requests = uiState.requests,
+              onRequestClick = { request ->
+                // later: navigate to request details or to a list filtered by this skill
+                // e.g. onNavigateToRequestDetails(request.listingId)
+              })
         }
       }
 }
@@ -179,7 +190,7 @@ fun SubjectCard(
 fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (Proposal) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
-        text = "Top Listings",
+        text = "Top Rated Proposals",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
         modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION))
@@ -195,6 +206,32 @@ fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (Proposal) -> U
                 // ProposalCard gives us listingId (String), but we want Proposal -> ignore arg
                 onClick = { _ -> onProposalClick(proposal) },
                 modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_CARD))
+          }
+        }
+  }
+}
+/**
+ * Displays a list of recent request listings.
+ *
+ * Shows a section title and a scrollable list of request cards.
+ */
+@Composable
+fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
+  Column(modifier = Modifier.padding(horizontal = 10.dp)) {
+    Text(
+        text = "Recent Requests",
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+    )
+
+    Spacer(modifier = Modifier.height(10.dp))
+
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+          items(requests) { request ->
+            RequestCard(
+                request = request, onClick = onRequestClick // will receive request.listingId
+                )
           }
         }
   }
