@@ -52,8 +52,8 @@ class HomeScreenProfileNavigationTest {
           composable("home") {
             ProposalsSection(
                 proposals = listOf(proposal),
-                onProposalClick = { p ->
-                  clickedCreatorId.value = p.creatorUserId
+                onProposalClick = { listingId ->
+                  clickedCreatorId.value = listingId
                   navController.navigate(NavRoutes.OTHERS_PROFILE)
                 })
           }

@@ -85,8 +85,7 @@ class HomeScreenTest {
 
     composeRule.setContent {
       MaterialTheme {
-        ProposalsSection(
-            proposals = proposals, onProposalClick = { p -> clickedProposalId = p.listingId })
+        ProposalsSection(proposals = proposals, onProposalClick = { id -> clickedProposalId = id })
       }
     }
 

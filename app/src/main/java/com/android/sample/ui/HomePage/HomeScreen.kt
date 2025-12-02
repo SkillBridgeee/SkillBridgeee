@@ -65,7 +65,8 @@ fun HomeScreen(
     mainPageViewModel: MainPageViewModel = MainPageViewModel(),
     onNavigateToProfile: (String) -> Unit = {},
     onNavigateToSubjectList: (MainSubject) -> Unit = {},
-    onNavigateToAddNewListing: () -> Unit
+    onNavigateToAddNewListing: () -> Unit,
+    onNavigateToListingDetails: (String) -> Unit,
 ) {
   val uiState by mainPageViewModel.uiState.collectAsState()
 
@@ -88,17 +89,11 @@ fun HomeScreen(
           Spacer(modifier = Modifier.height(20.dp))
 
           ProposalsSection(
-              proposals = uiState.proposals,
-              onProposalClick = { proposal -> onNavigateToProfile(proposal.creatorUserId) })
+              proposals = uiState.proposals, onProposalClick = onNavigateToListingDetails)
 
           Spacer(modifier = Modifier.height(20.dp))
 
-          RequestsSection(
-              requests = uiState.requests,
-              onRequestClick = { request ->
-                // later: navigate to request details or to a list filtered by this skill
-                // e.g. onNavigateToRequestDetails(request.listingId)
-              })
+          RequestsSection(requests = uiState.requests, onRequestClick = onNavigateToListingDetails)
         }
       }
 }
@@ -187,7 +182,7 @@ fun SubjectCard(
  * Shows a section title and a scrollable list of proposal cards.
  */
 @Composable
-fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (Proposal) -> Unit) {
+fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
         text = "Top Rated Proposals",
@@ -203,13 +198,13 @@ fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (Proposal) -> U
           items(proposals) { proposal ->
             ProposalCard(
                 proposal = proposal,
-                // ProposalCard gives us listingId (String), but we want Proposal -> ignore arg
-                onClick = { _ -> onProposalClick(proposal) },
+                onClick = onProposalClick,
                 modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_CARD))
           }
         }
   }
 }
+
 /**
  * Displays a list of recent request listings.
  *
@@ -230,7 +225,7 @@ fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
         modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
           items(requests) { request ->
             RequestCard(
-                request = request, onClick = onRequestClick // will receive request.listingId
+                request = request, onClick = onRequestClick // gets request.listingId
                 )
           }
         }

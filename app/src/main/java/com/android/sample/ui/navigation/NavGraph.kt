@@ -127,7 +127,8 @@ fun AppNavGraph(
             if (currentUserId != null) {
               navController.navigate(NavRoutes.createNewSkillRoute(currentUserId))
             }
-          })
+          },
+          onNavigateToListingDetails = { listingId -> navigateToListing(navController, listingId) })
     }
 
     composable(NavRoutes.SKILLS) { backStackEntry ->
