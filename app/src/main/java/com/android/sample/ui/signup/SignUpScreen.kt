@@ -64,7 +64,7 @@ object SignUpScreenTestTags {
 fun SignUpScreen(
     vm: SignUpViewModel,
     onSubmitSuccess: () -> Unit = {},
-    onNavigateToToS: () -> Unit
+    onNavigateToToS: () -> Unit = {}
 ) {
   val state by vm.state.collectAsState()
 

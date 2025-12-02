@@ -3,7 +3,6 @@ package com.android.sample.ui.tos
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -121,20 +120,5 @@ fun ToSScreen(
                   style = MaterialTheme.typography.bodyMedium,
                   modifier = Modifier.padding(bottom = 16.dp))
             }
-
-        // Error Message
-        if (false) { // Replace with actual error condition
-          Surface(
-              modifier = Modifier.fillMaxWidth().padding(16.dp),
-              color = MaterialTheme.colorScheme.errorContainer,
-              shape = RoundedCornerShape(8.dp)) {
-                Text(
-                    text = "Error message here", // Replace with actual error message
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier =
-                        Modifier.fillMaxWidth().testTag(ToSTestTags.ERROR_TEXT).padding(12.dp))
-              }
-        }
       }
 }
