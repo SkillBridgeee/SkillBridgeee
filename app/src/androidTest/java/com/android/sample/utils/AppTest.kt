@@ -82,7 +82,6 @@ abstract class AppTest() {
     bookingRepository = createInitializedBookingRepo()
     ratingRepository = createInitializedRatingRepo()
 
-
     val currentUserId = profileRepository.getCurrentUserId()
     UserSessionManager.setCurrentUserId(currentUserId)
 
@@ -114,8 +113,7 @@ abstract class AppTest() {
             profileRepository = profileRepository,
             ratingRepository = ratingRepository)
 
-      discussionViewModel = DiscussionViewModel(OverViewConvRepositoryProvider.repository)
-
+    discussionViewModel = DiscussionViewModel(OverViewConvRepositoryProvider.repository)
   }
 
   /**

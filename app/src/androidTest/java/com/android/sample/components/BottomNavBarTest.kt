@@ -125,7 +125,7 @@ class BottomNavBarTest {
               AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
           newListingViewModel = newListingViewModel,
           bookingDetailsViewModel = bookingDetailsViewModel,
-            discussionViewModel = discussionViewModel,
+          discussionViewModel = discussionViewModel,
           onGoogleSignIn = {})
       BottomNavBar(navController = controller)
     }

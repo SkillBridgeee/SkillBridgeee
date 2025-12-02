@@ -106,8 +106,7 @@ class BookingDetailsScreenTest {
 
         override suspend fun deactivateListing(listingId: String) {}
 
-        override suspend fun searchBySkill(skill: Skill) =
-            emptyList<Listing>()
+        override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
 
         override suspend fun searchByLocation(location: Location, radiusKm: Double) =
             emptyList<Listing>()
@@ -133,8 +132,7 @@ class BookingDetailsScreenTest {
         override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
             emptyList<Profile>()
 
-        override suspend fun getSkillsForUser(userId: String) =
-            emptyList<Skill>()
+        override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
 
         override suspend fun updateTutorRatingFields(
             userId: String,
@@ -168,9 +166,9 @@ class BookingDetailsScreenTest {
       BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
     }
 
-      composeTestRule.waitUntil {
-          composeTestRule.onAllNodesWithText("John Doe").fetchSemanticsNodes().isNotEmpty()
-      }
+    composeTestRule.waitUntil {
+      composeTestRule.onAllNodesWithText("John Doe").fetchSemanticsNodes().isNotEmpty()
+    }
 
     // Vérifie les sections visibles
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertExists()
@@ -235,8 +233,7 @@ class BookingDetailsScreenTest {
         override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
             emptyList<Profile>()
 
-        override suspend fun getSkillsForUser(userId: String) =
-            emptyList<Skill>()
+        override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
 
         override suspend fun updateTutorRatingFields(
             userId: String,
@@ -291,7 +288,7 @@ class BookingDetailsScreenTest {
   fun bookingDetailsScreen_errorScreen() {
     val vm = fakeViewModelError()
     composeTestRule.setContent {
-      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = { })
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
     }
 
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertIsDisplayed()
@@ -366,8 +363,7 @@ class BookingDetailsScreenTest {
 
         override suspend fun deactivateListing(listingId: String) {}
 
-        override suspend fun searchBySkill(skill: Skill) =
-            emptyList<Listing>()
+        override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
 
         override suspend fun searchByLocation(location: Location, radiusKm: Double) =
             emptyList<Listing>()
