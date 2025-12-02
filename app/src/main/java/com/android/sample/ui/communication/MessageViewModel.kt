@@ -37,11 +37,14 @@ class MessageViewModel(
   val uiState: StateFlow<ConvUIState> = _uiState.asStateFlow()
 
   private var currentConvId: String? = null
-
   private var currentUserId: String? = null
   private var otherId: String? = null
-
   private var loadJob: Job? = null
+
+  private val userError: String = "User not logged in"
+  private val convNotFoundError: String = "Conversation not found"
+  private val listenMsgError: String = "Failed to receive messages"
+  private val sendMsgError: String = "Failed ot send message"
 
   /** Start listening to real-time messages for a given conversation ID. */
   fun loadConversation(convId: String) {
@@ -55,7 +58,7 @@ class MessageViewModel(
           // Get current user id
           val userId = UserSessionManager.getCurrentUserId()
           if (userId == null) {
-            _uiState.update { it.copy(error = "User not logged in") }
+            _uiState.update { it.copy(error = userError) }
             return@launch
           }
           currentUserId = userId
@@ -64,7 +67,7 @@ class MessageViewModel(
           // Fetch the conversation to find the other user
           val conversation = convManager.getConv(convId)
           if (conversation == null) {
-            _uiState.update { it.copy(error = "Conversation not found") }
+            _uiState.update { it.copy(error = convNotFoundError) }
             return@launch
           }
 
@@ -77,9 +80,7 @@ class MessageViewModel(
           convManager
               .listenMessages(convId)
               .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
-              .catch { e ->
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Unknow error") }
-              }
+              .catch { e -> _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
               .collect { messages ->
                 convManager.resetUnreadCount(convId = convId, userId = currentUserId!!)
                 _uiState.update {
@@ -113,7 +114,7 @@ class MessageViewModel(
         convManager.sendMessage(convId, message)
         _uiState.update { it.copy(currentMessage = "") }
       } catch (e: Exception) {
-        _uiState.update { it.copy(error = e.message ?: "Error to send Message") }
+        _uiState.update { it.copy(error = sendMsgError) }
       }
     }
   }
