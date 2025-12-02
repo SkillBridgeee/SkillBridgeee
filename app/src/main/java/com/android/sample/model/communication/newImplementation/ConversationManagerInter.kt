@@ -26,4 +26,6 @@ interface ConversationManagerInter {
   suspend fun getConv(convId: String): ConversationNew?
 
   suspend fun getOverViewConvUser(userId: String): List<OverViewConversation>
+
+  fun getMessageNewUid(): String
 }
