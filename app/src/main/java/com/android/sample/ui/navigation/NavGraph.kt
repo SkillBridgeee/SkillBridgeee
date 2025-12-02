@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -185,16 +187,34 @@ fun AppNavGraph(
           // Debug logging
           Log.d(TAG, "SignUp - Received email parameter: $email")
 
-          // Create ViewModel with email parameter so it's available immediately
-          val viewModel = SignUpViewModel(initialEmail = email)
+          // Use viewModel() to ensure single instance per navigation entry
+          val viewModel: SignUpViewModel =
+              viewModel(
+                  factory =
+                      object : ViewModelProvider.Factory {
+                        @Suppress("UNCHECKED_CAST")
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                          return SignUpViewModel(initialEmail = email) as T
+                        }
+                      })
 
           SignUpScreen(
               vm = viewModel,
               onSubmitSuccess = {
-                // Navigate to login after successful signup
+                // Email/password users - navigate to login to verify and sign in
                 navController.navigate(NavRoutes.LOGIN) {
-                  popUpTo(NavRoutes.SIGNUP_BASE) { inclusive = true }
+                  popUpTo(0) { inclusive = false } // Clear entire backstack except LOGIN
                 }
+              },
+              onGoogleSignUpSuccess = {
+                // Google users - navigate directly to HOME (stay authenticated)
+                navController.navigate(NavRoutes.HOME) {
+                  popUpTo(0) { inclusive = true } // Clear entire backstack including LOGIN
+                }
+              },
+              onBackPressed = {
+                // User pressed back during Google signup - navigate to LOGIN
+                navController.navigate(NavRoutes.LOGIN) { popUpTo(0) { inclusive = false } }
               })
         }
     composable(route = NavRoutes.OTHERS_PROFILE) {

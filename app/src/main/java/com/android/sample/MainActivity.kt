@@ -131,19 +131,65 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val navController = rememberNavController()
   val authResult by authViewModel.authResult.collectAsStateWithLifecycle()
 
-  // Navigate based on authentication result
+  // One-time auto-login check on app start
+  LaunchedEffect(Unit) {
+    // Wait a brief moment for auth state to initialize
+    kotlinx.coroutines.delay(100)
+
+    val currentUserId = UserSessionManager.getCurrentUserId()
+    if (currentUserId != null) {
+      Log.d("MainActivity", "Auto-login: Found authenticated user: $currentUserId")
+
+      // Check if this user has a profile and is verified
+      try {
+        val profile = ProfileRepositoryProvider.repository.getProfile(currentUserId)
+        val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+
+        if (profile != null) {
+          // Check email verification for email/password users
+          val isEmailVerified = firebaseUser?.isEmailVerified ?: true
+
+          if (isEmailVerified) {
+            // User has profile and is verified - navigate to HOME
+            Log.d(
+                "MainActivity", "Auto-login: User has profile and is verified - navigating to HOME")
+            navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+          } else {
+            // User has profile but email not verified - sign out and stay at LOGIN
+            Log.d("MainActivity", "Auto-login: Email not verified - signing out")
+            authViewModel.signOut()
+          }
+        } else {
+          // User is authenticated but has no profile - sign them out
+          Log.d("MainActivity", "Auto-login: User has no profile - signing out")
+          authViewModel.signOut()
+        }
+      } catch (e: Exception) {
+        // Error fetching profile - sign out to be safe
+        Log.e("MainActivity", "Auto-login: Error checking profile - signing out", e)
+        authViewModel.signOut()
+      }
+    } else {
+      Log.d("MainActivity", "Auto-login: No user authenticated - staying at LOGIN")
+    }
+  }
+
+  // Navigate based on authentication result from explicit login/signup actions
   LaunchedEffect(authResult) {
-    when (authResult) {
+    when (val result = authResult) {
       is AuthResult.Success -> {
+        Log.d("MainActivity", "Auth success - navigating to HOME")
         navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+        authViewModel.clearAuthResult() // Clear after navigation
       }
       is AuthResult.RequiresSignUp -> {
         // Navigate to signup screen when Google user doesn't have a profile
-        val email = (authResult as AuthResult.RequiresSignUp).email
+        val email = result.email
         Log.d("MainActivity", "Google user requires sign up, email: $email")
         val route = NavRoutes.createSignUpRoute(email)
         Log.d("MainActivity", "Navigating to route: $route")
         navController.navigate(route) { popUpTo(NavRoutes.LOGIN) { inclusive = false } }
+        authViewModel.clearAuthResult() // Clear after navigation
       }
       else -> {
         // No navigation for Error or null

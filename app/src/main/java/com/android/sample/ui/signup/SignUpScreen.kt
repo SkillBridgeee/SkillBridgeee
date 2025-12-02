@@ -1,6 +1,7 @@
 package com.android.sample.ui.signup
 
 import android.content.pm.PackageManager
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -59,18 +60,33 @@ object SignUpScreenTestTags {
 }
 
 @Composable
-fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
+fun SignUpScreen(
+    vm: SignUpViewModel,
+    onSubmitSuccess: () -> Unit = {},
+    onGoogleSignUpSuccess: () -> Unit = {},
+    onBackPressed: () -> Unit = {}
+) {
   val state by vm.state.collectAsState()
 
-  // Navigate on success (Google Sign-In) or when verification email is sent (Email/Password)
-  LaunchedEffect(state.submitSuccess, state.verificationEmailSent) {
-    if (state.submitSuccess || state.verificationEmailSent) {
+  // Handle back button press for Google signup - sign out if not completed
+  BackHandler(
+      enabled = state.isGoogleSignUp && !state.submitSuccess && !state.verificationEmailSent) {
+        vm.onSignUpAbandoned()
+        onBackPressed()
+      }
+
+  // Navigate differently based on signup type:
+  // - Google users (isGoogleSignUp=true, submitSuccess=true) -> go to HOME
+  // - Email users (verificationEmailSent=true) -> go to LOGIN
+  LaunchedEffect(state.submitSuccess, state.verificationEmailSent, state.isGoogleSignUp) {
+    if (state.submitSuccess && state.isGoogleSignUp) {
+      // Google user completed signup - navigate to HOME (stay authenticated)
+      onGoogleSignUpSuccess()
+    } else if (state.verificationEmailSent) {
+      // Email user completed signup - navigate to LOGIN (need to verify and login)
       onSubmitSuccess()
     }
   }
-
-  // Clean up if user navigates away without completing signup
-  DisposableEffect(Unit) { onDispose { vm.onSignUpAbandoned() } }
 
   val focusManager = LocalFocusManager.current
 

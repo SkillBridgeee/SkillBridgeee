@@ -67,11 +67,17 @@ class MainPageViewModel(
         val tutorProfiles = getTutors(allProposals, allProfiles)
         val welcomeMsg = getWelcomeMsg()
 
-        _uiState.value = HomeUiState(welcomeMessage = welcomeMsg, tutors = tutorProfiles)
+        // Only update the welcome message if we got a non-null result
+        // This prevents the message from disappearing if there's a temporary auth hiccup
+        _uiState.value =
+            HomeUiState(
+                welcomeMessage = welcomeMsg ?: _uiState.value.welcomeMessage,
+                tutors = tutorProfiles)
       } catch (e: Exception) {
         // Log the error for debugging while providing a safe fallback UI state
         Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        _uiState.value = HomeUiState()
+        // Keep existing welcome message instead of resetting to default
+        _uiState.value = _uiState.value.copy(tutors = emptyList())
       }
     }
   }
@@ -116,10 +122,17 @@ class MainPageViewModel(
    * message if the name is available. If the username cannot be fetched, it falls back to a generic
    * welcome message.
    *
-   * @return A welcome message string, personalized when possible.
+   * @return A welcome message string, personalized when possible, or null if user lookup failed.
    */
-  private suspend fun getWelcomeMsg(): String {
+  private suspend fun getWelcomeMsg(): String? {
     val userName = runCatching { getUserName() }.getOrNull()
-    return if (userName != null) "Welcome back, $userName!" else "Welcome back!"
+    // If we got a user ID but no profile, return generic message
+    // If we couldn't get user ID at all, return null to keep previous message
+    val userId = UserSessionManager.getCurrentUserId()
+    return if (userId != null) {
+      if (userName != null) "Welcome back, $userName!" else "Welcome back!"
+    } else {
+      null // No user ID means temporary auth issue, keep previous message
+    }
   }
 }
