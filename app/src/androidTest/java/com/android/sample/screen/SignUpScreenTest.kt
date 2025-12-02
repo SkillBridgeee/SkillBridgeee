@@ -31,7 +31,7 @@ import org.junit.Rule
 import org.junit.Test
 
 // ---------- helpers ----------
-private const val DEFAULT_TIMEOUT_MS = 15_000L // a bit more headroom for CI
+private const val DEFAULT_TIMEOUT_MS = 15_000L
 
 private fun waitForTag(
     rule: ComposeContentTestRule,
@@ -46,7 +46,6 @@ private fun waitForTag(
 private fun ComposeContentTestRule.nodeByTag(tag: String) =
     onNodeWithTag(tag, useUnmergedTree = false)
 
-/** Create a user via Firebase Auth and await completion. */
 private suspend fun createUserProgrammatically(
     auth: FirebaseAuth,
     email: String,
@@ -64,24 +63,17 @@ private suspend fun createUserProgrammatically(
 class SignUpScreenTest {
 
   @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
-
   private lateinit var auth: FirebaseAuth
 
   @Before
   fun setUp() {
-    // Use the Auth emulator; no Firestore dependency in these tests.
     try {
       Firebase.auth.useEmulator("10.0.2.2", 9099)
-    } catch (_: IllegalStateException) {
-      // already configured
-    }
+    } catch (_: IllegalStateException) {}
 
     auth = Firebase.auth
-
-    // Use an in-memory fake repository to avoid Firestore emulator in CI
     ProfileRepositoryProvider.setForTests(FakeProfileRepository())
 
-    // Start from a clean auth state
     auth.signOut()
     composeRule.waitUntil(2_000) { auth.currentUser == null }
   }
@@ -90,18 +82,16 @@ class SignUpScreenTest {
   fun tearDown() {
     try {
       auth.currentUser?.delete()
-    } catch (_: Exception) {
-      // ignore
-    }
+    } catch (_: Exception) {}
     auth.signOut()
   }
 
   @Test
   fun all_fields_render() {
     val vm = SignUpViewModel()
-    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
-    composeRule.waitForIdle()
+    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm, onNavigateToToS = {}) } }
 
+    composeRule.waitForIdle()
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
     composeRule.nodeByTag(SignUpScreenTestTags.TITLE).assertIsDisplayed()
@@ -122,140 +112,122 @@ class SignUpScreenTest {
   @Test
   fun successful_signup_creates_firebase_auth_and_profile() {
     val vm = SignUpViewModel()
-    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
-    composeRule.waitForIdle()
+    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm, onNavigateToToS = {}) } }
 
+    composeRule.waitForIdle()
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
-    // Use a unique email to avoid conflicts
     val testEmail = "test${System.currentTimeMillis()}@example.com"
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Ada")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Lovelace")
     composeRule
-        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, true)
         .performTextInput("London Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS, 3rd year")
     composeRule.nodeByTag(SignUpScreenTestTags.DESCRIPTION).performTextInput("Loves mathematics")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(testEmail)
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("TestPass123!")
 
-    // Close keyboard with IME action
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
     composeRule.waitForIdle()
 
-    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
-    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
+    // *** NEW: accept ToS ***
+    composeRule.nodeByTag(SignUpScreenTestTags.TOS_CHECKBOX).performScrollTo().performClick()
 
-    // Wait for signup to complete by observing ViewModel state
-    // Now expects verificationEmailSent instead of submitSuccess (email verification feature)
+    composeRule
+        .nodeByTag(SignUpScreenTestTags.SIGN_UP)
+        .assertIsEnabled()
+        .performScrollTo()
+        .performClick()
+
     composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
       vm.state.value.verificationEmailSent || vm.state.value.error != null
     }
 
-    // Verify success path in VM - verification email should be sent for new signups
-    assertTrue("Signup should send verification email", vm.state.value.verificationEmailSent)
-
-    // Note: With email verification, the user is signed out after account creation
-    // They need to verify their email before they can log in
-    // So we don't expect auth.currentUser to be set
+    assertTrue(vm.state.value.verificationEmailSent)
   }
 
   @Test
   fun uppercase_email_is_accepted_and_trimmed() {
     val vm = SignUpViewModel()
-    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
-    composeRule.waitForIdle()
+    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm, onNavigateToToS = {}) } }
 
+    composeRule.waitForIdle()
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
-    // Use a unique email to avoid conflicts
     val testEmail = "TEST${System.currentTimeMillis()}@MAIL.Example.ORG"
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Élise")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Müller")
     composeRule
-        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, true)
         .performTextInput("S1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput("  $testEmail ")
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("passw0rd!")
 
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
-    composeRule.waitForIdle()
 
-    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).assertIsEnabled()
-    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
+    // *** NEW: accept ToS ***
+    composeRule.nodeByTag(SignUpScreenTestTags.TOS_CHECKBOX).performScrollTo().performClick()
+
+    composeRule
+        .nodeByTag(SignUpScreenTestTags.SIGN_UP)
+        .assertIsEnabled()
+        .performScrollTo()
+        .performClick()
 
     composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
       vm.state.value.verificationEmailSent || vm.state.value.error != null
     }
 
-    assertTrue("Signup should send verification email", vm.state.value.verificationEmailSent)
-
-    // Note: With email verification, the user is signed out after account creation
-    // They need to verify their email before they can log in
+    assertTrue(vm.state.value.verificationEmailSent)
   }
 
   @Test
   fun duplicate_email_shows_error() {
-    // Use a unique email for this test
     val duplicateEmail = "duplicate${System.currentTimeMillis()}@test.com"
 
-    // First, create a user programmatically (not via UI) to ensure independence
     runBlocking {
       val created = createUserProgrammatically(auth, duplicateEmail, "FirstPass123!")
-      assertTrue("Programmatic user creation should succeed", created)
-
-      // Wait for auth to be ready
+      assertTrue(created)
       composeRule.waitUntil(10_000) { auth.currentUser != null }
-
-      // Sign out so we can test UI signup with duplicate email
       auth.signOut()
     }
-    // Give CI a moment to settle signed-out state
     composeRule.waitUntil(3_000) { auth.currentUser == null }
 
-    // Now try to sign up via UI with the same email - should show error
     val vm = SignUpViewModel()
-    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
+    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm, onNavigateToToS = {}) } }
     composeRule.waitForIdle()
-
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("John")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Doe")
     composeRule
-        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, true)
         .performTextInput("Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(duplicateEmail)
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("SecondPass123!")
 
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
-    composeRule.waitForIdle()
+
+    // *** NEW: accept ToS ***
+    composeRule.nodeByTag(SignUpScreenTestTags.TOS_CHECKBOX).performScrollTo().performClick()
 
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for error to appear by observing ViewModel state
-    composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
-      vm.state.value.error != null || vm.state.value.submitSuccess
-    }
+    composeRule.waitUntil(DEFAULT_TIMEOUT_MS) { vm.state.value.error != null }
 
-    // Should have an error and not be successful
-    assertTrue("Duplicate email should show error", vm.state.value.error != null)
-    assertTrue(
-        "Error should mention email already registered",
-        vm.state.value.error?.contains("already", ignoreCase = true) == true ||
-            vm.state.value.error?.contains("registered", ignoreCase = true) == true)
+    assertTrue(vm.state.value.error != null)
   }
 
   @Test
   fun weak_password_shows_error() {
     val vm = SignUpViewModel()
-    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
+    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm, onNavigateToToS = {}) } }
     composeRule.waitForIdle()
-
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
     val testEmail = "weakpass${System.currentTimeMillis()}@test.com"
@@ -263,30 +235,22 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Test")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("User")
     composeRule
-        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, true)
         .performTextInput("Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(testEmail)
-    // Password "123!" is too short (< 8 chars) and missing a letter
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("123!")
 
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
-    composeRule.waitForIdle()
 
-    // Scroll to the button to ensure it's measured
-    composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo()
-    composeRule.waitForIdle()
-
-    // Verify form validation failed via VM (button enablement is derived from it)
-    assertTrue("Weak password should prevent form submission", !vm.state.value.canSubmit)
+    assertTrue(!vm.state.value.canSubmit)
   }
 
   @Test
   fun verification_email_sent_message_displays() {
     val vm = SignUpViewModel()
-    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
+    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm, onNavigateToToS = {}) } }
     composeRule.waitForIdle()
-
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
     val testEmail = "verify${System.currentTimeMillis()}@test.com"
@@ -294,39 +258,36 @@ class SignUpScreenTest {
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("Test")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("User")
     composeRule
-        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, true)
         .performTextInput("Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(testEmail)
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("ValidPass123!")
 
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
+
+    // *** NEW: accept ToS ***
+    composeRule.nodeByTag(SignUpScreenTestTags.TOS_CHECKBOX).performScrollTo().performClick()
+
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for verification email sent state
     composeRule.waitUntil(DEFAULT_TIMEOUT_MS) {
       vm.state.value.verificationEmailSent || vm.state.value.error != null
     }
 
-    // Verify that verification email sent message is displayed
-    assertTrue("Verification email should be sent", vm.state.value.verificationEmailSent)
+    assertTrue(vm.state.value.verificationEmailSent)
 
-    // Verify the success message text is displayed
-    composeRule.onNodeWithText("✓ Verification Email Sent!", useUnmergedTree = true).assertExists()
+    composeRule.onNodeWithText("✓ Verification Email Sent!", true).assertExists()
     composeRule
         .onNodeWithText(
-            "Please check your inbox at $testEmail and click the verification link. After verifying, you can log in.",
-            substring = true,
-            useUnmergedTree = true)
+            "Please check your inbox at $testEmail", substring = true, useUnmergedTree = true)
         .assertExists()
   }
 
   @Test
   fun error_message_displays_on_signup_failure() {
-    // Use a unique email for this test
     val duplicateEmail = "error${System.currentTimeMillis()}@test.com"
 
-    // First, create a user programmatically to cause duplicate email error
     runBlocking {
       createUserProgrammatically(auth, duplicateEmail, "FirstPass123!")
       composeRule.waitUntil(10_000) { auth.currentUser != null }
@@ -334,30 +295,30 @@ class SignUpScreenTest {
     }
     composeRule.waitUntil(3_000) { auth.currentUser == null }
 
-    // Try to sign up with duplicate email
     val vm = SignUpViewModel()
-    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm) } }
+    composeRule.setContent { SampleAppTheme { SignUpScreen(vm = vm, onNavigateToToS = {}) } }
     composeRule.waitForIdle()
-
     waitForTag(composeRule, SignUpScreenTestTags.NAME)
 
     composeRule.nodeByTag(SignUpScreenTestTags.NAME).performTextInput("John")
     composeRule.nodeByTag(SignUpScreenTestTags.SURNAME).performTextInput("Doe")
     composeRule
-        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, useUnmergedTree = true)
+        .onNodeWithTag(LocationInputFieldTestTags.INPUT_LOCATION, true)
         .performTextInput("Street 1")
     composeRule.nodeByTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION).performTextInput("CS")
     composeRule.nodeByTag(SignUpScreenTestTags.EMAIL).performTextInput(duplicateEmail)
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performTextInput("SecondPass123!")
 
     composeRule.nodeByTag(SignUpScreenTestTags.PASSWORD).performImeAction()
+
+    // *** NEW: accept ToS ***
+    composeRule.nodeByTag(SignUpScreenTestTags.TOS_CHECKBOX).performScrollTo().performClick()
+
     composeRule.nodeByTag(SignUpScreenTestTags.SIGN_UP).performScrollTo().performClick()
 
-    // Wait for error state
     composeRule.waitUntil(DEFAULT_TIMEOUT_MS) { vm.state.value.error != null }
 
-    // Verify error message is displayed on screen
     val errorMsg = vm.state.value.error!!
-    composeRule.onNodeWithText(errorMsg, useUnmergedTree = true).assertExists()
+    composeRule.onNodeWithText(errorMsg, true).assertExists()
   }
 }

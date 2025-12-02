@@ -55,7 +55,7 @@ object SignUpScreenTestTags {
   const val EMAIL = "SignUpScreenTestTags.EMAIL"
   const val PASSWORD = "SignUpScreenTestTags.PASSWORD"
   const val SIGN_UP = "SignUpScreenTestTags.SIGN_UP"
-  const val TOS_CHECKBOX_TAG = "SignUpScreenTestTags.TOS_CHECKBOX"
+  const val TOS_CHECKBOX = "SignUpScreenTestTags.TOS_CHECKBOX"
 
   const val PIN_CONTENT_DESC = "Use my location"
 }
@@ -306,6 +306,7 @@ fun SignUpScreen(
               verticalAlignment = Alignment.CenterVertically,
               modifier = Modifier.padding(top = 8.dp)) {
                 Checkbox(
+                    modifier = Modifier.testTag(SignUpScreenTestTags.TOS_CHECKBOX),
                     checked = isToSChecked,
                     onCheckedChange = { isToSChecked = it },
                     colors = CheckboxDefaults.colors(checkedColor = TurquoisePrimary))
