@@ -89,12 +89,12 @@ class HomeScreenTest {
       }
     }
 
-    composeRule.onNodeWithTag(HomeScreenTestTags.TOP_TUTOR_SECTION).assertIsDisplayed()
-    composeRule.onNodeWithTag(HomeScreenTestTags.TUTOR_LIST).assertIsDisplayed()
-    composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD).assertCountEquals(2)
+    composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_SECTION).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_LIST).assertIsDisplayed()
+    composeRule.onAllNodesWithTag(HomeScreenTestTags.PROPOSAL_CARD).assertCountEquals(2)
 
     // Click the first proposal card
-    composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD)[0].performClick()
+    composeRule.onAllNodesWithTag(HomeScreenTestTags.PROPOSAL_CARD)[0].performClick()
     assertEquals(proposal1.listingId, clickedProposalId)
   }
 
@@ -109,6 +109,6 @@ class HomeScreenTest {
   fun proposalsSection_handlesEmptyListGracefully() {
     composeRule.setContent { MaterialTheme { ProposalsSection(emptyList()) { /* no-op */} } }
 
-    composeRule.onNodeWithTag(HomeScreenTestTags.TOP_TUTOR_SECTION).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_SECTION).assertIsDisplayed()
   }
 }

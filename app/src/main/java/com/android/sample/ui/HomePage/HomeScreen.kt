@@ -41,9 +41,14 @@ object HomeScreenTestTags {
   const val EXPLORE_SKILLS_SECTION = "exploreSkillsSection"
   const val ALL_SUBJECT_LIST = "allSubjectList"
   const val SKILL_CARD = "skillCard"
-  const val TOP_TUTOR_SECTION = "topTutorSection"
-  const val TUTOR_CARD = "tutorCard"
-  const val TUTOR_LIST = "tutorList"
+  const val PROPOSAL_SECTION = "proposalSection"
+  const val PROPOSAL_CARD = "proposalCard"
+  const val PROPOSAL_LIST = "proposalList"
+
+  const val REQUEST_SECTION = "requestSection"
+  const val REQUEST_CARD = "requestCard"
+  const val REQUEST_LIST = "requestList"
+
   const val FAB_ADD = "fabAdd"
 }
 
@@ -63,7 +68,6 @@ object HomeScreenTestTags {
 @Composable
 fun HomeScreen(
     mainPageViewModel: MainPageViewModel = MainPageViewModel(),
-    onNavigateToProfile: (String) -> Unit = {},
     onNavigateToSubjectList: (MainSubject) -> Unit = {},
     onNavigateToAddNewListing: () -> Unit,
     onNavigateToListingDetails: (String) -> Unit,
@@ -185,21 +189,21 @@ fun SubjectCard(
 fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
-        text = "Top Rated Proposals",
+        "Top Rated Proposals",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
-        modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION))
+        modifier = Modifier.testTag(HomeScreenTestTags.PROPOSAL_SECTION))
 
     Spacer(modifier = Modifier.height(10.dp))
 
     LazyColumn(
-        modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_LIST).fillMaxWidth(),
+        modifier = Modifier.testTag(HomeScreenTestTags.PROPOSAL_LIST).fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)) {
           items(proposals) { proposal ->
             ProposalCard(
                 proposal = proposal,
                 onClick = onProposalClick,
-                modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_CARD))
+                modifier = Modifier.testTag(HomeScreenTestTags.PROPOSAL_CARD))
           }
         }
   }

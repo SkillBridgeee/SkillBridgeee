@@ -67,8 +67,8 @@ class HomeScreenProfileNavigationTest {
       }
     }
 
-    composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD).assertCountEquals(1)
-    composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD)[0].performClick()
+    composeRule.onAllNodesWithTag(HomeScreenTestTags.PROPOSAL_CARD).assertCountEquals(1)
+    composeRule.onAllNodesWithTag(HomeScreenTestTags.PROPOSAL_CARD)[0].performClick()
 
     composeRule.onNodeWithTag(ProfileScreenTestTags.SCREEN).assertIsDisplayed()
   }

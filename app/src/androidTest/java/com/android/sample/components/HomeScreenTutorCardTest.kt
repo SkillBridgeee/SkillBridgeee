@@ -145,7 +145,6 @@ class HomeScreenTutorCardTest {
     composeRule.setContent {
       HomeScreen(
           mainPageViewModel = vm,
-          onNavigateToProfile = { /* no-op in this test */},
           onNavigateToSubjectList = { /* no-op */},
           onNavigateToAddNewListing = {},
           onNavigateToListingDetails = { listingId -> navigatedToListingId = listingId })
@@ -153,7 +152,7 @@ class HomeScreenTutorCardTest {
 
     composeRule.waitForIdle()
 
-    val cards = composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD)
+    val cards = composeRule.onAllNodesWithTag(HomeScreenTestTags.PROPOSAL_CARD)
     cards.assertCountEquals(1)
 
     cards[0].performClick()
