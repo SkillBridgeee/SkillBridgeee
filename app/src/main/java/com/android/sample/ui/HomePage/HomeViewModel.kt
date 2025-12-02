@@ -14,6 +14,7 @@ import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -71,12 +72,21 @@ class MainPageViewModel(
         val topRequests =
             allRequests.filter { it.isActive }.sortedByDescending { it.createdAt }.take(10)
 
-        _uiState.value =
-            HomeUiState(
-                welcomeMessage = welcomeMsg, proposals = topProposals, requests = topRequests)
+        _uiState.update { current ->
+          current.copy(
+              welcomeMessage = welcomeMsg, proposals = topProposals, requests = topRequests
+              // subjects stays whatever it was (currently the default)
+              )
+        }
       } catch (e: Exception) {
         Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        _uiState.value = HomeUiState()
+        _uiState.update { current ->
+          current.copy(
+              // keep existing subjects and welcomeMessage if you want,
+              // but reset proposals/requests to safe defaults
+              proposals = emptyList(),
+              requests = emptyList())
+        }
       }
     }
   }

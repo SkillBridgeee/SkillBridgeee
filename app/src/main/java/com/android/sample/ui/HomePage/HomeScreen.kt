@@ -47,7 +47,6 @@ object HomeScreenTestTags {
 
   const val REQUEST_SECTION = "requestSection"
   const val REQUEST_CARD = "requestCard"
-  const val REQUEST_LIST = "requestList"
 
   const val FAB_ADD = "fabAdd"
 }
@@ -85,20 +84,31 @@ fun HomeScreen(
               Icon(Icons.Default.Add, contentDescription = "Add")
             }
       }) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues).fillMaxSize().background(Color.White)) {
-          Spacer(modifier = Modifier.height(10.dp))
-          GreetingSection(uiState.welcomeMessage)
-          Spacer(modifier = Modifier.height(20.dp))
-          ExploreSubjects(uiState.subjects, onNavigateToSubjectList)
-          Spacer(modifier = Modifier.height(20.dp))
+        LazyColumn(
+            modifier = Modifier.padding(paddingValues).fillMaxSize().background(Color.White),
+            verticalArrangement = Arrangement.spacedBy(20.dp)) {
+              // Greeting
+              item {
+                Spacer(modifier = Modifier.height(10.dp))
+                GreetingSection(uiState.welcomeMessage)
+              }
 
-          ProposalsSection(
-              proposals = uiState.proposals, onProposalClick = onNavigateToListingDetails)
+              // Explore subjects
+              item { ExploreSubjects(uiState.subjects, onNavigateToSubjectList) }
 
-          Spacer(modifier = Modifier.height(20.dp))
+              item {
+                ProposalsSection(
+                    proposals = uiState.proposals, onProposalClick = onNavigateToListingDetails)
+              }
 
-          RequestsSection(requests = uiState.requests, onRequestClick = onNavigateToListingDetails)
-        }
+              item {
+                RequestsSection(
+                    requests = uiState.requests, onRequestClick = onNavigateToListingDetails)
+              }
+
+              // Bottom padding
+              item { Spacer(modifier = Modifier.height(16.dp)) }
+            }
       }
 }
 
@@ -189,23 +199,31 @@ fun SubjectCard(
 fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
-        "Top Rated Proposals",
+        text = "Latest Proposals",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
         modifier = Modifier.testTag(HomeScreenTestTags.PROPOSAL_SECTION))
 
     Spacer(modifier = Modifier.height(10.dp))
 
-    LazyColumn(
-        modifier = Modifier.testTag(HomeScreenTestTags.PROPOSAL_LIST).fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          items(proposals) { proposal ->
-            ProposalCard(
-                proposal = proposal,
-                onClick = onProposalClick,
-                modifier = Modifier.testTag(HomeScreenTestTags.PROPOSAL_CARD))
+    if (proposals.isEmpty()) {
+      Text(
+          text = "No proposals available yet.",
+          color = Color.Gray,
+          fontSize = 14.sp,
+          modifier = Modifier.padding(8.dp))
+    } else {
+      Column(
+          modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.PROPOSAL_LIST),
+          verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            proposals.forEach { proposal ->
+              ProposalCard(
+                  proposal = proposal,
+                  onClick = onProposalClick,
+                  modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.PROPOSAL_CARD))
+            }
           }
-        }
+    }
   }
 }
 
@@ -221,17 +239,25 @@ fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
         text = "Recent Requests",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
-    )
+        modifier = Modifier.testTag(HomeScreenTestTags.REQUEST_SECTION))
 
     Spacer(modifier = Modifier.height(10.dp))
 
-    LazyColumn(
-        modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          items(requests) { request ->
-            RequestCard(
-                request = request, onClick = onRequestClick // gets request.listingId
-                )
-          }
+    if (requests.isEmpty()) {
+      Text(
+          text = "No requests available yet.",
+          color = Color.Gray,
+          fontSize = 14.sp,
+          modifier = Modifier.padding(8.dp))
+    } else {
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        requests.forEach { request ->
+          RequestCard(
+              request = request,
+              onClick = onRequestClick,
+              modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.REQUEST_CARD))
         }
+      }
+    }
   }
 }
