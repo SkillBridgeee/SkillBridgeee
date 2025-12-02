@@ -4,6 +4,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,7 +60,7 @@ object SignUpScreenTestTags {
 }
 
 @Composable
-fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
+fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}, onNavigateToToS: () -> Unit) {
   val state by vm.state.collectAsState()
 
   // Navigate on success (Google Sign-In) or when verification email is sent (Email/Password)
@@ -88,6 +89,8 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
           unfocusedTextColor = MaterialTheme.colorScheme.onSurface)
 
   val scrollState = rememberScrollState()
+  var isToSChecked by remember { mutableStateOf(false) }
+
   Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier =
@@ -294,9 +297,26 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}) {
                   disabledContentColor = DisabledContent // <-- gray text when disabled
                   )
 
+          Row(
+              verticalAlignment = Alignment.CenterVertically,
+              modifier = Modifier.padding(top = 8.dp)) {
+            Checkbox(
+                checked = isToSChecked,
+                onCheckedChange = { isToSChecked = it },
+                colors = CheckboxDefaults.colors(checkedColor = TurquoisePrimary))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "I have read and accept the ",
+                style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = "Terms of Service",
+                style = MaterialTheme.typography.bodyMedium.copy(color = TurquoisePrimary),
+                modifier = Modifier.clickable { onNavigateToToS() })
+          }
+
           Button(
               onClick = { vm.onEvent(SignUpEvent.Submit) },
-              enabled = enabled,
+              enabled = isToSChecked,
               modifier =
                   Modifier.fillMaxWidth()
                       .height(52.dp)

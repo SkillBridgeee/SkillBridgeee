@@ -13,4 +13,5 @@ data class Profile(
     val description: String = "",
     val tutorRating: RatingInfo = RatingInfo(),
     val studentRating: RatingInfo = RatingInfo(),
+    val hasAcceptedToS: Boolean = false,
 )
