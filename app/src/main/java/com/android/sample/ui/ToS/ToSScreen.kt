@@ -23,12 +23,10 @@ object ToSTestTags {
  * This screen is displayed after user login/signup if they haven't accepted ToS. Users cannot
  * proceed to the app without accepting.
  *
- * @param onAcceptanceComplete callback when user successfully accepts ToS
  * @param onDecline callback when user declines ToS
  */
 @Composable
 fun ToSScreen(
-    onAcceptanceComplete: () -> Unit,
     onDecline: () -> Unit,
 ) {
   Column(

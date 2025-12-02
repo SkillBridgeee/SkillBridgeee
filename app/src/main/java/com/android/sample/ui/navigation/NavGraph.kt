@@ -239,7 +239,6 @@ fun AppNavGraph(
     composable(route = NavRoutes.TOS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.TOS) }
       ToSScreen(
-          onAcceptanceComplete = { /* Handle acceptance */},
           onDecline = { /* Handle decline */},
       )
     }
