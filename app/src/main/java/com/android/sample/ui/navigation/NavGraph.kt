@@ -197,10 +197,7 @@ fun AppNavGraph(
                   popUpTo(NavRoutes.SIGNUP_BASE) { inclusive = true }
                 }
               },
-              onNavigateToToS = {
-                navController.navigate(NavRoutes.TOS)
-              }
-          )
+              onNavigateToToS = { navController.navigate(NavRoutes.TOS) })
         }
     composable(route = NavRoutes.OTHERS_PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
@@ -242,8 +239,8 @@ fun AppNavGraph(
     composable(route = NavRoutes.TOS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.TOS) }
       ToSScreen(
-          onAcceptanceComplete = { /* Handle acceptance */ },
-          onDecline = { /* Handle decline */ },
+          onAcceptanceComplete = { /* Handle acceptance */},
+          onDecline = { /* Handle decline */},
       )
     }
   }

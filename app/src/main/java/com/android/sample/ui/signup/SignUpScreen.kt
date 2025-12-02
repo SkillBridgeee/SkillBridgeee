@@ -55,12 +55,17 @@ object SignUpScreenTestTags {
   const val EMAIL = "SignUpScreenTestTags.EMAIL"
   const val PASSWORD = "SignUpScreenTestTags.PASSWORD"
   const val SIGN_UP = "SignUpScreenTestTags.SIGN_UP"
+  const val TOS_CHECKBOX_TAG = "SignUpScreenTestTags.TOS_CHECKBOX"
 
   const val PIN_CONTENT_DESC = "Use my location"
 }
 
 @Composable
-fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}, onNavigateToToS: () -> Unit) {
+fun SignUpScreen(
+    vm: SignUpViewModel,
+    onSubmitSuccess: () -> Unit = {},
+    onNavigateToToS: () -> Unit
+) {
   val state by vm.state.collectAsState()
 
   // Navigate on success (Google Sign-In) or when verification email is sent (Email/Password)
@@ -300,19 +305,19 @@ fun SignUpScreen(vm: SignUpViewModel, onSubmitSuccess: () -> Unit = {}, onNaviga
           Row(
               verticalAlignment = Alignment.CenterVertically,
               modifier = Modifier.padding(top = 8.dp)) {
-            Checkbox(
-                checked = isToSChecked,
-                onCheckedChange = { isToSChecked = it },
-                colors = CheckboxDefaults.colors(checkedColor = TurquoisePrimary))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "I have read and accept the ",
-                style = MaterialTheme.typography.bodyMedium)
-            Text(
-                text = "Terms of Service",
-                style = MaterialTheme.typography.bodyMedium.copy(color = TurquoisePrimary),
-                modifier = Modifier.clickable { onNavigateToToS() })
-          }
+                Checkbox(
+                    checked = isToSChecked,
+                    onCheckedChange = { isToSChecked = it },
+                    colors = CheckboxDefaults.colors(checkedColor = TurquoisePrimary))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "I have read and accept the ",
+                    style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = "Terms of Service",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = TurquoisePrimary),
+                    modifier = Modifier.clickable { onNavigateToToS() })
+              }
 
           Button(
               onClick = { vm.onEvent(SignUpEvent.Submit) },
