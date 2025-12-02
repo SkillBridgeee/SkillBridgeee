@@ -80,7 +80,7 @@ class MessageViewModel(
           convManager
               .listenMessages(convId)
               .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
-              .catch { e -> _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
+              .catch { _ -> _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
               .collect { messages ->
                 convManager.resetUnreadCount(convId = convId, userId = currentUserId!!)
                 _uiState.update {
@@ -113,7 +113,7 @@ class MessageViewModel(
       try {
         convManager.sendMessage(convId, message)
         _uiState.update { it.copy(currentMessage = "") }
-      } catch (e: Exception) {
+      } catch (_: Exception) {
         _uiState.update { it.copy(error = sendMsgError) }
       }
     }
