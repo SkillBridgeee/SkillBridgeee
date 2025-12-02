@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
 import com.android.sample.ui.tos.ToSScreen
 import com.android.sample.ui.tos.ToSTestTags
 import org.junit.Rule
@@ -56,7 +57,10 @@ class ToSScreenTest {
             "4. Modification of Terms",
             "5. Dispute Resolution")
 
-    sectionTitles.forEach { title -> composeTestRule.onNodeWithText(title).assertIsDisplayed() }
+    sectionTitles.forEach { title ->
+      // First scroll to make sure the element is visible
+      composeTestRule.onNodeWithText(title).performScrollTo().assertIsDisplayed()
+    }
   }
 
   @Test
@@ -74,7 +78,11 @@ class ToSScreenTest {
             "Any disputes arising from these Terms")
 
     contentSnippets.forEach { snippet ->
-      composeTestRule.onNodeWithText(snippet, substring = true).assertIsDisplayed()
+      // Scroll to each content snippet before asserting visibility
+      composeTestRule
+          .onNodeWithText(snippet, substring = true)
+          .performScrollTo()
+          .assertIsDisplayed()
     }
   }
 
