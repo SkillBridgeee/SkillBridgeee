@@ -1,8 +1,6 @@
 package com.android.sample.screen
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -17,8 +15,6 @@ import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.*
 import java.util.*
-import kotlin.and
-import kotlin.collections.get
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
@@ -96,13 +92,13 @@ class BookingDetailsScreenTest {
 
         override suspend fun getProposals() = emptyList<Proposal>()
 
-        override suspend fun getRequests() = emptyList<com.android.sample.model.listing.Request>()
+        override suspend fun getRequests() = emptyList<Request>()
 
         override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
 
         override suspend fun addProposal(proposal: Proposal) {}
 
-        override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+        override suspend fun addRequest(request: Request) {}
 
         override suspend fun updateListing(listingId: String, listing: Listing) {}
 
@@ -110,7 +106,7 @@ class BookingDetailsScreenTest {
 
         override suspend fun deactivateListing(listingId: String) {}
 
-        override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
+        override suspend fun searchBySkill(skill: Skill) =
             emptyList<Listing>()
 
         override suspend fun searchByLocation(location: Location, radiusKm: Double) =
@@ -138,7 +134,7 @@ class BookingDetailsScreenTest {
             emptyList<Profile>()
 
         override suspend fun getSkillsForUser(userId: String) =
-            emptyList<com.android.sample.model.skill.Skill>()
+            emptyList<Skill>()
 
         override suspend fun updateTutorRatingFields(
             userId: String,
@@ -171,6 +167,10 @@ class BookingDetailsScreenTest {
     composeTestRule.setContent {
       BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
     }
+
+      composeTestRule.waitUntil {
+          composeTestRule.onAllNodesWithText("John Doe").fetchSemanticsNodes().isNotEmpty()
+      }
 
     // Vérifie les sections visibles
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertExists()
@@ -236,7 +236,7 @@ class BookingDetailsScreenTest {
             emptyList<Profile>()
 
         override suspend fun getSkillsForUser(userId: String) =
-            emptyList<com.android.sample.model.skill.Skill>()
+            emptyList<Skill>()
 
         override suspend fun updateTutorRatingFields(
             userId: String,
@@ -289,10 +289,9 @@ class BookingDetailsScreenTest {
 
   @Test
   fun bookingDetailsScreen_errorScreen() {
-    var clickedId: String? = null
     val vm = fakeViewModelError()
     composeTestRule.setContent {
-      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = { clickedId = it })
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = { })
     }
 
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertIsDisplayed()
@@ -353,13 +352,13 @@ class BookingDetailsScreenTest {
 
         override suspend fun getProposals() = emptyList<Proposal>()
 
-        override suspend fun getRequests() = emptyList<com.android.sample.model.listing.Request>()
+        override suspend fun getRequests() = emptyList<Request>()
 
         override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
 
         override suspend fun addProposal(proposal: Proposal) {}
 
-        override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+        override suspend fun addRequest(request: Request) {}
 
         override suspend fun updateListing(listingId: String, listing: Listing) {}
 
@@ -367,7 +366,7 @@ class BookingDetailsScreenTest {
 
         override suspend fun deactivateListing(listingId: String) {}
 
-        override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
+        override suspend fun searchBySkill(skill: Skill) =
             emptyList<Listing>()
 
         override suspend fun searchByLocation(location: Location, radiusKm: Double) =

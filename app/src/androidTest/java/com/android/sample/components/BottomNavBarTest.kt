@@ -20,6 +20,7 @@ import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.communication.DiscussionViewModel
 import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.map.MapScreenTestTags
@@ -105,7 +106,6 @@ class BottomNavBarTest {
     composeTestRule.setContent {
       val controller = rememberNavController()
       navController = controller
-      val currentUserId = "test"
       val factory = MyViewModelFactory(UserSessionManager)
 
       val bookingsViewModel: MyBookingsViewModel = viewModel(factory = factory)
@@ -114,6 +114,7 @@ class BottomNavBarTest {
 
       val newListingViewModel: NewListingViewModel = viewModel(factory = factory)
       val bookingDetailsViewModel: BookingDetailsViewModel = viewModel(factory = factory)
+      val discussionViewModel: DiscussionViewModel = viewModel(factory = factory)
 
       AppNavGraph(
           navController = controller,
@@ -124,6 +125,7 @@ class BottomNavBarTest {
               AuthenticationViewModel(InstrumentationRegistry.getInstrumentation().targetContext),
           newListingViewModel = newListingViewModel,
           bookingDetailsViewModel = bookingDetailsViewModel,
+            discussionViewModel = discussionViewModel,
           onGoogleSignIn = {})
       BottomNavBar(navController = controller)
     }
