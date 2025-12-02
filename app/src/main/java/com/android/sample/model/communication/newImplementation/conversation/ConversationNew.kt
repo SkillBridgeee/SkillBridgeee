@@ -3,10 +3,10 @@ package com.android.sample.model.communication.newImplementation.conversation
 import com.google.firebase.Timestamp
 
 data class ConversationNew(
-    var convId: String = "",
-    var convCreatorId: String = "",
-    var otherPersonId: String = "",
-    var convName: String = "",
-    var updatedAt: Timestamp? = null,
-    var messages: List<MessageNew> = emptyList(),
+    val convId: String = "",
+    val convCreatorId: String = "",
+    val otherPersonId: String = "",
+    val convName: String = "",
+    val updatedAt: Timestamp? = null,
+    val messages: List<MessageNew> = emptyList(),
 )
