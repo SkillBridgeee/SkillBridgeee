@@ -35,6 +35,7 @@ fun ToSScreen(
               .testTag(ToSTestTags.SCREEN)
               .background(MaterialTheme.colorScheme.background),
       horizontalAlignment = Alignment.CenterHorizontally) {
+
         // Header
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -56,67 +57,50 @@ fun ToSScreen(
               }
         }
 
-        // ToS Content
+        // Content
         Column(
             modifier =
                 Modifier.fillMaxWidth()
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)) {
-              Text(
-                  text = "1. User Responsibilities",
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = FontWeight.Bold,
-                  modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-              Text(
-                  text =
-                      "By using this application, you agree to abide by all applicable laws and regulations. You are responsible for maintaining the confidentiality of your account and password and for restricting access to your computer.",
-                  style = MaterialTheme.typography.bodyMedium,
-                  modifier = Modifier.padding(bottom = 8.dp))
+              ToSSection(
+                  title = "1. User Responsibilities",
+                  body =
+                      "By using this application, you agree to abide by all applicable laws and regulations. You are responsible for maintaining the confidentiality of your account and password and for restricting access to your computer.")
 
-              Text(
-                  text = "2. Intellectual Property Rights",
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = FontWeight.Bold,
-                  modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-              Text(
-                  text =
-                      "All content included in this application is the property of SkillBridge and is protected by international copyright laws. You agree not to reproduce, duplicate, copy, sell, or resell any portion of this application without express written permission.",
-                  style = MaterialTheme.typography.bodyMedium,
-                  modifier = Modifier.padding(bottom = 8.dp))
+              ToSSection(
+                  title = "2. Intellectual Property Rights",
+                  body =
+                      "All content included in this application is the property of SkillBridge and is protected by international copyright laws. You agree not to reproduce, duplicate, copy, sell, or resell any portion of this application without express written permission.")
 
-              Text(
-                  text = "3. Limitation of Liability",
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = FontWeight.Bold,
-                  modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-              Text(
-                  text =
-                      "In no case shall SkillBridge, its directors, officers, or representatives be liable for any indirect, incidental, or consequential damages arising out of or in connection with your use of the application.",
-                  style = MaterialTheme.typography.bodyMedium,
-                  modifier = Modifier.padding(bottom = 8.dp))
+              ToSSection(
+                  title = "3. Limitation of Liability",
+                  body =
+                      "In no case shall SkillBridge, its directors, officers, or representatives be liable for any indirect, incidental, or consequential damages arising out of or in connection with your use of the application.")
 
-              Text(
-                  text = "4. Modification of Terms",
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = FontWeight.Bold,
-                  modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-              Text(
-                  text =
-                      "SkillBridge reserves the right to modify these Terms of Service at any time. Your continued use of the application following the posting of revised Terms means that you accept and agree to the changes.",
-                  style = MaterialTheme.typography.bodyMedium,
-                  modifier = Modifier.padding(bottom = 8.dp))
+              ToSSection(
+                  title = "4. Modification of Terms",
+                  body =
+                      "SkillBridge reserves the right to modify these Terms of Service at any time. Your continued use of the application following the posting of revised Terms means that you accept and agree to the changes.")
 
-              Text(
-                  text = "5. Dispute Resolution",
-                  style = MaterialTheme.typography.titleMedium,
-                  fontWeight = FontWeight.Bold,
-                  modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-              Text(
-                  text =
-                      "Any disputes arising from these Terms of Service shall be governed by the laws of the jurisdiction in which SkillBridge is located. You agree to submit to the exclusive jurisdiction of the courts in that location.",
-                  style = MaterialTheme.typography.bodyMedium,
-                  modifier = Modifier.padding(bottom = 16.dp))
+              ToSSection(
+                  title = "5. Dispute Resolution",
+                  body =
+                      "Any disputes arising from these Terms of Service shall be governed by the laws of the jurisdiction in which SkillBridge is located. You agree to submit to the exclusive jurisdiction of the courts in that location.")
             }
       }
+}
+
+@Composable
+private fun ToSSection(title: String, body: String) {
+  Text(
+      text = title,
+      style = MaterialTheme.typography.titleMedium,
+      fontWeight = FontWeight.Bold,
+      modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+  Text(
+      text = body,
+      style = MaterialTheme.typography.bodyMedium,
+      modifier = Modifier.padding(bottom = 8.dp))
 }
