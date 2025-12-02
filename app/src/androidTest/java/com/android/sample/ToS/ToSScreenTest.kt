@@ -17,7 +17,7 @@ class ToSScreenTest {
   @Test
   fun tosScreen_isDisplayed() {
     // Given: Setup the ToS screen
-    composeTestRule.setContent { ToSScreen(onDecline = {}) }
+    composeTestRule.setContent { ToSScreen() }
 
     // Then: Verify the main screen container is displayed
     composeTestRule.onNodeWithTag(ToSTestTags.SCREEN).assertIsDisplayed()
@@ -26,7 +26,7 @@ class ToSScreenTest {
   @Test
   fun tosScreen_headerIsDisplayed() {
     // Given: Setup the ToS screen
-    composeTestRule.setContent { ToSScreen(onDecline = {}) }
+    composeTestRule.setContent { ToSScreen() }
 
     // Then: Verify the header title is displayed
     composeTestRule.onNodeWithText("Terms of Service").assertIsDisplayed()
@@ -35,7 +35,7 @@ class ToSScreenTest {
   @Test
   fun tosScreen_subheaderIsDisplayed() {
     // Given: Setup the ToS screen
-    composeTestRule.setContent { ToSScreen(onDecline = {}) }
+    composeTestRule.setContent { ToSScreen() }
 
     // Then: Verify the subheader text is displayed
     composeTestRule
@@ -46,7 +46,7 @@ class ToSScreenTest {
   @Test
   fun tosScreen_allSectionTitlesAreDisplayed() {
     // Given: Setup the ToS screen
-    composeTestRule.setContent { ToSScreen(onDecline = {}) }
+    composeTestRule.setContent { ToSScreen() }
 
     // Then: Verify all section titles are displayed
     val sectionTitles =
@@ -66,7 +66,7 @@ class ToSScreenTest {
   @Test
   fun tosScreen_sectionContentIsDisplayed() {
     // Given: Setup the ToS screen
-    composeTestRule.setContent { ToSScreen(onDecline = {}) }
+    composeTestRule.setContent { ToSScreen() }
 
     // Then: Verify some key content text is displayed
     val contentSnippets =
@@ -89,7 +89,7 @@ class ToSScreenTest {
   @Test
   fun tosScreen_errorTextIsNotDisplayedByDefault() {
     // Given: Setup the ToS screen (error is hardcoded to false)
-    composeTestRule.setContent { ToSScreen(onDecline = {}) }
+    composeTestRule.setContent { ToSScreen() }
 
     // Then: Verify error text is NOT displayed (since condition is false)
     composeTestRule.onNodeWithTag(ToSTestTags.ERROR_TEXT).assertDoesNotExist()

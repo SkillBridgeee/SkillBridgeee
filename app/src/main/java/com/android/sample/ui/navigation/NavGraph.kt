@@ -235,9 +235,7 @@ fun AppNavGraph(
 
     composable(route = NavRoutes.TOS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.TOS) }
-      ToSScreen(
-          onDecline = { /* Handle decline */},
-      )
+      ToSScreen()
     }
   }
 }

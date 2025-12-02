@@ -27,7 +27,6 @@ object ToSTestTags {
  */
 @Composable
 fun ToSScreen(
-    onDecline: () -> Unit,
 ) {
   Column(
       modifier =
