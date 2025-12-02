@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 
 @Composable
-fun MessageScreen(viewModel: MessageViewModel = MessageViewModel(), convId: String) {
+fun MessageScreen(viewModel: MessageViewModel, convId: String) {
 
   val uiState by viewModel.uiState.collectAsState()
 

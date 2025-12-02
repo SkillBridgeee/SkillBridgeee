@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.newImplementation.ConversationManager
+import com.android.sample.model.communication.newImplementation.ConversationManagerInter
 import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
@@ -11,6 +12,7 @@ import java.util.Date
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
@@ -25,16 +27,18 @@ data class ConvUIState(
 )
 
 class MessageViewModel(
-    private val convManager: ConversationManager =
+    private val convManager: ConversationManagerInter =
         ConversationManager(
             convRepo = ConversationRepositoryProvider.repository,
             overViewRepo = OverViewConvRepositoryProvider.repository)
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(ConvUIState())
-  val uiState: StateFlow<ConvUIState> = _uiState
+  val uiState: StateFlow<ConvUIState> = _uiState.asStateFlow()
 
   private var currentConvId: String? = null
+
+  private var currentUserId: String? = null
   private var otherId: String? = null
 
   private var loadJob: Job? = null
@@ -54,7 +58,7 @@ class MessageViewModel(
             _uiState.update { it.copy(error = "User not logged in") }
             return@launch
           }
-
+          currentUserId = userId
           _uiState.update { it.copy(currentUserId = userId) }
 
           // Fetch the conversation to find the other user
@@ -77,7 +81,7 @@ class MessageViewModel(
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Unknow error") }
               }
               .collect { messages ->
-                convManager.resetUnreadCount(convId = convId, userId = uiState.value.currentUserId)
+                convManager.resetUnreadCount(convId = convId, userId = currentUserId!!)
                 _uiState.update {
                   it.copy(
                       messages = messages.sortedBy { msg -> msg.createdAt },
@@ -91,16 +95,16 @@ class MessageViewModel(
   /** Send the current message and clear the input field. */
   fun sendMessage() {
     val convId = currentConvId ?: return
+    val senderId = currentUserId ?: return
+    val receiverId = otherId ?: return
     val content = _uiState.value.currentMessage.trim()
-    val receiver = otherId ?: return
-
     if (content.isBlank()) return
 
     val message =
         MessageNew(
             msgId = convManager.getMessageNewUid(),
-            senderId = _uiState.value.currentUserId,
-            receiverId = receiver,
+            senderId = senderId,
+            receiverId = receiverId,
             content = content,
             createdAt = Date())
 
