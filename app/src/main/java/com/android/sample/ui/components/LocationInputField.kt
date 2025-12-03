@@ -133,7 +133,8 @@ fun RoundEdgedLocationInputField(
     onLocationSelected: (Location) -> Unit,
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(14.dp),
-    colors: TextFieldColors = TextFieldDefaults.colors()
+    colors: TextFieldColors = TextFieldDefaults.colors(),
+    enabled: Boolean = true
 ) {
   var showDropdown by remember { mutableStateOf(false) }
 
@@ -146,6 +147,7 @@ fun RoundEdgedLocationInputField(
         },
         placeholder = { Text("Address") },
         singleLine = true,
+        enabled = enabled,
         shape = shape,
         colors = colors,
         modifier = Modifier.fillMaxWidth().testTag(LocationInputFieldTestTags.INPUT_LOCATION))

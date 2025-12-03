@@ -51,7 +51,8 @@ data class SignUpUiState(
     val verificationEmailSent: Boolean = false, // True when verification email has been sent
     val isGoogleSignUp: Boolean = false, // True if user is already authenticated via Google
     val passwordRequirements: PasswordRequirements = PasswordRequirements(),
-    val isNavigating: Boolean = false // True when navigating away after successful submit
+    val isNavigating: Boolean = false, // True when navigating away after successful submit
+    val isToSAccepted: Boolean = false // True when user has accepted Terms of Service
 )
 
 sealed interface SignUpEvent {
@@ -73,6 +74,8 @@ sealed interface SignUpEvent {
   data class EmailChanged(val value: String) : SignUpEvent
 
   data class PasswordChanged(val value: String) : SignUpEvent
+
+  data class ToSAcceptedChanged(val accepted: Boolean) : SignUpEvent
 
   object Submit : SignUpEvent
 }
@@ -152,6 +155,7 @@ class SignUpViewModel(
         }
       }
       is SignUpEvent.PasswordChanged -> _state.update { it.copy(password = e.value) }
+      is SignUpEvent.ToSAcceptedChanged -> _state.update { it.copy(isToSAccepted = e.accepted) }
       SignUpEvent.Submit -> submit()
     }
     validate()
@@ -251,11 +255,13 @@ class SignUpViewModel(
   }
 
   private fun submit() {
-    // Early return if form validation fails
-    if (!_state.value.canSubmit) {
+    // Early return if form validation fails or already submitting
+    if (!_state.value.canSubmit || _state.value.submitting) {
+      Log.d(TAG, "Submit blocked - canSubmit: ${_state.value.canSubmit}, submitting: ${_state.value.submitting}")
       return
     }
 
+    Log.d(TAG, "Starting sign-up submission")
     viewModelScope.launch {
       _state.update {
         it.copy(
@@ -277,12 +283,14 @@ class SignUpViewModel(
               location = selectedLoc)
 
       // Execute sign-up through use case
+      Log.d(TAG, "Executing sign-up use case")
       val result = signUpUseCase.execute(request)
 
       // Update UI state based on result
       when (result) {
         is SignUpResult.Success -> {
           // Success for Google Sign-In users who already have auth
+          Log.d(TAG, "Sign-up SUCCESS - setting submitSuccess=true, isNavigating=true")
           _state.update {
             it.copy(
                 submitting = false,
@@ -290,9 +298,11 @@ class SignUpViewModel(
                 verificationEmailSent = false,
                 isNavigating = true)
           }
+          Log.d(TAG, "State updated - submitSuccess: ${_state.value.submitSuccess}, isNavigating: ${_state.value.isNavigating}")
         }
         is SignUpResult.VerificationEmailSent -> {
           // Verification email sent - show message to check email
+          Log.d(TAG, "Verification email SENT - setting verificationEmailSent=true")
           _state.update {
             it.copy(
                 submitting = false,
@@ -302,6 +312,7 @@ class SignUpViewModel(
           }
         }
         is SignUpResult.Error -> {
+          Log.e(TAG, "Sign-up ERROR: ${result.message}")
           _state.update {
             it.copy(submitting = false, error = result.message, verificationEmailSent = false)
           }

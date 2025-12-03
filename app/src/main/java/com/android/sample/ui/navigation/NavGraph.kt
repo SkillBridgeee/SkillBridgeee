@@ -213,7 +213,6 @@ fun AppNavGraph(
               onBackPressed = {
                 // User pressed back during Google signup - navigate to LOGIN
                 navController.navigate(NavRoutes.LOGIN) { popUpTo(0) { inclusive = false } }
-              })
               },
               onNavigateToToS = { navController.navigate(NavRoutes.TOS) })
         }

@@ -9,7 +9,6 @@ import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.skill.MainSubject
-import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +22,8 @@ import kotlinx.coroutines.launch
  *
  * @property welcomeMessage A greeting message for the current user.
  * @property subjects A list of subjects for the List to display.
- * @property tutors A list of tutor cards prepared for display.
+ * @property proposals A list of active proposals to display.
+ * @property requests A list of active requests to display.
  */
 data class HomeUiState(
     val welcomeMessage: String = "Welcome back!",
@@ -75,7 +75,9 @@ class MainPageViewModel(
 
         _uiState.update { current ->
           current.copy(
-              welcomeMessage = welcomeMsg, proposals = topProposals, requests = topRequests
+              welcomeMessage = welcomeMsg ?: current.welcomeMessage,
+              proposals = topProposals,
+              requests = topRequests
               // subjects stays whatever it was (currently the default)
               )
         }

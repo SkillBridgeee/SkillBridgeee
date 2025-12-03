@@ -31,6 +31,7 @@ fun EllipsizingTextField(
     maxPreviewLength: Int = 40,
     style: EllipsizingTextFieldStyle = EllipsizingTextFieldStyle(),
     leadingIcon: (@Composable (() -> Unit))? = null,
+    enabled: Boolean = true
 ) {
   var focused by remember { mutableStateOf(false) }
 
@@ -57,6 +58,7 @@ fun EllipsizingTextField(
       placeholder = { Text(placeholder) },
       singleLine = true,
       maxLines = 1,
+      enabled = enabled,
       shape = shape,
       visualTransformation = transform,
       leadingIcon = leadingIcon,

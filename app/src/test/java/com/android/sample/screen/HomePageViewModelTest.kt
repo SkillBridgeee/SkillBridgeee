@@ -172,9 +172,6 @@ class MainPageViewModelTest {
     // Clear session to ensure clean state
     com.android.sample.model.authentication.UserSessionManager.clearSession()
 
-    val failingProfiles =
-        object : FakeProfileRepository(emptyList()) {
-          override suspend fun getAllProfiles(): List<Profile> {
     val failingListings =
         object : FakeListingRepository(emptyList()) {
           override suspend fun getProposals(): List<Proposal> {
