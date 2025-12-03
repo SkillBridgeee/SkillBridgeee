@@ -196,8 +196,9 @@ private fun NameSurnameBlock(
         placeholder = "Enter your Name",
         modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.NAME),
         maxPreviewLength = 45,
-        enabled = !state.submitting,
-        style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
+        style =
+            EllipsizingTextFieldStyle(
+                shape = fieldShape, colors = fieldColors, enabled = !state.submitting))
   }
 
   EllipsizingTextField(
@@ -206,8 +207,9 @@ private fun NameSurnameBlock(
       placeholder = "Enter your Surname",
       modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.SURNAME),
       maxPreviewLength = 45,
-      enabled = !state.submitting,
-      style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
+      style =
+          EllipsizingTextFieldStyle(
+              shape = fieldShape, colors = fieldColors, enabled = !state.submitting))
 }
 
 @Composable
@@ -258,9 +260,9 @@ private fun LocationBlock(
         locationSuggestions = state.locationSuggestions,
         onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },
         onLocationSelected = { location -> vm.onEvent(SignUpEvent.LocationSelected(location)) },
-        shape = fieldShape,
-        colors = fieldColors,
-        enabled = !state.submitting)
+        style =
+            com.android.sample.ui.components.LocationFieldStyle(
+                shape = fieldShape, colors = fieldColors, enabled = !state.submitting))
 
     LocationIconButton(
         context = context,

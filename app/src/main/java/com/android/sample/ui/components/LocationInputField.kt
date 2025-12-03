@@ -125,6 +125,14 @@ fun LocationInputField(
  * @see TextField
  * @see DropdownMenu
  */
+
+// Style holder to reduce number of parameters
+data class LocationFieldStyle(
+    val shape: Shape = RoundedCornerShape(14.dp),
+    val colors: TextFieldColors? = null,
+    val enabled: Boolean = true
+)
+
 @Composable
 fun RoundEdgedLocationInputField(
     locationQuery: String,
@@ -132,11 +140,12 @@ fun RoundEdgedLocationInputField(
     onLocationQueryChange: (String) -> Unit,
     onLocationSelected: (Location) -> Unit,
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(14.dp),
-    colors: TextFieldColors = TextFieldDefaults.colors(),
-    enabled: Boolean = true
+    style: LocationFieldStyle = LocationFieldStyle()
 ) {
   var showDropdown by remember { mutableStateOf(false) }
+
+  // Provide default colors from Compose when used in a composable context
+  val colors = style.colors ?: TextFieldDefaults.colors()
 
   Box(modifier = modifier.fillMaxWidth()) {
     TextField(
@@ -147,8 +156,8 @@ fun RoundEdgedLocationInputField(
         },
         placeholder = { Text("Address") },
         singleLine = true,
-        enabled = enabled,
-        shape = shape,
+        enabled = style.enabled,
+        shape = style.shape,
         colors = colors,
         modifier = Modifier.fillMaxWidth().testTag(LocationInputFieldTestTags.INPUT_LOCATION))
 
