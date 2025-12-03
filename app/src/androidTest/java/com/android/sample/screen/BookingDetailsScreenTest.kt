@@ -1,8 +1,6 @@
 package com.android.sample.screen
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -17,8 +15,6 @@ import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.*
 import java.util.*
-import kotlin.and
-import kotlin.collections.get
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
 import org.junit.Rule
