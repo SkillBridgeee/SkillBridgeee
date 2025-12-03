@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -273,14 +273,16 @@ fun AppNavGraph(
         val currentUserId = UserSessionManager.getCurrentUserId()
         val conversation = discussionUiState.conversations.find { it.linkedConvId == currentConvId }
 
-        val partnerName = conversation?.let { conv ->
-          val otherUserId = when {
-            conv.overViewOwnerId == currentUserId -> conv.otherPersonId
-            conv.otherPersonId == currentUserId -> conv.overViewOwnerId
-            else -> conv.otherPersonId
-          }
-          discussionUiState.participantNames[otherUserId] ?: "User"
-        } ?: "Messages"
+        val partnerName =
+            conversation?.let { conv ->
+              val otherUserId =
+                  when {
+                    conv.overViewOwnerId == currentUserId -> conv.otherPersonId
+                    conv.otherPersonId == currentUserId -> conv.overViewOwnerId
+                    else -> conv.otherPersonId
+                  }
+              discussionUiState.participantNames[otherUserId] ?: "User"
+            } ?: "Messages"
 
         MessageScreen(
             viewModel = messageViewModel,
@@ -288,10 +290,7 @@ fun AppNavGraph(
         )
       } else {
         // No conversation selected, show empty state
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
           Text("No conversation selected")
         }
       }

@@ -18,8 +18,8 @@ class ConversationManager(
   }
 
   /**
-   * Creates a new conversation and the corresponding overview entries for both participants.
-   * If a conversation already exists between these two users, returns the existing conversation ID.
+   * Creates a new conversation and the corresponding overview entries for both participants. If a
+   * conversation already exists between these two users, returns the existing conversation ID.
    *
    * @param creatorId The user ID of the conversation creator.
    * @param otherUserId The user ID of the other participant.
@@ -43,9 +43,7 @@ class ConversationManager(
 
     // Check if conversation already exists between these two users
     val existingConversations = overViewRepo.getOverViewConvUser(creatorId)
-    val existingConv = existingConversations.firstOrNull {
-      it.otherPersonId == otherUserId
-    }
+    val existingConv = existingConversations.firstOrNull { it.otherPersonId == otherUserId }
 
     if (existingConv != null) {
       // Conversation already exists, return existing ID
@@ -121,26 +119,29 @@ class ConversationManager(
     val receiverId = message.receiverId
 
     // Update sender's overview: DO NOT increment unread count
-    val senderOverview = overViewRepo.getOverViewConvUser(senderId)
-        .firstOrNull { it.linkedConvId == convId }
+    val senderOverview =
+        overViewRepo.getOverViewConvUser(senderId).firstOrNull { it.linkedConvId == convId }
     if (senderOverview != null) {
       val updatedSenderOverview = senderOverview.copy(lastMsg = message)
       overViewRepo.addOverViewConvUser(updatedSenderOverview)
-      Log.d(TAG, "Updated sender's overview for user $senderId, unread count is ${updatedSenderOverview.nonReadMsgNumber}")
+      Log.d(
+          TAG,
+          "Updated sender's overview for user $senderId, unread count is ${updatedSenderOverview.nonReadMsgNumber}")
     } else {
       Log.w(TAG, "Could not find sender's overview for user $senderId in conversation $convId")
     }
 
     // Update receiver's overview: INCREMENT unread count
-    val receiverOverview = overViewRepo.getOverViewConvUser(receiverId)
-        .firstOrNull { it.linkedConvId == convId }
+    val receiverOverview =
+        overViewRepo.getOverViewConvUser(receiverId).firstOrNull { it.linkedConvId == convId }
     if (receiverOverview != null) {
-      val updatedReceiverOverview = receiverOverview.copy(
-          lastMsg = message,
-          nonReadMsgNumber = receiverOverview.nonReadMsgNumber + 1
-      )
+      val updatedReceiverOverview =
+          receiverOverview.copy(
+              lastMsg = message, nonReadMsgNumber = receiverOverview.nonReadMsgNumber + 1)
       overViewRepo.addOverViewConvUser(updatedReceiverOverview)
-      Log.d(TAG, "Updated receiver's overview for user $receiverId, new unread count is ${updatedReceiverOverview.nonReadMsgNumber}")
+      Log.d(
+          TAG,
+          "Updated receiver's overview for user $receiverId, new unread count is ${updatedReceiverOverview.nonReadMsgNumber}")
     } else {
       Log.w(TAG, "Could not find receiver's overview for user $receiverId in conversation $convId")
     }

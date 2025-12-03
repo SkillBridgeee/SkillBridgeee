@@ -2,9 +2,9 @@ package com.android.sample.ui.communication
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -27,17 +27,11 @@ fun MessageScreen(
 
   val uiState by viewModel.uiState.collectAsState()
 
-  LaunchedEffect(convId) {
-    viewModel.loadConversation(convId)
-  }
+  LaunchedEffect(convId) { viewModel.loadConversation(convId) }
 
   Scaffold(
       modifier = Modifier.fillMaxSize(),
-      topBar = {
-        TopAppBar(
-            title = { Text(uiState.partnerName ?: "Messages") }
-        )
-      },
+      topBar = { TopAppBar(title = { Text(uiState.partnerName ?: "Messages") }) },
       bottomBar = {
         MessageInput(
             message = uiState.currentMessage,
@@ -61,9 +55,7 @@ fun MessageScreen(
                             modifier = Modifier.weight(1f))
                         if (error.contains("not authenticated", ignoreCase = true)) {
                           TextButton(onClick = { viewModel.retry() }) {
-                            Text(
-                                text = "Retry",
-                                color = MaterialTheme.colorScheme.onErrorContainer)
+                            Text(text = "Retry", color = MaterialTheme.colorScheme.onErrorContainer)
                           }
                         }
                       }
