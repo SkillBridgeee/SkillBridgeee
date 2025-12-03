@@ -99,7 +99,9 @@ fun SignUpScreen(
     android.util.Log.d("SignUpScreen", "DisposableEffect created")
     onDispose {
       val currentState = state
-      android.util.Log.d("SignUpScreen", "DisposableEffect onDispose - submitSuccess: ${currentState.submitSuccess}, verificationEmailSent: ${currentState.verificationEmailSent}")
+      android.util.Log.d(
+          "SignUpScreen",
+          "DisposableEffect onDispose - submitSuccess: ${currentState.submitSuccess}, verificationEmailSent: ${currentState.verificationEmailSent}")
       // Don't sign out if sign-up was successful or verification email was sent
       if (!currentState.submitSuccess && !currentState.verificationEmailSent) {
         android.util.Log.d("SignUpScreen", "Calling onSignUpAbandoned")
@@ -113,10 +115,7 @@ fun SignUpScreen(
   val scrollState = rememberScrollState()
 
   SignUpScreenContent(
-      state = state,
-      vm = vm,
-      scrollState = scrollState,
-      onNavigateToToS = onNavigateToToS)
+      state = state, vm = vm, scrollState = scrollState, onNavigateToToS = onNavigateToToS)
 }
 
 @Composable

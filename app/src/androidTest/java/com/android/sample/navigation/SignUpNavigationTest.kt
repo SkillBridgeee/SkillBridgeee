@@ -15,6 +15,7 @@ import com.android.sample.ui.HomePage.HomeUiState
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.communication.DiscussionViewModel
 import com.android.sample.ui.navigation.AppNavGraph
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.newListing.NewListingViewModel
@@ -50,6 +51,7 @@ class SignUpNavigationTest {
   private lateinit var mockMainPageViewModel: MainPageViewModel
   private lateinit var mockNewListingViewModel: NewListingViewModel
   private lateinit var mockBookingDetailsViewModel: BookingDetailsViewModel
+  private lateinit var mockDiscussionViewModel: DiscussionViewModel
 
   @Before
   fun setUp() {
@@ -81,6 +83,7 @@ class SignUpNavigationTest {
     mockProfileViewModel = mockk(relaxed = true)
     mockNewListingViewModel = mockk(relaxed = true)
     mockBookingDetailsViewModel = mockk(relaxed = true)
+    mockDiscussionViewModel = mockk(relaxed = true)
   }
 
   /**
@@ -101,6 +104,7 @@ class SignUpNavigationTest {
           newListingViewModel = mockNewListingViewModel,
           authViewModel = mockAuthViewModel,
           bookingDetailsViewModel = mockBookingDetailsViewModel,
+          discussionViewModel = mockDiscussionViewModel,
           onGoogleSignIn = {})
     }
 
@@ -132,6 +136,7 @@ class SignUpNavigationTest {
           newListingViewModel = mockNewListingViewModel,
           authViewModel = mockAuthViewModel,
           bookingDetailsViewModel = mockBookingDetailsViewModel,
+          discussionViewModel = mockDiscussionViewModel,
           onGoogleSignIn = {})
     }
 
@@ -162,6 +167,7 @@ class SignUpNavigationTest {
           newListingViewModel = mockNewListingViewModel,
           authViewModel = mockAuthViewModel,
           bookingDetailsViewModel = mockBookingDetailsViewModel,
+          discussionViewModel = mockDiscussionViewModel,
           onGoogleSignIn = {})
     }
 
@@ -200,6 +206,7 @@ class SignUpNavigationTest {
           newListingViewModel = mockNewListingViewModel,
           authViewModel = mockAuthViewModel,
           bookingDetailsViewModel = mockBookingDetailsViewModel,
+          discussionViewModel = mockDiscussionViewModel,
           onGoogleSignIn = {})
     }
 
@@ -233,6 +240,7 @@ class SignUpNavigationTest {
           newListingViewModel = mockNewListingViewModel,
           authViewModel = mockAuthViewModel,
           bookingDetailsViewModel = mockBookingDetailsViewModel,
+          discussionViewModel = mockDiscussionViewModel,
           onGoogleSignIn = {})
     }
 
@@ -268,6 +276,7 @@ class SignUpNavigationTest {
           newListingViewModel = mockNewListingViewModel,
           authViewModel = mockAuthViewModel,
           bookingDetailsViewModel = mockBookingDetailsViewModel,
+          discussionViewModel = mockDiscussionViewModel,
           onGoogleSignIn = {})
     }
 
@@ -306,6 +315,7 @@ class SignUpNavigationTest {
           newListingViewModel = mockNewListingViewModel,
           authViewModel = mockAuthViewModel,
           bookingDetailsViewModel = mockBookingDetailsViewModel,
+          discussionViewModel = mockDiscussionViewModel,
           onGoogleSignIn = {})
     }
 
@@ -339,6 +349,7 @@ class SignUpNavigationTest {
           newListingViewModel = mockNewListingViewModel,
           authViewModel = mockAuthViewModel,
           bookingDetailsViewModel = mockBookingDetailsViewModel,
+          discussionViewModel = mockDiscussionViewModel,
           onGoogleSignIn = {})
     }
 

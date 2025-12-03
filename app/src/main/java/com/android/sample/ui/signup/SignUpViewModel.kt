@@ -257,7 +257,9 @@ class SignUpViewModel(
   private fun submit() {
     // Early return if form validation fails or already submitting
     if (!_state.value.canSubmit || _state.value.submitting) {
-      Log.d(TAG, "Submit blocked - canSubmit: ${_state.value.canSubmit}, submitting: ${_state.value.submitting}")
+      Log.d(
+          TAG,
+          "Submit blocked - canSubmit: ${_state.value.canSubmit}, submitting: ${_state.value.submitting}")
       return
     }
 
@@ -298,7 +300,9 @@ class SignUpViewModel(
                 verificationEmailSent = false,
                 isNavigating = true)
           }
-          Log.d(TAG, "State updated - submitSuccess: ${_state.value.submitSuccess}, isNavigating: ${_state.value.isNavigating}")
+          Log.d(
+              TAG,
+              "State updated - submitSuccess: ${_state.value.submitSuccess}, isNavigating: ${_state.value.isNavigating}")
         }
         is SignUpResult.VerificationEmailSent -> {
           // Verification email sent - show message to check email

@@ -199,8 +199,11 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
 
   // One-time auto-login check on app start
   LaunchedEffect(Unit) {
-    kotlinx.coroutines.delay(100) // Wait for auth state to initialize
-    performAutoLogin(navController, authViewModel)
+    // Wait for auth state to be ready
+    val currentUserId = UserSessionManager.getCurrentUserId()
+    if (currentUserId != null || authViewModel.authResult.value != null) {
+      performAutoLogin(navController, authViewModel)
+    }
   }
 
   // Navigate based on authentication result from explicit login/signup actions
