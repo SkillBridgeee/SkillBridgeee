@@ -8,6 +8,8 @@ import com.android.sample.model.communication.newImplementation.ConversationMana
 import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import java.util.Date
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +24,7 @@ data class ConvUIState(
     val messages: List<MessageNew> = emptyList(),
     val currentMessage: String = "",
     val currentUserId: String = "",
+    val partnerName: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -30,7 +33,8 @@ class MessageViewModel(
     private val convManager: ConversationManagerInter =
         ConversationManager(
             convRepo = ConversationRepositoryProvider.repository,
-            overViewRepo = OverViewConvRepositoryProvider.repository)
+            overViewRepo = OverViewConvRepositoryProvider.repository),
+    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(ConvUIState())
@@ -41,10 +45,18 @@ class MessageViewModel(
   private var otherId: String? = null
   private var loadJob: Job? = null
 
-  private val userError: String = "User not logged in"
+  private val userError: String = "User not authenticated. Please log in to view messages."
   private val convNotFoundError: String = "Conversation not found"
   private val listenMsgError: String = "Failed to receive messages"
-  private val sendMsgError: String = "Failed ot send message"
+  private val sendMsgError: String = "Failed to send message"
+
+  init {
+    // Initialize current user ID on ViewModel creation
+    currentUserId = UserSessionManager.getCurrentUserId()
+    if (currentUserId != null) {
+      _uiState.update { it.copy(currentUserId = currentUserId!!) }
+    }
+  }
 
   /** Start listening to real-time messages for a given conversation ID. */
   fun loadConversation(convId: String) {
@@ -55,10 +67,16 @@ class MessageViewModel(
     loadJob =
         viewModelScope.launch {
 
-          // Get current user id
-          val userId = UserSessionManager.getCurrentUserId()
+          // Get current user id (try to refresh if null)
+          var userId = currentUserId ?: UserSessionManager.getCurrentUserId()
           if (userId == null) {
-            _uiState.update { it.copy(error = userError) }
+            // Wait a bit and try again (Firebase might still be initializing)
+            kotlinx.coroutines.delay(500)
+            userId = UserSessionManager.getCurrentUserId()
+          }
+
+          if (userId == null) {
+            _uiState.update { it.copy(error = userError, isLoading = false) }
             return@launch
           }
           currentUserId = userId
@@ -73,8 +91,19 @@ class MessageViewModel(
 
           // Determine who is the other participant
           otherId =
-              if (conversation.convCreatorId == userId) conversation.otherPersonId
-              else conversation.convCreatorId
+              if (conversation.convCreatorId == userId) {
+                conversation.otherPersonId
+              } else {
+                conversation.convCreatorId
+              }
+
+          // Fetch partner's profile name
+          try {
+            val partnerProfile = profileRepository.getProfile(otherId!!)
+            _uiState.update { it.copy(partnerName = partnerProfile?.name ?: "User") }
+          } catch (e: Exception) {
+            _uiState.update { it.copy(partnerName = "User") }
+          }
 
           // Start listening to messages
           convManager
@@ -82,7 +111,10 @@ class MessageViewModel(
               .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
               .catch { _ -> _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
               .collect { messages ->
-                convManager.resetUnreadCount(convId = convId, userId = currentUserId!!)
+                // Reset unread count only if the current user is the receiver of the last message
+                if (messages.isNotEmpty() && messages.last().receiverId == userId) {
+                  convManager.resetUnreadCount(convId = convId, userId = userId)
+                }
                 _uiState.update {
                   it.copy(
                       messages = messages.sortedBy { msg -> msg.createdAt },
@@ -122,6 +154,11 @@ class MessageViewModel(
   /** Updates the text for the new message being composed. */
   fun onMessageChange(newMessage: String) {
     _uiState.update { it.copy(currentMessage = newMessage) }
+  }
+
+  /** Retry loading the conversation (useful after authentication issues). */
+  fun retry() {
+    currentConvId?.let { loadConversation(it) }
   }
 
   /** Clears the error message. */

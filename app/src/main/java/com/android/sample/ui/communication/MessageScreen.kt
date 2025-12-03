@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -17,15 +18,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MessageScreen(viewModel: MessageViewModel, convId: String) {
+fun MessageScreen(
+    viewModel: MessageViewModel,
+    convId: String,
+) {
 
   val uiState by viewModel.uiState.collectAsState()
 
-  LaunchedEffect(convId) { viewModel.loadConversation(convId) }
+  LaunchedEffect(convId) {
+    viewModel.loadConversation(convId)
+  }
 
   Scaffold(
       modifier = Modifier.fillMaxSize(),
+      topBar = {
+        TopAppBar(
+            title = { Text(uiState.partnerName ?: "Messages") }
+        )
+      },
       bottomBar = {
         MessageInput(
             message = uiState.currentMessage,
@@ -38,11 +50,23 @@ fun MessageScreen(viewModel: MessageViewModel, convId: String) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.errorContainer) {
-                  Text(
-                      text = error,
-                      color = MaterialTheme.colorScheme.onErrorContainer,
-                      modifier = Modifier.padding(8.dp),
-                      style = MaterialTheme.typography.bodySmall)
+                  Row(
+                      modifier = Modifier.fillMaxWidth().padding(8.dp),
+                      horizontalArrangement = Arrangement.SpaceBetween,
+                      verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f))
+                        if (error.contains("not authenticated", ignoreCase = true)) {
+                          TextButton(onClick = { viewModel.retry() }) {
+                            Text(
+                                text = "Retry",
+                                color = MaterialTheme.colorScheme.onErrorContainer)
+                          }
+                        }
+                      }
                 }
           }
 
