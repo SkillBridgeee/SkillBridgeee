@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Address
 import android.location.Geocoder
-import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -63,9 +63,12 @@ class SignUpScreenRobolectricTest {
     ProfileRepositoryProvider.setForTests(FakeProfileRepository())
   }
 
-  private fun waitForTag(tag: String) {
+  private fun waitForTag() {
     rule.waitUntil {
-      rule.onAllNodes(hasTestTag(tag), useUnmergedTree = false).fetchSemanticsNodes().isNotEmpty()
+      rule
+          .onAllNodes(hasTestTag(SignUpScreenTestTags.NAME), useUnmergedTree = false)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
   }
 
@@ -74,7 +77,7 @@ class SignUpScreenRobolectricTest {
     rule.setContent {
       SampleAppTheme {
         val vm = SignUpViewModel()
-        SignUpScreen(vm = vm)
+        SignUpScreen(vm = vm, onNavigateToToS = { /* Mock navigation action */})
       }
     }
 
@@ -86,11 +89,11 @@ class SignUpScreenRobolectricTest {
   }
 
   @Test
-  fun entering_valid_form_enables_sign_up_button() {
+  fun entering_valid_form_without_ToS_disable_sign_up_button() {
     rule.setContent {
       SampleAppTheme {
         val vm = SignUpViewModel()
-        SignUpScreen(vm = vm)
+        SignUpScreen(vm = vm, onNavigateToToS = { /* Mock navigation action */})
       }
     }
 
@@ -118,10 +121,9 @@ class SignUpScreenRobolectricTest {
         .onNodeWithTag(SignUpScreenTestTags.PASSWORD, useUnmergedTree = false)
         .performTextInput("passw0rd!")
 
-    // Wait for validation
     rule.waitForIdle()
-
-    rule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP, useUnmergedTree = false).assertIsEnabled()
+    Thread.sleep(300) // Ensure validate is triggered
+    rule.onNodeWithTag(SignUpScreenTestTags.SIGN_UP, useUnmergedTree = false).assertIsNotEnabled()
   }
 
   @Test
@@ -129,7 +131,7 @@ class SignUpScreenRobolectricTest {
     rule.setContent {
       SampleAppTheme {
         val vm = SignUpViewModel()
-        SignUpScreen(vm = vm)
+        SignUpScreen(vm = vm, onNavigateToToS = { /* Mock navigation action */})
       }
     }
 
@@ -141,7 +143,7 @@ class SignUpScreenRobolectricTest {
     rule.setContent {
       SampleAppTheme {
         val vm = SignUpViewModel()
-        SignUpScreen(vm = vm)
+        SignUpScreen(vm = vm, onNavigateToToS = { /* Mock navigation action */})
       }
     }
 
@@ -153,7 +155,7 @@ class SignUpScreenRobolectricTest {
     rule.setContent {
       SampleAppTheme {
         val vm = SignUpViewModel()
-        SignUpScreen(vm = vm)
+        SignUpScreen(vm = vm, onNavigateToToS = { /* Mock navigation action */})
       }
     }
 
@@ -174,7 +176,7 @@ class SignUpScreenRobolectricTest {
     rule.setContent {
       SampleAppTheme {
         val vm = SignUpViewModel()
-        SignUpScreen(vm = vm)
+        SignUpScreen(vm = vm, onNavigateToToS = { /* Mock navigation action */})
       }
     }
 
@@ -194,12 +196,12 @@ class SignUpScreenRobolectricTest {
     rule.setContent {
       SampleAppTheme {
         val vm = SignUpViewModel()
-        SignUpScreen(vm = vm)
+        SignUpScreen(vm = vm, onNavigateToToS = { /* Mock navigation action */})
       }
     }
 
     rule.waitForIdle()
-    waitForTag(SignUpScreenTestTags.NAME)
+    waitForTag()
     rule
         .onNodeWithContentDescription(SignUpScreenTestTags.PIN_CONTENT_DESC, useUnmergedTree = true)
         .performClick()
@@ -216,12 +218,12 @@ class SignUpScreenRobolectricTest {
     rule.setContent {
       SampleAppTheme {
         val vm = SignUpViewModel()
-        SignUpScreen(vm = vm)
+        SignUpScreen(vm = vm, onNavigateToToS = { /* Mock navigation action */})
       }
     }
 
     rule.waitForIdle()
-    waitForTag(SignUpScreenTestTags.NAME)
+    waitForTag()
 
     rule
         .onNodeWithContentDescription(SignUpScreenTestTags.PIN_CONTENT_DESC, useUnmergedTree = true)
@@ -240,6 +242,8 @@ class SignUpScreenRobolectricTest {
     every { address.adminArea } returns "Île-de-France"
     every { address.countryName } returns "France"
 
+    // Replacing deprecated Geocoder API usage with a comment to suppress warnings
+    @Suppress("DEPRECATION")
     every { anyConstructed<Geocoder>().getFromLocation(any(), any(), any()) } returns
         listOf(address)
 
@@ -262,6 +266,8 @@ class SignUpScreenRobolectricTest {
     val vm = SignUpViewModel()
 
     mockkConstructor(Geocoder::class)
+    // Replacing deprecated Geocoder API usage with a comment to suppress warnings
+    @Suppress("DEPRECATION")
     every { anyConstructed<Geocoder>().getFromLocation(any(), any(), any()) } returns emptyList()
 
     val provider = mockk<GpsLocationProvider>()
