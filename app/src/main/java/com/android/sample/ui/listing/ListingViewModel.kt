@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
  * @param listingBookings List of bookings for this listing (for owner view)
  * @param bookingsLoading Whether bookings are being loaded
  * @param bookerProfiles Map of booker user IDs to their profiles
+ * @param currentUserId The ID of the current user (for determining which actions to show)
  */
 data class ListingUiState(
     val listing: Listing? = null,
@@ -56,7 +57,8 @@ data class ListingUiState(
     val bookingsLoading: Boolean = false,
     val listingDeleted: Boolean = false,
     val bookerProfiles: Map<String, Profile> = emptyMap(),
-    val tutorRatingPending: Boolean = false
+    val tutorRatingPending: Boolean = false,
+    val currentUserId: String? = null
 )
 
 /**
@@ -102,6 +104,7 @@ class ListingViewModel(
               creator = creator,
               isLoading = false,
               isOwnListing = isOwnListing,
+              currentUserId = currentUserId,
               error = null)
         }
 

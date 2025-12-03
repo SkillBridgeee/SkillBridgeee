@@ -45,6 +45,7 @@ private const val PROFILE_ICON_CONTENT_DESC = "Profile Icon"
  * @param onReject Callback when reject button is clicked
  * @param onPaymentComplete Callback when payment complete button is clicked
  * @param onPaymentReceived Callback when payment received button is clicked
+ * @param currentUserId The ID of the current user (to determine which buttons to show)
  * @param modifier Modifier for the card
  */
 @Composable
@@ -55,6 +56,7 @@ fun BookingCard(
     onReject: () -> Unit,
     onPaymentComplete: () -> Unit = {},
     onPaymentReceived: () -> Unit = {},
+    currentUserId: String? = null,
     modifier: Modifier = Modifier
 ) {
   val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
@@ -152,7 +154,9 @@ fun BookingCard(
               }
 
               // Payment actions
-              if (booking.paymentStatus == PaymentStatus.PENDING_PAYMENT) {
+              // Only show "Payment Complete" button to the learner (bookerId)
+              if (booking.paymentStatus == PaymentStatus.PENDING_PAYMENT &&
+                  currentUserId == booking.bookerId) {
                 Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = onPaymentComplete,
@@ -161,7 +165,10 @@ fun BookingCard(
                             .testTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)) {
                       Text("Payment Complete")
                     }
-              } else if (booking.paymentStatus == PaymentStatus.PAYED) {
+              }
+              // Only show "Payment Received" button to the tutor (listingCreatorId)
+              else if (booking.paymentStatus == PaymentStatus.PAYED &&
+                       currentUserId == booking.listingCreatorId) {
                 Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = onPaymentReceived,
