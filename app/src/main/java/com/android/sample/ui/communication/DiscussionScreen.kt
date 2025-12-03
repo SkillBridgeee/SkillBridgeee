@@ -28,6 +28,7 @@ fun DiscussionScreen(
     onConversationClick: (conversationId: String) -> Unit
 ) {
   val uiState by viewModel.uiState.collectAsState()
+  val currentUserId = com.android.sample.model.authentication.UserSessionManager.getCurrentUserId()
 
   Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
     Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
@@ -62,8 +63,10 @@ fun DiscussionScreen(
       } else {
         LazyColumn(modifier = Modifier.fillMaxSize().testTag("discussion_list")) {
           itemsIndexed(uiState.conversations) { index, conversation ->
+            val participantName = uiState.participantNames[conversation.otherPersonId] ?: "Unknown User"
             ConversationItem(
                 conversation = conversation,
+                participantName = participantName,
                 onClick = { onConversationClick(conversation.linkedConvId) },
                 index = index)
           }
@@ -74,7 +77,12 @@ fun DiscussionScreen(
 }
 
 @Composable
-fun ConversationItem(conversation: OverViewConversation, onClick: () -> Unit, index: Int) {
+fun ConversationItem(
+    conversation: OverViewConversation,
+    participantName: String,
+    onClick: () -> Unit,
+    index: Int
+) {
   val backgroundColor =
       if (index % 2 == 0) {
         MaterialTheme.colorScheme.surface
@@ -97,7 +105,7 @@ fun ConversationItem(conversation: OverViewConversation, onClick: () -> Unit, in
                     .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center) {
               Text(
-                  text = conversation.convName.take(1).uppercase(),
+                  text = participantName.take(1).uppercase(),
                   style = MaterialTheme.typography.headlineSmall,
                   color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
@@ -105,7 +113,7 @@ fun ConversationItem(conversation: OverViewConversation, onClick: () -> Unit, in
         Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-          Text(text = conversation.convName, style = MaterialTheme.typography.titleMedium)
+          Text(text = participantName, style = MaterialTheme.typography.titleMedium)
           Text(
               text = conversation.lastMsg?.content ?: "",
               style = MaterialTheme.typography.bodyMedium,
