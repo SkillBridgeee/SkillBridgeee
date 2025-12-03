@@ -807,7 +807,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     val studentUser = mockk<FirebaseUser>()
     every { studentAuth.currentUser } returns studentUser
     every { studentUser.uid } returns "student1"
-    val studentRepo = FirestoreBookingRepository(firestore, studentAuth)
+    val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
     studentRepo.addBooking(booking)
 
     // Update payment status as tutor (listing creator)
@@ -833,7 +833,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { anotherAuth.currentUser } returns anotherUser
     every { anotherUser.uid } returns "another-user"
 
-    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth)
+    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth, context)
     val booking =
         Booking(
             bookingId = "booking1",
@@ -924,7 +924,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { studentAuth.currentUser } returns studentUser
     every { studentUser.uid } returns "student1"
 
-    val studentRepo = FirestoreBookingRepository(firestore, studentAuth)
+    val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
     val booking =
         Booking(
             bookingId = "booking1",
