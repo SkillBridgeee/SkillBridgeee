@@ -22,11 +22,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.SkillsHelper
-import com.android.sample.model.user.Profile
 import com.android.sample.ui.components.HorizontalScrollHint
-import com.android.sample.ui.components.TutorCard
+import com.android.sample.ui.components.ProposalCard
+import com.android.sample.ui.components.RequestCard
 import com.android.sample.ui.theme.PrimaryColor
 
 /**
@@ -39,9 +41,13 @@ object HomeScreenTestTags {
   const val EXPLORE_SKILLS_SECTION = "exploreSkillsSection"
   const val ALL_SUBJECT_LIST = "allSubjectList"
   const val SKILL_CARD = "skillCard"
-  const val TOP_TUTOR_SECTION = "topTutorSection"
-  const val TUTOR_CARD = "tutorCard"
-  const val TUTOR_LIST = "tutorList"
+  const val PROPOSAL_SECTION = "proposalSection"
+  const val PROPOSAL_CARD = "proposalCard"
+  const val PROPOSAL_LIST = "proposalList"
+
+  const val REQUEST_SECTION = "requestSection"
+  const val REQUEST_CARD = "requestCard"
+
   const val FAB_ADD = "fabAdd"
 }
 
@@ -61,9 +67,9 @@ object HomeScreenTestTags {
 @Composable
 fun HomeScreen(
     mainPageViewModel: MainPageViewModel = MainPageViewModel(),
-    onNavigateToProfile: (String) -> Unit = {},
     onNavigateToSubjectList: (MainSubject) -> Unit = {},
-    onNavigateToAddNewListing: () -> Unit
+    onNavigateToAddNewListing: () -> Unit,
+    onNavigateToListingDetails: (String) -> Unit,
 ) {
   val uiState by mainPageViewModel.uiState.collectAsState()
 
@@ -78,15 +84,31 @@ fun HomeScreen(
               Icon(Icons.Default.Add, contentDescription = "Add")
             }
       }) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues).fillMaxSize().background(Color.White)) {
-          Spacer(modifier = Modifier.height(10.dp))
-          GreetingSection(uiState.welcomeMessage)
-          Spacer(modifier = Modifier.height(20.dp))
-          ExploreSubjects(uiState.subjects, onNavigateToSubjectList)
-          Spacer(modifier = Modifier.height(20.dp))
-          TutorsSection(
-              tutors = uiState.tutors, onTutorClick = { userId -> onNavigateToProfile(userId) })
-        }
+        LazyColumn(
+            modifier = Modifier.padding(paddingValues).fillMaxSize().background(Color.White),
+            verticalArrangement = Arrangement.spacedBy(20.dp)) {
+              // Greeting
+              item {
+                Spacer(modifier = Modifier.height(10.dp))
+                GreetingSection(uiState.welcomeMessage)
+              }
+
+              // Explore subjects
+              item { ExploreSubjects(uiState.subjects, onNavigateToSubjectList) }
+
+              item {
+                ProposalsSection(
+                    proposals = uiState.proposals, onProposalClick = onNavigateToListingDetails)
+              }
+
+              item {
+                RequestsSection(
+                    requests = uiState.requests, onRequestClick = onNavigateToListingDetails)
+              }
+
+              // Bottom padding
+              item { Spacer(modifier = Modifier.height(16.dp)) }
+            }
       }
 }
 
@@ -169,31 +191,73 @@ fun SubjectCard(
 }
 
 /**
- * Displays a list of all tutors.
+ * Displays a list of top proposal listings.
  *
- * Shows a section title and a scrollable list of tutor cards. When a tutor card is clicked,
- * triggers a callback with the tutor's user ID so the caller can navigate to the tutor’s profile.
+ * Shows a section title and a scrollable list of proposal cards.
  */
 @Composable
-fun TutorsSection(tutors: List<Profile>, onTutorClick: (String) -> Unit) {
+fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
-        text = "All Tutors",
+        text = "Latest Proposals",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
-        modifier = Modifier.testTag(HomeScreenTestTags.TOP_TUTOR_SECTION))
+        modifier = Modifier.testTag(HomeScreenTestTags.PROPOSAL_SECTION))
 
     Spacer(modifier = Modifier.height(10.dp))
 
-    LazyColumn(
-        modifier = Modifier.testTag(HomeScreenTestTags.TUTOR_LIST).fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
-          items(tutors) { profile ->
-            TutorCard(
-                profile = profile,
-                onOpenProfile = { onTutorClick(profile.userId) },
-                cardTestTag = HomeScreenTestTags.TUTOR_CARD)
+    if (proposals.isEmpty()) {
+      Text(
+          text = "No proposals available yet.",
+          color = Color.Gray,
+          fontSize = 14.sp,
+          modifier = Modifier.padding(8.dp))
+    } else {
+      Column(
+          modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.PROPOSAL_LIST),
+          verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            proposals.forEach { proposal ->
+              ProposalCard(
+                  proposal = proposal,
+                  onClick = onProposalClick,
+                  modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.PROPOSAL_CARD))
+            }
           }
+    }
+  }
+}
+
+/**
+ * Displays a list of recent request listings.
+ *
+ * Shows a section title and a scrollable list of request cards.
+ */
+@Composable
+fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
+  Column(modifier = Modifier.padding(horizontal = 10.dp)) {
+    Text(
+        text = "Recent Requests",
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        modifier = Modifier.testTag(HomeScreenTestTags.REQUEST_SECTION))
+
+    Spacer(modifier = Modifier.height(10.dp))
+
+    if (requests.isEmpty()) {
+      Text(
+          text = "No requests available yet.",
+          color = Color.Gray,
+          fontSize = 14.sp,
+          modifier = Modifier.padding(8.dp))
+    } else {
+      Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        requests.forEach { request ->
+          RequestCard(
+              request = request,
+              onClick = onRequestClick,
+              modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.REQUEST_CARD))
         }
+      }
+    }
   }
 }
