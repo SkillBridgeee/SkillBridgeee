@@ -2,8 +2,10 @@ package com.android.sample.ui.components
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -82,22 +84,29 @@ internal fun LocationAndDateRow(
     dateTestTag: String
 ) {
   Row(
-      horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
+      modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
       verticalAlignment = Alignment.CenterVertically) {
-        LocationText(locationName = locationName, testTag = locationTestTag)
+        LocationText(
+            locationName = locationName, testTag = locationTestTag, modifier = Modifier.weight(1f))
+
+        Spacer(modifier = Modifier.width(8.dp))
+
         CreatedDateText(createdAt = createdAt, testTag = dateTestTag)
       }
 }
 
 @Composable
-internal fun LocationText(locationName: String, testTag: String) {
+internal fun LocationText(locationName: String, testTag: String, modifier: Modifier = Modifier) {
   val displayName = locationName.ifBlank { "No location" }
   Text(
       text = "📍 $displayName",
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
-      modifier = Modifier.testTag(testTag))
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis,
+      modifier = modifier.testTag(testTag))
 }
+
 
 @Composable
 internal fun CreatedDateText(createdAt: java.util.Date, testTag: String) {
