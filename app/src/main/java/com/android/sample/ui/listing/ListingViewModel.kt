@@ -11,9 +11,9 @@ import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
-import com.android.sample.model.rating.FirestoreRatingRepository
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.rating.RatingType
 import com.android.sample.model.rating.StarRating
 import com.android.sample.model.user.Profile
@@ -21,7 +21,6 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.components.RatingAggregationHelper
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import java.util.Date
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -72,8 +71,7 @@ class ListingViewModel(
     private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
     private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
     private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository,
-    private val ratingRepo: RatingRepository =
-        FirestoreRatingRepository(FirebaseFirestore.getInstance(), FirebaseAuth.getInstance())
+    private val ratingRepo: RatingRepository = RatingRepositoryProvider.repository
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(ListingUiState())
