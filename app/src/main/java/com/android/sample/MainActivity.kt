@@ -21,12 +21,16 @@ import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.GoogleSignInHelper
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.communication.DiscussionViewModel
+import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.ui.components.BottomNavBar
 import com.android.sample.ui.components.TopAppBar
 import com.android.sample.ui.navigation.AppNavGraph
@@ -72,6 +76,8 @@ class MainActivity : ComponentActivity() {
       ListingRepositoryProvider.init(this)
       BookingRepositoryProvider.init(this)
       RatingRepositoryProvider.init(this)
+      OverViewConvRepositoryProvider.init(this)
+      ConversationRepositoryProvider.init(this)
     } catch (e: Exception) {
       println("Repository initialization failed: ${e.message}")
     }
@@ -107,6 +113,12 @@ class MyViewModelFactory(private val sessionManager: UserSessionManager) :
       }
       BookingDetailsViewModel::class.java -> {
         BookingDetailsViewModel() as T
+      }
+      DiscussionViewModel::class.java -> {
+        DiscussionViewModel() as T
+      }
+      MessageViewModel::class.java -> {
+        MessageViewModel() as T
       }
       else -> throw IllegalArgumentException("Unknown ViewModel class")
     }
@@ -164,6 +176,7 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val mainPageViewModel: MainPageViewModel = viewModel(factory = factory)
   val newListingViewModel: NewListingViewModel = viewModel(factory = factory)
   val bookingDetailsViewModel: BookingDetailsViewModel = viewModel(factory = factory)
+  val discussionViewModel: DiscussionViewModel = viewModel(factory = factory)
 
   // Define main screens that should show bottom nav
   val mainScreenRoutes =
@@ -197,6 +210,7 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
               newListingViewModel = newListingViewModel,
               bookingDetailsViewModel = bookingDetailsViewModel,
               authViewModel = authViewModel,
+              discussionViewModel = discussionViewModel,
               onGoogleSignIn = onGoogleSignIn)
         }
       }
