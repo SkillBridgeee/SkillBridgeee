@@ -95,13 +95,13 @@ class BookingDetailsScreenTest {
 
         override suspend fun getProposals() = emptyList<Proposal>()
 
-        override suspend fun getRequests() = emptyList<com.android.sample.model.listing.Request>()
+        override suspend fun getRequests() = emptyList<Request>()
 
         override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
 
         override suspend fun addProposal(proposal: Proposal) {}
 
-        override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+        override suspend fun addRequest(request: Request) {}
 
         override suspend fun updateListing(listingId: String, listing: Listing) {}
 
@@ -109,8 +109,7 @@ class BookingDetailsScreenTest {
 
         override suspend fun deactivateListing(listingId: String) {}
 
-        override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
-            emptyList<Listing>()
+        override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
 
         override suspend fun searchByLocation(location: Location, radiusKm: Double) =
             emptyList<Listing>()
@@ -138,8 +137,7 @@ class BookingDetailsScreenTest {
         override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
             emptyList<Profile>()
 
-        override suspend fun getSkillsForUser(userId: String) =
-            emptyList<com.android.sample.model.skill.Skill>()
+        override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
 
         override suspend fun updateTutorRatingFields(
             userId: String,
@@ -171,6 +169,10 @@ class BookingDetailsScreenTest {
     val vm = fakeViewModel()
     composeTestRule.setContent {
       BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.waitUntil {
+      composeTestRule.onAllNodesWithText("John Doe").fetchSemanticsNodes().isNotEmpty()
     }
 
     // Vérifie les sections visibles
@@ -238,8 +240,7 @@ class BookingDetailsScreenTest {
         override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
             emptyList<Profile>()
 
-        override suspend fun getSkillsForUser(userId: String) =
-            emptyList<com.android.sample.model.skill.Skill>()
+        override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
 
         override suspend fun updateTutorRatingFields(
             userId: String,
@@ -621,10 +622,9 @@ class BookingDetailsScreenTest {
 
   @Test
   fun bookingDetailsScreen_errorScreen() {
-    var clickedId: String? = null
     val vm = fakeViewModelError()
     composeTestRule.setContent {
-      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = { clickedId = it })
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
     }
 
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertIsDisplayed()
@@ -687,13 +687,13 @@ class BookingDetailsScreenTest {
 
         override suspend fun getProposals() = emptyList<Proposal>()
 
-        override suspend fun getRequests() = emptyList<com.android.sample.model.listing.Request>()
+        override suspend fun getRequests() = emptyList<Request>()
 
         override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
 
         override suspend fun addProposal(proposal: Proposal) {}
 
-        override suspend fun addRequest(request: com.android.sample.model.listing.Request) {}
+        override suspend fun addRequest(request: Request) {}
 
         override suspend fun updateListing(listingId: String, listing: Listing) {}
 
@@ -701,8 +701,7 @@ class BookingDetailsScreenTest {
 
         override suspend fun deactivateListing(listingId: String) {}
 
-        override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
-            emptyList<Listing>()
+        override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
 
         override suspend fun searchByLocation(location: Location, radiusKm: Double) =
             emptyList<Listing>()
