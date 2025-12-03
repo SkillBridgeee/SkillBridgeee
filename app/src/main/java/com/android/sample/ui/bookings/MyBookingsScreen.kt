@@ -88,21 +88,19 @@ fun BookingsList(
     onBookingClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize().padding(12.dp),
-        contentPadding = PaddingValues(6.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+  LazyColumn(
+      modifier = modifier.fillMaxSize().padding(12.dp),
+      contentPadding = PaddingValues(6.dp),
+      verticalArrangement = Arrangement.spacedBy(12.dp)) {
         items(bookings, key = { it.booking.bookingId }) { bookingUI ->
-            BookingCard(
-                booking = bookingUI.booking,
-                listing = bookingUI.listing,
-                creator = bookingUI.creatorProfile,
-                onClickBookingCard = { bookingId -> onBookingClick(bookingId) },
-                modifier = Modifier.padding(8.dp)
-            )
+          BookingCard(
+              booking = bookingUI.booking,
+              listing = bookingUI.listing,
+              creator = bookingUI.creatorProfile,
+              onClickBookingCard = { bookingId -> onBookingClick(bookingId) },
+              modifier = Modifier.padding(8.dp))
         }
-    }
+      }
 }
 
 /**

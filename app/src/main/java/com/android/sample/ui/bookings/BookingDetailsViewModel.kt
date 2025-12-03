@@ -111,8 +111,7 @@ class BookingDetailsViewModel(
                 ratingSubmitted = alreadySubmitted,
                 isTutor = booking.listingCreatorId == profileRepository.getCurrentUserId(),
                 onAcceptBooking = { acceptBooking(booking.bookingId) },
-                onDenyBooking = { denyBooking(booking.bookingId) }
-            )
+                onDenyBooking = { denyBooking(booking.bookingId) })
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error loading booking details for $bookingId", e)
         _bookingUiState.value = bookingUiState.value.copy(loadError = true)
@@ -282,31 +281,31 @@ class BookingDetailsViewModel(
 
   private fun acceptBooking(bookingId: String) {
     viewModelScope.launch {
-        try {
-            bookingRepository.updateBookingStatus(bookingId, BookingStatus.CONFIRMED)
-            val updatedBooking = bookingRepository.getBooking(bookingId)
-            if (updatedBooking != null) {
-                _bookingUiState.value = bookingUiState.value.copy(booking = updatedBooking)
-            }
-        } catch (e: Exception) {
-            Log.e("BookingDetailsViewModel", "Error accepting booking", e)
+      try {
+        bookingRepository.updateBookingStatus(bookingId, BookingStatus.CONFIRMED)
+        val updatedBooking = bookingRepository.getBooking(bookingId)
+        if (updatedBooking != null) {
+          _bookingUiState.value = bookingUiState.value.copy(booking = updatedBooking)
         }
-    }
-}
-
-private fun denyBooking(bookingId: String) {
-  viewModelScope.launch {
-    try {
-      bookingRepository.updateBookingStatus(bookingId, BookingStatus.CANCELLED)
-      val updatedBooking = bookingRepository.getBooking(bookingId)
-      if (updatedBooking != null) {
-        _bookingUiState.value = bookingUiState.value.copy(booking = updatedBooking)
+      } catch (e: Exception) {
+        Log.e("BookingDetailsViewModel", "Error accepting booking", e)
       }
-    } catch (e: Exception) {
-      Log.e("BookingDetailsViewModel", "Error denying booking", e)
     }
   }
-}
+
+  private fun denyBooking(bookingId: String) {
+    viewModelScope.launch {
+      try {
+        bookingRepository.updateBookingStatus(bookingId, BookingStatus.CANCELLED)
+        val updatedBooking = bookingRepository.getBooking(bookingId)
+        if (updatedBooking != null) {
+          _bookingUiState.value = bookingUiState.value.copy(booking = updatedBooking)
+        }
+      } catch (e: Exception) {
+        Log.e("BookingDetailsViewModel", "Error denying booking", e)
+      }
+    }
+  }
 
   fun markPaymentComplete() {
     val currentBookingId = bookingUiState.value.booking.bookingId
@@ -317,7 +316,8 @@ private fun denyBooking(bookingId: String) {
         bookingRepository.updatePaymentStatus(currentBookingId, PaymentStatus.PAYED)
         val updatedBooking = bookingRepository.getBooking(currentBookingId)
         if (updatedBooking != null) {
-          _bookingUiState.value = bookingUiState.value.copy(booking = updatedBooking, loadError = false)
+          _bookingUiState.value =
+              bookingUiState.value.copy(booking = updatedBooking, loadError = false)
         }
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error marking payment complete", e)
@@ -335,7 +335,8 @@ private fun denyBooking(bookingId: String) {
         bookingRepository.updatePaymentStatus(currentBookingId, PaymentStatus.CONFIRMED)
         val updatedBooking = bookingRepository.getBooking(currentBookingId)
         if (updatedBooking != null) {
-          _bookingUiState.value = bookingUiState.value.copy(booking = updatedBooking, loadError = false)
+          _bookingUiState.value =
+              bookingUiState.value.copy(booking = updatedBooking, loadError = false)
         }
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error confirming payment received", e)

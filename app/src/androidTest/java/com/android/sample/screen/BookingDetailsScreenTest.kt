@@ -74,6 +74,8 @@ class BookingDetailsScreenTest {
 
         override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
+        override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {}
+
         override suspend fun confirmBooking(bookingId: String) {}
 
         override suspend fun completeBooking(bookingId: String) {}
@@ -120,6 +122,8 @@ class BookingDetailsScreenTest {
   private val fakeProfileRepo =
       object : ProfileRepository {
         override fun getNewUid() = "u1"
+
+        override fun getCurrentUserId() = "u1"
 
         override suspend fun getProfile(userId: String) =
             Profile(userId = userId, name = "John Doe", email = "john.doe@example.com")
@@ -219,6 +223,8 @@ class BookingDetailsScreenTest {
   private val fakeProfileRepoError =
       object : ProfileRepository {
         override fun getNewUid() = "u1"
+
+        override fun getCurrentUserId() = "u1"
 
         override suspend fun getProfile(userId: String) = throw error("test")
 
@@ -331,6 +337,8 @@ class BookingDetailsScreenTest {
 
         override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
+        override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {}
+
         override suspend fun confirmBooking(bookingId: String) {}
 
         override suspend fun completeBooking(bookingId: String) {}
@@ -423,6 +431,8 @@ class BookingDetailsScreenTest {
           onCreatorClick = {},
           onMarkCompleted = { clicked = true },
           onSubmitStudentRatings = { _, _ -> },
+          onPaymentComplete = {},
+          onPaymentReceived = {},
       )
     }
 
@@ -458,6 +468,8 @@ class BookingDetailsScreenTest {
           onCreatorClick = {},
           onMarkCompleted = {},
           onSubmitStudentRatings = { _, _ -> },
+          onPaymentComplete = {},
+          onPaymentReceived = {},
       )
     }
 
@@ -491,6 +503,8 @@ class BookingDetailsScreenTest {
           onCreatorClick = {},
           onMarkCompleted = {},
           onSubmitStudentRatings = { _, _ -> },
+          onPaymentComplete = {},
+          onPaymentReceived = {},
       )
     }
 
@@ -509,6 +523,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onMarkCompleted = {},
             onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {},
         )
       }
     }
@@ -538,6 +554,8 @@ class BookingDetailsScreenTest {
               receivedTutorStars = tutorStars
               receivedListingStars = listingStars
             },
+            onPaymentComplete = {},
+            onPaymentReceived = {},
         )
       }
     }

@@ -23,7 +23,16 @@ data class Booking(
 ) {
   // No-argument constructor for Firestore deserialization
   constructor() :
-      this("", "", "", "", Date(), Date(System.currentTimeMillis() + 1), BookingStatus.PENDING, PaymentStatus.PENDING_PAYMENT, 0.0)
+      this(
+          "",
+          "",
+          "",
+          "",
+          Date(),
+          Date(System.currentTimeMillis() + 1),
+          BookingStatus.PENDING,
+          PaymentStatus.PENDING_PAYMENT,
+          0.0)
 
   /** Validates the booking data. Throws an [IllegalArgumentException] if the data is invalid. */
   fun validate() {
@@ -45,7 +54,6 @@ enum class PaymentStatus {
   PAYED,
   CONFIRMED
 }
-
 
 fun Booking.dateString(): String {
   val formatter = SimpleDateFormat("dd/MM/yy", Locale.getDefault())

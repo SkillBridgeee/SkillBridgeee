@@ -51,6 +51,8 @@ class ProfileFakeRepoWorking : ProfileRepository {
 
   override fun getNewUid(): String = "profile_${UUID.randomUUID()}"
 
+  override fun getCurrentUserId(): String = "current-user-test-id"
+
   override suspend fun getProfile(userId: String): Profile? = profiles[userId]
 
   override suspend fun addProfile(profile: Profile) {

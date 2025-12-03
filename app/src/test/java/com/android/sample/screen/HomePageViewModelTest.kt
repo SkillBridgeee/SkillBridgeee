@@ -39,6 +39,8 @@ class MainPageViewModelTest {
       ProfileRepository {
     override fun getNewUid() = "fake"
 
+    override fun getCurrentUserId() = "test-user-id"
+
     override suspend fun getProfile(userId: String): Profile? =
         profiles.find { it.userId == userId }
 

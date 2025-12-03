@@ -24,6 +24,10 @@ class ProfileFakeRepoEmpty : ProfileRepository {
     return ""
   }
 
+  override fun getCurrentUserId(): String {
+    return ""
+  }
+
   override suspend fun getProfile(userId: String): Profile? {
     return null
   }

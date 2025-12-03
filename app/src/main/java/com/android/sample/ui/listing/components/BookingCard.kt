@@ -156,16 +156,20 @@ fun BookingCard(
                 Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = onPaymentComplete,
-                    modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)) {
-                  Text("Payment Complete")
-                }
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .testTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)) {
+                      Text("Payment Complete")
+                    }
               } else if (booking.paymentStatus == PaymentStatus.PAYED) {
                 Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = onPaymentReceived,
-                    modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)) {
-                  Text("Payment Received")
-                }
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .testTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)) {
+                      Text("Payment Received")
+                    }
               }
             }
       }

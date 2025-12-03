@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Button
@@ -146,10 +146,9 @@ fun BookingDetailsContent(
     onPaymentReceived: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+  Column(
+      modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+      verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
         // Header
         BookingHeader(uiState)
@@ -177,42 +176,33 @@ fun BookingDetailsContent(
         HorizontalDivider()
         // Let the student mark the session as completed once it is confirmed
         if (uiState.booking.status == BookingStatus.CONFIRMED) {
-            ConfirmCompletionSection(onMarkCompleted)
+          ConfirmCompletionSection(onMarkCompleted)
         }
 
         // Once the session is completed, allow the student to rate the tutor and listing
         if (uiState.booking.status == BookingStatus.COMPLETED) {
-            StudentRatingSection(
-                ratingSubmitted = uiState.ratingSubmitted,
-                onSubmitStudentRatings = onSubmitStudentRatings
-            )
+          StudentRatingSection(
+              ratingSubmitted = uiState.ratingSubmitted,
+              onSubmitStudentRatings = onSubmitStudentRatings)
         }
 
         // Accept/Deny buttons for tutors when a listing is booked
         if (uiState.booking.status == BookingStatus.PENDING && uiState.isTutor) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(onClick = { uiState.onAcceptBooking() }) {
-                    Text("Accept")
-                }
-                Button(onClick = { uiState.onDenyBooking() }) {
-                    Text("Deny")
-                }
-            }
+          Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            Button(onClick = { uiState.onAcceptBooking() }) { Text("Accept") }
+            Button(onClick = { uiState.onDenyBooking() }) { Text("Deny") }
+          }
         }
 
         // Payment actions based on the payment status - only for CONFIRMED bookings
         if (uiState.booking.status == BookingStatus.CONFIRMED) {
-            PaymentActionSection(
-                booking = uiState.booking,
-                isTutor = uiState.isTutor,
-                onPaymentComplete = onPaymentComplete,
-                onPaymentReceived = onPaymentReceived
-            )
+          PaymentActionSection(
+              booking = uiState.booking,
+              isTutor = uiState.isTutor,
+              onPaymentComplete = onPaymentComplete,
+              onPaymentReceived = onPaymentReceived)
         }
-    }
+      }
 }
 
 /**
@@ -554,75 +544,70 @@ private fun PaymentActionSection(
     onPaymentComplete: () -> Unit,
     onPaymentReceived: () -> Unit
 ) {
-    // Always display the current payment status
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+  // Always display the current payment status
+  Column(
+      modifier = Modifier.fillMaxWidth(),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      horizontalAlignment = Alignment.CenterHorizontally) {
         // Display current payment status
         Text(
             text = "Payment Status: ${booking.paymentStatus.name()}",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
+            color = MaterialTheme.colorScheme.primary)
 
         // Show appropriate action based on payment status and user role
         when (booking.paymentStatus) {
-            PaymentStatus.PENDING_PAYMENT -> {
-                // Student (booker) sees the payment complete button
-                if (!isTutor) {
-                    Text(
-                        text = "Once you've paid for the session, click the button below to notify the tutor.",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Button(
-                        onClick = onPaymentComplete,
-                        modifier = Modifier.testTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)
-                    ) {
-                        Text("Payment Complete")
-                    }
-                } else {
-                    // Tutor sees waiting message
-                    Text(
-                        text = "Waiting for the student to complete the payment.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+          PaymentStatus.PENDING_PAYMENT -> {
+            // Student (booker) sees the payment complete button
+            if (!isTutor) {
+              Text(
+                  text =
+                      "Once you've paid for the session, click the button below to notify the tutor.",
+                  style = MaterialTheme.typography.bodyMedium,
+              )
+              Button(
+                  onClick = onPaymentComplete,
+                  modifier = Modifier.testTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)) {
+                    Text("Payment Complete")
+                  }
+            } else {
+              // Tutor sees waiting message
+              Text(
+                  text = "Waiting for the student to complete the payment.",
+                  style = MaterialTheme.typography.bodyMedium,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            PaymentStatus.PAYED -> {
-                // Tutor (listing creator) sees the payment received button
-                if (isTutor) {
-                    Text(
-                        text = "The student has marked the payment as complete. Confirm once you've received it.",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Button(
-                        onClick = onPaymentReceived,
-                        modifier = Modifier.testTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)
-                    ) {
-                        Text("Payment Received")
-                    }
-                } else {
-                    // Student sees waiting message
-                    Text(
-                        text = "Waiting for the tutor to confirm receipt of payment.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+          }
+          PaymentStatus.PAYED -> {
+            // Tutor (listing creator) sees the payment received button
+            if (isTutor) {
+              Text(
+                  text =
+                      "The student has marked the payment as complete. Confirm once you've received it.",
+                  style = MaterialTheme.typography.bodyMedium,
+              )
+              Button(
+                  onClick = onPaymentReceived,
+                  modifier = Modifier.testTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)) {
+                    Text("Payment Received")
+                  }
+            } else {
+              // Student sees waiting message
+              Text(
+                  text = "Waiting for the tutor to confirm receipt of payment.",
+                  style = MaterialTheme.typography.bodyMedium,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            PaymentStatus.CONFIRMED -> {
-                // Both users see confirmation message
-                Text(
-                    text = "Payment has been successfully completed and confirmed!",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+          }
+          PaymentStatus.CONFIRMED -> {
+            // Both users see confirmation message
+            Text(
+                text = "Payment has been successfully completed and confirmed!",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+                fontWeight = FontWeight.SemiBold)
+          }
         }
-    }
+      }
 }
