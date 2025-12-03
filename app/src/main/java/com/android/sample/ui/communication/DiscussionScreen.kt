@@ -63,7 +63,8 @@ fun DiscussionScreen(
       } else {
         LazyColumn(modifier = Modifier.fillMaxSize().testTag("discussion_list")) {
           itemsIndexed(uiState.conversations) { index, conversation ->
-            val participantName = uiState.participantNames[conversation.otherPersonId] ?: "Unknown User"
+            val participantName =
+                uiState.participantNames[conversation.otherPersonId] ?: "Unknown User"
             ConversationItem(
                 conversation = conversation,
                 participantName = participantName,

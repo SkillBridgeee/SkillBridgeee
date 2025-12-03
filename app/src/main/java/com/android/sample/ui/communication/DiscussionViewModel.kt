@@ -103,16 +103,13 @@ class DiscussionViewModel(
             val myConversations = conversations.filter { it.overViewOwnerId == userId }
             Log.d(TAG, "Received ${myConversations.size} conversations owned by user $userId")
 
-            _uiState.update {
-              it.copy(
-                isLoading = false,
-                conversations = myConversations
-              )
-            }
+            _uiState.update { it.copy(isLoading = false, conversations = myConversations) }
 
             // Fetch names for the other participants
             val otherParticipantIds = myConversations.map { it.otherPersonId }.distinct()
-            Log.d(TAG, "Fetching profiles for ${otherParticipantIds.size} unique participants: $otherParticipantIds")
+            Log.d(
+                TAG,
+                "Fetching profiles for ${otherParticipantIds.size} unique participants: $otherParticipantIds")
 
             val participantNames = mutableMapOf<String, String>()
             otherParticipantIds.forEach { participantId ->
@@ -125,9 +122,7 @@ class DiscussionViewModel(
               }
             }
 
-            _uiState.update {
-              it.copy(participantNames = participantNames)
-            }
+            _uiState.update { it.copy(participantNames = participantNames) }
           }
     }
   }
