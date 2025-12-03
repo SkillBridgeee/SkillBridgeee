@@ -275,14 +275,6 @@ class FirestoreBookingRepository(
       throw e
     } catch (e: BookingNotFoundException) {
       throw e
-        if (isOnline()) {
-          documentRef.update("status", status).await()
-        } else {
-          documentRef.update("status", status)
-        }
-      } else {
-        throw Exception("Booking with ID $bookingId not found")
-      }
     } catch (e: Exception) {
       throw BookingFirestoreException("Failed to update payment status: ${e.message}", e)
     }
