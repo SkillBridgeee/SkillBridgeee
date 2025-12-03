@@ -97,7 +97,8 @@ fun BookingsList(
               booking = bookingUI.booking,
               listing = bookingUI.listing,
               creator = bookingUI.creatorProfile,
-              onClickBookingCard = { bookingId -> onBookingClick(bookingId) })
+              onClickBookingCard = { bookingId -> onBookingClick(bookingId) },
+              modifier = Modifier.padding(8.dp))
         }
       }
 }

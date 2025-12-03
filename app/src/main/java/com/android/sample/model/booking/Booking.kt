@@ -18,11 +18,21 @@ data class Booking(
     val sessionStart: Date = Date(),
     val sessionEnd: Date = Date(),
     val status: BookingStatus = BookingStatus.PENDING,
+    val paymentStatus: PaymentStatus = PaymentStatus.PENDING_PAYMENT,
     val price: Double = 0.0
 ) {
   // No-argument constructor for Firestore deserialization
   constructor() :
-      this("", "", "", "", Date(), Date(System.currentTimeMillis() + 1), BookingStatus.PENDING, 0.0)
+      this(
+          "",
+          "",
+          "",
+          "",
+          Date(),
+          Date(System.currentTimeMillis() + 1),
+          BookingStatus.PENDING,
+          PaymentStatus.PENDING_PAYMENT,
+          0.0)
 
   /** Validates the booking data. Throws an [IllegalArgumentException] if the data is invalid. */
   fun validate() {
@@ -39,6 +49,12 @@ enum class BookingStatus {
   CANCELLED
 }
 
+enum class PaymentStatus {
+  PENDING_PAYMENT,
+  PAID,
+  CONFIRMED
+}
+
 fun Booking.dateString(): String {
   val formatter = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
   return formatter.format(this.sessionStart)
@@ -53,11 +69,27 @@ fun BookingStatus.color(): Color {
   }
 }
 
+fun PaymentStatus.color(): Color {
+  return when (this) {
+    PaymentStatus.PENDING_PAYMENT -> Color.Gray // Placeholder color
+    PaymentStatus.PAID -> Color.Green // Placeholder color
+    PaymentStatus.CONFIRMED -> bkgCompletedColor
+  }
+}
+
 fun BookingStatus.name(): String {
   return when (this) {
     BookingStatus.PENDING -> "PENDING"
     BookingStatus.CONFIRMED -> "CONFIRMED"
     BookingStatus.COMPLETED -> "COMPLETED"
     BookingStatus.CANCELLED -> "CANCELLED"
+  }
+}
+
+fun PaymentStatus.name(): String {
+  return when (this) {
+    PaymentStatus.PENDING_PAYMENT -> "Pending Payment"
+    PaymentStatus.PAID -> "Payment Sent"
+    PaymentStatus.CONFIRMED -> "Payment Confirmed"
   }
 }

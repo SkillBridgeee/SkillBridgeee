@@ -17,6 +17,7 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.booking.PaymentStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -77,6 +78,8 @@ class MyProfileScreenTest {
     }
 
     override fun getNewUid() = "fake"
+
+    override fun getCurrentUserId() = "current-user-id"
 
     override suspend fun getProfile(userId: String): Profile =
         profiles[userId] ?: error("No profile $userId")
@@ -182,6 +185,8 @@ class MyProfileScreenTest {
     override suspend fun deleteBooking(bookingId: String) {}
 
     override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+    override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {}
 
     override suspend fun confirmBooking(bookingId: String) {}
 

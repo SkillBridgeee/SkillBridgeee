@@ -3,6 +3,7 @@ package com.android.sample.mockRepository.bookingRepo
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.booking.PaymentStatus
 import java.util.*
 
 /**
@@ -95,6 +96,12 @@ class BookingFakeRepoWorking : BookingRepository {
   override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
     val booking = bookings.find { it.bookingId == bookingId } ?: return
     val updated = booking.copy(status = status)
+    updateBooking(bookingId, updated)
+  }
+
+  override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {
+    val booking = bookings.find { it.bookingId == bookingId } ?: return
+    val updated = booking.copy(paymentStatus = paymentStatus)
     updateBooking(bookingId, updated)
   }
 

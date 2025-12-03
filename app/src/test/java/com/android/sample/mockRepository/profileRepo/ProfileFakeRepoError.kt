@@ -29,6 +29,10 @@ class ProfileFakeRepoError : ProfileRepository {
     throw IllegalStateException("Failed to generate new profile UID")
   }
 
+  override fun getCurrentUserId(): String {
+    throw IllegalStateException("Failed to get current user ID")
+  }
+
   override suspend fun getProfile(userId: String): Profile? {
     throw IllegalArgumentException("Error fetching profile for userId: $userId")
   }
