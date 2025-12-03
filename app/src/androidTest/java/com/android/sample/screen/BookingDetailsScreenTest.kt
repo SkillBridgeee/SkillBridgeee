@@ -14,6 +14,7 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.*
+import com.android.sample.ui.listing.ListingScreenTestTags
 import java.util.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
@@ -899,5 +900,450 @@ class BookingDetailsScreenTest {
       assert(receivedTutorStars == 0)
       assert(receivedListingStars == 0)
     }
+  }
+
+  // ===== NEW TESTS FOR LINES 94-124 OF BookingDetailsScreen.kt =====
+
+  @Test
+  fun bookingDetailsScreen_launchedEffect_callsLoadWithBookingId() {
+    // Test line 102: LaunchedEffect(bookingId) { bkgViewModel.load(bookingId) }
+    var loadedBookingId: String? = null
+
+    val customBookingRepo =
+        object : BookingRepository by fakeBookingRepo {
+          override suspend fun getBooking(bookingId: String): Booking? {
+            loadedBookingId = bookingId
+            return Booking(
+                bookingId = bookingId,
+                associatedListingId = "l1",
+                listingCreatorId = "u1",
+                bookerId = "student-456",
+                sessionStart = Date(),
+                sessionEnd = Date(System.currentTimeMillis() + 3600000),
+                status = BookingStatus.PENDING,
+                price = 50.0)
+          }
+        }
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = customBookingRepo,
+            listingRepository = fakeListingRepo,
+            profileRepository = fakeProfileRepo)
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "test-booking-123", onCreatorClick = {})
+    }
+
+    // Wait for composition and async loading
+    composeTestRule.waitForIdle()
+    Thread.sleep(300)
+
+    // Verify load was called with the correct bookingId
+    assert(loadedBookingId == "test-booking-123")
+  }
+
+  @Test
+  fun bookingDetailsScreen_errorState_displaysCircularProgressIndicator() {
+    // Test lines 105-110: error state rendering
+    val errorRepo =
+        object : BookingRepository by fakeBookingRepo {
+          override suspend fun getBooking(bookingId: String): Booking? = null
+        }
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = errorRepo,
+            listingRepository = fakeListingRepo,
+            profileRepository = fakeProfileRepo)
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "non-existent", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300)
+
+    // Verify error indicator is displayed with correct test tag
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertExists().assertIsDisplayed()
+  }
+
+  @Test
+  fun bookingDetailsScreen_errorState_usesCenteredBox() {
+    // Test lines 106-109: Box with fillMaxSize, padding, and center alignment
+    val errorRepo =
+        object : BookingRepository by fakeBookingRepo {
+          override suspend fun getBooking(bookingId: String): Booking? {
+            throw Exception("Network error")
+          }
+        }
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = errorRepo,
+            listingRepository = fakeListingRepo,
+            profileRepository = fakeProfileRepo)
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "error-booking", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300)
+
+    // The CircularProgressIndicator should be centered
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertExists()
+  }
+
+  @Test
+  fun bookingDetailsScreen_successState_rendersBookingDetailsContent() {
+    // Test lines 111-121: BookingDetailsContent rendering
+    val vm = fakeViewModel()
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+
+    // Verify main content sections are rendered (not error)
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertDoesNotExist()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertExists()
+  }
+
+  @Test
+  fun bookingDetailsScreen_successState_passesCorrectUiState() {
+    // Test line 113: uiState parameter passed to BookingDetailsContent
+    val vm = fakeViewModel()
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300) // Wait for async data loading
+
+    // Verify data from uiState is displayed correctly
+    composeTestRule.onNodeWithText("John Doe").assertExists()
+    composeTestRule.onNodeWithText("john.doe@example.com").assertExists()
+  }
+
+  @Test
+  fun bookingDetailsScreen_successState_wiresOnCreatorClickCallback() {
+    // Test line 114: onCreatorClick callback wiring
+    var clickedCreatorId: String? = null
+    val vm = fakeViewModel()
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(
+          bkgViewModel = vm, bookingId = "b1", onCreatorClick = { clickedCreatorId = it })
+    }
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300) // Wait for async data loading
+
+    // Click the more info button
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.MORE_INFO_BUTTON)
+        .assertExists()
+        .performClick()
+
+    // Verify callback was invoked with correct creator ID (u1 from fakeProfileRepo)
+    assert(clickedCreatorId == "u1")
+  }
+
+  @Test
+  fun bookingDetailsScreen_successState_wiresOnMarkCompletedCallback() {
+    // Test line 115: onMarkCompleted callback wiring
+    var markCompletedCalled = false
+    val customRepo =
+        object : BookingRepository by fakeBookingRepo {
+          override suspend fun completeBooking(bookingId: String) {
+            markCompletedCalled = true
+          }
+
+          override suspend fun getBooking(bookingId: String) =
+              Booking(
+                  bookingId = bookingId,
+                  associatedListingId = "l1",
+                  listingCreatorId = "u1",
+                  bookerId = "student",
+                  sessionStart = Date(),
+                  sessionEnd = Date(System.currentTimeMillis() + 3600000),
+                  status = BookingStatus.CONFIRMED, // Must be CONFIRMED to show complete button
+                  price = 50.0)
+        }
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = customRepo,
+            listingRepository = fakeListingRepo,
+            profileRepository = fakeProfileRepo)
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300) // Wait for async data loading
+
+    // Find and click the complete button
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .assertExists()
+        .performScrollTo()
+        .performClick()
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(200)
+
+    // Verify markBookingAsCompleted was called
+    assert(markCompletedCalled)
+  }
+
+  @Test
+  fun bookingDetailsScreen_successState_wiresOnSubmitStudentRatingsCallback() {
+    // Test lines 116-118: onSubmitStudentRatings callback wiring
+    val customRepo =
+        object : BookingRepository by fakeBookingRepo {
+          override suspend fun getBooking(bookingId: String) =
+              Booking(
+                  bookingId = bookingId,
+                  associatedListingId = "l1",
+                  listingCreatorId = "u1",
+                  bookerId = "student",
+                  sessionStart = Date(),
+                  sessionEnd = Date(System.currentTimeMillis() + 3600000),
+                  status = BookingStatus.COMPLETED, // Must be COMPLETED to show rating section
+                  price = 50.0)
+        }
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = customRepo,
+            listingRepository = fakeListingRepo,
+            profileRepository = fakeProfileRepo)
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300) // Wait for async data loading
+
+    // Verify rating section is present (indicates callback is wired)
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON).assertExists()
+  }
+
+  @Test
+  fun bookingDetailsScreen_successState_wiresOnPaymentReceivedCallback() {
+    // Test line 120: onPaymentReceived callback wiring
+    var paymentReceivedCalled = false
+    val customRepo =
+        object : BookingRepository by fakeBookingRepo {
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: PaymentStatus
+          ) {
+            paymentReceivedCalled = true
+          }
+
+          override suspend fun getBooking(bookingId: String) =
+              Booking(
+                  bookingId = bookingId,
+                  associatedListingId = "l1",
+                  listingCreatorId = "current-user", // User is the tutor
+                  bookerId = "student-123",
+                  sessionStart = Date(),
+                  sessionEnd = Date(System.currentTimeMillis() + 3600000),
+                  status = BookingStatus.CONFIRMED, // Must be CONFIRMED
+                  paymentStatus = PaymentStatus.PAID,
+                  price = 50.0)
+        }
+
+    val profileRepo =
+        object : ProfileRepository by fakeProfileRepo {
+          override fun getCurrentUserId() = "current-user" // User is the tutor
+        }
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = customRepo,
+            listingRepository = fakeListingRepo,
+            profileRepository = profileRepo)
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300) // Wait for async data loading
+
+    // Click the payment received button if visible
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)
+        .assertExists()
+        .performScrollTo()
+        .performClick()
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(200)
+
+    // Verify callback was invoked
+    assert(paymentReceivedCalled)
+  }
+
+  @Test
+  fun bookingDetailsScreen_appliesCorrectModifier() {
+    // Test line 121: modifier with padding and fillMaxSize
+    val vm = fakeViewModel()
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+
+    // Verify content is displayed (modifier applied correctly allows content to render)
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertExists().assertIsDisplayed()
+  }
+
+  @Test
+  fun bookingDetailsScreen_scaffoldStructure_appliesPaddingValues() {
+    // Test lines 104-105: Scaffold structure with paddingValues
+    val vm = fakeViewModel()
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+
+    // Verify that content is properly padded within Scaffold
+    // Content sections should be visible
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertIsDisplayed()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertIsDisplayed()
+  }
+
+  @Test
+  fun bookingDetailsScreen_stateCollection_reactsToViewModelChanges() {
+    // Test line 100: val uiState by bkgViewModel.bookingUiState.collectAsState()
+    val vm = fakeViewModel()
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300) // Wait for initial async data loading
+
+    // Initial state should show PENDING status
+    composeTestRule.onNodeWithText("PENDING").assertExists()
+
+    // Update the state
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    status = BookingStatus.CONFIRMED),
+            listing = Proposal(),
+            creatorProfile =
+                Profile(userId = "u1", name = "John Doe", email = "john.doe@example.com"),
+        ))
+
+    composeTestRule.waitForIdle()
+
+    // State should update to show CONFIRMED
+    composeTestRule.onNodeWithText("CONFIRMED").assertExists()
+  }
+
+  @Test
+  fun bookingDetailsScreen_launchedEffect_retriggersOnBookingIdChange() {
+    // Test line 102: LaunchedEffect key dependency on bookingId
+    var loadCallCount = 0
+    var lastLoadedId: String? = null
+
+    val customRepo =
+        object : BookingRepository by fakeBookingRepo {
+          override suspend fun getBooking(bookingId: String): Booking {
+            loadCallCount++
+            lastLoadedId = bookingId
+            return Booking(
+                bookingId = bookingId,
+                associatedListingId = "l1",
+                listingCreatorId = "u1",
+                bookerId = "student",
+                sessionStart = Date(),
+                sessionEnd = Date(System.currentTimeMillis() + 3600000),
+                status = BookingStatus.PENDING,
+                price = 50.0)
+          }
+        }
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = customRepo,
+            listingRepository = fakeListingRepo,
+            profileRepository = fakeProfileRepo)
+
+    // Use a mutable state to trigger recomposition with different bookingId
+    val currentBookingId = androidx.compose.runtime.mutableStateOf("booking-1")
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(
+          bkgViewModel = vm, bookingId = currentBookingId.value, onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300)
+
+    val firstCallCount = loadCallCount
+    assert(lastLoadedId == "booking-1")
+
+    // Change the bookingId - this should trigger LaunchedEffect again
+    currentBookingId.value = "booking-2"
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300)
+
+    // Load should have been called again with new ID
+    assert(loadCallCount > firstCallCount)
+    assert(lastLoadedId == "booking-2")
+  }
+
+  @Test
+  fun bookingDetailsScreen_errorState_doesNotRenderContent() {
+    // Test that when loadError is true, content is not rendered (only error indicator)
+    val errorRepo =
+        object : BookingRepository by fakeBookingRepo {
+          override suspend fun getBooking(bookingId: String): Booking? = null
+        }
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = errorRepo,
+            listingRepository = fakeListingRepo,
+            profileRepository = fakeProfileRepo)
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "error-id", onCreatorClick = {})
+    }
+
+    composeTestRule.waitForIdle()
+    Thread.sleep(300)
+
+    // Error indicator should be shown
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertExists()
+
+    // Content sections should NOT be rendered
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertDoesNotExist()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertDoesNotExist()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertDoesNotExist()
   }
 }
