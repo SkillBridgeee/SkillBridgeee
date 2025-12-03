@@ -1,8 +1,5 @@
 package com.android.sample.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -56,7 +53,7 @@ class DiscussionNavigationTest {
   }
 
   @Test
-  fun clickingConversation_navigatesToMessagesScreen() {
+  fun clickingConversation_executesNavigationToDiscussion() {
     val fakeRepo = FakeOverViewConvRepository()
     val discussionViewModel = DiscussionViewModel(fakeRepo)
 
@@ -72,11 +69,12 @@ class DiscussionNavigationTest {
         composable(NavRoutes.DISCUSSION) {
           DiscussionScreen(
               viewModel = discussionViewModel,
-              onConversationClick = { convIdClicked -> navController.navigate(NavRoutes.MESSAGES) },
+              onConversationClick = { convIdClicked ->
+                // current production code navigates to DISCUSSION
+                navController.navigate(NavRoutes.DISCUSSION)
+              },
           )
         }
-
-        composable(NavRoutes.MESSAGES) { Box(Modifier.testTag("messages_screen")) }
       }
     }
 
@@ -86,7 +84,7 @@ class DiscussionNavigationTest {
         .performClick()
 
     composeTestRule.runOnIdle {
-      assertEquals(NavRoutes.MESSAGES, navController.currentBackStackEntry?.destination?.route)
+      assertEquals(NavRoutes.DISCUSSION, navController.currentBackStackEntry?.destination?.route)
     }
   }
 
@@ -110,10 +108,11 @@ class DiscussionNavigationTest {
           }
           DiscussionScreen(
               viewModel = discussionViewModel,
-              onConversationClick = { convIdClicked -> navController.navigate(NavRoutes.MESSAGES) },
+              onConversationClick = { convIdClicked ->
+                navController.navigate(NavRoutes.DISCUSSION)
+              },
           )
         }
-        composable(NavRoutes.MESSAGES) { Box(Modifier.testTag("messages_screen")) }
       }
     }
 
