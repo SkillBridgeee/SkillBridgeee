@@ -49,7 +49,6 @@ class HomeScreenTutorCardTest {
 
   @Before
   fun setupFakeRepos() {
-    // Full fake ProfileRepository implementation (implements all interface members)
     val fakeProfileRepo =
         object : ProfileRepository {
           override fun getNewUid(): String = "new-user-uid"
@@ -87,12 +86,9 @@ class HomeScreenTutorCardTest {
               userId: String,
               averageRating: Double,
               totalRatings: Int
-          ) {
-            TODO("Not yet implemented")
-          }
+          ) {}
         }
 
-    // Full fake ListingRepository implementation
     val fakeListingRepo =
         object : ListingRepository {
           override fun getNewUid(): String = "new-listing-uid"
@@ -127,8 +123,6 @@ class HomeScreenTutorCardTest {
           ): List<Listing> = listOf(listingForSample)
         }
 
-    // Providers expose a read-only public property; set the internal `_repository` field via
-    // reflection.
     run {
       val profileRepoField =
           ProfileRepositoryProvider::class.java.getSuperclass().getDeclaredField("_repository")
@@ -145,34 +139,29 @@ class HomeScreenTutorCardTest {
   }
 
   @Test
-  fun displaysNewTutorCard_and_clickingCard_triggersNavigation() {
-    var navigatedToProfileId: String? = null
+  fun displaysNewTutorCard_and_clickingCard_triggersListingNavigation() {
+    var navigatedToListingId: String? = null
 
-    // Create ViewModel instance (will load from the fake repos)
     val vm = MainPageViewModel()
 
-    // Use composeRule.setContent to set the composable content in the test
     composeRule.setContent {
       HomeScreen(
           mainPageViewModel = vm,
-          onNavigateToProfile = { profileId -> navigatedToProfileId = profileId },
-          onNavigateToAddNewListing = {})
+          onNavigateToSubjectList = { /* no-op */},
+          onNavigateToAddNewListing = {},
+          onNavigateToListingDetails = { listingId -> navigatedToListingId = listingId })
     }
 
-    // Wait for UI + coroutines to settle
     composeRule.waitForIdle()
 
-    // Expect at least one tutor card rendered
-    val cards = composeRule.onAllNodesWithTag(HomeScreenTestTags.TUTOR_CARD)
+    val cards = composeRule.onAllNodesWithTag(HomeScreenTestTags.PROPOSAL_CARD)
     cards.assertCountEquals(1)
 
-    // Click card and let navigation propagate
     cards[0].performClick()
     composeRule.waitForIdle()
 
-    // Verify navigation callback got the profile id
-    assert(navigatedToProfileId == sampleProfile.userId) {
-      "Expected navigation to ${sampleProfile.userId}, got $navigatedToProfileId"
+    assert(navigatedToListingId == listingForSample.listingId) {
+      "Expected navigation to listing ${listingForSample.listingId}, got $navigatedToListingId"
     }
   }
 }
