@@ -1,5 +1,6 @@
 package com.android.sample.model.user
 
+import android.content.Context
 import com.android.sample.model.ValidationUtils
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
@@ -12,7 +13,8 @@ const val PROFILES_COLLECTION_PATH = "profiles"
 
 class FirestoreProfileRepository(
     private val db: FirebaseFirestore,
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val context: Context
 ) : ProfileRepository {
 
   private companion object {
@@ -28,6 +30,18 @@ class FirestoreProfileRepository(
 
   private val currentUserId: String
     get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
+
+  fun isOnline(): Boolean {
+    val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+    val network = connectivityManager.activeNetwork
+    val capabilities = connectivityManager.getNetworkCapabilities(network)
+
+    return capabilities != null &&
+        (capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
+            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
+            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET))
+  }
 
   override fun getNewUid(): String {
     return UUID.randomUUID().toString()
@@ -66,7 +80,12 @@ class FirestoreProfileRepository(
       }
       ValidationUtils.requireId(userId, "userId")
       val cleaned = validateAndClean(profile.copy(userId = userId))
-      db.collection(PROFILES_COLLECTION_PATH).document(userId).set(cleaned).await()
+
+      if (isOnline()) {
+        db.collection(PROFILES_COLLECTION_PATH).document(userId).set(cleaned).await()
+      } else {
+        db.collection(PROFILES_COLLECTION_PATH).document(userId).set(cleaned)
+      }
     } catch (e: Exception) {
       throw Exception("Failed to update profile for user $userId: ${e.message}")
     }

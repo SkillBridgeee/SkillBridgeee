@@ -1,5 +1,7 @@
 package com.android.sample.model.booking
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.sample.utils.FirebaseEmulator
 import com.android.sample.utils.RepositoryTest
 import com.google.firebase.auth.FirebaseAuth
@@ -25,6 +27,8 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
   private lateinit var firestore: FirebaseFirestore
   private lateinit var auth: FirebaseAuth
 
+  private val context = ApplicationProvider.getApplicationContext<Context>()
+
   @Before
   override fun setUp() {
     super.setUp()
@@ -36,7 +40,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { auth.currentUser } returns mockUser
     every { mockUser.uid } returns testUserId // testUserId is "test-user-id" from RepositoryTest
 
-    bookingRepository = FirestoreBookingRepository(firestore, auth)
+    bookingRepository = FirestoreBookingRepository(firestore, auth, context)
     BookingRepositoryProvider.setForTests(bookingRepository)
   }
 
@@ -190,7 +194,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { anotherAuth.currentUser } returns anotherUser
     every { anotherUser.uid } returns "another-user-id"
 
-    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth)
+    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth, context)
     val booking =
         Booking(
             bookingId = "booking1",
@@ -343,7 +347,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { anotherAuth.currentUser } returns anotherUser
     every { anotherUser.uid } returns "another-user-id"
 
-    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth)
+    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth, context)
     val booking =
         Booking(
             bookingId = "booking1",
@@ -467,7 +471,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { studentAuth.currentUser } returns studentUser
     every { studentUser.uid } returns "student1"
 
-    val studentRepo = FirestoreBookingRepository(firestore, studentAuth)
+    val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
     val booking =
         Booking(
             bookingId = "booking1",
@@ -504,7 +508,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { studentAuth.currentUser } returns studentUser
     every { studentUser.uid } returns "student1"
 
-    val studentRepo = FirestoreBookingRepository(firestore, studentAuth)
+    val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
     val booking2 =
         Booking(
             bookingId = "booking2",
@@ -567,7 +571,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { studentAuth.currentUser } returns studentUser
     every { studentUser.uid } returns "student1"
 
-    val studentRepo = FirestoreBookingRepository(firestore, studentAuth)
+    val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
     val booking2 =
         Booking(
             bookingId = "booking2",
@@ -593,7 +597,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { user123Auth.currentUser } returns user123User
     every { user123User.uid } returns "user123"
 
-    val user123Repo = FirestoreBookingRepository(firestore, user123Auth)
+    val user123Repo = FirestoreBookingRepository(firestore, user123Auth, context)
     val booking =
         Booking(
             bookingId = "booking1",
@@ -607,6 +611,12 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     val bookings = bookingRepository.getBookingsByUserId("user123")
     assertEquals(1, bookings.size)
     assertEquals("booking1", bookings[0].bookingId)
+  }
+
+  @Test
+  fun isOnlineReturnsTrueWhenOnline() {
+    val repo = FirestoreBookingRepository(firestore, auth, context)
+    assertEquals(repo.isOnline(), true)
   }
 
   @Test
@@ -634,7 +644,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { user123Auth.currentUser } returns user123User
     every { user123User.uid } returns "user123"
 
-    val user123Repo = FirestoreBookingRepository(firestore, user123Auth)
+    val user123Repo = FirestoreBookingRepository(firestore, user123Auth, context)
 
     // Booking where target user123 is booker
     val booking1 =
@@ -693,7 +703,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { user123Auth.currentUser } returns user123User
     every { user123User.uid } returns "user123"
 
-    val user123Repo = FirestoreBookingRepository(firestore, user123Auth)
+    val user123Repo = FirestoreBookingRepository(firestore, user123Auth, context)
 
     // Later booking where user123 is booker
     val booking1 =
@@ -738,7 +748,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { anotherAuth.currentUser } returns anotherUser
     every { anotherUser.uid } returns "another-user-id"
 
-    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth)
+    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth, context)
     val booking =
         Booking(
             bookingId = "booking1",

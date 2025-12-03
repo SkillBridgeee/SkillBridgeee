@@ -11,6 +11,6 @@ object ListingRepositoryProvider : RepositoryProvider<ListingRepository>() {
     if (FirebaseApp.getApps(context).isEmpty()) {
       FirebaseApp.initializeApp(context)
     }
-    _repository = FirestoreListingRepository(Firebase.firestore)
+    _repository = FirestoreListingRepository(Firebase.firestore, context = context)
   }
 }

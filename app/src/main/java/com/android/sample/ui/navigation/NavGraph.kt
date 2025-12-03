@@ -1,12 +1,14 @@
 package com.android.sample.ui.navigation
 
 import android.util.Log
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -22,6 +24,8 @@ import com.android.sample.ui.bookings.BookingDetailsScreen
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.communication.DiscussionScreen
+import com.android.sample.ui.communication.DiscussionViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.newListing.NewListingScreen
@@ -77,11 +81,13 @@ fun AppNavGraph(
     newListingViewModel: NewListingViewModel,
     authViewModel: AuthenticationViewModel,
     bookingDetailsViewModel: BookingDetailsViewModel,
+    discussionViewModel: DiscussionViewModel,
     onGoogleSignIn: () -> Unit
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
   val profileID = remember { mutableStateOf("") }
   val bookingId = remember { mutableStateOf("") }
+  val convId = remember { mutableStateOf("") }
 
   NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
     composable(NavRoutes.LOGIN) {
@@ -253,9 +259,24 @@ fun AppNavGraph(
           bkgViewModel = bookingDetailsViewModel)
     }
 
+    composable(NavRoutes.DISCUSSION) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.DISCUSSION) }
+
+      DiscussionScreen(
+          viewModel = discussionViewModel,
+          onConversationClick = { convIdClicked ->
+            convId.value = convIdClicked
+            navController.navigate(NavRoutes.MESSAGES)
+          })
+    }
     composable(route = NavRoutes.TOS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.TOS) }
       ToSScreen()
+    }
+
+    composable(NavRoutes.MESSAGES) {
+      // Temporary placeholder so navigation doesn't crash and is covered by tests
+      Box(Modifier)
     }
   }
 }
