@@ -107,7 +107,6 @@ internal fun LocationText(locationName: String, testTag: String, modifier: Modif
       modifier = modifier.testTag(testTag))
 }
 
-
 @Composable
 internal fun CreatedDateText(createdAt: java.util.Date, testTag: String) {
   val formatter = remember { DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.getDefault()) }
