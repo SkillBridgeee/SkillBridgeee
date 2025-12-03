@@ -1,5 +1,7 @@
 package com.android.sample.model.listing
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.skill.Skill
 import com.android.sample.utils.FirebaseEmulator
 import com.android.sample.utils.RepositoryTest
@@ -29,6 +31,8 @@ class FirestoreListingRepositoryTest : RepositoryTest() {
   private lateinit var auth: FirebaseAuth
   private lateinit var repository: ListingRepository
 
+  private val context = ApplicationProvider.getApplicationContext<Context>()
+
   private val testProposal =
       Proposal(
           listingId = "proposal1",
@@ -55,7 +59,7 @@ class FirestoreListingRepositoryTest : RepositoryTest() {
     every { auth.currentUser } returns mockUser
     every { mockUser.uid } returns testUserId
 
-    repository = FirestoreListingRepository(firestore, auth)
+    repository = FirestoreListingRepository(firestore, auth, context)
   }
 
   @After
@@ -71,6 +75,12 @@ class FirestoreListingRepositoryTest : RepositoryTest() {
     repository.addProposal(testProposal)
     val retrieved = repository.getListing("proposal1")
     assertEquals(testProposal, retrieved)
+  }
+
+  @Test
+  fun isOnlineReturnsTrueWhenConnected() {
+    val repository = FirestoreListingRepository(firestore, auth, context)
+    assertTrue(repository.isOnline())
   }
 
   @Test

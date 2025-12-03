@@ -11,6 +11,6 @@ object BookingRepositoryProvider : RepositoryProvider<BookingRepository>() {
     if (FirebaseApp.getApps(context).isEmpty()) {
       FirebaseApp.initializeApp(context)
     }
-    _repository = FirestoreBookingRepository(Firebase.firestore)
+    _repository = FirestoreBookingRepository(Firebase.firestore, context = context)
   }
 }
