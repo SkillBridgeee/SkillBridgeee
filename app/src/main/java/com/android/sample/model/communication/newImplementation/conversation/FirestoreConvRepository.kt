@@ -44,7 +44,10 @@ class FirestoreConvRepository(
 
     // Load messages
     val messagesSnapshot = convRef.collection("messages").get().await()
-    val messages = messagesSnapshot.documents.mapNotNull { it.toObject(MessageNew::class.java) }
+    val messages =
+        messagesSnapshot.documents.mapNotNull { doc ->
+          doc.toObject(MessageNew::class.java)?.copy(msgId = doc.id)
+        }
 
     return convWithId.copy(messages = messages)
   }
