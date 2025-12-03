@@ -33,6 +33,7 @@ import com.android.sample.ui.signup.SignUpScreen
 import com.android.sample.ui.signup.SignUpViewModel
 import com.android.sample.ui.subject.SubjectListScreen
 import com.android.sample.ui.subject.SubjectListViewModel
+import com.android.sample.ui.tos.ToSScreen
 
 private const val TAG = "NavGraph"
 
@@ -118,10 +119,6 @@ fun AppNavGraph(
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.HOME) }
       HomeScreen(
           mainPageViewModel = mainPageViewModel,
-          onNavigateToProfile = { profileId ->
-            profileID.value = profileId
-            navController.navigate(NavRoutes.OTHERS_PROFILE)
-          },
           onNavigateToSubjectList = { subject ->
             academicSubject.value = subject
             navController.navigate(NavRoutes.SKILLS)
@@ -131,7 +128,8 @@ fun AppNavGraph(
             if (currentUserId != null) {
               navController.navigate(NavRoutes.createNewSkillRoute(currentUserId))
             }
-          })
+          },
+          onNavigateToListingDetails = { listingId -> navigateToListing(navController, listingId) })
     }
 
     composable(NavRoutes.SKILLS) { backStackEntry ->
@@ -199,7 +197,8 @@ fun AppNavGraph(
                 navController.navigate(NavRoutes.LOGIN) {
                   popUpTo(NavRoutes.SIGNUP_BASE) { inclusive = true }
                 }
-              })
+              },
+              onNavigateToToS = { navController.navigate(NavRoutes.TOS) })
         }
     composable(route = NavRoutes.OTHERS_PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
@@ -247,6 +246,9 @@ fun AppNavGraph(
             convId.value = convIdClicked
             navController.navigate(NavRoutes.MESSAGES)
           })
+    composable(route = NavRoutes.TOS) {
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.TOS) }
+      ToSScreen()
     }
   }
 }
