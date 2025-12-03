@@ -94,13 +94,13 @@ fun ListingScreen(
     }
   }
 
-
   // Show success dialog when booking is created
   if (uiState.bookingSuccess) {
     val successMessage = buildString {
       append(ListingViewModel.MSG_BOOKING_SUCCESS)
       if (uiState.conversationCreationWarning != null) {
-        append("\n\nNote: ${uiState.conversationCreationWarning} ${ListingViewModel.MSG_CONVERSATION_ALTERNATIVE}")
+        append(
+            "\n\nNote: ${uiState.conversationCreationWarning} ${ListingViewModel.MSG_CONVERSATION_ALTERNATIVE}")
       } else {
         append("\n\n${ListingViewModel.MSG_CONVERSATION_SUCCESS}")
       }
@@ -115,13 +115,14 @@ fun ListingScreen(
         title = { Text("Booking Created") },
         text = { Text(successMessage) },
         confirmButton = {
-          Button(onClick = {
-            viewModel.clearBookingSuccess()
-            viewModel.clearConversationWarning()
-            onNavigateBack()
-          }) {
-            Text("OK")
-          }
+          Button(
+              onClick = {
+                viewModel.clearBookingSuccess()
+                viewModel.clearConversationWarning()
+                onNavigateBack()
+              }) {
+                Text("OK")
+              }
         },
         modifier = Modifier.testTag(ListingScreenTestTags.SUCCESS_DIALOG))
   }

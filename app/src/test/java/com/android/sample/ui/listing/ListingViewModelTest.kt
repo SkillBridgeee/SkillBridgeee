@@ -4,13 +4,20 @@ import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
+import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.rating.RatingType
 import com.android.sample.model.rating.StarRating
 import com.android.sample.model.skill.ExpertiseLevel
@@ -18,6 +25,7 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import io.mockk.every
@@ -42,6 +50,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mock
+import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -54,6 +64,9 @@ class ListingViewModelTest {
   @get:Rule val firebaseRule = FirebaseTestRule()
 
   private val testDispatcher = StandardTestDispatcher()
+
+  @Mock private lateinit var mockConversationRepository: ConvRepository
+  @Mock private lateinit var mockOverViewConvRepository: OverViewConvRepository
 
   private val sampleProposal =
       Proposal(
@@ -104,8 +117,16 @@ class ListingViewModelTest {
 
   @Before
   fun setup() {
+    MockitoAnnotations.openMocks(this)
     Dispatchers.setMain(testDispatcher)
     UserSessionManager.clearSession()
+    // Initialize all repository providers with mock instances
+    ListingRepositoryProvider.setForTests(mockk(relaxed = true))
+    ProfileRepositoryProvider.setForTests(mockk(relaxed = true))
+    BookingRepositoryProvider.setForTests(mockk(relaxed = true))
+    RatingRepositoryProvider.setForTests(mockk(relaxed = true))
+    ConversationRepositoryProvider.setForTests(mockConversationRepository)
+    OverViewConvRepositoryProvider.setForTests(mockOverViewConvRepository)
   }
 
   @After
@@ -113,6 +134,12 @@ class ListingViewModelTest {
     Dispatchers.resetMain()
     UserSessionManager.clearSession()
     unmockkStatic(FirebaseAuth::class)
+    ListingRepositoryProvider.clearForTests()
+    ProfileRepositoryProvider.clearForTests()
+    BookingRepositoryProvider.clearForTests()
+    RatingRepositoryProvider.clearForTests()
+    ConversationRepositoryProvider.clearForTests()
+    OverViewConvRepositoryProvider.clearForTests()
   }
 
   // Fake Repositories

@@ -14,7 +14,6 @@ import com.android.sample.model.communication.newImplementation.overViewConv.Ove
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
-import com.android.sample.model.rating.FirestoreRatingRepository
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.rating.RatingRepositoryProvider
@@ -25,7 +24,6 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.components.RatingAggregationHelper
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import java.util.Date
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -85,8 +83,10 @@ class ListingViewModel(
 
   companion object {
     // User-facing messages for booking and conversation creation
-    const val MSG_BOOKING_SUCCESS = "Your booking has been created successfully and is pending confirmation."
-    const val MSG_CONVERSATION_SUCCESS = "A conversation has been created with the tutor. You can now chat with them in the Discussions tab to coordinate your session."
+    const val MSG_BOOKING_SUCCESS =
+        "Your booking has been created successfully and is pending confirmation."
+    const val MSG_CONVERSATION_SUCCESS =
+        "A conversation has been created with the tutor. You can now chat with them in the Discussions tab to coordinate your session."
     const val MSG_CONVERSATION_FAILURE_PREFIX = "Conversation could not be created: "
     const val MSG_CONVERSATION_ALTERNATIVE = "You can still contact the tutor through other means."
   }
@@ -259,12 +259,14 @@ class ListingViewModel(
           val creatorProfile = profileRepo.getProfile(listing.creatorUserId)
           val conversationName = creatorProfile?.name ?: "Booking Discussion"
 
-          val convId = conversationManager.createConvAndOverviews(
-              creatorId = currentUserId,
-              otherUserId = listing.creatorUserId,
-              convName = conversationName
-          )
-          Log.d("ListingViewModel", "Conversation created successfully: $convId between $currentUserId and ${listing.creatorUserId}")
+          val convId =
+              conversationManager.createConvAndOverviews(
+                  creatorId = currentUserId,
+                  otherUserId = listing.creatorUserId,
+                  convName = conversationName)
+          Log.d(
+              "ListingViewModel",
+              "Conversation created successfully: $convId between $currentUserId and ${listing.creatorUserId}")
         } catch (e: Exception) {
           Log.e("ListingViewModel", "Failed to create conversation", e)
           _uiState.update {
@@ -272,8 +274,7 @@ class ListingViewModel(
                 bookingInProgress = false,
                 bookingSuccess = true, // Booking is successful even if conversation creation fails
                 bookingError = null,
-                conversationCreationWarning = "${MSG_CONVERSATION_FAILURE_PREFIX}${e.message}"
-            )
+                conversationCreationWarning = "${MSG_CONVERSATION_FAILURE_PREFIX}${e.message}")
           }
           return@launch
         }
