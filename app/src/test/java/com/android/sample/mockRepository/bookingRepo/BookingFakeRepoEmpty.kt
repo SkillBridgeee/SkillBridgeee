@@ -3,6 +3,7 @@ package com.android.sample.mockRepository.bookingRepo
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.booking.PaymentStatus
 
 /**
  * A fake implementation of [BookingRepository] that always returns empty data.
@@ -60,6 +61,10 @@ class BookingFakeRepoEmpty : BookingRepository {
   }
 
   override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
+    TODO("Not yet implemented")
+  }
+
+  override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {
     TODO("Not yet implemented")
   }
 

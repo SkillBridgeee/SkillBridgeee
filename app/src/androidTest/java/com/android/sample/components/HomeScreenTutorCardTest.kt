@@ -53,6 +53,8 @@ class HomeScreenTutorCardTest {
         object : ProfileRepository {
           override fun getNewUid(): String = "new-user-uid"
 
+          override fun getCurrentUserId(): String = "test-user-id"
+
           override suspend fun getProfile(userId: String): Profile? =
               if (userId == sampleProfile.userId) sampleProfile else null
 

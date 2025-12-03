@@ -131,6 +131,8 @@ class SubjectListViewModelTest {
       com.android.sample.model.user.ProfileRepository {
     override fun getNewUid(): String = "unused"
 
+    override fun getCurrentUserId(): String = "test-user-id"
+
     override suspend fun getProfile(userId: String): Profile? = profiles[userId]
 
     override suspend fun addProfile(profile: Profile) {}
@@ -193,6 +195,11 @@ class SubjectListViewModelTest {
         override suspend fun deleteBooking(bookingId: String) {}
 
         override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+        override suspend fun updatePaymentStatus(
+            bookingId: String,
+            paymentStatus: com.android.sample.model.booking.PaymentStatus
+        ) {}
 
         override suspend fun confirmBooking(bookingId: String) {}
 

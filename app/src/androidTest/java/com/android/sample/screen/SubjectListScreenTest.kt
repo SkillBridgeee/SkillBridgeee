@@ -139,6 +139,8 @@ class SubjectListScreenTest {
         object : ProfileRepository {
           override fun getNewUid(): String = "unused"
 
+          override fun getCurrentUserId(): String = "testUserId"
+
           override suspend fun getProfile(userId: String): Profile? =
               when (userId) {
                 "debugUser1" -> profile1

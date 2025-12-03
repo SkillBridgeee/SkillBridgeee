@@ -7,6 +7,7 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.booking.PaymentStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -104,6 +105,8 @@ class ListingScreenTest {
       ProfileRepository {
     override fun getNewUid() = "new-profile-id"
 
+    override fun getCurrentUserId() = "current-user-id"
+
     override suspend fun getProfile(userId: String) =
         profiles[userId] ?: throw NoSuchElementException("Profile not found")
 
@@ -170,6 +173,8 @@ class ListingScreenTest {
     override suspend fun deleteBooking(bookingId: String) {}
 
     override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+    override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {}
 
     override suspend fun confirmBooking(bookingId: String) {}
 

@@ -71,6 +71,8 @@ class ProfileScreenTest {
   private class FakeProfileRepo(private var profile: Profile? = null) : ProfileRepository {
     override fun getNewUid() = "fake"
 
+    override fun getCurrentUserId() = "current-user-id"
+
     override suspend fun getProfile(userId: String) = profile
 
     override suspend fun addProfile(profile: Profile) {}
