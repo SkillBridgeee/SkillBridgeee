@@ -222,7 +222,7 @@ class BookingDetailsScreenTest {
 
         override fun getCurrentUserId() = "u1"
 
-        override suspend fun getProfile(userId: String) = throw error("test")
+        override suspend fun getProfile(userId: String): Profile = error("test")
 
         override suspend fun getProfileById(userId: String) = getProfile(userId)
 
