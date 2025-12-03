@@ -8,12 +8,20 @@ import kotlin.math.*
 class FakeProfileRepository : ProfileRepository {
   private val data = mutableMapOf<String, Profile>()
   private var counter = 0
+  private var mockCurrentUserId: String = "mock_user_id"
 
   override fun getNewUid(): String =
       synchronized(this) {
         counter += 1
         "u$counter"
       }
+
+  override fun getCurrentUserId(): String = mockCurrentUserId
+
+  // Helper method for tests to set the current user
+  fun setCurrentUserId(userId: String) {
+    mockCurrentUserId = userId
+  }
 
   override suspend fun getProfile(userId: String): Profile =
       data[userId] ?: throw NoSuchElementException("Profile not found: $userId")

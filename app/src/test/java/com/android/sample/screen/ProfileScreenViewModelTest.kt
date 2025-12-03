@@ -48,6 +48,8 @@ class ProfileScreenViewModelTest {
 
     override fun getNewUid(): String = "fake-uid"
 
+    override fun getCurrentUserId(): String = "test-user-id"
+
     override suspend fun getProfile(userId: String): Profile? {
       getProfileCalled = true
       return storedProfile
