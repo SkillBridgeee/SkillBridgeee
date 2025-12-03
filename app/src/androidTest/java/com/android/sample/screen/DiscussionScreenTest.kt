@@ -10,7 +10,6 @@ import com.android.sample.model.communication.newImplementation.overViewConv.Ove
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
-import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.communication.DiscussionScreen
 import com.android.sample.ui.communication.DiscussionViewModel
 import java.util.Date
@@ -207,7 +206,8 @@ class DiscussionScreenTest {
   }
 
   /** Fake ProfileRepository that does nothing. */
-  private class FakeProfileRepository : ProfileRepository {
+  private class FakeProfileRepository :
+      com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo {
     override suspend fun getProfile(userId: String): Profile? = null
 
     override suspend fun addProfile(profile: Profile) {
@@ -256,6 +256,10 @@ class DiscussionScreenTest {
     }
 
     override fun getNewUid(): String = "fake-profile-uid"
+
+    override fun getCurrentUserId(): String = "fake-current-user-id"
+
+    override fun getCurrentUserName(): String? = "Fake User"
   }
 
   /** Simple in-memory fake repository for tests. */
