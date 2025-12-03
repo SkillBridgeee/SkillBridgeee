@@ -20,11 +20,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.Listing
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.communication.DiscussionViewModel
 import com.android.sample.ui.components.BookingCardTestTag
 import com.android.sample.ui.components.BottomBarTestTag
 import com.android.sample.ui.components.BottomNavBar
@@ -70,6 +72,7 @@ abstract class AppTest() {
   lateinit var mainPageViewModel: MainPageViewModel
   lateinit var newListingViewModel: NewListingViewModel
   lateinit var bookingDetailsViewModel: BookingDetailsViewModel
+  lateinit var discussionViewModel: DiscussionViewModel
 
   @Before
   open fun setUp() {
@@ -109,6 +112,8 @@ abstract class AppTest() {
             bookingRepository = bookingRepository,
             profileRepository = profileRepository,
             ratingRepository = ratingRepository)
+
+    discussionViewModel = DiscussionViewModel(OverViewConvRepositoryProvider.repository)
   }
 
   /**
@@ -146,7 +151,8 @@ abstract class AppTest() {
                 newListingViewModel = newListingViewModel,
                 authViewModel = authViewModel,
                 onGoogleSignIn = {},
-                bookingDetailsViewModel = bookingDetailsViewModel)
+                bookingDetailsViewModel = bookingDetailsViewModel,
+                discussionViewModel = discussionViewModel)
           }
           LaunchedEffect(Unit) {
             navController.navigate(NavRoutes.HOME) { popUpTo(0) { inclusive = true } }
