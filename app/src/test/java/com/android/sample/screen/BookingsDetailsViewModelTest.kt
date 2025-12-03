@@ -717,10 +717,9 @@ class BookingsDetailsViewModelTest {
   @OptIn(ExperimentalCoroutinesApi::class)
   @Test
   fun markPaymentComplete_whenEmptyBookingId_doesNothing() = runTest {
+    var updatePaymentCalled = false
     val repo =
         object : BookingRepository {
-          var updatePaymentCalled = false
-
           override fun getNewUid(): String = "unused"
 
           override suspend fun getAllBookings(): List<Booking> = emptyList()
@@ -777,14 +776,7 @@ class BookingsDetailsViewModelTest {
     testDispatcher.scheduler.advanceUntilIdle()
 
     // Verify that updatePaymentStatus was never called since booking ID is empty
-    val testRepo = repo as? Object
-    assertFalse(
-        (testRepo as? BookingRepository)?.let {
-          // We can't directly check if updatePaymentCalled is false since it's in an anonymous
-          // object
-          // but the test passes if no exception is thrown
-          false
-        } ?: false)
+    assertFalse(updatePaymentCalled)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -932,10 +924,9 @@ class BookingsDetailsViewModelTest {
   @OptIn(ExperimentalCoroutinesApi::class)
   @Test
   fun confirmPaymentReceived_whenEmptyBookingId_doesNothing() = runTest {
+    var updatePaymentCalled = false
     val repo =
         object : BookingRepository {
-          var updatePaymentCalled = false
-
           override fun getNewUid(): String = "unused"
 
           override suspend fun getAllBookings(): List<Booking> = emptyList()
@@ -992,14 +983,7 @@ class BookingsDetailsViewModelTest {
     testDispatcher.scheduler.advanceUntilIdle()
 
     // Verify that updatePaymentStatus was never called since booking ID is empty
-    val testRepo = repo as? Object
-    assertFalse(
-        (testRepo as? BookingRepository)?.let {
-          // We can't directly check if updatePaymentCalled is false since it's in an anonymous
-          // object
-          // but the test passes if no exception is thrown
-          false
-        } ?: false)
+    assertFalse(updatePaymentCalled)
   }
 
   // ===== TESTS FOR LINES 282-308 OF BookingDetailsViewModel.kt =====

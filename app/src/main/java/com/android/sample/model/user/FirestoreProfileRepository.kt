@@ -96,12 +96,6 @@ class FirestoreProfileRepository(
       throw e
     } catch (e: ProfileAccessDeniedException) {
       throw e
-
-      if (isOnline()) {
-        db.collection(PROFILES_COLLECTION_PATH).document(userId).set(cleaned).await()
-      } else {
-        db.collection(PROFILES_COLLECTION_PATH).document(userId).set(cleaned)
-      }
     } catch (e: Exception) {
       throw ProfileFirestoreException("Failed to update profile for user $userId: ${e.message}", e)
     }
