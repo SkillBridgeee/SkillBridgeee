@@ -26,109 +26,99 @@ import org.junit.Test
 
 class DiscussionNavigationTest {
 
-    @get:Rule val composeTestRule = createComposeRule()
+  @get:Rule val composeTestRule = createComposeRule()
 
-    private class FakeOverViewConvRepository : OverViewConvRepository {
-        override fun getNewUid(): String = "dummy"
+  private class FakeOverViewConvRepository : OverViewConvRepository {
+    override fun getNewUid(): String = "dummy"
 
-        override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> =
-            emptyList()
+    override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> =
+        emptyList()
 
-        override suspend fun addOverViewConvUser(overView: OverViewConversation) {}
+    override suspend fun addOverViewConvUser(overView: OverViewConversation) {}
 
-        override suspend fun deleteOverViewConvUser(convId: String) {}
+    override suspend fun deleteOverViewConvUser(convId: String) {}
 
-        override fun listenOverView(userId: String): Flow<List<OverViewConversation>> =
-            flowOf(
-                listOf(
-                    OverViewConversation(
-                        convName = "Chat with Alice",
-                        linkedConvId = "conv1",
-                        lastMsg = null,
-                        nonReadMsgNumber = 0,
-                    )
-                )
-            )
-    }
+    override fun listenOverView(userId: String): Flow<List<OverViewConversation>> =
+        flowOf(
+            listOf(
+                OverViewConversation(
+                    convName = "Chat with Alice",
+                    linkedConvId = "conv1",
+                    lastMsg = null,
+                    nonReadMsgNumber = 0,
+                )))
+  }
 
-    @Before
-    fun setUp() {
-        UserSessionManager.setCurrentUserId("user1")
-        RouteStackManager.clear()
-    }
+  @Before
+  fun setUp() {
+    UserSessionManager.setCurrentUserId("user1")
+    RouteStackManager.clear()
+  }
 
-    @Test
-    fun clickingConversation_navigatesToMessagesScreen() {
-        val fakeRepo = FakeOverViewConvRepository()
-        val discussionViewModel = DiscussionViewModel(fakeRepo)
+  @Test
+  fun clickingConversation_navigatesToMessagesScreen() {
+    val fakeRepo = FakeOverViewConvRepository()
+    val discussionViewModel = DiscussionViewModel(fakeRepo)
 
-        lateinit var navController: NavHostController
+    lateinit var navController: NavHostController
 
-        composeTestRule.setContent {
-            navController = rememberNavController()
+    composeTestRule.setContent {
+      navController = rememberNavController()
 
-            NavHost(
-                navController = navController,
-                startDestination = NavRoutes.DISCUSSION,
-            ) {
-                composable(NavRoutes.DISCUSSION) {
-                    DiscussionScreen(
-                        viewModel = discussionViewModel,
-                        onConversationClick = { convIdClicked ->
-                            navController.navigate(NavRoutes.MESSAGES)
-                        },
-                    )
-                }
-
-                composable(NavRoutes.MESSAGES) {
-                    Box(Modifier.testTag("messages_screen"))
-                }
-            }
+      NavHost(
+          navController = navController,
+          startDestination = NavRoutes.DISCUSSION,
+      ) {
+        composable(NavRoutes.DISCUSSION) {
+          DiscussionScreen(
+              viewModel = discussionViewModel,
+              onConversationClick = { convIdClicked -> navController.navigate(NavRoutes.MESSAGES) },
+          )
         }
 
-        composeTestRule
-            .onNodeWithTag("conversation_item_conv1", useUnmergedTree = true)
-            .assertExists()
-            .performClick()
-
-        composeTestRule.runOnIdle {
-            assertEquals(NavRoutes.MESSAGES, navController.currentBackStackEntry?.destination?.route)
-        }
+        composable(NavRoutes.MESSAGES) { Box(Modifier.testTag("messages_screen")) }
+      }
     }
 
-    @Test
-    fun discussionRoute_isPushedToRouteStackManager() {
-        val fakeRepo = FakeOverViewConvRepository()
-        val discussionViewModel = DiscussionViewModel(fakeRepo)
+    composeTestRule
+        .onNodeWithTag("conversation_item_conv1", useUnmergedTree = true)
+        .assertExists()
+        .performClick()
 
-        RouteStackManager.clear()
-
-        composeTestRule.setContent {
-            val navController = rememberNavController()
-
-            NavHost(
-                navController = navController,
-                startDestination = NavRoutes.DISCUSSION,
-            ) {
-                composable(NavRoutes.DISCUSSION) {
-                    androidx.compose.runtime.LaunchedEffect(Unit) {
-                        RouteStackManager.addRoute(NavRoutes.DISCUSSION)
-                    }
-                    DiscussionScreen(
-                        viewModel = discussionViewModel,
-                        onConversationClick = { convIdClicked ->
-                            navController.navigate(NavRoutes.MESSAGES)
-                        },
-                    )
-                }
-                composable(NavRoutes.MESSAGES) {
-                    Box(Modifier.testTag("messages_screen"))
-                }
-            }
-        }
-
-        composeTestRule.runOnIdle {
-            assertEquals(NavRoutes.DISCUSSION, RouteStackManager.getCurrentRoute())
-        }
+    composeTestRule.runOnIdle {
+      assertEquals(NavRoutes.MESSAGES, navController.currentBackStackEntry?.destination?.route)
     }
+  }
+
+  @Test
+  fun discussionRoute_isPushedToRouteStackManager() {
+    val fakeRepo = FakeOverViewConvRepository()
+    val discussionViewModel = DiscussionViewModel(fakeRepo)
+
+    RouteStackManager.clear()
+
+    composeTestRule.setContent {
+      val navController = rememberNavController()
+
+      NavHost(
+          navController = navController,
+          startDestination = NavRoutes.DISCUSSION,
+      ) {
+        composable(NavRoutes.DISCUSSION) {
+          androidx.compose.runtime.LaunchedEffect(Unit) {
+            RouteStackManager.addRoute(NavRoutes.DISCUSSION)
+          }
+          DiscussionScreen(
+              viewModel = discussionViewModel,
+              onConversationClick = { convIdClicked -> navController.navigate(NavRoutes.MESSAGES) },
+          )
+        }
+        composable(NavRoutes.MESSAGES) { Box(Modifier.testTag("messages_screen")) }
+      }
+    }
+
+    composeTestRule.runOnIdle {
+      assertEquals(NavRoutes.DISCUSSION, RouteStackManager.getCurrentRoute())
+    }
+  }
 }
