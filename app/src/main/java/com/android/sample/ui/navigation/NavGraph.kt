@@ -246,6 +246,7 @@ fun AppNavGraph(
             convId.value = convIdClicked
             navController.navigate(NavRoutes.MESSAGES)
           })
+    }
     composable(route = NavRoutes.TOS) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.TOS) }
       ToSScreen()
