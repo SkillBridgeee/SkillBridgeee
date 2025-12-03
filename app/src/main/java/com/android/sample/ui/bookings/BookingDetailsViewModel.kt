@@ -313,7 +313,7 @@ class BookingDetailsViewModel(
 
     viewModelScope.launch {
       try {
-        bookingRepository.updatePaymentStatus(currentBookingId, PaymentStatus.PAYED)
+        bookingRepository.updatePaymentStatus(currentBookingId, PaymentStatus.PAID)
         val updatedBooking = bookingRepository.getBooking(currentBookingId)
         if (updatedBooking != null) {
           _bookingUiState.value =

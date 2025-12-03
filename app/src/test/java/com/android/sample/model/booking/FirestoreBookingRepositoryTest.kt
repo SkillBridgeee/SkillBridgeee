@@ -772,11 +772,11 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
             paymentStatus = PaymentStatus.PENDING_PAYMENT)
     bookingRepository.addBooking(booking)
 
-    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAYED)
+    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAID)
 
     val retrievedBooking = bookingRepository.getBooking("booking1")
     assertNotNull(retrievedBooking)
-    assertEquals(PaymentStatus.PAYED, retrievedBooking!!.paymentStatus)
+    assertEquals(PaymentStatus.PAID, retrievedBooking!!.paymentStatus)
   }
 
   @Test
@@ -790,7 +790,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
             sessionStart = Date(System.currentTimeMillis()),
             sessionEnd = Date(System.currentTimeMillis() + 3600000),
             status = BookingStatus.CONFIRMED,
-            paymentStatus = PaymentStatus.PAYED)
+            paymentStatus = PaymentStatus.PAID)
 
     // Create booking as student first
     val studentAuth = mockk<FirebaseAuth>()
@@ -811,7 +811,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
   @Test
   fun updatePaymentStatus_failsForNonExistentBooking() {
     assertThrows(Exception::class.java) {
-      runTest { bookingRepository.updatePaymentStatus("non-existent", PaymentStatus.PAYED) }
+      runTest { bookingRepository.updatePaymentStatus("non-existent", PaymentStatus.PAID) }
     }
   }
 
@@ -837,7 +837,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
 
     // Try to update payment status as testUserId (who is neither booker nor creator)
     assertThrows(Exception::class.java) {
-      runTest { bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAYED) }
+      runTest { bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAID) }
     }
   }
 
@@ -856,7 +856,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
             price = 75.0)
     bookingRepository.addBooking(originalBooking)
 
-    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAYED)
+    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAID)
 
     val retrievedBooking = bookingRepository.getBooking("booking1")
     assertNotNull(retrievedBooking)
@@ -866,7 +866,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     assertEquals(testUserId, retrievedBooking.bookerId)
     assertEquals(BookingStatus.CONFIRMED, retrievedBooking.status)
     assertEquals(75.0, retrievedBooking.price, 0.01)
-    assertEquals(PaymentStatus.PAYED, retrievedBooking.paymentStatus)
+    assertEquals(PaymentStatus.PAID, retrievedBooking.paymentStatus)
   }
 
   @Test
@@ -900,10 +900,10 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     bookingRepository.addBooking(booking)
 
     // Update as booker
-    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAYED)
+    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAID)
 
     val retrievedBooking = bookingRepository.getBooking("booking1")
-    assertEquals(PaymentStatus.PAYED, retrievedBooking!!.paymentStatus)
+    assertEquals(PaymentStatus.PAID, retrievedBooking!!.paymentStatus)
   }
 
   @Test
@@ -923,7 +923,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
             bookerId = "student1",
             sessionStart = Date(System.currentTimeMillis()),
             sessionEnd = Date(System.currentTimeMillis() + 3600000),
-            paymentStatus = PaymentStatus.PAYED)
+            paymentStatus = PaymentStatus.PAID)
     studentRepo.addBooking(booking)
 
     // Update as listing creator (testUserId)

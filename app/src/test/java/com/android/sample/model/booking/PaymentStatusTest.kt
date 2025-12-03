@@ -19,7 +19,7 @@ class PaymentStatusTest {
 
   @Test
   fun paymentStatus_PAYED_returnsCorrectName() {
-    val status = PaymentStatus.PAYED
+    val status = PaymentStatus.PAID
     assertEquals("Payment Sent", status.name())
   }
 
@@ -37,7 +37,7 @@ class PaymentStatusTest {
 
   @Test
   fun paymentStatus_PAYED_returnsGreenColor() {
-    val status = PaymentStatus.PAYED
+    val status = PaymentStatus.PAID
     assertEquals(Color.Green, status.color())
   }
 

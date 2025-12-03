@@ -51,7 +51,7 @@ enum class BookingStatus {
 
 enum class PaymentStatus {
   PENDING_PAYMENT,
-  PAYED,
+  PAID,
   CONFIRMED
 }
 
@@ -72,7 +72,7 @@ fun BookingStatus.color(): Color {
 fun PaymentStatus.color(): Color {
   return when (this) {
     PaymentStatus.PENDING_PAYMENT -> Color.Gray // Placeholder color
-    PaymentStatus.PAYED -> Color.Green // Placeholder color
+    PaymentStatus.PAID -> Color.Green // Placeholder color
     PaymentStatus.CONFIRMED -> bkgCompletedColor
   }
 }
@@ -89,7 +89,7 @@ fun BookingStatus.name(): String {
 fun PaymentStatus.name(): String {
   return when (this) {
     PaymentStatus.PENDING_PAYMENT -> "Pending Payment"
-    PaymentStatus.PAYED -> "Payment Sent"
+    PaymentStatus.PAID -> "Payment Sent"
     PaymentStatus.CONFIRMED -> "Payment Confirmed"
   }
 }

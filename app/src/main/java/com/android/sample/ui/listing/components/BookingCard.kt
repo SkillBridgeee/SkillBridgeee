@@ -167,8 +167,8 @@ fun BookingCard(
                     }
               }
               // Only show "Payment Received" button to the tutor (listingCreatorId)
-              else if (booking.paymentStatus == PaymentStatus.PAYED &&
-                       currentUserId == booking.listingCreatorId) {
+              else if (booking.paymentStatus == PaymentStatus.PAID &&
+                  currentUserId == booking.listingCreatorId) {
                 Spacer(Modifier.height(8.dp))
                 Button(
                     onClick = onPaymentReceived,

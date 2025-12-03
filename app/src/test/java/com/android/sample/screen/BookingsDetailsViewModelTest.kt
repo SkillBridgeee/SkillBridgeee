@@ -640,7 +640,7 @@ class BookingsDetailsViewModelTest {
     testDispatcher.scheduler.advanceUntilIdle()
 
     assertEquals(
-        com.android.sample.model.booking.PaymentStatus.PAYED,
+        com.android.sample.model.booking.PaymentStatus.PAID,
         vm.bookingUiState.value.booking.paymentStatus)
     assertFalse(vm.bookingUiState.value.loadError)
   }
@@ -799,7 +799,7 @@ class BookingsDetailsViewModelTest {
                   listingCreatorId = "creator_1",
                   bookerId = "student_1",
                   status = BookingStatus.CONFIRMED,
-                  paymentStatus = com.android.sample.model.booking.PaymentStatus.PAYED)
+                  paymentStatus = com.android.sample.model.booking.PaymentStatus.PAID)
 
           override fun getNewUid(): String = "unused"
 
@@ -848,7 +848,7 @@ class BookingsDetailsViewModelTest {
     vm.load("b1")
     testDispatcher.scheduler.advanceUntilIdle()
     assertEquals(
-        com.android.sample.model.booking.PaymentStatus.PAYED,
+        com.android.sample.model.booking.PaymentStatus.PAID,
         vm.bookingUiState.value.booking.paymentStatus)
 
     vm.confirmPaymentReceived()
@@ -872,7 +872,7 @@ class BookingsDetailsViewModelTest {
                   listingCreatorId = "creator_1",
                   bookerId = "student_1",
                   status = BookingStatus.CONFIRMED,
-                  paymentStatus = com.android.sample.model.booking.PaymentStatus.PAYED)
+                  paymentStatus = com.android.sample.model.booking.PaymentStatus.PAID)
 
           override fun getNewUid(): String = "unused"
 

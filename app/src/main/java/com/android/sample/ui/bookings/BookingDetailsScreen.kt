@@ -579,7 +579,7 @@ private fun PaymentActionSection(
                   color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
           }
-          PaymentStatus.PAYED -> {
+          PaymentStatus.PAID -> {
             // Tutor (listing creator) sees the payment received button
             if (isTutor) {
               Text(
