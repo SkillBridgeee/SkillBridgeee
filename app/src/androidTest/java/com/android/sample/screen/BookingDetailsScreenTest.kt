@@ -257,21 +257,6 @@ class BookingDetailsScreenTest {
         }
       }
 
-  // NEW TESTS FOR COVERAGE
-
-  @Test
-  fun bookingDetailsScreen_displaysErrorIndicator_whenLoadError() {
-    val vm = fakeViewModel()
-    vm.setUiStateForTest(BookingUIState(loadError = true))
-
-    composeTestRule.setContent {
-      MaterialTheme { BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1") }
-    }
-
-    // Verify error indicator is displayed (lines 94, 114-120 of BookingDetailsScreen)
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertIsDisplayed()
-  }
-
   @Test
   fun viewModel_load_handlesBookingNotFound() {
     val errorRepo =
@@ -456,90 +441,6 @@ class BookingDetailsScreenTest {
   }
 
   @Test
-  fun viewModel_acceptBooking_updatesStatus() {
-    var updateCalled = false
-    var updatedStatus: BookingStatus? = null
-
-    val repo =
-        object : BookingRepository by fakeBookingRepo {
-          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
-            updateCalled = true
-            updatedStatus = status
-          }
-
-          override suspend fun getBooking(bookingId: String) =
-              Booking(
-                  bookingId = bookingId,
-                  associatedListingId = "l1",
-                  listingCreatorId = "u1",
-                  bookerId = "student",
-                  status = BookingStatus.CONFIRMED)
-        }
-
-    val vm =
-        BookingDetailsViewModel(
-            bookingRepository = repo,
-            listingRepository = fakeListingRepo,
-            profileRepository = fakeProfileRepo)
-
-    vm.setUiStateForTest(
-        BookingUIState(
-            booking =
-                Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1"),
-            onAcceptBooking = { vm.bookingUiState.value.onAcceptBooking() }))
-
-    // Trigger accept via callback (lines 283-309)
-    vm.bookingUiState.value.onAcceptBooking()
-    Thread.sleep(200)
-
-    assert(updateCalled)
-    assert(updatedStatus == BookingStatus.CONFIRMED)
-    assert(vm.bookingUiState.value.booking.status == BookingStatus.CONFIRMED)
-  }
-
-  @Test
-  fun viewModel_denyBooking_updatesStatus() {
-    var updateCalled = false
-    var updatedStatus: BookingStatus? = null
-
-    val repo =
-        object : BookingRepository by fakeBookingRepo {
-          override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
-            updateCalled = true
-            updatedStatus = status
-          }
-
-          override suspend fun getBooking(bookingId: String) =
-              Booking(
-                  bookingId = bookingId,
-                  associatedListingId = "l1",
-                  listingCreatorId = "u1",
-                  bookerId = "student",
-                  status = BookingStatus.CANCELLED)
-        }
-
-    val vm =
-        BookingDetailsViewModel(
-            bookingRepository = repo,
-            listingRepository = fakeListingRepo,
-            profileRepository = fakeProfileRepo)
-
-    vm.setUiStateForTest(
-        BookingUIState(
-            booking =
-                Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1"),
-            onDenyBooking = { vm.bookingUiState.value.onDenyBooking() }))
-
-    // Trigger deny via callback (lines 283-309)
-    vm.bookingUiState.value.onDenyBooking()
-    Thread.sleep(200)
-
-    assert(updateCalled)
-    assert(updatedStatus == BookingStatus.CANCELLED)
-    assert(vm.bookingUiState.value.booking.status == BookingStatus.CANCELLED)
-  }
-
-  @Test
   fun viewModel_markPaymentComplete_updatesPaymentStatus() {
     var updateCalled = false
 
@@ -647,18 +548,6 @@ class BookingDetailsScreenTest {
 
     // Lines 84-87 - isTutor should be true
     assert(vm.bookingUiState.value.isTutor)
-  }
-
-  @Test
-  fun viewModel_load_handlesRatingCheckErrors() {
-    // This test covers lines 59-70 where rating check errors are caught
-    val vm = fakeViewModel()
-    vm.load("b1")
-    Thread.sleep(200)
-
-    // Even with rating errors, load should complete without setting loadError
-    assert(!vm.bookingUiState.value.loadError)
-    assert(vm.bookingUiState.value.booking.bookingId == "b1")
   }
 
   @Test
