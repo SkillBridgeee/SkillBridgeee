@@ -358,7 +358,12 @@ class BookingDetailsScreenTest {
 
     vm.setUiStateForTest(
         BookingUIState(
-            booking = Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1", bookerId = "student")))
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student")))
 
     vm.markBookingAsCompleted()
     Thread.sleep(200)
@@ -385,7 +390,8 @@ class BookingDetailsScreenTest {
 
     vm.setUiStateForTest(
         BookingUIState(
-            booking = Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1")))
+            booking =
+                Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1")))
 
     vm.markBookingAsCompleted()
     Thread.sleep(200)
@@ -478,7 +484,8 @@ class BookingDetailsScreenTest {
 
     vm.setUiStateForTest(
         BookingUIState(
-            booking = Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1"),
+            booking =
+                Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1"),
             onAcceptBooking = { vm.bookingUiState.value.onAcceptBooking() }))
 
     // Trigger accept via callback (lines 283-309)
@@ -519,7 +526,8 @@ class BookingDetailsScreenTest {
 
     vm.setUiStateForTest(
         BookingUIState(
-            booking = Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1"),
+            booking =
+                Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1"),
             onDenyBooking = { vm.bookingUiState.value.onDenyBooking() }))
 
     // Trigger deny via callback (lines 283-309)
@@ -537,7 +545,10 @@ class BookingDetailsScreenTest {
 
     val repo =
         object : BookingRepository by fakeBookingRepo {
-          override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: PaymentStatus
+          ) {
             updateCalled = true
           }
 
@@ -558,7 +569,8 @@ class BookingDetailsScreenTest {
 
     vm.setUiStateForTest(
         BookingUIState(
-            booking = Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1")))
+            booking =
+                Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1")))
 
     vm.markPaymentComplete()
     Thread.sleep(200)
@@ -573,7 +585,10 @@ class BookingDetailsScreenTest {
 
     val repo =
         object : BookingRepository by fakeBookingRepo {
-          override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: PaymentStatus
+          ) {
             updateCalled = true
           }
 
@@ -594,7 +609,8 @@ class BookingDetailsScreenTest {
 
     vm.setUiStateForTest(
         BookingUIState(
-            booking = Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1")))
+            booking =
+                Booking(bookingId = "b1", associatedListingId = "l1", listingCreatorId = "u1")))
 
     vm.confirmPaymentReceived()
     Thread.sleep(200)
@@ -649,7 +665,10 @@ class BookingDetailsScreenTest {
   fun viewModel_submitStudentRatings_handlesRepositoryError() {
     val errorRepo =
         object : BookingRepository by fakeBookingRepo {
-          override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: PaymentStatus
+          ) {
             throw Exception("Payment update failed")
           }
         }

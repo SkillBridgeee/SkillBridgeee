@@ -37,6 +37,46 @@ private const val REJECT_BUTTON_TEXT = "Reject"
 private const val PROFILE_ICON_CONTENT_DESC = "Profile Icon"
 
 /**
+ * Data class to hold the state and callbacks for BookingCard
+ *
+ * @param booking The booking to display
+ * @param bookerProfile Profile of the person who made the booking
+ * @param currentUserId The ID of the current user (to determine which buttons to show)
+ * @param onApprove Callback when approve button is clicked
+ * @param onReject Callback when reject button is clicked
+ * @param onPaymentComplete Callback when payment complete button is clicked
+ * @param onPaymentReceived Callback when payment received button is clicked
+ */
+data class BookingCardState(
+    val booking: Booking,
+    val bookerProfile: Profile?,
+    val currentUserId: String? = null,
+    val onApprove: () -> Unit,
+    val onReject: () -> Unit,
+    val onPaymentComplete: () -> Unit = {},
+    val onPaymentReceived: () -> Unit = {}
+)
+
+/**
+ * Card displaying a single booking with approve/reject actions
+ *
+ * @param state The state containing booking data and callbacks
+ * @param modifier Modifier for the card
+ */
+@Composable
+fun BookingCard(state: BookingCardState, modifier: Modifier = Modifier) {
+  BookingCard(
+      booking = state.booking,
+      bookerProfile = state.bookerProfile,
+      onApprove = state.onApprove,
+      onReject = state.onReject,
+      onPaymentComplete = state.onPaymentComplete,
+      onPaymentReceived = state.onPaymentReceived,
+      currentUserId = state.currentUserId,
+      modifier = modifier)
+}
+
+/**
  * Card displaying a single booking with approve/reject actions
  *
  * @param booking The booking to display
@@ -54,10 +94,10 @@ fun BookingCard(
     bookerProfile: Profile?,
     onApprove: () -> Unit,
     onReject: () -> Unit,
+    modifier: Modifier = Modifier,
     onPaymentComplete: () -> Unit = {},
     onPaymentReceived: () -> Unit = {},
-    currentUserId: String? = null,
-    modifier: Modifier = Modifier
+    currentUserId: String? = null
 ) {
   val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
 
@@ -131,53 +171,61 @@ fun BookingCard(
 
               // Action buttons for pending bookings
               if (booking.status == BookingStatus.PENDING) {
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                      Button(
-                          onClick = onApprove,
-                          modifier =
-                              Modifier.weight(1f).testTag(ListingScreenTestTags.APPROVE_BUTTON)) {
-                            Text(APPROVE_BUTTON_TEXT)
-                          }
-                      Button(
-                          onClick = onReject,
-                          modifier =
-                              Modifier.weight(1f).testTag(ListingScreenTestTags.REJECT_BUTTON),
-                          colors =
-                              ButtonDefaults.buttonColors(
-                                  containerColor = MaterialTheme.colorScheme.error)) {
-                            Text(REJECT_BUTTON_TEXT)
-                          }
-                    }
+                BookingActionButtons(onApprove = onApprove, onReject = onReject)
               }
 
               // Payment actions
-              // Only show "Payment Complete" button to the learner (bookerId)
-              if (booking.paymentStatus == PaymentStatus.PENDING_PAYMENT &&
-                  currentUserId == booking.bookerId) {
-                Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = onPaymentComplete,
-                    modifier =
-                        Modifier.fillMaxWidth()
-                            .testTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)) {
-                      Text("Payment Complete")
-                    }
-              }
-              // Only show "Payment Received" button to the tutor (listingCreatorId)
-              else if (booking.paymentStatus == PaymentStatus.PAID &&
-                  currentUserId == booking.listingCreatorId) {
-                Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = onPaymentReceived,
-                    modifier =
-                        Modifier.fillMaxWidth()
-                            .testTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)) {
-                      Text("Payment Received")
-                    }
-              }
+              PaymentActionButtons(
+                  booking = booking,
+                  currentUserId = currentUserId,
+                  onPaymentComplete = onPaymentComplete,
+                  onPaymentReceived = onPaymentReceived)
             }
       }
+}
+
+@Composable
+private fun BookingActionButtons(onApprove: () -> Unit, onReject: () -> Unit) {
+  Spacer(Modifier.height(8.dp))
+  Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Button(
+        onClick = onApprove,
+        modifier = Modifier.weight(1f).testTag(ListingScreenTestTags.APPROVE_BUTTON)) {
+          Text(APPROVE_BUTTON_TEXT)
+        }
+    Button(
+        onClick = onReject,
+        modifier = Modifier.weight(1f).testTag(ListingScreenTestTags.REJECT_BUTTON),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
+          Text(REJECT_BUTTON_TEXT)
+        }
+  }
+}
+
+@Composable
+private fun PaymentActionButtons(
+    booking: Booking,
+    currentUserId: String?,
+    onPaymentComplete: () -> Unit,
+    onPaymentReceived: () -> Unit
+) {
+  // Only show "Payment Complete" button to the learner (bookerId)
+  if (booking.paymentStatus == PaymentStatus.PENDING_PAYMENT && currentUserId == booking.bookerId) {
+    Spacer(Modifier.height(8.dp))
+    Button(
+        onClick = onPaymentComplete,
+        modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)) {
+          Text("Payment Complete")
+        }
+  }
+  // Only show "Payment Received" button to the tutor (listingCreatorId)
+  else if (booking.paymentStatus == PaymentStatus.PAID &&
+      currentUserId == booking.listingCreatorId) {
+    Spacer(Modifier.height(8.dp))
+    Button(
+        onClick = onPaymentReceived,
+        modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)) {
+          Text("Payment Received")
+        }
+  }
 }
