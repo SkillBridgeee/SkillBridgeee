@@ -33,128 +33,128 @@ import org.junit.Test
 
 class AppNavGraphDiscussionTest {
 
-    @get:Rule val composeTestRule = createComposeRule()
+  @get:Rule val composeTestRule = createComposeRule()
 
-    private lateinit var authViewModel: AuthenticationViewModel
-    private lateinit var bookingsViewModel: MyBookingsViewModel
-    private lateinit var profileViewModel: MyProfileViewModel
-    private lateinit var mainPageViewModel: MainPageViewModel
-    private lateinit var newListingViewModel: NewListingViewModel
-    private lateinit var bookingDetailsViewModel: BookingDetailsViewModel
-    private lateinit var discussionViewModel: DiscussionViewModel
+  private lateinit var authViewModel: AuthenticationViewModel
+  private lateinit var bookingsViewModel: MyBookingsViewModel
+  private lateinit var profileViewModel: MyProfileViewModel
+  private lateinit var mainPageViewModel: MainPageViewModel
+  private lateinit var newListingViewModel: NewListingViewModel
+  private lateinit var bookingDetailsViewModel: BookingDetailsViewModel
+  private lateinit var discussionViewModel: DiscussionViewModel
 
-    private class FakeOverViewConvRepository : OverViewConvRepository {
-        override fun getNewUid(): String = "dummy"
+  private class FakeOverViewConvRepository : OverViewConvRepository {
+    override fun getNewUid(): String = "dummy"
 
-        override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> =
-            emptyList()
+    override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> =
+        emptyList()
 
-        override suspend fun addOverViewConvUser(overView: OverViewConversation) {}
+    override suspend fun addOverViewConvUser(overView: OverViewConversation) {}
 
-        override suspend fun deleteOverViewConvUser(convId: String) {}
+    override suspend fun deleteOverViewConvUser(convId: String) {}
 
-        override fun listenOverView(userId: String): Flow<List<OverViewConversation>> =
-            flowOf(
-                listOf(
-                    OverViewConversation(
-                        convName = "Chat with Alice",
-                        linkedConvId = "conv1",
-                        lastMsg = null,
-                        nonReadMsgNumber = 0,
-                    )))
+    override fun listenOverView(userId: String): Flow<List<OverViewConversation>> =
+        flowOf(
+            listOf(
+                OverViewConversation(
+                    convName = "Chat with Alice",
+                    linkedConvId = "conv1",
+                    lastMsg = null,
+                    nonReadMsgNumber = 0,
+                )))
+  }
+
+  @Before
+  fun setUp() {
+    val profileRepo = FakeProfileWorking()
+    val listingRepo = FakeListingWorking()
+    val bookingRepo = FakeBookingWorking()
+    val ratingRepo = RatingFakeRepoWorking()
+
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    UserSessionManager.setCurrentUserId(profileRepo.getCurrentUserId())
+
+    authViewModel = AuthenticationViewModel(context = context, profileRepository = profileRepo)
+    bookingsViewModel =
+        MyBookingsViewModel(
+            bookingRepo = bookingRepo, listingRepo = listingRepo, profileRepo = profileRepo)
+    profileViewModel =
+        MyProfileViewModel(
+            profileRepository = profileRepo,
+            bookingRepository = bookingRepo,
+            listingRepository = listingRepo,
+            ratingsRepository = ratingRepo,
+            sessionManager = UserSessionManager)
+    mainPageViewModel =
+        MainPageViewModel(profileRepository = profileRepo, listingRepository = listingRepo)
+    newListingViewModel = NewListingViewModel(listingRepository = listingRepo)
+    bookingDetailsViewModel =
+        BookingDetailsViewModel(
+            listingRepository = listingRepo,
+            bookingRepository = bookingRepo,
+            profileRepository = profileRepo,
+            ratingRepository = ratingRepo)
+
+    discussionViewModel = DiscussionViewModel(FakeOverViewConvRepository())
+
+    RouteStackManager.clear()
+  }
+
+  @Test
+  fun clickingConversation_inAppNavGraph_triggersMessagesNavigation() {
+    lateinit var navController: NavHostController
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
     }
 
-    @Before
-    fun setUp() {
-        val profileRepo = FakeProfileWorking()
-        val listingRepo = FakeListingWorking()
-        val bookingRepo = FakeBookingWorking()
-        val ratingRepo = RatingFakeRepoWorking()
+    // Go to the DISCUSSION screen inside the real AppNavGraph
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.DISCUSSION) }
 
-        val context = ApplicationProvider.getApplicationContext<Context>()
-        UserSessionManager.setCurrentUserId(profileRepo.getCurrentUserId())
+    // Click on the fake conversation -> should execute convId.value = ... and navigate(MESSAGES)
+    composeTestRule
+        .onNodeWithTag("conversation_item_conv1", useUnmergedTree = true)
+        .assertExists()
+        .performClick()
 
-        authViewModel = AuthenticationViewModel(context = context, profileRepository = profileRepo)
-        bookingsViewModel =
-            MyBookingsViewModel(
-                bookingRepo = bookingRepo, listingRepo = listingRepo, profileRepo = profileRepo)
-        profileViewModel =
-            MyProfileViewModel(
-                profileRepository = profileRepo,
-                bookingRepository = bookingRepo,
-                listingRepository = listingRepo,
-                ratingsRepository = ratingRepo,
-                sessionManager = UserSessionManager)
-        mainPageViewModel =
-            MainPageViewModel(profileRepository = profileRepo, listingRepository = listingRepo)
-        newListingViewModel = NewListingViewModel(listingRepository = listingRepo)
-        bookingDetailsViewModel =
-            BookingDetailsViewModel(
-                listingRepository = listingRepo,
-                bookingRepository = bookingRepo,
-                profileRepository = profileRepo,
-                ratingRepository = ratingRepo)
+    // Just assert that we ended up on the MESSAGES route
+    composeTestRule.runOnIdle {
+      assertEquals(NavRoutes.MESSAGES, navController.currentBackStackEntry?.destination?.route)
+    }
+  }
 
-        discussionViewModel = DiscussionViewModel(FakeOverViewConvRepository())
+  @Test
+  fun navigateToToS_doesNotCrash() {
+    lateinit var navController: NavHostController
 
-        RouteStackManager.clear()
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
     }
 
-    @Test
-    fun clickingConversation_inAppNavGraph_triggersMessagesNavigation() {
-        lateinit var navController: NavHostController
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.TOS) }
 
-        composeTestRule.setContent {
-            navController = rememberNavController()
-            AppNavGraph(
-                navController = navController,
-                bookingsViewModel = bookingsViewModel,
-                profileViewModel = profileViewModel,
-                mainPageViewModel = mainPageViewModel,
-                newListingViewModel = newListingViewModel,
-                authViewModel = authViewModel,
-                bookingDetailsViewModel = bookingDetailsViewModel,
-                discussionViewModel = discussionViewModel,
-                onGoogleSignIn = {})
-        }
-
-        // Go to the DISCUSSION screen inside the real AppNavGraph
-        composeTestRule.runOnIdle { navController.navigate(NavRoutes.DISCUSSION) }
-
-        // Click on the fake conversation -> should execute convId.value = ... and navigate(MESSAGES)
-        composeTestRule
-            .onNodeWithTag("conversation_item_conv1", useUnmergedTree = true)
-            .assertExists()
-            .performClick()
-
-        // Just assert that we ended up on the MESSAGES route
-        composeTestRule.runOnIdle {
-            assertEquals(NavRoutes.MESSAGES, navController.currentBackStackEntry?.destination?.route)
-        }
+    composeTestRule.runOnIdle {
+      assertEquals(NavRoutes.TOS, navController.currentBackStackEntry?.destination?.route)
     }
-
-    @Test
-    fun navigateToToS_doesNotCrash() {
-        lateinit var navController: NavHostController
-
-        composeTestRule.setContent {
-            navController = rememberNavController()
-            AppNavGraph(
-                navController = navController,
-                bookingsViewModel = bookingsViewModel,
-                profileViewModel = profileViewModel,
-                mainPageViewModel = mainPageViewModel,
-                newListingViewModel = newListingViewModel,
-                authViewModel = authViewModel,
-                bookingDetailsViewModel = bookingDetailsViewModel,
-                discussionViewModel = discussionViewModel,
-                onGoogleSignIn = {})
-        }
-
-        composeTestRule.runOnIdle { navController.navigate(NavRoutes.TOS) }
-
-        composeTestRule.runOnIdle {
-            assertEquals(NavRoutes.TOS, navController.currentBackStackEntry?.destination?.route)
-        }
-    }
+  }
 }

@@ -254,9 +254,9 @@ fun AppNavGraph(
       ToSScreen()
     }
 
-      composable(NavRoutes.MESSAGES) {
-          // Temporary placeholder so navigation doesn't crash and is covered by tests
-          Box(Modifier)
-      }
+    composable(NavRoutes.MESSAGES) {
+      // Temporary placeholder so navigation doesn't crash and is covered by tests
+      Box(Modifier)
+    }
   }
 }
