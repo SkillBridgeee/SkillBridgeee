@@ -36,6 +36,7 @@ object NavRoutes {
   const val SIGNUP = "signup?email={email}"
   const val SIGNUP_BASE = "signup"
   const val LISTING = "listing/{listingId}"
+  const val TOS = "tos"
 
   const val OTHERS_PROFILE = "profile"
   const val BOOKING_DETAILS = "bookingDetails"

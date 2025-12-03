@@ -88,10 +88,11 @@ class MainPageViewModelTest {
     }
   }
 
-  private class FakeListingRepository(private val listings: List<Proposal>) : ListingRepository {
+  private open class FakeListingRepository(private val listings: List<Proposal>) :
+      ListingRepository {
     override fun getNewUid() = "fake"
 
-    override suspend fun getAllListings() = listings
+    override suspend fun getAllListings() = listings // List<Proposal> is fine (covariant)
 
     override suspend fun getProposals() = listings
 
@@ -103,7 +104,8 @@ class MainPageViewModelTest {
 
     override suspend fun getListing(listingId: String) = null
 
-    override suspend fun getListingsByUser(userId: String) = emptyList<Proposal>()
+    override suspend fun getListingsByUser(userId: String) =
+        emptyList<com.android.sample.model.listing.Listing>()
 
     override suspend fun updateListing(
         listingId: String,
@@ -145,9 +147,10 @@ class MainPageViewModelTest {
     advanceUntilIdle()
     val state = vm.uiState.first()
 
-    Assert.assertEquals(2, state.tutors.size)
-    Assert.assertEquals("Alice", state.tutors[0].name)
-    Assert.assertEquals("Bob", state.tutors[1].name)
+    // We no longer expose tutors; we expose proposals directly
+    Assert.assertEquals(2, state.proposals.size)
+    val listingIds = state.proposals.map { it.listingId }.toSet()
+    Assert.assertEquals(setOf("l-u1", "l-u2"), listingIds)
   }
 
   @Test
@@ -161,8 +164,6 @@ class MainPageViewModelTest {
     advanceUntilIdle()
     val state = vm.uiState.first()
 
-    // When no user is logged in, welcome message should stay as default "Welcome back!"
-    // because getWelcomeMsg returns null and the ViewModel keeps the previous message
     Assert.assertEquals("Welcome back!", state.welcomeMessage)
   }
 
@@ -174,16 +175,20 @@ class MainPageViewModelTest {
     val failingProfiles =
         object : FakeProfileRepository(emptyList()) {
           override suspend fun getAllProfiles(): List<Profile> {
+    val failingListings =
+        object : FakeListingRepository(emptyList()) {
+          override suspend fun getProposals(): List<Proposal> {
             throw IllegalStateException("Test crash")
           }
         }
 
-    val vm = MainPageViewModel(failingProfiles, FakeListingRepository(emptyList()))
+    val vm = MainPageViewModel(FakeProfileRepository(emptyList()), failingListings)
 
     advanceUntilIdle()
     val state = vm.uiState.first()
 
-    Assert.assertTrue(state.tutors.isEmpty())
+    // On failure we fall back to the default HomeUiState()
+    Assert.assertTrue(state.proposals.isEmpty())
     Assert.assertEquals("Welcome back!", state.welcomeMessage)
   }
 }

@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -57,6 +58,7 @@ object SignUpScreenTestTags {
   const val EMAIL = "SignUpScreenTestTags.EMAIL"
   const val PASSWORD = "SignUpScreenTestTags.PASSWORD"
   const val SIGN_UP = "SignUpScreenTestTags.SIGN_UP"
+  const val TOS_CHECKBOX = "SignUpScreenTestTags.TOS_CHECKBOX"
 
   const val PIN_CONTENT_DESC = "Use my location"
 }
@@ -66,28 +68,60 @@ fun SignUpScreen(
     vm: SignUpViewModel,
     onSubmitSuccess: () -> Unit = {},
     onGoogleSignUpSuccess: () -> Unit = {},
-    onBackPressed: () -> Unit = {}
+    onBackPressed: () -> Unit = {},
+    onNavigateToToS: () -> Unit = {}
 ) {
   val state by vm.state.collectAsState()
-
-  // Handle back button press for Google signup - sign out if not completed
-  BackHandler(
-      enabled = state.isGoogleSignUp && !state.submitSuccess && !state.verificationEmailSent) {
+    // Handle back button press for Google signup - sign out if not completed
+    BackHandler(
+        enabled = state.isGoogleSignUp && !state.submitSuccess && !state.verificationEmailSent) {
         vm.onSignUpAbandoned()
         onBackPressed()
-      }
-
-  // Navigate based on signup type
-  LaunchedEffect(state.submitSuccess, state.verificationEmailSent, state.isGoogleSignUp) {
-    when {
-      state.submitSuccess && state.isGoogleSignUp -> onGoogleSignUpSuccess()
-      state.verificationEmailSent -> onSubmitSuccess()
     }
-  }
 
-  val focusManager = LocalFocusManager.current
-  val fieldStyle = rememberFieldStyle()
+    // Navigate based on signup type
+    LaunchedEffect(state.submitSuccess, state.verificationEmailSent, state.isGoogleSignUp) {
+        when {
+            state.submitSuccess && state.isGoogleSignUp -> onGoogleSignUpSuccess()
+            state.verificationEmailSent -> onSubmitSuccess()
+        }
+    }
+  HandleSuccessNavigation(state, onSubmitSuccess)
+  DisposableEffect(Unit) { onDispose { vm.onSignUpAbandoned() } }
+
   val scrollState = rememberScrollState()
+  var isToSChecked by remember { mutableStateOf(false) }
+
+  SignUpScreenContent(
+      state = state,
+      vm = vm,
+      scrollState = scrollState,
+      isToSChecked = isToSChecked,
+      onToSCheckedChange = { isToSChecked = it },
+      onNavigateToToS = onNavigateToToS)
+}
+
+@Composable
+private fun HandleSuccessNavigation(state: SignUpUiState, onSubmitSuccess: () -> Unit) {
+    LaunchedEffect(state.submitSuccess, state.verificationEmailSent, state.isGoogleSignUp) {
+        when {
+            state.submitSuccess && state.isGoogleSignUp -> onGoogleSignUpSuccess()
+            state.verificationEmailSent -> onSubmitSuccess()
+        }
+    }
+}
+
+@Composable
+private fun SignUpScreenContent(
+    state: SignUpUiState,
+    vm: SignUpViewModel,
+    scrollState: androidx.compose.foundation.ScrollState,
+    isToSChecked: Boolean,
+    onToSCheckedChange: (Boolean) -> Unit,
+    onNavigateToToS: () -> Unit
+) {
+  val fieldShape = RoundedCornerShape(14.dp)
+  val fieldColors = rememberFieldColors()
 
   Box(modifier = Modifier.fillMaxSize()) {
     Column(
@@ -96,51 +130,39 @@ fun SignUpScreen(
                 .verticalScroll(scrollState)
                 .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
-          SignUpHeader()
-
-          PersonalInfoFields(state = state, vm = vm, fieldStyle = fieldStyle)
-
-          LocationField(state = state, vm = vm, fieldStyle = fieldStyle)
-
-          LevelAndDescriptionFields(state = state, vm = vm, fieldStyle = fieldStyle)
-
-          PasswordSection(
-              state = state, vm = vm, fieldStyle = fieldStyle, focusManager = focusManager)
-
-          StatusMessages(state = state)
-
-          SubmitButton(state = state, vm = vm)
+          HeaderBlock()
+          NameSurnameBlock(state, vm, fieldShape, fieldColors)
+          EmailBlock(state, vm, fieldShape, fieldColors)
+          LocationBlock(state, vm, fieldShape, fieldColors)
+          EducationDescriptionBlock(state, vm, fieldShape, fieldColors)
+          PasswordAndRequirementsBlock(state, vm, fieldShape, fieldColors)
+          MessagesBlock(state)
+          Spacer(Modifier.height(6.dp))
+          ToSAndSubmitBlock(state, vm, isToSChecked, onToSCheckedChange, onNavigateToToS)
         }
 
+    val showHint by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
     VerticalScrollHint(
-        visible = scrollState.value < scrollState.maxValue,
+        visible = showHint,
         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
   }
 }
 
-/** Data class to hold field styling configuration */
-data class FieldStyle(val shape: Shape, val colors: TextFieldColors)
-
-/** Remember field style configuration */
 @Composable
-private fun rememberFieldStyle(): FieldStyle {
-  val shape = RoundedCornerShape(14.dp)
-  val colors =
-      TextFieldDefaults.colors(
-          focusedContainerColor = FieldContainer,
-          unfocusedContainerColor = FieldContainer,
-          disabledContainerColor = FieldContainer,
-          focusedIndicatorColor = Color.Transparent,
-          unfocusedIndicatorColor = Color.Transparent,
-          disabledIndicatorColor = Color.Transparent,
-          cursorColor = MaterialTheme.colorScheme.primary,
-          focusedTextColor = MaterialTheme.colorScheme.onSurface,
-          unfocusedTextColor = MaterialTheme.colorScheme.onSurface)
-  return FieldStyle(shape, colors)
-}
+private fun rememberFieldColors() =
+    TextFieldDefaults.colors(
+        focusedContainerColor = FieldContainer,
+        unfocusedContainerColor = FieldContainer,
+        disabledContainerColor = FieldContainer,
+        focusedIndicatorColor = Color.Transparent,
+        unfocusedIndicatorColor = Color.Transparent,
+        disabledIndicatorColor = Color.Transparent,
+        cursorColor = MaterialTheme.colorScheme.primary,
+        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+        unfocusedTextColor = MaterialTheme.colorScheme.onSurface)
 
 @Composable
-private fun SignUpHeader() {
+private fun HeaderBlock() {
   Text(
       "SkillBridge",
       modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.TITLE),
@@ -156,7 +178,12 @@ private fun SignUpHeader() {
 }
 
 @Composable
-private fun PersonalInfoFields(state: SignUpUiState, vm: SignUpViewModel, fieldStyle: FieldStyle) {
+private fun NameSurnameBlock(
+    state: SignUpUiState,
+    vm: SignUpViewModel,
+    fieldShape: RoundedCornerShape,
+    fieldColors: TextFieldColors
+) {
   Box(modifier = Modifier.fillMaxWidth()) {
     EllipsizingTextField(
         value = state.name,
@@ -164,9 +191,7 @@ private fun PersonalInfoFields(state: SignUpUiState, vm: SignUpViewModel, fieldS
         placeholder = "Enter your Name",
         modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.NAME),
         maxPreviewLength = 45,
-        style =
-            EllipsizingTextFieldStyle(
-                shape = fieldStyle.shape as RoundedCornerShape, colors = fieldStyle.colors))
+        style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
   }
 
   EllipsizingTextField(
@@ -175,10 +200,16 @@ private fun PersonalInfoFields(state: SignUpUiState, vm: SignUpViewModel, fieldS
       placeholder = "Enter your Surname",
       modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.SURNAME),
       maxPreviewLength = 45,
-      style =
-          EllipsizingTextFieldStyle(
-              shape = fieldStyle.shape as RoundedCornerShape, colors = fieldStyle.colors))
+      style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
+}
 
+@Composable
+private fun EmailBlock(
+    state: SignUpUiState,
+    vm: SignUpViewModel,
+    fieldShape: RoundedCornerShape,
+    fieldColors: TextFieldColors
+) {
   TextField(
       value = state.email,
       onValueChange = {
@@ -189,14 +220,19 @@ private fun PersonalInfoFields(state: SignUpUiState, vm: SignUpViewModel, fieldS
       modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.EMAIL),
       placeholder = { Text("Email Address") },
       singleLine = true,
-      shape = fieldStyle.shape,
-      colors = fieldStyle.colors,
+      shape = fieldShape,
+      colors = fieldColors,
       enabled = !state.isGoogleSignUp,
       readOnly = state.isGoogleSignUp)
 }
 
 @Composable
-private fun LocationField(state: SignUpUiState, vm: SignUpViewModel, fieldStyle: FieldStyle) {
+private fun LocationBlock(
+    state: SignUpUiState,
+    vm: SignUpViewModel,
+    fieldShape: RoundedCornerShape,
+    fieldColors: TextFieldColors
+) {
   val context = LocalContext.current
   val permission = android.Manifest.permission.ACCESS_FINE_LOCATION
 
@@ -214,35 +250,50 @@ private fun LocationField(state: SignUpUiState, vm: SignUpViewModel, fieldStyle:
         locationQuery = state.locationQuery,
         locationSuggestions = state.locationSuggestions,
         onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },
-        onLocationSelected = { vm.onEvent(SignUpEvent.LocationSelected(it)) },
-        shape = fieldStyle.shape,
-        colors = fieldStyle.colors)
+        onLocationSelected = { location -> vm.onEvent(SignUpEvent.LocationSelected(location)) },
+        shape = fieldShape,
+        colors = fieldColors)
 
-    IconButton(
-        onClick = {
-          val granted =
-              ContextCompat.checkSelfPermission(context, permission) ==
-                  PackageManager.PERMISSION_GRANTED
-          if (granted) {
-            vm.fetchLocationFromGps(GpsLocationProvider(context), context)
-          } else {
-            permissionLauncher.launch(permission)
-          }
-        },
-        modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
-          Icon(
-              imageVector = Icons.Filled.MyLocation,
-              contentDescription = SignUpScreenTestTags.PIN_CONTENT_DESC,
-              tint = MaterialTheme.colorScheme.primary)
-        }
+    LocationIconButton(
+        context = context,
+        permission = permission,
+        permissionLauncher = permissionLauncher,
+        vm = vm)
   }
 }
 
 @Composable
-private fun LevelAndDescriptionFields(
+private fun LocationIconButton(
+    context: android.content.Context,
+    permission: String,
+    permissionLauncher: androidx.activity.result.ActivityResultLauncher<String>,
+    vm: SignUpViewModel
+) {
+  IconButton(
+      onClick = {
+        val granted =
+            ContextCompat.checkSelfPermission(context, permission) ==
+                PackageManager.PERMISSION_GRANTED
+        if (granted) {
+          vm.fetchLocationFromGps(GpsLocationProvider(context), context)
+        } else {
+          permissionLauncher.launch(permission)
+        }
+      },
+      modifier = Modifier.size(36.dp)) {
+        Icon(
+            imageVector = Icons.Filled.MyLocation,
+            contentDescription = SignUpScreenTestTags.PIN_CONTENT_DESC,
+            tint = MaterialTheme.colorScheme.primary)
+      }
+}
+
+@Composable
+private fun EducationDescriptionBlock(
     state: SignUpUiState,
     vm: SignUpViewModel,
-    fieldStyle: FieldStyle
+    fieldShape: RoundedCornerShape,
+    fieldColors: TextFieldColors
 ) {
   TextField(
       value = state.levelOfEducation,
@@ -250,8 +301,8 @@ private fun LevelAndDescriptionFields(
       modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION),
       placeholder = { Text("Major, Year (e.g. CS, 3rd year)") },
       singleLine = true,
-      shape = fieldStyle.shape,
-      colors = fieldStyle.colors)
+      shape = fieldShape,
+      colors = fieldColors)
 
   TextField(
       value = state.description,
@@ -259,18 +310,19 @@ private fun LevelAndDescriptionFields(
       modifier =
           Modifier.fillMaxWidth().heightIn(min = 112.dp).testTag(SignUpScreenTestTags.DESCRIPTION),
       placeholder = { Text("Short description of yourself") },
-      shape = fieldStyle.shape,
-      colors = fieldStyle.colors)
+      shape = fieldShape,
+      colors = fieldColors)
 }
 
 @Composable
-private fun PasswordSection(
+private fun PasswordAndRequirementsBlock(
     state: SignUpUiState,
     vm: SignUpViewModel,
-    fieldStyle: FieldStyle,
-    focusManager: FocusManager
+    fieldShape: RoundedCornerShape,
+    fieldColors: TextFieldColors
 ) {
   if (!state.isGoogleSignUp) {
+    val focusManager = LocalFocusManager.current
     TextField(
         value = state.password,
         onValueChange = { vm.onEvent(SignUpEvent.PasswordChanged(it)) },
@@ -279,96 +331,137 @@ private fun PasswordSection(
         singleLine = true,
         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
         visualTransformation = PasswordVisualTransformation(),
-        shape = fieldStyle.shape,
-        colors = fieldStyle.colors,
+        shape = fieldShape,
+        colors = fieldColors,
         keyboardOptions =
             KeyboardOptions.Default.copy(
                 imeAction = ImeAction.Done, keyboardType = KeyboardType.Password),
         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }))
 
     Spacer(Modifier.height(6.dp))
-
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-      val reqs = state.passwordRequirements
-      RequirementItem(met = reqs.minLength, text = "At least 8 characters")
-      RequirementItem(met = reqs.hasLetter, text = "Contains a letter")
-      RequirementItem(met = reqs.hasDigit, text = "Contains a digit")
-      RequirementItem(met = reqs.hasSpecial, text = "Contains a special character")
-    }
+    PasswordRequirementsList(state.passwordRequirements)
   }
 }
 
 @Composable
-private fun StatusMessages(state: SignUpUiState) {
+private fun PasswordRequirementsList(requirements: PasswordRequirements) {
+  Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+    RequirementItem(met = requirements.minLength, text = "At least 8 characters")
+    RequirementItem(met = requirements.hasLetter, text = "Contains a letter")
+    RequirementItem(met = requirements.hasDigit, text = "Contains a digit")
+    RequirementItem(met = requirements.hasSpecial, text = "Contains a special character")
+  }
+}
+
+@Composable
+private fun MessagesBlock(state: SignUpUiState) {
   if (state.verificationEmailSent) {
     Spacer(Modifier.height(8.dp))
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = TurquoisePrimary.copy(alpha = 0.1f))) {
-          Column(
-              modifier = Modifier.padding(16.dp),
-              verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "✓ Verification Email Sent!",
-                    color = TurquoisePrimary,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold)
-                Text(
-                    text =
-                        "Please check your inbox at ${state.email} and click the verification link. After verifying, you can log in.",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.bodyMedium)
-              }
-        }
+    VerificationEmailCard(state.email)
   } else {
-    state.error?.let { errorMessage ->
-      Spacer(Modifier.height(8.dp))
-      Text(
-          text = errorMessage,
-          color = MaterialTheme.colorScheme.error,
-          style = MaterialTheme.typography.bodyMedium,
-          modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
-    }
+    state.error?.let { ErrorMessage(it) }
   }
 }
 
 @Composable
-private fun SubmitButton(state: SignUpUiState, vm: SignUpViewModel) {
-  Spacer(Modifier.height(6.dp))
+private fun VerificationEmailCard(email: String) {
+  Card(
+      modifier = Modifier.fillMaxWidth(),
+      colors = CardDefaults.cardColors(containerColor = TurquoisePrimary.copy(alpha = 0.1f))) {
+        Column(
+            modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+              Text(
+                  text = "✓ Verification Email Sent!",
+                  color = TurquoisePrimary,
+                  style = MaterialTheme.typography.titleMedium,
+                  fontWeight = FontWeight.Bold)
+              Text(
+                  text =
+                      "Please check your inbox at $email and click the verification link. After verifying, you can log in.",
+                  color = MaterialTheme.colorScheme.onSurface,
+                  style = MaterialTheme.typography.bodyMedium)
+            }
+      }
+}
 
+@Composable
+private fun ErrorMessage(errorMessage: String) {
+  Spacer(Modifier.height(8.dp))
+  Text(
+      text = errorMessage,
+      color = MaterialTheme.colorScheme.error,
+      style = MaterialTheme.typography.bodyMedium,
+      modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
+}
+
+@Composable
+private fun ToSAndSubmitBlock(
+    state: SignUpUiState,
+    vm: SignUpViewModel,
+    isToSChecked: Boolean,
+    onToSCheckedChange: (Boolean) -> Unit,
+    onNavigateToToS: () -> Unit
+) {
+  ToSCheckboxRow(isToSChecked, onToSCheckedChange, onNavigateToToS)
+  SignUpButton(state, vm, isToSChecked)
+}
+
+@Composable
+private fun ToSCheckboxRow(
+    isToSChecked: Boolean,
+    onToSCheckedChange: (Boolean) -> Unit,
+    onNavigateToToS: () -> Unit
+) {
+  Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+    Checkbox(
+        modifier = Modifier.testTag(SignUpScreenTestTags.TOS_CHECKBOX),
+        checked = isToSChecked,
+        onCheckedChange = onToSCheckedChange,
+        colors = CheckboxDefaults.colors(checkedColor = TurquoisePrimary))
+    Spacer(modifier = Modifier.width(8.dp))
+    Text(text = "I have read and accept the ", style = MaterialTheme.typography.bodyMedium)
+    Text(
+        text = "Terms of Service",
+        style = MaterialTheme.typography.bodyMedium.copy(color = TurquoisePrimary),
+        modifier = Modifier.clickable { onNavigateToToS() })
+  }
+}
+
+@Composable
+private fun SignUpButton(state: SignUpUiState, vm: SignUpViewModel, isToSChecked: Boolean) {
   val gradient = Brush.horizontalGradient(listOf(TurquoiseStart, TurquoiseEnd))
   val disabledBrush = Brush.linearGradient(listOf(GrayE6, GrayE6))
-
-  val enabled =
-      if (state.isGoogleSignUp) {
-        state.canSubmit && !state.submitting
-      } else {
-        state.canSubmit && state.passwordRequirements.allMet && !state.submitting
-      }
-
-  val buttonColors =
-      ButtonDefaults.buttonColors(
-          containerColor = Color.Transparent,
-          contentColor = Color.White,
-          disabledContainerColor = Color.Transparent,
-          disabledContentColor = DisabledContent)
+  val enabled = calculateSubmitEnabled(state)
 
   Button(
       onClick = { vm.onEvent(SignUpEvent.Submit) },
-      enabled = enabled,
+      enabled = isToSChecked,
       modifier =
           Modifier.fillMaxWidth()
               .height(52.dp)
               .clip(RoundedCornerShape(24.dp))
               .background(if (enabled) gradient else disabledBrush, RoundedCornerShape(24.dp))
               .testTag(SignUpScreenTestTags.SIGN_UP),
-      colors = buttonColors,
+      colors =
+          ButtonDefaults.buttonColors(
+              containerColor = Color.Transparent,
+              contentColor = Color.White,
+              disabledContainerColor = Color.Transparent,
+              disabledContentColor = DisabledContent),
       contentPadding = PaddingValues(0.dp)) {
         Text(
             if (state.submitting) "Submitting…" else "Sign Up",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold)
       }
+}
+
+private fun calculateSubmitEnabled(state: SignUpUiState): Boolean {
+  return if (state.isGoogleSignUp) {
+    state.canSubmit && !state.submitting
+  } else {
+    state.canSubmit && state.passwordRequirements.allMet && !state.submitting
+  }
 }
 
 @Composable

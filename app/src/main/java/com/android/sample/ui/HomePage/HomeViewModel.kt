@@ -7,6 +7,7 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
+import com.android.sample.model.listing.Request
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -14,6 +15,7 @@ import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -26,7 +28,8 @@ import kotlinx.coroutines.launch
 data class HomeUiState(
     val welcomeMessage: String = "Welcome back!",
     val subjects: List<MainSubject> = MainSubject.entries.toList(),
-    var tutors: List<Profile> = emptyList()
+    val proposals: List<Proposal> = emptyList(),
+    val requests: List<Request> = emptyList()
 )
 
 /**
@@ -50,34 +53,41 @@ class MainPageViewModel(
   }
 
   /**
-   * Loads all data required for the Home screen.
-   * - Fetches all listings and profiles
-   * - Matches listings with their creator profiles to build the tutor list
-   * - Retrieves the current user's name and builds a welcome message
-   * - Updates the UI state with the prepared data
+   * Loads and prepares data for the Home UI state.
    *
-   * In case of failure, logs the error and falls back to a default UI state.
+   * This function fetches proposals and requests from the listing repository, filters and sorts
+   * them to get the top 10 active items, and retrieves a personalized welcome message. It then
+   * updates the [uiState] with this data. In case of any errors during data fetching, it logs a
+   * warning and falls back to a default empty state.
    */
   fun load() {
     viewModelScope.launch {
       try {
         val allProposals = listingRepository.getProposals()
-        val allProfiles = profileRepository.getAllProfiles()
-
-        val tutorProfiles = getTutors(allProposals, allProfiles)
+        val allRequests = listingRepository.getRequests()
         val welcomeMsg = getWelcomeMsg()
 
-        // Only update the welcome message if we got a non-null result
-        // This prevents the message from disappearing if there's a temporary auth hiccup
-        _uiState.value =
-            HomeUiState(
-                welcomeMessage = welcomeMsg ?: _uiState.value.welcomeMessage,
-                tutors = tutorProfiles)
+        val topProposals =
+            allProposals.filter { it.isActive }.sortedByDescending { it.createdAt }.take(10)
+
+        val topRequests =
+            allRequests.filter { it.isActive }.sortedByDescending { it.createdAt }.take(10)
+
+        _uiState.update { current ->
+          current.copy(
+              welcomeMessage = welcomeMsg, proposals = topProposals, requests = topRequests
+              // subjects stays whatever it was (currently the default)
+              )
+        }
       } catch (e: Exception) {
-        // Log the error for debugging while providing a safe fallback UI state
         Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        // Keep existing welcome message instead of resetting to default
-        _uiState.value = _uiState.value.copy(tutors = emptyList())
+        _uiState.update { current ->
+          current.copy(
+              // keep existing subjects and welcomeMessage if you want,
+              // but reset proposals/requests to safe defaults
+              proposals = emptyList(),
+              requests = emptyList())
+        }
       }
     }
   }
@@ -99,20 +109,6 @@ class MainPageViewModel(
         }
         .onFailure { Log.w("HomePageViewModel", "Failed to get current profile", it) }
         .getOrNull()
-  }
-
-  /**
-   * Get all Profile that propose courses.
-   *
-   * @param proposals List of proposals submitted by users.
-   * @param profiles List of all available user profiles.
-   * @return A list of profiles corresponding to the creators of the given proposals.
-   */
-  private fun getTutors(proposals: List<Proposal>, profiles: List<Profile>): List<Profile> {
-    // TODO: Add sorting logic for tutors based on rating here.
-    return proposals
-        .mapNotNull { proposal -> profiles.find { it.userId == proposal.creatorUserId } }
-        .distinctBy { it.userId }
   }
 
   /**
