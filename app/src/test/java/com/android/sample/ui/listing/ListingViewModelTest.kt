@@ -186,6 +186,8 @@ class ListingViewModelTest {
       ProfileRepository {
     override fun getNewUid() = "fake-profile-id"
 
+    override fun getCurrentUserId() = "test-user-id"
+
     override suspend fun getProfile(userId: String) = profiles[userId]
 
     override suspend fun addProfile(profile: Profile) {}
@@ -266,6 +268,17 @@ class ListingViewModelTest {
       val booking = storedBookings.find { it.bookingId == bookingId }
       booking?.let {
         val updated = it.copy(status = status)
+        updateBooking(bookingId, updated)
+      }
+    }
+
+    override suspend fun updatePaymentStatus(
+        bookingId: String,
+        paymentStatus: com.android.sample.model.booking.PaymentStatus
+    ) {
+      val booking = storedBookings.find { it.bookingId == bookingId }
+      booking?.let {
+        val updated = it.copy(paymentStatus = paymentStatus)
         updateBooking(bookingId, updated)
       }
     }
@@ -376,6 +389,8 @@ class ListingViewModelTest {
     var lastStudentTotal: Int? = null
 
     override fun getNewUid() = "fake-profile-id"
+
+    override fun getCurrentUserId() = "test-user-id"
 
     override suspend fun getProfile(userId: String) = profiles[userId]
 

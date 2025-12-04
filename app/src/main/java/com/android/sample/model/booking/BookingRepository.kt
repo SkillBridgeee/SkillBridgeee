@@ -24,6 +24,9 @@ interface BookingRepository {
   /** Updates booking status */
   suspend fun updateBookingStatus(bookingId: String, status: BookingStatus)
 
+  /** Updates payment status */
+  suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus)
+
   /** Confirms a pending booking */
   suspend fun confirmBooking(bookingId: String)
 

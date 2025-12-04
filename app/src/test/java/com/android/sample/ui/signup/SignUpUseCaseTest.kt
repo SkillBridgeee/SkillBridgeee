@@ -75,6 +75,8 @@ class SignUpUseCaseTest {
     every { mockAuthRepository.getCurrentUser() } returns mockUser
     coEvery { mockProfileRepository.addProfile(any()) } throws
         Exception("Database connection failed")
+    // Mock signOut which is called when profile creation fails
+    coEvery { mockAuthRepository.signOut() } returns Unit
 
     val request = createTestRequest()
     val result = signUpUseCase.execute(request)
@@ -83,6 +85,8 @@ class SignUpUseCaseTest {
     assertEquals(
         "Profile creation failed: Database connection failed",
         (result as SignUpResult.Error).message)
+    // Verify that signOut was called after profile creation failed
+    coVerify(exactly = 1) { mockAuthRepository.signOut() }
   }
 
   @Test

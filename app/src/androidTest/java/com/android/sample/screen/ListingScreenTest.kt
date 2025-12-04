@@ -194,6 +194,8 @@ class ListingScreenTest {
       ProfileRepository {
     override fun getNewUid() = "new-profile-id"
 
+    override fun getCurrentUserId() = "current-user-id"
+
     override suspend fun getProfile(userId: String) =
         profiles[userId] ?: throw NoSuchElementException("Profile not found")
 
@@ -260,6 +262,8 @@ class ListingScreenTest {
     override suspend fun deleteBooking(bookingId: String) {}
 
     override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+    override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {}
 
     override suspend fun confirmBooking(bookingId: String) {}
 

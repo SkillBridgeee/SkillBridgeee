@@ -70,6 +70,11 @@ class MyBookingsScreenUiTest {
                     status: BookingStatus
                 ) {}
 
+                override suspend fun updatePaymentStatus(
+                    bookingId: String,
+                    paymentStatus: PaymentStatus
+                ) {}
+
                 override suspend fun confirmBooking(bookingId: String) {}
 
                 override suspend fun completeBooking(bookingId: String) {}
@@ -115,6 +120,8 @@ class MyBookingsScreenUiTest {
           profileRepo =
               object : ProfileRepository {
                 override fun getNewUid() = "demoP"
+
+                override fun getCurrentUserId() = "current-user"
 
                 override suspend fun getProfile(userId: String): Profile =
                     when (userId) {
@@ -221,6 +228,8 @@ class MyBookingsScreenUiTest {
         object : ProfileRepository {
           override fun getNewUid() = "demoP"
 
+          override fun getCurrentUserId() = "current-user"
+
           override suspend fun getProfile(userId: String): Profile =
               when (userId) {
                 "t1" -> Profile("t1", "Alice Martin", "alice@test.com")
@@ -292,6 +301,11 @@ class MyBookingsScreenUiTest {
                   override suspend fun updateBookingStatus(
                       bookingId: String,
                       status: BookingStatus
+                  ) {}
+
+                  override suspend fun updatePaymentStatus(
+                      bookingId: String,
+                      paymentStatus: PaymentStatus
                   ) {}
 
                   override suspend fun confirmBooking(bookingId: String) {}

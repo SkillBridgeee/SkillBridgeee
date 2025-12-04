@@ -58,7 +58,8 @@ object ListingScreenTestTags {
   const val DATE_PICKER_CANCEL_BUTTON = "listingScreenDatePickerCancelButton"
   const val TIME_PICKER_OK_BUTTON = "listingScreenTimePickerOkButton"
   const val TIME_PICKER_CANCEL_BUTTON = "listingScreenTimePickerCancelButton"
-
+  const val PAYMENT_COMPLETE_BUTTON = "listingScreenPaymentCompleteButton"
+  const val PAYMENT_RECEIVED_BUTTON = "listingScreenPaymentReceivedButton"
   const val TUTOR_RATING_SECTION = "listing_tutor_rating_section"
   const val TUTOR_RATING_STARS = "listing_tutor_rating_stars"
   const val TUTOR_RATING_SUBMIT = "listing_tutor_rating_submit"

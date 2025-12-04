@@ -78,6 +78,8 @@ class MyProfileViewModelTest {
 
     override fun getNewUid(): String = "fake"
 
+    override fun getCurrentUserId(): String = "test-user-id"
+
     override suspend fun getProfile(userId: String): Profile {
       getProfileCalled = true
       return storedProfile ?: error("Profile not found")
@@ -155,6 +157,11 @@ class MyProfileViewModelTest {
     override suspend fun deleteBooking(bookingId: String) {}
 
     override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
+
+    override suspend fun updatePaymentStatus(
+        bookingId: String,
+        paymentStatus: com.android.sample.model.booking.PaymentStatus
+    ) {}
 
     override suspend fun confirmBooking(bookingId: String) {}
 
@@ -852,6 +859,13 @@ class MyProfileViewModelTest {
             TODO("Not yet implemented")
           }
 
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: com.android.sample.model.booking.PaymentStatus
+          ) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun confirmBooking(bookingId: String) {
             TODO("Not yet implemented")
           }
@@ -927,6 +941,13 @@ class MyProfileViewModelTest {
             TODO("Not yet implemented")
           }
 
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: com.android.sample.model.booking.PaymentStatus
+          ) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun confirmBooking(bookingId: String) {
             TODO("Not yet implemented")
           }
@@ -956,6 +977,10 @@ class MyProfileViewModelTest {
 
     val failingProfileRepo =
         object : ProfileRepository {
+          override fun getNewUid() = "x"
+
+          override fun getCurrentUserId() = "test-user-id"
+
           override suspend fun getProfile(userId: String): Profile {
             throw RuntimeException("boom")
           }
@@ -990,8 +1015,6 @@ class MyProfileViewModelTest {
           override suspend fun getSkillsForUser(userId: String): List<Skill> {
             TODO("Not yet implemented")
           }
-
-          override fun getNewUid() = "x"
 
           override suspend fun updateTutorRatingFields(
               userId: String,
@@ -1055,6 +1078,13 @@ class MyProfileViewModelTest {
           }
 
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: com.android.sample.model.booking.PaymentStatus
+          ) {
             TODO("Not yet implemented")
           }
 
