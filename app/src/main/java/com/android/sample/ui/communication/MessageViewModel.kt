@@ -1,5 +1,6 @@
 package com.android.sample.ui.communication
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
@@ -108,7 +109,9 @@ class MessageViewModel(
           // Reset unread message count when conversation is loaded
           try {
             convManager.resetUnreadCount(convId = convId, userId = userId)
-          } catch (_: Exception) {}
+          } catch (_: Exception) {
+            Log.d("MessageViewModel", "Failed to reset unread message count")
+          }
 
           // Start listening to messages
           convManager
