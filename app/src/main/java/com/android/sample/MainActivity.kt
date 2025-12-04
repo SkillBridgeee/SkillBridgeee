@@ -170,7 +170,8 @@ internal suspend fun performAutoLogin(
 internal suspend fun handleAuthenticatedUser(
     userId: String,
     navController: NavHostController,
-    authViewModel: AuthenticationViewModel
+    authViewModel: AuthenticationViewModel,
+    skipEmulatorCheck: Boolean = false // For testing: allows overriding emulator behavior
 ) {
   val profile = ProfileRepositoryProvider.repository.getProfile(userId)
 
@@ -186,7 +187,7 @@ internal suspend fun handleAuthenticatedUser(
   // In production, Google Sign-In users are automatically verified
   // In emulator with email/password auth (simulating Google), they are not
   val isEmailVerified =
-      if (BuildConfig.USE_FIREBASE_EMULATOR) {
+      if (BuildConfig.USE_FIREBASE_EMULATOR && !skipEmulatorCheck) {
         // In emulator mode, skip verification check (for E2E tests)
         true
       } else {
