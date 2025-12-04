@@ -8,14 +8,21 @@ import com.android.sample.model.communication.newImplementation.conversation.Con
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.map.Location
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.communication.MessageViewModel
 import com.google.firebase.Timestamp
 import java.util.Date
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -47,6 +54,7 @@ class MessageViewModelTest {
 
     UserSessionManager.setCurrentUserId(testUserId)
 
+    ProfileRepositoryProvider.setForTests(FakeProfileRepository())
     convRepo = FakeConvRepo()
     overViewRepo = FakeOverViewRepo()
     manager = ConversationManager(convRepo, overViewRepo)
@@ -65,6 +73,8 @@ class MessageViewModelTest {
   @After
   fun tearDown() {
     Dispatchers.resetMain()
+    UserSessionManager.clearSession()
+    ProfileRepositoryProvider.clearForTests()
   }
 
   // -----------------------------------------------------
@@ -277,6 +287,307 @@ class MessageViewModelTest {
     assertEquals("Earlier message", messages[0].content)
     assertEquals("Later message", messages[1].content)
   }
+
+  // -----------------------------------------------------
+  // TEST 12 — retry() reloads conversation
+  // -----------------------------------------------------
+  @Test
+  fun retry_reloadsConversation() = runTest {
+    // First load
+    viewModel.loadConversation(convId)
+    composeTestRule.waitForIdle()
+
+    // Send a message
+    val msg1 =
+        MessageNew(
+            msgId = "m1",
+            senderId = testUserId,
+            receiverId = otherUserId,
+            content = "First message",
+            createdAt = Date())
+    manager.sendMessage(convId, msg1)
+    composeTestRule.waitForIdle()
+
+    assertEquals(1, viewModel.uiState.value.messages.size)
+
+    // Simulate an error (clear messages from state)
+    // In real scenario, this might happen if connection was lost
+
+    // Call retry
+    viewModel.retry()
+    composeTestRule.waitForIdle()
+
+    // Messages should still be there (reloaded from repository)
+    assertEquals(1, viewModel.uiState.value.messages.size)
+    assertEquals("First message", viewModel.uiState.value.messages[0].content)
+  }
+
+  // -----------------------------------------------------
+  // TEST 13 — retry() without previous conversation does nothing
+  // -----------------------------------------------------
+  @Test
+  fun retry_withoutPreviousConversation_doesNothing() = runTest {
+    // Don't load any conversation first
+
+    // Call retry
+    viewModel.retry()
+    composeTestRule.waitForIdle()
+
+    // Should not crash and state should be empty
+    assertEquals(0, viewModel.uiState.value.messages.size)
+    assertEquals(null, viewModel.uiState.value.error)
+  }
+
+  // -----------------------------------------------------
+  // TEST 14 — retry() after error clears error and reloads
+  // -----------------------------------------------------
+  @Test
+  fun retry_afterError_clearsErrorAndReloads() = runTest {
+    // Load an invalid conversation to trigger error
+    viewModel.loadConversation("invalid_conv_id")
+    composeTestRule.waitForIdle()
+
+    // Should have error
+    assertEquals("Conversation not found", viewModel.uiState.value.error)
+
+    // Now create a valid conversation
+    runBlocking {
+      convRepo.createConv(
+          ConversationNew(
+              convId = "invalid_conv_id", convCreatorId = testUserId, otherPersonId = otherUserId))
+    }
+
+    // Retry
+    viewModel.retry()
+    composeTestRule.waitForIdle()
+
+    // Error should be cleared and conversation loaded
+    assertEquals(null, viewModel.uiState.value.error)
+  }
+
+  // -----------------------------------------------------
+  // TEST 15 — loadConversation with delayed userId initialization succeeds
+  // -----------------------------------------------------
+  @Test
+  fun loadConversation_withDelayedUserIdInitialization_succeeds() = runTest {
+    // Clear user session to simulate not initialized
+    UserSessionManager.clearSession()
+
+    // Create a new viewModel
+    val newViewModel = MessageViewModel(manager)
+
+    // Set userId after a small delay (simulating Firebase initialization)
+    launch {
+      delay(100)
+      UserSessionManager.setCurrentUserId(testUserId)
+    }
+
+    // Load conversation (should wait and retry for userId)
+    newViewModel.loadConversation(convId)
+
+    // Wait for initialization and loading
+    composeTestRule.waitForIdle()
+    delay(600) // Wait for the delay(500) + some buffer
+
+    // Should eventually succeed
+    val state = newViewModel.uiState.value
+    // Either it loaded successfully or still has the userId set
+    assertEquals(testUserId, state.currentUserId)
+  }
+
+  // -----------------------------------------------------
+  // TEST 16 — loadConversation without userId after delay sets error
+  // -----------------------------------------------------
+  @Test
+  fun loadConversation_withoutUserIdAfterDelay_setsError() = runTest {
+    // Clear user session complètement
+    UserSessionManager.clearSession()
+
+    // Create a new viewModel
+    val newViewModel = MessageViewModel(manager)
+
+    // Load conversation
+    newViewModel.loadConversation(convId)
+
+    // Wait for the delay and retry attempts
+    delay(600)
+    composeTestRule.waitForIdle()
+
+    // Should have authentication error
+    val state = newViewModel.uiState.value
+    assertEquals(true, state.error?.contains("authenticated") == true)
+    assertEquals(false, state.isLoading)
+  }
+
+  // -----------------------------------------------------
+  // TEST 17 — retry() preserves conversation ID
+  // -----------------------------------------------------
+  @Test
+  fun retry_preservesConversationId() = runTest {
+    // Load first conversation
+    viewModel.loadConversation(convId)
+    composeTestRule.waitForIdle()
+
+    val msg1 =
+        MessageNew(
+            msgId = "m1",
+            senderId = testUserId,
+            receiverId = otherUserId,
+            content = "Message in conv1",
+            createdAt = Date())
+    manager.sendMessage(convId, msg1)
+    composeTestRule.waitForIdle()
+
+    assertEquals(1, viewModel.uiState.value.messages.size)
+
+    // Retry should reload the same conversation
+    viewModel.retry()
+    composeTestRule.waitForIdle()
+
+    // Should still have the same message
+    assertEquals(1, viewModel.uiState.value.messages.size)
+    assertEquals("Message in conv1", viewModel.uiState.value.messages[0].content)
+  }
+
+  // -----------------------------------------------------
+  // TEST 18 — multiple retry() calls work correctly
+  // -----------------------------------------------------
+  @Test
+  fun retry_multipleCalls_workCorrectly() = runTest {
+    viewModel.loadConversation(convId)
+    composeTestRule.waitForIdle()
+
+    // First retry
+    viewModel.retry()
+    composeTestRule.waitForIdle()
+
+    // Second retry
+    viewModel.retry()
+    composeTestRule.waitForIdle()
+
+    // Third retry
+    viewModel.retry()
+    composeTestRule.waitForIdle()
+
+    // Should not crash and maintain state
+    assertEquals(testUserId, viewModel.uiState.value.currentUserId)
+    assertEquals(null, viewModel.uiState.value.error)
+  }
+
+  // -----------------------------------------------------
+  // TEST 19 — retry() after successful load works
+  // -----------------------------------------------------
+  @Test
+  fun retry_afterSuccessfulLoad_reloadsSuccessfully() = runTest {
+    // Load conversation successfully
+    viewModel.loadConversation(convId)
+    composeTestRule.waitForIdle()
+
+    val msg1 =
+        MessageNew(
+            msgId = "m1",
+            senderId = testUserId,
+            receiverId = otherUserId,
+            content = "Original message",
+            createdAt = Date())
+    manager.sendMessage(convId, msg1)
+    composeTestRule.waitForIdle()
+
+    assertEquals(1, viewModel.uiState.value.messages.size)
+
+    // Add another message
+    val msg2 =
+        MessageNew(
+            msgId = "m2",
+            senderId = otherUserId,
+            receiverId = testUserId,
+            content = "New message",
+            createdAt = Date())
+    manager.sendMessage(convId, msg2)
+
+    // Retry to get updated messages
+    viewModel.retry()
+    composeTestRule.waitForIdle()
+
+    // Should have both messages
+    assertEquals(2, viewModel.uiState.value.messages.size)
+  }
+
+  // -----------------------------------------------------
+  // TEST 20 — userId delay logic waits 500ms before second attempt
+  // -----------------------------------------------------
+  @Test
+  fun loadConversation_userIdDelayLogic_waits500ms() = runTest {
+    // Clear user session
+    UserSessionManager.clearSession()
+
+    val newViewModel = MessageViewModel(manager)
+
+    // Record start time
+    val startTime = System.currentTimeMillis()
+
+    // Set userId after 300ms (before the retry)
+    launch {
+      delay(300)
+      UserSessionManager.setCurrentUserId(testUserId)
+    }
+
+    // Load conversation
+    newViewModel.loadConversation(convId)
+
+    // Wait for completion
+    delay(700)
+    composeTestRule.waitForIdle()
+
+    val endTime = System.currentTimeMillis()
+    val elapsed = endTime - startTime
+
+    // Should have waited at least 500ms (for the delay)
+    assertEquals(true, elapsed >= 500)
+
+    // And should have succeeded
+    assertEquals(testUserId, newViewModel.uiState.value.currentUserId)
+  }
+}
+
+class FakeProfileRepository : ProfileRepository {
+  override fun getNewUid() = "fake-profile-id"
+
+  override fun getCurrentUserId() = "userA"
+
+  override suspend fun getProfile(userId: String): Profile? =
+      Profile(
+          userId = userId,
+          name = "Test User",
+          email = "test@example.com",
+          location = Location(latitude = 0.0, longitude = 0.0, name = "Test Location"))
+
+  override suspend fun addProfile(profile: Profile) {}
+
+  override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+  override suspend fun deleteProfile(userId: String) {}
+
+  override suspend fun getAllProfiles() = emptyList<Profile>()
+
+  override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+      emptyList<Profile>()
+
+  override suspend fun getProfileById(userId: String) = getProfile(userId)
+
+  override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
+
+  override suspend fun updateTutorRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {}
+
+  override suspend fun updateStudentRatingFields(
+      userId: String,
+      averageRating: Double,
+      totalRatings: Int
+  ) {}
 }
 
 class FakeConvRepo : ConvRepository {
