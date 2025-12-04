@@ -266,7 +266,25 @@ private fun ProfileTextField(
   val ellipsizeTransformation = VisualTransformation { text ->
     if (!focused && text.text.length > maxPreview) {
       val short = text.text.take(maxPreview) + "..."
-      TransformedText(AnnotatedString(short), OffsetMapping.Identity)
+      val offsetMapping =
+          object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+              // Map original positions to transformed positions
+              return when {
+                offset <= maxPreview -> offset
+                else -> maxPreview + 3 // After the "..."
+              }
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+              // Map transformed positions back to original positions
+              return when {
+                offset <= maxPreview -> offset
+                else -> text.text.length // End of original text
+              }
+            }
+          }
+      TransformedText(AnnotatedString(short), offsetMapping)
     } else {
       TransformedText(text, OffsetMapping.Identity)
     }
