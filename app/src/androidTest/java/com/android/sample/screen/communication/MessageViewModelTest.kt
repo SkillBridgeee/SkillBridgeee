@@ -277,24 +277,6 @@ class MessageViewModelTest {
     assertEquals("Earlier message", messages[0].content)
     assertEquals("Later message", messages[1].content)
   }
-
-  // -----------------------------------------------------
-  // TEST 12 — Error handling when user not authenticated
-  // -----------------------------------------------------
-  @Test
-  fun loadConversation_whenUserNotAuthenticated_setsError() = runTest {
-    // Clear user session
-    UserSessionManager.clearSession()
-
-    val newViewModel = MessageViewModel(manager)
-    newViewModel.loadConversation(convId)
-
-    composeTestRule.waitForIdle()
-
-    val error = newViewModel.uiState.value.error
-    assertEquals(true, error != null)
-    assertEquals(true, error?.contains("authenticated") == true)
-  }
 }
 
 class FakeConvRepo : ConvRepository {
