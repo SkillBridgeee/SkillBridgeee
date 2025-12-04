@@ -59,10 +59,8 @@ class DiscussionViewModel(
     viewModelScope.launch {
       UserSessionManager.authState.collect { authState ->
         if (authState is com.android.sample.model.authentication.AuthState.Authenticated) {
-          Log.d(TAG, "User authenticated, loading conversations for ${authState.userId}")
           loadConversations()
         } else {
-          Log.d(TAG, "User logged out, clearing conversations.")
           _uiState.update { DiscussionUiState() } // Reset to initial state
         }
       }
@@ -101,15 +99,11 @@ class DiscussionViewModel(
           .collect { conversations ->
             // Filter to ensure we only process conversations owned by the current user
             val myConversations = conversations.filter { it.overViewOwnerId == userId }
-            Log.d(TAG, "Received ${myConversations.size} conversations owned by user $userId")
 
             _uiState.update { it.copy(isLoading = false, conversations = myConversations) }
 
             // Fetch names for the other participants
             val otherParticipantIds = myConversations.map { it.otherPersonId }.distinct()
-            Log.d(
-                TAG,
-                "Fetching profiles for ${otherParticipantIds.size} unique participants: $otherParticipantIds")
 
             val participantNames = mutableMapOf<String, String>()
             otherParticipantIds.forEach { participantId ->

@@ -101,9 +101,14 @@ class MessageViewModel(
           try {
             val partnerProfile = profileRepository.getProfile(otherId!!)
             _uiState.update { it.copy(partnerName = partnerProfile?.name ?: "User") }
-          } catch (e: Exception) {
+          } catch (_: Exception) {
             _uiState.update { it.copy(partnerName = "User") }
           }
+
+          // Reset unread message count when conversation is loaded
+          try {
+            convManager.resetUnreadCount(convId = convId, userId = userId)
+          } catch (_: Exception) {}
 
           // Start listening to messages
           convManager
@@ -111,10 +116,6 @@ class MessageViewModel(
               .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
               .catch { _ -> _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
               .collect { messages ->
-                // Reset unread count only if the current user is the receiver of the last message
-                if (messages.isNotEmpty() && messages.last().receiverId == userId) {
-                  convManager.resetUnreadCount(convId = convId, userId = userId)
-                }
                 _uiState.update {
                   it.copy(
                       messages = messages.sortedBy { msg -> msg.createdAt },
