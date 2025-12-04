@@ -28,7 +28,6 @@ fun DiscussionScreen(
     onConversationClick: (conversationId: String) -> Unit
 ) {
   val uiState by viewModel.uiState.collectAsState()
-  val currentUserId = com.android.sample.model.authentication.UserSessionManager.getCurrentUserId()
 
   Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
     Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {

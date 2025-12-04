@@ -1,5 +1,6 @@
 package com.android.sample.screen.communication
 
+import androidx.compose.ui.test.junit4.createComposeRule
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.newImplementation.ConversationManager
 import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
@@ -23,10 +24,13 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MessageViewModelTest {
+
+  @get:Rule val composeTestRule = createComposeRule()
 
   private lateinit var convRepo: ConvRepository
   private lateinit var overViewRepo: OverViewConvRepository
@@ -117,7 +121,7 @@ class MessageViewModelTest {
 
   @Test
   fun clearError_removesError() = runTest {
-    // On force une erreur dans l’état
+    // On force une erreur dans l'état
     viewModel.clearError() // juste pour reset
     viewModel.loadConversation("invalid_id")
 
@@ -127,8 +131,169 @@ class MessageViewModelTest {
     // Action
     viewModel.clearError()
 
-    // L’erreur doit être supprimée
+    // L'erreur doit être supprimée
     assertEquals(null, viewModel.uiState.value.error)
+  }
+
+  // -----------------------------------------------------
+  // TEST 5 — onMessageChange() updates current message
+  // -----------------------------------------------------
+  @Test
+  fun onMessageChange_updatesCurrentMessage() = runTest {
+    val newMessage = "Hello, World!"
+
+    viewModel.onMessageChange(newMessage)
+
+    assertEquals(newMessage, viewModel.uiState.value.currentMessage)
+  }
+
+  // -----------------------------------------------------
+  // TEST 6 — sendMessage() with empty message does nothing
+  // -----------------------------------------------------
+  @Test
+  fun sendMessage_withEmptyMessage_doesNothing() = runTest {
+    viewModel.loadConversation(convId)
+
+    // Don't set any message
+    viewModel.onMessageChange("")
+
+    viewModel.sendMessage()
+
+    // No messages should be sent
+    val messages = viewModel.uiState.value.messages
+    assertEquals(0, messages.size)
+  }
+
+  // -----------------------------------------------------
+  // TEST 7 — loadConversation() sets isLoading correctly
+  // -----------------------------------------------------
+  @Test
+  fun loadConversation_setsLoadingState() = runTest {
+    viewModel.loadConversation(convId)
+
+    // Eventually loading should be false
+    composeTestRule.waitForIdle()
+    val state = viewModel.uiState.value
+    assertEquals(false, state.isLoading)
+  }
+
+  // -----------------------------------------------------
+  // TEST 8 — Multiple calls to loadConversation() work correctly
+  // -----------------------------------------------------
+  @Test
+  fun loadConversation_multipleCalls_workCorrectly() = runTest {
+    // First load
+    viewModel.loadConversation(convId)
+
+    // Send a message
+    val msg1 =
+        MessageNew(
+            msgId = "m1",
+            senderId = testUserId,
+            receiverId = otherUserId,
+            content = "First",
+            createdAt = Date())
+    manager.sendMessage(convId, msg1)
+
+    composeTestRule.waitForIdle()
+    assertEquals(1, viewModel.uiState.value.messages.size)
+
+    // Load again (should cancel previous job)
+    viewModel.loadConversation(convId)
+
+    // Send another message
+    val msg2 =
+        MessageNew(
+            msgId = "m2",
+            senderId = otherUserId,
+            receiverId = testUserId,
+            content = "Second",
+            createdAt = Date())
+    manager.sendMessage(convId, msg2)
+
+    composeTestRule.waitForIdle()
+    assertEquals(2, viewModel.uiState.value.messages.size)
+  }
+
+  // -----------------------------------------------------
+  // TEST 9 — currentUserId is set on initialization
+  // -----------------------------------------------------
+  @Test
+  fun initialization_setsCurrentUserId() = runTest {
+    val state = viewModel.uiState.value
+    assertEquals(testUserId, state.currentUserId)
+  }
+
+  // -----------------------------------------------------
+  // TEST 10 — sendMessage() clears current message
+  // -----------------------------------------------------
+  @Test
+  fun sendMessage_clearsCurrentMessage() = runTest {
+    viewModel.loadConversation(convId)
+
+    viewModel.onMessageChange("Test message")
+    assertEquals("Test message", viewModel.uiState.value.currentMessage)
+
+    viewModel.sendMessage()
+
+    composeTestRule.waitForIdle()
+    assertEquals("", viewModel.uiState.value.currentMessage)
+  }
+
+  // -----------------------------------------------------
+  // TEST 11 — Messages are ordered by date
+  // -----------------------------------------------------
+  @Test
+  fun messages_areOrderedByDate() = runTest {
+    viewModel.loadConversation(convId)
+
+    val now = Date()
+    val earlier = Date(now.time - 60000) // 1 minute earlier
+
+    val msg1 =
+        MessageNew(
+            msgId = "m1",
+            senderId = testUserId,
+            receiverId = otherUserId,
+            content = "Later message",
+            createdAt = now)
+
+    val msg2 =
+        MessageNew(
+            msgId = "m2",
+            senderId = otherUserId,
+            receiverId = testUserId,
+            content = "Earlier message",
+            createdAt = earlier)
+
+    manager.sendMessage(convId, msg2)
+    manager.sendMessage(convId, msg1)
+
+    composeTestRule.waitForIdle()
+
+    val messages = viewModel.uiState.value.messages
+    assertEquals(2, messages.size)
+    // Messages should be in chronological order
+    assertEquals("Earlier message", messages[0].content)
+    assertEquals("Later message", messages[1].content)
+  }
+
+  // -----------------------------------------------------
+  // TEST 12 — Error handling when user not authenticated
+  // -----------------------------------------------------
+  @Test
+  fun loadConversation_whenUserNotAuthenticated_setsError() = runTest {
+    // Clear user session
+    UserSessionManager.clearSession()
+
+    val newViewModel = MessageViewModel(manager)
+    newViewModel.loadConversation(convId)
+
+    composeTestRule.waitForIdle()
+
+    val error = newViewModel.uiState.value.error
+    assertEquals(true, error != null)
+    assertEquals(true, error?.contains("authenticated") == true)
   }
 }
 

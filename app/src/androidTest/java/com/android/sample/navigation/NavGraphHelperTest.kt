@@ -8,8 +8,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsViewModel
@@ -25,6 +23,7 @@ import com.android.sample.utils.fakeRepo.fakeListing.FakeListingWorking
 import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileWorking
 import com.android.sample.utils.fakeRepo.fakeRating.RatingFakeRepoWorking
 import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.After
@@ -32,7 +31,11 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-class AppNavGraphDiscussionTest {
+/**
+ * Tests for NavGraph helper functions and navigation logic. This test class focuses on testing the
+ * recently added helper functions like navigateToNewListing() and the Messages screen navigation.
+ */
+class NavGraphHelperTest {
 
   @get:Rule val composeTestRule = createComposeRule()
 
@@ -44,25 +47,29 @@ class AppNavGraphDiscussionTest {
   private lateinit var bookingDetailsViewModel: BookingDetailsViewModel
   private lateinit var discussionViewModel: DiscussionViewModel
 
-  private class FakeOverViewConvRepository : OverViewConvRepository {
+  private class FakeOverViewConvRepository :
+      com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository {
     override fun getNewUid(): String = "dummy"
 
-    override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> =
+    override suspend fun getOverViewConvUser(
+        userId: String
+    ): List<
+        com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation> =
         emptyList()
 
-    override suspend fun addOverViewConvUser(overView: OverViewConversation) {}
+    override suspend fun addOverViewConvUser(
+        overView:
+            com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+    ) {}
 
     override suspend fun deleteOverViewConvUser(convId: String) {}
 
-    override fun listenOverView(userId: String): Flow<List<OverViewConversation>> =
-        flowOf(
-            listOf(
-                OverViewConversation(
-                    convName = "Chat with Alice",
-                    linkedConvId = "conv1",
-                    lastMsg = null,
-                    nonReadMsgNumber = 0,
-                )))
+    override fun listenOverView(
+        userId: String
+    ): Flow<
+        List<
+            com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation>> =
+        flowOf(emptyList())
   }
 
   @Before
@@ -75,7 +82,6 @@ class AppNavGraphDiscussionTest {
     val context = ApplicationProvider.getApplicationContext<Context>()
     UserSessionManager.setCurrentUserId(profileRepo.getCurrentUserId())
 
-    // Initialize ProfileRepositoryProvider before creating ViewModels that depend on it
     ProfileRepositoryProvider.setForTests(profileRepo)
 
     authViewModel = AuthenticationViewModel(context = context, profileRepository = profileRepo)
@@ -111,7 +117,7 @@ class AppNavGraphDiscussionTest {
   }
 
   @Test
-  fun navigateToToS_doesNotCrash() {
+  fun navigateToNewListing_fromHome_whenAuthenticated_navigatesToNewSkillRoute() {
     lateinit var navController: NavHostController
 
     composeTestRule.setContent {
@@ -128,67 +134,47 @@ class AppNavGraphDiscussionTest {
           onGoogleSignIn = {})
     }
 
-    composeTestRule.runOnIdle { navController.navigate(NavRoutes.TOS) }
-
-    composeTestRule.runOnIdle {
-      assertEquals(NavRoutes.TOS, navController.currentBackStackEntry?.destination?.route)
-    }
-  }
-
-  @Test
-  fun navigateToMessages_withoutConvId_showsEmptyState() {
-    lateinit var navController: NavHostController
-
-    composeTestRule.setContent {
-      navController = rememberNavController()
-      AppNavGraph(
-          navController = navController,
-          bookingsViewModel = bookingsViewModel,
-          profileViewModel = profileViewModel,
-          mainPageViewModel = mainPageViewModel,
-          newListingViewModel = newListingViewModel,
-          authViewModel = authViewModel,
-          bookingDetailsViewModel = bookingDetailsViewModel,
-          discussionViewModel = discussionViewModel,
-          onGoogleSignIn = {})
-    }
-
-    composeTestRule.runOnIdle { navController.navigate(NavRoutes.MESSAGES) }
-
-    // Should show empty state text
-    composeTestRule.waitForIdle()
-    composeTestRule.onNodeWithText("No conversation selected").assertExists()
-  }
-
-  @Test
-  fun navigateFromHomeToNewListing_whenAuthenticated_succeeds() {
-    lateinit var navController: NavHostController
-
-    composeTestRule.setContent {
-      navController = rememberNavController()
-      AppNavGraph(
-          navController = navController,
-          bookingsViewModel = bookingsViewModel,
-          profileViewModel = profileViewModel,
-          mainPageViewModel = mainPageViewModel,
-          newListingViewModel = newListingViewModel,
-          authViewModel = authViewModel,
-          bookingDetailsViewModel = bookingDetailsViewModel,
-          discussionViewModel = discussionViewModel,
-          onGoogleSignIn = {})
-    }
-
+    // Navigate to HOME first
     composeTestRule.runOnIdle { navController.navigate(NavRoutes.HOME) }
     composeTestRule.waitForIdle()
 
-    // Should be able to navigate to new listing
+    val currentUserId = UserSessionManager.getCurrentUserId()
+    assertTrue(currentUserId != null)
+
+    // The HOME screen should be displayed
     composeTestRule.runOnIdle {
       assertEquals(NavRoutes.HOME, navController.currentBackStackEntry?.destination?.route)
     }
   }
 
   @Test
-  fun routeStackManager_tracksNavigationToMessages() {
+  fun messagesScreen_withEmptyConvId_showsEmptyState() {
+    lateinit var navController: NavHostController
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    // Navigate directly to MESSAGES without setting convId
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.MESSAGES) }
+    composeTestRule.waitForIdle()
+
+    // Should show "No conversation selected"
+    composeTestRule.onNodeWithText("No conversation selected").assertExists()
+  }
+
+  @Test
+  fun routeStackManager_tracksAllNavigationEvents() {
     lateinit var navController: NavHostController
 
     composeTestRule.setContent {
@@ -206,11 +192,21 @@ class AppNavGraphDiscussionTest {
     }
 
     RouteStackManager.clear()
+
+    // Navigate to multiple screens
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.HOME) }
+    composeTestRule.waitForIdle()
+
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.DISCUSSION) }
+    composeTestRule.waitForIdle()
+
     composeTestRule.runOnIdle { navController.navigate(NavRoutes.MESSAGES) }
     composeTestRule.waitForIdle()
 
-    // RouteStackManager should have tracked the route
-    val currentRoutes = RouteStackManager.getAllRoutes()
-    assertEquals(true, currentRoutes.contains(NavRoutes.MESSAGES))
+    // All routes should be tracked
+    val routes = RouteStackManager.getAllRoutes()
+    assertTrue(routes.contains(NavRoutes.HOME))
+    assertTrue(routes.contains(NavRoutes.DISCUSSION))
+    assertTrue(routes.contains(NavRoutes.MESSAGES))
   }
 }

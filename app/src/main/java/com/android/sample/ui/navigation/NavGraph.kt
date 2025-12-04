@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -52,6 +50,14 @@ private const val TAG = "NavGraph"
  */
 private fun navigateToListing(navController: NavHostController, listingId: String) {
   navController.navigate(NavRoutes.createListingRoute(listingId))
+}
+
+/** Helper function to navigate to new listing screen if user is authenticated */
+private fun navigateToNewListing(navController: NavHostController, listingId: String? = null) {
+  val currentUserId = UserSessionManager.getCurrentUserId()
+  if (currentUserId != null) {
+    navController.navigate(NavRoutes.createNewSkillRoute(currentUserId, listingId))
+  }
 }
 
 /**
@@ -223,16 +229,11 @@ fun AppNavGraph(
         arguments = listOf(navArgument("listingId") { type = NavType.StringType })) { backStackEntry
           ->
           val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
-          val currentUserId = UserSessionManager.getCurrentUserId()
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
           com.android.sample.ui.listing.ListingScreen(
               listingId = listingId,
               onNavigateBack = { navController.popBackStack() },
-              onEditListing = {
-                if (currentUserId != null) {
-                  navController.navigate(NavRoutes.createNewSkillRoute(currentUserId, listingId))
-                }
-              })
+              onEditListing = { navigateToNewListing(navController, listingId) })
         }
 
     composable(route = NavRoutes.BOOKING_DETAILS) {
@@ -267,22 +268,6 @@ fun AppNavGraph(
       val currentConvId = convId.value
       if (currentConvId.isNotEmpty()) {
         val messageViewModel = remember(currentConvId) { MessageViewModel() }
-
-        // Get the conversation partner's name from the discussion view model
-        val discussionUiState by discussionViewModel.uiState.collectAsState()
-        val currentUserId = UserSessionManager.getCurrentUserId()
-        val conversation = discussionUiState.conversations.find { it.linkedConvId == currentConvId }
-
-        val partnerName =
-            conversation?.let { conv ->
-              val otherUserId =
-                  when {
-                    conv.overViewOwnerId == currentUserId -> conv.otherPersonId
-                    conv.otherPersonId == currentUserId -> conv.overViewOwnerId
-                    else -> conv.otherPersonId
-                  }
-              discussionUiState.participantNames[otherUserId] ?: "User"
-            } ?: "Messages"
 
         MessageScreen(
             viewModel = messageViewModel,
