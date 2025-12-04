@@ -8,6 +8,7 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.booking.PaymentStatus
 import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
 import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
 import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
