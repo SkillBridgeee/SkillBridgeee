@@ -78,8 +78,7 @@ class NavGraphHelperTest {
 
     override suspend fun getConv(
         convId: String
-    ): com.android.sample.model.communication.newImplementation.conversation.ConversationNew? =
-        null
+    ): com.android.sample.model.communication.newImplementation.conversation.ConversationNew? = null
 
     override suspend fun createConv(
         conversation:
@@ -90,15 +89,13 @@ class NavGraphHelperTest {
 
     override suspend fun sendMessage(
         convId: String,
-        message:
-            com.android.sample.model.communication.newImplementation.conversation.MessageNew
+        message: com.android.sample.model.communication.newImplementation.conversation.MessageNew
     ) {}
 
     override fun listenMessages(
         convId: String
     ): Flow<
-        List<
-            com.android.sample.model.communication.newImplementation.conversation.MessageNew>> =
+        List<com.android.sample.model.communication.newImplementation.conversation.MessageNew>> =
         flowOf(emptyList())
   }
 
@@ -118,10 +115,12 @@ class NavGraphHelperTest {
     com.android.sample.model.listing.ListingRepositoryProvider.setForTests(listingRepo)
     com.android.sample.model.booking.BookingRepositoryProvider.setForTests(bookingRepo)
     com.android.sample.model.rating.RatingRepositoryProvider.setForTests(ratingRepo)
-    com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider.setForTests(
-        FakeConvRepository())
-    com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider.setForTests(
-        overViewRepo)
+    com.android.sample.model.communication.newImplementation.conversation
+        .ConversationRepositoryProvider
+        .setForTests(FakeConvRepository())
+    com.android.sample.model.communication.newImplementation.overViewConv
+        .OverViewConvRepositoryProvider
+        .setForTests(overViewRepo)
 
     authViewModel = AuthenticationViewModel(context = context, profileRepository = profileRepo)
     bookingsViewModel =
@@ -155,8 +154,12 @@ class NavGraphHelperTest {
     com.android.sample.model.listing.ListingRepositoryProvider.clearForTests()
     com.android.sample.model.booking.BookingRepositoryProvider.clearForTests()
     com.android.sample.model.rating.RatingRepositoryProvider.clearForTests()
-    com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider.clearForTests()
-    com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider.clearForTests()
+    com.android.sample.model.communication.newImplementation.conversation
+        .ConversationRepositoryProvider
+        .clearForTests()
+    com.android.sample.model.communication.newImplementation.overViewConv
+        .OverViewConvRepositoryProvider
+        .clearForTests()
     UserSessionManager.clearSession()
   }
 
@@ -371,9 +374,7 @@ class NavGraphHelperTest {
           onGoogleSignIn = {})
     }
 
-    composeTestRule.runOnIdle {
-      navController.navigate(NavRoutes.createSignUpRoute(testEmail))
-    }
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.createSignUpRoute(testEmail)) }
     composeTestRule.waitForIdle()
 
     composeTestRule.runOnIdle {
@@ -436,7 +437,8 @@ class NavGraphHelperTest {
     assertTrue(routes.contains(NavRoutes.OTHERS_PROFILE))
 
     composeTestRule.runOnIdle {
-      assertEquals(NavRoutes.OTHERS_PROFILE, navController.currentBackStackEntry?.destination?.route)
+      assertEquals(
+          NavRoutes.OTHERS_PROFILE, navController.currentBackStackEntry?.destination?.route)
     }
   }
 
