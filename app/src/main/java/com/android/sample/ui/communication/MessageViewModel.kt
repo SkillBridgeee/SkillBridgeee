@@ -119,6 +119,8 @@ class MessageViewModel(
               .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
               .catch { _ -> _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
               .collect { messages ->
+                // Reset unread count whenever new messages arrive while viewing
+                convManager.resetUnreadCount(convId = convId, userId = userId)
                 _uiState.update {
                   it.copy(
                       messages = messages.sortedBy { msg -> msg.createdAt },
