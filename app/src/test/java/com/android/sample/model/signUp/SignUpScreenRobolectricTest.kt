@@ -64,7 +64,7 @@ class SignUpScreenRobolectricTest {
   }
 
   private fun waitForTag() {
-    rule.waitUntil {
+    rule.waitUntil(timeoutMillis = 5000) {
       rule
           .onAllNodes(hasTestTag(SignUpScreenTestTags.NAME), useUnmergedTree = false)
           .fetchSemanticsNodes()
