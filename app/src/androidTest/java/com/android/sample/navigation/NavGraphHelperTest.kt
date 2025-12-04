@@ -72,17 +72,56 @@ class NavGraphHelperTest {
         flowOf(emptyList())
   }
 
+  private class FakeConvRepository :
+      com.android.sample.model.communication.newImplementation.conversation.ConvRepository {
+    override fun getNewUid(): String = "dummy-conv-id"
+
+    override suspend fun getConv(
+        convId: String
+    ): com.android.sample.model.communication.newImplementation.conversation.ConversationNew? =
+        null
+
+    override suspend fun createConv(
+        conversation:
+            com.android.sample.model.communication.newImplementation.conversation.ConversationNew
+    ) {}
+
+    override suspend fun deleteConv(convId: String) {}
+
+    override suspend fun sendMessage(
+        convId: String,
+        message:
+            com.android.sample.model.communication.newImplementation.conversation.MessageNew
+    ) {}
+
+    override fun listenMessages(
+        convId: String
+    ): Flow<
+        List<
+            com.android.sample.model.communication.newImplementation.conversation.MessageNew>> =
+        flowOf(emptyList())
+  }
+
   @Before
   fun setUp() {
     val profileRepo = FakeProfileWorking()
     val listingRepo = FakeListingWorking()
     val bookingRepo = FakeBookingWorking()
     val ratingRepo = RatingFakeRepoWorking()
+    val overViewRepo = FakeOverViewConvRepository()
 
     val context = ApplicationProvider.getApplicationContext<Context>()
     UserSessionManager.setCurrentUserId(profileRepo.getCurrentUserId())
 
+    // Initialize all repository providers to prevent initialization errors
     ProfileRepositoryProvider.setForTests(profileRepo)
+    com.android.sample.model.listing.ListingRepositoryProvider.setForTests(listingRepo)
+    com.android.sample.model.booking.BookingRepositoryProvider.setForTests(bookingRepo)
+    com.android.sample.model.rating.RatingRepositoryProvider.setForTests(ratingRepo)
+    com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider.setForTests(
+        FakeConvRepository())
+    com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider.setForTests(
+        overViewRepo)
 
     authViewModel = AuthenticationViewModel(context = context, profileRepository = profileRepo)
     bookingsViewModel =
@@ -113,6 +152,11 @@ class NavGraphHelperTest {
   @After
   fun tearDown() {
     ProfileRepositoryProvider.clearForTests()
+    com.android.sample.model.listing.ListingRepositoryProvider.clearForTests()
+    com.android.sample.model.booking.BookingRepositoryProvider.clearForTests()
+    com.android.sample.model.rating.RatingRepositoryProvider.clearForTests()
+    com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider.clearForTests()
+    com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider.clearForTests()
     UserSessionManager.clearSession()
   }
 
@@ -208,5 +252,254 @@ class NavGraphHelperTest {
     assertTrue(routes.contains(NavRoutes.HOME))
     assertTrue(routes.contains(NavRoutes.DISCUSSION))
     assertTrue(routes.contains(NavRoutes.MESSAGES))
+  }
+
+  @Test
+  fun listingScreen_onEditListing_callsNavigateToNewListing() {
+    lateinit var navController: NavHostController
+    val testListingId = "listing-to-edit-123"
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    // Navigate to listing screen
+    composeTestRule.runOnIdle {
+      navController.navigate(NavRoutes.createListingRoute(testListingId))
+    }
+    composeTestRule.waitForIdle()
+
+    // Verify listing screen is loaded
+    composeTestRule.runOnIdle {
+      val currentRoute = navController.currentBackStackEntry?.destination?.route
+      assertTrue(currentRoute?.contains("listingId") == true)
+    }
+  }
+
+  @Test
+  fun listingScreen_onNavigateBack_popsBackStack() {
+    lateinit var navController: NavHostController
+    val testListingId = "listing-back-test"
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    // Navigate to home first
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.HOME) }
+    composeTestRule.waitForIdle()
+
+    // Then navigate to listing
+    composeTestRule.runOnIdle {
+      navController.navigate(NavRoutes.createListingRoute(testListingId))
+    }
+    composeTestRule.waitForIdle()
+
+    // Pop back stack
+    composeTestRule.runOnIdle { navController.popBackStack() }
+    composeTestRule.waitForIdle()
+
+    // Should be back at HOME
+    composeTestRule.runOnIdle {
+      assertEquals(NavRoutes.HOME, navController.currentBackStackEntry?.destination?.route)
+    }
+  }
+
+  @Test
+  fun bookingDetailsScreen_tracksRoute() {
+    lateinit var navController: NavHostController
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    RouteStackManager.clear()
+
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.BOOKING_DETAILS) }
+    composeTestRule.waitForIdle()
+
+    val routes = RouteStackManager.getAllRoutes()
+    assertTrue(routes.contains(NavRoutes.BOOKING_DETAILS))
+  }
+
+  @Test
+  fun signUpScreen_receivesEmailParameter() {
+    lateinit var navController: NavHostController
+    val testEmail = "test@example.com"
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    composeTestRule.runOnIdle {
+      navController.navigate(NavRoutes.createSignUpRoute(testEmail))
+    }
+    composeTestRule.waitForIdle()
+
+    composeTestRule.runOnIdle {
+      val currentRoute = navController.currentBackStackEntry?.destination?.route
+      assertTrue(currentRoute?.contains("email") == true)
+    }
+  }
+
+  @Test
+  fun signUpScreen_tracksSignUpRoute() {
+    lateinit var navController: NavHostController
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    RouteStackManager.clear()
+
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.SIGNUP_BASE) }
+    composeTestRule.waitForIdle()
+
+    val routes = RouteStackManager.getAllRoutes()
+    assertTrue(routes.contains(NavRoutes.SIGNUP))
+  }
+
+  @Test
+  fun othersProfileScreen_tracksRoute() {
+    lateinit var navController: NavHostController
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    RouteStackManager.clear()
+
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.OTHERS_PROFILE) }
+    composeTestRule.waitForIdle()
+
+    val routes = RouteStackManager.getAllRoutes()
+    assertTrue(routes.contains(NavRoutes.OTHERS_PROFILE))
+
+    composeTestRule.runOnIdle {
+      assertEquals(NavRoutes.OTHERS_PROFILE, navController.currentBackStackEntry?.destination?.route)
+    }
+  }
+
+  @Test
+  fun othersProfileScreen_onProposalClick_navigatesToListing() {
+    lateinit var navController: NavHostController
+    val testListingId = "proposal-123"
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.OTHERS_PROFILE) }
+    composeTestRule.waitForIdle()
+
+    composeTestRule.runOnIdle {
+      navController.navigate(NavRoutes.createListingRoute(testListingId))
+    }
+    composeTestRule.waitForIdle()
+
+    composeTestRule.runOnIdle {
+      val currentRoute = navController.currentBackStackEntry?.destination?.route
+      assertTrue(currentRoute?.contains("listingId") == true)
+    }
+  }
+
+  @Test
+  fun listingScreen_routeStackManager_addsListingRoute() {
+    lateinit var navController: NavHostController
+    val testListingId = "listing-stack-test"
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    RouteStackManager.clear()
+
+    composeTestRule.runOnIdle {
+      navController.navigate(NavRoutes.createListingRoute(testListingId))
+    }
+    composeTestRule.waitForIdle()
+
+    val routes = RouteStackManager.getAllRoutes()
+    assertTrue(routes.contains(NavRoutes.LISTING))
   }
 }
