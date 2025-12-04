@@ -1,6 +1,7 @@
 package com.android.sample.ui.signup
 
 import android.content.pm.PackageManager
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -64,32 +65,57 @@ object SignUpScreenTestTags {
 fun SignUpScreen(
     vm: SignUpViewModel,
     onSubmitSuccess: () -> Unit = {},
+    onGoogleSignUpSuccess: () -> Unit = {},
+    onBackPressed: () -> Unit = {},
     onNavigateToToS: () -> Unit = {}
 ) {
   val state by vm.state.collectAsState()
 
-  HandleSuccessNavigation(state, onSubmitSuccess)
-  DisposableEffect(Unit) { onDispose { vm.onSignUpAbandoned() } }
+  // Handle back button press for Google signup - sign out if not completed
+  BackHandler(
+      enabled = state.isGoogleSignUp && !state.submitSuccess && !state.verificationEmailSent) {
+        vm.onSignUpAbandoned()
+        onBackPressed()
+      }
 
-  val scrollState = rememberScrollState()
-  var isToSChecked by remember { mutableStateOf(false) }
-
-  SignUpScreenContent(
-      state = state,
-      vm = vm,
-      scrollState = scrollState,
-      isToSChecked = isToSChecked,
-      onToSCheckedChange = { isToSChecked = it },
-      onNavigateToToS = onNavigateToToS)
-}
-
-@Composable
-private fun HandleSuccessNavigation(state: SignUpUiState, onSubmitSuccess: () -> Unit) {
-  LaunchedEffect(state.submitSuccess, state.verificationEmailSent) {
-    if (state.submitSuccess || state.verificationEmailSent) {
-      onSubmitSuccess()
+  // Navigate based on signup type
+  LaunchedEffect(state.submitSuccess, state.verificationEmailSent, state.isGoogleSignUp) {
+    when {
+      state.submitSuccess && state.isGoogleSignUp -> {
+        android.util.Log.d("SignUpScreen", "Navigating to home after successful Google sign-up")
+        onGoogleSignUpSuccess()
+      }
+      state.verificationEmailSent -> {
+        android.util.Log.d("SignUpScreen", "Navigating after verification email sent")
+        onSubmitSuccess()
+      }
     }
   }
+
+  // Only call onSignUpAbandoned if the user leaves without completing sign-up
+  // Use Unit as key so this effect only runs once when composable is first created
+  // and disposed when permanently leaving the screen
+  DisposableEffect(Unit) {
+    android.util.Log.d("SignUpScreen", "DisposableEffect created")
+    onDispose {
+      val currentState = state
+      android.util.Log.d(
+          "SignUpScreen",
+          "DisposableEffect onDispose - submitSuccess: ${currentState.submitSuccess}, verificationEmailSent: ${currentState.verificationEmailSent}")
+      // Don't sign out if sign-up was successful or verification email was sent
+      if (!currentState.submitSuccess && !currentState.verificationEmailSent) {
+        android.util.Log.d("SignUpScreen", "Calling onSignUpAbandoned")
+        vm.onSignUpAbandoned()
+      } else {
+        android.util.Log.d("SignUpScreen", "NOT calling onSignUpAbandoned - sign-up was completed")
+      }
+    }
+  }
+
+  val scrollState = rememberScrollState()
+
+  SignUpScreenContent(
+      state = state, vm = vm, scrollState = scrollState, onNavigateToToS = onNavigateToToS)
 }
 
 @Composable
@@ -97,8 +123,6 @@ private fun SignUpScreenContent(
     state: SignUpUiState,
     vm: SignUpViewModel,
     scrollState: androidx.compose.foundation.ScrollState,
-    isToSChecked: Boolean,
-    onToSCheckedChange: (Boolean) -> Unit,
     onNavigateToToS: () -> Unit
 ) {
   val fieldShape = RoundedCornerShape(14.dp)
@@ -119,7 +143,7 @@ private fun SignUpScreenContent(
           PasswordAndRequirementsBlock(state, vm, fieldShape, fieldColors)
           MessagesBlock(state)
           Spacer(Modifier.height(6.dp))
-          ToSAndSubmitBlock(state, vm, isToSChecked, onToSCheckedChange, onNavigateToToS)
+          ToSAndSubmitBlock(state, vm, onNavigateToToS)
         }
 
     val showHint by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
@@ -172,7 +196,9 @@ private fun NameSurnameBlock(
         placeholder = "Enter your Name",
         modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.NAME),
         maxPreviewLength = 45,
-        style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
+        style =
+            EllipsizingTextFieldStyle(
+                shape = fieldShape, colors = fieldColors, enabled = !state.submitting))
   }
 
   EllipsizingTextField(
@@ -181,7 +207,9 @@ private fun NameSurnameBlock(
       placeholder = "Enter your Surname",
       modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.SURNAME),
       maxPreviewLength = 45,
-      style = EllipsizingTextFieldStyle(shape = fieldShape, colors = fieldColors))
+      style =
+          EllipsizingTextFieldStyle(
+              shape = fieldShape, colors = fieldColors, enabled = !state.submitting))
 }
 
 @Composable
@@ -203,8 +231,8 @@ private fun EmailBlock(
       singleLine = true,
       shape = fieldShape,
       colors = fieldColors,
-      enabled = !state.isGoogleSignUp,
-      readOnly = state.isGoogleSignUp)
+      enabled = !state.isGoogleSignUp && !state.submitting,
+      readOnly = state.isGoogleSignUp || state.submitting)
 }
 
 @Composable
@@ -232,14 +260,16 @@ private fun LocationBlock(
         locationSuggestions = state.locationSuggestions,
         onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },
         onLocationSelected = { location -> vm.onEvent(SignUpEvent.LocationSelected(location)) },
-        shape = fieldShape,
-        colors = fieldColors)
+        style =
+            com.android.sample.ui.components.LocationFieldStyle(
+                shape = fieldShape, colors = fieldColors, enabled = !state.submitting))
 
     LocationIconButton(
         context = context,
         permission = permission,
         permissionLauncher = permissionLauncher,
-        vm = vm)
+        vm = vm,
+        enabled = !state.submitting)
   }
 }
 
@@ -248,7 +278,8 @@ private fun LocationIconButton(
     context: android.content.Context,
     permission: String,
     permissionLauncher: androidx.activity.result.ActivityResultLauncher<String>,
-    vm: SignUpViewModel
+    vm: SignUpViewModel,
+    enabled: Boolean = true
 ) {
   IconButton(
       onClick = {
@@ -261,6 +292,7 @@ private fun LocationIconButton(
           permissionLauncher.launch(permission)
         }
       },
+      enabled = enabled,
       modifier = Modifier.size(36.dp)) {
         Icon(
             imageVector = Icons.Filled.MyLocation,
@@ -282,6 +314,7 @@ private fun EducationDescriptionBlock(
       modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION),
       placeholder = { Text("Major, Year (e.g. CS, 3rd year)") },
       singleLine = true,
+      enabled = !state.submitting,
       shape = fieldShape,
       colors = fieldColors)
 
@@ -291,6 +324,7 @@ private fun EducationDescriptionBlock(
       modifier =
           Modifier.fillMaxWidth().heightIn(min = 112.dp).testTag(SignUpScreenTestTags.DESCRIPTION),
       placeholder = { Text("Short description of yourself") },
+      enabled = !state.submitting,
       shape = fieldShape,
       colors = fieldColors)
 }
@@ -310,6 +344,7 @@ private fun PasswordAndRequirementsBlock(
         modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.PASSWORD),
         placeholder = { Text("Password") },
         singleLine = true,
+        enabled = !state.submitting,
         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
         visualTransformation = PasswordVisualTransformation(),
         shape = fieldShape,
@@ -379,49 +414,58 @@ private fun ErrorMessage(errorMessage: String) {
 private fun ToSAndSubmitBlock(
     state: SignUpUiState,
     vm: SignUpViewModel,
-    isToSChecked: Boolean,
-    onToSCheckedChange: (Boolean) -> Unit,
     onNavigateToToS: () -> Unit
 ) {
-  ToSCheckboxRow(isToSChecked, onToSCheckedChange, onNavigateToToS)
-  SignUpButton(state, vm, isToSChecked)
+  ToSCheckboxRow(
+      isToSChecked = state.isToSAccepted,
+      onToSCheckedChange = { vm.onEvent(SignUpEvent.ToSAcceptedChanged(it)) },
+      onNavigateToToS = onNavigateToToS,
+      enabled = !state.submitting)
+  SignUpButton(state, vm)
 }
 
 @Composable
 private fun ToSCheckboxRow(
     isToSChecked: Boolean,
     onToSCheckedChange: (Boolean) -> Unit,
-    onNavigateToToS: () -> Unit
+    onNavigateToToS: () -> Unit,
+    enabled: Boolean = true
 ) {
   Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
     Checkbox(
         modifier = Modifier.testTag(SignUpScreenTestTags.TOS_CHECKBOX),
         checked = isToSChecked,
         onCheckedChange = onToSCheckedChange,
+        enabled = enabled,
         colors = CheckboxDefaults.colors(checkedColor = TurquoisePrimary))
     Spacer(modifier = Modifier.width(8.dp))
     Text(text = "I have read and accept the ", style = MaterialTheme.typography.bodyMedium)
     Text(
         text = "Terms of Service",
         style = MaterialTheme.typography.bodyMedium.copy(color = TurquoisePrimary),
-        modifier = Modifier.clickable { onNavigateToToS() })
+        modifier = Modifier.clickable(enabled = enabled) { onNavigateToToS() })
   }
 }
 
 @Composable
-private fun SignUpButton(state: SignUpUiState, vm: SignUpViewModel, isToSChecked: Boolean) {
+private fun SignUpButton(state: SignUpUiState, vm: SignUpViewModel) {
   val gradient = Brush.horizontalGradient(listOf(TurquoiseStart, TurquoiseEnd))
   val disabledBrush = Brush.linearGradient(listOf(GrayE6, GrayE6))
-  val enabled = calculateSubmitEnabled(state)
+
+  // Button should be enabled only when BOTH conditions are met:
+  // 1. Form is valid (calculateSubmitEnabled)
+  // 2. ToS is checked
+  val formIsValid = calculateSubmitEnabled(state)
+  val buttonEnabled = formIsValid && state.isToSAccepted
 
   Button(
       onClick = { vm.onEvent(SignUpEvent.Submit) },
-      enabled = isToSChecked,
+      enabled = buttonEnabled,
       modifier =
           Modifier.fillMaxWidth()
               .height(52.dp)
               .clip(RoundedCornerShape(24.dp))
-              .background(if (enabled) gradient else disabledBrush, RoundedCornerShape(24.dp))
+              .background(if (buttonEnabled) gradient else disabledBrush, RoundedCornerShape(24.dp))
               .testTag(SignUpScreenTestTags.SIGN_UP),
       colors =
           ButtonDefaults.buttonColors(

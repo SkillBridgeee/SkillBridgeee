@@ -1,5 +1,6 @@
 package com.android.sample.screen
 
+import android.app.Application
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
@@ -7,6 +8,7 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.HomePage.MainPageViewModel
+import com.google.firebase.FirebaseApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -18,10 +20,22 @@ import org.robolectric.annotation.Config
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
+@Config(manifest = Config.NONE, application = MainPageViewModelTest.TestApp::class)
 class MainPageViewModelTest {
 
   private val dispatcher = StandardTestDispatcher()
+
+  // Custom test application that initializes Firebase
+  class TestApp : Application() {
+    override fun onCreate() {
+      super.onCreate()
+      try {
+        FirebaseApp.initializeApp(this)
+      } catch (_: IllegalStateException) {
+        // Firebase already initialized, ignore
+      }
+    }
+  }
 
   @Before
   fun setUp() {
@@ -122,13 +136,16 @@ class MainPageViewModelTest {
   // ---------- Tests ----------
 
   @Test
-  fun `load populates proposals list based on repository`() = runTest {
+  fun `load populates tutor list based on proposals`() = runTest {
+    // Clear session to avoid Firebase Auth issues
+    com.android.sample.model.authentication.UserSessionManager.clearSession()
+
     val profiles = listOf(profile("u1", "Alice"), profile("u2", "Bob"))
+
     val proposals = listOf(proposal("u1"), proposal("u2"))
 
     val vm = MainPageViewModel(FakeProfileRepository(profiles), FakeListingRepository(proposals))
 
-    // Let the ViewModel's coroutines run
     advanceUntilIdle()
     val state = vm.uiState.first()
 
@@ -140,6 +157,9 @@ class MainPageViewModelTest {
 
   @Test
   fun `default welcome message when no logged user`() = runTest {
+    // Ensure no user is logged in
+    com.android.sample.model.authentication.UserSessionManager.clearSession()
+
     val vm =
         MainPageViewModel(FakeProfileRepository(emptyList()), FakeListingRepository(emptyList()))
 
@@ -151,6 +171,9 @@ class MainPageViewModelTest {
 
   @Test
   fun `gracefully handles repository failure`() = runTest {
+    // Clear session to ensure clean state
+    com.android.sample.model.authentication.UserSessionManager.clearSession()
+
     val failingListings =
         object : FakeListingRepository(emptyList()) {
           override suspend fun getProposals(): List<Proposal> {

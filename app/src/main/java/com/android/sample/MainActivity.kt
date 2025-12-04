@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.authentication.AuthResult
@@ -138,24 +139,89 @@ class MyViewModelFactory(private val sessionManager: UserSessionManager) :
  * LoginScreen( viewModel = viewModel, onGoogleSignIn = { val signInIntent =
  * viewModel.getGoogleSignInClient().signInIntent googleSignInLauncher.launch(signInIntent) }) }
  */
+
+/**
+ * Performs auto-login by checking if user is authenticated and has a valid profile. Navigates to
+ * HOME if successful, or signs out the user if they don't have a profile or their email is not
+ * verified.
+ */
+internal suspend fun performAutoLogin(
+    navController: NavHostController,
+    authViewModel: AuthenticationViewModel
+) {
+  val currentUserId = UserSessionManager.getCurrentUserId()
+
+  if (currentUserId == null) {
+    Log.d("MainActivity", "Auto-login: No user authenticated - staying at LOGIN")
+    return
+  }
+
+  Log.d("MainActivity", "Auto-login: Found authenticated user: $currentUserId")
+
+  try {
+    handleAuthenticatedUser(currentUserId, navController, authViewModel)
+  } catch (e: Exception) {
+    Log.e("MainActivity", "Auto-login: Error checking profile - signing out", e)
+    authViewModel.signOut()
+  }
+}
+
+/** Handles an authenticated user by checking their profile and email verification status. */
+internal suspend fun handleAuthenticatedUser(
+    userId: String,
+    navController: NavHostController,
+    authViewModel: AuthenticationViewModel
+) {
+  val profile = ProfileRepositoryProvider.repository.getProfile(userId)
+
+  if (profile == null) {
+    Log.d("MainActivity", "Auto-login: User has no profile - signing out")
+    authViewModel.signOut()
+    return
+  }
+
+  val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+  val isEmailVerified = firebaseUser?.isEmailVerified ?: true
+
+  if (isEmailVerified) {
+    Log.d("MainActivity", "Auto-login: User has profile and is verified - navigating to HOME")
+    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+  } else {
+    Log.d("MainActivity", "Auto-login: Email not verified - signing out")
+    authViewModel.signOut()
+  }
+}
+
 @Composable
 fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) {
   val navController = rememberNavController()
   val authResult by authViewModel.authResult.collectAsStateWithLifecycle()
 
-  // Navigate based on authentication result
+  // One-time auto-login check on app start
+  LaunchedEffect(Unit) {
+    // Wait for auth state to be ready
+    val currentUserId = UserSessionManager.getCurrentUserId()
+    if (currentUserId != null || authViewModel.authResult.value != null) {
+      performAutoLogin(navController, authViewModel)
+    }
+  }
+
+  // Navigate based on authentication result from explicit login/signup actions
   LaunchedEffect(authResult) {
-    when (authResult) {
+    when (val result = authResult) {
       is AuthResult.Success -> {
+        Log.d("MainActivity", "Auth success - navigating to HOME")
         navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+        authViewModel.clearAuthResult() // Clear after navigation
       }
       is AuthResult.RequiresSignUp -> {
         // Navigate to signup screen when Google user doesn't have a profile
-        val email = (authResult as AuthResult.RequiresSignUp).email
+        val email = result.email
         Log.d("MainActivity", "Google user requires sign up, email: $email")
         val route = NavRoutes.createSignUpRoute(email)
         Log.d("MainActivity", "Navigating to route: $route")
         navController.navigate(route) { popUpTo(NavRoutes.LOGIN) { inclusive = false } }
+        authViewModel.clearAuthResult() // Clear after navigation
       }
       else -> {
         // No navigation for Error or null

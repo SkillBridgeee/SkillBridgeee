@@ -212,8 +212,9 @@ class LocationInputFieldTest {
           locationSuggestions = emptyList(),
           onLocationQueryChange = {},
           onLocationSelected = {},
-          shape = RoundedCornerShape(14.dp),
-          colors = TextFieldDefaults.colors())
+          style =
+              LocationFieldStyle(
+                  shape = RoundedCornerShape(14.dp), colors = TextFieldDefaults.colors()))
     }
 
     // Then

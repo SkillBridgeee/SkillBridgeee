@@ -1093,6 +1093,8 @@ class SignUpViewModelTest {
     every { mockUser.uid } returns "google-user-123"
     every { mockAuthRepo.getCurrentUser() } returns mockUser
     coEvery { mockProfileRepo.addProfile(any()) } throws Exception("Profile creation failed")
+    // Mock signOut which is called when profile creation fails
+    coEvery { mockAuthRepo.signOut() } returns Unit
 
     val vm =
         createViewModel(
