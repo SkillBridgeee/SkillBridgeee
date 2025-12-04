@@ -6,22 +6,39 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
+import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
+import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.rating.RatingType
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.listing.ListingScreen
 import com.android.sample.ui.listing.ListingScreenTestTags
 import com.android.sample.ui.listing.ListingViewModel
 import java.util.Date
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
@@ -63,12 +80,85 @@ class ListingScreenTest {
           description = "Experienced guitar teacher",
           location = Location(latitude = 40.7128, longitude = -74.0060, name = "New York"))
 
+  @Before
+  fun setUp() {
+    // Initialize all repository providers to prevent initialization errors
+    ConversationRepositoryProvider.setForTests(FakeConvRepository())
+    OverViewConvRepositoryProvider.setForTests(FakeOverViewConvRepository())
+    RatingRepositoryProvider.setForTests(FakeRatingRepository())
+  }
+
   @After
   fun cleanup() {
     UserSessionManager.clearSession()
+    ConversationRepositoryProvider.clearForTests()
+    OverViewConvRepositoryProvider.clearForTests()
+    RatingRepositoryProvider.clearForTests()
+    ListingRepositoryProvider.clearForTests()
+    ProfileRepositoryProvider.clearForTests()
+    BookingRepositoryProvider.clearForTests()
   }
 
   // Fake Repositories
+  private class FakeConvRepository : ConvRepository {
+    override fun getNewUid() = "dummy-conv-id"
+
+    override suspend fun getConv(convId: String): ConversationNew? = null
+
+    override suspend fun createConv(conversation: ConversationNew) {}
+
+    override suspend fun deleteConv(convId: String) {}
+
+    override suspend fun sendMessage(convId: String, message: MessageNew) {}
+
+    override fun listenMessages(convId: String): Flow<List<MessageNew>> = flowOf(emptyList())
+  }
+
+  private class FakeOverViewConvRepository : OverViewConvRepository {
+    override fun getNewUid() = "dummy-overview-id"
+
+    override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> =
+        emptyList()
+
+    override suspend fun addOverViewConvUser(overView: OverViewConversation) {}
+
+    override suspend fun deleteOverViewConvUser(convId: String) {}
+
+    override fun listenOverView(userId: String): Flow<List<OverViewConversation>> =
+        flowOf(emptyList())
+  }
+
+  private class FakeRatingRepository : RatingRepository {
+    override fun getNewUid() = "dummy-rating-id"
+
+    override suspend fun hasRating(
+        fromUserId: String,
+        toUserId: String,
+        ratingType: RatingType,
+        targetObjectId: String
+    ) = false
+
+    override suspend fun addRating(rating: Rating) {}
+
+    override suspend fun getAllRatings() = emptyList<Rating>()
+
+    override suspend fun getRating(ratingId: String) = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String) = emptyList<Rating>()
+
+    override suspend fun getRatingsByToUser(toUserId: String) = emptyList<Rating>()
+
+    override suspend fun getRatingsOfListing(listingId: String) = emptyList<Rating>()
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+    override suspend fun deleteRating(ratingId: String) {}
+
+    override suspend fun getTutorRatingsOfUser(userId: String) = emptyList<Rating>()
+
+    override suspend fun getStudentRatingsOfUser(userId: String) = emptyList<Rating>()
+  }
+
   private class FakeListingRepo(private val listing: Listing?) : ListingRepository {
     override fun getNewUid() = "new-listing-id"
 
