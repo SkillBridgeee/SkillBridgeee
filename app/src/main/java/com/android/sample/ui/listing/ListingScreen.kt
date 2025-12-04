@@ -95,19 +95,36 @@ fun ListingScreen(
     }
   }
 
-  // Helper function to handle success dialog dismissal
-  val handleSuccessDismiss: () -> Unit = {
-    viewModel.clearBookingSuccess()
-    onNavigateBack()
-  }
-
   // Show success dialog when booking is created
   if (uiState.bookingSuccess) {
+    val successMessage = buildString {
+      append(ListingViewModel.MSG_BOOKING_SUCCESS)
+      if (uiState.conversationCreationWarning != null) {
+        append(
+            "\n\nNote: ${uiState.conversationCreationWarning} ${ListingViewModel.MSG_CONVERSATION_ALTERNATIVE}")
+      } else {
+        append("\n\n${ListingViewModel.MSG_CONVERSATION_SUCCESS}")
+      }
+    }
+
     AlertDialog(
-        onDismissRequest = handleSuccessDismiss,
+        onDismissRequest = {
+          viewModel.clearBookingSuccess()
+          viewModel.clearConversationWarning()
+          onNavigateBack()
+        },
         title = { Text("Booking Created") },
-        text = { Text("Your booking has been created successfully and is pending confirmation.") },
-        confirmButton = { Button(onClick = handleSuccessDismiss) { Text("OK") } },
+        text = { Text(successMessage) },
+        confirmButton = {
+          Button(
+              onClick = {
+                viewModel.clearBookingSuccess()
+                viewModel.clearConversationWarning()
+                onNavigateBack()
+              }) {
+                Text("OK")
+              }
+        },
         modifier = Modifier.testTag(ListingScreenTestTags.SUCCESS_DIALOG))
   }
 

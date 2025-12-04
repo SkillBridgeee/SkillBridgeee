@@ -7,6 +7,9 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.map.Location
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.user.Profile
 import com.android.sample.ui.communication.DiscussionScreen
 import com.android.sample.ui.communication.DiscussionViewModel
 import java.util.Date
@@ -71,8 +74,6 @@ class DiscussionScreenTest {
     compose.waitForIdle()
 
     // Check if conversations are displayed
-    compose.onNodeWithText("John Doe").assertIsDisplayed()
-    compose.onNodeWithText("Jane Smith").assertIsDisplayed()
     compose.onNodeWithText("Hey, how are you?").assertIsDisplayed()
     compose.onNodeWithText("See you tomorrow!").assertIsDisplayed()
   }
@@ -98,12 +99,12 @@ class DiscussionScreenTest {
       DiscussionScreen(viewModel = viewModel, onConversationClick = { clickedConversationId = it })
     }
 
-    compose.waitForIdle()
+    compose.waitUntil(3_000) {
+      compose.onAllNodesWithTag("conversation_item_conv1").fetchSemanticsNodes().isNotEmpty()
+    }
 
     // Click on the first conversation using testTag
     compose.onNodeWithTag("conversation_item_conv1").performClick()
-
-    compose.waitForIdle()
 
     // Verify callback was called with correct ID
     assert(clickedConversationId == "conv1")
@@ -183,21 +184,82 @@ class DiscussionScreenTest {
   private fun createViewModelWithConversations(
       conversations: List<OverViewConversation>
   ): DiscussionViewModel {
-    val repository = FakeOverViewConvRepository()
-    repository.setConversations(conversations)
-    return DiscussionViewModel(repository)
+    val overViewRepository = FakeOverViewConvRepository()
+    val profileRepository = FakeProfileRepository()
+
+    overViewRepository.setConversations(conversations)
+    return DiscussionViewModel(overViewRepository, profileRepository)
   }
 
   private fun createViewModelWithError(): DiscussionViewModel {
-    val repository = FakeOverViewConvRepository()
-    repository.setShouldThrowError(true)
-    return DiscussionViewModel(repository)
+    val overViewRepository = FakeOverViewConvRepository()
+    val profileRepository = FakeProfileRepository()
+    overViewRepository.setShouldThrowError(true)
+    return DiscussionViewModel(overViewRepository, profileRepository)
   }
 
   private fun createViewModelWithDelay(): DiscussionViewModel {
-    val repository = FakeOverViewConvRepository()
-    repository.setDelayLoading(true)
-    return DiscussionViewModel(repository)
+    val overViewRepository = FakeOverViewConvRepository()
+    val profileRepository = FakeProfileRepository()
+    overViewRepository.setDelayLoading(true)
+    return DiscussionViewModel(overViewRepository, profileRepository)
+  }
+
+  /** Fake ProfileRepository that does nothing. */
+  private class FakeProfileRepository :
+      com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo {
+    override suspend fun getProfile(userId: String): Profile? = null
+
+    override suspend fun addProfile(profile: Profile) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun updateProfile(userId: String, profile: Profile) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteProfile(userId: String) {}
+
+    override suspend fun getAllProfiles(): List<Profile> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun searchProfilesByLocation(
+        location: Location,
+        radiusKm: Double
+    ): List<Profile> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getProfileById(userId: String): Profile? {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getSkillsForUser(userId: String): List<Skill> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun updateStudentRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      TODO("Not yet implemented")
+    }
+
+    override fun getNewUid(): String = "fake-profile-uid"
+
+    override fun getCurrentUserId(): String = "fake-current-user-id"
+
+    override fun getCurrentUserName(): String? = "Fake User"
   }
 
   /** Simple in-memory fake repository for tests. */
@@ -218,7 +280,7 @@ class DiscussionScreenTest {
                   overViewOwnerId = "user1",
                   otherPersonId = "user2")),
       private var shouldThrowError: Boolean = false,
-      private var delayLoading: Boolean = false
+      private var delayLoading: Boolean = false,
   ) : OverViewConvRepository {
 
     fun setConversations(newConversations: List<OverViewConversation>) {

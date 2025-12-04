@@ -8,6 +8,9 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.communication.newImplementation.ConversationManager
+import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
@@ -38,6 +41,7 @@ import kotlinx.coroutines.launch
  * @param bookingInProgress Whether a booking is being created
  * @param bookingError Any error during booking creation
  * @param bookingSuccess Whether booking was created successfully
+ * @param conversationCreationWarning Warning message if conversation creation fails
  * @param listingBookings List of bookings for this listing (for owner view)
  * @param bookingsLoading Whether bookings are being loaded
  * @param bookerProfiles Map of booker user IDs to their profiles
@@ -52,6 +56,7 @@ data class ListingUiState(
     val bookingInProgress: Boolean = false,
     val bookingError: String? = null,
     val bookingSuccess: Boolean = false,
+    val conversationCreationWarning: String? = null,
     val listingBookings: List<Booking> = emptyList(),
     val bookingsLoading: Boolean = false,
     val listingDeleted: Boolean = false,
@@ -71,8 +76,22 @@ class ListingViewModel(
     private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
     private val profileRepo: ProfileRepository = ProfileRepositoryProvider.repository,
     private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository,
-    private val ratingRepo: RatingRepository = RatingRepositoryProvider.repository
+    private val ratingRepo: RatingRepository = RatingRepositoryProvider.repository,
+    private val conversationManager: ConversationManager =
+        ConversationManager(
+            convRepo = ConversationRepositoryProvider.repository,
+            overViewRepo = OverViewConvRepositoryProvider.repository)
 ) : ViewModel() {
+
+  companion object {
+    // User-facing messages for booking and conversation creation
+    const val MSG_BOOKING_SUCCESS =
+        "Your booking has been created successfully and is pending confirmation."
+    const val MSG_CONVERSATION_SUCCESS =
+        "A conversation has been created with the tutor. You can now chat with them in the Discussions tab to coordinate your session."
+    const val MSG_CONVERSATION_FAILURE_PREFIX = "Conversation could not be created: "
+    const val MSG_CONVERSATION_ALTERNATIVE = "You can still contact the tutor through other means."
+  }
 
   private val _uiState = MutableStateFlow(ListingUiState())
   val uiState: StateFlow<ListingUiState> = _uiState
@@ -237,6 +256,31 @@ class ListingViewModel(
         booking.validate()
 
         bookingRepo.addBooking(booking)
+
+        // Create a conversation between the booker and listing creator
+        try {
+          val creatorProfile = profileRepo.getProfile(listing.creatorUserId)
+          val conversationName = creatorProfile?.name ?: "Booking Discussion"
+
+          val convId =
+              conversationManager.createConvAndOverviews(
+                  creatorId = currentUserId,
+                  otherUserId = listing.creatorUserId,
+                  convName = conversationName)
+          Log.d(
+              "ListingViewModel",
+              "Conversation created successfully: $convId between $currentUserId and ${listing.creatorUserId}")
+        } catch (e: Exception) {
+          Log.e("ListingViewModel", "Failed to create conversation", e)
+          _uiState.update {
+            it.copy(
+                bookingInProgress = false,
+                bookingSuccess = true, // Booking is successful even if conversation creation fails
+                bookingError = null,
+                conversationCreationWarning = "${MSG_CONVERSATION_FAILURE_PREFIX}${e.message}")
+          }
+          return@launch
+        }
 
         _uiState.update {
           it.copy(bookingInProgress = false, bookingSuccess = true, bookingError = null)
@@ -409,6 +453,11 @@ class ListingViewModel(
   /** Clears the booking error state. */
   fun clearBookingError() {
     _uiState.update { it.copy(bookingError = null) }
+  }
+
+  /** Clears the conversation creation warning. */
+  fun clearConversationWarning() {
+    _uiState.update { it.copy(conversationCreationWarning = null) }
   }
 
   fun showBookingSuccess() {
