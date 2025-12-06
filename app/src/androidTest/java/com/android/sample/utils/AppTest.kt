@@ -20,8 +20,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.Listing
+import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsViewModel
@@ -39,6 +44,8 @@ import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingRepo
 import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingWorking
+import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
+import com.android.sample.utils.fakeRepo.fakeConvManager.FakeOverViewRepo
 import com.android.sample.utils.fakeRepo.fakeListing.FakeListingRepo
 import com.android.sample.utils.fakeRepo.fakeListing.FakeListingWorking
 import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileRepo
@@ -84,6 +91,14 @@ abstract class AppTest() {
 
     val currentUserId = profileRepository.getCurrentUserId()
     UserSessionManager.setCurrentUserId(currentUserId)
+
+    // Initialize all repository providers to prevent initialization errors
+    ProfileRepositoryProvider.setForTests(profileRepository)
+    ListingRepositoryProvider.setForTests(listingRepository)
+    BookingRepositoryProvider.setForTests(bookingRepository)
+    RatingRepositoryProvider.setForTests(ratingRepository)
+    ConversationRepositoryProvider.setForTests(FakeConvRepo())
+    OverViewConvRepositoryProvider.setForTests(FakeOverViewRepo())
 
     val context = ApplicationProvider.getApplicationContext<Context>()
     authViewModel =
@@ -160,7 +175,17 @@ abstract class AppTest() {
         }
   }
 
-  @After open fun tearDown() {}
+  @After
+  open fun tearDown() {
+    // Clear all repository providers to ensure test isolation
+    ProfileRepositoryProvider.clearForTests()
+    ListingRepositoryProvider.clearForTests()
+    BookingRepositoryProvider.clearForTests()
+    RatingRepositoryProvider.clearForTests()
+    ConversationRepositoryProvider.clearForTests()
+    OverViewConvRepositoryProvider.clearForTests()
+    UserSessionManager.clearSession()
+  }
 
   //////// HelperFunction to navigate from Home Screen
 

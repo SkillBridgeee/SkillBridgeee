@@ -2,10 +2,13 @@ package com.android.sample.ui.navigation
 
 import android.util.Log
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -26,6 +29,8 @@ import com.android.sample.ui.bookings.MyBookingsScreen
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.communication.DiscussionScreen
 import com.android.sample.ui.communication.DiscussionViewModel
+import com.android.sample.ui.communication.MessageScreen
+import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.newListing.NewListingScreen
@@ -47,6 +52,14 @@ private const val TAG = "NavGraph"
  */
 private fun navigateToListing(navController: NavHostController, listingId: String) {
   navController.navigate(NavRoutes.createListingRoute(listingId))
+}
+
+/** Helper function to navigate to new listing screen if user is authenticated */
+private fun navigateToNewListing(navController: NavHostController, listingId: String? = null) {
+  val currentUserId = UserSessionManager.getCurrentUserId()
+  if (currentUserId != null) {
+    navController.navigate(NavRoutes.createNewSkillRoute(currentUserId, listingId))
+  }
 }
 
 /**
@@ -236,16 +249,11 @@ fun AppNavGraph(
         arguments = listOf(navArgument("listingId") { type = NavType.StringType })) { backStackEntry
           ->
           val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
-          val currentUserId = UserSessionManager.getCurrentUserId()
           LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
           com.android.sample.ui.listing.ListingScreen(
               listingId = listingId,
               onNavigateBack = { navController.popBackStack() },
-              onEditListing = {
-                if (currentUserId != null) {
-                  navController.navigate(NavRoutes.createNewSkillRoute(currentUserId, listingId))
-                }
-              })
+              onEditListing = { navigateToNewListing(navController, listingId) })
         }
 
     composable(route = NavRoutes.BOOKING_DETAILS) {
@@ -275,8 +283,22 @@ fun AppNavGraph(
     }
 
     composable(NavRoutes.MESSAGES) {
-      // Temporary placeholder so navigation doesn't crash and is covered by tests
-      Box(Modifier)
+      LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MESSAGES) }
+
+      val currentConvId = convId.value
+      if (currentConvId.isNotEmpty()) {
+        val messageViewModel = remember(currentConvId) { MessageViewModel() }
+
+        MessageScreen(
+            viewModel = messageViewModel,
+            convId = currentConvId,
+        )
+      } else {
+        // No conversation selected, show empty state
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+          Text("No conversation selected")
+        }
+      }
     }
   }
 }

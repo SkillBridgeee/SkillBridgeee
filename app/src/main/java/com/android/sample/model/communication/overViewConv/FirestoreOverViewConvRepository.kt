@@ -1,4 +1,4 @@
-package com.android.sample.model.communication.newImplementation.overViewConv
+package com.android.sample.model.communication.overViewConv
 
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.UUID

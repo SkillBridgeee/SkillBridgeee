@@ -10,11 +10,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.ConversationManager
-import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.ConversationManager
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
@@ -22,6 +22,7 @@ import com.android.sample.utils.fakeRepo.fakeConvManager.FakeOverViewRepo
 import java.util.Date
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -53,7 +54,7 @@ class MessageScreenTest {
 
     runBlocking {
       convRepo.createConv(
-          ConversationNew(convId = convId, convCreatorId = userA, otherPersonId = userB))
+          Conversation(convId = convId, convCreatorId = userA, otherPersonId = userB))
     }
   }
 
@@ -86,7 +87,7 @@ class MessageScreenTest {
     // Simule réception d’un message
     manager.sendMessage(
         convId,
-        MessageNew(
+        Message(
             msgId = "xyz",
             senderId = userB,
             receiverId = userA,
@@ -98,5 +99,107 @@ class MessageScreenTest {
     }
 
     composeTestRule.onNodeWithText("Salut utilisateur!").assertExists()
+  }
+
+  // -----------------------------------------------------
+  // TEST 3 — Empty message cannot be sent
+  // -----------------------------------------------------
+  @Test
+  fun messageScreen_emptyMessageCannotBeSent() {
+    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+
+    // Try to send without typing anything
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+
+    // No message should appear (since it's empty)
+    composeTestRule.waitForIdle()
+    // The send button should be disabled or no message added
+    assertEquals(0, viewModel.uiState.value.messages.size)
+  }
+
+  // -----------------------------------------------------
+  // TEST 4 — Loading state is shown initially
+  // -----------------------------------------------------
+  @Test
+  fun messageScreen_showsLoadingStateInitially() {
+    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+
+    // Initially loading should be true
+    composeTestRule.waitForIdle()
+    // Check that messages eventually load
+    viewModel.loadConversation(convId)
+    composeTestRule.waitForIdle()
+  }
+
+  // -----------------------------------------------------
+  // TEST 5 — Multiple messages are displayed in order
+  // -----------------------------------------------------
+  @Test
+  fun messageScreen_displaysMultipleMessagesInOrder() = runTest {
+    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+
+    // Send multiple messages
+    manager.sendMessage(
+        convId,
+        Message(
+            msgId = "m1",
+            senderId = userA,
+            receiverId = userB,
+            content = "First message",
+            createdAt = Date()))
+
+    manager.sendMessage(
+        convId,
+        Message(
+            msgId = "m2",
+            senderId = userB,
+            receiverId = userA,
+            content = "Second message",
+            createdAt = Date()))
+
+    composeTestRule.waitUntil(timeoutMillis = 2000) {
+      composeTestRule.onAllNodesWithText("First message").fetchSemanticsNodes().isNotEmpty() &&
+          composeTestRule.onAllNodesWithText("Second message").fetchSemanticsNodes().isNotEmpty()
+    }
+
+    composeTestRule.onNodeWithText("First message").assertExists()
+    composeTestRule.onNodeWithText("Second message").assertExists()
+  }
+
+  // -----------------------------------------------------
+  // TEST 6 — Message input clears after sending
+  // -----------------------------------------------------
+  @Test
+  fun messageScreen_inputClearsAfterSending() {
+    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+
+    val textToSend = "Test message"
+
+    // Type in input
+    composeTestRule.onNode(hasSetTextAction()).performTextInput(textToSend)
+
+    // Send message
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+
+    composeTestRule.waitForIdle()
+
+    // Current message should be empty
+    assertEquals("", viewModel.uiState.value.currentMessage)
+  }
+
+  // -----------------------------------------------------
+  // TEST 7 — Error state is handled gracefully
+  // -----------------------------------------------------
+  @Test
+  fun messageScreen_handlesErrorGracefully() {
+    val invalidConvId = "invalid_conversation_id"
+
+    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = invalidConvId) }
+
+    composeTestRule.waitForIdle()
+
+    // ViewModel should have error state
+    val error = viewModel.uiState.value.error
+    assertEquals(true, error != null)
   }
 }

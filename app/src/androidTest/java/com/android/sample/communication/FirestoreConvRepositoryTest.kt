@@ -1,10 +1,10 @@
 package com.android.sample.communication
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.sample.model.communication.newImplementation.conversation.BLANK_CONVID_ERR_MSG
-import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
-import com.android.sample.model.communication.newImplementation.conversation.FirestoreConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import com.android.sample.model.communication.conversation.BLANK_CONVID_ERR_MSG
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.FirestoreConvRepository
+import com.android.sample.model.communication.conversation.Message
 import com.android.sample.utils.TestFirestore
 import java.util.UUID
 import junit.framework.TestCase.*
@@ -30,7 +30,7 @@ class FirestoreConvRepositoryTest {
   @Test
   fun testCreateAndGetConversation() = runTest {
     val convId = "convCreateTest"
-    val conv = ConversationNew(convId)
+    val conv = Conversation(convId)
 
     repo.createConv(conv)
 
@@ -46,10 +46,10 @@ class FirestoreConvRepositoryTest {
   @Test
   fun testSendMessage() = runTest {
     val convId = "convSendTest"
-    val conv = ConversationNew(convId)
+    val conv = Conversation(convId)
     repo.createConv(conv)
 
-    val msg = MessageNew(msgId = "1", content = "Hello World", senderId = "A", receiverId = "B")
+    val msg = Message(msgId = "1", content = "Hello World", senderId = "A", receiverId = "B")
 
     repo.sendMessage(convId, msg)
 
@@ -73,7 +73,7 @@ class FirestoreConvRepositoryTest {
   @Test
   fun testDeleteConversation() = runTest {
     val convId = "convDeleteTest"
-    val conv = ConversationNew(convId)
+    val conv = Conversation(convId)
 
     repo.createConv(conv)
     assertNotNull(repo.getConv(convId))
@@ -90,14 +90,13 @@ class FirestoreConvRepositoryTest {
   @Test
   fun testListenMessages() = runTest {
     val convId = "convListenTest"
-    val conv = ConversationNew(convId)
+    val conv = Conversation(convId)
     repo.createConv(conv)
 
     val collectJob = repo.listenMessages(convId)
 
     // send message
-    val msg =
-        MessageNew(msgId = "42", content = "Listening works!", senderId = "A", receiverId = "B")
+    val msg = Message(msgId = "42", content = "Listening works!", senderId = "A", receiverId = "B")
     repo.sendMessage(convId, msg)
 
     val emittedMessages = collectJob.first { it.isNotEmpty() }
@@ -113,17 +112,17 @@ class FirestoreConvRepositoryTest {
   @Test
   fun testListenMessagesTwoUsers() = runTest {
     val convId = "convListenTwoUsers"
-    val conv = ConversationNew(convId)
+    val conv = Conversation(convId)
     repo.createConv(conv)
 
     val flow = repo.listenMessages(convId)
 
     // 1er message (user A)
-    val msg1 = MessageNew(msgId = "1", content = "Hello, it's A", senderId = "A", receiverId = "B")
+    val msg1 = Message(msgId = "1", content = "Hello, it's A", senderId = "A", receiverId = "B")
     repo.sendMessage(convId, msg1)
 
     // 2e message (user B)
-    val msg2 = MessageNew(msgId = "2", content = "Hi A, it's B", senderId = "B", receiverId = "A")
+    val msg2 = Message(msgId = "2", content = "Hi A, it's B", senderId = "B", receiverId = "A")
     repo.sendMessage(convId, msg2)
 
     // On attend que le flow émette une liste contenant les 2 messages

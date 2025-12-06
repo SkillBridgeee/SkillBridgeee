@@ -1,4 +1,4 @@
-package com.android.sample.model.communication.newImplementation.overViewConv
+package com.android.sample.model.communication.overViewConv
 
 import android.content.Context
 import com.android.sample.model.RepositoryProvider

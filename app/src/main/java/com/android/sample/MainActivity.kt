@@ -22,8 +22,8 @@ import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.GoogleSignInHelper
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.BookingRepositoryProvider
-import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
