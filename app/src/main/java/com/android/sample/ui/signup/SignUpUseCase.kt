@@ -1,5 +1,6 @@
 package com.android.sample.ui.signup
 
+import android.util.Log
 import com.android.sample.model.authentication.AuthenticationRepository
 import com.android.sample.model.map.Location
 import com.android.sample.model.user.Profile
@@ -47,6 +48,10 @@ class SignUpUseCase(
     private val profileRepository: ProfileRepository
 ) {
 
+  companion object {
+    private const val TAG = "SignUpUseCase"
+  }
+
   /**
    * Executes the sign-up flow.
    *
@@ -60,12 +65,15 @@ class SignUpUseCase(
 
       if (currentUser != null) {
         // User already authenticated - just create profile
+        Log.d(TAG, "User already authenticated (Google): ${currentUser.uid}")
         createProfileForAuthenticatedUser(currentUser.uid, request)
       } else {
         // New user - create auth account then profile
+        Log.d(TAG, "Creating new email/password user")
         createNewUserWithProfile(request)
       }
     } catch (t: Throwable) {
+      Log.e(TAG, "SignUp failed with exception", t)
       SignUpResult.Error(t.message ?: "Unknown error")
     }
   }
@@ -76,10 +84,18 @@ class SignUpUseCase(
       request: SignUpRequest
   ): SignUpResult {
     return try {
+      Log.d(TAG, "Creating profile for authenticated user: $userId")
       val profile = buildProfile(userId, request)
       profileRepository.addProfile(profile)
+      Log.d(TAG, "✅ Profile created successfully - user stays authenticated")
+      // SUCCESS: User stays authenticated, profile is created
+      // They can now proceed directly to the app
       SignUpResult.Success
     } catch (e: Exception) {
+      // If profile creation fails for a Google user, sign them out
+      // so they can try again from the beginning
+      Log.e(TAG, "❌ Profile creation failed - signing out user", e)
+      authRepository.signOut()
       SignUpResult.Error("Profile creation failed: ${e.message}")
     }
   }

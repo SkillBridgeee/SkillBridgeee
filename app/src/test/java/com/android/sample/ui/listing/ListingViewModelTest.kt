@@ -4,13 +4,20 @@ import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
+import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.rating.RatingType
 import com.android.sample.model.rating.StarRating
 import com.android.sample.model.skill.ExpertiseLevel
@@ -18,6 +25,7 @@ import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import io.mockk.every
@@ -42,6 +50,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mock
+import org.mockito.MockitoAnnotations
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -54,6 +64,9 @@ class ListingViewModelTest {
   @get:Rule val firebaseRule = FirebaseTestRule()
 
   private val testDispatcher = StandardTestDispatcher()
+
+  @Mock private lateinit var mockConversationRepository: ConvRepository
+  @Mock private lateinit var mockOverViewConvRepository: OverViewConvRepository
 
   private val sampleProposal =
       Proposal(
@@ -104,8 +117,16 @@ class ListingViewModelTest {
 
   @Before
   fun setup() {
+    MockitoAnnotations.openMocks(this)
     Dispatchers.setMain(testDispatcher)
     UserSessionManager.clearSession()
+    // Initialize all repository providers with mock instances
+    ListingRepositoryProvider.setForTests(mockk(relaxed = true))
+    ProfileRepositoryProvider.setForTests(mockk(relaxed = true))
+    BookingRepositoryProvider.setForTests(mockk(relaxed = true))
+    RatingRepositoryProvider.setForTests(mockk(relaxed = true))
+    ConversationRepositoryProvider.setForTests(mockConversationRepository)
+    OverViewConvRepositoryProvider.setForTests(mockOverViewConvRepository)
   }
 
   @After
@@ -113,6 +134,12 @@ class ListingViewModelTest {
     Dispatchers.resetMain()
     UserSessionManager.clearSession()
     unmockkStatic(FirebaseAuth::class)
+    ListingRepositoryProvider.clearForTests()
+    ProfileRepositoryProvider.clearForTests()
+    BookingRepositoryProvider.clearForTests()
+    RatingRepositoryProvider.clearForTests()
+    ConversationRepositoryProvider.clearForTests()
+    OverViewConvRepositoryProvider.clearForTests()
   }
 
   // Fake Repositories
@@ -158,6 +185,8 @@ class ListingViewModelTest {
   private open class FakeProfileRepo(private val profiles: Map<String, Profile> = emptyMap()) :
       ProfileRepository {
     override fun getNewUid() = "fake-profile-id"
+
+    override fun getCurrentUserId() = "test-user-id"
 
     override suspend fun getProfile(userId: String) = profiles[userId]
 
@@ -239,6 +268,17 @@ class ListingViewModelTest {
       val booking = storedBookings.find { it.bookingId == bookingId }
       booking?.let {
         val updated = it.copy(status = status)
+        updateBooking(bookingId, updated)
+      }
+    }
+
+    override suspend fun updatePaymentStatus(
+        bookingId: String,
+        paymentStatus: com.android.sample.model.booking.PaymentStatus
+    ) {
+      val booking = storedBookings.find { it.bookingId == bookingId }
+      booking?.let {
+        val updated = it.copy(paymentStatus = paymentStatus)
         updateBooking(bookingId, updated)
       }
     }
@@ -350,6 +390,8 @@ class ListingViewModelTest {
 
     override fun getNewUid() = "fake-profile-id"
 
+    override fun getCurrentUserId() = "test-user-id"
+
     override suspend fun getProfile(userId: String) = profiles[userId]
 
     override suspend fun addProfile(profile: Profile) {}
@@ -456,7 +498,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -475,7 +518,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(null)
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("non-existent-id")
     advanceUntilIdle()
@@ -495,7 +539,8 @@ class ListingViewModelTest {
         }
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -516,7 +561,8 @@ class ListingViewModelTest {
     val profileRepo =
         FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
     val bookingRepo = FakeBookingRepo(bookings.toMutableList())
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -535,7 +581,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -550,7 +597,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(emptyMap())
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -573,7 +621,8 @@ class ListingViewModelTest {
             throw RuntimeException("Database error")
           }
         }
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -593,7 +642,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -617,7 +667,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo()
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     val sessionStart = Date()
     val sessionEnd = Date(System.currentTimeMillis() + 3600000)
@@ -636,7 +687,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -659,7 +711,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -682,7 +735,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -709,7 +763,8 @@ class ListingViewModelTest {
             throw RuntimeException("Database error")
           }
         }
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -739,7 +794,8 @@ class ListingViewModelTest {
 
     val listingRepo = FakeListingRepo(sampleProposal) // hourlyRate = 30.0
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -764,7 +820,8 @@ class ListingViewModelTest {
     val profileRepo =
         FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
     val bookingRepo = FakeBookingRepo(bookings.toMutableList())
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -789,7 +846,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo =
         FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -812,7 +870,8 @@ class ListingViewModelTest {
     val profileRepo =
         FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
     val bookingRepo = FakeBookingRepo(bookings.toMutableList())
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -837,7 +896,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo =
         FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -856,7 +916,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.showBookingSuccess()
     advanceUntilIdle()
@@ -874,7 +935,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.showBookingError("Test error")
     advanceUntilIdle()
@@ -892,7 +954,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     assertFalse(viewModel.uiState.value.bookingSuccess)
 
@@ -907,7 +970,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     assertNull(viewModel.uiState.value.bookingError)
 
@@ -924,7 +988,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     assertFalse(viewModel.uiState.value.isLoading)
 
@@ -943,7 +1008,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -966,7 +1032,8 @@ class ListingViewModelTest {
     val profileRepo =
         FakeProfileRepo(mapOf("creator-999" to sampleCreator.copy(userId = "creator-999")))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("request-789")
     advanceUntilIdle()
@@ -997,7 +1064,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(profiles)
     val bookingRepo = FakeBookingRepo(bookings.toMutableList())
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1017,7 +1085,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo(bookings.toMutableList())
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1035,7 +1104,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo()
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     val state = viewModel.uiState.value
     assertNull(state.listing)
@@ -1056,7 +1126,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     // Don't load listing first
     viewModel.approveBooking("booking-1")
@@ -1071,7 +1142,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     // Don't load listing first
     viewModel.rejectBooking("booking-1")
@@ -1116,8 +1188,9 @@ class ListingViewModelTest {
     val profileRepo =
         FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
     val bookingRepo = FakeBookingRepo(mutableListOf(pendingBooking))
+    val ratingRepo = FakeRatingRepo()
 
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1140,8 +1213,9 @@ class ListingViewModelTest {
             throw IllegalArgumentException("Test invalid booking")
           }
         }
+    val ratingRepo = FakeRatingRepo()
 
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1327,7 +1401,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo()
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.deleteListing()
     advanceUntilIdle()
@@ -1348,7 +1423,8 @@ class ListingViewModelTest {
         }
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1382,7 +1458,8 @@ class ListingViewModelTest {
 
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1414,7 +1491,8 @@ class ListingViewModelTest {
         }
 
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val viewModel =
+        ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo = FakeRatingRepo())
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1451,7 +1529,8 @@ class ListingViewModelTest {
         }
 
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1475,7 +1554,8 @@ class ListingViewModelTest {
 
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1495,7 +1575,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1515,7 +1596,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
@@ -1536,7 +1618,8 @@ class ListingViewModelTest {
     val listingRepo = FakeListingRepo()
     val profileRepo = FakeProfileRepo()
     val bookingRepo = FakeBookingRepo()
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo)
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
     assertFalse(viewModel.uiState.value.listingDeleted)
 

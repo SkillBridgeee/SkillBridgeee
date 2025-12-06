@@ -259,4 +259,219 @@ class BookingCardTest {
 
     compose.onNodeWithText("Nov", substring = true).assertExists()
   }
+
+  // NEW TESTS FOR COVERAGE
+
+  @Test
+  fun bookingCard_withState_displaysCorrectly() {
+    // Test the BookingCardState overload (lines 50-77)
+    val state =
+        BookingCardState(
+            booking = sampleBooking, bookerProfile = sampleBooker, onApprove = {}, onReject = {})
+
+    compose.setContent { BookingCard(state = state) }
+
+    compose.onNodeWithText("PENDING").assertIsDisplayed()
+    compose.onNodeWithText("Jane Smith").assertIsDisplayed()
+    compose.onNodeWithTag(ListingScreenTestTags.APPROVE_BUTTON).assertIsDisplayed()
+  }
+
+  @Test
+  fun bookingCard_withState_handlesCallbacks() {
+    // Test callbacks work through the state-based API
+    var approveCalled = false
+    var rejectCalled = false
+
+    val state =
+        BookingCardState(
+            booking = sampleBooking,
+            bookerProfile = sampleBooker,
+            onApprove = { approveCalled = true },
+            onReject = { rejectCalled = true })
+
+    compose.setContent { BookingCard(state = state) }
+
+    compose.onNodeWithTag(ListingScreenTestTags.APPROVE_BUTTON).performClick()
+    assert(approveCalled)
+
+    compose.onNodeWithTag(ListingScreenTestTags.REJECT_BUTTON).performClick()
+    assert(rejectCalled)
+  }
+
+  @Test
+  fun bookingCard_showsPaymentCompleteButton_forLearner() {
+    // Test lines 211-217: Payment Complete button for learner (bookerId)
+    val booking =
+        sampleBooking.copy(
+            paymentStatus = com.android.sample.model.booking.PaymentStatus.PENDING_PAYMENT,
+            bookerId = "current-user",
+            listingCreatorId = "tutor-123")
+
+    var paymentCompleteCalled = false
+
+    compose.setContent {
+      BookingCard(
+          booking = booking,
+          bookerProfile = sampleBooker,
+          onApprove = {},
+          onReject = {},
+          currentUserId = "current-user",
+          onPaymentComplete = { paymentCompleteCalled = true })
+    }
+
+    // Payment Complete button should be visible for the learner
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON).assertIsDisplayed()
+    compose.onNodeWithText("Payment Complete").assertIsDisplayed()
+
+    // Click and verify callback
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON).performClick()
+    assert(paymentCompleteCalled)
+  }
+
+  @Test
+  fun bookingCard_hidesPaymentCompleteButton_forTutor() {
+    // Test that Payment Complete button is NOT shown to the tutor
+    val booking =
+        sampleBooking.copy(
+            paymentStatus = com.android.sample.model.booking.PaymentStatus.PENDING_PAYMENT,
+            bookerId = "student-123",
+            listingCreatorId = "current-user")
+
+    compose.setContent {
+      BookingCard(
+          booking = booking,
+          bookerProfile = sampleBooker,
+          onApprove = {},
+          onReject = {},
+          currentUserId = "current-user", // Current user is the tutor
+          onPaymentComplete = {})
+    }
+
+    // Payment Complete button should NOT be visible for the tutor
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON).assertDoesNotExist()
+  }
+
+  @Test
+  fun bookingCard_showsPaymentReceivedButton_forTutor() {
+    // Test lines 220-227: Payment Received button for tutor (listingCreatorId)
+    val booking =
+        sampleBooking.copy(
+            paymentStatus = com.android.sample.model.booking.PaymentStatus.PAID,
+            bookerId = "student-123",
+            listingCreatorId = "current-user")
+
+    var paymentReceivedCalled = false
+
+    compose.setContent {
+      BookingCard(
+          booking = booking,
+          bookerProfile = sampleBooker,
+          onApprove = {},
+          onReject = {},
+          currentUserId = "current-user", // Current user is the tutor
+          onPaymentReceived = { paymentReceivedCalled = true })
+    }
+
+    // Payment Received button should be visible for the tutor
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON).assertIsDisplayed()
+    compose.onNodeWithText("Payment Received").assertIsDisplayed()
+
+    // Click and verify callback
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON).performClick()
+    assert(paymentReceivedCalled)
+  }
+
+  @Test
+  fun bookingCard_hidesPaymentReceivedButton_forLearner() {
+    // Test that Payment Received button is NOT shown to the learner
+    val booking =
+        sampleBooking.copy(
+            paymentStatus = com.android.sample.model.booking.PaymentStatus.PAID,
+            bookerId = "current-user",
+            listingCreatorId = "tutor-123")
+
+    compose.setContent {
+      BookingCard(
+          booking = booking,
+          bookerProfile = sampleBooker,
+          onApprove = {},
+          onReject = {},
+          currentUserId = "current-user", // Current user is the learner
+          onPaymentReceived = {})
+    }
+
+    // Payment Received button should NOT be visible for the learner
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON).assertDoesNotExist()
+  }
+
+  @Test
+  fun bookingCard_hidesPaymentButtons_whenCurrentUserIdIsNull() {
+    // Test that payment buttons are hidden when currentUserId is null
+    val bookingPending =
+        sampleBooking.copy(
+            paymentStatus = com.android.sample.model.booking.PaymentStatus.PENDING_PAYMENT)
+
+    compose.setContent {
+      BookingCard(
+          booking = bookingPending,
+          bookerProfile = sampleBooker,
+          onApprove = {},
+          onReject = {},
+          currentUserId = null) // No current user
+    }
+
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON).assertDoesNotExist()
+  }
+
+  @Test
+  fun bookingCard_hidesPaymentButtons_whenStatusIsNotPendingOrPaid() {
+    // Test that payment buttons are hidden for other payment statuses
+    val booking =
+        sampleBooking.copy(
+            paymentStatus = com.android.sample.model.booking.PaymentStatus.CONFIRMED,
+            bookerId = "current-user")
+
+    compose.setContent {
+      BookingCard(
+          booking = booking,
+          bookerProfile = sampleBooker,
+          onApprove = {},
+          onReject = {},
+          currentUserId = "current-user",
+          onPaymentComplete = {},
+          onPaymentReceived = {})
+    }
+
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON).assertDoesNotExist()
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON).assertDoesNotExist()
+  }
+
+  @Test
+  fun bookingCard_withState_supportsPaymentCallbacks() {
+    // Test payment callbacks through the state-based API
+    var paymentCompleteCalled = false
+    var paymentReceivedCalled = false
+
+    val booking =
+        sampleBooking.copy(
+            paymentStatus = com.android.sample.model.booking.PaymentStatus.PENDING_PAYMENT,
+            bookerId = "current-user")
+
+    val state =
+        BookingCardState(
+            booking = booking,
+            bookerProfile = sampleBooker,
+            currentUserId = "current-user",
+            onApprove = {},
+            onReject = {},
+            onPaymentComplete = { paymentCompleteCalled = true },
+            onPaymentReceived = { paymentReceivedCalled = true })
+
+    compose.setContent { BookingCard(state = state) }
+
+    // Should show Payment Complete button for learner
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON).assertIsDisplayed()
+    compose.onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON).performClick()
+    assert(paymentCompleteCalled)
+  }
 }

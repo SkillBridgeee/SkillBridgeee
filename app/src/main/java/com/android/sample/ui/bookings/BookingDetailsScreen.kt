@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Button
@@ -42,11 +44,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.booking.PaymentStatus
 import com.android.sample.model.booking.color
 import com.android.sample.model.booking.name
 import com.android.sample.model.listing.ListingType
 import com.android.sample.ui.components.RatingStarsInput
+import com.android.sample.ui.listing.ListingScreenTestTags
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -88,7 +93,7 @@ object BookingDetailsTestTag {
 fun BookingDetailsScreen(
     bkgViewModel: BookingDetailsViewModel = viewModel(),
     bookingId: String,
-    onCreatorClick: (String) -> Unit,
+    onCreatorClick: (String) -> Unit = {}
 ) {
 
   val uiState by bkgViewModel.bookingUiState.collectAsState()
@@ -110,6 +115,8 @@ fun BookingDetailsScreen(
           onSubmitStudentRatings = { tutorStars, listingStars ->
             bkgViewModel.submitStudentRatings(tutorStars, listingStars)
           },
+          onPaymentComplete = { bkgViewModel.markPaymentComplete() },
+          onPaymentReceived = { bkgViewModel.confirmPaymentReceived() },
           modifier = Modifier.padding(paddingValues).fillMaxSize().padding(16.dp))
     }
   }
@@ -135,46 +142,67 @@ fun BookingDetailsContent(
     onCreatorClick: (String) -> Unit,
     onMarkCompleted: () -> Unit,
     onSubmitStudentRatings: (Int, Int) -> Unit,
+    onPaymentComplete: () -> Unit,
+    onPaymentReceived: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-  Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+  Column(
+      modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+      verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
-    // Header
-    BookingHeader(uiState)
+        // Header
+        BookingHeader(uiState)
 
-    HorizontalDivider()
+        HorizontalDivider()
 
-    // Info about the creator
-    InfoCreator(uiState = uiState, onCreatorClick = onCreatorClick)
+        // Info about the creator
+        InfoCreator(uiState = uiState, onCreatorClick = onCreatorClick)
 
-    HorizontalDivider()
+        HorizontalDivider()
 
-    // Info about the courses
-    InfoListing(uiState)
+        // Info about the courses
+        InfoListing(uiState)
 
-    HorizontalDivider()
+        HorizontalDivider()
 
-    // Schedule
-    InfoSchedule(uiState)
+        // Schedule
+        InfoSchedule(uiState)
 
-    HorizontalDivider()
+        HorizontalDivider()
 
-    // Description
-    InfoDesc(uiState)
+        // Description
+        InfoDesc(uiState)
 
-    HorizontalDivider()
-    // Let the student mark the session as completed once it is confirmed
-    if (uiState.booking.status == BookingStatus.CONFIRMED) {
-      ConfirmCompletionSection(onMarkCompleted)
-    }
+        HorizontalDivider()
+        // Let the student mark the session as completed once it is confirmed
+        if (uiState.booking.status == BookingStatus.CONFIRMED) {
+          ConfirmCompletionSection(onMarkCompleted)
+        }
 
-    // Once the session is completed, allow the student to rate the tutor and listing
-    if (uiState.booking.status == BookingStatus.COMPLETED) {
-      StudentRatingSection(
-          ratingSubmitted = uiState.ratingSubmitted,
-          onSubmitStudentRatings = onSubmitStudentRatings)
-    }
-  }
+        // Once the session is completed, allow the student to rate the tutor and listing
+        if (uiState.booking.status == BookingStatus.COMPLETED) {
+          StudentRatingSection(
+              ratingSubmitted = uiState.ratingSubmitted,
+              onSubmitStudentRatings = onSubmitStudentRatings)
+        }
+
+        // Accept/Deny buttons for tutors when a listing is booked
+        if (uiState.booking.status == BookingStatus.PENDING && uiState.isTutor) {
+          Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            Button(onClick = { uiState.onAcceptBooking() }) { Text("Accept") }
+            Button(onClick = { uiState.onDenyBooking() }) { Text("Deny") }
+          }
+        }
+
+        // Payment actions based on the payment status - only for CONFIRMED bookings
+        if (uiState.booking.status == BookingStatus.CONFIRMED) {
+          PaymentActionSection(
+              booking = uiState.booking,
+              isTutor = uiState.isTutor,
+              onPaymentComplete = onPaymentComplete,
+              onPaymentReceived = onPaymentReceived)
+        }
+      }
 }
 
 /**
@@ -497,5 +525,89 @@ private fun StudentRatingSection(
             modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
               Text("Submit ratings")
             }
+      }
+}
+
+/**
+ * Composable function that displays payment action buttons based on the payment status of the
+ * booking.
+ *
+ * @param booking The booking object containing payment status information.
+ * @param isTutor Whether the current user is the tutor (listing creator).
+ * @param onPaymentComplete Callback invoked when the "Payment Complete" button is clicked.
+ * @param onPaymentReceived Callback invoked when the "Payment Received" button is clicked.
+ */
+@Composable
+private fun PaymentActionSection(
+    booking: Booking,
+    isTutor: Boolean,
+    onPaymentComplete: () -> Unit,
+    onPaymentReceived: () -> Unit
+) {
+  // Always display the current payment status
+  Column(
+      modifier = Modifier.fillMaxWidth(),
+      verticalArrangement = Arrangement.spacedBy(8.dp),
+      horizontalAlignment = Alignment.CenterHorizontally) {
+        // Display current payment status
+        Text(
+            text = "Payment Status: ${booking.paymentStatus.name()}",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary)
+
+        // Show appropriate action based on payment status and user role
+        when (booking.paymentStatus) {
+          PaymentStatus.PENDING_PAYMENT -> {
+            // Student (booker) sees the payment complete button
+            if (!isTutor) {
+              Text(
+                  text =
+                      "Once you've paid for the session, click the button below to notify the tutor.",
+                  style = MaterialTheme.typography.bodyMedium,
+              )
+              Button(
+                  onClick = onPaymentComplete,
+                  modifier = Modifier.testTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)) {
+                    Text("Payment Complete")
+                  }
+            } else {
+              // Tutor sees waiting message
+              Text(
+                  text = "Waiting for the student to complete the payment.",
+                  style = MaterialTheme.typography.bodyMedium,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+          }
+          PaymentStatus.PAID -> {
+            // Tutor (listing creator) sees the payment received button
+            if (isTutor) {
+              Text(
+                  text =
+                      "The student has marked the payment as complete. Confirm once you've received it.",
+                  style = MaterialTheme.typography.bodyMedium,
+              )
+              Button(
+                  onClick = onPaymentReceived,
+                  modifier = Modifier.testTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)) {
+                    Text("Payment Received")
+                  }
+            } else {
+              // Student sees waiting message
+              Text(
+                  text = "Waiting for the tutor to confirm receipt of payment.",
+                  style = MaterialTheme.typography.bodyMedium,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+          }
+          PaymentStatus.CONFIRMED -> {
+            // Both users see confirmation message
+            Text(
+                text = "Payment has been successfully completed and confirmed!",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+                fontWeight = FontWeight.SemiBold)
+          }
+        }
       }
 }

@@ -69,7 +69,8 @@ fun LazyListScope.bookingsSection(
             booking = booking,
             bookerProfile = uiState.bookerProfiles[booking.bookerId],
             onApprove = { onApproveBooking(booking.bookingId) },
-            onReject = { onRejectBooking(booking.bookingId) })
+            onReject = { onRejectBooking(booking.bookingId) },
+            currentUserId = uiState.currentUserId)
       }
     }
   }

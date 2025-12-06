@@ -58,7 +58,8 @@ object ListingScreenTestTags {
   const val DATE_PICKER_CANCEL_BUTTON = "listingScreenDatePickerCancelButton"
   const val TIME_PICKER_OK_BUTTON = "listingScreenTimePickerOkButton"
   const val TIME_PICKER_CANCEL_BUTTON = "listingScreenTimePickerCancelButton"
-
+  const val PAYMENT_COMPLETE_BUTTON = "listingScreenPaymentCompleteButton"
+  const val PAYMENT_RECEIVED_BUTTON = "listingScreenPaymentReceivedButton"
   const val TUTOR_RATING_SECTION = "listing_tutor_rating_section"
   const val TUTOR_RATING_STARS = "listing_tutor_rating_stars"
   const val TUTOR_RATING_SUBMIT = "listing_tutor_rating_submit"
@@ -94,19 +95,36 @@ fun ListingScreen(
     }
   }
 
-  // Helper function to handle success dialog dismissal
-  val handleSuccessDismiss: () -> Unit = {
-    viewModel.clearBookingSuccess()
-    onNavigateBack()
-  }
-
   // Show success dialog when booking is created
   if (uiState.bookingSuccess) {
+    val successMessage = buildString {
+      append(ListingViewModel.MSG_BOOKING_SUCCESS)
+      if (uiState.conversationCreationWarning != null) {
+        append(
+            "\n\nNote: ${uiState.conversationCreationWarning} ${ListingViewModel.MSG_CONVERSATION_ALTERNATIVE}")
+      } else {
+        append("\n\n${ListingViewModel.MSG_CONVERSATION_SUCCESS}")
+      }
+    }
+
     AlertDialog(
-        onDismissRequest = handleSuccessDismiss,
+        onDismissRequest = {
+          viewModel.clearBookingSuccess()
+          viewModel.clearConversationWarning()
+          onNavigateBack()
+        },
         title = { Text("Booking Created") },
-        text = { Text("Your booking has been created successfully and is pending confirmation.") },
-        confirmButton = { Button(onClick = handleSuccessDismiss) { Text("OK") } },
+        text = { Text(successMessage) },
+        confirmButton = {
+          Button(
+              onClick = {
+                viewModel.clearBookingSuccess()
+                viewModel.clearConversationWarning()
+                onNavigateBack()
+              }) {
+                Text("OK")
+              }
+        },
         modifier = Modifier.testTag(ListingScreenTestTags.SUCCESS_DIALOG))
   }
 

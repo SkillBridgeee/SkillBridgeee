@@ -58,7 +58,7 @@ object FirebaseEmulator {
       try {
         val settings =
             FirebaseFirestoreSettings.Builder()
-                .setPersistenceEnabled(false) // Disable persistence for tests
+                .setPersistenceEnabled(true) // Disable persistence for tests
                 .build()
         firestore.firestoreSettings = settings
         Log.i("FirebaseEmulator", "Firestore settings configured successfully")

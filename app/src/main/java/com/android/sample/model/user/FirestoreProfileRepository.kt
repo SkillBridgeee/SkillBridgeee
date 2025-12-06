@@ -1,5 +1,6 @@
 package com.android.sample.model.user
 
+import android.content.Context
 import com.android.sample.model.ValidationUtils
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
@@ -12,7 +13,8 @@ const val PROFILES_COLLECTION_PATH = "profiles"
 
 class FirestoreProfileRepository(
     private val db: FirebaseFirestore,
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val context: Context
 ) : ProfileRepository {
 
   private companion object {
@@ -26,8 +28,27 @@ class FirestoreProfileRepository(
         Regex("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", RegexOption.IGNORE_CASE)
   }
 
-  private val currentUserId: String
-    get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
+  /**
+   * Gets the currently authenticated user's ID
+   *
+   * @return The user ID of the currently authenticated user
+   * @throws ProfileAuthenticationException if no user is authenticated
+   */
+  override fun getCurrentUserId(): String {
+    return auth.currentUser?.uid ?: throw ProfileAuthenticationException()
+  }
+
+  fun isOnline(): Boolean {
+    val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+    val network = connectivityManager.activeNetwork
+    val capabilities = connectivityManager.getNetworkCapabilities(network)
+
+    return capabilities != null &&
+        (capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
+            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
+            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET))
+  }
 
   override fun getNewUid(): String {
     return UUID.randomUUID().toString()
@@ -41,45 +62,57 @@ class FirestoreProfileRepository(
       }
       document.toObject(Profile::class.java)
     } catch (e: Exception) {
-      throw Exception("Failed to get profile for user $userId: ${e.message}")
+      throw ProfileFirestoreException("Failed to get profile for user $userId: ${e.message}", e)
     }
   }
 
   override suspend fun addProfile(profile: Profile) {
     try {
-      if (profile.userId != currentUserId) {
-        throw Exception("Access denied: You can only create a profile for yourself.")
+      if (profile.userId != getCurrentUserId()) {
+        throw ProfileAccessDeniedException("You can only create a profile for yourself")
       }
 
       val cleaned = validateAndClean(profile)
 
       db.collection(PROFILES_COLLECTION_PATH).document(cleaned.userId).set(cleaned).await()
+    } catch (e: ProfileAuthenticationException) {
+      throw e
+    } catch (e: ProfileAccessDeniedException) {
+      throw e
     } catch (e: Exception) {
-      throw Exception("Failed to add profile: ${e.message}")
+      throw ProfileFirestoreException("Failed to add profile: ${e.message}", e)
     }
   }
 
   override suspend fun updateProfile(userId: String, profile: Profile) {
     try {
-      if (userId != currentUserId) {
-        throw Exception("Access denied: You can only update your own profile.")
+      if (userId != getCurrentUserId()) {
+        throw ProfileAccessDeniedException("You can only update your own profile")
       }
       ValidationUtils.requireId(userId, "userId")
       val cleaned = validateAndClean(profile.copy(userId = userId))
       db.collection(PROFILES_COLLECTION_PATH).document(userId).set(cleaned).await()
+    } catch (e: ProfileAuthenticationException) {
+      throw e
+    } catch (e: ProfileAccessDeniedException) {
+      throw e
     } catch (e: Exception) {
-      throw Exception("Failed to update profile for user $userId: ${e.message}")
+      throw ProfileFirestoreException("Failed to update profile for user $userId: ${e.message}", e)
     }
   }
 
   override suspend fun deleteProfile(userId: String) {
     try {
-      if (userId != currentUserId) {
-        throw Exception("Access denied: You can only delete your own profile.")
+      if (userId != getCurrentUserId()) {
+        throw ProfileAccessDeniedException("You can only delete your own profile")
       }
       db.collection(PROFILES_COLLECTION_PATH).document(userId).delete().await()
+    } catch (e: ProfileAuthenticationException) {
+      throw e
+    } catch (e: ProfileAccessDeniedException) {
+      throw e
     } catch (e: Exception) {
-      throw Exception("Failed to delete profile for user $userId: ${e.message}")
+      throw ProfileFirestoreException("Failed to delete profile for user $userId: ${e.message}", e)
     }
   }
 
@@ -88,7 +121,7 @@ class FirestoreProfileRepository(
       val snapshot = db.collection(PROFILES_COLLECTION_PATH).get().await()
       return snapshot.toObjects(Profile::class.java)
     } catch (e: Exception) {
-      throw Exception("Failed to fetch all profiles: ${e.message}")
+      throw ProfileFirestoreException("Failed to fetch all profiles: ${e.message}", e)
     }
   }
 
@@ -117,7 +150,7 @@ class FirestoreProfileRepository(
               .await()
       return snapshot.toObjects(Skill::class.java)
     } catch (e: Exception) {
-      throw Exception("Failed to get skills for user $userId: ${e.message}")
+      throw ProfileFirestoreException("Failed to get skills for user $userId: ${e.message}", e)
     }
   }
 
@@ -182,12 +215,17 @@ class FirestoreProfileRepository(
       averageRating: Double,
       totalRatings: Int
   ) {
-    val updates =
-        mapOf(
-            "tutorRating.averageRating" to averageRating,
-            "tutorRating.totalRatings" to totalRatings)
+    try {
+      val updates =
+          mapOf(
+              "tutorRating.averageRating" to averageRating,
+              "tutorRating.totalRatings" to totalRatings)
 
-    db.collection(PROFILES_COLLECTION_PATH).document(userId).update(updates).await()
+      db.collection(PROFILES_COLLECTION_PATH).document(userId).update(updates).await()
+    } catch (e: Exception) {
+      throw ProfileFirestoreException(
+          "Failed to update tutor rating for user $userId: ${e.message}", e)
+    }
   }
 
   override suspend fun updateStudentRatingFields(
@@ -203,7 +241,8 @@ class FirestoreProfileRepository(
 
       db.collection(PROFILES_COLLECTION_PATH).document(userId).update(updates).await()
     } catch (e: Exception) {
-      throw Exception("Failed to update student rating for user $userId: ${e.message}")
+      throw ProfileFirestoreException(
+          "Failed to update student rating for user $userId: ${e.message}", e)
     }
   }
 }

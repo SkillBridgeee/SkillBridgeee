@@ -11,6 +11,6 @@ object ProfileRepositoryProvider : RepositoryProvider<ProfileRepository>() {
     if (FirebaseApp.getApps(context).isEmpty()) {
       FirebaseApp.initializeApp(context)
     }
-    _repository = FirestoreProfileRepository(Firebase.firestore)
+    _repository = FirestoreProfileRepository(Firebase.firestore, context = context)
   }
 }

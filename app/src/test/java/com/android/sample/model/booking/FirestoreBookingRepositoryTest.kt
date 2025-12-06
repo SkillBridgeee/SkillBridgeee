@@ -1,5 +1,7 @@
 package com.android.sample.model.booking
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.android.sample.utils.FirebaseEmulator
 import com.android.sample.utils.RepositoryTest
 import com.google.firebase.auth.FirebaseAuth
@@ -25,6 +27,8 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
   private lateinit var firestore: FirebaseFirestore
   private lateinit var auth: FirebaseAuth
 
+  private val context = ApplicationProvider.getApplicationContext<Context>()
+
   @Before
   override fun setUp() {
     super.setUp()
@@ -36,7 +40,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { auth.currentUser } returns mockUser
     every { mockUser.uid } returns testUserId // testUserId is "test-user-id" from RepositoryTest
 
-    bookingRepository = FirestoreBookingRepository(firestore, auth)
+    bookingRepository = FirestoreBookingRepository(firestore, auth, context)
     BookingRepositoryProvider.setForTests(bookingRepository)
   }
 
@@ -190,7 +194,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { anotherAuth.currentUser } returns anotherUser
     every { anotherUser.uid } returns "another-user-id"
 
-    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth)
+    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth, context)
     val booking =
         Booking(
             bookingId = "booking1",
@@ -343,7 +347,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { anotherAuth.currentUser } returns anotherUser
     every { anotherUser.uid } returns "another-user-id"
 
-    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth)
+    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth, context)
     val booking =
         Booking(
             bookingId = "booking1",
@@ -467,7 +471,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { studentAuth.currentUser } returns studentUser
     every { studentUser.uid } returns "student1"
 
-    val studentRepo = FirestoreBookingRepository(firestore, studentAuth)
+    val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
     val booking =
         Booking(
             bookingId = "booking1",
@@ -504,7 +508,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { studentAuth.currentUser } returns studentUser
     every { studentUser.uid } returns "student1"
 
-    val studentRepo = FirestoreBookingRepository(firestore, studentAuth)
+    val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
     val booking2 =
         Booking(
             bookingId = "booking2",
@@ -567,7 +571,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { studentAuth.currentUser } returns studentUser
     every { studentUser.uid } returns "student1"
 
-    val studentRepo = FirestoreBookingRepository(firestore, studentAuth)
+    val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
     val booking2 =
         Booking(
             bookingId = "booking2",
@@ -593,7 +597,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { user123Auth.currentUser } returns user123User
     every { user123User.uid } returns "user123"
 
-    val user123Repo = FirestoreBookingRepository(firestore, user123Auth)
+    val user123Repo = FirestoreBookingRepository(firestore, user123Auth, context)
     val booking =
         Booking(
             bookingId = "booking1",
@@ -607,6 +611,12 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     val bookings = bookingRepository.getBookingsByUserId("user123")
     assertEquals(1, bookings.size)
     assertEquals("booking1", bookings[0].bookingId)
+  }
+
+  @Test
+  fun isOnlineReturnsTrueWhenOnline() {
+    val repo = FirestoreBookingRepository(firestore, auth, context)
+    assertEquals(repo.isOnline(), true)
   }
 
   @Test
@@ -634,7 +644,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { user123Auth.currentUser } returns user123User
     every { user123User.uid } returns "user123"
 
-    val user123Repo = FirestoreBookingRepository(firestore, user123Auth)
+    val user123Repo = FirestoreBookingRepository(firestore, user123Auth, context)
 
     // Booking where target user123 is booker
     val booking1 =
@@ -693,7 +703,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { user123Auth.currentUser } returns user123User
     every { user123User.uid } returns "user123"
 
-    val user123Repo = FirestoreBookingRepository(firestore, user123Auth)
+    val user123Repo = FirestoreBookingRepository(firestore, user123Auth, context)
 
     // Later booking where user123 is booker
     val booking1 =
@@ -738,7 +748,7 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     every { anotherAuth.currentUser } returns anotherUser
     every { anotherUser.uid } returns "another-user-id"
 
-    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth)
+    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth, context)
     val booking =
         Booking(
             bookingId = "booking1",
@@ -752,5 +762,184 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     // Current user should not see this booking
     val bookings = bookingRepository.getAllBookings()
     assertEquals(0, bookings.size)
+  }
+
+  // ----------------------------
+  // Payment Status Tests
+  // ----------------------------
+
+  @Test
+  fun updatePaymentStatus_successfullyUpdatesToPayed() = runTest {
+    val booking =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            status = BookingStatus.CONFIRMED,
+            paymentStatus = PaymentStatus.PENDING_PAYMENT)
+    bookingRepository.addBooking(booking)
+
+    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAID)
+
+    val retrievedBooking = bookingRepository.getBooking("booking1")
+    assertNotNull(retrievedBooking)
+    assertEquals(PaymentStatus.PAID, retrievedBooking!!.paymentStatus)
+  }
+
+  @Test
+  fun updatePaymentStatus_successfullyUpdatesToConfirmed() = runTest {
+    val booking =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = testUserId,
+            bookerId = "student1",
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            status = BookingStatus.CONFIRMED,
+            paymentStatus = PaymentStatus.PAID)
+
+    // Create booking as student first
+    val studentAuth = mockk<FirebaseAuth>()
+    val studentUser = mockk<FirebaseUser>()
+    every { studentAuth.currentUser } returns studentUser
+    every { studentUser.uid } returns "student1"
+    val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
+    studentRepo.addBooking(booking)
+
+    // Update payment status as tutor (listing creator)
+    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.CONFIRMED)
+
+    val retrievedBooking = bookingRepository.getBooking("booking1")
+    assertNotNull(retrievedBooking)
+    assertEquals(PaymentStatus.CONFIRMED, retrievedBooking!!.paymentStatus)
+  }
+
+  @Test
+  fun updatePaymentStatus_failsForNonExistentBooking() {
+    assertThrows(Exception::class.java) {
+      runTest { bookingRepository.updatePaymentStatus("non-existent", PaymentStatus.PAID) }
+    }
+  }
+
+  @Test
+  fun updatePaymentStatus_failsWhenUserHasNoAccess() = runTest {
+    // Create booking as different user
+    val anotherAuth = mockk<FirebaseAuth>()
+    val anotherUser = mockk<FirebaseUser>()
+    every { anotherAuth.currentUser } returns anotherUser
+    every { anotherUser.uid } returns "another-user"
+
+    val anotherRepo = FirestoreBookingRepository(firestore, anotherAuth, context)
+    val booking =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = "another-user",
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            paymentStatus = PaymentStatus.PENDING_PAYMENT)
+    anotherRepo.addBooking(booking)
+
+    // Try to update payment status as testUserId (who is neither booker nor creator)
+    assertThrows(Exception::class.java) {
+      runTest { bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAID) }
+    }
+  }
+
+  @Test
+  fun updatePaymentStatus_preservesOtherBookingFields() = runTest {
+    val originalBooking =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            status = BookingStatus.CONFIRMED,
+            paymentStatus = PaymentStatus.PENDING_PAYMENT,
+            price = 75.0)
+    bookingRepository.addBooking(originalBooking)
+
+    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAID)
+
+    val retrievedBooking = bookingRepository.getBooking("booking1")
+    assertNotNull(retrievedBooking)
+    assertEquals("booking1", retrievedBooking!!.bookingId)
+    assertEquals("listing1", retrievedBooking.associatedListingId)
+    assertEquals("tutor1", retrievedBooking.listingCreatorId)
+    assertEquals(testUserId, retrievedBooking.bookerId)
+    assertEquals(BookingStatus.CONFIRMED, retrievedBooking.status)
+    assertEquals(75.0, retrievedBooking.price, 0.01)
+    assertEquals(PaymentStatus.PAID, retrievedBooking.paymentStatus)
+  }
+
+  @Test
+  fun newBooking_hasDefaultPaymentStatusPendingPayment() = runTest {
+    val booking =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000))
+    bookingRepository.addBooking(booking)
+
+    val retrievedBooking = bookingRepository.getBooking("booking1")
+    assertNotNull(retrievedBooking)
+    assertEquals(PaymentStatus.PENDING_PAYMENT, retrievedBooking!!.paymentStatus)
+  }
+
+  @Test
+  fun updatePaymentStatus_canUpdateAsBooker() = runTest {
+    val booking =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = "tutor1",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            paymentStatus = PaymentStatus.PENDING_PAYMENT)
+    bookingRepository.addBooking(booking)
+
+    // Update as booker
+    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.PAID)
+
+    val retrievedBooking = bookingRepository.getBooking("booking1")
+    assertEquals(PaymentStatus.PAID, retrievedBooking!!.paymentStatus)
+  }
+
+  @Test
+  fun updatePaymentStatus_canUpdateAsListingCreator() = runTest {
+    // Create booking as student where testUserId is the listing creator
+    val studentAuth = mockk<FirebaseAuth>()
+    val studentUser = mockk<FirebaseUser>()
+    every { studentAuth.currentUser } returns studentUser
+    every { studentUser.uid } returns "student1"
+
+    val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
+    val booking =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = testUserId,
+            bookerId = "student1",
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            paymentStatus = PaymentStatus.PAID)
+    studentRepo.addBooking(booking)
+
+    // Update as listing creator (testUserId)
+    bookingRepository.updatePaymentStatus("booking1", PaymentStatus.CONFIRMED)
+
+    val retrievedBooking = bookingRepository.getBooking("booking1")
+    assertEquals(PaymentStatus.CONFIRMED, retrievedBooking!!.paymentStatus)
   }
 }

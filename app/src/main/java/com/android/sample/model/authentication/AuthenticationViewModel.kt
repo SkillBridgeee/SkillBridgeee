@@ -222,6 +222,11 @@ class AuthenticationViewModel(
     }
   }
 
+  /** Clear auth result - used after navigation to prevent re-navigation */
+  fun clearAuthResult() {
+    _authResult.value = null
+  }
+
   /** Set error message */
   fun setError(message: String) {
     _uiState.update { it.copy(error = message, isLoading = false) }

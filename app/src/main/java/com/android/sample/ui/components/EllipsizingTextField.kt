@@ -15,10 +15,13 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
+// Add leadingIcon and enabled to the style to reduce top-level parameters
 data class EllipsizingTextFieldStyle(
     val shape: RoundedCornerShape? = null,
     val colors: TextFieldColors? = null,
-    val keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+    val keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    val leadingIcon: (@Composable (() -> Unit))? = null,
+    val enabled: Boolean = true
 )
 
 @Suppress("LongParameterList")
@@ -29,8 +32,7 @@ fun EllipsizingTextField(
     placeholder: String,
     modifier: Modifier = Modifier,
     maxPreviewLength: Int = 40,
-    style: EllipsizingTextFieldStyle = EllipsizingTextFieldStyle(),
-    leadingIcon: (@Composable (() -> Unit))? = null,
+    style: EllipsizingTextFieldStyle = EllipsizingTextFieldStyle()
 ) {
   var focused by remember { mutableStateOf(false) }
 
@@ -57,9 +59,10 @@ fun EllipsizingTextField(
       placeholder = { Text(placeholder) },
       singleLine = true,
       maxLines = 1,
+      enabled = style.enabled,
       shape = shape,
       visualTransformation = transform,
-      leadingIcon = leadingIcon,
+      leadingIcon = style.leadingIcon,
       keyboardOptions = style.keyboardOptions,
       colors =
           colors.copy(

@@ -22,7 +22,8 @@ import kotlinx.coroutines.launch
  *
  * @property welcomeMessage A greeting message for the current user.
  * @property subjects A list of subjects for the List to display.
- * @property tutors A list of tutor cards prepared for display.
+ * @property proposals A list of active proposals to display.
+ * @property requests A list of active requests to display.
  */
 data class HomeUiState(
     val welcomeMessage: String = "Welcome back!",
@@ -74,7 +75,9 @@ class MainPageViewModel(
 
         _uiState.update { current ->
           current.copy(
-              welcomeMessage = welcomeMsg, proposals = topProposals, requests = topRequests
+              welcomeMessage = welcomeMsg ?: current.welcomeMessage,
+              proposals = topProposals,
+              requests = topRequests
               // subjects stays whatever it was (currently the default)
               )
         }
@@ -117,10 +120,17 @@ class MainPageViewModel(
    * message if the name is available. If the username cannot be fetched, it falls back to a generic
    * welcome message.
    *
-   * @return A welcome message string, personalized when possible.
+   * @return A welcome message string, personalized when possible, or null if user lookup failed.
    */
-  private suspend fun getWelcomeMsg(): String {
+  private suspend fun getWelcomeMsg(): String? {
     val userName = runCatching { getUserName() }.getOrNull()
-    return if (userName != null) "Welcome back, $userName!" else "Welcome back!"
+    // If we got a user ID but no profile, return generic message
+    // If we couldn't get user ID at all, return null to keep previous message
+    val userId = UserSessionManager.getCurrentUserId()
+    return if (userId != null) {
+      if (userName != null) "Welcome back, $userName!" else "Welcome back!"
+    } else {
+      null // No user ID means temporary auth issue, keep previous message
+    }
   }
 }

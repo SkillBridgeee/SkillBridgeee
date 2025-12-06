@@ -5,6 +5,8 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.newImplementation.conversation.MessageNew
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -73,6 +75,7 @@ class DiscussionViewModelTest {
               otherPersonId = "user3"))
 
   @Mock private lateinit var mockRepository: OverViewConvRepository
+  @Mock private lateinit var mockProfileRepository: ProfileRepository
 
   private lateinit var viewModel: DiscussionViewModel
 
@@ -81,6 +84,7 @@ class DiscussionViewModelTest {
     MockitoAnnotations.openMocks(this)
     Dispatchers.setMain(testDispatcher)
     UserSessionManager.setCurrentUserId(currentUserId)
+    ProfileRepositoryProvider.setForTests(mockProfileRepository)
     `when`(mockRepository.listenOverView(currentUserId)).thenReturn(flowOf(sampleConversations))
     viewModel = DiscussionViewModel(overViewConvRepository = mockRepository)
   }
@@ -89,6 +93,7 @@ class DiscussionViewModelTest {
   fun tearDown() {
     Dispatchers.resetMain()
     UserSessionManager.clearSession()
+    ProfileRepositoryProvider.clearForTests()
   }
 
   @Test

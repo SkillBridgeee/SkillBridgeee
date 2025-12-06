@@ -11,6 +11,6 @@ object RatingRepositoryProvider : RepositoryProvider<RatingRepository>() {
     if (FirebaseApp.getApps(context).isEmpty()) {
       FirebaseApp.initializeApp(context)
     }
-    _repository = FirestoreRatingRepository(Firebase.firestore)
+    _repository = FirestoreRatingRepository(Firebase.firestore, context = context)
   }
 }

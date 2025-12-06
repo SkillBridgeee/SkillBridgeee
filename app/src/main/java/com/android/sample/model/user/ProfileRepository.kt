@@ -27,4 +27,6 @@ interface ProfileRepository {
   suspend fun updateTutorRatingFields(userId: String, averageRating: Double, totalRatings: Int)
 
   suspend fun updateStudentRatingFields(userId: String, averageRating: Double, totalRatings: Int)
+
+  fun getCurrentUserId(): String
 }

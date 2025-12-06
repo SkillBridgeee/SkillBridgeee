@@ -215,9 +215,6 @@ dependencies {
     // Instrumentation
     androidTestImplementation("io.mockk:mockk-android:1.13.11")
 
-    // Compose testing
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4:<compose_version>")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:<compose_version>")
 
     // AndroidX test libs
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

@@ -2,6 +2,7 @@ package com.android.sample.utils.fakeRepo.fakeBooking
 
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.booking.PaymentStatus
 import java.io.IOException
 
 /**
@@ -56,6 +57,10 @@ class FakeBookingError : FakeBookingRepo {
 
   override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
     throw IOException("Failed to update booking status (mock error).")
+  }
+
+  override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {
+    throw IOException("Failed to update payment status (mock error).")
   }
 
   override suspend fun confirmBooking(bookingId: String) {

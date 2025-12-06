@@ -1,5 +1,8 @@
 package com.android.sample.model.booking
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -10,12 +13,25 @@ const val BOOKINGS_COLLECTION_PATH = "bookings"
 
 class FirestoreBookingRepository(
     private val db: FirebaseFirestore,
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val context: Context
 ) : BookingRepository {
 
   // Helper property to get current user ID
   private val currentUserId: String
     get() = auth.currentUser?.uid ?: throw Exception("User not authenticated")
+
+  fun isOnline(): Boolean {
+    val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val network = connectivityManager.activeNetwork
+    val capabilities = connectivityManager.getNetworkCapabilities(network)
+
+    return capabilities != null &&
+        (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
+  }
 
   override fun getNewUid(): String {
     return UUID.randomUUID().toString()
@@ -140,8 +156,11 @@ class FirestoreBookingRepository(
       if (booking.bookerId != currentUserId) {
         throw Exception("Access denied: Can only create bookings for yourself")
       }
-
-      db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking).await()
+      if (isOnline()) {
+        db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking).await()
+      } else {
+        db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking)
+      }
     } catch (e: Exception) {
       throw Exception("Failed to add booking: ${e.message}")
     }
@@ -162,7 +181,11 @@ class FirestoreBookingRepository(
               "Access denied: Cannot update booking that doesn't belong to current user")
         }
 
-        documentRef.set(booking).await()
+        if (isOnline()) {
+          documentRef.set(booking).await()
+        } else {
+          documentRef.set(booking)
+        }
       } else {
         throw Exception("Booking with ID $bookingId not found")
       }
@@ -184,22 +207,76 @@ class FirestoreBookingRepository(
   override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
     try {
       val documentRef = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId)
-      val documentSnapshot = documentRef.get().await()
 
-      if (documentSnapshot.exists()) {
-        val booking = documentSnapshot.toObject(Booking::class.java)
+      // Use transaction for atomicity
+      db.runTransaction { transaction ->
+            val snapshot = transaction[documentRef]
 
-        // Verify user has access
-        if (booking?.bookerId != currentUserId && booking?.listingCreatorId != currentUserId) {
-          throw Exception("Access denied: Cannot update booking status")
-        }
+            if (!snapshot.exists()) {
+              throw BookingNotFoundException(bookingId)
+            }
 
-        documentRef.update("status", status).await()
-      } else {
-        throw Exception("Booking with ID $bookingId not found")
-      }
+            val booking =
+                snapshot.toObject(Booking::class.java)
+                    ?: throw BookingFirestoreException("Failed to parse booking data")
+
+            // Verify user has access
+            if (booking.bookerId != currentUserId && booking.listingCreatorId != currentUserId) {
+              throw BookingAccessDeniedException(
+                  "Cannot update booking status for booking $bookingId")
+            }
+
+            // Update the status
+            transaction.update(documentRef, "status", status)
+            null
+          }
+          .await()
+    } catch (e: BookingAuthenticationException) {
+      throw e
+    } catch (e: BookingAccessDeniedException) {
+      throw e
+    } catch (e: BookingNotFoundException) {
+      throw e
     } catch (e: Exception) {
-      throw Exception("Failed to update booking status: ${e.message}")
+      throw BookingFirestoreException("Failed to update booking status: ${e.message}", e)
+    }
+  }
+
+  override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {
+    try {
+      val documentRef = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId)
+
+      // Use transaction for atomicity
+      db.runTransaction { transaction ->
+            val snapshot = transaction[documentRef]
+
+            if (!snapshot.exists()) {
+              throw BookingNotFoundException(bookingId)
+            }
+
+            val booking =
+                snapshot.toObject(Booking::class.java)
+                    ?: throw BookingFirestoreException("Failed to parse booking data")
+
+            // Verify user has access
+            if (booking.bookerId != currentUserId && booking.listingCreatorId != currentUserId) {
+              throw BookingAccessDeniedException(
+                  "Cannot update payment status for booking $bookingId")
+            }
+
+            // Update the payment status
+            transaction.update(documentRef, "paymentStatus", paymentStatus)
+            null
+          }
+          .await()
+    } catch (e: BookingAuthenticationException) {
+      throw e
+    } catch (e: BookingAccessDeniedException) {
+      throw e
+    } catch (e: BookingNotFoundException) {
+      throw e
+    } catch (e: Exception) {
+      throw BookingFirestoreException("Failed to update payment status: ${e.message}", e)
     }
   }
 
