@@ -1,11 +1,11 @@
 package com.android.sample.model.communication.newImplementation
 
 import android.util.Log
-import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.Conversation
-import com.android.sample.model.communication.newImplementation.conversation.Message
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import kotlinx.coroutines.flow.Flow
 
 class ConversationManager(

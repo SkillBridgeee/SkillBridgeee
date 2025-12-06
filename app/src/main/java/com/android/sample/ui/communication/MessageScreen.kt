@@ -16,7 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.android.sample.model.communication.newImplementation.conversation.Message
+import com.android.sample.model.communication.conversation.Message
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

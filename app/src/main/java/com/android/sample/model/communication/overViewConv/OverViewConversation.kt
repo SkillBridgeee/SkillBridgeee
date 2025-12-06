@@ -1,6 +1,6 @@
-package com.android.sample.model.communication.newImplementation.overViewConv
+package com.android.sample.model.communication.overViewConv
 
-import com.android.sample.model.communication.newImplementation.conversation.Message
+import com.android.sample.model.communication.conversation.Message
 
 /**
  * Represents a summary or overview of a conversation for a user.

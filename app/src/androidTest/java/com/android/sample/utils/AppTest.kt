@@ -21,8 +21,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.BookingRepositoryProvider
-import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider

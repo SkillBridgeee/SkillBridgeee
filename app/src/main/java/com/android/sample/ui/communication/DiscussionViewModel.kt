@@ -4,9 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlinx.coroutines.flow.MutableStateFlow

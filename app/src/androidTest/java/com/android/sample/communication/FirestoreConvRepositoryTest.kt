@@ -1,10 +1,10 @@
 package com.android.sample.communication
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.sample.model.communication.newImplementation.conversation.BLANK_CONVID_ERR_MSG
-import com.android.sample.model.communication.newImplementation.conversation.Conversation
-import com.android.sample.model.communication.newImplementation.conversation.FirestoreConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.Message
+import com.android.sample.model.communication.conversation.BLANK_CONVID_ERR_MSG
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.FirestoreConvRepository
+import com.android.sample.model.communication.conversation.Message
 import com.android.sample.utils.TestFirestore
 import java.util.UUID
 import junit.framework.TestCase.*

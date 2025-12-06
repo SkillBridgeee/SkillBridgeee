@@ -1,8 +1,8 @@
 package com.android.sample.model.communication.newImplementation
 
-import com.android.sample.model.communication.newImplementation.conversation.Conversation
-import com.android.sample.model.communication.newImplementation.conversation.Message
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import kotlinx.coroutines.flow.Flow
 
 interface ConversationManagerInter {

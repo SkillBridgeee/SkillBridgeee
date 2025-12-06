@@ -2,9 +2,9 @@ package com.android.sample.ui.communication
 
 import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.conversation.Message
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import java.util.Date

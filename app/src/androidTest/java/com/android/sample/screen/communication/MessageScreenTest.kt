@@ -10,11 +10,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.Message
 import com.android.sample.model.communication.newImplementation.ConversationManager
-import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.Conversation
-import com.android.sample.model.communication.newImplementation.conversation.Message
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo

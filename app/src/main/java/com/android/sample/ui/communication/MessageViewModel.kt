@@ -4,11 +4,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.conversation.Message
 import com.android.sample.model.communication.newImplementation.ConversationManager
 import com.android.sample.model.communication.newImplementation.ConversationManagerInter
-import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
-import com.android.sample.model.communication.newImplementation.conversation.Message
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import java.util.Date

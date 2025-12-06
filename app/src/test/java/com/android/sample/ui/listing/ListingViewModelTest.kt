@@ -6,10 +6,10 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
-import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal

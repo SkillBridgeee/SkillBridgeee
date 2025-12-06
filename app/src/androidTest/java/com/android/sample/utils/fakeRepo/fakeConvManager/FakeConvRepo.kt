@@ -1,8 +1,8 @@
 package com.android.sample.utils.fakeRepo.fakeConvManager
 
-import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.Conversation
-import com.android.sample.model.communication.newImplementation.conversation.Message
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.Message
 import com.google.firebase.Timestamp
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
