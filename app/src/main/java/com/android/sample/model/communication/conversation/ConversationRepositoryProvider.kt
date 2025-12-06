@@ -1,4 +1,4 @@
-package com.android.sample.model.communication.newImplementation.conversation
+package com.android.sample.model.communication.conversation
 
 import android.content.Context
 import com.android.sample.model.RepositoryProvider

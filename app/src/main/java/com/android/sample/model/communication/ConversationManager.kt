@@ -1,11 +1,11 @@
-package com.android.sample.model.communication.newImplementation
+package com.android.sample.model.communication
 
 import android.util.Log
-import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import kotlinx.coroutines.flow.Flow
 
 class ConversationManager(
@@ -54,7 +54,7 @@ class ConversationManager(
     Log.d(TAG, "Creating new conversation...")
     val convId = convRepo.getNewUid()
     val conversation =
-        ConversationNew(
+        Conversation(
             convId = convId,
             convCreatorId = creatorId,
             otherPersonId = otherUserId,
@@ -67,7 +67,7 @@ class ConversationManager(
             overViewId = overViewRepo.getNewUid(),
             linkedConvId = convId,
             convName = convName,
-            lastMsg = MessageNew(),
+            lastMsg = Message(),
             overViewOwnerId = creatorId,
             otherPersonId = otherUserId)
     val overviewOtherPerson =
@@ -108,12 +108,12 @@ class ConversationManager(
    * 2. Updates the last message in each user's overview.
    * 3. Increments the unread count for the message receiver.
    */
-  override suspend fun sendMessage(convId: String, message: MessageNew) {
+  override suspend fun sendMessage(convId: String, message: Message) {
     convRepo.sendMessage(convId, message)
     updateOverviewsAfterSend(convId, message)
   }
 
-  private suspend fun updateOverviewsAfterSend(convId: String, message: MessageNew) {
+  private suspend fun updateOverviewsAfterSend(convId: String, message: Message) {
     // Explicitly get sender and receiver to avoid any ambiguity
     val senderId = message.senderId
     val receiverId = message.receiverId
@@ -166,7 +166,7 @@ class ConversationManager(
    * @param convId The ID of the conversation.
    * @return A Flow that emits the updated list of messages whenever a new message arrives.
    */
-  override fun listenMessages(convId: String): Flow<List<MessageNew>> {
+  override fun listenMessages(convId: String): Flow<List<Message>> {
     return convRepo.listenMessages(convId)
   }
 
@@ -180,7 +180,7 @@ class ConversationManager(
     return overViewRepo.listenOverView(userId)
   }
 
-  override suspend fun getConv(convId: String): ConversationNew? {
+  override suspend fun getConv(convId: String): Conversation? {
     return convRepo.getConv(convId)
   }
 

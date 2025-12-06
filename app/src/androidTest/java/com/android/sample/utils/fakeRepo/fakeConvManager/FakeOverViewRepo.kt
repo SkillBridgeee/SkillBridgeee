@@ -1,7 +1,7 @@
 package com.android.sample.utils.fakeRepo.fakeConvManager
 
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import java.util.UUID
 import kotlinx.coroutines.flow.*
 

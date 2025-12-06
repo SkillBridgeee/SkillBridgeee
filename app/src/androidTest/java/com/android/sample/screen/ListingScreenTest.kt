@@ -9,13 +9,13 @@ import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.booking.PaymentStatus
-import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
-import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
@@ -104,15 +104,15 @@ class ListingScreenTest {
   private class FakeConvRepository : ConvRepository {
     override fun getNewUid() = "dummy-conv-id"
 
-    override suspend fun getConv(convId: String): ConversationNew? = null
+    override suspend fun getConv(convId: String): Conversation? = null
 
-    override suspend fun createConv(conversation: ConversationNew) {}
+    override suspend fun createConv(conversation: Conversation) {}
 
     override suspend fun deleteConv(convId: String) {}
 
-    override suspend fun sendMessage(convId: String, message: MessageNew) {}
+    override suspend fun sendMessage(convId: String, message: Message) {}
 
-    override fun listenMessages(convId: String): Flow<List<MessageNew>> = flowOf(emptyList())
+    override fun listenMessages(convId: String): Flow<List<Message>> = flowOf(emptyList())
   }
 
   private class FakeOverViewConvRepository : OverViewConvRepository {

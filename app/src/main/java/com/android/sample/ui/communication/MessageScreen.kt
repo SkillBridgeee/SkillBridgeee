@@ -16,7 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import com.android.sample.model.communication.conversation.Message
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,7 +83,7 @@ fun MessageScreen(
 }
 
 @Composable
-fun MessageBubble(message: MessageNew, isCurrentUser: Boolean) {
+fun MessageBubble(message: Message, isCurrentUser: Boolean) {
   val alignment = if (isCurrentUser) Alignment.CenterEnd else Alignment.CenterStart
   val backgroundColor =
       if (isCurrentUser) MaterialTheme.colorScheme.primaryContainer

@@ -4,11 +4,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.ConversationManager
-import com.android.sample.model.communication.newImplementation.ConversationManagerInter
-import com.android.sample.model.communication.newImplementation.conversation.ConversationRepositoryProvider
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.ConversationManager
+import com.android.sample.model.communication.ConversationManagerInter
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import java.util.Date
@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class ConvUIState(
-    val messages: List<MessageNew> = emptyList(),
+    val messages: List<Message> = emptyList(),
     val currentMessage: String = "",
     val currentUserId: String = "",
     val partnerName: String? = null,
@@ -140,7 +140,7 @@ class MessageViewModel(
     if (content.isBlank()) return
 
     val message =
-        MessageNew(
+        Message(
             msgId = convManager.getMessageNewUid(),
             senderId = senderId,
             receiverId = receiverId,

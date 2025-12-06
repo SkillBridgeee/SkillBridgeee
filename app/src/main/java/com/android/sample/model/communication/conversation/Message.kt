@@ -1,8 +1,8 @@
-package com.android.sample.model.communication.newImplementation.conversation
+package com.android.sample.model.communication.conversation
 
 import java.util.Date
 
-data class MessageNew(
+data class Message(
     val msgId: String = "",
     val content: String = "",
     val senderId: String = "",

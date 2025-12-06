@@ -10,11 +10,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.ConversationManager
-import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.ConversationManager
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
@@ -54,7 +54,7 @@ class MessageScreenTest {
 
     runBlocking {
       convRepo.createConv(
-          ConversationNew(convId = convId, convCreatorId = userA, otherPersonId = userB))
+          Conversation(convId = convId, convCreatorId = userA, otherPersonId = userB))
     }
   }
 
@@ -87,7 +87,7 @@ class MessageScreenTest {
     // Simule réception d’un message
     manager.sendMessage(
         convId,
-        MessageNew(
+        Message(
             msgId = "xyz",
             senderId = userB,
             receiverId = userA,
@@ -141,7 +141,7 @@ class MessageScreenTest {
     // Send multiple messages
     manager.sendMessage(
         convId,
-        MessageNew(
+        Message(
             msgId = "m1",
             senderId = userA,
             receiverId = userB,
@@ -150,7 +150,7 @@ class MessageScreenTest {
 
     manager.sendMessage(
         convId,
-        MessageNew(
+        Message(
             msgId = "m2",
             senderId = userB,
             receiverId = userA,

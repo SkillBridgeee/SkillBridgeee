@@ -8,8 +8,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsViewModel
