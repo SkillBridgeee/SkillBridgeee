@@ -1,4 +1,4 @@
-package com.android.sample.model.communication.newImplementation
+package com.android.sample.model.communication
 
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.Message

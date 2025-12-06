@@ -8,8 +8,8 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.communication.ConversationManager
 import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
-import com.android.sample.model.communication.newImplementation.ConversationManager
 import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository

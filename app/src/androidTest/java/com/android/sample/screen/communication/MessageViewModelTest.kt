@@ -2,10 +2,10 @@ package com.android.sample.screen.communication
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.communication.ConversationManager
 import com.android.sample.model.communication.conversation.ConvRepository
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.Message
-import com.android.sample.model.communication.newImplementation.ConversationManager
 import com.android.sample.model.communication.overViewConv.OverViewConvRepository
 import com.android.sample.model.communication.overViewConv.OverViewConversation
 import com.android.sample.model.map.Location

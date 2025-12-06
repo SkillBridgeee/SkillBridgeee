@@ -1,10 +1,10 @@
 package com.android.sample.communication
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.sample.model.communication.ConversationManager
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.FirestoreConvRepository
 import com.android.sample.model.communication.conversation.Message
-import com.android.sample.model.communication.newImplementation.ConversationManager
 import com.android.sample.model.communication.overViewConv.FirestoreOverViewConvRepository
 import com.android.sample.model.communication.overViewConv.OverViewConversation
 import com.android.sample.utils.TestFirestore
