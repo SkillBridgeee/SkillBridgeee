@@ -2,7 +2,7 @@ package com.android.sample.ui.communication
 
 import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import com.android.sample.model.communication.newImplementation.conversation.Message
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
 import com.android.sample.model.user.ProfileRepository
@@ -52,7 +52,7 @@ class DiscussionViewModelTest {
               linkedConvId = "conv1",
               convName = "John Doe",
               lastMsg =
-                  MessageNew(
+                  Message(
                       content = "Hey, how are you?",
                       senderId = "user2",
                       receiverId = currentUserId,
@@ -65,7 +65,7 @@ class DiscussionViewModelTest {
               linkedConvId = "conv2",
               convName = "Jane Smith",
               lastMsg =
-                  MessageNew(
+                  Message(
                       content = "See you tomorrow!",
                       senderId = currentUserId,
                       receiverId = "user3",

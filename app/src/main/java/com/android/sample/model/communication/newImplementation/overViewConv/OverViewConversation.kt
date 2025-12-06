@@ -1,6 +1,6 @@
 package com.android.sample.model.communication.newImplementation.overViewConv
 
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import com.android.sample.model.communication.newImplementation.conversation.Message
 
 /**
  * Represents a summary or overview of a conversation for a user.
@@ -21,7 +21,7 @@ data class OverViewConversation(
     val linkedConvId: String = "",
     val convName: String = "",
     val nonReadMsgNumber: Int = 0,
-    val lastMsg: MessageNew? = null,
+    val lastMsg: Message? = null,
     val overViewOwnerId: String = "",
     val otherPersonId: String = "",
 )

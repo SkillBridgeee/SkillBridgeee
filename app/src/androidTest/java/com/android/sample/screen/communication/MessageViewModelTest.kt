@@ -4,8 +4,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.newImplementation.ConversationManager
 import com.android.sample.model.communication.newImplementation.conversation.ConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import com.android.sample.model.communication.newImplementation.conversation.Conversation
+import com.android.sample.model.communication.newImplementation.conversation.Message
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
 import com.android.sample.model.map.Location
@@ -66,7 +66,7 @@ class MessageViewModelTest {
     // Create conversation
     runBlocking {
       convRepo.createConv(
-          ConversationNew(convId = convId, convCreatorId = testUserId, otherPersonId = otherUserId))
+          Conversation(convId = convId, convCreatorId = testUserId, otherPersonId = otherUserId))
     }
   }
 
@@ -86,7 +86,7 @@ class MessageViewModelTest {
 
     // Simule un message reçu
     val msg =
-        MessageNew(
+        Message(
             msgId = "m1",
             senderId = otherUserId,
             receiverId = testUserId,
@@ -197,7 +197,7 @@ class MessageViewModelTest {
 
     // Send a message
     val msg1 =
-        MessageNew(
+        Message(
             msgId = "m1",
             senderId = testUserId,
             receiverId = otherUserId,
@@ -213,7 +213,7 @@ class MessageViewModelTest {
 
     // Send another message
     val msg2 =
-        MessageNew(
+        Message(
             msgId = "m2",
             senderId = otherUserId,
             receiverId = testUserId,
@@ -261,7 +261,7 @@ class MessageViewModelTest {
     val earlier = Date(now.time - 60000) // 1 minute earlier
 
     val msg1 =
-        MessageNew(
+        Message(
             msgId = "m1",
             senderId = testUserId,
             receiverId = otherUserId,
@@ -269,7 +269,7 @@ class MessageViewModelTest {
             createdAt = now)
 
     val msg2 =
-        MessageNew(
+        Message(
             msgId = "m2",
             senderId = otherUserId,
             receiverId = testUserId,
@@ -299,7 +299,7 @@ class MessageViewModelTest {
 
     // Send a message
     val msg1 =
-        MessageNew(
+        Message(
             msgId = "m1",
             senderId = testUserId,
             receiverId = otherUserId,
@@ -353,7 +353,7 @@ class MessageViewModelTest {
     // Now create a valid conversation
     runBlocking {
       convRepo.createConv(
-          ConversationNew(
+          Conversation(
               convId = "invalid_conv_id", convCreatorId = testUserId, otherPersonId = otherUserId))
     }
 
@@ -429,7 +429,7 @@ class MessageViewModelTest {
     composeTestRule.waitForIdle()
 
     val msg1 =
-        MessageNew(
+        Message(
             msgId = "m1",
             senderId = testUserId,
             receiverId = otherUserId,
@@ -484,7 +484,7 @@ class MessageViewModelTest {
     composeTestRule.waitForIdle()
 
     val msg1 =
-        MessageNew(
+        Message(
             msgId = "m1",
             senderId = testUserId,
             receiverId = otherUserId,
@@ -497,7 +497,7 @@ class MessageViewModelTest {
 
     // Add another message
     val msg2 =
-        MessageNew(
+        Message(
             msgId = "m2",
             senderId = otherUserId,
             receiverId = testUserId,
@@ -579,7 +579,7 @@ class MessageViewModelTest {
 
     // Send a message to verify the conversation is working
     val msg =
-        MessageNew(
+        Message(
             msgId = "m1",
             senderId = testUserId,
             receiverId = otherUserId,
@@ -606,7 +606,7 @@ class MessageViewModelTest {
 
     // Add a message after loading
     val msg =
-        MessageNew(
+        Message(
             msgId = "m1",
             senderId = otherUserId,
             receiverId = testUserId,
@@ -631,7 +631,7 @@ class MessageViewModelTest {
 
     // Send message
     val msg1 =
-        MessageNew(
+        Message(
             msgId = "m1",
             senderId = otherUserId,
             receiverId = testUserId,
@@ -648,7 +648,7 @@ class MessageViewModelTest {
 
     // Send another message
     val msg2 =
-        MessageNew(
+        Message(
             msgId = "m2",
             senderId = otherUserId,
             receiverId = testUserId,
@@ -725,20 +725,20 @@ class FakeProfileRepository : ProfileRepository {
 class FakeConvRepo : ConvRepository {
 
   // Stockage interne des conversations
-  private val conversations = mutableMapOf<String, ConversationNew>()
+  private val conversations = mutableMapOf<String, Conversation>()
 
   // Stockage des flows de messages par conversation
-  private val messageFlows = mutableMapOf<String, MutableStateFlow<List<MessageNew>>>()
+  private val messageFlows = mutableMapOf<String, MutableStateFlow<List<Message>>>()
 
   override fun getNewUid(): String {
     return UUID.randomUUID().toString()
   }
 
-  override suspend fun getConv(convId: String): ConversationNew? {
+  override suspend fun getConv(convId: String): Conversation? {
     return conversations[convId]
   }
 
-  override suspend fun createConv(conversation: ConversationNew) {
+  override suspend fun createConv(conversation: Conversation) {
     val convId = conversation.convId.ifEmpty { getNewUid() }
 
     val newConv = conversation.copy(convId = convId, updatedAt = Timestamp.now())
@@ -752,7 +752,7 @@ class FakeConvRepo : ConvRepository {
     messageFlows.remove(convId)
   }
 
-  override suspend fun sendMessage(convId: String, message: MessageNew) {
+  override suspend fun sendMessage(convId: String, message: Message) {
     val conv = conversations[convId] ?: return
 
     // Nouveau message ajouté
@@ -766,7 +766,7 @@ class FakeConvRepo : ConvRepository {
     messageFlows[convId]?.value = updatedMessages
   }
 
-  override fun listenMessages(convId: String): Flow<List<MessageNew>> {
+  override fun listenMessages(convId: String): Flow<List<Message>> {
     return messageFlows.getOrPut(convId) { MutableStateFlow(emptyList()) }
   }
 }

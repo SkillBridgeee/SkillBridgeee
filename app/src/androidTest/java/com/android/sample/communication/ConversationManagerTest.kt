@@ -2,9 +2,9 @@ package com.android.sample.communication
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.communication.newImplementation.ConversationManager
-import com.android.sample.model.communication.newImplementation.conversation.ConversationNew
+import com.android.sample.model.communication.newImplementation.conversation.Conversation
 import com.android.sample.model.communication.newImplementation.conversation.FirestoreConvRepository
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import com.android.sample.model.communication.newImplementation.conversation.Message
 import com.android.sample.model.communication.newImplementation.overViewConv.FirestoreOverViewConvRepository
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
 import com.android.sample.utils.TestFirestore
@@ -99,8 +99,7 @@ class ConversationManagerTest {
 
     convId = manager.createConvAndOverviews(creator, other, "Chat")
 
-    val msg =
-        MessageNew(msgId = "1-test3", content = "Hello", senderId = creator, receiverId = other)
+    val msg = Message(msgId = "1-test3", content = "Hello", senderId = creator, receiverId = other)
 
     manager.sendMessage(convId, msg)
 
@@ -124,7 +123,7 @@ class ConversationManagerTest {
     val other = "B-test4"
     convId = manager.createConvAndOverviews(creator, other, "Chat")
 
-    val msg = MessageNew("1-test4", "Hello", creator, other)
+    val msg = Message("1-test4", "Hello", creator, other)
     manager.sendMessage(convId, msg)
 
     manager.resetUnreadCount(convId, creator)
@@ -145,7 +144,7 @@ class ConversationManagerTest {
 
     val flow = manager.listenMessages(convId)
 
-    val msg = MessageNew("1-test6", "Listening OK", creator, other)
+    val msg = Message("1-test6", "Listening OK", creator, other)
     manager.sendMessage(convId, msg)
 
     val emitted = flow.first { it.isNotEmpty() }
@@ -165,7 +164,7 @@ class ConversationManagerTest {
 
     val flow = manager.listenConversationOverviews(creator)
 
-    val msg = MessageNew("1-test7", "Yo", creator, other)
+    val msg = Message("1-test7", "Yo", creator, other)
     manager.sendMessage(convId, msg)
 
     val emitted = flow.first { it.isNotEmpty() }
@@ -189,7 +188,7 @@ class ConversationManagerTest {
 
     // Creator send a message
 
-    val msgCreator1 = MessageNew("msg1", "hello", creator, other)
+    val msgCreator1 = Message("msg1", "hello", creator, other)
     manager.sendMessage(convId, msgCreator1)
 
     var emittedCreatorMsg = flowCreatorMsg.first { it.isNotEmpty() }
@@ -216,7 +215,7 @@ class ConversationManagerTest {
     assertEquals(1, emittedOtherOverView.size)
     assertEquals(0, emittedOtherOverView[0].nonReadMsgNumber)
 
-    val msgOther1 = MessageNew("msg2", "hi", other, creator)
+    val msgOther1 = Message("msg2", "hi", other, creator)
     manager.sendMessage(convId, msgOther1)
 
     emittedCreatorOverView = flowCreatorOverView.first { it.isNotEmpty() }
@@ -249,8 +248,8 @@ class ConversationManagerTest {
     convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     // Lists pour collecter toutes les émissions des flows
-    val creatorMsgs = mutableListOf<List<MessageNew>>()
-    val otherMsgs = mutableListOf<List<MessageNew>>()
+    val creatorMsgs = mutableListOf<List<Message>>()
+    val otherMsgs = mutableListOf<List<Message>>()
     val creatorOv = mutableListOf<List<OverViewConversation>>()
     val otherOv = mutableListOf<List<OverViewConversation>>()
 
@@ -262,7 +261,7 @@ class ConversationManagerTest {
     val job4 = launch { manager.listenConversationOverviews(other).collect { otherOv.add(it) } }
 
     // --- Creator envoie un message ---
-    val msgCreator1 = MessageNew("msg1", "hello", creator, other)
+    val msgCreator1 = Message("msg1", "hello", creator, other)
     manager.sendMessage(convId, msgCreator1)
 
     // attendre un petit peu que les flows émettent
@@ -286,7 +285,7 @@ class ConversationManagerTest {
     assertEquals(0, otherOv.last()[0].nonReadMsgNumber)
 
     // --- Receiver envoie un message ---
-    val msgOther1 = MessageNew("msg2", "hi", other, creator)
+    val msgOther1 = Message("msg2", "hi", other, creator)
     manager.sendMessage(convId, msgOther1)
     advanceUntilIdle()
 
@@ -316,7 +315,7 @@ class ConversationManagerTest {
   @Test
   fun testCreateAndGetConversation() = runTest {
     val convId = "convCreateTest"
-    val conv = ConversationNew(convId)
+    val conv = Conversation(convId)
 
     convRepo.createConv(conv)
 

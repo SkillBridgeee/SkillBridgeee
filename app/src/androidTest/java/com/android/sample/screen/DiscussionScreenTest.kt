@@ -4,7 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.conversation.MessageNew
+import com.android.sample.model.communication.newImplementation.conversation.Message
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
 import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
 import com.android.sample.model.map.Location
@@ -32,7 +32,7 @@ class DiscussionScreenTest {
               linkedConvId = "conv1",
               convName = "John Doe",
               lastMsg =
-                  MessageNew(
+                  Message(
                       content = "Hey, how are you?",
                       senderId = "user2",
                       receiverId = currentUserId,
@@ -45,7 +45,7 @@ class DiscussionScreenTest {
               linkedConvId = "conv2",
               convName = "Jane Smith",
               lastMsg =
-                  MessageNew(
+                  Message(
                       content = "See you tomorrow!",
                       senderId = currentUserId,
                       receiverId = "user3",
@@ -271,7 +271,7 @@ class DiscussionScreenTest {
                   linkedConvId = "conv1",
                   convName = "John Doe",
                   lastMsg =
-                      MessageNew(
+                      Message(
                           content = "Hey, how are you?",
                           senderId = "user2",
                           receiverId = "user1",
