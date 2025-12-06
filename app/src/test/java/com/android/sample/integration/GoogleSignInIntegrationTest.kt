@@ -77,26 +77,28 @@ class GoogleSignInIntegrationTest {
     // Setup Google Sign-In mocks
     every { mockActivityResult.data } returns mockIntent
 
-    mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
-    every {
-      com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
-    } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
+    try {
+      mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+      every {
+        com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
+      } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
 
-    every { mockAccount.idToken } returns "test-token"
-    every { mockAccount.email } returns "newuser@gmail.com"
-    every { mockFirebaseUser.uid } returns "new-user-123"
-    every { mockFirebaseUser.email } returns "newuser@gmail.com"
+      every { mockAccount.idToken } returns "test-token"
+      every { mockAccount.email } returns "newuser@gmail.com"
+      every { mockFirebaseUser.uid } returns "new-user-123"
+      every { mockFirebaseUser.email } returns "newuser@gmail.com"
 
-    every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
-    coEvery { mockAuthRepository.signInWithCredential(any()) } returns
-        Result.success(mockFirebaseUser)
-    coEvery { mockProfileRepository.getProfile("new-user-123") } returns null // No profile exists
+      every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
+      coEvery { mockAuthRepository.signInWithCredential(any()) } returns
+          Result.success(mockFirebaseUser)
+      coEvery { mockProfileRepository.getProfile("new-user-123") } returns null // No profile exists
 
-    // Execute Google Sign-In
-    authViewModel.handleGoogleSignInResult(mockActivityResult)
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    unmockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+      // Execute Google Sign-In
+      authViewModel.handleGoogleSignInResult(mockActivityResult)
+      testDispatcher.scheduler.advanceUntilIdle()
+    } finally {
+      unmockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+    }
 
     // Verify: Should return RequiresSignUp
     val authResult = authViewModel.authResult.first()
@@ -169,27 +171,29 @@ class GoogleSignInIntegrationTest {
     // Setup Google Sign-In mocks
     every { mockActivityResult.data } returns mockIntent
 
-    mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
-    every {
-      com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
-    } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
+    try {
+      mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+      every {
+        com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
+      } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
 
-    every { mockAccount.idToken } returns "test-token"
-    every { mockAccount.email } returns "existinguser@gmail.com"
-    every { mockFirebaseUser.uid } returns "existing-user-456"
-    every { mockFirebaseUser.email } returns "existinguser@gmail.com"
+      every { mockAccount.idToken } returns "test-token"
+      every { mockAccount.email } returns "existinguser@gmail.com"
+      every { mockFirebaseUser.uid } returns "existing-user-456"
+      every { mockFirebaseUser.email } returns "existinguser@gmail.com"
 
-    every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
-    coEvery { mockAuthRepository.signInWithCredential(any()) } returns
-        Result.success(mockFirebaseUser)
-    coEvery { mockProfileRepository.getProfile("existing-user-456") } returns
-        existingProfile // Profile exists
+      every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
+      coEvery { mockAuthRepository.signInWithCredential(any()) } returns
+          Result.success(mockFirebaseUser)
+      coEvery { mockProfileRepository.getProfile("existing-user-456") } returns
+          existingProfile // Profile exists
 
-    // Execute Google Sign-In
-    authViewModel.handleGoogleSignInResult(mockActivityResult)
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    unmockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+      // Execute Google Sign-In
+      authViewModel.handleGoogleSignInResult(mockActivityResult)
+      testDispatcher.scheduler.advanceUntilIdle()
+    } finally {
+      unmockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+    }
 
     // Verify: Should return Success (direct login)
     val authResult = authViewModel.authResult.first()
@@ -345,21 +349,23 @@ class GoogleSignInIntegrationTest {
     val mockAccount = mockk<GoogleSignInAccount>()
 
     every { mockActivityResult.data } returns mockIntent
-    mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
-    every {
-      com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
-    } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
+    try {
+      mockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+      every {
+        com.google.android.gms.auth.api.signin.GoogleSignIn.getSignedInAccountFromIntent(any())
+      } returns mockk { every { getResult(any<Class<Exception>>()) } returns mockAccount }
 
-    every { mockAccount.idToken } returns "test-token"
-    every { mockAccount.email } returns "complete@gmail.com"
-    every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
-    coEvery { mockAuthRepository.signInWithCredential(any()) } returns
-        Result.success(mockFirebaseUser)
+      every { mockAccount.idToken } returns "test-token"
+      every { mockAccount.email } returns "complete@gmail.com"
+      every { mockCredentialHelper.getFirebaseCredential(any()) } returns mockk()
+      coEvery { mockAuthRepository.signInWithCredential(any()) } returns
+          Result.success(mockFirebaseUser)
 
-    authViewModel.handleGoogleSignInResult(mockActivityResult)
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    unmockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+      authViewModel.handleGoogleSignInResult(mockActivityResult)
+      testDispatcher.scheduler.advanceUntilIdle()
+    } finally {
+      unmockkStatic("com.google.android.gms.auth.api.signin.GoogleSignIn")
+    }
 
     // Should now successfully sign in
     val authResult = authViewModel.authResult.first()
