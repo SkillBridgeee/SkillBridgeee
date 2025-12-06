@@ -1,4 +1,4 @@
-package com.android.sample.model.communication.newImplementation.conversation
+package com.android.sample.model.communication.conversation
 
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.UUID
@@ -29,9 +29,9 @@ class FirestoreConvRepository(
    * Retrieves a conversation along with all its messages.
    *
    * @param convId The ID of the conversation to fetch.
-   * @return A [ConversationNew] object if found, or null if the conversation does not exist.
+   * @return A [Conversation] object if found, or null if the conversation does not exist.
    */
-  override suspend fun getConv(convId: String): ConversationNew? {
+  override suspend fun getConv(convId: String): Conversation? {
     if (convId.isBlank()) return null
 
     val convRef = conversationsRef.document(convId)
@@ -39,14 +39,14 @@ class FirestoreConvRepository(
     val convSnapshot = convRef.get().await()
     if (!convSnapshot.exists()) return null
 
-    val conv = convSnapshot.toObject(ConversationNew::class.java) ?: return null
+    val conv = convSnapshot.toObject(Conversation::class.java) ?: return null
     val convWithId = conv.copy(convId = convId)
 
     // Load messages
     val messagesSnapshot = convRef.collection("messages").get().await()
     val messages =
         messagesSnapshot.documents.mapNotNull { doc ->
-          doc.toObject(MessageNew::class.java)?.copy(msgId = doc.id)
+          doc.toObject(Message::class.java)?.copy(msgId = doc.id)
         }
 
     return convWithId.copy(messages = messages)
@@ -55,10 +55,10 @@ class FirestoreConvRepository(
   /**
    * Creates a new conversation in Firestore.
    *
-   * @param conversation The [ConversationNew] object to store.
+   * @param conversation The [Conversation] object to store.
    * @throws IllegalArgumentException if the conversation ID is blank.
    */
-  override suspend fun createConv(conversation: ConversationNew) {
+  override suspend fun createConv(conversation: Conversation) {
     require(conversation.convId.isNotBlank()) { BLANK_CONVID_ERR_MSG }
 
     conversationsRef.document(conversation.convId).set(conversation).await()
@@ -97,10 +97,10 @@ class FirestoreConvRepository(
    * conversation's `updatedAt` field to the message's timestamp.
    *
    * @param convId The conversation ID where the message should be added.
-   * @param message The [MessageNew] object to send.
+   * @param message The [Message] object to send.
    * @throws IllegalArgumentException if the conversation does not exist or IDs are blank.
    */
-  override suspend fun sendMessage(convId: String, message: MessageNew) {
+  override suspend fun sendMessage(convId: String, message: Message) {
     require(convId.isNotBlank()) { BLANK_CONVID_ERR_MSG }
     require(message.msgId.isNotBlank()) { "Message ID cannot be blank" }
 
@@ -120,10 +120,10 @@ class FirestoreConvRepository(
    * emit a new list whenever messages are added or updated.
    *
    * @param convId The conversation ID to observe.
-   * @return A [Flow] emitting lists of [MessageNew] objects in ascending order.
+   * @return A [Flow] emitting lists of [Message] objects in ascending order.
    * @throws IllegalArgumentException if the conversation ID is blank.
    */
-  override fun listenMessages(convId: String): Flow<List<MessageNew>> {
+  override fun listenMessages(convId: String): Flow<List<Message>> {
     return callbackFlow {
       if (convId.isBlank()) {
         close(IllegalArgumentException(BLANK_CONVID_ERR_MSG))
@@ -139,7 +139,7 @@ class FirestoreConvRepository(
               return@addSnapshotListener
             }
 
-            val messages = snapshot?.toObjects(MessageNew::class.java).orEmpty()
+            val messages = snapshot?.toObjects(Message::class.java).orEmpty()
             trySend(messages)
           }
       trySend(emptyList())

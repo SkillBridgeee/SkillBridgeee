@@ -4,9 +4,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepositoryProvider
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConversation
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 /** UI state for the discussion screen. */
 data class DiscussionUiState(
     val conversations: List<OverViewConversation> = emptyList(),
+    val participantNames: Map<String, String> = emptyMap(), // Maps user ID to their name
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -28,7 +31,8 @@ data class DiscussionUiState(
  */
 class DiscussionViewModel(
     private val overViewConvRepository: OverViewConvRepository =
-        OverViewConvRepositoryProvider.repository
+        OverViewConvRepositoryProvider.repository,
+    private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(DiscussionUiState())
@@ -51,7 +55,16 @@ class DiscussionViewModel(
   }
 
   init {
-    loadConversations()
+    // Observe auth state to reload data on user change
+    viewModelScope.launch {
+      UserSessionManager.authState.collect { authState ->
+        if (authState is com.android.sample.model.authentication.AuthState.Authenticated) {
+          loadConversations()
+        } else {
+          _uiState.update { DiscussionUiState() } // Reset to initial state
+        }
+      }
+    }
   }
 
   /** Public API to retry loading conversations. */
@@ -84,7 +97,26 @@ class DiscussionViewModel(
             _uiState.update { it.copy(isLoading = false, error = errorMessage) }
           }
           .collect { conversations ->
-            _uiState.update { it.copy(isLoading = false, conversations = conversations) }
+            // Filter to ensure we only process conversations owned by the current user
+            val myConversations = conversations.filter { it.overViewOwnerId == userId }
+
+            _uiState.update { it.copy(isLoading = false, conversations = myConversations) }
+
+            // Fetch names for the other participants
+            val otherParticipantIds = myConversations.map { it.otherPersonId }.distinct()
+
+            val participantNames = mutableMapOf<String, String>()
+            otherParticipantIds.forEach { participantId ->
+              try {
+                val profile = profileRepository.getProfile(participantId)
+                participantNames[participantId] = profile?.name ?: "Unknown User"
+              } catch (e: Exception) {
+                Log.w(TAG, "Failed to fetch profile for $participantId", e)
+                participantNames[participantId] = "Unknown User"
+              }
+            }
+
+            _uiState.update { it.copy(participantNames = participantNames) }
           }
     }
   }

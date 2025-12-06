@@ -16,4 +16,8 @@ abstract class RepositoryProvider<T> {
   fun setForTests(repository: T) {
     _repository = repository
   }
+
+  fun clearForTests() {
+    _repository = null
+  }
 }

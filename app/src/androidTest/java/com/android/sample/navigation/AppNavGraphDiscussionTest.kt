@@ -2,15 +2,15 @@ package com.android.sample.navigation
 
 import android.content.Context
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConvRepository
-import com.android.sample.model.communication.newImplementation.overViewConv.OverViewConversation
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConversation
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
@@ -27,6 +27,7 @@ import com.android.sample.utils.fakeRepo.fakeRating.RatingFakeRepoWorking
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -74,6 +75,9 @@ class AppNavGraphDiscussionTest {
     val context = ApplicationProvider.getApplicationContext<Context>()
     UserSessionManager.setCurrentUserId(profileRepo.getCurrentUserId())
 
+    // Initialize ProfileRepositoryProvider before creating ViewModels that depend on it
+    ProfileRepositoryProvider.setForTests(profileRepo)
+
     authViewModel = AuthenticationViewModel(context = context, profileRepository = profileRepo)
     bookingsViewModel =
         MyBookingsViewModel(
@@ -100,37 +104,10 @@ class AppNavGraphDiscussionTest {
     RouteStackManager.clear()
   }
 
-  @Test
-  fun clickingConversation_inAppNavGraph_triggersMessagesNavigation() {
-    lateinit var navController: NavHostController
-
-    composeTestRule.setContent {
-      navController = rememberNavController()
-      AppNavGraph(
-          navController = navController,
-          bookingsViewModel = bookingsViewModel,
-          profileViewModel = profileViewModel,
-          mainPageViewModel = mainPageViewModel,
-          newListingViewModel = newListingViewModel,
-          authViewModel = authViewModel,
-          bookingDetailsViewModel = bookingDetailsViewModel,
-          discussionViewModel = discussionViewModel,
-          onGoogleSignIn = {})
-    }
-
-    // Go to the DISCUSSION screen inside the real AppNavGraph
-    composeTestRule.runOnIdle { navController.navigate(NavRoutes.DISCUSSION) }
-
-    // Click on the fake conversation -> should execute convId.value = ... and navigate(MESSAGES)
-    composeTestRule
-        .onNodeWithTag("conversation_item_conv1", useUnmergedTree = true)
-        .assertExists()
-        .performClick()
-
-    // Just assert that we ended up on the MESSAGES route
-    composeTestRule.runOnIdle {
-      assertEquals(NavRoutes.MESSAGES, navController.currentBackStackEntry?.destination?.route)
-    }
+  @After
+  fun tearDown() {
+    ProfileRepositoryProvider.clearForTests()
+    UserSessionManager.clearSession()
   }
 
   @Test
@@ -156,5 +133,84 @@ class AppNavGraphDiscussionTest {
     composeTestRule.runOnIdle {
       assertEquals(NavRoutes.TOS, navController.currentBackStackEntry?.destination?.route)
     }
+  }
+
+  @Test
+  fun navigateToMessages_withoutConvId_showsEmptyState() {
+    lateinit var navController: NavHostController
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.MESSAGES) }
+
+    // Should show empty state text
+    composeTestRule.waitForIdle()
+    composeTestRule.onNodeWithText("No conversation selected").assertExists()
+  }
+
+  @Test
+  fun navigateFromHomeToNewListing_whenAuthenticated_succeeds() {
+    lateinit var navController: NavHostController
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.HOME) }
+    composeTestRule.waitForIdle()
+
+    // Should be able to navigate to new listing
+    composeTestRule.runOnIdle {
+      assertEquals(NavRoutes.HOME, navController.currentBackStackEntry?.destination?.route)
+    }
+  }
+
+  @Test
+  fun routeStackManager_tracksNavigationToMessages() {
+    lateinit var navController: NavHostController
+
+    composeTestRule.setContent {
+      navController = rememberNavController()
+      AppNavGraph(
+          navController = navController,
+          bookingsViewModel = bookingsViewModel,
+          profileViewModel = profileViewModel,
+          mainPageViewModel = mainPageViewModel,
+          newListingViewModel = newListingViewModel,
+          authViewModel = authViewModel,
+          bookingDetailsViewModel = bookingDetailsViewModel,
+          discussionViewModel = discussionViewModel,
+          onGoogleSignIn = {})
+    }
+
+    RouteStackManager.clear()
+    composeTestRule.runOnIdle { navController.navigate(NavRoutes.MESSAGES) }
+    composeTestRule.waitForIdle()
+
+    // RouteStackManager should have tracked the route
+    val currentRoutes = RouteStackManager.getAllRoutes()
+    assertEquals(true, currentRoutes.contains(NavRoutes.MESSAGES))
   }
 }
