@@ -95,6 +95,19 @@ class MainActivity : ComponentActivity() {
   }
 }
 
+/**
+ * Checks if an email is a test email based on known test domains. Test domains
+ * include: @example.test, @test.com (for E2E tests)
+ *
+ * @param email The email address to check
+ * @return true if the email is a test email, false otherwise
+ */
+internal fun isTestEmail(email: String?): Boolean {
+  if (email == null) return false
+  val testDomains = listOf("@example.test", "@test.com", "@e2etest.com")
+  return testDomains.any { email.endsWith(it, ignoreCase = true) }
+}
+
 class MyViewModelFactory(private val sessionManager: UserSessionManager) :
     ViewModelProvider.Factory {
   @Suppress("UNCHECKED_CAST")
@@ -171,7 +184,8 @@ internal suspend fun handleAuthenticatedUser(
     userId: String,
     navController: NavHostController,
     authViewModel: AuthenticationViewModel,
-    skipEmulatorCheck: Boolean = false // For testing: allows overriding emulator behavior
+    skipEmulatorCheck: Boolean = false, // For testing: allows overriding emulator behavior
+    dispatcher: kotlinx.coroutines.CoroutineDispatcher = kotlinx.coroutines.Dispatchers.Main
 ) {
   val profile = ProfileRepositoryProvider.repository.getProfile(userId)
 
@@ -183,15 +197,32 @@ internal suspend fun handleAuthenticatedUser(
 
   val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
 
-  // Skip email verification check when using Firebase emulator (for testing)
-  // In production, Google Sign-In users are automatically verified
-  // In emulator with email/password auth (simulating Google), they are not
+  // Determine if we should skip email verification
+  // Skip verification in these cases:
+  // 1. Using Firebase emulator (for all E2E tests)
+  // 2. Test email domain in debug builds (for UI-based E2E tests)
+  val shouldSkipVerification =
+      when {
+        // Case 1: Firebase emulator - always skip (unless explicitly testing verification)
+        BuildConfig.USE_FIREBASE_EMULATOR && !skipEmulatorCheck -> {
+          Log.d("MainActivity", "Auto-login: Using emulator - skipping email verification")
+          true
+        }
+        // Case 2: Test email domain in debug build with SKIP_EMAIL_VERIFICATION enabled
+        BuildConfig.SKIP_EMAIL_VERIFICATION && isTestEmail(firebaseUser?.email) -> {
+          Log.d(
+              "MainActivity",
+              "Auto-login: Test email domain detected - skipping email verification")
+          true
+        }
+        // Case 3: Production or real email - check actual verification
+        else -> false
+      }
+
   val isEmailVerified =
-      if (BuildConfig.USE_FIREBASE_EMULATOR && !skipEmulatorCheck) {
-        // In emulator mode, skip verification check (for E2E tests)
+      if (shouldSkipVerification) {
         true
       } else {
-        // In production, check actual verification status
         firebaseUser?.isEmailVerified ?: true
       }
 
@@ -201,7 +232,7 @@ internal suspend fun handleAuthenticatedUser(
     // Try to navigate, but handle the case where NavHost isn't ready yet
     try {
       // Navigation must happen on the main thread
-      kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+      kotlinx.coroutines.withContext(dispatcher) {
         navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
       }
     } catch (_: IllegalArgumentException) {

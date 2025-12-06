@@ -1,5 +1,6 @@
 package com.android.sample.e2e
 
+import android.util.Log
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -10,6 +11,8 @@ import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.ktx.functions
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -78,6 +81,53 @@ object E2ETestHelper {
   }
 
   /**
+   * Forces email verification for a test user using Cloud Functions. This function calls the
+   * `forceVerifyTestUser` Cloud Function which uses Firebase Admin SDK to mark the user's email as
+   * verified.
+   *
+   * Security: Only works with @example.test email addresses.
+   *
+   * @param email The email address of the test user (must end with @example.test)
+   * @throws Exception if the Cloud Function call fails
+   */
+  suspend fun forceEmailVerification(email: String) {
+    try {
+      Log.d("E2ETestHelper", "Forcing email verification for: $email")
+
+      // Get Firebase Functions instance
+      val functions = Firebase.functions
+
+      // For emulator, use 10.0.2.2 (Android emulator's host machine)
+      // The emulator runs on port 5001 as configured in firebase.json
+      functions.useEmulator("10.0.2.2", 5001)
+
+      // Call the Cloud Function
+      val data = hashMapOf("email" to email)
+      val result = functions.getHttpsCallable("forceVerifyTestUser").call(data).await()
+
+      @Suppress("UNCHECKED_CAST") val resultData = result.data as? Map<String, Any>
+      val success = resultData?.get("success") as? Boolean ?: false
+      val message = resultData?.get("message") as? String ?: "Unknown result"
+
+      if (success) {
+        Log.d("E2ETestHelper", "✓ Email verification forced successfully: $message")
+
+        // Reload the current user to get updated email verification status
+        FirebaseAuth.getInstance().currentUser?.reload()?.await()
+
+        val isVerified = FirebaseAuth.getInstance().currentUser?.isEmailVerified ?: false
+        Log.d("E2ETestHelper", "✓ Email verified status after reload: $isVerified")
+      } else {
+        Log.e("E2ETestHelper", "✗ Failed to force email verification: $message")
+        throw Exception("Failed to force email verification: $message")
+      }
+    } catch (e: Exception) {
+      Log.e("E2ETestHelper", "✗ Error forcing email verification", e)
+      throw e
+    }
+  }
+
+  /**
    * Waits for a semantic node to be displayed.
    *
    * @param composeTestRule The ComposeTestRule for the test
@@ -98,24 +148,6 @@ object E2ETestHelper {
         false
       }
     }
-  }
-
-  /**
-   * Gets the current Firebase Auth user.
-   *
-   * @return The current FirebaseUser or null if not authenticated
-   */
-  fun getCurrentUser(): FirebaseUser? {
-    return FirebaseAuth.getInstance().currentUser
-  }
-
-  /**
-   * Checks if the current user is authenticated.
-   *
-   * @return true if a user is authenticated, false otherwise
-   */
-  fun isUserAuthenticated(): Boolean {
-    return getCurrentUser() != null
   }
 
   /**
