@@ -120,7 +120,6 @@ class MessageViewModel(
               .catch { _ -> _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
               .collect { messages ->
                 // Reset unread count whenever new messages arrive while viewing
-                convManager.resetUnreadCount(convId = convId, userId = userId)
                 _uiState.update {
                   it.copy(
                       messages = messages.sortedBy { msg -> msg.createdAt },
@@ -160,11 +159,17 @@ class MessageViewModel(
   fun onScreenLeft() {
     loadJob?.cancel()
     loadJob = null
+    viewModelScope.launch {
+      convManager.resetUnreadCount(convId = currentConvId!!, userId = currentUserId!!)
+    }
   }
 
   override fun onCleared() {
     super.onCleared()
     loadJob?.cancel()
+    viewModelScope.launch {
+      convManager.resetUnreadCount(convId = currentConvId!!, userId = currentUserId!!)
+    }
   }
 
   /** Updates the text for the new message being composed. */
