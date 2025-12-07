@@ -292,10 +292,7 @@ fun AppNavGraph(
         MessageScreen(
             viewModel = messageViewModel,
             convId = currentConvId,
-            onConversationDeleted = {
-                navController.popBackStack()
-            }
-        )
+            onConversationDeleted = { navController.popBackStack() })
       } else {
         // No conversation selected, show empty state
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

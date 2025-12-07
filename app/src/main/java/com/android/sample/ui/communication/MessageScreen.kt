@@ -30,25 +30,24 @@ fun MessageScreen(
   val uiState by viewModel.uiState.collectAsState()
 
   LaunchedEffect(convId) { viewModel.loadConversation(convId) }
-    LaunchedEffect(uiState.isDeleted) {
-        if (uiState.isDeleted) {
-            onConversationDeleted()
-            viewModel.resetDeletionFlag()
-        }
+  LaunchedEffect(uiState.isDeleted) {
+    if (uiState.isDeleted) {
+      onConversationDeleted()
+      viewModel.resetDeletionFlag()
     }
+  }
 
   Scaffold(
       modifier = Modifier.fillMaxSize(),
-      topBar = { TopAppBar(
-          title = { Text(uiState.partnerName ?: "Messages") },
-          actions = {
+      topBar = {
+        TopAppBar(
+            title = { Text(uiState.partnerName ?: "Messages") },
+            actions = {
               IconButton(onClick = { viewModel.deleteConversation() }) {
-                  Icon(
-                      imageVector = Icons.Default.Delete,
-                      contentDescription = "Delete conversation"
-                  )
+                Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete conversation")
               }
-          }) },
+            })
+      },
       bottomBar = {
         MessageInput(
             message = uiState.currentMessage,
