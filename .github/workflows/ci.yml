@@ -407,11 +407,14 @@ jobs:
 
       - name: Verify Functions Loaded
         run: |
-          echo "Checking if forceVerifyTestUser function is available..."
-          sleep 5
-          curl -s http://localhost:5001/demo-test/us-central1/forceVerifyTestUser || echo "⚠️ Function endpoint check failed (this is expected, just checking availability)"
+          echo "Waiting for Functions emulator to be fully ready..."
+          sleep 10
           echo "Checking functions emulator UI..."
           curl -s http://localhost:4000 > /dev/null && echo "✓ Emulator UI is accessible" || echo "❌ Emulator UI not accessible"
+          echo "Checking Functions emulator port..."
+          nc -zv localhost 5001 && echo "✓ Functions emulator port 5001 is open" || echo "❌ Functions port not accessible"
+          echo "Functions loaded from logs:"
+          grep "http function initialized" firebase.log || echo "⚠️ No functions initialization found in logs"
 
       - name: Run Android Tests
         uses: reactivecircus/android-emulator-runner@v2
@@ -423,23 +426,19 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
-            echo "========= Setting up ADB reverse port forwarding ========="
-            # Wait for emulator to be fully ready
+            echo "========= Waiting for Android emulator to be ready ========="
             adb wait-for-device
             sleep 5
             
-            # Set up ADB reverse port forwarding so Android emulator can reach Firebase emulators on host
-            echo "Setting up port forwarding for Firestore (8080)..."
-            adb reverse tcp:8080 tcp:8080 && echo "✓ Firestore port forwarded" || echo "❌ Failed to forward Firestore port"
+            echo "========= Testing network connectivity ========="
+            # Test if host machine (10.0.2.2) is reachable
+            adb shell "ping -c 2 10.0.2.2" && echo "✓ Can ping host (10.0.2.2)" || echo "❌ Cannot ping host"
             
-            echo "Setting up port forwarding for Auth (9099)..."
-            adb reverse tcp:9099 tcp:9099 && echo "✓ Auth port forwarded" || echo "❌ Failed to forward Auth port"
-            
-            echo "Setting up port forwarding for Functions (5001)..."
-            adb reverse tcp:5001 tcp:5001 && echo "✓ Functions port forwarded" || echo "❌ Failed to forward Functions port"
-            
-            # Verify port forwarding
-            echo "========= Verifying port forwarding ========="
+            echo "========= Setting up ADB reverse port forwarding ========="
+            # Set up ADB reverse port forwarding as backup
+            adb reverse tcp:8080 tcp:8080 && echo "✓ Firestore port forwarded" || echo "❌ Failed"
+            adb reverse tcp:9099 tcp:9099 && echo "✓ Auth port forwarded" || echo "❌ Failed"
+            adb reverse tcp:5001 tcp:5001 && echo "✓ Functions port forwarded" || echo "❌ Failed"
             adb reverse --list
             
             echo "========= Running Android Tests ========="

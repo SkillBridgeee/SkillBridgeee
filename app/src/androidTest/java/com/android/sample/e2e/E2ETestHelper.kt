@@ -92,14 +92,18 @@ object E2ETestHelper {
    */
   suspend fun forceEmailVerification(email: String) {
     try {
-      Log.d("E2ETestHelper", "Forcing email verification for: $email")
+      Log.d("E2ETestHelper", "========= Force Email Verification =========")
+      Log.d("E2ETestHelper", "Email: $email")
 
       // Get Firebase Functions instance (already configured with emulator in TestRunner)
       val functions = Firebase.functions
+      Log.d("E2ETestHelper", "Functions instance obtained")
 
       // Call the Cloud Function
       val data = hashMapOf("email" to email)
+      Log.d("E2ETestHelper", "Calling forceVerifyTestUser function...")
       val result = functions.getHttpsCallable("forceVerifyTestUser").call(data).await()
+      Log.d("E2ETestHelper", "Function call completed")
 
       @Suppress("UNCHECKED_CAST") val resultData = result.data as? Map<String, Any>
       val success = resultData?.get("success") as? Boolean ?: false
@@ -118,6 +122,10 @@ object E2ETestHelper {
         throw Exception("Failed to force email verification: $message")
       }
     } catch (e: Exception) {
+      Log.e("E2ETestHelper", "========= ERROR Details =========")
+      Log.e("E2ETestHelper", "Exception type: ${e.javaClass.simpleName}")
+      Log.e("E2ETestHelper", "Exception message: ${e.message}")
+      Log.e("E2ETestHelper", "Exception cause: ${e.cause?.message}")
       Log.e("E2ETestHelper", "✗ Error forcing email verification", e)
       throw e
     }

@@ -36,6 +36,14 @@ class TestRunner : AndroidJUnitRunner() {
     functions.useEmulator("10.0.2.2", 5001)
     Log.d("TestRunner", "✓ Functions emulator configured: 10.0.2.2:5001")
 
+    // Log the Functions emulator URL for debugging
+    try {
+      Log.d("TestRunner", "Functions instance region: ${functions.toString()}")
+      Log.d("TestRunner", "Functions emulator host configured")
+    } catch (e: Exception) {
+      Log.e("TestRunner", "Error logging Functions info: ${e.message}")
+    }
+
     // Verify configuration by attempting to reach the emulator
     try {
       Log.d("TestRunner", "Testing Functions emulator connectivity...")
