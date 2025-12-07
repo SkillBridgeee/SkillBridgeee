@@ -13,6 +13,7 @@ class TestRunner : AndroidJUnitRunner() {
     super.onCreate(arguments)
 
     // ⚠ Must be before any Firebase instance is used
+    // Use 10.0.2.2 to reach host machine from Android emulator
     // Configure Firestore emulator
     val firestore = FirebaseFirestore.getInstance()
     firestore.useEmulator("10.0.2.2", 8080)
