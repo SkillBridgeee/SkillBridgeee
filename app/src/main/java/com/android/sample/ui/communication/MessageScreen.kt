@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,15 +24,31 @@ import com.android.sample.model.communication.conversation.Message
 fun MessageScreen(
     viewModel: MessageViewModel,
     convId: String,
+    onConversationDeleted: () -> Unit,
 ) {
 
   val uiState by viewModel.uiState.collectAsState()
 
   LaunchedEffect(convId) { viewModel.loadConversation(convId) }
+    LaunchedEffect(uiState.isDeleted) {
+        if (uiState.isDeleted) {
+            onConversationDeleted()
+            viewModel.resetDeletionFlag()
+        }
+    }
 
   Scaffold(
       modifier = Modifier.fillMaxSize(),
-      topBar = { TopAppBar(title = { Text(uiState.partnerName ?: "Messages") }) },
+      topBar = { TopAppBar(
+          title = { Text(uiState.partnerName ?: "Messages") },
+          actions = {
+              IconButton(onClick = { viewModel.deleteConversation() }) {
+                  Icon(
+                      imageVector = Icons.Default.Delete,
+                      contentDescription = "Delete conversation"
+                  )
+              }
+          }) },
       bottomBar = {
         MessageInput(
             message = uiState.currentMessage,

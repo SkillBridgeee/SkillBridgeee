@@ -27,7 +27,8 @@ data class ConvUIState(
     val currentUserId: String = "",
     val partnerName: String? = null,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val isDeleted: Boolean = false
 )
 
 class MessageViewModel(
@@ -171,4 +172,28 @@ class MessageViewModel(
   fun clearError() {
     _uiState.update { it.copy(error = null) }
   }
+
+    /**
+     * Deletes the current conversation along with its overviews.
+     */
+    fun deleteConversation() {
+        val convId = currentConvId ?: return
+
+        viewModelScope.launch {
+            try {
+                convManager.deleteConvAndOverviews(convId)
+                _uiState.update { it.copy(isDeleted = true) }
+            } catch (e: Exception) {
+                Log.e("MessageViewModel", "Failed to delete conversation", e)
+                _uiState.update { it.copy(error = "Failed to delete conversation") }
+            }
+        }
+    }
+
+    /**
+     * Resets the deletion flag after the conversation has been handled.
+     */
+    fun resetDeletionFlag() {
+        _uiState.update { it.copy(isDeleted = false) }
+    }
 }
