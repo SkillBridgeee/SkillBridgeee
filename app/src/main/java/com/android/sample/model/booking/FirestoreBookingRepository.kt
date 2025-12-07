@@ -152,19 +152,18 @@ class FirestoreBookingRepository(
 
   override suspend fun addBooking(booking: Booking) {
     try {
-        if(!isOnline()){
-            throw Exception("Cannot add booking while offline")
-        }
+      if (!isOnline()) {
+        throw Exception("Cannot add booking while offline")
+      }
       // Verify current user is the booker
       if (booking.bookerId != currentUserId) {
         throw Exception("Access denied: Can only create bookings for yourself")
       }
-        db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking).await()
-
+      db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking).await()
     } catch (e: Exception) {
-        if(!isOnline()){
-            throw Exception("Cannot add booking while offline")
-        }
+      if (!isOnline()) {
+        throw Exception("Cannot add booking while offline")
+      }
       throw Exception("Failed to add booking: ${e.message}")
     }
   }
@@ -211,31 +210,31 @@ class FirestoreBookingRepository(
     try {
       val documentRef = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId)
 
-      val transaction = db.runTransaction { transaction ->
-        val snapshot = transaction[documentRef]
+      val transaction =
+          db.runTransaction { transaction ->
+            val snapshot = transaction[documentRef]
 
-        if (!snapshot.exists()) {
-          throw BookingNotFoundException(bookingId)
-        }
+            if (!snapshot.exists()) {
+              throw BookingNotFoundException(bookingId)
+            }
 
-        val booking =
-            snapshot.toObject(Booking::class.java)
-                ?: throw BookingFirestoreException("Failed to parse booking data")
+            val booking =
+                snapshot.toObject(Booking::class.java)
+                    ?: throw BookingFirestoreException("Failed to parse booking data")
 
-        // Verify user has access
-        if (booking.bookerId != currentUserId && booking.listingCreatorId != currentUserId) {
-          throw BookingAccessDeniedException(
-              "Cannot update booking status for booking $bookingId")
-        }
+            // Verify user has access
+            if (booking.bookerId != currentUserId && booking.listingCreatorId != currentUserId) {
+              throw BookingAccessDeniedException(
+                  "Cannot update booking status for booking $bookingId")
+            }
 
-        // Update the status
-        transaction.update(documentRef, "status", status)
-        null
+            // Update the status
+            transaction.update(documentRef, "status", status)
+            null
+          }
+      if (isOnline()) {
+        transaction.await()
       }
-      if(isOnline())  {
-          transaction.await()
-      }
-
     } catch (e: BookingAuthenticationException) {
       throw e
     } catch (e: BookingAccessDeniedException) {
@@ -251,31 +250,31 @@ class FirestoreBookingRepository(
     try {
       val documentRef = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId)
 
-      val transaction = db.runTransaction { transaction ->
-          val snapshot = transaction[documentRef]
+      val transaction =
+          db.runTransaction { transaction ->
+            val snapshot = transaction[documentRef]
 
-          if (!snapshot.exists()) {
+            if (!snapshot.exists()) {
               throw BookingNotFoundException(bookingId)
-          }
+            }
 
-          val booking =
-              snapshot.toObject(Booking::class.java)
-                  ?: throw BookingFirestoreException("Failed to parse booking data")
+            val booking =
+                snapshot.toObject(Booking::class.java)
+                    ?: throw BookingFirestoreException("Failed to parse booking data")
 
-          // Verify user has access
-          if (booking.bookerId != currentUserId && booking.listingCreatorId != currentUserId) {
+            // Verify user has access
+            if (booking.bookerId != currentUserId && booking.listingCreatorId != currentUserId) {
               throw BookingAccessDeniedException(
                   "Cannot update payment status for booking $bookingId")
+            }
+
+            // Update the payment status
+            transaction.update(documentRef, "paymentStatus", paymentStatus)
+            null
           }
-
-          // Update the payment status
-          transaction.update(documentRef, "paymentStatus", paymentStatus)
-          null
+      if (isOnline()) {
+        transaction.await()
       }
-      if(isOnline()){
-            transaction.await()
-      }
-
     } catch (e: BookingAuthenticationException) {
       throw e
     } catch (e: BookingAccessDeniedException) {
