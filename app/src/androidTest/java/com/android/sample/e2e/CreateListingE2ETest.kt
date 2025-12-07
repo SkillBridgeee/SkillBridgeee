@@ -1,5 +1,9 @@
 package com.android.sample.e2e
 
+// test
+// import
+// test
+// import
 import android.util.Log
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -12,11 +16,7 @@ import com.android.sample.e2e.E2ETestHelper.signOutCurrentUser
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.communication.conversation.ConversationRepositoryProvider // E2E
-                                                                                          // test
-                                                                                          // import
 import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider // E2E
-                                                                                          // test
-                                                                                          // import
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
