@@ -94,12 +94,8 @@ object E2ETestHelper {
     try {
       Log.d("E2ETestHelper", "Forcing email verification for: $email")
 
-      // Get Firebase Functions instance
+      // Get Firebase Functions instance (already configured with emulator in TestRunner)
       val functions = Firebase.functions
-
-      // For emulator, use 10.0.2.2 (Android emulator's host machine)
-      // The emulator runs on port 5001 as configured in firebase.json
-      functions.useEmulator("10.0.2.2", 5001)
 
       // Call the Cloud Function
       val data = hashMapOf("email" to email)

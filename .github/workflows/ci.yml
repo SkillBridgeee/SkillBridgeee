@@ -247,14 +247,31 @@ jobs:
 
       - name: Start Firebase Emulators
         run: |
-          firebase emulators:start --only firestore,auth,functions --project demo-test --debug > firebase.log 2>&1 &
-          for i in $(seq 1 30); do
-            if grep -q "All emulators started" firebase.log || grep -q "HTTP server listening" firebase.log; then
-              echo "Firebase emulators ready"
+          firebase emulators:start --only firestore,auth,functions --project demo-test > firebase.log 2>&1 &
+          echo "Waiting for emulators to start..."
+          for i in $(seq 1 60); do
+            if grep -q "All emulators ready" firebase.log; then
+              echo "✓ All emulators started successfully"
               break
             fi
-            sleep 1
-          done  
+            if [ $i -eq 60 ]; then
+              echo "❌ Timeout waiting for emulators"
+              echo "=== Firebase Emulator Logs ==="
+              cat firebase.log
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "=== Emulator Status ==="
+          grep -E "firestore|auth|functions" firebase.log | tail -10 || true
+
+      - name: Verify Functions Loaded
+        run: |
+          echo "Checking if forceVerifyTestUser function is available..."
+          sleep 5
+          curl -s http://localhost:5001/demo-test/us-central1/forceVerifyTestUser || echo "⚠️ Function endpoint check failed (this is expected, just checking availability)"
+          echo "Checking functions emulator UI..."
+          curl -s http://localhost:4000 > /dev/null && echo "✓ Emulator UI is accessible" || echo "❌ Emulator UI not accessible"
 
       - name: Run Unit Tests
         run: ./gradlew check --stacktrace --build-cache
@@ -370,14 +387,31 @@ jobs:
 
       - name: Start Firebase Emulators
         run: |
-          firebase emulators:start --only firestore,auth,functions --project demo-test --debug > firebase.log 2>&1 &
-          for i in $(seq 1 30); do
-            if grep -q "All emulators started" firebase.log || grep -q "HTTP server listening" firebase.log; then
-              echo "Firebase emulators ready"
+          firebase emulators:start --only firestore,auth,functions --project demo-test > firebase.log 2>&1 &
+          echo "Waiting for emulators to start..."
+          for i in $(seq 1 60); do
+            if grep -q "All emulators ready" firebase.log; then
+              echo "✓ All emulators started successfully"
               break
             fi
-            sleep 1
-          done  
+            if [ $i -eq 60 ]; then
+              echo "❌ Timeout waiting for emulators"
+              echo "=== Firebase Emulator Logs ==="
+              cat firebase.log
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "=== Emulator Status ==="
+          grep -E "firestore|auth|functions" firebase.log | tail -10 || true
+
+      - name: Verify Functions Loaded
+        run: |
+          echo "Checking if forceVerifyTestUser function is available..."
+          sleep 5
+          curl -s http://localhost:5001/demo-test/us-central1/forceVerifyTestUser || echo "⚠️ Function endpoint check failed (this is expected, just checking availability)"
+          echo "Checking functions emulator UI..."
+          curl -s http://localhost:4000 > /dev/null && echo "✓ Emulator UI is accessible" || echo "❌ Emulator UI not accessible"
 
       - name: Run Android Tests
         uses: reactivecircus/android-emulator-runner@v2
