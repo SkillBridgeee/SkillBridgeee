@@ -1,12 +1,9 @@
-const {onCall} = require('firebase-functions/v2/https');
-const {onInit} = require('firebase-functions/v2/core');
+const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 
-// Use onInit() to defer initialization - avoids deployment timeouts
-onInit(() => {
-  admin.initializeApp();
-  console.log('Firebase Admin SDK initialized');
-});
+// Initialize Firebase Admin SDK
+admin.initializeApp();
+console.log('Firebase Admin SDK initialized');
 
 /**
  * Callable Cloud Function to force email verification for test users.
@@ -23,22 +20,22 @@ onInit(() => {
  *     .await()
  * ```
  *
- * @param {Object} request - The request object
- * @param {Object} request.data - The request data
- * @param {string} request.data.email - The email address of the user to verify
+ * @param {Object} data - The request data
+ * @param {string} data.email - The email address of the user to verify
+ * @param {Object} context - The context object
  * @returns {Promise<{success: boolean, message: string}>}
  */
-exports.forceVerifyTestUser = onCall(async (request) => {
-  const email = request.data.email;
+exports.forceVerifyTestUser = functions.https.onCall(async (data, context) => {
+  const email = data.email;
 
   // Validate input
   if (!email) {
-    throw new Error('Email is required');
+    throw new functions.https.HttpsError('invalid-argument', 'Email is required');
   }
 
   // Security: Only allow test emails with @example.test domain
   if (!email.endsWith('@example.test')) {
-    throw new Error('This function can only be used with @example.test email addresses');
+    throw new functions.https.HttpsError('permission-denied', 'This function can only be used with @example.test email addresses');
   }
 
   try {
@@ -61,26 +58,26 @@ exports.forceVerifyTestUser = onCall(async (request) => {
     console.error('Error forcing email verification:', error);
 
     if (error.code === 'auth/user-not-found') {
-      throw new Error('User not found with the provided email');
+      throw new functions.https.HttpsError('not-found', 'User not found with the provided email');
     }
 
-    throw new Error('Failed to force email verification: ' + error.message);
+    throw new functions.https.HttpsError('internal', 'Failed to force email verification: ' + error.message);
   }
 });
 
 /**
  * Additional function to clean up test users (optional, for cleanup)
  */
-exports.deleteTestUser = onCall(async (request) => {
-  const email = request.data.email;
+exports.deleteTestUser = functions.https.onCall(async (data, context) => {
+  const email = data.email;
 
   if (!email) {
-    throw new Error('Email is required');
+    throw new functions.https.HttpsError('invalid-argument', 'Email is required');
   }
 
   // Security: Only allow test emails
   if (!email.endsWith('@example.test')) {
-    throw new Error('This function can only be used with @example.test email addresses');
+    throw new functions.https.HttpsError('permission-denied', 'This function can only be used with @example.test email addresses');
   }
 
   try {
@@ -101,11 +98,11 @@ exports.deleteTestUser = onCall(async (request) => {
       // User doesn't exist, that's fine
       return {
         success: true,
-        message: 'User already deleted or does not exist'
+        message: 'User does not exist (already deleted or never created)'
       };
     }
 
-    throw new Error('Failed to delete test user: ' + error.message);
+    throw new functions.https.HttpsError('internal', 'Failed to delete test user: ' + error.message);
   }
 });
 
