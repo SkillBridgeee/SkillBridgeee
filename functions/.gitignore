@@ -3,3 +3,8 @@ npm-debug.log
 *.log
 .env
 
+# Exclude package-lock.json to keep PRs clean
+# This is test-only code, exact dependency versions not critical
+# npm will regenerate this file automatically on install
+package-lock.json
+

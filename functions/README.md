@@ -14,6 +14,9 @@ cd functions
 npm install
 ```
 
+**Note**: `package-lock.json` is excluded from Git to keep PRs clean. Since this is test-only code, 
+exact dependency versions are not critical. npm will automatically generate the lockfile on first install.
+
 ## Available Functions
 
 ### forceVerifyTestUser
