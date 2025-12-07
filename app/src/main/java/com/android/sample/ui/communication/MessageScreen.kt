@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -28,6 +29,8 @@ fun MessageScreen(
   val uiState by viewModel.uiState.collectAsState()
 
   LaunchedEffect(convId) { viewModel.loadConversation(convId) }
+
+  DisposableEffect(Unit) { onDispose { viewModel.onScreenLeft() } }
 
   Scaffold(
       modifier = Modifier.fillMaxSize(),

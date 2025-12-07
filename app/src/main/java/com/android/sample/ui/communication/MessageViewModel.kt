@@ -157,6 +157,16 @@ class MessageViewModel(
     }
   }
 
+  fun onScreenLeft() {
+    loadJob?.cancel()
+    loadJob = null
+  }
+
+  override fun onCleared() {
+    super.onCleared()
+    loadJob?.cancel()
+  }
+
   /** Updates the text for the new message being composed. */
   fun onMessageChange(newMessage: String) {
     _uiState.update { it.copy(currentMessage = newMessage) }
