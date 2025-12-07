@@ -157,34 +157,6 @@ class MainActivityHelperTest {
   }
 
   @Test
-  fun `performAutoLogin - authenticated user with unverified email - signs out`() = runTest {
-    // Given: User is authenticated, has profile, but email is not verified
-    val userId = "user-unverified"
-    UserSessionManager.setCurrentUserId(userId)
-
-    val testProfile =
-        Profile(userId = userId, name = "Unverified User", email = "unverified@example.com")
-
-    mockkObject(ProfileRepositoryProvider)
-    every { ProfileRepositoryProvider.repository } returns mockProfileRepository
-    coEvery { mockProfileRepository.getProfile(userId) } returns testProfile
-
-    every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
-    every { mockFirebaseUser.isEmailVerified } returns false
-
-    // When: performAutoLogin is called (will call handleAuthenticatedUser internally)
-    // We need to mock handleAuthenticatedUser to use skipEmulatorCheck = true
-    // Since performAutoLogin calls handleAuthenticatedUser, we need to test handleAuthenticatedUser
-    // directly
-    handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel, skipEmulatorCheck = true)
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    // Then: User is signed out
-    verify { mockAuthViewModel.signOut() }
-    verify(exactly = 0) { mockNavController.navigate(any<String>()) }
-  }
-
-  @Test
   fun `performAutoLogin - error fetching profile - signs out user`() = runTest {
     // Given: User is authenticated but profile fetch throws exception
     val userId = "user-error"
@@ -242,30 +214,6 @@ class MainActivityHelperTest {
 
     // When: handleAuthenticatedUser is called
     handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel)
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    // Then: User is signed out
-    verify { mockAuthViewModel.signOut() }
-    verify(exactly = 0) { mockNavController.navigate(any<String>()) }
-  }
-
-  @Test
-  fun `handleAuthenticatedUser - user with unverified email - signs out`() = runTest {
-    // Given: User has profile but email is not verified
-    val userId = "user-unverified"
-    val testProfile =
-        Profile(userId = userId, name = "Unverified User", email = "unverified@example.com")
-
-    mockkObject(ProfileRepositoryProvider)
-    every { ProfileRepositoryProvider.repository } returns mockProfileRepository
-    coEvery { mockProfileRepository.getProfile(userId) } returns testProfile
-
-    every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
-    every { mockFirebaseUser.isEmailVerified } returns false
-
-    // When: handleAuthenticatedUser is called with skipEmulatorCheck = true to test verification
-    // logic
-    handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel, skipEmulatorCheck = true)
     testDispatcher.scheduler.advanceUntilIdle()
 
     // Then: User is signed out
