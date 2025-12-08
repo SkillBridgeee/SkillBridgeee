@@ -53,12 +53,12 @@ private const val TAG = "NavGraph"
  * Helper function to navigate to listing details screen Avoids code duplication across different
  * navigation paths
  */
-private fun navigateToListing(navController: NavHostController, listingId: String) {
+internal fun navigateToListing(navController: NavHostController, listingId: String) {
   navController.navigate(NavRoutes.createListingRoute(listingId))
 }
 
 /** Helper function to navigate to new listing screen if user is authenticated */
-private fun navigateToNewListing(navController: NavHostController, listingId: String? = null) {
+internal fun navigateToNewListing(navController: NavHostController, listingId: String? = null) {
   val currentUserId = UserSessionManager.getCurrentUserId()
   if (currentUserId != null) {
     navController.navigate(NavRoutes.createNewSkillRoute(currentUserId, listingId))
