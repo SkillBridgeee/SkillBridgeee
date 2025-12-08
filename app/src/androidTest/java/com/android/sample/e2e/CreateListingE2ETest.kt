@@ -460,26 +460,29 @@ class CreateListingE2ETest : E2ETestBase() {
       // ═══════════════════════════════════════════════════════════
       Log.d(TAG, "STEP 14: Verifying created listing appears on home screen")
 
-      // Look for the created listing
+      // Wait for listings to load
+      delay(2000)
+      composeTestRule.waitForIdle()
+
+      // Look for the created listing by its full title to be more specific
       try {
         composeTestRule
-            .onNodeWithText("Advanced Mathematics", substring = true, ignoreCase = true)
+            .onNodeWithText("Advanced Mathematics Tutoring", substring = true, ignoreCase = true)
             .assertExists()
 
         Log.d(TAG, "→ Found 'Advanced Mathematics Tutoring' listing on home screen")
       } catch (_: AssertionError) {
         Log.d(TAG, "→ Listing verification: Listing may not be visible yet")
-      }
+        // Try with just "Advanced Mathematics"
+        try {
+          composeTestRule
+              .onNodeWithText("Advanced Mathematics", substring = true, ignoreCase = true)
+              .assertExists()
 
-      // Try to find Mathematics subject
-      try {
-        composeTestRule
-            .onNodeWithText("Mathematics", substring = true, ignoreCase = true)
-            .assertExists()
-
-        Log.d(TAG, "→ Mathematics subject found on home screen")
-      } catch (_: AssertionError) {
-        Log.d(TAG, "→ Mathematics subject may not be displayed")
+          Log.d(TAG, "→ Found 'Advanced Mathematics' listing on home screen")
+        } catch (_: AssertionError) {
+          Log.d(TAG, "→ Listing verification: Still not visible, continuing anyway")
+        }
       }
 
       Log.d(TAG, "✅ STEP 14 PASSED: Listing verification completed\n")
@@ -490,23 +493,40 @@ class CreateListingE2ETest : E2ETestBase() {
       Log.d(TAG, "STEP 15: Viewing created listing details")
 
       try {
-        // Try to click on the listing
+        // Use the full title to avoid ambiguity (there might be multiple "Mathematics" text)
         composeTestRule
-            .onNodeWithText("Mathematics", substring = true, ignoreCase = true)
+            .onNodeWithText("Advanced Mathematics Tutoring", substring = true, ignoreCase = true)
             .performClick()
 
         delay(2000)
         composeTestRule.waitForIdle()
 
-        Log.d(TAG, "→ Clicked on Mathematics listing")
+        Log.d(TAG, "→ Clicked on 'Advanced Mathematics Tutoring' listing")
         Log.d(TAG, "→ Viewing listing details for 3 seconds...")
         delay(3000)
         composeTestRule.waitForIdle()
 
         Log.d(TAG, "→ Listing details viewed")
       } catch (e: Exception) {
-        Log.d(TAG, "→ Could not interact with listing: ${e.message}")
-        Log.d(TAG, "→ Listing may require scrolling or may not be clickable")
+        Log.d(TAG, "→ Could not click via full title: ${e.message}")
+        // Try alternative: use test tag for listing card if available
+        try {
+          // Look for all nodes containing "Advanced Mathematics" and click the first one
+          composeTestRule
+              .onAllNodesWithText("Advanced Mathematics", substring = true, ignoreCase = true)
+              .onFirst()
+              .performClick()
+
+          delay(2000)
+          composeTestRule.waitForIdle()
+
+          Log.d(TAG, "→ Clicked on listing via first match")
+          delay(3000)
+          composeTestRule.waitForIdle()
+        } catch (e2: Exception) {
+          Log.d(TAG, "→ Could not interact with listing: ${e2.message}")
+          Log.d(TAG, "→ Listing may require scrolling or may not be clickable")
+        }
       }
 
       Log.d(TAG, "✅ STEP 15 PASSED: Listing details interaction completed\n")
