@@ -319,13 +319,13 @@ private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Uni
 /**
  * Composable function that displays the booker (student) information section.
  *
- * This section is shown to tutors when they need to review a booking request.
- * It includes:
+ * This section is shown to tutors when they need to review a booking request. It includes:
  * - The booker's name (clickable to view their profile)
  * - A helper text indicating the name is clickable
  *
  * @param uiState The [BookingUIState] containing booking and booker profile information.
- * @param onBookerClick Callback invoked when the booker's name is clicked; passes the booker's user ID.
+ * @param onBookerClick Callback invoked when the booker's name is clicked; passes the booker's user
+ *   ID.
  */
 @Composable
 private fun InfoBooker(uiState: BookingUIState, onBookerClick: (String) -> Unit) {
@@ -337,24 +337,22 @@ private fun InfoBooker(uiState: BookingUIState, onBookerClick: (String) -> Unit)
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold)
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()) {
-              Icon(
-                  imageVector = Icons.Default.Person,
-                  contentDescription = "Student profile",
-                  tint = MaterialTheme.colorScheme.primary,
-                  modifier = Modifier.size(24.dp))
-              Spacer(modifier = Modifier.width(8.dp))
-              Text(
-                  text = uiState.bookerProfile.name ?: "Unknown",
-                  style = MaterialTheme.typography.titleLarge,
-                  fontWeight = FontWeight.SemiBold,
-                  color = MaterialTheme.colorScheme.primary,
-                  modifier =
-                      Modifier.clickable { onBookerClick(uiState.booking.bookerId) }
-                          .padding(vertical = 4.dp))
-            }
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+          Icon(
+              imageVector = Icons.Default.Person,
+              contentDescription = "Student profile",
+              tint = MaterialTheme.colorScheme.primary,
+              modifier = Modifier.size(24.dp))
+          Spacer(modifier = Modifier.width(8.dp))
+          Text(
+              text = uiState.bookerProfile.name ?: "Unknown",
+              style = MaterialTheme.typography.titleLarge,
+              fontWeight = FontWeight.SemiBold,
+              color = MaterialTheme.colorScheme.primary,
+              modifier =
+                  Modifier.clickable { onBookerClick(uiState.booking.bookerId) }
+                      .padding(vertical = 4.dp))
+        }
 
         Text(
             text = "Tap name to view student profile",

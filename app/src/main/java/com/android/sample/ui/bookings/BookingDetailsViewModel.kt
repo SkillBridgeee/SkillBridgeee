@@ -68,8 +68,7 @@ class BookingDetailsViewModel(
 
         val bookerProfile =
             profileRepository.getProfile(booking.bookerId)
-                ?: throw IllegalStateException(
-                    "BookingDetailsViewModel : Booker profile not found")
+                ?: throw IllegalStateException("BookingDetailsViewModel : Booker profile not found")
 
         val listing =
             listingRepository.getListing(booking.associatedListingId)
