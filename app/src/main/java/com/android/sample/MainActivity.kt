@@ -197,15 +197,6 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val navController = rememberNavController()
   val authResult by authViewModel.authResult.collectAsStateWithLifecycle()
 
-  // One-time auto-login check on app start
-  LaunchedEffect(Unit) {
-    // Wait for auth state to be ready
-    val currentUserId = UserSessionManager.getCurrentUserId()
-    if (currentUserId != null || authViewModel.authResult.value != null) {
-      performAutoLogin(navController, authViewModel)
-    }
-  }
-
   // Navigate based on authentication result from explicit login/signup actions
   LaunchedEffect(authResult) {
     when (val result = authResult) {
@@ -254,6 +245,7 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val noTopBarRoutes =
       setOf(
           NavRoutes.LOGIN,
+          NavRoutes.SPLASH,
       )
 
   Scaffold(

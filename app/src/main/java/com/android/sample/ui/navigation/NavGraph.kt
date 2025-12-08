@@ -3,6 +3,7 @@ package com.android.sample.ui.navigation
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +19,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.android.sample.handleAuthenticatedUser
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.skill.MainSubject
@@ -43,6 +45,7 @@ import com.android.sample.ui.signup.SignUpViewModel
 import com.android.sample.ui.subject.SubjectListScreen
 import com.android.sample.ui.subject.SubjectListViewModel
 import com.android.sample.ui.tos.ToSScreen
+import com.google.firebase.auth.FirebaseAuth
 
 private const val TAG = "NavGraph"
 
@@ -102,7 +105,7 @@ fun AppNavGraph(
   val bookingId = remember { mutableStateOf("") }
   val convId = remember { mutableStateOf("") }
 
-  NavHost(navController = navController, startDestination = NavRoutes.LOGIN) {
+  NavHost(navController = navController, startDestination = NavRoutes.SPLASH) {
     composable(NavRoutes.LOGIN) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LOGIN) }
       LoginScreen(
@@ -166,6 +169,43 @@ fun AppNavGraph(
             navController.navigate(NavRoutes.BOOKING_DETAILS)
           },
           viewModel = bookingsViewModel)
+    }
+
+    composable(NavRoutes.SPLASH) {
+      LaunchedEffect(Unit) {
+        val firebaseUser = FirebaseAuth.getInstance().currentUser
+
+        if (firebaseUser == null) {
+          // No authenticated Firebase user → always go to LOGIN
+          navController.navigate(NavRoutes.LOGIN) { popUpTo(NavRoutes.SPLASH) { inclusive = true } }
+        } else {
+          try {
+            // Try to handle authenticated user (profile + email checks)
+            handleAuthenticatedUser(firebaseUser.uid, navController, authViewModel)
+
+            // If handleAuthenticatedUser signed the user out (no profile / not verified),
+            // FirebaseAuth.currentUser will now be null → go to LOGIN.
+            val stillLoggedIn = FirebaseAuth.getInstance().currentUser != null
+            if (!stillLoggedIn) {
+              navController.navigate(NavRoutes.LOGIN) {
+                popUpTo(NavRoutes.SPLASH) { inclusive = true }
+              }
+            }
+            // If it succeeded, handleAuthenticatedUser already navigated to HOME.
+          } catch (e: Exception) {
+            Log.e(TAG, "Splash: error during auto-login", e)
+            authViewModel.signOut()
+            navController.navigate(NavRoutes.LOGIN) {
+              popUpTo(NavRoutes.SPLASH) { inclusive = true }
+            }
+          }
+        }
+      }
+
+      // Simple loading UI
+      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
+      }
     }
 
     composable(
