@@ -1,7 +1,6 @@
 package com.android.sample
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -62,8 +61,6 @@ class MainActivity : ComponentActivity() {
       if (BuildConfig.USE_FIREBASE_EMULATOR) {
         Firebase.firestore.useEmulator("10.0.2.2", 8080)
         Firebase.auth.useEmulator("10.0.2.2", 9099)
-      } else {
-        Log.d("MainActivity", "🌐 Using production Firebase servers")
       }
     }
   }
@@ -165,16 +162,12 @@ internal suspend fun performAutoLogin(
   val currentUserId = UserSessionManager.getCurrentUserId()
 
   if (currentUserId == null) {
-    Log.d("MainActivity", "Auto-login: No user authenticated - staying at LOGIN")
     return
   }
 
-  Log.d("MainActivity", "Auto-login: Found authenticated user: $currentUserId")
-
   try {
     handleAuthenticatedUser(currentUserId, navController, authViewModel)
-  } catch (e: Exception) {
-    Log.e("MainActivity", "Auto-login: Error checking profile - signing out", e)
+  } catch (_: Exception) {
     authViewModel.signOut()
   }
 }
@@ -190,7 +183,6 @@ internal suspend fun handleAuthenticatedUser(
   val profile = ProfileRepositoryProvider.repository.getProfile(userId)
 
   if (profile == null) {
-    Log.d("MainActivity", "Auto-login: User has no profile - signing out")
     authViewModel.signOut()
     return
   }
@@ -205,14 +197,10 @@ internal suspend fun handleAuthenticatedUser(
       when {
         // Case 1: Firebase emulator - always skip (unless explicitly testing verification)
         BuildConfig.USE_FIREBASE_EMULATOR && !skipEmulatorCheck -> {
-          Log.d("MainActivity", "Auto-login: Using emulator - skipping email verification")
           true
         }
         // Case 2: Test email domain in debug build with SKIP_EMAIL_VERIFICATION enabled
         BuildConfig.SKIP_EMAIL_VERIFICATION && isTestEmail(firebaseUser?.email) -> {
-          Log.d(
-              "MainActivity",
-              "Auto-login: Test email domain detected - skipping email verification")
           true
         }
         // Case 3: Production or real email - check actual verification
@@ -227,8 +215,6 @@ internal suspend fun handleAuthenticatedUser(
       }
 
   if (isEmailVerified) {
-    Log.d("MainActivity", "Auto-login: User has profile and is verified - navigating to HOME")
-
     // Try to navigate, but handle the case where NavHost isn't ready yet
     try {
       // Navigation must happen on the main thread
@@ -237,15 +223,11 @@ internal suspend fun handleAuthenticatedUser(
       }
     } catch (_: IllegalArgumentException) {
       // NavHost not ready yet - this can happen during app startup
-      Log.d("MainActivity", "Auto-login: NavHost not ready yet, will navigate on next composition")
       // Don't sign out - the user is valid, navigation will happen once NavHost is ready
     } catch (_: IllegalStateException) {
-      // Main thread issue - log and don't sign out
-      Log.d(
-          "MainActivity", "Auto-login: Thread issue during navigation, user remains authenticated")
+      // Main thread issue - don't sign out
     }
   } else {
-    Log.d("MainActivity", "Auto-login: Email not verified - signing out")
     authViewModel.signOut()
   }
 }
@@ -271,16 +253,13 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   LaunchedEffect(authResult) {
     when (val result = authResult) {
       is AuthResult.Success -> {
-        Log.d("MainActivity", "Auth success - navigating to HOME")
         navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
         authViewModel.clearAuthResult() // Clear after navigation
       }
       is AuthResult.RequiresSignUp -> {
         // Navigate to signup screen when Google user doesn't have a profile
         val email = result.email
-        Log.d("MainActivity", "Google user requires sign up, email: $email")
         val route = NavRoutes.createSignUpRoute(email)
-        Log.d("MainActivity", "Navigating to route: $route")
         navController.navigate(route) { popUpTo(NavRoutes.LOGIN) { inclusive = false } }
         authViewModel.clearAuthResult() // Clear after navigation
       }

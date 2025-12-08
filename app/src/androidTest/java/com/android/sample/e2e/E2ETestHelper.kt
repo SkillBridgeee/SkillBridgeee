@@ -1,6 +1,5 @@
 package com.android.sample.e2e
 
-import android.util.Log
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -13,7 +12,9 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 
 /**
  * Helper object containing utility functions for end-to-end tests. Provides common functionality
@@ -91,44 +92,23 @@ object E2ETestHelper {
    * @throws Exception if the Cloud Function call fails
    */
   suspend fun forceEmailVerification(email: String) {
-    try {
-      Log.d("E2ETestHelper", "========= Force Email Verification =========")
-      Log.d("E2ETestHelper", "Email: $email")
+    val functions = Firebase.functions(TestConfig.FUNCTIONS_REGION)
+    // Ensure emulator usage (no-op if already set)
+    functions.useEmulator(TestConfig.EMULATOR_HOST, TestConfig.FUNCTIONS_PORT)
 
-      // Get Firebase Functions instance (already configured with emulator in TestRunner)
-      val functions = Firebase.functions
-      Log.d("E2ETestHelper", "Functions instance obtained")
+    val data = mapOf("email" to email)
+    val result = functions.getHttpsCallable("forceVerifyTestUser").call(data).await()
 
-      // Call the Cloud Function
-      val data = hashMapOf("email" to email)
-      Log.d("E2ETestHelper", "Calling forceVerifyTestUser function...")
-      val result = functions.getHttpsCallable("forceVerifyTestUser").call(data).await()
-      Log.d("E2ETestHelper", "Function call completed")
+    @Suppress("UNCHECKED_CAST") val resultData = result.data as? Map<String, Any>
+    val success = resultData?.get("success") as? Boolean ?: false
+    val message = resultData?.get("message") as? String ?: "Unknown result"
 
-      @Suppress("UNCHECKED_CAST") val resultData = result.data as? Map<String, Any>
-      val success = resultData?.get("success") as? Boolean ?: false
-      val message = resultData?.get("message") as? String ?: "Unknown result"
-
-      if (success) {
-        Log.d("E2ETestHelper", "✓ Email verification forced successfully: $message")
-
-        // Reload the current user to get updated email verification status
-        FirebaseAuth.getInstance().currentUser?.reload()?.await()
-
-        val isVerified = FirebaseAuth.getInstance().currentUser?.isEmailVerified ?: false
-        Log.d("E2ETestHelper", "✓ Email verified status after reload: $isVerified")
-      } else {
-        Log.e("E2ETestHelper", "✗ Failed to force email verification: $message")
-        throw Exception("Failed to force email verification: $message")
-      }
-    } catch (e: Exception) {
-      Log.e("E2ETestHelper", "========= ERROR Details =========")
-      Log.e("E2ETestHelper", "Exception type: ${e.javaClass.simpleName}")
-      Log.e("E2ETestHelper", "Exception message: ${e.message}")
-      Log.e("E2ETestHelper", "Exception cause: ${e.cause?.message}")
-      Log.e("E2ETestHelper", "✗ Error forcing email verification", e)
-      throw e
+    if (!success) {
+      throw Exception("forceVerifyTestUser failed: $message")
     }
+
+    // Reload current user (if present) to pick up verified flag
+    FirebaseAuth.getInstance().currentUser?.reload()?.await()
   }
 
   /**
@@ -155,6 +135,33 @@ object E2ETestHelper {
   }
 
   /**
+   * Waits for a Firestore document to exist by polling the database. This is useful in tests after
+   * programmatic creation of profiles, listings, or bookings to avoid arbitrary sleep calls and
+   * instead wait for actual data availability.
+   *
+   * @param collection The Firestore collection name
+   * @param docId The document ID to wait for
+   * @param timeoutMs Maximum time to wait in milliseconds (default: 5 seconds)
+   * @param pollIntervalMs Interval between polling attempts in milliseconds (default: 200ms)
+   * @throws kotlinx.coroutines.TimeoutCancellationException if document is not found within timeout
+   */
+  suspend fun waitForDocument(
+      collection: String,
+      docId: String,
+      timeoutMs: Long = 5000L,
+      pollIntervalMs: Long = 200L
+  ) {
+    withTimeout(timeoutMs) {
+      val firestore = FirebaseFirestore.getInstance()
+      while (true) {
+        val snap = firestore.collection(collection).document(docId).get().await()
+        if (snap.exists()) return@withTimeout
+        delay(pollIntervalMs)
+      }
+    }
+  }
+
+  /**
    * Gets the target application context.
    *
    * @return The application context
@@ -172,8 +179,8 @@ object E2ETestHelper {
 
     // Use emulators
     try {
-      firestore.useEmulator("10.0.2.2", 8080)
-      auth.useEmulator("10.0.2.2", 9099)
+      firestore.useEmulator(TestConfig.EMULATOR_HOST, TestConfig.FIRESTORE_PORT)
+      auth.useEmulator(TestConfig.EMULATOR_HOST, TestConfig.AUTH_PORT)
     } catch (_: IllegalStateException) {
       // Already initialized, ignore
     }

@@ -206,11 +206,11 @@ dependencies {
     implementation(libs.firebase.ui.auth)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.auth)
-    implementation("com.google.firebase:firebase-functions-ktx:20.4.0")
+    implementation(libs.firebase.functions.ktx)
 
     // Firebase Testing dependencies
-    testImplementation("com.google.firebase:firebase-auth:22.3.0")
-    androidTestImplementation("com.google.firebase:firebase-functions-ktx:20.4.0")
+    testImplementation(libs.firebase.auth)
+    androidTestImplementation(libs.firebase.functions.ktx)
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.test:core:1.5.0")
 

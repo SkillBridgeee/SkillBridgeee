@@ -103,6 +103,7 @@ class MainActivityHelperTest {
 
     // When: performAutoLogin is called
     performAutoLogin(mockNavController, mockAuthViewModel)
+    testDispatcher.scheduler.advanceUntilIdle()
 
     // Then: No navigation occurs and no signOut is called
     verify(exactly = 0) { mockNavController.navigate(any<String>()) }
