@@ -63,7 +63,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_showsSentMessage() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     val textToSend = "Bonjour test"
 
@@ -82,7 +84,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_showsIncomingMessage() = runTest {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     // Simule réception d’un message
     manager.sendMessage(
@@ -106,7 +110,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_emptyMessageCannotBeSent() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     // Try to send without typing anything
     composeTestRule.onNode(hasContentDescription("Send message")).performClick()
@@ -122,7 +128,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_showsLoadingStateInitially() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     // Initially loading should be true
     composeTestRule.waitForIdle()
@@ -136,7 +144,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_displaysMultipleMessagesInOrder() = runTest {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     // Send multiple messages
     manager.sendMessage(
@@ -171,7 +181,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_inputClearsAfterSending() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     val textToSend = "Test message"
 
@@ -194,7 +206,9 @@ class MessageScreenTest {
   fun messageScreen_handlesErrorGracefully() {
     val invalidConvId = "invalid_conversation_id"
 
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = invalidConvId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = invalidConvId, onConversationDeleted = {})
+    }
 
     composeTestRule.waitForIdle()
 
