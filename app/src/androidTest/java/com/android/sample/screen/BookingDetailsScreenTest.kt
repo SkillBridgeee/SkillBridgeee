@@ -122,7 +122,12 @@ class BookingDetailsScreenTest {
         override fun getCurrentUserId() = "u1"
 
         override suspend fun getProfile(userId: String) =
-            Profile(userId = userId, name = "John Doe", email = "john.doe@example.com")
+            when (userId) {
+              "u1" -> Profile(userId = userId, name = "John Doe", email = "john.doe@example.com")
+              "asdf" ->
+                  Profile(userId = userId, name = "Student Booker", email = "student@example.com")
+              else -> Profile(userId = userId, name = "User $userId", email = "$userId@example.com")
+            }
 
         override suspend fun getProfileById(userId: String) = getProfile(userId)
 
@@ -205,6 +210,7 @@ class BookingDetailsScreenTest {
                 ),
             listing = Proposal(),
             creatorProfile = Profile(userId = "u1", name = "Teacher"),
+            bookerProfile = Profile(userId = "student", name = "Student"),
         ))
 
     composeTestRule.setContent {
