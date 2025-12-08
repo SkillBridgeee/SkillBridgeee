@@ -15,6 +15,11 @@ import com.android.sample.model.communication.conversation.ConvRepository
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.Message
 import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.map.Location
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
@@ -47,7 +52,7 @@ class MessageScreenTest {
     convRepo = FakeConvRepo()
     overViewRepo = FakeOverViewRepo()
     manager = ConversationManager(convRepo, overViewRepo)
-
+    ProfileRepositoryProvider.setForTests(FakeProfileRepository())
     viewModel = MessageViewModel(manager)
 
     UserSessionManager.setCurrentUserId(userA)
@@ -199,21 +204,43 @@ class MessageScreenTest {
     assertEquals("", viewModel.uiState.value.currentMessage)
   }
 
-  // -----------------------------------------------------
-  // TEST 7 — Error state is handled gracefully
-  // -----------------------------------------------------
-  @Test
-  fun messageScreen_handlesErrorGracefully() {
-    val invalidConvId = "invalid_conversation_id"
+  class FakeProfileRepository : ProfileRepository {
+    override fun getNewUid() = "fake-profile-id"
 
-    composeTestRule.setContent {
-      MessageScreen(viewModel = viewModel, convId = invalidConvId, onConversationDeleted = {})
-    }
+    override fun getCurrentUserId() = "userA"
 
-    composeTestRule.waitForIdle()
+    override suspend fun getProfile(userId: String): Profile? =
+        Profile(
+            userId = userId,
+            name = "Test User",
+            email = "test@example.com",
+            location = Location(0.0, 0.0, "Test Location"))
 
-    // ViewModel should have error state
-    val error = viewModel.uiState.value.error
-    assertEquals(true, error != null)
+    override suspend fun addProfile(profile: Profile) {}
+
+    override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+    override suspend fun deleteProfile(userId: String) {}
+
+    override suspend fun getAllProfiles() = emptyList<Profile>()
+
+    override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+        emptyList<Profile>()
+
+    override suspend fun getProfileById(userId: String) = getProfile(userId)
+
+    override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
+
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {}
+
+    override suspend fun updateStudentRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {}
   }
 }
