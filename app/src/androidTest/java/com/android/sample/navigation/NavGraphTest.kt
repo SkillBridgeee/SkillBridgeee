@@ -1,15 +1,28 @@
 package com.android.sample.ui.navigation
 
 import androidx.activity.ComponentActivity
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.createGraph
 import androidx.navigation.testing.TestNavHostController
+import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.HomePage.MainPageViewModel
+import com.android.sample.ui.bookings.BookingDetailsViewModel
+import com.android.sample.ui.bookings.MyBookingsViewModel
+import com.android.sample.ui.communication.DiscussionViewModel
+import com.android.sample.ui.newListing.NewListingViewModel
+import com.android.sample.ui.profile.MyProfileViewModel
+import com.google.firebase.auth.FirebaseAuth
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
@@ -20,17 +33,35 @@ class NavGraphTest {
 
   @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-  private lateinit var navController: TestNavHostController
+  private lateinit var navController: NavHostController
 
   @Before
   fun setup() {
-    composeRule.setContent {
-      val context = LocalContext.current
+    // Only create controller. DO NOT set content here.
+    composeRule.activityRule.scenario.onActivity { activity ->
       navController =
-          TestNavHostController(context).apply {
+          TestNavHostController(activity).apply {
             navigatorProvider.addNavigator(ComposeNavigator())
-            graph = createTestNavGraph(this)
+            graph = createTestGraph(this)
           }
+    }
+    val fakeProfileRepo: ProfileRepository = mockk(relaxed = true)
+    ProfileRepositoryProvider.setForTests(fakeProfileRepo)
+  }
+
+  private fun createTestGraph(navController: NavHostController): NavGraph {
+    return navController.createGraph(startDestination = "dummy") {
+      composable("dummy") {}
+      composable(NavRoutes.LISTING) {}
+      composable(NavRoutes.NEW_SKILL) {}
+      composable(NavRoutes.SIGNUP) {}
+      composable(NavRoutes.LOGIN) {}
+      composable(NavRoutes.HOME) {}
+      composable(NavRoutes.TOS) {}
+      composable(NavRoutes.BOOKING_DETAILS) {}
+      composable(NavRoutes.OTHERS_PROFILE) {}
+      composable(NavRoutes.DISCUSSION) {}
+      composable(NavRoutes.MESSAGES) {}
     }
   }
 
@@ -79,26 +110,6 @@ class NavGraphTest {
 
       assertEquals(userId, argProfileId)
       assertEquals(listingId, argListingId)
-    }
-  }
-
-  private fun createTestNavGraph(navController: NavHostController): NavGraph {
-    return navController.createGraph(startDestination = "dummy") {
-      composable("dummy") {}
-
-      // Helpers under test
-      composable(NavRoutes.LISTING) {}
-      composable(NavRoutes.NEW_SKILL) {}
-
-      // Extra routes used in your tests
-      composable(NavRoutes.SIGNUP) {}
-      composable(NavRoutes.LOGIN) {}
-      composable(NavRoutes.HOME) {}
-      composable(NavRoutes.TOS) {}
-      composable(NavRoutes.BOOKING_DETAILS) {}
-      composable(NavRoutes.OTHERS_PROFILE) {}
-      composable(NavRoutes.DISCUSSION) {}
-      composable(NavRoutes.MESSAGES) {}
     }
   }
 
@@ -216,5 +227,74 @@ class NavGraphTest {
 
       assertEquals(NavRoutes.MESSAGES, navController.currentDestination?.route)
     }
+  }
+
+  @Test
+  fun splash_withoutFirebaseUser_navigatesToLogin_fromAppNavGraph() {
+    FirebaseAuth.getInstance().signOut()
+
+    composeRule.setContent {
+      val controller = rememberNavController()
+      navController = controller
+      val context = androidx.compose.ui.platform.LocalContext.current
+
+      val authVm = AuthenticationViewModel(context) // REAL VM
+
+      val bookingsVm: MyBookingsViewModel = mockk(relaxed = true)
+      val profileVm: MyProfileViewModel = mockk(relaxed = true)
+      val mainVm: MainPageViewModel = mockk(relaxed = true)
+      val newListingVm: NewListingViewModel = mockk(relaxed = true)
+      val bookingDetailsVm: BookingDetailsViewModel = mockk(relaxed = true)
+      val discussionVm: DiscussionViewModel = mockk(relaxed = true)
+
+      AppNavGraph(
+          navController = controller,
+          bookingsViewModel = bookingsVm,
+          profileViewModel = profileVm,
+          mainPageViewModel = mainVm,
+          newListingViewModel = newListingVm,
+          authViewModel = authVm, // <-- use real one
+          bookingDetailsViewModel = bookingDetailsVm,
+          discussionViewModel = discussionVm,
+          onGoogleSignIn = {})
+    }
+
+    composeRule.waitForIdle()
+    assertEquals(NavRoutes.LOGIN, navController.currentDestination?.route)
+  }
+
+  @Test
+  fun messages_showsFallbackText_whenNoConversationSelected_fromAppNavGraph() {
+    FirebaseAuth.getInstance().signOut()
+
+    composeRule.setContent {
+      val controller = rememberNavController()
+      navController = controller
+      val context = androidx.compose.ui.platform.LocalContext.current
+
+      val authVm = AuthenticationViewModel(context) // REAL VM
+
+      val bookingsVm: MyBookingsViewModel = mockk(relaxed = true)
+      val profileVm: MyProfileViewModel = mockk(relaxed = true)
+      val mainVm: MainPageViewModel = mockk(relaxed = true)
+      val newListingVm: NewListingViewModel = mockk(relaxed = true)
+      val bookingDetailsVm: BookingDetailsViewModel = mockk(relaxed = true)
+      val discussionVm: DiscussionViewModel = mockk(relaxed = true)
+
+      AppNavGraph(
+          navController = controller,
+          bookingsViewModel = bookingsVm,
+          profileViewModel = profileVm,
+          mainPageViewModel = mainVm,
+          newListingViewModel = newListingVm,
+          authViewModel = authVm, // <-- real
+          bookingDetailsViewModel = bookingDetailsVm,
+          discussionViewModel = discussionVm,
+          onGoogleSignIn = {})
+    }
+
+    composeRule.runOnIdle { navController.navigate(NavRoutes.MESSAGES) }
+
+    composeRule.onNodeWithText("No conversation selected").assertIsDisplayed()
   }
 }
