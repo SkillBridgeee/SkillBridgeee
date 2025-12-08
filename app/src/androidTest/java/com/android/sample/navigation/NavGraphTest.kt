@@ -3,7 +3,9 @@ package com.android.sample.ui.navigation
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.ComposeNavigator
@@ -20,6 +22,7 @@ import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.communication.DiscussionViewModel
 import com.android.sample.ui.newListing.NewListingViewModel
+import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import io.mockk.mockk
@@ -62,6 +65,10 @@ class NavGraphTest {
       composable(NavRoutes.OTHERS_PROFILE) {}
       composable(NavRoutes.DISCUSSION) {}
       composable(NavRoutes.MESSAGES) {}
+      composable(NavRoutes.SKILLS) {}
+      composable(NavRoutes.BOOKINGS) {}
+      composable(NavRoutes.PROFILE) {}
+
     }
   }
 
@@ -297,4 +304,48 @@ class NavGraphTest {
 
     composeRule.onNodeWithText("No conversation selected").assertIsDisplayed()
   }
+
+  @Test
+  fun home_onNavigateToSubjectList_navigatesToSkills() {
+    composeRule.runOnIdle {
+      navController.navigate(NavRoutes.HOME)
+      assertEquals(NavRoutes.HOME, navController.currentDestination?.route)
+
+      // Simulate UI callback
+      navController.navigate(NavRoutes.SKILLS)
+    }
+
+    assertEquals(NavRoutes.SKILLS, navController.currentDestination?.route)
+  }
+
+  @Test
+  fun skills_onListingClick_navigatesToListing() {
+    val listingId = "123"
+
+    composeRule.runOnIdle {
+      navController.navigate(NavRoutes.SKILLS)
+      navigateToListing(navController, listingId)
+    }
+
+    assertEquals(NavRoutes.LISTING, navController.currentDestination?.route)
+    assertEquals(listingId, navController.currentBackStackEntry?.arguments?.getString("listingId"))
+  }
+
+  @Test
+  fun bookings_onBookingClick_navigatesToBookingDetails() {
+    val bookingId = "B001"
+
+    composeRule.runOnIdle {
+      navController.navigate(NavRoutes.BOOKINGS)
+
+      // simulate click callback
+      navController.navigate(NavRoutes.BOOKING_DETAILS)
+    }
+
+    assertEquals(NavRoutes.BOOKING_DETAILS, navController.currentDestination?.route)
+  }
+
+
+
+
 }
