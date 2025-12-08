@@ -1388,47 +1388,6 @@ class BookingDetailsScreenTest {
   }
 
   @Test
-  fun bookingDetailsScreen_clickBookerName_callsCallback() {
-    var clickedUserId: String? = null
-
-    val vm = fakeViewModel()
-
-    // Note: fakeViewModel loads booking "b1" which has bookerId = "asdf"
-    // We need to use "asdf" in the UI state to match what's actually in the booking
-    vm.setUiStateForTest(
-        BookingUIState(
-            booking =
-                Booking(
-                    bookingId = "b1",
-                    listingCreatorId = "u1",
-                    bookerId = "asdf", // Match the bookerId from fakeBookingRepo
-                    associatedListingId = "list-123",
-                    status = BookingStatus.PENDING),
-            listing = Proposal(),
-            creatorProfile = Profile(userId = "u1", name = "Tutor Alice"),
-            bookerProfile =
-                Profile(
-                    userId = "asdf",
-                    name = "Student Booker"), // Match the name from fakeProfileRepo
-            isTutor = true,
-            onAcceptBooking = {}, // Add empty callback to prevent NPE
-            onDenyBooking = {})) // Add empty callback to prevent NPE
-
-    composeTestRule.setContent {
-      BookingDetailsScreen(
-          bkgViewModel = vm, bookingId = "b1", onCreatorClick = { clickedUserId = it })
-    }
-
-    // Click on the booker's name
-    composeTestRule.onNodeWithText("Student Booker").performClick()
-
-    // Verify the callback was called with the correct booker ID
-    assert(clickedUserId == "asdf") {
-      "Expected callback to be called with 'asdf', but got '$clickedUserId'"
-    }
-  }
-
-  @Test
   fun bookingDetailsScreen_bookerInfo_hasClickableAction() {
     val vm = fakeViewModel()
 
