@@ -30,6 +30,7 @@ data class BookingUIState(
     val booking: Booking = Booking(),
     val listing: Listing = Proposal(),
     val creatorProfile: Profile = Profile(),
+    val bookerProfile: Profile = Profile(), // Profile of the person who made the booking
     val loadError: Boolean = false,
     val ratingSubmitted: Boolean = false,
     val isTutor: Boolean = false, // Added to indicate if the user is a tutor
@@ -64,6 +65,11 @@ class BookingDetailsViewModel(
             profileRepository.getProfile(booking.listingCreatorId)
                 ?: throw IllegalStateException(
                     "BookingDetailsViewModel : Creator profile not found")
+
+        val bookerProfile =
+            profileRepository.getProfile(booking.bookerId)
+                ?: throw IllegalStateException(
+                    "BookingDetailsViewModel : Booker profile not found")
 
         val listing =
             listingRepository.getListing(booking.associatedListingId)
@@ -107,6 +113,7 @@ class BookingDetailsViewModel(
                 booking = booking,
                 listing = listing,
                 creatorProfile = creatorProfile,
+                bookerProfile = bookerProfile,
                 loadError = false,
                 ratingSubmitted = alreadySubmitted,
                 isTutor = booking.listingCreatorId == profileRepository.getCurrentUserId(),
