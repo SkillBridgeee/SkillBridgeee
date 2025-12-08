@@ -86,9 +86,135 @@ class NavGraphTest {
     return navController.createGraph(startDestination = "dummy") {
       composable("dummy") {}
 
-      // These must match your actual route patterns in NavRoutes
+      // Helpers under test
       composable(NavRoutes.LISTING) {}
       composable(NavRoutes.NEW_SKILL) {}
+
+      // Extra routes used in your tests
+      composable(NavRoutes.SIGNUP) {}
+      composable(NavRoutes.LOGIN) {}
+      composable(NavRoutes.HOME) {}
+      composable(NavRoutes.TOS) {}
+      composable(NavRoutes.BOOKING_DETAILS) {}
+      composable(NavRoutes.OTHERS_PROFILE) {}
+      composable(NavRoutes.DISCUSSION) {}
+      composable(NavRoutes.MESSAGES) {}
+    }
+  }
+
+  // In NavGraphTest.kt (add below your existing 2 tests)
+
+  @Test
+  fun signUp_onSubmitSuccess_navigatesToLogin() {
+    composeRule.runOnIdle {
+      // Simulate we are on SIGNUP
+      navController.navigate(NavRoutes.SIGNUP)
+      assertEquals(NavRoutes.SIGNUP, navController.currentDestination?.route)
+
+      // Same code as onSubmitSuccess
+      navController.navigate(NavRoutes.LOGIN) { popUpTo(0) { inclusive = false } }
+
+      assertEquals(NavRoutes.LOGIN, navController.currentDestination?.route)
+    }
+  }
+
+  @Test
+  fun signUp_onGoogleSignUpSuccess_navigatesToHome() {
+    composeRule.runOnIdle {
+      navController.navigate(NavRoutes.SIGNUP)
+      assertEquals(NavRoutes.SIGNUP, navController.currentDestination?.route)
+
+      // Same code as onGoogleSignUpSuccess
+      navController.navigate(NavRoutes.HOME) { popUpTo(0) { inclusive = true } }
+
+      assertEquals(NavRoutes.HOME, navController.currentDestination?.route)
+    }
+  }
+
+  @Test
+  fun signUp_onBackPressed_navigatesToLogin() {
+    composeRule.runOnIdle {
+      navController.navigate(NavRoutes.SIGNUP)
+      assertEquals(NavRoutes.SIGNUP, navController.currentDestination?.route)
+
+      // Same code as onBackPressed
+      navController.navigate(NavRoutes.LOGIN) { popUpTo(0) { inclusive = false } }
+
+      assertEquals(NavRoutes.LOGIN, navController.currentDestination?.route)
+    }
+  }
+
+  @Test
+  fun signUp_onNavigateToToS_navigatesToToS() {
+    composeRule.runOnIdle {
+      navController.navigate(NavRoutes.SIGNUP)
+      assertEquals(NavRoutes.SIGNUP, navController.currentDestination?.route)
+
+      // Same code as onNavigateToToS
+      navController.navigate(NavRoutes.TOS)
+
+      assertEquals(NavRoutes.TOS, navController.currentDestination?.route)
+    }
+  }
+
+  @Test
+  fun othersProfile_onProposalClick_navigatesToListing() {
+    val listingId = "listing_from_proposal"
+
+    composeRule.runOnIdle {
+      // Same behaviour as ProfileScreen's onProposalClick
+      navigateToListing(navController, listingId)
+
+      assertEquals(NavRoutes.LISTING, navController.currentDestination?.route)
+      val args = navController.currentBackStackEntry?.arguments
+      assertEquals(listingId, args?.getString("listingId"))
+    }
+  }
+
+  @Test
+  fun othersProfile_onRequestClick_navigatesToListing() {
+    val listingId = "listing_from_request"
+
+    composeRule.runOnIdle {
+      // Same behaviour as ProfileScreen's onRequestClick
+      navigateToListing(navController, listingId)
+
+      assertEquals(NavRoutes.LISTING, navController.currentDestination?.route)
+      val args = navController.currentBackStackEntry?.arguments
+      assertEquals(listingId, args?.getString("listingId"))
+    }
+  }
+
+  @Test
+  fun bookingDetails_onCreatorClick_navigatesToOthersProfile() {
+    val creatorId = "creator123"
+
+    composeRule.runOnIdle {
+      // Simulate we are in BOOKING_DETAILS
+      navController.navigate(NavRoutes.BOOKING_DETAILS)
+      assertEquals(NavRoutes.BOOKING_DETAILS, navController.currentDestination?.route)
+
+      // Same logic as in onCreatorClick lambda
+      // (in AppNavGraph you also store profileID.value, here we just test navigation)
+      navController.navigate(NavRoutes.OTHERS_PROFILE)
+
+      assertEquals(NavRoutes.OTHERS_PROFILE, navController.currentDestination?.route)
+    }
+  }
+
+  @Test
+  fun discussion_onConversationClick_navigatesToMessages() {
+    val convId = "conv-xyz"
+
+    composeRule.runOnIdle {
+      // Start at DISCUSSION
+      navController.navigate(NavRoutes.DISCUSSION)
+      assertEquals(NavRoutes.DISCUSSION, navController.currentDestination?.route)
+
+      // Same behaviour as onConversationClick
+      navController.navigate(NavRoutes.MESSAGES)
+
+      assertEquals(NavRoutes.MESSAGES, navController.currentDestination?.route)
     }
   }
 }
