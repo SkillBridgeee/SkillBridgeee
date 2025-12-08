@@ -161,9 +161,6 @@ class FirestoreBookingRepository(
       }
       db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking).await()
     } catch (e: Exception) {
-      if (!isOnline()) {
-        throw Exception("Cannot add booking while offline")
-      }
       throw Exception("Failed to add booking: ${e.message}")
     }
   }
