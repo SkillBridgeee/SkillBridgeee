@@ -70,6 +70,7 @@ object ListingScreenTestTags {
  *
  * @param listingId The ID of the listing to display
  * @param onNavigateBack Callback when back button is pressed
+ * @param onNavigateToProfile Callback when creator's name is clicked with creator's profile ID
  * @param viewModel The ViewModel for this screen
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,6 +79,7 @@ fun ListingScreen(
     listingId: String,
     onNavigateBack: () -> Unit,
     onEditListing: () -> Unit,
+    onNavigateToProfile: (String) -> Unit = {},
     viewModel: ListingViewModel = viewModel(),
     autoFillDatesForTesting: Boolean = false
 ) {
@@ -162,14 +164,15 @@ fun ListingScreen(
       uiState.listing != null -> {
         ListingContent(
             uiState = uiState,
-            modifier = Modifier.padding(padding),
             onBook = { start, end -> viewModel.createBooking(start, end) },
             onApproveBooking = { bookingId -> viewModel.approveBooking(bookingId) },
             onRejectBooking = { bookingId -> viewModel.rejectBooking(bookingId) },
             onDeleteListing = { scope.launch { viewModel.deleteListing() } },
             onEditListing = onEditListing,
-            autoFillDatesForTesting = autoFillDatesForTesting,
-            onSubmitTutorRating = { stars -> viewModel.submitTutorRating(stars) })
+            onSubmitTutorRating = { stars -> viewModel.submitTutorRating(stars) },
+            modifier = Modifier.padding(padding),
+            onNavigateToProfile = onNavigateToProfile,
+            autoFillDatesForTesting = autoFillDatesForTesting)
       }
     }
   }

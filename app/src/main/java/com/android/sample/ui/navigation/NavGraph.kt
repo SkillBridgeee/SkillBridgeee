@@ -253,7 +253,11 @@ fun AppNavGraph(
           com.android.sample.ui.listing.ListingScreen(
               listingId = listingId,
               onNavigateBack = { navController.popBackStack() },
-              onEditListing = { navigateToNewListing(navController, listingId) })
+              onEditListing = { navigateToNewListing(navController, listingId) },
+              onNavigateToProfile = { creatorId ->
+                profileID.value = creatorId
+                navController.navigate(NavRoutes.OTHERS_PROFILE)
+              })
         }
 
     composable(route = NavRoutes.BOOKING_DETAILS) {

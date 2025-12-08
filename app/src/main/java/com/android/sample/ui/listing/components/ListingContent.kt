@@ -1,5 +1,6 @@
 package com.android.sample.ui.listing.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -55,7 +56,10 @@ object ListingContentTestTags {
  * @param onRejectBooking Callback when a booking is rejected
  * @param onDeleteListing Callback when a listing is deleted
  * @param onEditListing Callback when a listing is edited
+ * @param onSubmitTutorRating Callback when a tutor rating is submitted
  * @param modifier Modifier for the content
+ * @param onNavigateToProfile Callback when creator's name is clicked with creator's profile ID
+ * @param autoFillDatesForTesting Whether to autofill dates for testing
  */
 @Composable
 fun ListingContent(
@@ -67,6 +71,7 @@ fun ListingContent(
     onEditListing: () -> Unit,
     onSubmitTutorRating: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    onNavigateToProfile: (String) -> Unit = {},
     autoFillDatesForTesting: Boolean = false
 ) {
   val listing = uiState.listing ?: return
@@ -94,7 +99,7 @@ fun ListingContent(
 
         item {
           // Creator info (if available)
-          creator?.let { CreatorCard(it) }
+          creator?.let { CreatorCard(it, onNavigateToProfile) }
         }
 
         item { // Skill details
@@ -173,17 +178,26 @@ private fun DescriptionCard(description: String) {
 
 /** Creator information card */
 @Composable
-private fun CreatorCard(creator: com.android.sample.model.user.Profile) {
+private fun CreatorCard(creator: com.android.sample.model.user.Profile, onNavigateToProfile: (String) -> Unit) {
   Card(modifier = Modifier.fillMaxWidth()) {
     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      Row(verticalAlignment = Alignment.CenterVertically) {
+      Row(
+          verticalAlignment = Alignment.CenterVertically,
+          modifier = Modifier.fillMaxWidth()) {
         Icon(Icons.Default.Person, contentDescription = null)
         Spacer(Modifier.padding(4.dp))
         Text(
             text = creator.name ?: "",
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.testTag(ListingScreenTestTags.CREATOR_NAME))
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .testTag(ListingScreenTestTags.CREATOR_NAME)
+                .clickable { onNavigateToProfile(creator.userId) })
       }
+      Text(
+          text = "Tap to view profile",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
   }
 }
