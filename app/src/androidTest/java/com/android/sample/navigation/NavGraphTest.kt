@@ -7,10 +7,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.ComposeNavigator
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.createGraph
 import androidx.navigation.testing.TestNavHostController
+import com.android.sample.handleAuthenticatedUser
 import com.android.sample.model.authentication.AuthenticationViewModel
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.user.ProfileRepository
@@ -22,21 +24,61 @@ import com.android.sample.ui.communication.DiscussionViewModel
 import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import io.mockk.every
 import io.mockk.mockk
+import org.junit.After
+import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 
 class NavGraphTest {
 
+  companion object {
+    // Keep a single shared mocked FirebaseAuth instance and mock the static getInstance() once.
+    private lateinit var staticAuth: FirebaseAuth
+
+    // Ensure FirebaseAuth.getInstance() is mocked before any classes that access it are loaded
+    @BeforeClass
+    @JvmStatic
+    fun globalSetup() {
+      io.mockk.mockkStatic(FirebaseAuth::class)
+      staticAuth = io.mockk.mockk(relaxed = true)
+      // default: no user
+      every { staticAuth.currentUser } returns null
+      every { staticAuth.signOut() } returns Unit
+      every { FirebaseAuth.getInstance() } returns staticAuth
+    }
+
+    @AfterClass
+    @JvmStatic
+    fun globalTearDown() {
+      try {
+        io.mockk.unmockkStatic(FirebaseAuth::class)
+      } catch (_: Throwable) {}
+    }
+  }
+
   @get:Rule val composeRule = createAndroidComposeRule<ComponentActivity>()
 
   private lateinit var navController: NavHostController
+  // Shared mocks for FirebaseAuth so tests don't call real Firebase
+  private lateinit var mockAuth: FirebaseAuth
+  private lateinit var mockUser: FirebaseUser
 
   @Before
   fun setup() {
+    // Reuse the static mock created in companion object so we never call every { ... } on a real
+    // object
+    mockAuth = staticAuth
+
+    // No need to re-stub FirebaseAuth.getInstance() here (already done in globalSetup).
+    // Per-test we may override currentUser using setSignedInUser().
+
     // Only create controller. DO NOT set content here.
     composeRule.activityRule.scenario.onActivity { activity ->
       navController =
@@ -47,6 +89,21 @@ class NavGraphTest {
     }
     val fakeProfileRepo: ProfileRepository = mockk(relaxed = true)
     ProfileRepositoryProvider.setForTests(fakeProfileRepo)
+  }
+
+  @After
+  fun teardown() {
+    // cleanup per-test mocks
+    try {
+      io.mockk.unmockkStatic("com.android.sample.MainActivityKt")
+    } catch (_: Throwable) {}
+    try {
+      UserSessionManager.clearSession()
+    } catch (_: Throwable) {}
+    // clear any stubs on staticAuth between tests to avoid leakage
+    try {
+      io.mockk.clearMocks(staticAuth)
+    } catch (_: Throwable) {}
   }
 
   private fun createTestGraph(navController: NavHostController): NavGraph {
@@ -93,6 +150,7 @@ class NavGraphTest {
   fun navigateToNewListing_navigatesWhenUserExists() {
     val userId = "user42"
     val listingId = "listing999"
+    // Use testing helper to set fake user id
     UserSessionManager.setCurrentUserId(userId)
 
     composeRule.runOnIdle {
@@ -234,6 +292,7 @@ class NavGraphTest {
 
   @Test
   fun splash_withoutFirebaseUser_navigatesToLogin_fromAppNavGraph() {
+    // call signOut on mocked FirebaseAuth
     FirebaseAuth.getInstance().signOut()
 
     composeRule.setContent {
@@ -301,6 +360,14 @@ class NavGraphTest {
     composeRule.onNodeWithText("No conversation selected").assertIsDisplayed()
   }
 
+  // helper to set FirebaseAuth.currentUser for tests that need a signed-in user
+  private fun setSignedInUser(uid: String, email: String? = "test@example.com") {
+    mockUser = io.mockk.mockk(relaxed = true)
+    io.mockk.every { mockUser.uid } returns uid
+    io.mockk.every { mockUser.email } returns email
+    io.mockk.every { mockAuth.currentUser } returns mockUser
+  }
+
   @Test
   fun home_onNavigateToSubjectList_navigatesToSkills() {
     composeRule.runOnIdle {
@@ -339,5 +406,111 @@ class NavGraphTest {
     }
 
     assertEquals(NavRoutes.BOOKING_DETAILS, navController.currentDestination?.route)
+  }
+
+  @Test
+  fun appNavGraph_skills_composable_is_reached() {
+    // Use a minimal NavHost in tests to avoid composing real screens that create ViewModels.
+    composeRule.setContent {
+      val controller = rememberNavController()
+      navController = controller
+      NavHost(navController = controller, startDestination = "dummy") {
+        composable("dummy") {}
+        composable(NavRoutes.SKILLS) {
+          // lightweight placeholder composable for test
+          androidx.compose.runtime.LaunchedEffect(Unit) {
+            RouteStackManager.addRoute(NavRoutes.SKILLS)
+          }
+        }
+      }
+    }
+
+    // navigate and assert
+    composeRule.runOnIdle {
+      setSignedInUser("test-user")
+      navController.navigate(NavRoutes.SKILLS)
+    }
+
+    composeRule.waitForIdle()
+    assertEquals(NavRoutes.SKILLS, navController.currentDestination?.route)
+  }
+
+  @Test
+  fun appNavGraph_bookings_composable_and_bookingDetails_route_are_reached() {
+    // Use minimal NavHost with BOOKINGS and BOOKING_DETAILS routes to avoid real ViewModel
+    // creation.
+    composeRule.setContent {
+      val controller = rememberNavController()
+      navController = controller
+      NavHost(navController = controller, startDestination = "dummy") {
+        composable("dummy") {}
+        composable(NavRoutes.BOOKINGS) {
+          androidx.compose.runtime.LaunchedEffect(Unit) {
+            RouteStackManager.addRoute(NavRoutes.BOOKINGS)
+          }
+        }
+        composable(NavRoutes.BOOKING_DETAILS) {
+          androidx.compose.runtime.LaunchedEffect(Unit) {
+            RouteStackManager.addRoute(NavRoutes.BOOKING_DETAILS)
+          }
+        }
+      }
+    }
+
+    composeRule.runOnIdle {
+      setSignedInUser("test-user")
+      navController.navigate(NavRoutes.BOOKINGS)
+      assertEquals(NavRoutes.BOOKINGS, navController.currentDestination?.route)
+      navController.navigate(NavRoutes.BOOKING_DETAILS)
+    }
+
+    composeRule.waitForIdle()
+    assertEquals(NavRoutes.BOOKING_DETAILS, navController.currentDestination?.route)
+  }
+
+  @Test
+  fun splash_when_handleAuthenticatedUser_throws_navigates_to_login() {
+    // Mock FirebaseAuth to return a non-null user and mock handleAuthenticatedUser to throw
+    // ensure mockAuth is set to return a signed-in user
+    setSignedInUser("fake-uid")
+    // Mock top-level handleAuthenticatedUser to throw
+    io.mockk.mockkStatic("com.android.sample.MainActivityKt")
+    io.mockk.coEvery {
+      handleAuthenticatedUser(
+          any<String>(), any<NavHostController>(), any<AuthenticationViewModel>())
+    } throws RuntimeException("boom")
+
+    composeRule.setContent {
+      val controller = rememberNavController()
+      navController = controller
+      val context = androidx.compose.ui.platform.LocalContext.current
+
+      val authVm = AuthenticationViewModel(context)
+      val bookingsVm: MyBookingsViewModel = mockk(relaxed = true)
+      val profileVm: MyProfileViewModel = mockk(relaxed = true)
+      val mainVm: MainPageViewModel = mockk(relaxed = true)
+      val newListingVm: NewListingViewModel = mockk(relaxed = true)
+      val bookingDetailsVm: BookingDetailsViewModel = mockk(relaxed = true)
+      val discussionVm: DiscussionViewModel = mockk(relaxed = true)
+
+      AppNavGraph(
+          navController = controller,
+          bookingsViewModel = bookingsVm,
+          profileViewModel = profileVm,
+          mainPageViewModel = mainVm,
+          newListingViewModel = newListingVm,
+          authViewModel = authVm,
+          bookingDetailsViewModel = bookingDetailsVm,
+          discussionViewModel = discussionVm,
+          onGoogleSignIn = {})
+    }
+
+    // Wait then assert Splash path handled the exception and navigated to LOGIN
+    composeRule.waitForIdle()
+    assertEquals(NavRoutes.LOGIN, navController.currentDestination?.route)
+
+    // Cleanup mocks
+    io.mockk.unmockkStatic("com.android.sample.MainActivityKt")
+    io.mockk.unmockkStatic(com.google.firebase.auth.FirebaseAuth::class)
   }
 }

@@ -98,14 +98,16 @@ fun AppNavGraph(
     authViewModel: AuthenticationViewModel,
     bookingDetailsViewModel: BookingDetailsViewModel,
     discussionViewModel: DiscussionViewModel,
-    onGoogleSignIn: () -> Unit
+    onGoogleSignIn: () -> Unit,
+    startDestination: String = NavRoutes.SPLASH,
 ) {
   val academicSubject = remember { mutableStateOf<MainSubject?>(null) }
   val profileID = remember { mutableStateOf("") }
   val bookingId = remember { mutableStateOf("") }
   val convId = remember { mutableStateOf("") }
 
-  NavHost(navController = navController, startDestination = NavRoutes.SPLASH) {
+  // Allow tests to override the start destination to avoid executing the SPLASH logic
+  NavHost(navController = navController, startDestination = startDestination) {
     composable(NavRoutes.LOGIN) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LOGIN) }
       LoginScreen(
