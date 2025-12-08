@@ -231,7 +231,7 @@ jobs:
           else
             echo "::warning::GOOGLE_SERVICES secret not set."
           fi
-          
+
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
@@ -247,7 +247,7 @@ jobs:
 
       - name: Start Firebase Emulators
         run: |
-          firebase emulators:start --only firestore,auth,functions --project demo-test > firebase.log 2>&1 &
+          firebase emulators:start --only firestore,auth,functions --project skillbridge-46ee3 > firebase.log 2>&1 &
           echo "Waiting for emulators to start..."
           for i in $(seq 1 60); do
             if grep -q "All emulators ready" firebase.log; then
@@ -269,7 +269,7 @@ jobs:
         run: |
           echo "Checking if forceVerifyTestUser function is available..."
           sleep 5
-          curl -s http://localhost:5001/demo-test/us-central1/forceVerifyTestUser || echo "⚠️ Function endpoint check failed (this is expected, just checking availability)"
+          curl -s http://localhost:5001/skillbridge-46ee3/us-central1/forceVerifyTestUser || echo "⚠️ Function endpoint check failed (this is expected, just checking availability)"
           echo "Checking functions emulator UI..."
           curl -s http://localhost:4000 > /dev/null && echo "✓ Emulator UI is accessible" || echo "❌ Emulator UI not accessible"
 
@@ -387,7 +387,7 @@ jobs:
 
       - name: Start Firebase Emulators
         run: |
-          firebase emulators:start --only firestore,auth,functions --project demo-test > firebase.log 2>&1 &
+          firebase emulators:start --only firestore,auth,functions --project skillbridge-46ee3 > firebase.log 2>&1 &
           echo "Waiting for emulators to start..."
           for i in $(seq 1 60); do
             if grep -q "All emulators ready" firebase.log; then
@@ -564,4 +564,3 @@ jobs:
             exit 1
           fi
           echo "All CI jobs completed successfully!"
-  
