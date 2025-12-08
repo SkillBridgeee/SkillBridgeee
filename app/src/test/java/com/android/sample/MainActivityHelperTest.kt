@@ -315,4 +315,174 @@ class MainActivityHelperTest {
     assert(route.contains("signup?email="))
     assert(route.contains("%")) // Should contain URL encoding
   }
+
+  // ==================== isTestEmail Tests (Lines 103-105) ====================
+
+  @Test
+  fun `isTestEmail - returns false for null email`() {
+    // Given: null email
+    // When: isTestEmail is called
+    val result = isTestEmail(null)
+
+    // Then: Should return false
+    assert(!result)
+  }
+
+  @Test
+  fun `isTestEmail - returns true for example_test domain`() {
+    // Given: Email with @example.test domain (line 103)
+    val email = "user@example.test"
+
+    // When: isTestEmail is called
+    val result = isTestEmail(email)
+
+    // Then: Should return true
+    assert(result)
+  }
+
+  @Test
+  fun `isTestEmail - returns true for test_com domain`() {
+    // Given: Email with @test.com domain (line 104)
+    val email = "user@test.com"
+
+    // When: isTestEmail is called
+    val result = isTestEmail(email)
+
+    // Then: Should return true
+    assert(result)
+  }
+
+  @Test
+  fun `isTestEmail - returns true for e2etest_com domain`() {
+    // Given: Email with @e2etest.com domain (line 105)
+    val email = "user@e2etest.com"
+
+    // When: isTestEmail is called
+    val result = isTestEmail(email)
+
+    // Then: Should return true
+    assert(result)
+  }
+
+  @Test
+  fun `isTestEmail - returns false for production email`() {
+    // Given: Production email
+    val email = "user@gmail.com"
+
+    // When: isTestEmail is called
+    val result = isTestEmail(email)
+
+    // Then: Should return false
+    assert(!result)
+  }
+
+  @Test
+  fun `isTestEmail - is case insensitive`() {
+    // Given: Test email with uppercase
+    val email = "USER@EXAMPLE.TEST"
+
+    // When: isTestEmail is called
+    val result = isTestEmail(email)
+
+    // Then: Should return true (ignoreCase = true)
+    assert(result)
+  }
+
+  // ==================== MyViewModelFactory Tests (Lines 131-134) ====================
+
+  @Test
+  fun `MyViewModelFactory - throws IllegalArgumentException for unknown ViewModel class`() {
+    // Given: A factory with session manager
+    val sessionManager = UserSessionManager
+    val factory = MyViewModelFactory(sessionManager)
+
+    // When/Then: Creating an unknown ViewModel class should throw IllegalArgumentException
+    try {
+      // Use a ViewModel class that's not in the factory's when expression
+      class UnknownViewModel : androidx.lifecycle.ViewModel()
+      factory.create(UnknownViewModel::class.java)
+      assert(false) { "Should have thrown IllegalArgumentException" }
+    } catch (e: IllegalArgumentException) {
+      assert(e.message == "Unknown ViewModel class")
+    }
+  }
+
+  // ==================== handleAuthenticatedUser Navigation Exception Tests (Lines 203-207)
+  // ====================
+
+  @Test
+  fun `handleAuthenticatedUser - catches IllegalArgumentException during navigation`() = runTest {
+    // Given: User has profile and verified email, but navigation throws
+    // IllegalArgumentException
+    val userId = "test-user"
+    val testProfile = Profile(userId = userId, name = "Test User", email = "test@example.com")
+
+    mockkObject(ProfileRepositoryProvider)
+    every { ProfileRepositoryProvider.repository } returns mockProfileRepository
+    coEvery { mockProfileRepository.getProfile(userId) } returns testProfile
+
+    every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
+    every { mockFirebaseUser.isEmailVerified } returns true
+
+    // Mock navigate to throw IllegalArgumentException (NavHost not ready)
+    every { mockNavController.navigate(any<String>(), any<NavOptionsBuilder.() -> Unit>()) } throws
+        IllegalArgumentException("NavHost not ready")
+
+    // When: handleAuthenticatedUser is called
+    handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then: Exception is caught and user is NOT signed out (line 205-206)
+    verify(exactly = 0) { mockAuthViewModel.signOut() }
+  }
+
+  @Test
+  fun `handleAuthenticatedUser - catches IllegalStateException during navigation`() = runTest {
+    // Given: User has profile and verified email, but navigation throws IllegalStateException
+    val userId = "test-user"
+    val testProfile = Profile(userId = userId, name = "Test User", email = "test@example.com")
+
+    mockkObject(ProfileRepositoryProvider)
+    every { ProfileRepositoryProvider.repository } returns mockProfileRepository
+    coEvery { mockProfileRepository.getProfile(userId) } returns testProfile
+
+    every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
+    every { mockFirebaseUser.isEmailVerified } returns true
+
+    // Mock navigate to throw IllegalStateException (main thread issue)
+    every { mockNavController.navigate(any<String>(), any<NavOptionsBuilder.() -> Unit>()) } throws
+        IllegalStateException("Main thread issue")
+
+    // When: handleAuthenticatedUser is called
+    handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then: Exception is caught and user is NOT signed out (line 207-208)
+    verify(exactly = 0) { mockAuthViewModel.signOut() }
+  }
+
+  @Test
+  fun `handleAuthenticatedUser - unverified email signs out user`() = runTest {
+    // Given: User has profile but email is not verified
+    val userId = "unverified-user"
+    val testProfile =
+        Profile(userId = userId, name = "Unverified User", email = "unverified@example.com")
+
+    mockkObject(ProfileRepositoryProvider)
+    every { ProfileRepositoryProvider.repository } returns mockProfileRepository
+    coEvery { mockProfileRepository.getProfile(userId) } returns testProfile
+
+    every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
+    every { mockFirebaseUser.isEmailVerified } returns false
+    every { mockFirebaseUser.email } returns "unverified@example.com"
+
+    // When: handleAuthenticatedUser is called with skipEmulatorCheck = true to test real
+    // verification
+    handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel, skipEmulatorCheck = true)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then: User is signed out because email is not verified
+    verify { mockAuthViewModel.signOut() }
+    verify(exactly = 0) { mockNavController.navigate(any<String>()) }
+  }
 }
