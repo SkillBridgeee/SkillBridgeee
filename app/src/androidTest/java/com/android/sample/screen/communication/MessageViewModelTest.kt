@@ -680,6 +680,93 @@ class MessageViewModelTest {
     assertEquals(testUserId, newViewModel.uiState.value.currentUserId)
     assertEquals(null, newViewModel.uiState.value.error)
   }
+
+    // -----------------------------------------------------
+    // TEST 26 — deleteConversation deletes conv & overview and sets flag
+    // -----------------------------------------------------
+    @Test
+    fun deleteConversation_deletesConvAndOverview_andSetsIsDeleted() = runTest {
+        // Ensure we have an overview for this conversation for the current user
+        overViewRepo.addOverViewConvUser(
+            OverViewConversation(
+                overViewId = "ov1",
+                linkedConvId = convId,
+                convName = "Test conversation",
+                overViewOwnerId = testUserId,
+                otherPersonId = otherUserId))
+
+        // Safety check: conv + overview exist before deletion
+        val convBefore = convRepo.getConv(convId)
+        val overviewsBefore = overViewRepo.getOverViewConvUser(testUserId)
+        assertEquals(true, convBefore != null)
+        assertEquals(1, overviewsBefore.size)
+
+        // Load conversation so that currentConvId is set in the ViewModel
+        viewModel.loadConversation(convId)
+        composeTestRule.waitForIdle()
+
+        // Act: delete the conversation
+        viewModel.deleteConversation()
+        composeTestRule.waitForIdle()
+
+        // Assert: UI flag set
+        val state = viewModel.uiState.value
+        assertEquals(true, state.isDeleted)
+
+        // Assert: conversation deleted from repository
+        val convAfter = convRepo.getConv(convId)
+        assertEquals(null, convAfter)
+
+        // Assert: overview deleted for current user
+        val overviewsAfter = overViewRepo.getOverViewConvUser(testUserId)
+        assertEquals(0, overviewsAfter.size)
+    }
+
+    // -----------------------------------------------------
+    // TEST 27 — deleteConversation without loaded conv does nothing
+    // -----------------------------------------------------
+    @Test
+    fun deleteConversation_withoutLoadedConversation_doesNothing() = runTest {
+        // Precondition: conversation exists but loadConversation() was never called
+        val convBefore = convRepo.getConv(convId)
+        assertEquals(true, convBefore != null)
+
+        // Act: directly call deleteConversation()
+        viewModel.deleteConversation()
+        composeTestRule.waitForIdle()
+
+        // Since currentConvId is null, nothing should happen
+        val state = viewModel.uiState.value
+        assertEquals(false, state.isDeleted)
+
+        // Conversation should still exist
+        val convAfter = convRepo.getConv(convId)
+        assertEquals(true, convAfter != null)
+    }
+
+    // -----------------------------------------------------
+    // TEST 28 — resetDeletionFlag resets isDeleted to false
+    // -----------------------------------------------------
+    @Test
+    fun resetDeletionFlag_resetsIsDeleted() = runTest {
+        // Arrange: load and delete to set the flag
+        viewModel.loadConversation(convId)
+        composeTestRule.waitForIdle()
+
+        viewModel.deleteConversation()
+        composeTestRule.waitForIdle()
+
+        // Sanity check: flag is true after deletion
+        assertEquals(true, viewModel.uiState.value.isDeleted)
+
+        // Act: reset flag
+        viewModel.resetDeletionFlag()
+        composeTestRule.waitForIdle()
+
+        // Assert: flag is false again
+        assertEquals(false, viewModel.uiState.value.isDeleted)
+    }
+
 }
 
 class FakeProfileRepository : ProfileRepository {
