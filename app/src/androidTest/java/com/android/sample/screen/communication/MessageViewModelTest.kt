@@ -3,6 +3,7 @@ package com.android.sample.screen.communication
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.ConversationManager
+import com.android.sample.model.communication.ConversationManagerInter
 import com.android.sample.model.communication.conversation.ConvRepository
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.Message
@@ -766,6 +767,40 @@ class MessageViewModelTest {
     // Assert: flag is false again
     assertEquals(false, viewModel.uiState.value.isDeleted)
   }
+
+  // -----------------------------------------------------
+  // TEST 29 — deleteConversation sets error when deletion fails
+  // -----------------------------------------------------
+  @Test
+  fun deleteConversation_whenManagerThrows_setsErrorAndNotDeleted() = runTest {
+    // Use the normal fake repos created in setup()
+    // Wrap the existing manager in our failing manager
+    val failingManager = FailingConversationManager(manager)
+    val failingViewModel = MessageViewModel(failingManager)
+
+    // Ensure the conversation exists
+    val convBefore = convRepo.getConv(convId)
+    assertEquals(true, convBefore != null)
+
+    // Load conversation so currentConvId is set
+    failingViewModel.loadConversation(convId)
+    composeTestRule.waitForIdle()
+
+    // Act: this will throw inside the manager and hit the catch block
+    failingViewModel.deleteConversation()
+    composeTestRule.waitForIdle()
+
+    val state = failingViewModel.uiState.value
+
+    // Assert: error is set from the catch block
+    assertEquals("Failed to delete conversation", state.error)
+    // And isDeleted should remain false, since the deletion failed
+    assertEquals(false, state.isDeleted)
+
+    // Conversation should still exist because deletion failed
+    val convAfter = convRepo.getConv(convId)
+    assertEquals(true, convAfter != null)
+  }
 }
 
 class FakeProfileRepository : ProfileRepository {
@@ -854,6 +889,15 @@ class FakeConvRepo : ConvRepository {
 
   override fun listenMessages(convId: String): Flow<List<Message>> {
     return messageFlows.getOrPut(convId) { MutableStateFlow(emptyList()) }
+  }
+}
+
+class FailingConversationManager(private val delegate: ConversationManagerInter) :
+    ConversationManagerInter by delegate {
+
+  override suspend fun deleteConvAndOverviews(convId: String) {
+    // Force an error to go into the catch branch
+    throw RuntimeException("Simulated delete failure")
   }
 }
 
