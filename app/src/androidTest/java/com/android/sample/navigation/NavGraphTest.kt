@@ -3,9 +3,7 @@ package com.android.sample.ui.navigation
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.ComposeNavigator
@@ -22,7 +20,6 @@ import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.MyBookingsViewModel
 import com.android.sample.ui.communication.DiscussionViewModel
 import com.android.sample.ui.newListing.NewListingViewModel
-import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import io.mockk.mockk
@@ -68,7 +65,6 @@ class NavGraphTest {
       composable(NavRoutes.SKILLS) {}
       composable(NavRoutes.BOOKINGS) {}
       composable(NavRoutes.PROFILE) {}
-
     }
   }
 
@@ -344,8 +340,4 @@ class NavGraphTest {
 
     assertEquals(NavRoutes.BOOKING_DETAILS, navController.currentDestination?.route)
   }
-
-
-
-
 }
