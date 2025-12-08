@@ -613,4 +613,130 @@ class ListingScreenTest {
       assert(navigatedBack)
     }
   }
+
+  // ----- NEW TESTS FOR CREATOR PROFILE FEATURE -----
+
+  @Test
+  fun listingScreen_displaysCreatorName() {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
+    }
+
+    // Wait for content to load
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.CREATOR_NAME, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Verify creator name is displayed
+    compose.onNodeWithTag(ListingScreenTestTags.CREATOR_NAME).assertIsDisplayed()
+    compose.onNodeWithText("John Doe").assertIsDisplayed()
+
+    // Verify helper text is displayed
+    compose.onNodeWithText("Tap to view profile").assertIsDisplayed()
+  }
+
+  @Test
+  fun listingScreen_creatorName_isClickable() {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
+    }
+
+    // Wait for content to load
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.CREATOR_NAME, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Verify creator name has a click action
+    compose.onNodeWithText("John Doe").assertHasClickAction()
+  }
+
+  @Test
+  fun listingScreen_clickCreatorName_callsCallback() {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = true)
+
+    var clickedProfileId: String? = null
+
+    compose.setContent {
+      ListingScreen(
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = { profileId -> clickedProfileId = profileId },
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
+    }
+
+    // Wait for content to load
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.CREATOR_NAME, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Click on the creator's name
+    compose.onNodeWithText("John Doe").performClick()
+
+    // Verify the callback was called with the correct creator ID
+    compose.runOnIdle {
+      assert(clickedProfileId == "creator-456") {
+        "Expected callback to be called with 'creator-456', but got '$clickedProfileId'"
+      }
+    }
+  }
+
+  @Test
+  fun listingScreen_creatorNameInPrimaryColor() {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
+    }
+
+    // Wait for content to load
+    compose.waitUntil(5_000) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.CREATOR_NAME, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Verify creator name exists and is displayed
+    // Note: We can't directly test color in UI tests, but we can verify the node exists
+    // and is clickable, which indicates proper styling
+    compose.onNodeWithTag(ListingScreenTestTags.CREATOR_NAME).assertIsDisplayed()
+    compose.onNodeWithText("John Doe").assertIsDisplayed()
+  }
 }

@@ -1351,4 +1351,108 @@ class BookingDetailsScreenTest {
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertDoesNotExist()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertDoesNotExist()
   }
+
+  // ----- NEW TESTS FOR BOOKER PROFILE FEATURE -----
+
+  @Test
+  fun bookingDetailsScreen_pendingBooking_studentView_doesNotDisplayBookerInfo() {
+    val vm = fakeViewModel()
+
+    // Set up a pending booking where current user is the student (NOT the tutor)
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    listingCreatorId = "tutor123",
+                    bookerId = "u1", // Current user is the booker
+                    associatedListingId = "list-123",
+                    status = BookingStatus.PENDING),
+            listing = Proposal(),
+            creatorProfile = Profile(userId = "tutor123", name = "Tutor Alice"),
+            bookerProfile = Profile(userId = "u1", name = "Student Bob"),
+            isTutor = false, // Student view - not the tutor
+            onAcceptBooking = {}, // Add callbacks even though they won't be shown
+            onDenyBooking = {}))
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    // Verify "Booking Request From:" is NOT displayed (student doesn't see this)
+    composeTestRule.onNodeWithText("Booking Request From:").assertDoesNotExist()
+
+    // Verify Accept/Deny buttons are NOT displayed (student can't approve their own booking)
+    composeTestRule.onNodeWithText("Accept").assertDoesNotExist()
+    composeTestRule.onNodeWithText("Deny").assertDoesNotExist()
+  }
+
+  @Test
+  fun bookingDetailsScreen_clickBookerName_callsCallback() {
+    var clickedUserId: String? = null
+
+    val vm = fakeViewModel()
+
+    // Note: fakeViewModel loads booking "b1" which has bookerId = "asdf"
+    // We need to use "asdf" in the UI state to match what's actually in the booking
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    listingCreatorId = "u1",
+                    bookerId = "asdf", // Match the bookerId from fakeBookingRepo
+                    associatedListingId = "list-123",
+                    status = BookingStatus.PENDING),
+            listing = Proposal(),
+            creatorProfile = Profile(userId = "u1", name = "Tutor Alice"),
+            bookerProfile =
+                Profile(
+                    userId = "asdf",
+                    name = "Student Booker"), // Match the name from fakeProfileRepo
+            isTutor = true,
+            onAcceptBooking = {}, // Add empty callback to prevent NPE
+            onDenyBooking = {})) // Add empty callback to prevent NPE
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(
+          bkgViewModel = vm, bookingId = "b1", onCreatorClick = { clickedUserId = it })
+    }
+
+    // Click on the booker's name
+    composeTestRule.onNodeWithText("Student Booker").performClick()
+
+    // Verify the callback was called with the correct booker ID
+    assert(clickedUserId == "asdf") {
+      "Expected callback to be called with 'asdf', but got '$clickedUserId'"
+    }
+  }
+
+  @Test
+  fun bookingDetailsScreen_bookerInfo_hasClickableAction() {
+    val vm = fakeViewModel()
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    listingCreatorId = "u1",
+                    bookerId = "student123",
+                    associatedListingId = "list-123",
+                    status = BookingStatus.PENDING),
+            listing = Proposal(),
+            creatorProfile = Profile(userId = "u1", name = "Tutor Alice"),
+            bookerProfile = Profile(userId = "student123", name = "Student Bob"),
+            isTutor = true,
+            onAcceptBooking = {}, // Add callbacks
+            onDenyBooking = {}))
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    // Verify the booker name has a click action
+    composeTestRule.onNodeWithText("Student Bob").assertHasClickAction()
+  }
 }
