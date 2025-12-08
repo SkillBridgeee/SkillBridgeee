@@ -118,34 +118,6 @@ class MessageViewModelTest {
     assertEquals(1, messages.size)
     assertEquals("Salut !", messages.first().content)
   }
-
-  @Test
-  fun loadConversation_conversationNotFound_setsError() = runTest {
-    val invalidConvId = "does_not_exist"
-
-    viewModel.loadConversation(invalidConvId)
-
-    val state = viewModel.uiState.value
-    assertEquals("Conversation not found", state.error)
-    assertEquals(true, state.messages.isEmpty())
-  }
-
-  @Test
-  fun clearError_removesError() = runTest {
-    // On force une erreur dans l'état
-    viewModel.clearError() // juste pour reset
-    viewModel.loadConversation("invalid_id")
-
-    // Vérification initiale
-    assertEquals("Conversation not found", viewModel.uiState.value.error)
-
-    // Action
-    viewModel.clearError()
-
-    // L'erreur doit être supprimée
-    assertEquals(null, viewModel.uiState.value.error)
-  }
-
   // -----------------------------------------------------
   // TEST 5 — onMessageChange() updates current message
   // -----------------------------------------------------
@@ -338,34 +310,6 @@ class MessageViewModelTest {
     assertEquals(0, viewModel.uiState.value.messages.size)
     assertEquals(null, viewModel.uiState.value.error)
   }
-
-  // -----------------------------------------------------
-  // TEST 14 — retry() after error clears error and reloads
-  // -----------------------------------------------------
-  @Test
-  fun retry_afterError_clearsErrorAndReloads() = runTest {
-    // Load an invalid conversation to trigger error
-    viewModel.loadConversation("invalid_conv_id")
-    composeTestRule.waitForIdle()
-
-    // Should have error
-    assertEquals("Conversation not found", viewModel.uiState.value.error)
-
-    // Now create a valid conversation
-    runBlocking {
-      convRepo.createConv(
-          Conversation(
-              convId = "invalid_conv_id", convCreatorId = testUserId, otherPersonId = otherUserId))
-    }
-
-    // Retry
-    viewModel.retry()
-    composeTestRule.waitForIdle()
-
-    // Error should be cleared and conversation loaded
-    assertEquals(null, viewModel.uiState.value.error)
-  }
-
   // -----------------------------------------------------
   // TEST 15 — loadConversation with delayed userId initialization succeeds
   // -----------------------------------------------------

@@ -48,7 +48,6 @@ class MessageViewModel(
   private var loadJob: Job? = null
 
   private val userError: String = "User not authenticated. Please log in to view messages."
-  private val convNotFoundError: String = "Conversation not found"
   private val listenMsgError: String = "Failed to receive messages"
   private val sendMsgError: String = "Failed to send message"
 
@@ -87,7 +86,7 @@ class MessageViewModel(
           // Fetch the conversation to find the other user
           val conversation = convManager.getConv(convId)
           if (conversation == null) {
-            _uiState.update { it.copy(error = convNotFoundError) }
+            _uiState.update { it.copy(error = null, isDeleted = true) }
             return@launch
           }
 
