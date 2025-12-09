@@ -205,15 +205,18 @@ fun AppNavGraph(
           Log.d(TAG, "SignUp - Received email parameter: $email")
 
           // Use viewModel() to ensure single instance per navigation entry
-          val viewModel: SignUpViewModel =
-              viewModel(
-                  factory =
-                      object : ViewModelProvider.Factory {
-                        @Suppress("UNCHECKED_CAST")
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                          return SignUpViewModel(initialEmail = email) as T
-                        }
-                      })
+          // The ViewModel is scoped to this backstack entry and will be preserved
+          // when navigating to child screens like ToS
+          val factory =
+              remember(email) {
+                object : ViewModelProvider.Factory {
+                  @Suppress("UNCHECKED_CAST")
+                  override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return SignUpViewModel(initialEmail = email) as T
+                  }
+                }
+              }
+          val viewModel: SignUpViewModel = viewModel(factory = factory)
 
           SignUpScreen(
               vm = viewModel,
