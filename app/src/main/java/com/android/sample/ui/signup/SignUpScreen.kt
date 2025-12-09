@@ -92,25 +92,10 @@ fun SignUpScreen(
     }
   }
 
-  // Only call onSignUpAbandoned if the user leaves without completing sign-up
-  // Use Unit as key so this effect only runs once when composable is first created
-  // and disposed when permanently leaving the screen
-  DisposableEffect(Unit) {
-    android.util.Log.d("SignUpScreen", "DisposableEffect created")
-    onDispose {
-      val currentState = state
-      android.util.Log.d(
-          "SignUpScreen",
-          "DisposableEffect onDispose - submitSuccess: ${currentState.submitSuccess}, verificationEmailSent: ${currentState.verificationEmailSent}")
-      // Don't sign out if sign-up was successful or verification email was sent
-      if (!currentState.submitSuccess && !currentState.verificationEmailSent) {
-        android.util.Log.d("SignUpScreen", "Calling onSignUpAbandoned")
-        vm.onSignUpAbandoned()
-      } else {
-        android.util.Log.d("SignUpScreen", "NOT calling onSignUpAbandoned - sign-up was completed")
-      }
-    }
-  }
+  // Note: We don't use DisposableEffect here because it would trigger when navigating
+  // to child screens like ToS, which would incorrectly sign out Google users.
+  // The BackHandler above handles the back button case, and cleanup happens
+  // in the navigation callbacks when the user truly leaves the sign-up flow.
 
   val scrollState = rememberScrollState()
 
@@ -274,7 +259,7 @@ private fun LocationBlock(
 }
 
 @Composable
-private fun LocationIconButton(
+private fun BoxScope.LocationIconButton(
     context: android.content.Context,
     permission: String,
     permissionLauncher: androidx.activity.result.ActivityResultLauncher<String>,
@@ -293,7 +278,7 @@ private fun LocationIconButton(
         }
       },
       enabled = enabled,
-      modifier = Modifier.size(36.dp)) {
+      modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
         Icon(
             imageVector = Icons.Filled.MyLocation,
             contentDescription = SignUpScreenTestTags.PIN_CONTENT_DESC,
