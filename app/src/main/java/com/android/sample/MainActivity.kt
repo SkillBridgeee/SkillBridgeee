@@ -294,6 +294,7 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val noTopBarRoutes =
       setOf(
           NavRoutes.LOGIN,
+          NavRoutes.SPLASH,
       )
 
   Scaffold(
