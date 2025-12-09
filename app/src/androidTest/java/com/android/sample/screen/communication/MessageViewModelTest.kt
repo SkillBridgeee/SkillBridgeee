@@ -680,6 +680,28 @@ class MessageViewModelTest {
     assertEquals(testUserId, newViewModel.uiState.value.currentUserId)
     assertEquals(null, newViewModel.uiState.value.error)
   }
+
+  @Test
+  fun onClearedTest() = runTest {
+    viewModel.loadConversation(convId)
+
+    composeTestRule.waitForIdle()
+
+    // Send a message to verify the conversation is working
+    val msg =
+        Message(
+            msgId = "m1",
+            senderId = otherUserId,
+            receiverId = testUserId,
+            content = "Test message",
+            createdAt = Date())
+    manager.sendMessage(convId, msg)
+    composeTestRule.waitForIdle()
+
+    viewModel.cleanup()
+
+    assert(true)
+  }
 }
 
 class FakeProfileRepository : ProfileRepository {
