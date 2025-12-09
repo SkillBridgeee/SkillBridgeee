@@ -71,21 +71,6 @@ class MessageViewModel(
               return@launch
           }
 
-          // START LISTENER FIRST
-          convManager.listenMessages(convId)
-              .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
-              .catch { _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
-              .collect { messages ->
-                  _uiState.update {
-                      it.copy(
-                          messages = messages.sortedBy { msg -> msg.createdAt ?: Date(0) },
-                          isLoading = false,
-                          error = null
-                      )
-                  }
-              }
-
-          // THEN fetch conversation metadata (partner name etc.)
           val conversation = convManager.getConv(convId)
           if (conversation != null) {
               otherId = if (conversation.convCreatorId == userId)
@@ -94,6 +79,19 @@ class MessageViewModel(
               val partner = profileRepository.getProfile(otherId!!)
               _uiState.update { it.copy(partnerName = partner?.name ?: "User") }
           }
+
+          convManager.listenMessages(convId)
+              .onStart { _uiState.update { it.copy(isLoading = true) } }
+              .catch { _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
+              .collect { messages ->
+                  _uiState.update {
+                      it.copy(
+                          messages = messages.sortedBy { msg -> msg.createdAt ?: Date(0) },
+                          isLoading = false
+                      )
+                  }
+              }
+
       }
   }
 
@@ -114,10 +112,16 @@ class MessageViewModel(
             content = content,
             createdAt = Date())
 
+    _uiState.update { state ->
+        state.copy(
+            messages = (state.messages + message).sortedBy { it.createdAt },
+            currentMessage = ""
+        )
+    }
+
     viewModelScope.launch {
       try {
-        convManager.sendMessage(convId, message)
-        _uiState.update { it.copy(currentMessage = "") }
+          convManager.sendMessage(convId, message)
       } catch (_: Exception) {
         _uiState.update { it.copy(error = sendMsgError) }
       }

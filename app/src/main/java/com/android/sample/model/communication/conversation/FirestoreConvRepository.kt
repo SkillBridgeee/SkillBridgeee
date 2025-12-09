@@ -108,12 +108,11 @@ class FirestoreConvRepository(
     val convRef = conversationsRef.document(convId)
     val messagesRef = convRef.collection("messages")
 
-    val convSnapshot = convRef.get().await()
-    require(convSnapshot.exists()) { "Conversation $convId does not exist" }
-
     messagesRef.document(message.msgId).set(message).await()
 
-    convRef.update(mapOf("updatedAt" to message.createdAt)).await()
+
+    convRef.update("updatedAt", message.createdAt).await()
+
   }
 
   /**
@@ -130,7 +129,10 @@ class FirestoreConvRepository(
       return@callbackFlow
     }
 
-    val messagesRef = conversationsRef.document(convId).collection("messages")
+    val messagesRef = conversationsRef
+      .document(convId)
+      .collection("messages")
+      .orderBy("createdAt")
 
     val registration =
       messagesRef.addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
