@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.ui.components.EllipsizingTextField
 import com.android.sample.ui.components.EllipsizingTextFieldStyle
@@ -96,7 +97,7 @@ fun SignUpScreen(
   }
 
   // Use lifecycle observer to handle cleanup when nav entry is destroyed
-  val lifecycleOwner = LocalLifecycleOwner.current
+  val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
   DisposableEffect(lifecycleOwner) {
     val observer = LifecycleEventObserver { _, event ->
       if (event == Lifecycle.Event.ON_DESTROY) {
