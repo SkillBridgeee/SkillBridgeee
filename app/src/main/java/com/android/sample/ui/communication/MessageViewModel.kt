@@ -61,77 +61,44 @@ class MessageViewModel(
 
   /** Start listening to real-time messages for a given conversation ID. */
   fun loadConversation(convId: String) {
+      loadJob?.cancel()
+      currentConvId = convId
 
-    loadJob?.cancel()
-    currentConvId = convId
-
-    loadJob =
-        viewModelScope.launch {
-
-          // Get current user id (try to refresh if null)
-          var userId = currentUserId ?: UserSessionManager.getCurrentUserId()
+      loadJob = viewModelScope.launch {
+          val userId = currentUserId ?: UserSessionManager.getCurrentUserId()
           if (userId == null) {
-            // Wait a bit and try again (Firebase might still be initializing)
-            kotlinx.coroutines.delay(500)
-            userId = UserSessionManager.getCurrentUserId()
+              _uiState.update { it.copy(error = userError) }
+              return@launch
           }
 
-          if (userId == null) {
-            _uiState.update { it.copy(error = userError, isLoading = false) }
-            return@launch
-          }
-          currentUserId = userId
-          _uiState.update { it.copy(currentUserId = userId) }
-
-          // Fetch the conversation to find the other user
-          val conversation = convManager.getConv(convId)
-          if (conversation == null) {
-            _uiState.update { it.copy(error = convNotFoundError) }
-            return@launch
-          }
-
-          // Determine who is the other participant
-          otherId =
-              if (conversation.convCreatorId == userId) {
-                conversation.otherPersonId
-              } else {
-                conversation.convCreatorId
-              }
-
-          // Fetch partner's profile name
-          try {
-            val partnerProfile = profileRepository.getProfile(otherId!!)
-            _uiState.update { it.copy(partnerName = partnerProfile?.name ?: "User") }
-          } catch (_: Exception) {
-            _uiState.update { it.copy(partnerName = "User") }
-          }
-
-          // Reset unread message count when conversation is loaded
-          try {
-            convManager.resetUnreadCount(convId = convId, userId = userId)
-          } catch (_: Exception) {
-            Log.d("MessageViewModel", "Failed to reset unread message count")
-          }
-
-          // Start listening to messages
-          convManager
-              .listenMessages(convId)
+          // START LISTENER FIRST
+          convManager.listenMessages(convId)
               .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
-              .catch { _ -> _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
+              .catch { _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
               .collect { messages ->
-                // Reset unread count whenever new messages arrive while viewing
-                convManager.resetUnreadCount(convId = convId, userId = userId)
-                _uiState.update {
-                  it.copy(
-                      messages = messages.sortedBy { msg -> msg.createdAt },
-                      isLoading = false,
-                      error = null)
-                }
+                  _uiState.update {
+                      it.copy(
+                          messages = messages.sortedBy { msg -> msg.createdAt ?: Date(0) },
+                          isLoading = false,
+                          error = null
+                      )
+                  }
               }
-        }
+
+          // THEN fetch conversation metadata (partner name etc.)
+          val conversation = convManager.getConv(convId)
+          if (conversation != null) {
+              otherId = if (conversation.convCreatorId == userId)
+                  conversation.otherPersonId else conversation.convCreatorId
+
+              val partner = profileRepository.getProfile(otherId!!)
+              _uiState.update { it.copy(partnerName = partner?.name ?: "User") }
+          }
+      }
   }
 
-  /** Send the current message and clear the input field. */
+
+    /** Send the current message and clear the input field. */
   fun sendMessage() {
     val convId = currentConvId ?: return
     val senderId = currentUserId ?: return

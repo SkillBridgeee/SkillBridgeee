@@ -1,6 +1,7 @@
 package com.android.sample.model.communication.conversation
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.MetadataChanges
 import java.util.UUID
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -123,28 +124,29 @@ class FirestoreConvRepository(
    * @return A [Flow] emitting lists of [Message] objects in ascending order.
    * @throws IllegalArgumentException if the conversation ID is blank.
    */
-  override fun listenMessages(convId: String): Flow<List<Message>> {
-    return callbackFlow {
-      if (convId.isBlank()) {
-        close(IllegalArgumentException(BLANK_CONVID_ERR_MSG))
-        return@callbackFlow
+  override fun listenMessages(convId: String): Flow<List<Message>> = callbackFlow {
+    if (convId.isBlank()) {
+      close(IllegalArgumentException(BLANK_CONVID_ERR_MSG))
+      return@callbackFlow
+    }
+
+    val messagesRef = conversationsRef.document(convId).collection("messages")
+
+    val registration =
+      messagesRef.addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
+        if (error != null) {
+          close(error)
+          return@addSnapshotListener
+        }
+
+        val messages = snapshot?.documents?.mapNotNull { doc ->
+          doc.toObject(Message::class.java)?.copy(msgId = doc.id)
+        }.orEmpty()
+
+        trySend(messages)
       }
 
-      val messagesRef = conversationsRef.document(convId).collection("messages")
-
-      val listenerRegistration =
-          messagesRef.addSnapshotListener { snapshot, error ->
-            if (error != null) {
-              close(error)
-              return@addSnapshotListener
-            }
-
-            val messages = snapshot?.toObjects(Message::class.java).orEmpty()
-            trySend(messages)
-          }
-      trySend(emptyList())
-
-      awaitClose { listenerRegistration.remove() }
-    }
+    awaitClose { registration.remove() }
   }
+
 }
