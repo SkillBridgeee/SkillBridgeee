@@ -21,6 +21,8 @@ import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.components.RatingAggregationHelper
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -61,63 +63,71 @@ class BookingDetailsViewModel(
                 ?: throw IllegalStateException(
                     "BookingDetailsViewModel : Booking not found for id=$bookingId")
 
-        val creatorProfile =
-            profileRepository.getProfile(booking.listingCreatorId)
-                ?: throw IllegalStateException(
-                    "BookingDetailsViewModel : Creator profile not found")
+        // Parallelize remote calls to improve latency
+        coroutineScope {
+          val creatorDeferred = async { profileRepository.getProfile(booking.listingCreatorId) }
+          val bookerDeferred = async { profileRepository.getProfile(booking.bookerId) }
+          val listingDeferred = async { listingRepository.getListing(booking.associatedListingId) }
 
-        val bookerProfile =
-            profileRepository.getProfile(booking.bookerId)
-                ?: throw IllegalStateException("BookingDetailsViewModel : Booker profile not found")
+          val creatorProfile =
+              creatorDeferred.await()
+                  ?: throw IllegalStateException(
+                      "BookingDetailsViewModel : Creator profile not found")
 
-        val listing =
-            listingRepository.getListing(booking.associatedListingId)
-                ?: throw IllegalStateException("BookingDetailsViewModel : Listing not found")
+          val bookerProfile =
+              bookerDeferred.await()
+                  ?: throw IllegalStateException(
+                      "BookingDetailsViewModel : Booker profile not found")
 
-        val fromUserId = booking.bookerId
-        val tutorUserId = booking.listingCreatorId
-        val currentBookingId = booking.bookingId
+          val listing =
+              listingDeferred.await()
+                  ?: throw IllegalStateException("BookingDetailsViewModel : Listing not found")
 
-        val tutorAlreadyRated =
-            try {
-              ratingRepository.hasRating(
-                  fromUserId = fromUserId,
-                  toUserId = tutorUserId,
-                  ratingType = RatingType.TUTOR,
-                  targetObjectId = currentBookingId,
-              )
-            } catch (e: Exception) {
-              Log.w("BookingDetailsViewModel", "Error checking tutor rating", e)
-              false
-            }
+          val fromUserId = booking.bookerId
+          val tutorUserId = booking.listingCreatorId
+          val currentBookingId = booking.bookingId
 
-        val listingAlreadyRated =
-            try {
-              ratingRepository.hasRating(
-                  fromUserId = fromUserId,
-                  toUserId = tutorUserId,
-                  ratingType = RatingType.LISTING,
-                  targetObjectId = currentBookingId,
-              )
-            } catch (e: Exception) {
-              Log.w("BookingDetailsViewModel", "Error checking listing rating", e)
-              false
-            }
+          val tutorAlreadyRated =
+              try {
+                ratingRepository.hasRating(
+                    fromUserId = fromUserId,
+                    toUserId = tutorUserId,
+                    ratingType = RatingType.TUTOR,
+                    targetObjectId = currentBookingId,
+                )
+              } catch (e: Exception) {
+                Log.w("BookingDetailsViewModel", "Error checking tutor rating", e)
+                false
+              }
 
-        val alreadySubmitted = tutorAlreadyRated && listingAlreadyRated
+          val listingAlreadyRated =
+              try {
+                ratingRepository.hasRating(
+                    fromUserId = fromUserId,
+                    toUserId = tutorUserId,
+                    ratingType = RatingType.LISTING,
+                    targetObjectId = currentBookingId,
+                )
+              } catch (e: Exception) {
+                Log.w("BookingDetailsViewModel", "Error checking listing rating", e)
+                false
+              }
 
-        // IMPORTANT: build a FRESH state, don't reuse old ratingSubmitted
-        _bookingUiState.value =
-            BookingUIState(
-                booking = booking,
-                listing = listing,
-                creatorProfile = creatorProfile,
-                bookerProfile = bookerProfile,
-                loadError = false,
-                ratingSubmitted = alreadySubmitted,
-                isTutor = booking.listingCreatorId == profileRepository.getCurrentUserId(),
-                onAcceptBooking = { acceptBooking(booking.bookingId) },
-                onDenyBooking = { denyBooking(booking.bookingId) })
+          val alreadySubmitted = tutorAlreadyRated && listingAlreadyRated
+
+          // IMPORTANT: build a FRESH state, don't reuse old ratingSubmitted
+          _bookingUiState.value =
+              BookingUIState(
+                  booking = booking,
+                  listing = listing,
+                  creatorProfile = creatorProfile,
+                  bookerProfile = bookerProfile,
+                  loadError = false,
+                  ratingSubmitted = alreadySubmitted,
+                  isTutor = booking.listingCreatorId == profileRepository.getCurrentUserId(),
+                  onAcceptBooking = { acceptBooking(booking.bookingId) },
+                  onDenyBooking = { denyBooking(booking.bookingId) })
+        }
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error loading booking details for $bookingId", e)
         _bookingUiState.value = bookingUiState.value.copy(loadError = true)
