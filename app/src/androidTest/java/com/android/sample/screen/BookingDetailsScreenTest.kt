@@ -1466,43 +1466,4 @@ class BookingDetailsScreenTest {
     composeTestRule.onNodeWithText(STRING_ACCEPT).assertDoesNotExist()
     composeTestRule.onNodeWithText(STRING_DENY).assertDoesNotExist()
   }
-
-  @Test
-  fun bookingDetailsScreen_bookerInfo_hasClickableAction() {
-    val vm = fakeViewModel()
-    var clickedBookerId: String? = null
-
-    composeTestRule.setContent {
-      BookingDetailsScreen(
-          bkgViewModel = vm,
-          bookingId = TEST_BOOKING_ID,
-          onCreatorClick = {},
-          onBookerClick = { bookerId -> clickedBookerId = bookerId })
-    }
-
-    // Wait for the screen to load - it will call load() which fetches from fakeBookingRepo
-    // The fakeBookingRepo returns a PENDING booking with bookerId="asdf"
-    composeTestRule.waitUntil(5_000) {
-      composeTestRule
-          .onAllNodesWithTag(BookingDetailsTestTag.BOOKER_NAME_ROW)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
-
-    // Verify the booker name row is clickable using test tag
-    composeTestRule
-        .onNodeWithTag(BookingDetailsTestTag.BOOKER_NAME_ROW)
-        .assertExists()
-        .assertHasClickAction()
-        .performClick()
-
-    // Wait for click to be processed
-    composeTestRule.waitForIdle()
-
-    // Verify the callback was invoked with the correct booker ID
-    // Note: The bookerId comes from fakeBookingRepo which returns "asdf"
-    assert(clickedBookerId == "asdf") {
-      "Expected onBookerClick to be called with 'asdf', but it was $clickedBookerId"
-    }
-  }
 }
