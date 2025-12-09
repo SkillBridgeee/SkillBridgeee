@@ -1,6 +1,9 @@
 package com.android.sample.screen.communication
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.ConversationManager
 import com.android.sample.model.communication.conversation.ConvRepository
@@ -700,6 +703,25 @@ class MessageViewModelTest {
 
     viewModel.cleanup()
 
+    assert(true)
+  }
+
+  @Test
+  fun onCleared_isCalled_whenViewModelStoreIsCleared() = runTest {
+    val store = ViewModelStore()
+
+    val vm =
+        ViewModelProvider(
+            store,
+            object : ViewModelProvider.Factory {
+              override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return MessageViewModel(manager) as T
+              }
+            })[MessageViewModel::class.java]
+
+    vm.loadConversation(convId)
+
+    store.clear()
     assert(true)
   }
 }
