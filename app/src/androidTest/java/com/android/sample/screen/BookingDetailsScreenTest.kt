@@ -1472,9 +1472,6 @@ class BookingDetailsScreenTest {
     val vm = fakeViewModel()
     var clickedBookerId: String? = null
 
-    // Use helper function for tutor view with clear intent
-    vm.setUiStateForTest(bookingStateForTutor(bookingStatus = BookingStatus.PENDING))
-
     composeTestRule.setContent {
       BookingDetailsScreen(
           bkgViewModel = vm,
@@ -1483,8 +1480,14 @@ class BookingDetailsScreenTest {
           onBookerClick = { bookerId -> clickedBookerId = bookerId })
     }
 
-    // Wait for the screen to load and display the booker name row
-    composeTestRule.waitForIdle()
+    // Wait for the screen to load - it will call load() which fetches from fakeBookingRepo
+    // The fakeBookingRepo returns a PENDING booking with bookerId="asdf"
+    composeTestRule.waitUntil(5_000) {
+      composeTestRule
+          .onAllNodesWithTag(BookingDetailsTestTag.BOOKER_NAME_ROW)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
     // Verify the booker name row is clickable using test tag
     composeTestRule
@@ -1493,8 +1496,13 @@ class BookingDetailsScreenTest {
         .assertHasClickAction()
         .performClick()
 
+    // Wait for click to be processed
+    composeTestRule.waitForIdle()
+
     // Verify the callback was invoked with the correct booker ID
     // Note: The bookerId comes from fakeBookingRepo which returns "asdf"
-    assert(clickedBookerId != null) { "Expected onBookerClick to be called, but it was null" }
+    assert(clickedBookerId == "asdf") {
+      "Expected onBookerClick to be called with 'asdf', but it was $clickedBookerId"
+    }
   }
 }
