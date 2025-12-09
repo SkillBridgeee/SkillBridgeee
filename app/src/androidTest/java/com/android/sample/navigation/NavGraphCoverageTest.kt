@@ -13,6 +13,7 @@ import com.android.sample.model.listing.Request
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
+import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.subject.SubjectListTestTags
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -156,27 +157,35 @@ class NavGraphCoverageTest {
     mockkStatic("com.android.sample.MainActivityKt")
     coEvery { handleAuthenticatedUser(any(), any(), any()) } returns Unit
 
+    // Provide a concrete uiState StateFlow for MainPageViewModel to avoid MockK proxy cast issues
+    val mainVm: MainPageViewModel = mockk(relaxed = true)
+    val sampleHomeUiState = com.android.sample.ui.HomePage.HomeUiState()
+    val homeStateFlow = kotlinx.coroutines.flow.MutableStateFlow(sampleHomeUiState)
+    every { mainVm.uiState } returns homeStateFlow
+
+    // Provide a concrete uiState StateFlow for AuthenticationViewModel to avoid proxy cast issues
+    val authVm: com.android.sample.model.authentication.AuthenticationViewModel =
+        mockk(relaxed = true)
+    val authUiState = com.android.sample.model.authentication.AuthenticationUiState()
+    val authStateFlow = kotlinx.coroutines.flow.MutableStateFlow(authUiState)
+    every { authVm.uiState } returns authStateFlow
+
     composeRule.setContent {
       val nav = rememberNavController()
       AppNavGraph(
           navController = nav,
           bookingsViewModel = mockk(relaxed = true),
           profileViewModel = mockk(relaxed = true),
-          mainPageViewModel = mockk(relaxed = true),
+          mainPageViewModel = mainVm,
           newListingViewModel = mockk(relaxed = true),
-          authViewModel = mockk(relaxed = true),
+          authViewModel = authVm,
           bookingDetailsViewModel = mockk(relaxed = true),
           discussionViewModel = mockk(relaxed = true),
           onGoogleSignIn = {},
           startDestination = NavRoutes.SPLASH)
     }
 
-    // wait and assert we reached HOME as a result of handleAuthenticatedUser
     composeRule.waitForIdle()
-    // check that HOME route's side effects happened by asserting a node that exists on Home;
-    // fallback to RouteStackManager
-    // For simplicity assert that the Splash loading indicator is no longer visible
-    // (If HOME shows specific text, assert that instead)
 
     // cleanup static mock
     unmockkStatic("com.android.sample.MainActivityKt")

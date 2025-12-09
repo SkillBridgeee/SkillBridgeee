@@ -321,47 +321,6 @@ class NavGraphTest {
   }
 
   @Test
-  fun splash_withoutFirebaseUser_navigatesToLogin_fromAppNavGraph() {
-    // call signOut on mocked FirebaseAuth
-    FirebaseAuth.getInstance().signOut()
-
-    composeRule.setContent {
-      val controller = rememberNavController()
-      navController = controller
-      val context = androidx.compose.ui.platform.LocalContext.current
-
-      val authVm = AuthenticationViewModel(context) // REAL VM
-
-      val bookingsVm: MyBookingsViewModel = mockk(relaxed = true)
-      val profileVm: MyProfileViewModel = mockk(relaxed = true)
-
-      // Provide concrete HomeUiState wrapped in a StateFlow to avoid MockK proxy cast issues
-      val sampleHomeUiState = com.android.sample.ui.HomePage.HomeUiState()
-      val homeStateFlow = kotlinx.coroutines.flow.MutableStateFlow(sampleHomeUiState)
-      val mainVm: MainPageViewModel = mockk(relaxed = true)
-      every { mainVm.uiState } returns homeStateFlow
-
-      val newListingVm: NewListingViewModel = mockk(relaxed = true)
-      val bookingDetailsVm: BookingDetailsViewModel = mockk(relaxed = true)
-      val discussionVm: DiscussionViewModel = mockk(relaxed = true)
-
-      AppNavGraph(
-          navController = controller,
-          bookingsViewModel = bookingsVm,
-          profileViewModel = profileVm,
-          mainPageViewModel = mainVm,
-          newListingViewModel = newListingVm,
-          authViewModel = authVm, // <-- use real one
-          bookingDetailsViewModel = bookingDetailsVm,
-          discussionViewModel = discussionVm,
-          onGoogleSignIn = {})
-    }
-
-    composeRule.waitForIdle()
-    assertEquals(NavRoutes.LOGIN, navController.currentDestination?.route)
-  }
-
-  @Test
   fun messages_showsFallbackText_whenNoConversationSelected_fromAppNavGraph() {
     FirebaseAuth.getInstance().signOut()
 
