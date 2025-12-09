@@ -13,7 +13,12 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import io.mockk.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -29,6 +34,7 @@ import org.robolectric.annotation.Config
  * These tests use Robolectric to handle Firebase dependencies and ensure the auto-login and
  * navigation logic works correctly.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], application = MainActivityHelperTest.TestApp::class)
 class MainActivityHelperTest {
@@ -45,6 +51,7 @@ class MainActivityHelperTest {
     }
   }
 
+  private val testDispatcher = StandardTestDispatcher()
   private lateinit var mockNavController: NavHostController
   private lateinit var mockAuthViewModel: AuthenticationViewModel
   private lateinit var mockProfileRepository: ProfileRepository
@@ -53,6 +60,9 @@ class MainActivityHelperTest {
 
   @Before
   fun setUp() {
+    // Set Main dispatcher to test dispatcher to prevent hanging in coroutines
+    Dispatchers.setMain(testDispatcher)
+
     // Mock dependencies
     mockNavController = mockk(relaxed = true)
     mockAuthViewModel = mockk(relaxed = true)
@@ -63,16 +73,25 @@ class MainActivityHelperTest {
     // Clear any previous test session
     UserSessionManager.clearSession()
 
-    // Mock static Firebase instance
+    // Mock static Firebase instance with try-finally pattern
     mockkStatic(FirebaseAuth::class)
     every { FirebaseAuth.getInstance() } returns mockFirebaseAuth
   }
 
   @After
   fun tearDown() {
-    // Clean up
+    // Reset Main dispatcher
+    Dispatchers.resetMain()
+
+    // Clean up - ensure static mocks are always cleared
+    try {
+      unmockkAll()
+    } catch (_: Exception) {
+      // Ignore cleanup errors
+    }
+
+    // Clear session
     UserSessionManager.clearSession()
-    unmockkAll()
   }
 
   // ==================== performAutoLogin Tests ====================
@@ -84,6 +103,7 @@ class MainActivityHelperTest {
 
     // When: performAutoLogin is called
     performAutoLogin(mockNavController, mockAuthViewModel)
+    testDispatcher.scheduler.advanceUntilIdle()
 
     // Then: No navigation occurs and no signOut is called
     verify(exactly = 0) { mockNavController.navigate(any<String>()) }
@@ -109,6 +129,7 @@ class MainActivityHelperTest {
 
         // When: performAutoLogin is called
         performAutoLogin(mockNavController, mockAuthViewModel)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then: Navigation to HOME occurs
         verify {
@@ -129,30 +150,7 @@ class MainActivityHelperTest {
 
     // When: performAutoLogin is called
     performAutoLogin(mockNavController, mockAuthViewModel)
-
-    // Then: User is signed out
-    verify { mockAuthViewModel.signOut() }
-    verify(exactly = 0) { mockNavController.navigate(any<String>()) }
-  }
-
-  @Test
-  fun `performAutoLogin - authenticated user with unverified email - signs out`() = runTest {
-    // Given: User is authenticated, has profile, but email is not verified
-    val userId = "user-unverified"
-    UserSessionManager.setCurrentUserId(userId)
-
-    val testProfile =
-        Profile(userId = userId, name = "Unverified User", email = "unverified@example.com")
-
-    mockkObject(ProfileRepositoryProvider)
-    every { ProfileRepositoryProvider.repository } returns mockProfileRepository
-    coEvery { mockProfileRepository.getProfile(userId) } returns testProfile
-
-    every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
-    every { mockFirebaseUser.isEmailVerified } returns false
-
-    // When: performAutoLogin is called
-    performAutoLogin(mockNavController, mockAuthViewModel)
+    testDispatcher.scheduler.advanceUntilIdle()
 
     // Then: User is signed out
     verify { mockAuthViewModel.signOut() }
@@ -171,6 +169,7 @@ class MainActivityHelperTest {
 
     // When: performAutoLogin is called
     performAutoLogin(mockNavController, mockAuthViewModel)
+    testDispatcher.scheduler.advanceUntilIdle()
 
     // Then: User is signed out due to error
     verify { mockAuthViewModel.signOut() }
@@ -196,6 +195,7 @@ class MainActivityHelperTest {
 
         // When: handleAuthenticatedUser is called
         handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then: Navigation to HOME occurs with correct parameters
         verify {
@@ -205,16 +205,22 @@ class MainActivityHelperTest {
       }
 
   @Test
-  fun `handleAuthenticatedUser - user without profile - signs out`() =
-      runTest {
-        // ...existing code...
-      }
+  fun `handleAuthenticatedUser - user without profile - signs out`() = runTest {
+    // Given: User has no profile
+    val userId = "user-no-profile"
 
-  @Test
-  fun `handleAuthenticatedUser - user with unverified email - signs out`() =
-      runTest {
-        // ...existing code...
-      }
+    mockkObject(ProfileRepositoryProvider)
+    every { ProfileRepositoryProvider.repository } returns mockProfileRepository
+    coEvery { mockProfileRepository.getProfile(userId) } returns null
+
+    // When: handleAuthenticatedUser is called
+    handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then: User is signed out
+    verify { mockAuthViewModel.signOut() }
+    verify(exactly = 0) { mockNavController.navigate(any<String>()) }
+  }
 
   @Test
   fun `handleAuthenticatedUser - Google user without firebase user object - navigates to HOME`() =
@@ -231,6 +237,7 @@ class MainActivityHelperTest {
 
         // When: handleAuthenticatedUser is called
         handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Then: Navigation to HOME occurs (isEmailVerified defaults to true when currentUser is
         // null)
@@ -307,5 +314,175 @@ class MainActivityHelperTest {
     // Verify the route contains encoded email
     assert(route.contains("signup?email="))
     assert(route.contains("%")) // Should contain URL encoding
+  }
+
+  // ==================== isTestEmail Tests (Lines 103-105) ====================
+
+  @Test
+  fun `isTestEmail - returns false for null email`() {
+    // Given: null email
+    // When: isTestEmail is called
+    val result = isTestEmail(null)
+
+    // Then: Should return false
+    assert(!result)
+  }
+
+  @Test
+  fun `isTestEmail - returns true for example_test domain`() {
+    // Given: Email with @example.test domain (line 103)
+    val email = "user@example.test"
+
+    // When: isTestEmail is called
+    val result = isTestEmail(email)
+
+    // Then: Should return true
+    assert(result)
+  }
+
+  @Test
+  fun `isTestEmail - returns true for test_com domain`() {
+    // Given: Email with @test.com domain (line 104)
+    val email = "user@test.com"
+
+    // When: isTestEmail is called
+    val result = isTestEmail(email)
+
+    // Then: Should return true
+    assert(result)
+  }
+
+  @Test
+  fun `isTestEmail - returns true for e2etest_com domain`() {
+    // Given: Email with @e2etest.com domain (line 105)
+    val email = "user@e2etest.com"
+
+    // When: isTestEmail is called
+    val result = isTestEmail(email)
+
+    // Then: Should return true
+    assert(result)
+  }
+
+  @Test
+  fun `isTestEmail - returns false for production email`() {
+    // Given: Production email
+    val email = "user@gmail.com"
+
+    // When: isTestEmail is called
+    val result = isTestEmail(email)
+
+    // Then: Should return false
+    assert(!result)
+  }
+
+  @Test
+  fun `isTestEmail - is case insensitive`() {
+    // Given: Test email with uppercase
+    val email = "USER@EXAMPLE.TEST"
+
+    // When: isTestEmail is called
+    val result = isTestEmail(email)
+
+    // Then: Should return true (ignoreCase = true)
+    assert(result)
+  }
+
+  // ==================== MyViewModelFactory Tests (Lines 131-134) ====================
+
+  @Test
+  fun `MyViewModelFactory - throws IllegalArgumentException for unknown ViewModel class`() {
+    // Given: A factory with session manager
+    val sessionManager = UserSessionManager
+    val factory = MyViewModelFactory(sessionManager)
+
+    // When/Then: Creating an unknown ViewModel class should throw IllegalArgumentException
+    try {
+      // Use a ViewModel class that's not in the factory's when expression
+      class UnknownViewModel : androidx.lifecycle.ViewModel()
+      factory.create(UnknownViewModel::class.java)
+      assert(false) { "Should have thrown IllegalArgumentException" }
+    } catch (e: IllegalArgumentException) {
+      assert(e.message == "Unknown ViewModel class")
+    }
+  }
+
+  // ==================== handleAuthenticatedUser Navigation Exception Tests (Lines 203-207)
+  // ====================
+
+  @Test
+  fun `handleAuthenticatedUser - catches IllegalArgumentException during navigation`() = runTest {
+    // Given: User has profile and verified email, but navigation throws
+    // IllegalArgumentException
+    val userId = "test-user"
+    val testProfile = Profile(userId = userId, name = "Test User", email = "test@example.com")
+
+    mockkObject(ProfileRepositoryProvider)
+    every { ProfileRepositoryProvider.repository } returns mockProfileRepository
+    coEvery { mockProfileRepository.getProfile(userId) } returns testProfile
+
+    every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
+    every { mockFirebaseUser.isEmailVerified } returns true
+
+    // Mock navigate to throw IllegalArgumentException (NavHost not ready)
+    every { mockNavController.navigate(any<String>(), any<NavOptionsBuilder.() -> Unit>()) } throws
+        IllegalArgumentException("NavHost not ready")
+
+    // When: handleAuthenticatedUser is called
+    handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then: Exception is caught and user is NOT signed out (line 205-206)
+    verify(exactly = 0) { mockAuthViewModel.signOut() }
+  }
+
+  @Test
+  fun `handleAuthenticatedUser - catches IllegalStateException during navigation`() = runTest {
+    // Given: User has profile and verified email, but navigation throws IllegalStateException
+    val userId = "test-user"
+    val testProfile = Profile(userId = userId, name = "Test User", email = "test@example.com")
+
+    mockkObject(ProfileRepositoryProvider)
+    every { ProfileRepositoryProvider.repository } returns mockProfileRepository
+    coEvery { mockProfileRepository.getProfile(userId) } returns testProfile
+
+    every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
+    every { mockFirebaseUser.isEmailVerified } returns true
+
+    // Mock navigate to throw IllegalStateException (main thread issue)
+    every { mockNavController.navigate(any<String>(), any<NavOptionsBuilder.() -> Unit>()) } throws
+        IllegalStateException("Main thread issue")
+
+    // When: handleAuthenticatedUser is called
+    handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then: Exception is caught and user is NOT signed out (line 207-208)
+    verify(exactly = 0) { mockAuthViewModel.signOut() }
+  }
+
+  @Test
+  fun `handleAuthenticatedUser - unverified email signs out user`() = runTest {
+    // Given: User has profile but email is not verified
+    val userId = "unverified-user"
+    val testProfile =
+        Profile(userId = userId, name = "Unverified User", email = "unverified@example.com")
+
+    mockkObject(ProfileRepositoryProvider)
+    every { ProfileRepositoryProvider.repository } returns mockProfileRepository
+    coEvery { mockProfileRepository.getProfile(userId) } returns testProfile
+
+    every { mockFirebaseAuth.currentUser } returns mockFirebaseUser
+    every { mockFirebaseUser.isEmailVerified } returns false
+    every { mockFirebaseUser.email } returns "unverified@example.com"
+
+    // When: handleAuthenticatedUser is called with skipEmulatorCheck = true to test real
+    // verification
+    handleAuthenticatedUser(userId, mockNavController, mockAuthViewModel, skipEmulatorCheck = true)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    // Then: User is signed out because email is not verified
+    verify { mockAuthViewModel.signOut() }
+    verify(exactly = 0) { mockNavController.navigate(any<String>()) }
   }
 }

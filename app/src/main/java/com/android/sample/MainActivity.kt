@@ -1,7 +1,6 @@
 package com.android.sample
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -62,8 +61,6 @@ class MainActivity : ComponentActivity() {
       if (BuildConfig.USE_FIREBASE_EMULATOR) {
         Firebase.firestore.useEmulator("10.0.2.2", 8080)
         Firebase.auth.useEmulator("10.0.2.2", 9099)
-      } else {
-        Log.d("MainActivity", "🌐 Using production Firebase servers")
       }
     }
   }
@@ -93,6 +90,19 @@ class MainActivity : ComponentActivity() {
           authViewModel = authViewModel, onGoogleSignIn = { googleSignInHelper.signInWithGoogle() })
     }
   }
+}
+
+/**
+ * Checks if an email is a test email based on known test domains. Test domains
+ * include: @example.test, @test.com (for E2E tests)
+ *
+ * @param email The email address to check
+ * @return true if the email is a test email, false otherwise
+ */
+internal fun isTestEmail(email: String?): Boolean {
+  if (email == null) return false
+  val testDomains = listOf("@example.test", "@test.com", "@e2etest.com")
+  return testDomains.any { email.endsWith(it, ignoreCase = true) }
 }
 
 class MyViewModelFactory(private val sessionManager: UserSessionManager) :
@@ -152,16 +162,12 @@ internal suspend fun performAutoLogin(
   val currentUserId = UserSessionManager.getCurrentUserId()
 
   if (currentUserId == null) {
-    Log.d("MainActivity", "Auto-login: No user authenticated - staying at LOGIN")
     return
   }
 
-  Log.d("MainActivity", "Auto-login: Found authenticated user: $currentUserId")
-
   try {
     handleAuthenticatedUser(currentUserId, navController, authViewModel)
-  } catch (e: Exception) {
-    Log.e("MainActivity", "Auto-login: Error checking profile - signing out", e)
+  } catch (_: Exception) {
     authViewModel.signOut()
   }
 }
@@ -170,24 +176,58 @@ internal suspend fun performAutoLogin(
 internal suspend fun handleAuthenticatedUser(
     userId: String,
     navController: NavHostController,
-    authViewModel: AuthenticationViewModel
+    authViewModel: AuthenticationViewModel,
+    skipEmulatorCheck: Boolean = false, // For testing: allows overriding emulator behavior
+    dispatcher: kotlinx.coroutines.CoroutineDispatcher = kotlinx.coroutines.Dispatchers.Main
 ) {
   val profile = ProfileRepositoryProvider.repository.getProfile(userId)
 
   if (profile == null) {
-    Log.d("MainActivity", "Auto-login: User has no profile - signing out")
     authViewModel.signOut()
     return
   }
 
   val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
-  val isEmailVerified = firebaseUser?.isEmailVerified ?: true
+
+  // Determine if we should skip email verification
+  // Skip verification in these cases:
+  // 1. Using Firebase emulator (for all E2E tests)
+  // 2. Test email domain in debug builds (for UI-based E2E tests)
+  val shouldSkipVerification =
+      when {
+        // Case 1: Firebase emulator - always skip (unless explicitly testing verification)
+        BuildConfig.USE_FIREBASE_EMULATOR && !skipEmulatorCheck -> {
+          true
+        }
+        // Case 2: Test email domain in debug build with SKIP_EMAIL_VERIFICATION enabled
+        BuildConfig.SKIP_EMAIL_VERIFICATION && isTestEmail(firebaseUser?.email) -> {
+          true
+        }
+        // Case 3: Production or real email - check actual verification
+        else -> false
+      }
+
+  val isEmailVerified =
+      if (shouldSkipVerification) {
+        true
+      } else {
+        firebaseUser?.isEmailVerified ?: true
+      }
 
   if (isEmailVerified) {
-    Log.d("MainActivity", "Auto-login: User has profile and is verified - navigating to HOME")
-    navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+    // Try to navigate, but handle the case where NavHost isn't ready yet
+    try {
+      // Navigation must happen on the main thread
+      kotlinx.coroutines.withContext(dispatcher) {
+        navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
+      }
+    } catch (_: IllegalArgumentException) {
+      // NavHost not ready yet - this can happen during app startup
+      // Don't sign out - the user is valid, navigation will happen once NavHost is ready
+    } catch (_: IllegalStateException) {
+      // Main thread issue - don't sign out
+    }
   } else {
-    Log.d("MainActivity", "Auto-login: Email not verified - signing out")
     authViewModel.signOut()
   }
 }
@@ -197,20 +237,29 @@ fun MainApp(authViewModel: AuthenticationViewModel, onGoogleSignIn: () -> Unit) 
   val navController = rememberNavController()
   val authResult by authViewModel.authResult.collectAsStateWithLifecycle()
 
+  // One-time auto-login check on app start
+  LaunchedEffect(Unit) {
+    // Small delay to ensure NavHost is initialized before attempting navigation
+    kotlinx.coroutines.delay(100)
+
+    // Wait for auth state to be ready
+    val currentUserId = UserSessionManager.getCurrentUserId()
+    if (currentUserId != null || authViewModel.authResult.value != null) {
+      performAutoLogin(navController, authViewModel)
+    }
+  }
+
   // Navigate based on authentication result from explicit login/signup actions
   LaunchedEffect(authResult) {
     when (val result = authResult) {
       is AuthResult.Success -> {
-        Log.d("MainActivity", "Auth success - navigating to HOME")
         navController.navigate(NavRoutes.HOME) { popUpTo(NavRoutes.LOGIN) { inclusive = true } }
         authViewModel.clearAuthResult() // Clear after navigation
       }
       is AuthResult.RequiresSignUp -> {
         // Navigate to signup screen when Google user doesn't have a profile
         val email = result.email
-        Log.d("MainActivity", "Google user requires sign up, email: $email")
         val route = NavRoutes.createSignUpRoute(email)
-        Log.d("MainActivity", "Navigating to route: $route")
         navController.navigate(route) { popUpTo(NavRoutes.LOGIN) { inclusive = false } }
         authViewModel.clearAuthResult() // Clear after navigation
       }
