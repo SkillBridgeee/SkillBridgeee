@@ -28,7 +28,8 @@ data class ConvUIState(
     val partnerName: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    val infoMessage: String? = null
 )
 
 class MessageViewModel(
@@ -86,7 +87,13 @@ class MessageViewModel(
           // Fetch the conversation to find the other user
           val conversation = convManager.getConv(convId)
           if (conversation == null) {
-            _uiState.update { it.copy(error = null, isDeleted = true) }
+            _uiState.update {
+              it.copy(
+                  error = null,
+                  infoMessage = "This conversation was deleted by the other user.",
+                  isLoading = false,
+                  messages = emptyList())
+            }
             return@launch
           }
 
@@ -119,7 +126,20 @@ class MessageViewModel(
               .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
               .catch { _ -> _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
               .collect { messages ->
-                // Reset unread count whenever new messages arrive while viewing
+                // Conversation may have been deleted by the other user while we are on this screen
+                val convStillExists = convManager.getConv(convId) != null
+                if (!convStillExists) {
+                  _uiState.update {
+                    it.copy(
+                        infoMessage = "This conversation was deleted by the other user.",
+                        messages = emptyList(),
+                        isLoading = false,
+                        error = null)
+                  }
+                  return@collect
+                }
+
+                // Normal behaviour when conversation still exists
                 convManager.resetUnreadCount(convId = convId, userId = userId)
                 _uiState.update {
                   it.copy(
@@ -167,19 +187,22 @@ class MessageViewModel(
     currentConvId?.let { loadConversation(it) }
   }
 
-  /** Clears the error message. */
-  fun clearError() {
-    _uiState.update { it.copy(error = null) }
-  }
-
   /** Deletes the current conversation along with its overviews. */
   fun deleteConversation() {
     val convId = currentConvId ?: return
+    val userId = currentUserId ?: return
+
+    loadJob?.cancel()
+    loadJob = null
 
     viewModelScope.launch {
       try {
-        convManager.deleteConvAndOverviews(convId)
-        _uiState.update { it.copy(isDeleted = true) }
+        convManager.deleteConvAndOverviews(convId, userId)
+
+        currentConvId = null
+        otherId = null
+
+        _uiState.update { it.copy(isDeleted = true, messages = emptyList()) }
       } catch (e: Exception) {
         Log.e("MessageViewModel", "Failed to delete conversation", e)
         _uiState.update { it.copy(error = "Failed to delete conversation") }

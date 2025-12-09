@@ -49,12 +49,26 @@ fun MessageScreen(
             })
       },
       bottomBar = {
-        MessageInput(
-            message = uiState.currentMessage,
-            onMessageChanged = viewModel::onMessageChange,
-            onSendClicked = viewModel::sendMessage)
+        if (uiState.infoMessage == null && !uiState.isDeleted) {
+          MessageInput(
+              message = uiState.currentMessage,
+              onMessageChanged = viewModel::onMessageChange,
+              onSendClicked = viewModel::sendMessage)
+        }
       }) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+          // Show info message if present
+          uiState.infoMessage?.let { msg ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceVariant) {
+                  Text(
+                      text = msg,
+                      modifier = Modifier.padding(8.dp),
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      style = MaterialTheme.typography.bodySmall)
+                }
+          }
           // Show error if present
           uiState.error?.let { error ->
             Surface(

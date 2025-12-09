@@ -84,17 +84,20 @@ class ConversationManager(
   }
 
   /**
-   * Deletes a conversation and all associated overview entries for every user.
+   * Deletes a conversation and all associated overview entries for the user who initiated the
+   * deletion.
    *
    * @param convId The ID of the conversation to delete.
-   *
-   * This removes:
-   * - The conversation itself.
-   * - All overview entries linked to this conversation.
+   * @param deleterId The user ID of the person deleting the conversation.
    */
-  override suspend fun deleteConvAndOverviews(convId: String) {
+  override suspend fun deleteConvAndOverviews(convId: String, deleterId: String) {
     convRepo.deleteConv(convId)
-    overViewRepo.deleteOverViewConvUser(convId)
+
+    // Remove only the overview of the user who deleted
+    val myOverviews = overViewRepo.getOverViewConvUser(deleterId)
+    myOverviews
+        .filter { it.linkedConvId == convId }
+        .forEach { overview -> overViewRepo.deleteOverViewById(overview.overViewId) }
   }
 
   /**
