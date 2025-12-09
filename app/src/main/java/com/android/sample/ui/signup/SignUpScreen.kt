@@ -259,7 +259,7 @@ private fun LocationBlock(
 }
 
 @Composable
-private fun LocationIconButton(
+private fun BoxScope.LocationIconButton(
     context: android.content.Context,
     permission: String,
     permissionLauncher: androidx.activity.result.ActivityResultLauncher<String>,
@@ -278,7 +278,7 @@ private fun LocationIconButton(
         }
       },
       enabled = enabled,
-      modifier = Modifier.size(36.dp)) {
+      modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
         Icon(
             imageVector = Icons.Filled.MyLocation,
             contentDescription = SignUpScreenTestTags.PIN_CONTENT_DESC,
