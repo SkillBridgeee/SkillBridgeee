@@ -343,7 +343,10 @@ private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Uni
 @Composable
 private fun InfoBooker(uiState: BookingUIState, onBookerClick: (String) -> Unit) {
   Column(
-      modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp).testTag(BookingDetailsTestTag.BOOKER_SECTION),
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(vertical = 8.dp)
+              .testTag(BookingDetailsTestTag.BOOKER_SECTION),
       verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = BOOKING_REQUEST_FROM,

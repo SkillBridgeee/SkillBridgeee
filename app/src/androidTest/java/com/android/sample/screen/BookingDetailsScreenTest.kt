@@ -73,7 +73,8 @@ class BookingDetailsScreenTest {
                 description = "Cours de maths",
                 skill = Skill(skill = "Algebra", mainSubject = MainSubject.ACADEMICS),
                 location = Location(name = "Geneva")),
-        creatorProfile = Profile(userId = TEST_TUTOR_ID, name = TEST_TUTOR_NAME, email = TEST_TUTOR_EMAIL),
+        creatorProfile =
+            Profile(userId = TEST_TUTOR_ID, name = TEST_TUTOR_NAME, email = TEST_TUTOR_EMAIL),
         bookerProfile = Profile(userId = bookerId, name = bookerName, email = TEST_STUDENT_EMAIL),
         isTutor = true,
         onAcceptBooking = {},
@@ -111,7 +112,8 @@ class BookingDetailsScreenTest {
                 skill = Skill(skill = "Algebra", mainSubject = MainSubject.ACADEMICS),
                 location = Location(name = "Geneva")),
         creatorProfile = Profile(userId = tutorId, name = tutorName, email = TEST_TUTOR_EMAIL),
-        bookerProfile = Profile(userId = TEST_TUTOR_ID, name = TEST_STUDENT_NAME, email = TEST_STUDENT_EMAIL),
+        bookerProfile =
+            Profile(userId = TEST_TUTOR_ID, name = TEST_STUDENT_NAME, email = TEST_STUDENT_EMAIL),
         isTutor = false,
         onAcceptBooking = {},
         onDenyBooking = {})
@@ -1493,8 +1495,6 @@ class BookingDetailsScreenTest {
 
     // Verify the callback was invoked with the correct booker ID
     // Note: The bookerId comes from fakeBookingRepo which returns "asdf"
-    assert(clickedBookerId != null) {
-      "Expected onBookerClick to be called, but it was null"
-    }
+    assert(clickedBookerId != null) { "Expected onBookerClick to be called, but it was null" }
   }
 }

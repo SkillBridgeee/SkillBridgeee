@@ -111,9 +111,8 @@ class ListingScreenTest {
 
   // ----- HELPER FUNCTIONS -----
   /**
-   * Waits for the creator name to be loaded and displayed.
-   * Uses test tags to avoid flaky text-based waits.
-   * More robust than waiting for specific text content.
+   * Waits for the creator name to be loaded and displayed. Uses test tags to avoid flaky text-based
+   * waits. More robust than waiting for specific text content.
    */
   private fun waitForCreatorLoaded() {
     compose.waitUntil(WAIT_TIMEOUT_MS) {
@@ -125,8 +124,8 @@ class ListingScreenTest {
   }
 
   /**
-   * Waits for the listing content to be loaded and displayed.
-   * Uses test tags for more stable waiting.
+   * Waits for the listing content to be loaded and displayed. Uses test tags for more stable
+   * waiting.
    */
   private fun waitForListingLoaded() {
     compose.waitUntil(WAIT_TIMEOUT_MS) {

@@ -182,26 +182,33 @@ private fun CreatorCard(
     creator: com.android.sample.model.user.Profile,
     onNavigateToProfile: (String) -> Unit
 ) {
-  Card(modifier = Modifier.fillMaxWidth()) {
-    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-      Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Icon(Icons.Default.Person, contentDescription = null)
-        Spacer(Modifier.padding(4.dp))
-        Text(
-            text = creator.name ?: "",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier =
-                Modifier.testTag(ListingScreenTestTags.CREATOR_NAME).clickable {
-                  onNavigateToProfile(creator.userId)
-                })
+  Card(
+      modifier =
+          Modifier.fillMaxWidth()
+              .clickable(
+                  role = androidx.compose.ui.semantics.Role.Button,
+                  onClickLabel = "View ${creator.name ?: "creator"}'s profile") {
+                    onNavigateToProfile(creator.userId)
+                  }
+              .testTag(ListingScreenTestTags.CREATOR_NAME)) {
+        Column(
+            modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+              Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  modifier = Modifier.fillMaxWidth()) {
+                    Icon(Icons.Default.Person, contentDescription = "Profile icon")
+                    Spacer(Modifier.padding(4.dp))
+                    Text(
+                        text = creator.name ?: "",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary)
+                  }
+              Text(
+                  text = "Tap to view profile",
+                  style = MaterialTheme.typography.bodySmall,
+                  color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
       }
-      Text(
-          text = "Tap to view profile",
-          style = MaterialTheme.typography.bodySmall,
-          color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-  }
 }
 
 /** Skill details card */
