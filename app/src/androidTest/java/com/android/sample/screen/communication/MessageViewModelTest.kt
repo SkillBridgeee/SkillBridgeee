@@ -839,7 +839,7 @@ class FakeConvRepo : ConvRepository {
 class FailingConversationManager(private val delegate: ConversationManagerInter) :
     ConversationManagerInter by delegate {
 
-  override suspend fun deleteConvAndOverviews(convId: String) {
+  override suspend fun deleteConvAndOverviews(convId: String, deleterId: String, otherId: String) {
     // Force an error to go into the catch branch
     throw RuntimeException("Simulated delete failure")
   }
@@ -876,6 +876,11 @@ class FakeOverViewRepo : OverViewConvRepository {
       overviews.remove(it.overViewId)
       refreshUserFlow(it.overViewOwnerId)
     }
+  }
+
+  override suspend fun deleteOverViewById(overViewId: String) {
+    val overview = overviews.remove(overViewId)
+    overview?.let { refreshUserFlow(it.overViewOwnerId) }
   }
 
   override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {
