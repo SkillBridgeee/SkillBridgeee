@@ -204,7 +204,31 @@ class MessageScreenTest {
     assertEquals("", viewModel.uiState.value.currentMessage)
   }
 
-  class FakeProfileRepository : ProfileRepository {
+    // -----------------------------------------------------
+// TEST 7 — Info message is shown when conversation is missing
+// -----------------------------------------------------
+    @Test
+    fun messageScreen_showsInfoMessageWhenConversationDeleted() = runTest {
+        // Delete the conversation before showing the screen
+        convRepo.deleteConv(convId)
+
+        composeTestRule.setContent {
+            MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+        }
+
+        val infoText = "This conversation was deleted by the other user."
+
+        // Wait until the info message appears
+        composeTestRule.waitUntil(timeoutMillis = 2_000) {
+            composeTestRule.onAllNodesWithText(infoText).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        // Assert that the info message Surface is displayed
+        composeTestRule.onNodeWithText(infoText).assertExists()
+    }
+
+
+    class FakeProfileRepository : ProfileRepository {
     override fun getNewUid() = "fake-profile-id"
 
     override fun getCurrentUserId() = "userA"
