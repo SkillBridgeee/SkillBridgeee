@@ -1,6 +1,7 @@
 package com.android.sample.ui.navigation
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -25,10 +26,13 @@ import com.android.sample.ui.newListing.NewListingViewModel
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.mockkStatic
 import io.mockk.unmockkObject
+import io.mockk.unmockkStatic
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
@@ -330,7 +334,13 @@ class NavGraphTest {
 
       val bookingsVm: MyBookingsViewModel = mockk(relaxed = true)
       val profileVm: MyProfileViewModel = mockk(relaxed = true)
+
+      // Provide concrete HomeUiState wrapped in a StateFlow to avoid MockK proxy cast issues
+      val sampleHomeUiState = com.android.sample.ui.HomePage.HomeUiState()
+      val homeStateFlow = kotlinx.coroutines.flow.MutableStateFlow(sampleHomeUiState)
       val mainVm: MainPageViewModel = mockk(relaxed = true)
+      every { mainVm.uiState } returns homeStateFlow
+
       val newListingVm: NewListingViewModel = mockk(relaxed = true)
       val bookingDetailsVm: BookingDetailsViewModel = mockk(relaxed = true)
       val discussionVm: DiscussionViewModel = mockk(relaxed = true)
@@ -364,7 +374,13 @@ class NavGraphTest {
 
       val bookingsVm: MyBookingsViewModel = mockk(relaxed = true)
       val profileVm: MyProfileViewModel = mockk(relaxed = true)
+
+      // Provide concrete HomeUiState wrapped in a StateFlow to avoid MockK proxy cast issues
+      val sampleHomeUiState = com.android.sample.ui.HomePage.HomeUiState()
+      val homeStateFlow = kotlinx.coroutines.flow.MutableStateFlow(sampleHomeUiState)
       val mainVm: MainPageViewModel = mockk(relaxed = true)
+      every { mainVm.uiState } returns homeStateFlow
+
       val newListingVm: NewListingViewModel = mockk(relaxed = true)
       val bookingDetailsVm: BookingDetailsViewModel = mockk(relaxed = true)
       val discussionVm: DiscussionViewModel = mockk(relaxed = true)
@@ -375,7 +391,7 @@ class NavGraphTest {
           profileViewModel = profileVm,
           mainPageViewModel = mainVm,
           newListingViewModel = newListingVm,
-          authViewModel = authVm, // <-- real
+          authViewModel = authVm,
           bookingDetailsViewModel = bookingDetailsVm,
           discussionViewModel = discussionVm,
           onGoogleSignIn = {})
@@ -496,25 +512,33 @@ class NavGraphTest {
 
   @Test
   fun splash_when_handleAuthenticatedUser_throws_navigates_to_login() {
-    // Mock FirebaseAuth to return a non-null user and mock handleAuthenticatedUser to throw
-    // ensure mockAuth is set to return a signed-in user
     setSignedInUser("fake-uid")
-    // Mock top-level handleAuthenticatedUser to throw
-    io.mockk.mockkStatic("com.android.sample.MainActivityKt")
-    io.mockk.coEvery {
-      handleAuthenticatedUser(
-          any<String>(), any<NavHostController>(), any<AuthenticationViewModel>())
-    } throws RuntimeException("boom")
+
+    // mock the generated file class that contains the top-level suspend function
+    mockkStatic("com.android.sample.MainActivityKt")
+
+    // match the full parameter list (including defaults) so MockK intercepts the real call
+    coEvery { handleAuthenticatedUser(any(), any(), any(), any(), any()) } throws
+        RuntimeException("boom")
+
+    val fakeListingRepo: com.android.sample.model.listing.ListingRepository = mockk(relaxed = true)
+    com.android.sample.model.listing.ListingRepositoryProvider.setForTests(fakeListingRepo)
 
     composeRule.setContent {
       val controller = rememberNavController()
       navController = controller
-      val context = androidx.compose.ui.platform.LocalContext.current
+      val context = LocalContext.current
 
       val authVm = AuthenticationViewModel(context)
+
       val bookingsVm: MyBookingsViewModel = mockk(relaxed = true)
       val profileVm: MyProfileViewModel = mockk(relaxed = true)
+
+      val sampleHomeUiState = com.android.sample.ui.HomePage.HomeUiState()
+      val homeStateFlow = kotlinx.coroutines.flow.MutableStateFlow(sampleHomeUiState)
       val mainVm: MainPageViewModel = mockk(relaxed = true)
+      every { mainVm.uiState } returns homeStateFlow
+
       val newListingVm: NewListingViewModel = mockk(relaxed = true)
       val bookingDetailsVm: BookingDetailsViewModel = mockk(relaxed = true)
       val discussionVm: DiscussionViewModel = mockk(relaxed = true)
@@ -531,12 +555,7 @@ class NavGraphTest {
           onGoogleSignIn = {})
     }
 
-    // Wait then assert Splash path handled the exception and navigated to LOGIN
     composeRule.waitForIdle()
     assertEquals(NavRoutes.LOGIN, navController.currentDestination?.route)
-
-    // Cleanup mocks
-    io.mockk.unmockkStatic("com.android.sample.MainActivityKt")
-    io.mockk.unmockkStatic(com.google.firebase.auth.FirebaseAuth::class)
   }
 }
