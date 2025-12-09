@@ -110,9 +110,7 @@ class FirestoreConvRepository(
 
     messagesRef.document(message.msgId).set(message).await()
 
-
     convRef.update("updatedAt", message.createdAt).await()
-
   }
 
   /**
@@ -129,26 +127,24 @@ class FirestoreConvRepository(
       return@callbackFlow
     }
 
-    val messagesRef = conversationsRef
-      .document(convId)
-      .collection("messages")
-      .orderBy("createdAt")
+    val messagesRef = conversationsRef.document(convId).collection("messages").orderBy("createdAt")
 
     val registration =
-      messagesRef.addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
-        if (error != null) {
-          close(error)
-          return@addSnapshotListener
+        messagesRef.addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
+          if (error != null) {
+            close(error)
+            return@addSnapshotListener
+          }
+
+          val messages =
+              snapshot
+                  ?.documents
+                  ?.mapNotNull { doc -> doc.toObject(Message::class.java)?.copy(msgId = doc.id) }
+                  .orEmpty()
+
+          trySend(messages)
         }
-
-        val messages = snapshot?.documents?.mapNotNull { doc ->
-          doc.toObject(Message::class.java)?.copy(msgId = doc.id)
-        }.orEmpty()
-
-        trySend(messages)
-      }
 
     awaitClose { registration.remove() }
   }
-
 }

@@ -1,6 +1,5 @@
 package com.android.sample.ui.communication
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
@@ -61,42 +60,42 @@ class MessageViewModel(
 
   /** Start listening to real-time messages for a given conversation ID. */
   fun loadConversation(convId: String) {
-      loadJob?.cancel()
-      currentConvId = convId
+    loadJob?.cancel()
+    currentConvId = convId
 
-      loadJob = viewModelScope.launch {
+    loadJob =
+        viewModelScope.launch {
           val userId = currentUserId ?: UserSessionManager.getCurrentUserId()
           if (userId == null) {
-              _uiState.update { it.copy(error = userError) }
-              return@launch
+            _uiState.update { it.copy(error = userError) }
+            return@launch
           }
 
           val conversation = convManager.getConv(convId)
           if (conversation != null) {
-              otherId = if (conversation.convCreatorId == userId)
-                  conversation.otherPersonId else conversation.convCreatorId
+            otherId =
+                if (conversation.convCreatorId == userId) conversation.otherPersonId
+                else conversation.convCreatorId
 
-              val partner = profileRepository.getProfile(otherId!!)
-              _uiState.update { it.copy(partnerName = partner?.name ?: "User") }
+            val partner = profileRepository.getProfile(otherId!!)
+            _uiState.update { it.copy(partnerName = partner?.name ?: "User") }
           }
 
-          convManager.listenMessages(convId)
+          convManager
+              .listenMessages(convId)
               .onStart { _uiState.update { it.copy(isLoading = true) } }
               .catch { _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
               .collect { messages ->
-                  _uiState.update {
-                      it.copy(
-                          messages = messages.sortedBy { msg -> msg.createdAt ?: Date(0) },
-                          isLoading = false
-                      )
-                  }
+                _uiState.update {
+                  it.copy(
+                      messages = messages.sortedBy { msg -> msg.createdAt ?: Date(0) },
+                      isLoading = false)
+                }
               }
-
-      }
+        }
   }
 
-
-    /** Send the current message and clear the input field. */
+  /** Send the current message and clear the input field. */
   fun sendMessage() {
     val convId = currentConvId ?: return
     val senderId = currentUserId ?: return
@@ -113,15 +112,13 @@ class MessageViewModel(
             createdAt = Date())
 
     _uiState.update { state ->
-        state.copy(
-            messages = (state.messages + message).sortedBy { it.createdAt },
-            currentMessage = ""
-        )
+      state.copy(
+          messages = (state.messages + message).sortedBy { it.createdAt }, currentMessage = "")
     }
 
     viewModelScope.launch {
       try {
-          convManager.sendMessage(convId, message)
+        convManager.sendMessage(convId, message)
       } catch (_: Exception) {
         _uiState.update { it.copy(error = sendMsgError) }
       }
