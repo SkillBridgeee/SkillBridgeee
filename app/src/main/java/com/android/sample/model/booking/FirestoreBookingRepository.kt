@@ -152,15 +152,14 @@ class FirestoreBookingRepository(
 
   override suspend fun addBooking(booking: Booking) {
     try {
+      if (!isOnline()) {
+        throw Exception("Cannot add booking while offline")
+      }
       // Verify current user is the booker
       if (booking.bookerId != currentUserId) {
         throw Exception("Access denied: Can only create bookings for yourself")
       }
-      if (isOnline()) {
-        db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking).await()
-      } else {
-        db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking)
-      }
+      db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).set(booking).await()
     } catch (e: Exception) {
       throw Exception("Failed to add booking: ${e.message}")
     }
@@ -208,8 +207,8 @@ class FirestoreBookingRepository(
     try {
       val documentRef = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId)
 
-      // Use transaction for atomicity
-      db.runTransaction { transaction ->
+      val transaction =
+          db.runTransaction { transaction ->
             val snapshot = transaction[documentRef]
 
             if (!snapshot.exists()) {
@@ -230,7 +229,9 @@ class FirestoreBookingRepository(
             transaction.update(documentRef, "status", status)
             null
           }
-          .await()
+      if (isOnline()) {
+        transaction.await()
+      }
     } catch (e: BookingAuthenticationException) {
       throw e
     } catch (e: BookingAccessDeniedException) {
@@ -246,8 +247,8 @@ class FirestoreBookingRepository(
     try {
       val documentRef = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId)
 
-      // Use transaction for atomicity
-      db.runTransaction { transaction ->
+      val transaction =
+          db.runTransaction { transaction ->
             val snapshot = transaction[documentRef]
 
             if (!snapshot.exists()) {
@@ -268,7 +269,9 @@ class FirestoreBookingRepository(
             transaction.update(documentRef, "paymentStatus", paymentStatus)
             null
           }
-          .await()
+      if (isOnline()) {
+        transaction.await()
+      }
     } catch (e: BookingAuthenticationException) {
       throw e
     } catch (e: BookingAccessDeniedException) {
