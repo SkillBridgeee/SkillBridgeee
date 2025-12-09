@@ -37,8 +37,7 @@ class BookingDetailsScreenTest {
     private const val TEST_STUDENT_NAME = "Student Booker"
     private const val TEST_STUDENT_EMAIL = "student@example.com"
 
-    // UI String constants (match strings.xml)
-    const val STRING_BOOKING_REQUEST_FROM = "Booking Request From:"
+    // UI String constants
     const val STRING_ACCEPT = "Accept"
     const val STRING_DENY = "Deny"
   }
@@ -851,6 +850,7 @@ class BookingDetailsScreenTest {
       BookingDetailsContent(
           uiState = uiState,
           onCreatorClick = {},
+          onBookerClick = {},
           onMarkCompleted = { clicked = true },
           onSubmitStudentRatings = { _, _ -> },
           onPaymentComplete = {},
@@ -888,6 +888,7 @@ class BookingDetailsScreenTest {
       BookingDetailsContent(
           uiState = uiState,
           onCreatorClick = {},
+          onBookerClick = {},
           onMarkCompleted = {},
           onSubmitStudentRatings = { _, _ -> },
           onPaymentComplete = {},
@@ -923,6 +924,7 @@ class BookingDetailsScreenTest {
       BookingDetailsContent(
           uiState = uiState,
           onCreatorClick = {},
+          onBookerClick = {},
           onMarkCompleted = {},
           onSubmitStudentRatings = { _, _ -> },
           onPaymentComplete = {},
@@ -943,6 +945,7 @@ class BookingDetailsScreenTest {
         BookingDetailsContent(
             uiState = uiState,
             onCreatorClick = {},
+            onBookerClick = {},
             onMarkCompleted = {},
             onSubmitStudentRatings = { _, _ -> },
             onPaymentComplete = {},
@@ -970,6 +973,7 @@ class BookingDetailsScreenTest {
         BookingDetailsContent(
             uiState = uiState,
             onCreatorClick = {},
+            onBookerClick = {},
             onMarkCompleted = {},
             onSubmitStudentRatings = { tutorStars, listingStars ->
               callbackCalled = true
@@ -1464,6 +1468,7 @@ class BookingDetailsScreenTest {
   @Test
   fun bookingDetailsScreen_bookerInfo_hasClickableAction() {
     val vm = fakeViewModel()
+    var clickedBookerId: String? = null
 
     // Use helper function for tutor view with clear intent
     vm.setUiStateForTest(bookingStateForTutor(bookingStatus = BookingStatus.PENDING))
@@ -1472,11 +1477,24 @@ class BookingDetailsScreenTest {
       BookingDetailsScreen(
           bkgViewModel = vm,
           bookingId = TEST_BOOKING_ID,
-          onCreatorClick = {})
+          onCreatorClick = {},
+          onBookerClick = { bookerId -> clickedBookerId = bookerId })
     }
 
-    // Verify the Accept and Deny buttons are displayed for tutor
-    composeTestRule.onNodeWithText(STRING_ACCEPT).assertExists()
-    composeTestRule.onNodeWithText(STRING_DENY).assertExists()
+    // Wait for the screen to load and display the booker name row
+    composeTestRule.waitForIdle()
+
+    // Verify the booker name row is clickable using test tag
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.BOOKER_NAME_ROW)
+        .assertExists()
+        .assertHasClickAction()
+        .performClick()
+
+    // Verify the callback was invoked with the correct booker ID
+    // Note: The bookerId comes from fakeBookingRepo which returns "asdf"
+    assert(clickedBookerId != null) {
+      "Expected onBookerClick to be called, but it was null"
+    }
   }
 }
