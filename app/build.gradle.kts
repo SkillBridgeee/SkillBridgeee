@@ -85,6 +85,8 @@ android {
             signingConfig = signingConfigs.getByName("release")
             // Disable Firebase emulators in release builds
             buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
+            // Production builds always use real email verification
+            buildConfigField("boolean", "SKIP_EMAIL_VERIFICATION", "false")
         }
 
         debug {
@@ -94,6 +96,8 @@ android {
             // Debug builds connect to Firebase emulators (for local testing on Android emulator)
             // Make sure to run: firebase emulators:start
             buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "true")
+            // Skip email verification for test accounts in debug builds (for E2E tests)
+            buildConfigField("boolean", "SKIP_EMAIL_VERIFICATION", "true")
         }
     }
 
@@ -202,9 +206,11 @@ dependencies {
     implementation(libs.firebase.ui.auth)
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.functions.ktx)
 
     // Firebase Testing dependencies
-    testImplementation("com.google.firebase:firebase-auth:22.3.0")
+    testImplementation(libs.firebase.auth)
+    androidTestImplementation(libs.firebase.functions.ktx)
     testImplementation("org.robolectric:robolectric:4.11.1")
     testImplementation("androidx.test:core:1.5.0")
 
