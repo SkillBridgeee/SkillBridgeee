@@ -197,7 +197,7 @@ class MessageViewModel(
 
     viewModelScope.launch {
       try {
-        convManager.deleteConvAndOverviews(convId, userId)
+        convManager.deleteConvAndOverviews(convId, userId, otherId ?: "")
 
         currentConvId = null
         otherId = null

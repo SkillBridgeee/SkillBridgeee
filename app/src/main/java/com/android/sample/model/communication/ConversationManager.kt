@@ -84,20 +84,43 @@ class ConversationManager(
   }
 
   /**
-   * Deletes a conversation and all associated overview entries for the user who initiated the
-   * deletion.
+   * Deletes a conversation and manages the corresponding overviews for both participants.
    *
    * @param convId The ID of the conversation to delete.
-   * @param deleterId The user ID of the person deleting the conversation.
+   * @param deleterId The ID of the user initiating the deletion.
+   * @param otherId The ID of the other participant in the conversation.
    */
-  override suspend fun deleteConvAndOverviews(convId: String, deleterId: String) {
+  override suspend fun deleteConvAndOverviews(convId: String, deleterId: String, otherId: String) {
     convRepo.deleteConv(convId)
 
-    // Remove only the overview of the user who deleted
     val myOverviews = overViewRepo.getOverViewConvUser(deleterId)
     myOverviews
         .filter { it.linkedConvId == convId }
         .forEach { overview -> overViewRepo.deleteOverViewById(overview.overViewId) }
+
+    try {
+      val otherOverviews = overViewRepo.getOverViewConvUser(otherId)
+
+      val otherOverview = otherOverviews.firstOrNull { it.linkedConvId == convId }
+
+      if (otherOverview != null) {
+        // Create a modified overview that indicates deletion
+        val updatedOverview =
+            otherOverview.copy(
+                lastMsg =
+                    Message(
+                        msgId = "deleted-system-msg",
+                        senderId = "system",
+                        receiverId = otherId,
+                        content = "Conversation deleted",
+                        createdAt = java.util.Date()),
+                nonReadMsgNumber = 0)
+
+        overViewRepo.addOverViewConvUser(updatedOverview)
+      }
+    } catch (e: Exception) {
+      println("Failed to update other user's overview: ${e.message}")
+    }
   }
 
   /**
