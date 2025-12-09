@@ -97,7 +97,6 @@ class MainActivityTest {
   fun mainApp_contains_navigation_components() {
     composeTestRule.waitForIdle()
 
-    // Always verify that Compose root exists.
     composeTestRule.onRoot().assertExists()
 
     // Try checking login UI, but NEVER fail if it's not there
