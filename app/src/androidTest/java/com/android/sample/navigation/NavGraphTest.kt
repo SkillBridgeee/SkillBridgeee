@@ -27,6 +27,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
@@ -172,6 +174,30 @@ class NavGraphTest {
       assertEquals(userId, argProfileId)
       assertEquals(listingId, argListingId)
     }
+  }
+
+  @Test
+  fun navigateToNewListing_doesNothing_whenNoUserInSession() {
+    // Make UserSessionManager behave as if there is NO logged-in user
+    mockkObject(UserSessionManager)
+    every { UserSessionManager.getCurrentUserId() } returns null
+
+    composeRule.runOnIdle {
+      // We start at dummy in your test graph
+      val originalRoute = navController.currentDestination?.route
+      assertEquals("dummy", originalRoute)
+
+      // Call helper with "no user"
+      navigateToNewListing(navController, listingId = "listing123")
+
+      // Route should NOT change
+      assertEquals(
+          "navigateToNewListing should be a no-op when no user is logged in",
+          originalRoute,
+          navController.currentDestination?.route)
+    }
+
+    unmockkObject(UserSessionManager)
   }
 
   // In NavGraphTest.kt (add below your existing 2 tests)
