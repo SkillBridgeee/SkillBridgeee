@@ -122,7 +122,7 @@ fun AppNavGraph(
     addBookingDetailsRoute(navController, bookingDetailsViewModel, bookingId, profileID)
     addDiscussionRoute(navController, discussionViewModel, convId)
     addToSRoute()
-    addMessagesRoute(navController, convId)
+    addMessagesRoute(convId)
   }
 }
 
