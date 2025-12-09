@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -33,6 +34,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.ui.components.EllipsizingTextField
 import com.android.sample.ui.components.EllipsizingTextFieldStyle
@@ -92,24 +95,29 @@ fun SignUpScreen(
     }
   }
 
-  // Only call onSignUpAbandoned if the user leaves without completing sign-up
-  // Use Unit as key so this effect only runs once when composable is first created
-  // and disposed when permanently leaving the screen
-  DisposableEffect(Unit) {
-    android.util.Log.d("SignUpScreen", "DisposableEffect created")
-    onDispose {
-      val currentState = state
-      android.util.Log.d(
-          "SignUpScreen",
-          "DisposableEffect onDispose - submitSuccess: ${currentState.submitSuccess}, verificationEmailSent: ${currentState.verificationEmailSent}")
-      // Don't sign out if sign-up was successful or verification email was sent
-      if (!currentState.submitSuccess && !currentState.verificationEmailSent) {
-        android.util.Log.d("SignUpScreen", "Calling onSignUpAbandoned")
-        vm.onSignUpAbandoned()
-      } else {
-        android.util.Log.d("SignUpScreen", "NOT calling onSignUpAbandoned - sign-up was completed")
+  // Use lifecycle observer to handle cleanup when nav entry is destroyed
+  val lifecycleOwner = LocalLifecycleOwner.current
+  DisposableEffect(lifecycleOwner) {
+    val observer = LifecycleEventObserver { _, event ->
+      if (event == Lifecycle.Event.ON_DESTROY) {
+        val currentState = state
+        android.util.Log.d(
+            "SignUpScreen",
+            "Lifecycle ON_DESTROY - submitSuccess: ${currentState.submitSuccess}, verificationEmailSent: ${currentState.verificationEmailSent}")
+        // Don't sign out if sign-up was successful or verification email was sent
+        if (!currentState.submitSuccess && !currentState.verificationEmailSent) {
+          android.util.Log.d("SignUpScreen", "Calling onSignUpAbandoned from lifecycle observer")
+          vm.onSignUpAbandoned()
+        } else {
+          android.util.Log.d(
+              "SignUpScreen", "NOT calling onSignUpAbandoned - sign-up was completed")
+        }
       }
     }
+
+    lifecycleOwner.lifecycle.addObserver(observer)
+
+    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
   }
 
   val scrollState = rememberScrollState()
