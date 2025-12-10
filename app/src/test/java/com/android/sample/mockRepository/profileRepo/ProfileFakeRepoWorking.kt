@@ -47,6 +47,66 @@ class ProfileFakeRepoWorking : ProfileRepository {
                   location = Location(),
                   hourlyRate = "45",
                   description = "Student looking for physics help",
+                  studentRating = RatingInfo()),
+          "booker_1" to
+              Profile(
+                  userId = "booker_1",
+                  name = "Charlie",
+                  email = "charlie@example.com",
+                  levelOfEducation = "High School",
+                  location = Location(),
+                  hourlyRate = "0",
+                  description = "Student seeking math help",
+                  studentRating = RatingInfo()),
+          "booker_2" to
+              Profile(
+                  userId = "booker_2",
+                  name = "Diana",
+                  email = "diana@example.com",
+                  levelOfEducation = "Bachelor",
+                  location = Location(),
+                  hourlyRate = "0",
+                  description = "Student interested in physics",
+                  studentRating = RatingInfo()),
+          "student_1" to
+              Profile(
+                  userId = "student_1",
+                  name = "Student One",
+                  email = "student1@example.com",
+                  levelOfEducation = "Undergraduate",
+                  location = Location(),
+                  hourlyRate = "0",
+                  description = "Student seeking tutoring",
+                  studentRating = RatingInfo()),
+          "student-1" to
+              Profile(
+                  userId = "student-1",
+                  name = "Student One",
+                  email = "student-1@example.com",
+                  levelOfEducation = "Undergraduate",
+                  location = Location(),
+                  hourlyRate = "0",
+                  description = "Student seeking tutoring",
+                  studentRating = RatingInfo()),
+          "student-2" to
+              Profile(
+                  userId = "student-2",
+                  name = "Student Two",
+                  email = "student-2@example.com",
+                  levelOfEducation = "Undergraduate",
+                  location = Location(),
+                  hourlyRate = "0",
+                  description = "Student seeking tutoring",
+                  studentRating = RatingInfo()),
+          "student-3" to
+              Profile(
+                  userId = "student-3",
+                  name = "Student Three",
+                  email = "student-3@example.com",
+                  levelOfEducation = "Undergraduate",
+                  location = Location(),
+                  hourlyRate = "0",
+                  description = "Student seeking tutoring",
                   studentRating = RatingInfo()))
 
   override fun getNewUid(): String = "profile_${UUID.randomUUID()}"

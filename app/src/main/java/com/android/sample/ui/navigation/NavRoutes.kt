@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets
  * 3. If it was in the bottom navigation bar, remove it from the items list in `BottomNavBar.kt`.
  */
 object NavRoutes {
+  const val SPLASH = "splash"
   const val LOGIN = "login"
   const val HOME = "home"
   const val PROFILE = "profile/{profileId}"

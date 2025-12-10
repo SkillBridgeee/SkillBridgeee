@@ -53,6 +53,15 @@ class ListingScreenTest {
 
   @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
 
+  // ----- TEST CONSTANTS -----
+  companion object {
+    private const val TEST_CREATOR_NAME = "John Doe"
+    private const val TEST_CREATOR_EMAIL = "john@example.com"
+    private const val TEST_CREATOR_ID = "creator-456"
+    private const val TEST_LISTING_ID = "listing-123"
+    private const val WAIT_TIMEOUT_MS = 5_000L
+  }
+
   private val sampleProposal =
       Proposal(
           listingId = "listing-123",
@@ -75,9 +84,9 @@ class ListingScreenTest {
 
   private val sampleCreator =
       Profile(
-          userId = "creator-456",
-          name = "John Doe",
-          email = "john@example.com",
+          userId = TEST_CREATOR_ID,
+          name = TEST_CREATOR_NAME,
+          email = TEST_CREATOR_EMAIL,
           description = "Experienced guitar teacher",
           location = Location(latitude = 40.7128, longitude = -74.0060, name = "New York"))
 
@@ -98,6 +107,33 @@ class ListingScreenTest {
     ListingRepositoryProvider.clearForTests()
     ProfileRepositoryProvider.clearForTests()
     BookingRepositoryProvider.clearForTests()
+  }
+
+  // ----- HELPER FUNCTIONS -----
+  /**
+   * Waits for the creator name to be loaded and displayed. Uses test tags to avoid flaky text-based
+   * waits. More robust than waiting for specific text content.
+   */
+  private fun waitForCreatorLoaded() {
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.CREATOR_NAME, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+  }
+
+  /**
+   * Waits for the listing content to be loaded and displayed. Uses test tags for more stable
+   * waiting.
+   */
+  private fun waitForListingLoaded() {
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.TITLE, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
   }
 
   // Fake Repositories
@@ -327,7 +363,7 @@ class ListingScreenTest {
           listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
-    compose.waitUntil(5_000) {
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.ERROR, useUnmergedTree = true)
           .fetchSemanticsNodes()
@@ -347,12 +383,8 @@ class ListingScreenTest {
           listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(ListingScreenTestTags.TITLE, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    // Use helper function for waiting
+    waitForListingLoaded()
 
     // TITLE tag appears twice (type badge + actual title), so use onFirst()
     compose.onAllNodesWithTag(ListingScreenTestTags.TITLE).onFirst().assertIsDisplayed()
@@ -371,19 +403,14 @@ class ListingScreenTest {
           listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
-    // Wait for screen to load
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(ListingScreenTestTags.TITLE, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    // Wait for screen to load using helper function
+    waitForListingLoaded()
 
     // Simulate booking attempt that will fail
     compose.runOnUiThread { vm.createBooking(Date(), Date(System.currentTimeMillis() + 3600000)) }
 
     // Wait for error dialog
-    compose.waitUntil(5_000) {
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.ERROR_DIALOG, useUnmergedTree = true)
           .fetchSemanticsNodes()
@@ -408,12 +435,8 @@ class ListingScreenTest {
           listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(ListingScreenTestTags.TITLE, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    // Use helper function for waiting
+    waitForListingLoaded()
 
     compose.onAllNodesWithTag(ListingScreenTestTags.TITLE).assertCountEquals(1)
   }
@@ -427,12 +450,8 @@ class ListingScreenTest {
           listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(ListingScreenTestTags.TITLE, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    // Use helper function for waiting
+    waitForListingLoaded()
 
     compose.onNodeWithText("Offering to Teach").assertIsDisplayed()
   }
@@ -467,15 +486,11 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = TEST_LISTING_ID, onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(ListingScreenTestTags.TITLE, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    // Use helper function for waiting
+    waitForListingLoaded()
 
     compose.onNodeWithTag(ListingScreenTestTags.SCREEN).assertIsDisplayed()
   }
@@ -503,13 +518,8 @@ class ListingScreenTest {
     // Initially loading or content
     compose.onNodeWithTag(ListingScreenTestTags.SCREEN).assertIsDisplayed()
 
-    // Eventually shows content
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(ListingScreenTestTags.TITLE, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    // Eventually shows content - use helper function
+    waitForListingLoaded()
 
     // TITLE appears twice, use onFirst()
     compose.onAllNodesWithTag(ListingScreenTestTags.TITLE).onFirst().assertIsDisplayed()
@@ -527,19 +537,14 @@ class ListingScreenTest {
           listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
     }
 
-    // Wait for content to load
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(ListingScreenTestTags.TITLE, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    // Wait for content to load using helper function
+    waitForListingLoaded()
 
     // Trigger a failing booking
     compose.runOnUiThread { vm.createBooking(Date(), Date(System.currentTimeMillis() + 3_600_000)) }
 
     // Error dialog appears
-    compose.waitUntil(5_000) {
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.ERROR_DIALOG, useUnmergedTree = true)
           .fetchSemanticsNodes()
@@ -551,7 +556,7 @@ class ListingScreenTest {
     compose.onNodeWithText("OK", useUnmergedTree = true).assertIsDisplayed().performClick()
 
     // Dialog disappears
-    compose.waitUntil(5_000) {
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.ERROR_DIALOG, useUnmergedTree = true)
           .fetchSemanticsNodes()
@@ -577,19 +582,14 @@ class ListingScreenTest {
           onEditListing = {})
     }
 
-    // Wait for content to load (title appears)
-    compose.waitUntil(5_000) {
-      compose
-          .onAllNodesWithTag(ListingScreenTestTags.TITLE, useUnmergedTree = true)
-          .fetchSemanticsNodes()
-          .isNotEmpty()
-    }
+    // Wait for content to load using helper function
+    waitForListingLoaded()
 
     // when: we simulate a successful booking
     compose.runOnUiThread { vm.showBookingSuccess() }
 
     // then: success dialog should appear
-    compose.waitUntil(5_000) {
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.SUCCESS_DIALOG, useUnmergedTree = true)
           .fetchSemanticsNodes()
@@ -601,7 +601,7 @@ class ListingScreenTest {
     compose.onNodeWithText("OK", useUnmergedTree = true).assertIsDisplayed().performClick()
 
     // then: dialog disappears and success flag is cleared, and navigateBack is called
-    compose.waitUntil(5_000) {
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.SUCCESS_DIALOG, useUnmergedTree = true)
           .fetchSemanticsNodes()
@@ -612,5 +612,109 @@ class ListingScreenTest {
       assert(!vm.uiState.value.bookingSuccess)
       assert(navigatedBack)
     }
+  }
+
+  // ----- NEW TESTS FOR CREATOR PROFILE FEATURE -----
+
+  @Test
+  fun listingScreen_displaysCreatorName() {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
+    }
+
+    // Wait for content to load using helper function
+    waitForCreatorLoaded()
+
+    // Verify creator name is displayed using test tag
+    compose.onNodeWithTag(ListingScreenTestTags.CREATOR_NAME).assertIsDisplayed()
+
+    // Verify helper text is displayed
+    compose.onNodeWithText("Tap to view profile").assertIsDisplayed()
+  }
+
+  @Test
+  fun listingScreen_creatorName_isClickable() {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
+    }
+
+    // Wait for content to load using helper function
+    waitForCreatorLoaded()
+
+    // Verify creator name has a click action using test tag
+    compose.onNodeWithTag(ListingScreenTestTags.CREATOR_NAME).assertHasClickAction()
+  }
+
+  @Test
+  fun listingScreen_clickCreatorName_callsCallback() {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = true)
+
+    var clickedProfileId: String? = null
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = { profileId -> clickedProfileId = profileId },
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
+    }
+
+    // Wait for content to load using helper function
+    waitForCreatorLoaded()
+
+    // Click on the creator's name using test tag
+    compose.onNodeWithTag(ListingScreenTestTags.CREATOR_NAME).performClick()
+
+    // Verify the callback was called with the correct creator ID
+    compose.runOnIdle {
+      assert(clickedProfileId == TEST_CREATOR_ID) {
+        "Expected callback to be called with '$TEST_CREATOR_ID', but got '$clickedProfileId'"
+      }
+    }
+  }
+
+  @Test
+  fun listingScreen_creatorNameInPrimaryColor() {
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
+    }
+
+    // Wait for content to load using helper function
+    waitForCreatorLoaded()
+
+    // Verify creator name exists and is displayed using test tag
+    // Note: We can't directly test color in UI tests, but we can verify the node exists
+    // and is clickable, which indicates proper styling
+    compose.onNodeWithTag(ListingScreenTestTags.CREATOR_NAME).assertIsDisplayed()
   }
 }

@@ -30,7 +30,7 @@ class FirebaseTestRule : TestRule {
     try {
       // Check if Firebase is already initialized
       FirebaseApp.getInstance()
-    } catch (e: IllegalStateException) {
+    } catch (_: IllegalStateException) {
       // Firebase is not initialized, so initialize it
       val options =
           FirebaseOptions.Builder()
@@ -45,11 +45,12 @@ class FirebaseTestRule : TestRule {
 
   private fun cleanupFirebase() {
     try {
-      // Clean up Firebase instances if needed
-      val firebaseApp = FirebaseApp.getInstance()
-      firebaseApp.delete()
-    } catch (e: Exception) {
+      // Use clearInstancesForTest() instead of delete() to avoid hanging in CI
+      // This properly cleans up Firebase for testing without blocking
+      FirebaseApp.clearInstancesForTest()
+    } catch (_: Exception) {
       // Ignore cleanup errors in tests
+      // Some test environments may not support clearInstancesForTest()
     }
   }
 }

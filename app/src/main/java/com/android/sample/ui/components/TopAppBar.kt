@@ -7,11 +7,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.android.sample.ui.navigation.NavRoutes
 import com.android.sample.ui.navigation.RouteStackManager
+
+object TopAppBarTestTag {
+  const val MESSAGES_ICON = "messages_icon"
+}
 
 /**
  * TopAppBar - Reusable top navigation bar component for SkillBridge app
@@ -79,9 +84,11 @@ fun TopAppBar(navController: NavController) {
       },
       actions = {
         if (currentRoute == NavRoutes.HOME) {
-          IconButton(onClick = { navController.navigate(NavRoutes.DISCUSSION) }) {
-            Icon(imageVector = Icons.Filled.Email, contentDescription = "Messages")
-          }
+          IconButton(
+              modifier = Modifier.testTag(TopAppBarTestTag.MESSAGES_ICON),
+              onClick = { navController.navigate(NavRoutes.DISCUSSION) }) {
+                Icon(imageVector = Icons.Filled.Email, contentDescription = "Messages")
+              }
         }
       })
 }
