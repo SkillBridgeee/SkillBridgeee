@@ -65,11 +65,17 @@ class MessageViewModel(
 
     loadJob =
         viewModelScope.launch {
-          val userId = currentUserId ?: UserSessionManager.getCurrentUserId()
+          var userId = currentUserId ?: UserSessionManager.getCurrentUserId()
+          if (userId == null) {
+            kotlinx.coroutines.delay(500)
+            userId = UserSessionManager.getCurrentUserId()
+          }
           if (userId == null) {
             _uiState.update { it.copy(error = userError) }
             return@launch
           }
+          currentUserId = userId
+          _uiState.update { it.copy(currentUserId = userId) }
 
           val conversation = convManager.getConv(convId)
           if (conversation != null) {
