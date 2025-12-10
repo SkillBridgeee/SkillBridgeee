@@ -668,273 +668,278 @@ class MessageViewModelTest {
 
     store.clear()
     assert(true)
-  // -----------------------------------------------------
-  // TEST 26 — deleteConversation deletes conv & overview and sets flag
-  // -----------------------------------------------------
-  @Test
-  fun deleteConversation_deletesConvAndOverview_andSetsIsDeleted() = runTest {
-    // Ensure we have an overview for this conversation for the current user
-    overViewRepo.addOverViewConvUser(
-        OverViewConversation(
-            overViewId = "ov1",
-            linkedConvId = convId,
-            convName = "Test conversation",
-            overViewOwnerId = testUserId,
-            otherPersonId = otherUserId))
+    // -----------------------------------------------------
+    // TEST 26 — deleteConversation deletes conv & overview and sets flag
+    // -----------------------------------------------------
+    @Test
+    fun deleteConversation_deletesConvAndOverview_andSetsIsDeleted() = runTest {
+      // Ensure we have an overview for this conversation for the current user
+      overViewRepo.addOverViewConvUser(
+          OverViewConversation(
+              overViewId = "ov1",
+              linkedConvId = convId,
+              convName = "Test conversation",
+              overViewOwnerId = testUserId,
+              otherPersonId = otherUserId))
 
-    // Safety check: conv + overview exist before deletion
-    val convBefore = convRepo.getConv(convId)
-    val overviewsBefore = overViewRepo.getOverViewConvUser(testUserId)
-    assertEquals(true, convBefore != null)
-    assertEquals(1, overviewsBefore.size)
+      // Safety check: conv + overview exist before deletion
+      val convBefore = convRepo.getConv(convId)
+      val overviewsBefore = overViewRepo.getOverViewConvUser(testUserId)
+      assertEquals(true, convBefore != null)
+      assertEquals(1, overviewsBefore.size)
 
-    // Load conversation so that currentConvId is set in the ViewModel
-    viewModel.loadConversation(convId)
-    composeTestRule.waitForIdle()
+      // Load conversation so that currentConvId is set in the ViewModel
+      viewModel.loadConversation(convId)
+      composeTestRule.waitForIdle()
 
-    // Act: delete the conversation
-    viewModel.deleteConversation()
-    composeTestRule.waitForIdle()
+      // Act: delete the conversation
+      viewModel.deleteConversation()
+      composeTestRule.waitForIdle()
 
-    // Assert: UI flag set
-    val state = viewModel.uiState.value
-    assertEquals(true, state.isDeleted)
+      // Assert: UI flag set
+      val state = viewModel.uiState.value
+      assertEquals(true, state.isDeleted)
 
-    // Assert: conversation deleted from repository
-    val convAfter = convRepo.getConv(convId)
-    assertEquals(null, convAfter)
+      // Assert: conversation deleted from repository
+      val convAfter = convRepo.getConv(convId)
+      assertEquals(null, convAfter)
 
-    // Assert: overview deleted for current user
-    val overviewsAfter = overViewRepo.getOverViewConvUser(testUserId)
-    assertEquals(0, overviewsAfter.size)
-  }
+      // Assert: overview deleted for current user
+      val overviewsAfter = overViewRepo.getOverViewConvUser(testUserId)
+      assertEquals(0, overviewsAfter.size)
+    }
 
-  // -----------------------------------------------------
-  // TEST 27 — deleteConversation without loaded conv does nothing
-  // -----------------------------------------------------
-  @Test
-  fun deleteConversation_withoutLoadedConversation_doesNothing() = runTest {
-    // Precondition: conversation exists but loadConversation() was never called
-    val convBefore = convRepo.getConv(convId)
-    assertEquals(true, convBefore != null)
+    // -----------------------------------------------------
+    // TEST 27 — deleteConversation without loaded conv does nothing
+    // -----------------------------------------------------
+    @Test
+    fun deleteConversation_withoutLoadedConversation_doesNothing() = runTest {
+      // Precondition: conversation exists but loadConversation() was never called
+      val convBefore = convRepo.getConv(convId)
+      assertEquals(true, convBefore != null)
 
-    // Act: directly call deleteConversation()
-    viewModel.deleteConversation()
-    composeTestRule.waitForIdle()
+      // Act: directly call deleteConversation()
+      viewModel.deleteConversation()
+      composeTestRule.waitForIdle()
 
-    // Since currentConvId is null, nothing should happen
-    val state = viewModel.uiState.value
-    assertEquals(false, state.isDeleted)
+      // Since currentConvId is null, nothing should happen
+      val state = viewModel.uiState.value
+      assertEquals(false, state.isDeleted)
 
-    // Conversation should still exist
-    val convAfter = convRepo.getConv(convId)
-    assertEquals(true, convAfter != null)
-  }
+      // Conversation should still exist
+      val convAfter = convRepo.getConv(convId)
+      assertEquals(true, convAfter != null)
+    }
 
-  // -----------------------------------------------------
-  // TEST 28 — resetDeletionFlag resets isDeleted to false
-  // -----------------------------------------------------
-  @Test
-  fun resetDeletionFlag_resetsIsDeleted() = runTest {
-    // Arrange: load and delete to set the flag
-    viewModel.loadConversation(convId)
-    composeTestRule.waitForIdle()
+    // -----------------------------------------------------
+    // TEST 28 — resetDeletionFlag resets isDeleted to false
+    // -----------------------------------------------------
+    @Test
+    fun resetDeletionFlag_resetsIsDeleted() = runTest {
+      // Arrange: load and delete to set the flag
+      viewModel.loadConversation(convId)
+      composeTestRule.waitForIdle()
 
-    viewModel.deleteConversation()
-    composeTestRule.waitForIdle()
+      viewModel.deleteConversation()
+      composeTestRule.waitForIdle()
 
-    // Sanity check: flag is true after deletion
-    assertEquals(true, viewModel.uiState.value.isDeleted)
+      // Sanity check: flag is true after deletion
+      assertEquals(true, viewModel.uiState.value.isDeleted)
 
-    // Act: reset flag
-    viewModel.resetDeletionFlag()
-    composeTestRule.waitForIdle()
+      // Act: reset flag
+      viewModel.resetDeletionFlag()
+      composeTestRule.waitForIdle()
 
-    // Assert: flag is false again
-    assertEquals(false, viewModel.uiState.value.isDeleted)
-  }
+      // Assert: flag is false again
+      assertEquals(false, viewModel.uiState.value.isDeleted)
+    }
 
-  // -----------------------------------------------------
-  // TEST 29 — deleteConversation sets error when deletion fails
-  // -----------------------------------------------------
-  @Test
-  fun deleteConversation_whenManagerThrows_setsErrorAndNotDeleted() = runTest {
-    // Use the normal fake repos created in setup()
-    // Wrap the existing manager in our failing manager
-    val failingManager = FailingConversationManager(manager)
-    val failingViewModel = MessageViewModel(failingManager)
+    // -----------------------------------------------------
+    // TEST 29 — deleteConversation sets error when deletion fails
+    // -----------------------------------------------------
+    @Test
+    fun deleteConversation_whenManagerThrows_setsErrorAndNotDeleted() = runTest {
+      // Use the normal fake repos created in setup()
+      // Wrap the existing manager in our failing manager
+      val failingManager = FailingConversationManager(manager)
+      val failingViewModel = MessageViewModel(failingManager)
 
-    // Ensure the conversation exists
-    val convBefore = convRepo.getConv(convId)
-    assertEquals(true, convBefore != null)
+      // Ensure the conversation exists
+      val convBefore = convRepo.getConv(convId)
+      assertEquals(true, convBefore != null)
 
-    // Load conversation so currentConvId is set
-    failingViewModel.loadConversation(convId)
-    composeTestRule.waitForIdle()
+      // Load conversation so currentConvId is set
+      failingViewModel.loadConversation(convId)
+      composeTestRule.waitForIdle()
 
-    // Act: this will throw inside the manager and hit the catch block
-    failingViewModel.deleteConversation()
-    composeTestRule.waitForIdle()
+      // Act: this will throw inside the manager and hit the catch block
+      failingViewModel.deleteConversation()
+      composeTestRule.waitForIdle()
 
-    val state = failingViewModel.uiState.value
+      val state = failingViewModel.uiState.value
 
-    // Assert: error is set from the catch block
-    assertEquals("Failed to delete conversation", state.error)
-    // And isDeleted should remain false, since the deletion failed
-    assertEquals(false, state.isDeleted)
+      // Assert: error is set from the catch block
+      assertEquals("Failed to delete conversation", state.error)
+      // And isDeleted should remain false, since the deletion failed
+      assertEquals(false, state.isDeleted)
 
-    // Conversation should still exist because deletion failed
-    val convAfter = convRepo.getConv(convId)
-    assertEquals(true, convAfter != null)
-  }
-}
-
-class FakeProfileRepository : ProfileRepository {
-  override fun getNewUid() = "fake-profile-id"
-
-  override fun getCurrentUserId() = "userA"
-
-  override suspend fun getProfile(userId: String): Profile? =
-      Profile(
-          userId = userId,
-          name = "Test User",
-          email = "test@example.com",
-          location = Location(latitude = 0.0, longitude = 0.0, name = "Test Location"))
-
-  override suspend fun addProfile(profile: Profile) {}
-
-  override suspend fun updateProfile(userId: String, profile: Profile) {}
-
-  override suspend fun deleteProfile(userId: String) {}
-
-  override suspend fun getAllProfiles() = emptyList<Profile>()
-
-  override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
-      emptyList<Profile>()
-
-  override suspend fun getProfileById(userId: String) = getProfile(userId)
-
-  override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
-
-  override suspend fun updateTutorRatingFields(
-      userId: String,
-      averageRating: Double,
-      totalRatings: Int
-  ) {}
-
-  override suspend fun updateStudentRatingFields(
-      userId: String,
-      averageRating: Double,
-      totalRatings: Int
-  ) {}
-}
-
-class FakeConvRepo : ConvRepository {
-
-  // Stockage interne des conversations
-  private val conversations = mutableMapOf<String, Conversation>()
-
-  // Stockage des flows de messages par conversation
-  private val messageFlows = mutableMapOf<String, MutableStateFlow<List<Message>>>()
-
-  override fun getNewUid(): String {
-    return UUID.randomUUID().toString()
-  }
-
-  override suspend fun getConv(convId: String): Conversation? {
-    return conversations[convId]
-  }
-
-  override suspend fun createConv(conversation: Conversation) {
-    val convId = conversation.convId.ifEmpty { getNewUid() }
-
-    val newConv = conversation.copy(convId = convId, updatedAt = Timestamp.now())
-
-    conversations[convId] = newConv
-    messageFlows[convId] = MutableStateFlow(newConv.messages)
-  }
-
-  override suspend fun deleteConv(convId: String) {
-    conversations.remove(convId)
-    messageFlows.remove(convId)
-  }
-
-  override suspend fun sendMessage(convId: String, message: Message) {
-    val conv = conversations[convId] ?: return
-
-    // Nouveau message ajouté
-    val updatedMessages = conv.messages + message
-
-    val updatedConv = conv.copy(messages = updatedMessages, updatedAt = Timestamp.now())
-
-    conversations[convId] = updatedConv
-
-    // Mise à jour du Flow
-    messageFlows[convId]?.value = updatedMessages
-  }
-
-  override fun listenMessages(convId: String): Flow<List<Message>> {
-    return messageFlows.getOrPut(convId) { MutableStateFlow(emptyList()) }
-  }
-}
-
-class FailingConversationManager(private val delegate: ConversationManagerInter) :
-    ConversationManagerInter by delegate {
-
-  override suspend fun deleteConvAndOverviews(convId: String, deleterId: String, otherId: String) {
-    // Force an error to go into the catch branch
-    throw RuntimeException("Simulated delete failure")
-  }
-}
-
-class FakeOverViewRepo : OverViewConvRepository {
-
-  // Toutes les overviews stockées en mémoire
-  private val overviews = mutableMapOf<String, OverViewConversation>()
-
-  // Flows par utilisateur
-  private val userFlows = mutableMapOf<String, MutableStateFlow<List<OverViewConversation>>>()
-
-  override fun getNewUid(): String {
-    return UUID.randomUUID().toString()
-  }
-
-  override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
-    return overviews.values.filter { it.overViewOwnerId == userId }
-  }
-
-  override suspend fun addOverViewConvUser(overView: OverViewConversation) {
-    val id = overView.overViewId.ifEmpty { getNewUid() }
-
-    val newOverView = overView.copy(overViewId = id)
-    overviews[id] = newOverView
-
-    refreshUserFlow(newOverView.overViewOwnerId)
-  }
-
-  override suspend fun deleteOverViewConvUser(convId: String) {
-    val target = overviews.values.find { it.linkedConvId == convId }
-    target?.let {
-      overviews.remove(it.overViewId)
-      refreshUserFlow(it.overViewOwnerId)
+      // Conversation should still exist because deletion failed
+      val convAfter = convRepo.getConv(convId)
+      assertEquals(true, convAfter != null)
     }
   }
 
-  override suspend fun deleteOverViewById(overViewId: String) {
-    val overview = overviews.remove(overViewId)
-    overview?.let { refreshUserFlow(it.overViewOwnerId) }
+  class FakeProfileRepository : ProfileRepository {
+    override fun getNewUid() = "fake-profile-id"
+
+    override fun getCurrentUserId() = "userA"
+
+    override suspend fun getProfile(userId: String): Profile? =
+        Profile(
+            userId = userId,
+            name = "Test User",
+            email = "test@example.com",
+            location = Location(latitude = 0.0, longitude = 0.0, name = "Test Location"))
+
+    override suspend fun addProfile(profile: Profile) {}
+
+    override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+    override suspend fun deleteProfile(userId: String) {}
+
+    override suspend fun getAllProfiles() = emptyList<Profile>()
+
+    override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+        emptyList<Profile>()
+
+    override suspend fun getProfileById(userId: String) = getProfile(userId)
+
+    override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
+
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {}
+
+    override suspend fun updateStudentRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {}
   }
 
-  override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {
-    return userFlows.getOrPut(userId) { MutableStateFlow(emptyList()) }
+  class FakeConvRepo : ConvRepository {
+
+    // Stockage interne des conversations
+    private val conversations = mutableMapOf<String, Conversation>()
+
+    // Stockage des flows de messages par conversation
+    private val messageFlows = mutableMapOf<String, MutableStateFlow<List<Message>>>()
+
+    override fun getNewUid(): String {
+      return UUID.randomUUID().toString()
+    }
+
+    override suspend fun getConv(convId: String): Conversation? {
+      return conversations[convId]
+    }
+
+    override suspend fun createConv(conversation: Conversation) {
+      val convId = conversation.convId.ifEmpty { getNewUid() }
+
+      val newConv = conversation.copy(convId = convId, updatedAt = Timestamp.now())
+
+      conversations[convId] = newConv
+      messageFlows[convId] = MutableStateFlow(newConv.messages)
+    }
+
+    override suspend fun deleteConv(convId: String) {
+      conversations.remove(convId)
+      messageFlows.remove(convId)
+    }
+
+    override suspend fun sendMessage(convId: String, message: Message) {
+      val conv = conversations[convId] ?: return
+
+      // Nouveau message ajouté
+      val updatedMessages = conv.messages + message
+
+      val updatedConv = conv.copy(messages = updatedMessages, updatedAt = Timestamp.now())
+
+      conversations[convId] = updatedConv
+
+      // Mise à jour du Flow
+      messageFlows[convId]?.value = updatedMessages
+    }
+
+    override fun listenMessages(convId: String): Flow<List<Message>> {
+      return messageFlows.getOrPut(convId) { MutableStateFlow(emptyList()) }
+    }
   }
 
-  // ---------------------
-  // Helpers
-  // ---------------------
+  class FailingConversationManager(private val delegate: ConversationManagerInter) :
+      ConversationManagerInter by delegate {
 
-  private suspend fun refreshUserFlow(userId: String) {
-    val list = getOverViewConvUser(userId)
-    userFlows[userId]?.value = list
+    override suspend fun deleteConvAndOverviews(
+        convId: String,
+        deleterId: String,
+        otherId: String
+    ) {
+      // Force an error to go into the catch branch
+      throw RuntimeException("Simulated delete failure")
+    }
+  }
+
+  class FakeOverViewRepo : OverViewConvRepository {
+
+    // Toutes les overviews stockées en mémoire
+    private val overviews = mutableMapOf<String, OverViewConversation>()
+
+    // Flows par utilisateur
+    private val userFlows = mutableMapOf<String, MutableStateFlow<List<OverViewConversation>>>()
+
+    override fun getNewUid(): String {
+      return UUID.randomUUID().toString()
+    }
+
+    override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
+      return overviews.values.filter { it.overViewOwnerId == userId }
+    }
+
+    override suspend fun addOverViewConvUser(overView: OverViewConversation) {
+      val id = overView.overViewId.ifEmpty { getNewUid() }
+
+      val newOverView = overView.copy(overViewId = id)
+      overviews[id] = newOverView
+
+      refreshUserFlow(newOverView.overViewOwnerId)
+    }
+
+    override suspend fun deleteOverViewConvUser(convId: String) {
+      val target = overviews.values.find { it.linkedConvId == convId }
+      target?.let {
+        overviews.remove(it.overViewId)
+        refreshUserFlow(it.overViewOwnerId)
+      }
+    }
+
+    override suspend fun deleteOverViewById(overViewId: String) {
+      val overview = overviews.remove(overViewId)
+      overview?.let { refreshUserFlow(it.overViewOwnerId) }
+    }
+
+    override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {
+      return userFlows.getOrPut(userId) { MutableStateFlow(emptyList()) }
+    }
+
+    // ---------------------
+    // Helpers
+    // ---------------------
+
+    private suspend fun refreshUserFlow(userId: String) {
+      val list = getOverViewConvUser(userId)
+      userFlows[userId]?.value = list
+    }
   }
 }
