@@ -87,6 +87,10 @@ class HomeScreenTutorCardTest {
               averageRating: Double,
               totalRatings: Int
           ) {}
+
+          override suspend fun deleteAccount(userId: String) {
+            TODO("Not yet implemented")
+          }
         }
 
     val fakeListingRepo =
@@ -112,6 +116,10 @@ class HomeScreenTutorCardTest {
           override suspend fun updateListing(listingId: String, listing: Listing) {}
 
           override suspend fun deleteListing(listingId: String) {}
+
+          override suspend fun deleteAllListingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun deactivateListing(listingId: String) {}
 
