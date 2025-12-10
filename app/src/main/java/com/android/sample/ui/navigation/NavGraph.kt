@@ -124,7 +124,7 @@ fun AppNavGraph(
     addBookingDetailsRoute(navController, bookingDetailsViewModel, bookingId, profileID)
     addDiscussionRoute(navController, discussionViewModel, convId)
     addToSRoute()
-    addMessagesRoute(navController,convId)
+    addMessagesRoute(navController, convId)
   }
 }
 
@@ -558,7 +558,7 @@ fun NavGraphBuilder.addMessagesRoute(
       MessageScreen(
           viewModel = messageViewModel,
           convId = currentConvId,
-          onConversationDeleted = {navController.popBackStack()},
+          onConversationDeleted = { navController.popBackStack() },
       )
     } else {
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
