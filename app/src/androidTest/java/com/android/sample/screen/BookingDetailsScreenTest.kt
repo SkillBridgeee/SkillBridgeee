@@ -1448,22 +1448,4 @@ class BookingDetailsScreenTest {
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertDoesNotExist()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertDoesNotExist()
   }
-
-  // ----- NEW TESTS FOR BOOKER PROFILE FEATURE -----
-
-  /*  @Test
-  fun bookingDetailsScreen_pendingBooking_studentView_doesNotDisplayBookerInfo() {
-    val vm = fakeViewModel()
-
-    // Use helper function for student view with clear intent
-    vm.setUiStateForTest(bookingStateForStudent(bookingStatus = BookingStatus.PENDING))
-
-    composeTestRule.setContent {
-      BookingDetailsScreen(bkgViewModel = vm, bookingId = TEST_BOOKING_ID, onCreatorClick = {})
-    }
-
-    // Verify Accept/Deny buttons are NOT displayed using test constants
-    composeTestRule.onNodeWithText(STRING_ACCEPT).assertDoesNotExist()
-    composeTestRule.onNodeWithText(STRING_DENY).assertDoesNotExist()
-  }*/
 }
