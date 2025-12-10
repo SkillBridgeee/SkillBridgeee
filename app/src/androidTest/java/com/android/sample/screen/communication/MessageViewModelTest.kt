@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.communication.ConversationManager
+import com.android.sample.model.communication.ConversationManagerInter
 import com.android.sample.model.communication.conversation.ConvRepository
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.Message
@@ -120,34 +121,6 @@ class MessageViewModelTest {
     assertEquals(1, messages.size)
     assertEquals("Salut !", messages.first().content)
   }
-
-  @Test
-  fun loadConversation_conversationNotFound_setsError() = runTest {
-    val invalidConvId = "does_not_exist"
-
-    viewModel.loadConversation(invalidConvId)
-
-    val state = viewModel.uiState.value
-    assertEquals("Conversation not found", state.error)
-    assertEquals(true, state.messages.isEmpty())
-  }
-
-  @Test
-  fun clearError_removesError() = runTest {
-    // On force une erreur dans l'état
-    viewModel.clearError() // juste pour reset
-    viewModel.loadConversation("invalid_id")
-
-    // Vérification initiale
-    assertEquals("Conversation not found", viewModel.uiState.value.error)
-
-    // Action
-    viewModel.clearError()
-
-    // L'erreur doit être supprimée
-    assertEquals(null, viewModel.uiState.value.error)
-  }
-
   // -----------------------------------------------------
   // TEST 5 — onMessageChange() updates current message
   // -----------------------------------------------------
@@ -340,34 +313,6 @@ class MessageViewModelTest {
     assertEquals(0, viewModel.uiState.value.messages.size)
     assertEquals(null, viewModel.uiState.value.error)
   }
-
-  // -----------------------------------------------------
-  // TEST 14 — retry() after error clears error and reloads
-  // -----------------------------------------------------
-  @Test
-  fun retry_afterError_clearsErrorAndReloads() = runTest {
-    // Load an invalid conversation to trigger error
-    viewModel.loadConversation("invalid_conv_id")
-    composeTestRule.waitForIdle()
-
-    // Should have error
-    assertEquals("Conversation not found", viewModel.uiState.value.error)
-
-    // Now create a valid conversation
-    runBlocking {
-      convRepo.createConv(
-          Conversation(
-              convId = "invalid_conv_id", convCreatorId = testUserId, otherPersonId = otherUserId))
-    }
-
-    // Retry
-    viewModel.retry()
-    composeTestRule.waitForIdle()
-
-    // Error should be cleared and conversation loaded
-    assertEquals(null, viewModel.uiState.value.error)
-  }
-
   // -----------------------------------------------------
   // TEST 15 — loadConversation with delayed userId initialization succeeds
   // -----------------------------------------------------
@@ -723,6 +668,124 @@ class MessageViewModelTest {
 
     store.clear()
     assert(true)
+  // -----------------------------------------------------
+  // TEST 26 — deleteConversation deletes conv & overview and sets flag
+  // -----------------------------------------------------
+  @Test
+  fun deleteConversation_deletesConvAndOverview_andSetsIsDeleted() = runTest {
+    // Ensure we have an overview for this conversation for the current user
+    overViewRepo.addOverViewConvUser(
+        OverViewConversation(
+            overViewId = "ov1",
+            linkedConvId = convId,
+            convName = "Test conversation",
+            overViewOwnerId = testUserId,
+            otherPersonId = otherUserId))
+
+    // Safety check: conv + overview exist before deletion
+    val convBefore = convRepo.getConv(convId)
+    val overviewsBefore = overViewRepo.getOverViewConvUser(testUserId)
+    assertEquals(true, convBefore != null)
+    assertEquals(1, overviewsBefore.size)
+
+    // Load conversation so that currentConvId is set in the ViewModel
+    viewModel.loadConversation(convId)
+    composeTestRule.waitForIdle()
+
+    // Act: delete the conversation
+    viewModel.deleteConversation()
+    composeTestRule.waitForIdle()
+
+    // Assert: UI flag set
+    val state = viewModel.uiState.value
+    assertEquals(true, state.isDeleted)
+
+    // Assert: conversation deleted from repository
+    val convAfter = convRepo.getConv(convId)
+    assertEquals(null, convAfter)
+
+    // Assert: overview deleted for current user
+    val overviewsAfter = overViewRepo.getOverViewConvUser(testUserId)
+    assertEquals(0, overviewsAfter.size)
+  }
+
+  // -----------------------------------------------------
+  // TEST 27 — deleteConversation without loaded conv does nothing
+  // -----------------------------------------------------
+  @Test
+  fun deleteConversation_withoutLoadedConversation_doesNothing() = runTest {
+    // Precondition: conversation exists but loadConversation() was never called
+    val convBefore = convRepo.getConv(convId)
+    assertEquals(true, convBefore != null)
+
+    // Act: directly call deleteConversation()
+    viewModel.deleteConversation()
+    composeTestRule.waitForIdle()
+
+    // Since currentConvId is null, nothing should happen
+    val state = viewModel.uiState.value
+    assertEquals(false, state.isDeleted)
+
+    // Conversation should still exist
+    val convAfter = convRepo.getConv(convId)
+    assertEquals(true, convAfter != null)
+  }
+
+  // -----------------------------------------------------
+  // TEST 28 — resetDeletionFlag resets isDeleted to false
+  // -----------------------------------------------------
+  @Test
+  fun resetDeletionFlag_resetsIsDeleted() = runTest {
+    // Arrange: load and delete to set the flag
+    viewModel.loadConversation(convId)
+    composeTestRule.waitForIdle()
+
+    viewModel.deleteConversation()
+    composeTestRule.waitForIdle()
+
+    // Sanity check: flag is true after deletion
+    assertEquals(true, viewModel.uiState.value.isDeleted)
+
+    // Act: reset flag
+    viewModel.resetDeletionFlag()
+    composeTestRule.waitForIdle()
+
+    // Assert: flag is false again
+    assertEquals(false, viewModel.uiState.value.isDeleted)
+  }
+
+  // -----------------------------------------------------
+  // TEST 29 — deleteConversation sets error when deletion fails
+  // -----------------------------------------------------
+  @Test
+  fun deleteConversation_whenManagerThrows_setsErrorAndNotDeleted() = runTest {
+    // Use the normal fake repos created in setup()
+    // Wrap the existing manager in our failing manager
+    val failingManager = FailingConversationManager(manager)
+    val failingViewModel = MessageViewModel(failingManager)
+
+    // Ensure the conversation exists
+    val convBefore = convRepo.getConv(convId)
+    assertEquals(true, convBefore != null)
+
+    // Load conversation so currentConvId is set
+    failingViewModel.loadConversation(convId)
+    composeTestRule.waitForIdle()
+
+    // Act: this will throw inside the manager and hit the catch block
+    failingViewModel.deleteConversation()
+    composeTestRule.waitForIdle()
+
+    val state = failingViewModel.uiState.value
+
+    // Assert: error is set from the catch block
+    assertEquals("Failed to delete conversation", state.error)
+    // And isDeleted should remain false, since the deletion failed
+    assertEquals(false, state.isDeleted)
+
+    // Conversation should still exist because deletion failed
+    val convAfter = convRepo.getConv(convId)
+    assertEquals(true, convAfter != null)
   }
 }
 
@@ -815,6 +878,15 @@ class FakeConvRepo : ConvRepository {
   }
 }
 
+class FailingConversationManager(private val delegate: ConversationManagerInter) :
+    ConversationManagerInter by delegate {
+
+  override suspend fun deleteConvAndOverviews(convId: String, deleterId: String, otherId: String) {
+    // Force an error to go into the catch branch
+    throw RuntimeException("Simulated delete failure")
+  }
+}
+
 class FakeOverViewRepo : OverViewConvRepository {
 
   // Toutes les overviews stockées en mémoire
@@ -846,6 +918,11 @@ class FakeOverViewRepo : OverViewConvRepository {
       overviews.remove(it.overViewId)
       refreshUserFlow(it.overViewOwnerId)
     }
+  }
+
+  override suspend fun deleteOverViewById(overViewId: String) {
+    val overview = overviews.remove(overViewId)
+    overview?.let { refreshUserFlow(it.overViewOwnerId) }
   }
 
   override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {

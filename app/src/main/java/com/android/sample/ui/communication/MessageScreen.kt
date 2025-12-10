@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -24,24 +25,53 @@ import com.android.sample.model.communication.conversation.Message
 fun MessageScreen(
     viewModel: MessageViewModel,
     convId: String,
+    onConversationDeleted: () -> Unit,
 ) {
 
   val uiState by viewModel.uiState.collectAsState()
 
   LaunchedEffect(convId) { viewModel.loadConversation(convId) }
+  LaunchedEffect(uiState.isDeleted) {
+    if (uiState.isDeleted) {
+      onConversationDeleted()
+      viewModel.resetDeletionFlag()
+    }
+  }
 
   DisposableEffect(Unit) { onDispose { viewModel.onScreenLeft() } }
 
   Scaffold(
       modifier = Modifier.fillMaxSize(),
-      topBar = { TopAppBar(title = { Text(uiState.partnerName ?: "Messages") }) },
+      topBar = {
+        TopAppBar(
+            title = { Text(uiState.partnerName ?: "Messages") },
+            actions = {
+              IconButton(onClick = { viewModel.deleteConversation() }) {
+                Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete conversation")
+              }
+            })
+      },
       bottomBar = {
-        MessageInput(
-            message = uiState.currentMessage,
-            onMessageChanged = viewModel::onMessageChange,
-            onSendClicked = viewModel::sendMessage)
+        if (uiState.infoMessage == null && !uiState.isDeleted) {
+          MessageInput(
+              message = uiState.currentMessage,
+              onMessageChanged = viewModel::onMessageChange,
+              onSendClicked = viewModel::sendMessage)
+        }
       }) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+          // Show info message if present
+          uiState.infoMessage?.let { msg ->
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceVariant) {
+                  Text(
+                      text = msg,
+                      modifier = Modifier.padding(8.dp),
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      style = MaterialTheme.typography.bodySmall)
+                }
+          }
           // Show error if present
           uiState.error?.let { error ->
             Surface(

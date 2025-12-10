@@ -106,4 +106,14 @@ class FirestoreOverViewConvRepository(
 
     awaitClose { listenerOwner.remove() }
   }
+
+  /**
+   * Deletes a specific overview document by its ID.
+   *
+   * @param overViewId the ID of the overview to delete.
+   */
+  override suspend fun deleteOverViewById(overViewId: String) {
+    require(overViewId.isNotBlank()) { "OverView ID cannot be blank" }
+    overViewRef.document(overViewId).delete().await()
+  }
 }
