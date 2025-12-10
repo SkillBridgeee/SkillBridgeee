@@ -464,24 +464,28 @@ class MessagingE2ETest : E2ETestBase() {
 
       if (conversationFound) {
         try {
-          // Look for the message input field
+          // Look for the message input field - it's an OutlinedTextField
+          // We need to find a node that has SetText action (editable text field)
           val hasMessageInput =
               composeTestRule
-                  .onAllNodes(
-                      hasText("Type a message", substring = true, ignoreCase = true),
-                      useUnmergedTree = true)
+                  .onAllNodes(hasSetTextAction())
                   .fetchSemanticsNodes()
                   .isNotEmpty()
 
           if (hasMessageInput) {
             Log.d(TAG, "✓ Message input field found")
 
-            // Type a test message
+            // Click and type into the editable text field
             composeTestRule
-                .onNode(
-                    hasText("Type a message", substring = true, ignoreCase = true),
-                    useUnmergedTree = true)
+                .onNode(hasSetTextAction())
                 .performClick()
+
+            delay(500)
+            composeTestRule.waitForIdle()
+
+            // Now perform text input
+            composeTestRule
+                .onNode(hasSetTextAction())
                 .performTextInput(TEST_MESSAGE)
 
             delay(500)
@@ -491,9 +495,7 @@ class MessagingE2ETest : E2ETestBase() {
             // Find and click the send button
             try {
               composeTestRule
-                  .onNode(
-                      hasContentDescription("Send", substring = true, ignoreCase = true),
-                      useUnmergedTree = true)
+                  .onNode(hasContentDescription("Send", substring = true, ignoreCase = true))
                   .performClick()
               delay(1000)
               composeTestRule.waitForIdle()
@@ -502,16 +504,16 @@ class MessagingE2ETest : E2ETestBase() {
               // Verify message appears in the list
               val messageSent =
                   composeTestRule
-                      .onAllNodes(hasText(TEST_MESSAGE, substring = true), useUnmergedTree = true)
+                      .onAllNodes(hasText(TEST_MESSAGE, substring = true))
                       .fetchSemanticsNodes()
                       .isNotEmpty()
 
               Log.d(TAG, "→ Message sent and displayed: $messageSent")
-            } catch (_: Exception) {
-              Log.d(TAG, "→ Send button not found or could not click")
+            } catch (e: Exception) {
+              Log.d(TAG, "→ Send button not found or could not click: ${e.message}")
             }
           } else {
-            Log.d(TAG, "→ Message input field not found")
+            Log.d(TAG, "→ No editable text field found")
           }
         } catch (e: Exception) {
           Log.w(TAG, "→ Message sending test failed: ${e.message}")
