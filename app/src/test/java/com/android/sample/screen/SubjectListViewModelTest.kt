@@ -114,6 +114,10 @@ class SubjectListViewModelTest {
       TODO("Not yet implemented")
     }
 
+    override suspend fun deleteAllListingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
+
     override suspend fun deactivateListing(listingId: String) {
       TODO("Not yet implemented")
     }
@@ -161,6 +165,10 @@ class SubjectListViewModelTest {
         averageRating: Double,
         totalRatings: Int
     ) {}
+
+    override suspend fun deleteAccount(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private val fakeBookingRepo =
@@ -193,6 +201,10 @@ class SubjectListViewModelTest {
         override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
         override suspend fun deleteBooking(bookingId: String) {}
+
+        override suspend fun deleteAllBookingOfUser(userId: String) {
+          TODO("Not yet implemented")
+        }
 
         override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 

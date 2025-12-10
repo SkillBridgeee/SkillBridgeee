@@ -88,6 +88,10 @@ class MainPageViewModelTest {
     ) {
       /* no-op for this test */
     }
+
+    override suspend fun deleteAccount(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private open class FakeListingRepository(private val listings: List<Proposal>) :
@@ -115,6 +119,10 @@ class MainPageViewModelTest {
     ) {}
 
     override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deleteAllListingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
 
     override suspend fun deactivateListing(listingId: String) {}
 

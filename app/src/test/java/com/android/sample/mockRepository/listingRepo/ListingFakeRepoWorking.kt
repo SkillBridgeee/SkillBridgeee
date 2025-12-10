@@ -79,6 +79,10 @@ class ListingFakeRepoWorking : ListingRepository {
     }
   }
 
+  override suspend fun deleteAllListingOfUser(userId: String) {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun deactivateListing(listingId: String) {
     val listing = listings[listingId]
     if (listing == null) {

@@ -169,6 +169,10 @@ class BookingsDetailsViewModelTest {
     ) {
       // not needed for this test
     }
+
+    override suspend fun deleteAccount(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   // Replace the previous factory with one that returns the concrete fake so setup can still call
@@ -280,6 +284,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(
               bookingId: String,
               status: BookingStatus,
@@ -356,6 +364,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
           override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun updateBookingStatus(
               bookingId: String,
@@ -607,6 +619,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
           override suspend fun updatePaymentStatus(
@@ -680,6 +696,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
           override suspend fun updatePaymentStatus(
@@ -739,6 +759,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
           override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
@@ -814,6 +838,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
           override suspend fun updatePaymentStatus(
@@ -887,6 +915,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
           override suspend fun updatePaymentStatus(
@@ -946,6 +978,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
           override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
@@ -1023,6 +1059,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
             updateStatusCalled = true
             statusUsed = status
@@ -1090,6 +1130,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
           override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
             throw RuntimeException("Network error")
@@ -1166,6 +1210,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
           override suspend fun updatePaymentStatus(
@@ -1234,6 +1282,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
             updateStatusCalled = true
             statusUsed = status
@@ -1301,6 +1353,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
           override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
             throw RuntimeException("Database error")
@@ -1377,6 +1433,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
           override suspend fun updatePaymentStatus(
@@ -1446,6 +1506,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
           override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
@@ -1519,6 +1583,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
           override suspend fun updatePaymentStatus(
@@ -1581,6 +1649,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
           override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
@@ -1649,6 +1721,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
           override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
@@ -1724,6 +1800,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun deleteBooking(bookingId: String) {}
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
           override suspend fun updatePaymentStatus(
@@ -1788,6 +1868,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
           override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
@@ -1855,6 +1939,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
           override suspend fun deleteBooking(bookingId: String) {}
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
 
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 

@@ -83,4 +83,8 @@ class ProfileFakeRepoError : ProfileRepository {
   ) {
     throw IllegalStateException("Error updating student rating fields for userId: $userId")
   }
+
+  override suspend fun deleteAccount(userId: String) {
+    TODO("Not yet implemented")
+  }
 }

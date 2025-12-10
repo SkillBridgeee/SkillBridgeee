@@ -153,4 +153,8 @@ class ProfileFakeRepoWorking : ProfileRepository {
   ) {
     /* no-op */
   }
+
+  override suspend fun deleteAccount(userId: String) {
+    TODO("Not yet implemented")
+  }
 }
