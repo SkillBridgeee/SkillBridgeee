@@ -307,6 +307,27 @@ class MyProfileScreenTest {
     }
   }
 
+  // Helper: scroll so the delete account button becomes visible
+  private fun ensureDeleteVisible() {
+    compose.waitUntil(timeoutMillis = 5_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+        .performScrollToNode(hasTestTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON))
+
+    compose.waitUntil(timeoutMillis = 2_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+  }
+
   // --- TESTS ---
 
   @Test
@@ -894,5 +915,67 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_TAB).performClick()
 
     compose.onNodeWithText("You don’t have any completed bookings yet.").assertExists()
+  }
+
+  // ----------------------------------------------------------
+  // DELETE ACCOUNT BUTTON & DIALOG TESTS
+  // ----------------------------------------------------------
+  @Test
+  fun deleteAccountButton_isDisplayed() {
+    ensureDeleteVisible()
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).assertIsDisplayed()
+  }
+
+  @Test
+  fun deleteAccountButton_isClickable() {
+    ensureDeleteVisible()
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).assertHasClickAction()
+  }
+
+  @Test
+  fun deleteAccountButton_opensConfirmationDialog() {
+    ensureDeleteVisible()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).performClick()
+
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_DIALOG, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun deleteAccountDialog_showsConfirmAndCancelButtons() {
+    ensureDeleteVisible()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).performClick()
+
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CONFIRM_BUTTON, useUnmergedTree = true)
+        .assertIsDisplayed()
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CANCEL_BUTTON, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun deleteAccountDialog_dismissesOnCancel() {
+    ensureDeleteVisible()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).performClick()
+
+    // Dialog should be visible
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_DIALOG, useUnmergedTree = true)
+        .assertIsDisplayed()
+
+    // Tap Cancel
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CANCEL_BUTTON, useUnmergedTree = true)
+        .performClick()
+
+    // Dialog should disappear
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_DIALOG, useUnmergedTree = true)
+        .assertDoesNotExist()
   }
 }
