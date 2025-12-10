@@ -92,7 +92,7 @@ class MessageViewModel(
 
           convManager
               .listenMessages(convId)
-              .onStart { _uiState.update { it.copy(isLoading = true) } }
+              .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
               .catch { _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
               .collect { messages ->
                 _uiState.update {
