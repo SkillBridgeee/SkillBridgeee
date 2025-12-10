@@ -252,5 +252,15 @@ class FirestoreProfileRepository(
     }
   }
 
-  override suspend fun deleteAccount(userId: String) {}
+  override suspend fun deleteAccount(userId: String) {
+    if (!isOnline()) throw Error("User must be online to delete the account")
+    require(userId.isNotBlank())
+
+    try {
+      bookingRepo.deleteAllBookingOfUser(userId)
+      listingRepo.deleteAllListingOfUser(userId)
+    } catch (e: Exception) {
+      throw ProfileFirestoreException("Failed to delete user account $userId: ${e.message}", e)
+    }
+  }
 }
