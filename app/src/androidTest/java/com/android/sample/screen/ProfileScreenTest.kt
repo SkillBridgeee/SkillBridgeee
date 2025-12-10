@@ -105,6 +105,10 @@ class ProfileScreenTest {
     ) {
       // no-op
     }
+
+    override suspend fun deleteAccount(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private class FakeListingRepo(
@@ -139,6 +143,10 @@ class ProfileScreenTest {
     ) {}
 
     override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deleteAllListingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
 
     override suspend fun deactivateListing(listingId: String) {}
 

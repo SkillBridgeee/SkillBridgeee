@@ -77,4 +77,8 @@ class FakeProfileError : FakeProfileRepo {
   ) {
     throw IllegalStateException("Failed to update student rating fields for $userId (mock error).")
   }
+
+  override suspend fun deleteAccount(userId: String) {
+    TODO("Not yet implemented")
+  }
 }

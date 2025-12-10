@@ -91,4 +91,8 @@ class FakeProfileEmpty : FakeProfileRepo {
     val updated = profile.copy(studentRating = RatingInfo(averageRating, totalRatings))
     updateProfile(userId, updated)
   }
+
+  override suspend fun deleteAccount(userId: String) {
+    TODO("Not yet implemented")
+  }
 }

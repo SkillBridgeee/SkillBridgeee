@@ -162,6 +162,10 @@ class BookingDetailsScreenTest {
 
         override suspend fun deleteBooking(bookingId: String) {}
 
+        override suspend fun deleteAllBookingOfUser(userId: String) {
+          TODO("Not yet implemented")
+        }
+
         override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
         override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {}
@@ -199,6 +203,10 @@ class BookingDetailsScreenTest {
         override suspend fun updateListing(listingId: String, listing: Listing) {}
 
         override suspend fun deleteListing(listingId: String) {}
+
+        override suspend fun deleteAllListingOfUser(userId: String) {
+          TODO("Not yet implemented")
+        }
 
         override suspend fun deactivateListing(listingId: String) {}
 
@@ -251,6 +259,10 @@ class BookingDetailsScreenTest {
             totalRatings: Int
         ) {
           // no-op
+        }
+
+        override suspend fun deleteAccount(userId: String) {
+          TODO("Not yet implemented")
         }
       }
 
@@ -355,6 +367,10 @@ class BookingDetailsScreenTest {
             totalRatings: Int
         ) {
           throw IllegalStateException("test")
+        }
+
+        override suspend fun deleteAccount(userId: String) {
+          TODO("Not yet implemented")
         }
       }
 
@@ -759,6 +775,10 @@ class BookingDetailsScreenTest {
 
         override suspend fun deleteBooking(bookingId: String) {}
 
+        override suspend fun deleteAllBookingOfUser(userId: String) {
+          TODO("Not yet implemented")
+        }
+
         override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
         override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {}
@@ -796,6 +816,10 @@ class BookingDetailsScreenTest {
         override suspend fun updateListing(listingId: String, listing: Listing) {}
 
         override suspend fun deleteListing(listingId: String) {}
+
+        override suspend fun deleteAllListingOfUser(userId: String) {
+          TODO("Not yet implemented")
+        }
 
         override suspend fun deactivateListing(listingId: String) {}
 

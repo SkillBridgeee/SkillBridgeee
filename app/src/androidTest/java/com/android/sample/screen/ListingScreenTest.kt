@@ -219,6 +219,10 @@ class ListingScreenTest {
 
     override suspend fun deleteListing(listingId: String) {}
 
+    override suspend fun deleteAllListingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
+
     override suspend fun deactivateListing(listingId: String) {}
 
     override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
@@ -266,6 +270,10 @@ class ListingScreenTest {
     ) {
       // no-op
     }
+
+    override suspend fun deleteAccount(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private class FakeBookingRepo(
@@ -297,6 +305,10 @@ class ListingScreenTest {
     override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
     override suspend fun deleteBooking(bookingId: String) {}
+
+    override suspend fun deleteAllBookingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
 
     override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 

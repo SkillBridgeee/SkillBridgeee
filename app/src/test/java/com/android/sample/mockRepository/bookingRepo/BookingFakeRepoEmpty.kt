@@ -60,6 +60,10 @@ class BookingFakeRepoEmpty : BookingRepository {
     TODO("Not yet implemented")
   }
 
+  override suspend fun deleteAllBookingOfUser(userId: String) {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
     TODO("Not yet implemented")
   }

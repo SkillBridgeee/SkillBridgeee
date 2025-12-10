@@ -61,6 +61,10 @@ class FakeListingError : FakeListingRepo {
     throw IOException("Failed to delete listing with id: $listingId (mock error).")
   }
 
+  override suspend fun deleteAllListingOfUser(userId: String) {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun deactivateListing(listingId: String) {
     throw IOException("Failed to deactivate listing with id: $listingId (mock error).")
   }

@@ -86,6 +86,10 @@ class FakeListingWorking() : FakeListingRepo {
     listings.removeAll { it.listingId == listingId }
   }
 
+  override suspend fun deleteAllListingOfUser(userId: String) {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun deactivateListing(listingId: String) {
     val index = listings.indexOfFirst { it.listingId == listingId }
     if (index == -1) return

@@ -62,6 +62,10 @@ class BookingFakeRepoError : BookingRepository {
     throw IOException("Failed to delete booking (mock error).")
   }
 
+  override suspend fun deleteAllBookingOfUser(userId: String) {
+    throw IOException("Failed to delete all booking (mock error).")
+  }
+
   override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
     throw IOException("Failed to update booking status (mock error).")
   }

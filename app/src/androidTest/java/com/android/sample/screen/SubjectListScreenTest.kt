@@ -121,6 +121,10 @@ class SubjectListScreenTest {
 
           override suspend fun deleteListing(listingId: String) {}
 
+          override suspend fun deleteAllListingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun deactivateListing(listingId: String) {}
 
           override suspend fun searchBySkill(skill: Skill): List<Listing> {
@@ -177,6 +181,10 @@ class SubjectListScreenTest {
               averageRating: Double,
               totalRatings: Int
           ) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun deleteAccount(userId: String) {
             TODO("Not yet implemented")
           }
         }

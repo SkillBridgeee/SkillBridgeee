@@ -55,6 +55,10 @@ class FakeBookingError : FakeBookingRepo {
     throw IOException("Failed to delete booking (mock error).")
   }
 
+  override suspend fun deleteAllBookingOfUser(userId: String) {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
     throw IOException("Failed to update booking status (mock error).")
   }
