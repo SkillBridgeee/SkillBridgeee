@@ -212,7 +212,7 @@ class MessageScreenTest {
 
     composeTestRule.onNode(hasContentDescription("Send message")).assertExists()
 
-    composeTestRule.onNode( hasContentDescription("Send message")).assertIsNotEnabled()
+    composeTestRule.onNode(hasContentDescription("Send message")).assertIsNotEnabled()
 
     composeTestRule.onNode(hasSetTextAction()).performTextInput("Hello")
 
