@@ -5,14 +5,12 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
@@ -23,7 +21,6 @@ import com.android.sample.model.communication.conversation.ConvRepository
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.Message
 import com.android.sample.model.communication.overViewConv.OverViewConvRepository
-import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
@@ -257,13 +254,9 @@ class MessageScreenTest {
     assertEquals(null, viewModel.uiState.value.error)
   }
 
-
-
   @Test
   fun messageScreen_textInputReflectsInViewModel() {
-    composeTestRule.setContent {
-      MessageScreen(viewModel = viewModel, convId = convId)
-    }
+    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
 
     composeTestRule.onNode(hasSetTextAction()).performTextInput("Hello World")
 
@@ -308,22 +301,15 @@ class MessageScreenTest {
     assertEquals("Conversation not found", viewModel.uiState.value.error)
   }
 
-
-
   @Test
   fun messageScreen_listUpdatesWhenNewMessagesArrive() = runTest {
     composeTestRule.setContent { MessageScreen(viewModel, convId) }
 
     val before = viewModel.uiState.value.messages.size
 
-    manager.sendMessage(
-      convId,
-      Message("new", userB, userA, "Remote message", Date())
-    )
+    manager.sendMessage(convId, Message("new", userB, userA, "Remote message", Date()))
 
-    composeTestRule.waitUntil(2000) {
-      viewModel.uiState.value.messages.size > before
-    }
+    composeTestRule.waitUntil(2000) { viewModel.uiState.value.messages.size > before }
   }
 
   @Test
@@ -357,7 +343,7 @@ class MessageScreenTest {
   }
 
   @Test
-  fun messageScreen_scrollsDown(){
+  fun messageScreen_scrollsDown() {
     composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
 
     composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message1")
@@ -402,6 +388,8 @@ class MessageScreenTest {
     composeTestRule.onNode(hasContentDescription("Send message")).performClick()
 
     composeTestRule.onNodeWithTag("message_list").assertExists()
-    composeTestRule.onNodeWithTag("message_list").performScrollToNode(hasText("Scroll Test Message1") )
+    composeTestRule
+        .onNodeWithTag("message_list")
+        .performScrollToNode(hasText("Scroll Test Message1"))
   }
 }

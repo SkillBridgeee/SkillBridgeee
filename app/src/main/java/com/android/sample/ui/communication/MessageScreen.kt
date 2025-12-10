@@ -69,7 +69,8 @@ fun MessageScreen(
             }
           } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp).testTag("message_list"),
+                modifier =
+                    Modifier.fillMaxSize().padding(horizontal = 8.dp).testTag("message_list"),
                 reverseLayout = true // Shows latest messages at the bottom
                 ) {
                   items(uiState.messages.reversed()) { message ->
