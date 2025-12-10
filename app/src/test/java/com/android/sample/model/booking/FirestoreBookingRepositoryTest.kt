@@ -942,4 +942,76 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     val retrievedBooking = bookingRepository.getBooking("booking1")
     assertEquals(PaymentStatus.CONFIRMED, retrievedBooking!!.paymentStatus)
   }
+
+  @Test
+  fun test_delete_all_booking_by_user() = runTest {
+    val studentAuth = mockk<FirebaseAuth>()
+    val studentUser = mockk<FirebaseUser>()
+    every { studentAuth.currentUser } returns studentUser
+    every { studentUser.uid } returns "student1"
+
+    val bookingRepo = FirestoreBookingRepository(firestore, studentAuth, context)
+    val booking1 =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = testUserId,
+            bookerId = "student1",
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            paymentStatus = PaymentStatus.PAID)
+    bookingRepo.addBooking(booking1)
+
+    val booking2 =
+        Booking(
+            bookingId = "booking2",
+            associatedListingId = "listing2",
+            listingCreatorId = testUserId,
+            bookerId = "student1",
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            paymentStatus = PaymentStatus.PAID)
+    bookingRepo.addBooking(booking2)
+
+    bookingRepo.deleteAllBookingOfUser("student1")
+
+    val bookings = bookingRepo.getBookingsByUserId("student1")
+    assertEquals(bookings.size, 0)
+  }
+
+  @Test
+  fun test_delete_all_booking_by_other() = runTest {
+    val studentAuth = mockk<FirebaseAuth>()
+    val studentUser = mockk<FirebaseUser>()
+    every { studentAuth.currentUser } returns studentUser
+    every { studentUser.uid } returns "student1"
+
+    val bookingRepo = FirestoreBookingRepository(firestore, studentAuth, context)
+    val booking1 =
+        Booking(
+            bookingId = "booking1",
+            associatedListingId = "listing1",
+            listingCreatorId = testUserId,
+            bookerId = "student1",
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            paymentStatus = PaymentStatus.PAID)
+    bookingRepo.addBooking(booking1)
+
+    val booking2 =
+        Booking(
+            bookingId = "booking2",
+            associatedListingId = "listing2",
+            listingCreatorId = testUserId,
+            bookerId = "student1",
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            paymentStatus = PaymentStatus.PAID)
+    bookingRepo.addBooking(booking2)
+
+    bookingRepo.deleteAllBookingOfUser(testUserId)
+
+    val bookings = bookingRepo.getBookingsByUserId(testUserId)
+    assertEquals(bookings.size, 0)
+  }
 }
