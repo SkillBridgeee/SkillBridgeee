@@ -241,9 +241,9 @@ class MessageScreenTest {
 
   @Test
   fun messageSendButton_isDisabledWhenMessageIsEmpty() {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
     composeTestRule.onNode(hasContentDescription("Send message")).assertExists()
 
     composeTestRule.onNode(hasContentDescription("Send message")).assertIsNotEnabled()
@@ -264,34 +264,19 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_showsPartnerName() {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
     composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithText("Test User").assertExists()
   }
 
   @Test
-  fun messageScreen_errorClearsProperly() {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
-    composeTestRule.waitForIdle()
-
-    assertEquals(true, viewModel.uiState.value.error != null)
-
-    viewModel.clearError()
-    composeTestRule.waitForIdle()
-
-    assertEquals(null, viewModel.uiState.value.error)
-  }
-
-  @Test
   fun messageScreen_textInputReflectsInViewModel() {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
     composeTestRule.onNode(hasSetTextAction()).performTextInput("Hello World")
 
     assertEquals("Hello World", viewModel.uiState.value.currentMessage)
@@ -299,9 +284,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_multipleSentMessagesShowUp() {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
     repeat(3) { index ->
       composeTestRule.onNode(hasSetTextAction()).performTextInput("Msg $index")
       composeTestRule.onNode(hasContentDescription("Send message")).performClick()
@@ -312,9 +297,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_clearingInputDisablesSendButton() {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
     val sendButton = composeTestRule.onNode(hasContentDescription("Send message"))
 
     sendButton.assertIsNotEnabled()
@@ -330,9 +315,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_invalidConversationShowsError() {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
     composeTestRule.waitForIdle()
 
     assertEquals("Conversation not found", viewModel.uiState.value.error)
@@ -340,9 +325,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_listUpdatesWhenNewMessagesArrive() = runTest {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
     val before = viewModel.uiState.value.messages.size
 
     manager.sendMessage(convId, Message("new", userB, userA, "Remote message", Date()))
@@ -352,9 +337,9 @@ class MessageScreenTest {
 
   @Test
   fun messageField_isEmptyAfterSendingMessage() {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
     val messageText = "Test Message"
 
     composeTestRule.onNode(hasSetTextAction()).performTextInput(messageText)
@@ -368,9 +353,9 @@ class MessageScreenTest {
 
   @Test
   fun sendButton_isDisabledAfterSendingMessage() {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
     val messageText = "Another Test Message"
 
     composeTestRule.onNode(hasSetTextAction()).performTextInput(messageText)
@@ -384,9 +369,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_scrollsDown() {
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
     composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message1")
     composeTestRule.onNode(hasContentDescription("Send message")).performClick()
     composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
@@ -434,43 +419,43 @@ class MessageScreenTest {
         .performScrollToNode(hasText("Scroll Test Message1"))
   }
 
-    class FakeProfileRepository : ProfileRepository {
-        override fun getNewUid() = "fake-profile-id"
+  class FakeProfileRepository : ProfileRepository {
+    override fun getNewUid() = "fake-profile-id"
 
-        override fun getCurrentUserId() = "userA"
+    override fun getCurrentUserId() = "userA"
 
-        override suspend fun getProfile(userId: String): Profile? =
-            Profile(
-                userId = userId,
-                name = "Test User",
-                email = "test@example.com",
-                location = Location(0.0, 0.0, "Test Location"))
+    override suspend fun getProfile(userId: String): Profile? =
+        Profile(
+            userId = userId,
+            name = "Test User",
+            email = "test@example.com",
+            location = Location(0.0, 0.0, "Test Location"))
 
-        override suspend fun addProfile(profile: Profile) {}
+    override suspend fun addProfile(profile: Profile) {}
 
-        override suspend fun updateProfile(userId: String, profile: Profile) {}
+    override suspend fun updateProfile(userId: String, profile: Profile) {}
 
-        override suspend fun deleteProfile(userId: String) {}
+    override suspend fun deleteProfile(userId: String) {}
 
-        override suspend fun getAllProfiles() = emptyList<Profile>()
+    override suspend fun getAllProfiles() = emptyList<Profile>()
 
-        override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
-            emptyList<Profile>()
+    override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+        emptyList<Profile>()
 
-        override suspend fun getProfileById(userId: String) = getProfile(userId)
+    override suspend fun getProfileById(userId: String) = getProfile(userId)
 
-        override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
+    override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
 
-        override suspend fun updateTutorRatingFields(
-            userId: String,
-            averageRating: Double,
-            totalRatings: Int
-        ) {}
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {}
 
-        override suspend fun updateStudentRatingFields(
-            userId: String,
-            averageRating: Double,
-            totalRatings: Int
-        ) {}
-    }
+    override suspend fun updateStudentRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {}
+  }
 }

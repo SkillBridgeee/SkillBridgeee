@@ -87,17 +87,21 @@ class MessageViewModel(
                 if (conversation.convCreatorId == userId) conversation.otherPersonId
                 else conversation.convCreatorId
 
-            val partner = profileRepository.getProfile(otherId!!)
-            _uiState.update { it.copy(partnerName = partner?.name ?: "User", error = null) }
+            try {
+              val partnerProfile = profileRepository.getProfile(otherId!!)
+              _uiState.update { it.copy(partnerName = partnerProfile?.name ?: "User") }
+            } catch (_: Exception) {
+              _uiState.update { it.copy(partnerName = "User") }
+            }
           } else {
             _uiState.update { it.copy(error = convNotFoundError) }
             return@launch
           }
-            try {
-                convManager.resetUnreadCount(convId = convId, userId = userId)
-            } catch (_: Exception) {
-                Log.d("MessageViewModel", "Failed to reset unread message count")
-            }
+          try {
+            convManager.resetUnreadCount(convId = convId, userId = userId)
+          } catch (_: Exception) {
+            Log.d("MessageViewModel", "Failed to reset unread message count")
+          }
 
           // Start listening to messages
           convManager
@@ -165,36 +169,31 @@ class MessageViewModel(
     currentConvId?.let { loadConversation(it) }
   }
 
-  /** Clears the error message. */
-  fun clearError() {
-    _uiState.update { it.copy(error = null) }
+  /** Deletes the current conversation along with its overviews. */
+  fun deleteConversation() {
+    val convId = currentConvId ?: return
+    val userId = currentUserId ?: return
+
+    loadJob?.cancel()
+    loadJob = null
+
+    viewModelScope.launch {
+      try {
+        convManager.deleteConvAndOverviews(convId, userId, otherId ?: "")
+
+        currentConvId = null
+        otherId = null
+
+        _uiState.update { it.copy(isDeleted = true, messages = emptyList()) }
+      } catch (e: Exception) {
+        Log.e("MessageViewModel", "Failed to delete conversation", e)
+        _uiState.update { it.copy(error = "Failed to delete conversation") }
+      }
+    }
   }
 
-    /** Deletes the current conversation along with its overviews. */
-    fun deleteConversation() {
-        val convId = currentConvId ?: return
-        val userId = currentUserId ?: return
-
-        loadJob?.cancel()
-        loadJob = null
-
-        viewModelScope.launch {
-            try {
-                convManager.deleteConvAndOverviews(convId, userId, otherId ?: "")
-
-                currentConvId = null
-                otherId = null
-
-                _uiState.update { it.copy(isDeleted = true, messages = emptyList()) }
-            } catch (e: Exception) {
-                Log.e("MessageViewModel", "Failed to delete conversation", e)
-                _uiState.update { it.copy(error = "Failed to delete conversation") }
-            }
-        }
-    }
-
-    /** Resets the deletion flag after the conversation has been handled. */
-    fun resetDeletionFlag() {
-        _uiState.update { it.copy(isDeleted = false) }
-    }
+  /** Resets the deletion flag after the conversation has been handled. */
+  fun resetDeletionFlag() {
+    _uiState.update { it.copy(isDeleted = false) }
+  }
 }
