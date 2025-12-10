@@ -99,7 +99,6 @@ class DiscussionViewModel(
           .collect { conversations ->
             // Filter to ensure we only process conversations owned by the current user
             val myConversations = conversations.filter { it.overViewOwnerId == userId }
-
             _uiState.update { it.copy(isLoading = false, conversations = myConversations) }
 
             // Fetch names for the other participants

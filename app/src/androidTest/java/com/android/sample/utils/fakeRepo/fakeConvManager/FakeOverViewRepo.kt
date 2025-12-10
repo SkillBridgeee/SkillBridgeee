@@ -38,6 +38,11 @@ class FakeOverViewRepo : OverViewConvRepository {
     }
   }
 
+  override suspend fun deleteOverViewById(overViewId: String) {
+    val overview = overviews.remove(overViewId)
+    overview?.let { refreshUserFlow(it.overViewOwnerId) }
+  }
+
   override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {
     return userFlows.getOrPut(userId) { MutableStateFlow(emptyList()) }
   }

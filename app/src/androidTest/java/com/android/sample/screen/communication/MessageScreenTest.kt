@@ -21,6 +21,11 @@ import com.android.sample.model.communication.conversation.ConvRepository
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.Message
 import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.map.Location
+import com.android.sample.model.skill.Skill
+import com.android.sample.model.user.Profile
+import com.android.sample.model.user.ProfileRepository
+import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
@@ -53,8 +58,8 @@ class MessageScreenTest {
     convRepo = FakeConvRepo()
     overViewRepo = FakeOverViewRepo()
     manager = ConversationManager(convRepo, overViewRepo)
-
-    viewModel = MessageViewModel(manager, profileRepository = FakeProfileRepository())
+    ProfileRepositoryProvider.setForTests(FakeProfileRepository())
+    viewModel = MessageViewModel(manager)
 
     UserSessionManager.setCurrentUserId(userA)
 
@@ -69,7 +74,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_showsSentMessage() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     val textToSend = "Bonjour test"
 
@@ -88,7 +95,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_showsIncomingMessage() = runTest {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     // Simule réception d’un message
     manager.sendMessage(
@@ -112,7 +121,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_emptyMessageCannotBeSent() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     // Try to send without typing anything
     composeTestRule.onNode(hasContentDescription("Send message")).performClick()
@@ -128,7 +139,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_showsLoadingStateInitially() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     // Initially loading should be true
     composeTestRule.waitForIdle()
@@ -142,7 +155,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_displaysMultipleMessagesInOrder() = runTest {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     // Send multiple messages
     manager.sendMessage(
@@ -177,7 +192,9 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_inputClearsAfterSending() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
     val textToSend = "Test message"
 
@@ -194,13 +211,26 @@ class MessageScreenTest {
   }
 
   // -----------------------------------------------------
-  // TEST 7 — Error state is handled gracefully
+  // TEST 7 — Info message is shown when conversation is missing
   // -----------------------------------------------------
   @Test
-  fun messageScreen_handlesErrorGracefully() {
-    val invalidConvId = "invalid_conversation_id"
+  fun messageScreen_showsInfoMessageWhenConversationDeleted() = runTest {
+    // Delete the conversation before showing the screen
+    convRepo.deleteConv(convId)
 
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = invalidConvId) }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+
+    val infoText = "This conversation was deleted by the other user."
+
+    // Wait until the info message appears
+    composeTestRule.waitUntil(timeoutMillis = 2_000) {
+      composeTestRule.onAllNodesWithText(infoText).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    // Assert that the info message Surface is displayed
+    composeTestRule.onNodeWithText(infoText).assertExists()
 
     composeTestRule.waitForIdle()
 
@@ -211,8 +241,9 @@ class MessageScreenTest {
 
   @Test
   fun messageSendButton_isDisabledWhenMessageIsEmpty() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     composeTestRule.onNode(hasContentDescription("Send message")).assertExists()
 
     composeTestRule.onNode(hasContentDescription("Send message")).assertIsNotEnabled()
@@ -233,8 +264,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_showsPartnerName() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     composeTestRule.waitForIdle()
 
     composeTestRule.onNodeWithText("Test User").assertExists()
@@ -242,8 +274,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_errorClearsProperly() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = "bad_id") }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     composeTestRule.waitForIdle()
 
     assertEquals(true, viewModel.uiState.value.error != null)
@@ -256,8 +289,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_textInputReflectsInViewModel() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     composeTestRule.onNode(hasSetTextAction()).performTextInput("Hello World")
 
     assertEquals("Hello World", viewModel.uiState.value.currentMessage)
@@ -265,8 +299,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_multipleSentMessagesShowUp() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     repeat(3) { index ->
       composeTestRule.onNode(hasSetTextAction()).performTextInput("Msg $index")
       composeTestRule.onNode(hasContentDescription("Send message")).performClick()
@@ -277,8 +312,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_clearingInputDisablesSendButton() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     val sendButton = composeTestRule.onNode(hasContentDescription("Send message"))
 
     sendButton.assertIsNotEnabled()
@@ -294,8 +330,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_invalidConversationShowsError() {
-    composeTestRule.setContent { MessageScreen(viewModel, convId = "unknown") }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     composeTestRule.waitForIdle()
 
     assertEquals("Conversation not found", viewModel.uiState.value.error)
@@ -303,8 +340,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_listUpdatesWhenNewMessagesArrive() = runTest {
-    composeTestRule.setContent { MessageScreen(viewModel, convId) }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     val before = viewModel.uiState.value.messages.size
 
     manager.sendMessage(convId, Message("new", userB, userA, "Remote message", Date()))
@@ -314,8 +352,9 @@ class MessageScreenTest {
 
   @Test
   fun messageField_isEmptyAfterSendingMessage() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     val messageText = "Test Message"
 
     composeTestRule.onNode(hasSetTextAction()).performTextInput(messageText)
@@ -329,8 +368,9 @@ class MessageScreenTest {
 
   @Test
   fun sendButton_isDisabledAfterSendingMessage() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     val messageText = "Another Test Message"
 
     composeTestRule.onNode(hasSetTextAction()).performTextInput(messageText)
@@ -344,8 +384,9 @@ class MessageScreenTest {
 
   @Test
   fun messageScreen_scrollsDown() {
-    composeTestRule.setContent { MessageScreen(viewModel = viewModel, convId = convId) }
-
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
     composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message1")
     composeTestRule.onNode(hasContentDescription("Send message")).performClick()
     composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
@@ -392,4 +433,44 @@ class MessageScreenTest {
         .onNodeWithTag("message_list")
         .performScrollToNode(hasText("Scroll Test Message1"))
   }
+
+    class FakeProfileRepository : ProfileRepository {
+        override fun getNewUid() = "fake-profile-id"
+
+        override fun getCurrentUserId() = "userA"
+
+        override suspend fun getProfile(userId: String): Profile? =
+            Profile(
+                userId = userId,
+                name = "Test User",
+                email = "test@example.com",
+                location = Location(0.0, 0.0, "Test Location"))
+
+        override suspend fun addProfile(profile: Profile) {}
+
+        override suspend fun updateProfile(userId: String, profile: Profile) {}
+
+        override suspend fun deleteProfile(userId: String) {}
+
+        override suspend fun getAllProfiles() = emptyList<Profile>()
+
+        override suspend fun searchProfilesByLocation(location: Location, radiusKm: Double) =
+            emptyList<Profile>()
+
+        override suspend fun getProfileById(userId: String) = getProfile(userId)
+
+        override suspend fun getSkillsForUser(userId: String) = emptyList<Skill>()
+
+        override suspend fun updateTutorRatingFields(
+            userId: String,
+            averageRating: Double,
+            totalRatings: Int
+        ) {}
+
+        override suspend fun updateStudentRatingFields(
+            userId: String,
+            averageRating: Double,
+            totalRatings: Int
+        ) {}
+    }
 }
