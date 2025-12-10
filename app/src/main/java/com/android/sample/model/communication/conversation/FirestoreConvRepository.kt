@@ -107,6 +107,9 @@ class FirestoreConvRepository(
 
     val convRef = conversationsRef.document(convId)
     val messagesRef = convRef.collection("messages")
+    if (!(convRef.get().await().exists())) {
+      throw IllegalArgumentException("Conversation with ID $convId does not exist")
+    }
 
     messagesRef.document(message.msgId).set(message).await()
 
