@@ -34,15 +34,10 @@ class ConversationManagerTest {
     manager = ConversationManager(convRepo, ovRepo)
   }
 
-  @After
-  fun tearDown() = runTest {
-    if (::convId.isInitialized) {
-      manager.deleteConvAndOverviews(convId)
-    }
-  }
+  @After fun tearDown() = runTest {}
 
   // ----------------------------------------------------------
-  // TEST 1 : CREATE CONV + OVERVIEWS
+  // TEST 1 : CREATE CONV + OVERVIEWS (NEW CONVERSATION)
   // ----------------------------------------------------------
   @Test
   fun testCreateConvAndOverviews() = runTest {
@@ -58,35 +53,83 @@ class ConversationManagerTest {
     assertEquals(creator, conv.convCreatorId)
     assertEquals(other, conv.otherPersonId)
     assertEquals(convName, conv.convName)
+    assertTrue(conv.messages.isEmpty())
 
+    val ovA = ovRepo.getOverViewConvUser(creator).filter { it.linkedConvId == convId }
+    val ovB = ovRepo.getOverViewConvUser(other).filter { it.linkedConvId == convId }
+
+    assertEquals(1, ovA.size)
+    assertEquals(1, ovB.size)
+
+    val ovCreator = ovA.first()
+    val ovOther = ovB.first()
+
+    assertEquals(convId, ovCreator.linkedConvId)
+    assertEquals(convId, ovOther.linkedConvId)
+    // lastMsg is default Message() on creation
+    assertNotNull(ovCreator.lastMsg)
+    assertNotNull(ovOther.lastMsg)
+    assertEquals(0, ovCreator.nonReadMsgNumber)
+    assertEquals(0, ovOther.nonReadMsgNumber)
+  }
+
+  // ----------------------------------------------------------
+  // TEST 1B : CREATE CONV REUSES EXISTING CONV BETWEEN SAME USERS
+  // ----------------------------------------------------------
+  @Test
+  fun testCreateConvAndOverviews_existingConversationReturnsSameId() = runTest {
+    val creator = "UserA-test1b"
+    val other = "UserB-test1b"
+    val convName = "Chat1"
+
+    val firstId = manager.createConvAndOverviews(creator, other, convName)
+    val secondId = manager.createConvAndOverviews(creator, other, "AnotherNameShouldBeIgnored")
+
+    assertEquals(firstId, secondId)
+
+    // Still only one overview per user for that conversation
     val ovA = ovRepo.getOverViewConvUser(creator)
     val ovB = ovRepo.getOverViewConvUser(other)
 
     assertEquals(1, ovA.size)
     assertEquals(1, ovB.size)
-
-    assertEquals(convId, ovA.first().linkedConvId)
-    assertEquals(convId, ovB.first().linkedConvId)
   }
 
   // ----------------------------------------------------------
-  // TEST 2 : DELETE CONV + OVERVIEWS
+  // TEST 2 : DELETE CONV + MANAGE OVERVIEWS ACCORDING TO NEW LOGIC
   // ----------------------------------------------------------
   @Test
   fun testDeleteConvAndOverviews() = runTest {
-    val creator = "A-test2"
-    val other = "B-test"
+    val unique = System.currentTimeMillis().toString()
+
+    val creator = "A-test9-$unique"
+    val other = "B-test9-$unique"
 
     convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     assertNotNull(convRepo.getConv(convId))
     assertEquals(1, ovRepo.getOverViewConvUser(creator).size)
+    assertEquals(1, ovRepo.getOverViewConvUser(other).size)
 
-    manager.deleteConvAndOverviews(convId)
+    manager.deleteConvAndOverviews(convId, creator, other)
 
+    // Conversation must be deleted
     assertNull(convRepo.getConv(convId))
-    assertTrue(ovRepo.getOverViewConvUser(creator).isEmpty())
-    assertTrue(ovRepo.getOverViewConvUser(other).isEmpty())
+
+    // Deleter's overview(s) for that conv must be deleted
+    val creatorOverviews = ovRepo.getOverViewConvUser(creator)
+    assertTrue(creatorOverviews.none { it.linkedConvId == convId })
+
+    // Other user's overview should be updated with system "deleted" message
+    val otherOverviews = ovRepo.getOverViewConvUser(other)
+    // There may be one overview for this conversation
+    val otherOverview = otherOverviews.firstOrNull { it.linkedConvId == convId }
+    assertNotNull(otherOverview)
+    assertEquals("deleted-system-msg", otherOverview!!.lastMsg?.msgId)
+    assertEquals("system", otherOverview.lastMsg?.senderId)
+    assertEquals(other, otherOverview.lastMsg?.receiverId)
+    assertEquals("Conversation deleted", otherOverview.lastMsg?.content)
+    assertEquals(0, otherOverview.nonReadMsgNumber)
   }
 
   // ----------------------------------------------------------
@@ -94,8 +137,10 @@ class ConversationManagerTest {
   // ----------------------------------------------------------
   @Test
   fun testSendMessage() = runTest {
-    val creator = "A-test3"
-    val other = "B-test3"
+    val unique = System.currentTimeMillis().toString()
+
+    val creator = "A-test9-$unique"
+    val other = "B-test9-$unique"
 
     convId = manager.createConvAndOverviews(creator, other, "Chat")
 
@@ -107,11 +152,17 @@ class ConversationManagerTest {
     assertEquals(1, conv!!.messages.size)
     assertEquals(msg.msgId, conv.messages.first().msgId)
 
-    val ovA = ovRepo.getOverViewConvUser(creator).first()
-    val ovB = ovRepo.getOverViewConvUser(other).first()
+    val ovA = ovRepo.getOverViewConvUser(creator).first { it.linkedConvId == convId }
+    val ovB = ovRepo.getOverViewConvUser(other).first { it.linkedConvId == convId }
 
+    // sender overview: lastMsg updated, unread count NOT incremented
     assertEquals(msg.msgId, ovA.lastMsg!!.msgId)
+    assertEquals(0, ovA.nonReadMsgNumber)
+
+    // receiver overview: lastMsg updated, unread count incremented
+    assertEquals(msg.msgId, ovB.lastMsg!!.msgId)
     assertEquals(msg.content, ovB.lastMsg!!.content)
+    assertEquals(1, ovB.nonReadMsgNumber)
   }
 
   // ----------------------------------------------------------
@@ -119,18 +170,28 @@ class ConversationManagerTest {
   // ----------------------------------------------------------
   @Test
   fun testResetUnreadCount() = runTest {
-    val creator = "A-test4"
-    val other = "B-test4"
+    val unique = System.currentTimeMillis().toString()
+
+    val creator = "A-test9-$unique"
+    val other = "B-test9-$unique"
+
     convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     val msg = Message("1-test4", "Hello", creator, other)
     manager.sendMessage(convId, msg)
 
-    manager.resetUnreadCount(convId, creator)
+    // unread for receiver should be 1
+    val overviewBeforeReset = ovRepo.getOverViewConvUser(other).first()
+    assertEquals(1, overviewBeforeReset.nonReadMsgNumber)
+    assertEquals(msg, overviewBeforeReset.lastMsg)
 
-    val overview = ovRepo.getOverViewConvUser(creator).first()
+    // Reset unread count for receiver
+    manager.resetUnreadCount(convId, other)
 
-    assertEquals(msg, overview.lastMsg)
+    val overviewAfterReset = ovRepo.getOverViewConvUser(other).first()
+    assertEquals(0, overviewAfterReset.nonReadMsgNumber)
+    // lastMsg should stay the same
+    assertEquals(msg, overviewAfterReset.lastMsg)
   }
 
   // ----------------------------------------------------------
@@ -173,11 +234,16 @@ class ConversationManagerTest {
     assertEquals("1-test7", emitted.first().lastMsg!!.msgId)
   }
 
-  // test 8
+  // ----------------------------------------------------------
+  // TEST 8 : DISCUSSION (STEP-BY-STEP, USING first())
+  // ----------------------------------------------------------
   @Test
-  fun testallDiscussion() = runTest {
-    val creator = "A-test8"
-    val other = "B-test8"
+  fun testAllDiscussion() = runTest {
+    val unique = System.currentTimeMillis().toString()
+
+    val creator = "A-test9-$unique"
+    val other = "B-test9-$unique"
+
     convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     val flowCreatorMsg = manager.listenMessages(convId)
@@ -187,7 +253,6 @@ class ConversationManagerTest {
     val flowOtherOverView = manager.listenConversationOverviews(other)
 
     // Creator send a message
-
     val msgCreator1 = Message("msg1", "hello", creator, other)
     manager.sendMessage(convId, msgCreator1)
 
@@ -207,14 +272,14 @@ class ConversationManagerTest {
     assertEquals(0, emittedCreatorOverView[0].nonReadMsgNumber)
     assertEquals(1, emittedOtherOverView[0].nonReadMsgNumber)
 
-    // Creator read the message and also send a message
+    // Receiver reads the message
     manager.resetUnreadCount(convId, other)
-
     emittedOtherOverView = flowOtherOverView.first { it.isNotEmpty() }
 
     assertEquals(1, emittedOtherOverView.size)
     assertEquals(0, emittedOtherOverView[0].nonReadMsgNumber)
 
+    // Receiver sends a message back
     val msgOther1 = Message("msg2", "hi", other, creator)
     manager.sendMessage(convId, msgOther1)
 
@@ -240,11 +305,17 @@ class ConversationManagerTest {
     assertEquals(msgOther1, emittedOtherMsg[1])
   }
 
+  // ----------------------------------------------------------
+  // TEST 9 : DISCUSSION REAL-TIME WITH COLLECT + advanceUntilIdle
+  // ----------------------------------------------------------
   @OptIn(ExperimentalCoroutinesApi::class)
   @Test
   fun testAllDiscussionRealTime() = runTest {
-    val creator = "A-test8"
-    val other = "B-test8"
+    val unique = System.currentTimeMillis().toString()
+
+    val creator = "A-test9-$unique"
+    val other = "B-test9-$unique"
+
     convId = manager.createConvAndOverviews(creator, other, "Chat")
 
     // Lists pour collecter toutes les émissions des flows
@@ -257,7 +328,6 @@ class ConversationManagerTest {
     val job = launch { manager.listenMessages(convId).collect { creatorMsgs.add(it) } }
     val job2 = launch { manager.listenMessages(convId).collect { otherMsgs.add(it) } }
     val job3 = launch { manager.listenConversationOverviews(creator).collect { creatorOv.add(it) } }
-
     val job4 = launch { manager.listenConversationOverviews(other).collect { otherOv.add(it) } }
 
     // --- Creator envoie un message ---
@@ -312,6 +382,9 @@ class ConversationManagerTest {
     job4.cancel()
   }
 
+  // ----------------------------------------------------------
+  // TEST 10 : CREATE AND GET CONVERSATION
+  // ----------------------------------------------------------
   @Test
   fun testCreateAndGetConversation() = runTest {
     val convId = "convCreateTest"
@@ -325,6 +398,9 @@ class ConversationManagerTest {
     assertTrue(result.messages.isEmpty())
   }
 
+  // ----------------------------------------------------------
+  // TEST 11 : ADD AND GET OVERVIEW
+  // ----------------------------------------------------------
   @Test
   fun testAddAndGetOverview() = runTest {
     convId = "conv1"
@@ -340,5 +416,20 @@ class ConversationManagerTest {
 
     val result = manager.getOverViewConvUser("userA")
     assertTrue(result.any { it.linkedConvId == "conv1" })
+  }
+
+  // ----------------------------------------------------------
+  // TEST 12 : GET MESSAGE NEW UID
+  // ----------------------------------------------------------
+  @Test
+  fun testGetMessageNewUid() {
+    val uid1 = manager.getMessageNewUid()
+    val uid2 = manager.getMessageNewUid()
+    assertNotNull(uid1)
+    assertNotNull(uid2)
+    assertTrue(uid1.isNotEmpty())
+    assertTrue(uid2.isNotEmpty())
+    // Most implementations will generate different IDs
+    assertNotSame(uid1, uid2)
   }
 }

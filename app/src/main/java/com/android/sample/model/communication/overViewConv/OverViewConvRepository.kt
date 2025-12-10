@@ -12,5 +12,7 @@ interface OverViewConvRepository {
 
   suspend fun deleteOverViewConvUser(convId: String)
 
+  suspend fun deleteOverViewById(overViewId: String)
+
   fun listenOverView(userId: String): Flow<List<OverViewConversation>>
 }
