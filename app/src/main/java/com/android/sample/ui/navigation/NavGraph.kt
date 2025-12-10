@@ -7,6 +7,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,6 +35,7 @@ import com.android.sample.ui.communication.DiscussionScreen
 import com.android.sample.ui.communication.DiscussionViewModel
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
+import com.android.sample.ui.listing.ListingScreen
 import com.android.sample.ui.login.LoginScreen
 import com.android.sample.ui.map.MapScreen
 import com.android.sample.ui.newListing.NewListingScreen
@@ -122,7 +124,7 @@ fun AppNavGraph(
     addBookingDetailsRoute(navController, bookingDetailsViewModel, bookingId, profileID)
     addDiscussionRoute(navController, discussionViewModel, convId)
     addToSRoute()
-    addMessagesRoute(convId)
+    addMessagesRoute(navController, convId)
   }
 }
 
@@ -207,7 +209,7 @@ private fun NavGraphBuilder.addProfileRoute(
 private fun NavGraphBuilder.addHomeRoute(
     navController: NavHostController,
     mainPageViewModel: MainPageViewModel,
-    academicSubject: androidx.compose.runtime.MutableState<MainSubject?>,
+    academicSubject: MutableState<MainSubject?>,
 ) {
   composable(NavRoutes.HOME) {
     LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.HOME) }
@@ -238,7 +240,7 @@ private fun NavGraphBuilder.addHomeRoute(
  */
 private fun NavGraphBuilder.addSkillsRoute(
     navController: NavHostController,
-    academicSubject: androidx.compose.runtime.MutableState<MainSubject?>,
+    academicSubject: MutableState<MainSubject?>,
 ) {
   composable(NavRoutes.SKILLS) { backStackEntry ->
     LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.SKILLS) }
@@ -263,7 +265,7 @@ private fun NavGraphBuilder.addSkillsRoute(
 private fun NavGraphBuilder.addBookingsRoute(
     navController: NavHostController,
     bookingsViewModel: MyBookingsViewModel,
-    bookingId: androidx.compose.runtime.MutableState<String>,
+    bookingId: MutableState<String>,
 ) {
   composable(NavRoutes.BOOKINGS) {
     LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKINGS) }
@@ -419,7 +421,6 @@ fun NavGraphBuilder.addSignUpRoute(navController: NavHostController) {
             onNavigateToToS = { navController.navigate(NavRoutes.TOS) })
       }
 }
-
 /**
  * Registers the "other user's profile" route.
  *
@@ -431,7 +432,7 @@ fun NavGraphBuilder.addSignUpRoute(navController: NavHostController) {
  */
 fun NavGraphBuilder.addOthersProfileRoute(
     navController: NavHostController,
-    profileID: androidx.compose.runtime.MutableState<String>,
+    profileID: MutableState<String>,
 ) {
   composable(route = NavRoutes.OTHERS_PROFILE) {
     LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
@@ -457,7 +458,7 @@ fun NavGraphBuilder.addListingRoute(navController: NavHostController) {
         ->
         val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
         LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.LISTING) }
-        com.android.sample.ui.listing.ListingScreen(
+        ListingScreen(
             listingId = listingId,
             onNavigateBack = { navController.popBackStack() },
             onEditListing = { navigateToNewListing(navController, listingId) })
@@ -478,8 +479,8 @@ fun NavGraphBuilder.addListingRoute(navController: NavHostController) {
 fun NavGraphBuilder.addBookingDetailsRoute(
     navController: NavHostController,
     bookingDetailsViewModel: BookingDetailsViewModel,
-    bookingId: androidx.compose.runtime.MutableState<String>,
-    profileID: androidx.compose.runtime.MutableState<String>,
+    bookingId: MutableState<String>,
+    profileID: MutableState<String>,
 ) {
   composable(route = NavRoutes.BOOKING_DETAILS) {
     LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.BOOKING_DETAILS) }
@@ -506,7 +507,7 @@ fun NavGraphBuilder.addBookingDetailsRoute(
 fun NavGraphBuilder.addDiscussionRoute(
     navController: NavHostController,
     discussionViewModel: DiscussionViewModel,
-    convId: androidx.compose.runtime.MutableState<String>,
+    convId: MutableState<String>,
 ) {
   composable(NavRoutes.DISCUSSION) {
     LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.DISCUSSION) }
@@ -544,7 +545,8 @@ fun NavGraphBuilder.addToSRoute() {
  * @param convId Mutable state containing the current conversation id.
  */
 fun NavGraphBuilder.addMessagesRoute(
-    convId: androidx.compose.runtime.MutableState<String>,
+    navController: NavHostController,
+    convId: MutableState<String>,
 ) {
   composable(NavRoutes.MESSAGES) {
     LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.MESSAGES) }
@@ -556,6 +558,7 @@ fun NavGraphBuilder.addMessagesRoute(
       MessageScreen(
           viewModel = messageViewModel,
           convId = currentConvId,
+          onConversationDeleted = { navController.popBackStack() },
       )
     } else {
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

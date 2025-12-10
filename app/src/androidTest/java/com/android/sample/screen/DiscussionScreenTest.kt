@@ -314,6 +314,10 @@ class DiscussionScreenTest {
       conversations.removeIf { it.linkedConvId == convId }
     }
 
+    override suspend fun deleteOverViewById(overViewId: String) {
+      TODO("Not yet implemented")
+    }
+
     override fun listenOverView(
         userId: String
     ): kotlinx.coroutines.flow.Flow<List<OverViewConversation>> {
