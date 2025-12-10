@@ -87,6 +87,11 @@ object MyProfileScreenTestTag {
   const val HISTORY_TAB = "historyTab"
   const val LISTINGS_SECTION = "listingsSection"
   const val HISTORY_SECTION = "historySection"
+
+  const val DELETE_ACCOUNT_BUTTON = "deleteAccountButton"
+  const val DELETE_ACCOUNT_DIALOG = "deleteAccountDialog"
+  const val DELETE_ACCOUNT_CONFIRM_BUTTON = "deleteAccountConfirm"
+  const val DELETE_ACCOUNT_CANCEL_BUTTON = "deleteAccountCancel"
 }
 
 enum class ProfileTab {
@@ -181,7 +186,14 @@ private fun MyProfileContent(
             ProfileForm(ui = ui, profileViewModel = profileViewModel, fieldSpacing = fieldSpacing)
           }
 
-          item { ProfileLogout(onLogout = onLogout) }
+          item {
+            ProfileLogout(
+                onLogout = onLogout,
+                onDeleteAccount = {
+                  // TODO: Call your backend / ViewModel delete here, e.g.:
+
+                })
+          }
         }
 
     VerticalScrollHint(
@@ -589,15 +601,24 @@ private fun ProfileHistory(
 }
 
 /**
- * Logout section — presents a full-width logout button that triggers `onLogout`.
+ * Logout & account deletion section.
  *
- * The button includes a test tag so tests can find and click it.
+ * Shows:
+ * - A full-width logout button.
+ * - A "Delete account" destructive button that opens a confirmation dialog.
  *
- * @param onLogout Callback invoked when the button is clicked.
+ * `onDeleteAccount` is only called after the user confirms the dialog.
  */
 @Composable
-private fun ProfileLogout(onLogout: () -> Unit) {
+private fun ProfileLogout(
+    onLogout: () -> Unit,
+    onDeleteAccount: () -> Unit,
+) {
+  var showDeleteDialog by remember { mutableStateOf(false) }
+
   Spacer(modifier = Modifier.height(16.dp))
+
+  // Logout button
   Button(
       onClick = onLogout,
       modifier =
@@ -607,7 +628,58 @@ private fun ProfileLogout(onLogout: () -> Unit) {
         Text("Logout")
       }
 
+  Spacer(modifier = Modifier.height(8.dp))
+
+  // Delete account button
+  OutlinedButton(
+      onClick = { showDeleteDialog = true },
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(horizontal = 16.dp)
+              .testTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON),
+      colors =
+          ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
+        Text("Delete Account")
+      }
+
   Spacer(modifier = Modifier.height(80.dp))
+
+  if (showDeleteDialog) {
+    AlertDialog(
+        modifier = Modifier.testTag(MyProfileScreenTestTag.DELETE_ACCOUNT_DIALOG),
+        onDismissRequest = { showDeleteDialog = false },
+        title = {
+          Text(
+              text = "Delete account?",
+              style = MaterialTheme.typography.titleLarge,
+              fontWeight = FontWeight.Bold)
+        },
+        text = {
+          Text(
+              text =
+                  "This action will permanently delete your account and all associated data. " +
+                      "This cannot be undone.\n\n" +
+                      "Are you sure you want to continue?",
+              style = MaterialTheme.typography.bodyMedium)
+        },
+        confirmButton = {
+          TextButton(
+              onClick = {
+                showDeleteDialog = false
+                onDeleteAccount()
+              },
+              modifier = Modifier.testTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CONFIRM_BUTTON)) {
+                Text("Delete", color = MaterialTheme.colorScheme.error)
+              }
+        },
+        dismissButton = {
+          TextButton(
+              onClick = { showDeleteDialog = false },
+              modifier = Modifier.testTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CANCEL_BUTTON)) {
+                Text("Cancel")
+              }
+        })
+  }
 }
 
 /**
