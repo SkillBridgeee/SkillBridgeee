@@ -54,6 +54,10 @@ class AppNavGraphDiscussionTest {
 
     override suspend fun deleteOverViewConvUser(convId: String) {}
 
+    override suspend fun deleteOverViewById(overViewId: String) {
+      TODO("Not yet implemented")
+    }
+
     override fun listenOverView(userId: String): Flow<List<OverViewConversation>> =
         flowOf(
             listOf(
