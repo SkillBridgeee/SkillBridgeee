@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -55,6 +56,10 @@ import com.android.sample.ui.listing.ListingScreenTestTags
 import java.text.SimpleDateFormat
 import java.util.Locale
 
+// UI String Constants
+private const val BOOKING_REQUEST_FROM = "Booking Request From:"
+private const val TAP_TO_VIEW_STUDENT_PROFILE = "Tap name to view student profile"
+
 object BookingDetailsTestTag {
   const val ERROR = "booking_details_error"
   const val HEADER = "booking_header"
@@ -62,6 +67,9 @@ object BookingDetailsTestTag {
   const val CREATOR_NAME = "booking_creator_name"
   const val CREATOR_EMAIL = "booking_creator_email"
   const val MORE_INFO_BUTTON = "booking_creator_more_info_button"
+  const val BOOKER_SECTION = "booking_booker_section"
+  const val BOOKER_NAME_ROW = "booking_booker_name_row"
+  const val BOOKER_NAME = "booking_booker_name"
   const val LISTING_SECTION = "booking_listing_section"
   const val SCHEDULE_SECTION = "booking_schedule_section"
   const val DESCRIPTION_SECTION = "booking_description_section"
@@ -88,12 +96,15 @@ object BookingDetailsTestTag {
  * @param bookingId The unique identifier of the booking to display.
  * @param onCreatorClick Callback triggered when the user clicks the "More Info" button of the
  *   creator.
+ * @param onBookerClick Callback triggered when the user clicks the booker's name (student who made
+ *   the booking).
  */
 @Composable
 fun BookingDetailsScreen(
     bkgViewModel: BookingDetailsViewModel = viewModel(),
     bookingId: String,
-    onCreatorClick: (String) -> Unit = {}
+    onCreatorClick: (String) -> Unit = {},
+    onBookerClick: (String) -> Unit = {}
 ) {
 
   val uiState by bkgViewModel.bookingUiState.collectAsState()
@@ -111,6 +122,7 @@ fun BookingDetailsScreen(
       BookingDetailsContent(
           uiState = uiState,
           onCreatorClick = { profileId -> onCreatorClick(profileId) },
+          onBookerClick = { profileId -> onBookerClick(profileId) },
           onMarkCompleted = { bkgViewModel.markBookingAsCompleted() },
           onSubmitStudentRatings = { tutorStars, listingStars ->
             bkgViewModel.submitStudentRatings(tutorStars, listingStars)
@@ -134,12 +146,14 @@ fun BookingDetailsScreen(
  *
  * @param uiState The current [BookingUIState] holding booking, listing, and creator data.
  * @param onCreatorClick Callback invoked when the "More Info" button is clicked.
+ * @param onBookerClick Callback invoked when the booker's name is clicked.
  * @param modifier Optional [Modifier] to apply to the container.
  */
 @Composable
 fun BookingDetailsContent(
     uiState: BookingUIState,
     onCreatorClick: (String) -> Unit,
+    onBookerClick: (String) -> Unit,
     onMarkCompleted: () -> Unit,
     onSubmitStudentRatings: (Int, Int) -> Unit,
     onPaymentComplete: () -> Unit,
@@ -188,6 +202,13 @@ fun BookingDetailsContent(
 
         // Accept/Deny buttons for tutors when a listing is booked
         if (uiState.booking.status == BookingStatus.PENDING && uiState.isTutor) {
+          HorizontalDivider()
+
+          // Show booker information
+          InfoBooker(uiState = uiState, onBookerClick = onBookerClick)
+
+          Spacer(modifier = Modifier.height(8.dp))
+
           Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             Button(onClick = { uiState.onAcceptBooking() }) { Text("Accept") }
             Button(onClick = { uiState.onDenyBooking() }) { Text("Deny") }
@@ -306,6 +327,58 @@ private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Uni
         value = uiState.creatorProfile.email,
         modifier = Modifier.testTag(BookingDetailsTestTag.CREATOR_EMAIL))
   }
+}
+
+/**
+ * Composable function that displays the booker (student) information section.
+ *
+ * This section is shown to tutors when they need to review a booking request. It includes:
+ * - The booker's name (clickable to view their profile)
+ * - A helper text indicating the name is clickable
+ *
+ * @param uiState The [BookingUIState] containing booking and booker profile information.
+ * @param onBookerClick Callback invoked when the booker's name is clicked; passes the booker's user
+ *   ID.
+ */
+@Composable
+private fun InfoBooker(uiState: BookingUIState, onBookerClick: (String) -> Unit) {
+  Column(
+      modifier =
+          Modifier.fillMaxWidth()
+              .padding(vertical = 8.dp)
+              .testTag(BookingDetailsTestTag.BOOKER_SECTION),
+      verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = BOOKING_REQUEST_FROM,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold)
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier =
+                Modifier.fillMaxWidth()
+                    .clickable { onBookerClick(uiState.booking.bookerId) }
+                    .padding(vertical = 8.dp)
+                    .testTag(BookingDetailsTestTag.BOOKER_NAME_ROW)) {
+              Icon(
+                  imageVector = Icons.Default.Person,
+                  contentDescription = "Student profile",
+                  tint = MaterialTheme.colorScheme.primary,
+                  modifier = Modifier.size(24.dp))
+              Spacer(modifier = Modifier.width(8.dp))
+              Text(
+                  text = uiState.bookerProfile.name ?: "Unknown",
+                  style = MaterialTheme.typography.titleLarge,
+                  fontWeight = FontWeight.SemiBold,
+                  color = MaterialTheme.colorScheme.primary,
+                  modifier = Modifier.testTag(BookingDetailsTestTag.BOOKER_NAME))
+            }
+
+        Text(
+            text = TAP_TO_VIEW_STUDENT_PROFILE,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+      }
 }
 
 /**

@@ -344,7 +344,7 @@ private fun SplashScreen(
  * @param navController Controller used to navigate after creating/updating a listing.
  * @param newListingViewModel ViewModel used by the new listing screen.
  */
-private fun NavGraphBuilder.addNewSkillRoute(
+fun NavGraphBuilder.addNewSkillRoute(
     navController: NavHostController,
     newListingViewModel: NewListingViewModel,
 ) {
@@ -380,7 +380,7 @@ private fun NavGraphBuilder.addNewSkillRoute(
  *
  * @param navController Controller used for navigation from sign up flows.
  */
-private fun NavGraphBuilder.addSignUpRoute(navController: NavHostController) {
+fun NavGraphBuilder.addSignUpRoute(navController: NavHostController) {
   composable(
       route = NavRoutes.SIGNUP,
       arguments =
@@ -429,7 +429,7 @@ private fun NavGraphBuilder.addSignUpRoute(navController: NavHostController) {
  * @param navController Controller used for navigation from the others profile screen.
  * @param profileID Mutable state containing the profile id of the displayed user.
  */
-private fun NavGraphBuilder.addOthersProfileRoute(
+fun NavGraphBuilder.addOthersProfileRoute(
     navController: NavHostController,
     profileID: androidx.compose.runtime.MutableState<String>,
 ) {
@@ -450,7 +450,7 @@ private fun NavGraphBuilder.addOthersProfileRoute(
  *
  * @param navController Controller used to navigate from the listing details screen.
  */
-private fun NavGraphBuilder.addListingRoute(navController: NavHostController) {
+fun NavGraphBuilder.addListingRoute(navController: NavHostController) {
   composable(
       route = NavRoutes.LISTING,
       arguments = listOf(navArgument("listingId") { type = NavType.StringType })) { backStackEntry
@@ -475,7 +475,7 @@ private fun NavGraphBuilder.addListingRoute(navController: NavHostController) {
  * @param bookingId Mutable state containing the selected booking id.
  * @param profileID Mutable state used to pass a selected profile id to other screens.
  */
-private fun NavGraphBuilder.addBookingDetailsRoute(
+fun NavGraphBuilder.addBookingDetailsRoute(
     navController: NavHostController,
     bookingDetailsViewModel: BookingDetailsViewModel,
     bookingId: androidx.compose.runtime.MutableState<String>,
@@ -503,7 +503,7 @@ private fun NavGraphBuilder.addBookingDetailsRoute(
  * @param discussionViewModel ViewModel that backs the discussion UI.
  * @param convId Mutable state used to store the selected conversation id.
  */
-private fun NavGraphBuilder.addDiscussionRoute(
+fun NavGraphBuilder.addDiscussionRoute(
     navController: NavHostController,
     discussionViewModel: DiscussionViewModel,
     convId: androidx.compose.runtime.MutableState<String>,
@@ -524,7 +524,7 @@ private fun NavGraphBuilder.addDiscussionRoute(
  *
  * Presents [ToSScreen] and adds the route to [RouteStackManager].
  */
-private fun NavGraphBuilder.addToSRoute() {
+fun NavGraphBuilder.addToSRoute() {
   composable(route = NavRoutes.TOS) {
     LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.TOS) }
     ToSScreen()
@@ -543,7 +543,7 @@ private fun NavGraphBuilder.addToSRoute() {
  *
  * @param convId Mutable state containing the current conversation id.
  */
-private fun NavGraphBuilder.addMessagesRoute(
+fun NavGraphBuilder.addMessagesRoute(
     convId: androidx.compose.runtime.MutableState<String>,
 ) {
   composable(NavRoutes.MESSAGES) {
