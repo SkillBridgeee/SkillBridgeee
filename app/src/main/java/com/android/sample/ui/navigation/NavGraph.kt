@@ -124,7 +124,7 @@ fun AppNavGraph(
     addBookingDetailsRoute(navController, bookingDetailsViewModel, bookingId, profileID)
     addDiscussionRoute(navController, discussionViewModel, convId)
     addToSRoute()
-    addMessagesRoute(convId)
+    addMessagesRoute(navController,convId)
   }
 }
 
@@ -545,6 +545,7 @@ fun NavGraphBuilder.addToSRoute() {
  * @param convId Mutable state containing the current conversation id.
  */
 fun NavGraphBuilder.addMessagesRoute(
+    navController: NavHostController,
     convId: MutableState<String>,
 ) {
   composable(NavRoutes.MESSAGES) {
@@ -557,7 +558,7 @@ fun NavGraphBuilder.addMessagesRoute(
       MessageScreen(
           viewModel = messageViewModel,
           convId = currentConvId,
-          onConversationDeleted = {},
+          onConversationDeleted = {navController.popBackStack()},
       )
     } else {
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
