@@ -215,21 +215,21 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_showsInfoMessageWhenConversationDeleted() = runTest {
-      convRepo.deleteConv(convId)
+    convRepo.deleteConv(convId)
 
-      composeTestRule.setContent {
-          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-      }
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
 
-      val infoText = "This conversation was deleted by the other user."
+    val infoText = "This conversation was deleted by the other user."
 
-      // Wait until the info message appears
-      composeTestRule.waitUntil(timeoutMillis = 2_000) {
-          composeTestRule.onAllNodesWithText(infoText).fetchSemanticsNodes().isNotEmpty()
-      }
+    // Wait until the info message appears
+    composeTestRule.waitUntil(timeoutMillis = 2_000) {
+      composeTestRule.onAllNodesWithText(infoText).fetchSemanticsNodes().isNotEmpty()
+    }
 
-      // Assert that the info message Surface is displayed
-      composeTestRule.onNodeWithText(infoText).assertExists()
+    // Assert that the info message Surface is displayed
+    composeTestRule.onNodeWithText(infoText).assertExists()
   }
 
   @Test

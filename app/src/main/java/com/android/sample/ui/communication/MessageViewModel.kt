@@ -94,13 +94,13 @@ class MessageViewModel(
               _uiState.update { it.copy(partnerName = "User") }
             }
           } else {
-              _uiState.update {
-                  it.copy(
-                      error = null,
-                      infoMessage = "This conversation was deleted by the other user.",
-                      isLoading = false,
-                      messages = emptyList())
-              }
+            _uiState.update {
+              it.copy(
+                  error = null,
+                  infoMessage = "This conversation was deleted by the other user.",
+                  isLoading = false,
+                  messages = emptyList())
+            }
             return@launch
           }
           try {
