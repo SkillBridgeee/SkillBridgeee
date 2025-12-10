@@ -293,7 +293,10 @@ class MessagingE2ETest : E2ETestBase() {
         Log.d(TAG, "✓ Created conversation: $convId")
 
         // Wait for conversation document to be indexed in Firestore
-        E2ETestHelper.waitForDocument("conversations", convId, timeoutMs = 5000L)
+        // Use local val to avoid smart cast issues with captured variable
+        @Suppress("UnnecessaryVariable")
+        val createdConvId = convId
+        E2ETestHelper.waitForDocument("conversations", createdConvId, timeoutMs = 5000L)
         Log.d(TAG, "✓ Conversation indexed in Firestore")
       }
 
