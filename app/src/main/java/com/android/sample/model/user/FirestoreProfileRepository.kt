@@ -2,6 +2,10 @@ package com.android.sample.model.user
 
 import android.content.Context
 import com.android.sample.model.ValidationUtils
+import com.android.sample.model.booking.BookingRepository
+import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.listing.ListingRepository
+import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import com.google.firebase.auth.FirebaseAuth
@@ -14,7 +18,9 @@ const val PROFILES_COLLECTION_PATH = "profiles"
 class FirestoreProfileRepository(
     private val db: FirebaseFirestore,
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val context: Context
+    private val context: Context,
+    private val listingRepo: ListingRepository = ListingRepositoryProvider.repository,
+    private val bookingRepo: BookingRepository = BookingRepositoryProvider.repository
 ) : ProfileRepository {
 
   private companion object {
@@ -245,4 +251,6 @@ class FirestoreProfileRepository(
           "Failed to update student rating for user $userId: ${e.message}", e)
     }
   }
+
+  override suspend fun deleteAccount(userId: String) {}
 }

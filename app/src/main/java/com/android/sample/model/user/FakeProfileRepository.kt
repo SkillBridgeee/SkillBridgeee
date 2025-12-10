@@ -85,6 +85,8 @@ class FakeProfileRepository : ProfileRepository {
     data[userId] = updated
   }
 
+  override suspend fun deleteAccount(userId: String) {}
+
   private fun distanceKm(a: Location, b: Location): Double {
     // Use the actual coordinate property names on Location (latitude / longitude)
     val R = 6371.0
