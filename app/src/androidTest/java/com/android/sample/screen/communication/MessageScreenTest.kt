@@ -15,6 +15,8 @@ import com.android.sample.model.communication.conversation.ConvRepository
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.Message
 import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.user.FakeProfileRepository
+import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
@@ -35,6 +37,8 @@ class MessageScreenTest {
 
   private lateinit var convRepo: ConvRepository
   private lateinit var overViewRepo: OverViewConvRepository
+
+  private lateinit var profileRepository: ProfileRepository
   private lateinit var manager: ConversationManager
   private lateinit var viewModel: MessageViewModel
 
@@ -46,9 +50,11 @@ class MessageScreenTest {
   fun setup() {
     convRepo = FakeConvRepo()
     overViewRepo = FakeOverViewRepo()
+    profileRepository = FakeProfileRepository()
+
     manager = ConversationManager(convRepo, overViewRepo)
 
-    viewModel = MessageViewModel(manager)
+    viewModel = MessageViewModel(manager, profileRepository)
 
     UserSessionManager.setCurrentUserId(userA)
 
