@@ -13,7 +13,7 @@ interface ConversationManagerInter {
       convName: String
   ): String
 
-  suspend fun deleteConvAndOverviews(convId: String)
+  suspend fun deleteConvAndOverviews(convId: String, deleterId: String, otherId: String)
 
   suspend fun sendMessage(convId: String, message: Message)
 
