@@ -240,7 +240,6 @@ fun AppNavGraph(
         }
     composable(route = NavRoutes.OTHERS_PROFILE) {
       LaunchedEffect(Unit) { RouteStackManager.addRoute(NavRoutes.OTHERS_PROFILE) }
-      // todo add other parameters
       ProfileScreen(
           profileId = profileID.value,
           onProposalClick = { listingId -> navigateToListing(navController, listingId) },
