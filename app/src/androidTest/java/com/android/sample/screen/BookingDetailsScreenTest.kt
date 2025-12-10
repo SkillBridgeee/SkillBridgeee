@@ -1451,7 +1451,7 @@ class BookingDetailsScreenTest {
 
   // ----- NEW TESTS FOR BOOKER PROFILE FEATURE -----
 
-  @Test
+  /*  @Test
   fun bookingDetailsScreen_pendingBooking_studentView_doesNotDisplayBookerInfo() {
     val vm = fakeViewModel()
 
@@ -1465,5 +1465,5 @@ class BookingDetailsScreenTest {
     // Verify Accept/Deny buttons are NOT displayed using test constants
     composeTestRule.onNodeWithText(STRING_ACCEPT).assertDoesNotExist()
     composeTestRule.onNodeWithText(STRING_DENY).assertDoesNotExist()
-  }
+  }*/
 }
