@@ -32,8 +32,7 @@ import kotlinx.coroutines.withTimeout
 object E2ETestHelper {
 
   /**
-   * Initializes all repositories required for E2E tests.
-   * Should be called in @Before setup method.
+   * Initializes all repositories required for E2E tests. Should be called in @Before setup method.
    *
    * @param context The application context
    */
@@ -68,16 +67,16 @@ object E2ETestHelper {
       hourlyRate: Double = 40.0
   ): String {
     val listingId = ListingRepositoryProvider.repository.getNewUid()
-    val proposal = Proposal(
-        listingId = listingId,
-        creatorUserId = creatorUserId,
-        skill = skill,
-        title = title,
-        description = description,
-        location = Location(latitude = 46.5197, longitude = 6.6323),
-        hourlyRate = hourlyRate,
-        isActive = true
-    )
+    val proposal =
+        Proposal(
+            listingId = listingId,
+            creatorUserId = creatorUserId,
+            skill = skill,
+            title = title,
+            description = description,
+            location = Location(latitude = 46.5197, longitude = 6.6323),
+            hourlyRate = hourlyRate,
+            isActive = true)
     ListingRepositoryProvider.repository.addProposal(proposal)
     waitForDocument("listings", listingId, timeoutMs = 5000L)
     return listingId
@@ -96,15 +95,12 @@ object E2ETestHelper {
       otherUserId: String,
       convName: String
   ): String {
-    val conversationManager = ConversationManager(
-        convRepo = ConversationRepositoryProvider.repository,
-        overViewRepo = OverViewConvRepositoryProvider.repository
-    )
+    val conversationManager =
+        ConversationManager(
+            convRepo = ConversationRepositoryProvider.repository,
+            overViewRepo = OverViewConvRepositoryProvider.repository)
     return conversationManager.createConvAndOverviews(
-        creatorId = creatorId,
-        otherUserId = otherUserId,
-        convName = convName
-    )
+        creatorId = creatorId, otherUserId = otherUserId, convName = convName)
   }
 
   /**

@@ -47,8 +47,8 @@ import org.junit.runner.RunWith
  * 7. Send a message and verify it appears
  * 8. Verify real-time message delivery
  *
- * Uses E2ETestBase for student authentication flow.
- * Uses E2ETestHelper for programmatic tutor creation.
+ * Uses E2ETestBase for student authentication flow. Uses E2ETestHelper for programmatic tutor
+ * creation.
  */
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -70,9 +70,7 @@ class MessagingE2ETest : E2ETestBase() {
   // Helper Functions to Reduce Duplication
   // ═══════════════════════════════════════════════════════════
 
-  /**
-   * Navigates to the Discussion screen via the top app bar messages icon.
-   */
+  /** Navigates to the Discussion screen via the top app bar messages icon. */
   private suspend fun navigateToDiscussionScreen() {
     composeTestRule.waitUntil(timeoutMillis = 5000) {
       try {
@@ -94,14 +92,13 @@ class MessagingE2ETest : E2ETestBase() {
     composeTestRule.waitForIdle()
   }
 
-  /**
-   * Waits for the discussion loading indicator to disappear.
-   */
+  /** Waits for the discussion loading indicator to disappear. */
   private fun waitForDiscussionLoading() {
-    val isLoading = composeTestRule
-        .onAllNodesWithTag("discussion_loading_indicator", useUnmergedTree = true)
-        .fetchSemanticsNodes()
-        .isNotEmpty()
+    val isLoading =
+        composeTestRule
+            .onAllNodesWithTag("discussion_loading_indicator", useUnmergedTree = true)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
 
     if (isLoading) {
       Log.d(TAG, "→ Waiting for loading to complete...")
@@ -116,6 +113,7 @@ class MessagingE2ETest : E2ETestBase() {
 
   /**
    * Checks if the screen shows an authentication error.
+   *
    * @return true if auth error is present
    */
   private fun hasAuthenticationError(): Boolean {
@@ -127,9 +125,7 @@ class MessagingE2ETest : E2ETestBase() {
         .isNotEmpty()
   }
 
-  /**
-   * Throws an assertion error if authentication error is displayed.
-   */
+  /** Throws an assertion error if authentication error is displayed. */
   private fun assertNoAuthenticationError() {
     if (hasAuthenticationError()) {
       throw AssertionError(
@@ -219,8 +215,7 @@ class MessagingE2ETest : E2ETestBase() {
 
       tutorUser = createAndAuthenticateGoogleUser(tutorEmail, "Alice Tutor")
       tutorUser?.let { tutor ->
-        createTestProfile(
-            userId = tutor.uid, email = tutorEmail, name = "Alice", surname = "Tutor")
+        createTestProfile(userId = tutor.uid, email = tutorEmail, name = "Alice", surname = "Tutor")
 
         try {
           tutor.sendEmailVerification().await()
@@ -230,12 +225,13 @@ class MessagingE2ETest : E2ETestBase() {
         }
 
         // Create a listing for the tutor using helper function
-        createdListingId = createTestListing(
-            creatorUserId = tutor.uid,
-            skill = Skill(mainSubject = MainSubject.ACADEMICS, skill = AcademicSkills.PHYSICS.name),
-            title = "Physics Tutoring",
-            description = "Expert help in quantum mechanics and thermodynamics"
-        )
+        createdListingId =
+            createTestListing(
+                creatorUserId = tutor.uid,
+                skill =
+                    Skill(mainSubject = MainSubject.ACADEMICS, skill = AcademicSkills.PHYSICS.name),
+                title = "Physics Tutoring",
+                description = "Expert help in quantum mechanics and thermodynamics")
         Log.d(TAG, "✓ Created tutor user: ${tutor.uid}")
         Log.d(TAG, "✓ Created listing: $createdListingId")
       }
@@ -285,11 +281,11 @@ class MessagingE2ETest : E2ETestBase() {
         Log.d(TAG, "✓ Created booking: $bookingId")
 
         // Create conversation between student and tutor using helper function
-        convId = createTestConversation(
-            creatorId = student.uid,
-            otherUserId = tutorUser!!.uid,
-            convName = "Physics Tutoring Chat"
-        )
+        convId =
+            createTestConversation(
+                creatorId = student.uid,
+                otherUserId = tutorUser!!.uid,
+                convName = "Physics Tutoring Chat")
         Log.d(TAG, "✓ Created conversation: $convId")
 
         // Wait for conversation document to be indexed in Firestore
@@ -344,26 +340,28 @@ class MessagingE2ETest : E2ETestBase() {
       Log.d(TAG, "→ Checking what's visible on screen...")
 
       // Check for specific texts that should appear
-      val textsToCheck = mapOf(
-          "Alice" to "tutor name",
-          "Tutor" to "tutor surname",
-          "Unknown" to "fallback name",
-          "Physics" to "conversation/listing name",
-          "Chat" to "conversation name",
-          "No conversations" to "empty state",
-          "error" to "error message",
-          "authenticated" to "auth error"
-      )
+      val textsToCheck =
+          mapOf(
+              "Alice" to "tutor name",
+              "Tutor" to "tutor surname",
+              "Unknown" to "fallback name",
+              "Physics" to "conversation/listing name",
+              "Chat" to "conversation name",
+              "No conversations" to "empty state",
+              "error" to "error message",
+              "authenticated" to "auth error")
 
       for ((text, description) in textsToCheck) {
         try {
-          val count = composeTestRule
-              .onAllNodes(hasText(text, substring = true, ignoreCase = true))
-              .fetchSemanticsNodes()
-              .size
+          val count =
+              composeTestRule
+                  .onAllNodes(hasText(text, substring = true, ignoreCase = true))
+                  .fetchSemanticsNodes()
+                  .size
           if (count > 0) {
             Log.d(TAG, "→ Found '$text' ($description): $count nodes")
-            if (textToClick == null && text !in listOf("No conversations", "error", "authenticated")) {
+            if (textToClick == null &&
+                text !in listOf("No conversations", "error", "authenticated")) {
               textToClick = text
               conversationFound = true
             }
@@ -371,13 +369,12 @@ class MessagingE2ETest : E2ETestBase() {
         } catch (_: Exception) {}
       }
 
-      // If we still haven't found anything, try getting the first initial letter (avatar shows first letter)
+      // If we still haven't found anything, try getting the first initial letter (avatar shows
+      // first letter)
       if (!conversationFound) {
         // The avatar shows the first letter of the name, try "A" for Alice
         try {
-          val avatarNodes = composeTestRule
-              .onAllNodes(hasText("A"))
-              .fetchSemanticsNodes()
+          val avatarNodes = composeTestRule.onAllNodes(hasText("A")).fetchSemanticsNodes()
           if (avatarNodes.isNotEmpty()) {
             Log.d(TAG, "→ Found avatar with 'A': ${avatarNodes.size} nodes")
             // Can't click just "A", need to find the row
@@ -387,7 +384,9 @@ class MessagingE2ETest : E2ETestBase() {
 
       if (!conversationFound) {
         Log.w(TAG, "→ No conversation content found on screen")
-        Log.w(TAG, "→ The conversation may not have been created properly or the ViewModel didn't refresh")
+        Log.w(
+            TAG,
+            "→ The conversation may not have been created properly or the ViewModel didn't refresh")
       } else {
         Log.d(TAG, "✓ Found conversation text: '$textToClick'")
       }
@@ -414,9 +413,7 @@ class MessagingE2ETest : E2ETestBase() {
           // Try clicking using test tag as fallback
           try {
             convId?.let { id ->
-              composeTestRule
-                  .onNodeWithTag("conversation_item_$id")
-                  .performClick()
+              composeTestRule.onNodeWithTag("conversation_item_$id").performClick()
               delay(2000)
               composeTestRule.waitForIdle()
               Log.d(TAG, "✓ Clicked using test tag")
@@ -428,21 +425,22 @@ class MessagingE2ETest : E2ETestBase() {
 
         // Verify we're on the Messages screen by checking for message input
         delay(1000)
-        val isOnMessagesScreen = try {
-          composeTestRule
-              .onAllNodes(hasText("Type a message", substring = true, ignoreCase = true))
-              .fetchSemanticsNodes()
-              .isNotEmpty()
-        } catch (_: Exception) { false }
+        val isOnMessagesScreen =
+            try {
+              composeTestRule
+                  .onAllNodes(hasText("Type a message", substring = true, ignoreCase = true))
+                  .fetchSemanticsNodes()
+                  .isNotEmpty()
+            } catch (_: Exception) {
+              false
+            }
 
         Log.d(TAG, "→ On Messages screen: $isOnMessagesScreen")
       } else if (convId != null) {
         // Even if we didn't find the text, try clicking using the test tag
         Log.d(TAG, "→ Trying to click using test tag since text search failed...")
         try {
-          composeTestRule
-              .onNodeWithTag("conversation_item_$convId")
-              .performClick()
+          composeTestRule.onNodeWithTag("conversation_item_$convId").performClick()
           delay(2000)
           composeTestRule.waitForIdle()
           Log.d(TAG, "✓ Clicked using test tag")
@@ -467,26 +465,19 @@ class MessagingE2ETest : E2ETestBase() {
           // Look for the message input field - it's an OutlinedTextField
           // We need to find a node that has SetText action (editable text field)
           val hasMessageInput =
-              composeTestRule
-                  .onAllNodes(hasSetTextAction())
-                  .fetchSemanticsNodes()
-                  .isNotEmpty()
+              composeTestRule.onAllNodes(hasSetTextAction()).fetchSemanticsNodes().isNotEmpty()
 
           if (hasMessageInput) {
             Log.d(TAG, "✓ Message input field found")
 
             // Click and type into the editable text field
-            composeTestRule
-                .onNode(hasSetTextAction())
-                .performClick()
+            composeTestRule.onNode(hasSetTextAction()).performClick()
 
             delay(500)
             composeTestRule.waitForIdle()
 
             // Now perform text input
-            composeTestRule
-                .onNode(hasSetTextAction())
-                .performTextInput(TEST_MESSAGE)
+            composeTestRule.onNode(hasSetTextAction()).performTextInput(TEST_MESSAGE)
 
             delay(500)
             composeTestRule.waitForIdle()
@@ -565,7 +556,8 @@ class MessagingE2ETest : E2ETestBase() {
 
       val hasNoConversations =
           try {
-            // Check if any conversation items exist by looking for test tags that start with conversation_item_
+            // Check if any conversation items exist by looking for test tags that start with
+            // conversation_item_
             composeTestRule
                 .onAllNodes(
                     hasText("Unknown", substring = true, ignoreCase = true).not(),
