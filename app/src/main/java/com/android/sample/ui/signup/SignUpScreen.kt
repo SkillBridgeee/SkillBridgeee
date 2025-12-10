@@ -33,6 +33,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.ui.components.EllipsizingTextField
 import com.android.sample.ui.components.EllipsizingTextFieldStyle
@@ -92,10 +94,30 @@ fun SignUpScreen(
     }
   }
 
-  // Note: We don't use DisposableEffect here because it would trigger when navigating
-  // to child screens like ToS, which would incorrectly sign out Google users.
-  // The BackHandler above handles the back button case, and cleanup happens
-  // in the navigation callbacks when the user truly leaves the sign-up flow.
+  // Use lifecycle observer to handle cleanup when nav entry is destroyed
+  val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+  DisposableEffect(lifecycleOwner) {
+    val observer = LifecycleEventObserver { _, event ->
+      if (event == Lifecycle.Event.ON_DESTROY) {
+        val currentState = state
+        android.util.Log.d(
+            "SignUpScreen",
+            "Lifecycle ON_DESTROY - submitSuccess: ${currentState.submitSuccess}, verificationEmailSent: ${currentState.verificationEmailSent}")
+        // Don't sign out if sign-up was successful or verification email was sent
+        if (!currentState.submitSuccess && !currentState.verificationEmailSent) {
+          android.util.Log.d("SignUpScreen", "Calling onSignUpAbandoned from lifecycle observer")
+          vm.onSignUpAbandoned()
+        } else {
+          android.util.Log.d(
+              "SignUpScreen", "NOT calling onSignUpAbandoned - sign-up was completed")
+        }
+      }
+    }
+
+    lifecycleOwner.lifecycle.addObserver(observer)
+
+    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+  }
 
   val scrollState = rememberScrollState()
 
