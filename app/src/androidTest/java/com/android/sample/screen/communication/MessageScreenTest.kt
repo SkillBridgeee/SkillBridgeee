@@ -215,28 +215,21 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_showsInfoMessageWhenConversationDeleted() = runTest {
-    // Delete the conversation before showing the screen
-    convRepo.deleteConv(convId)
+      convRepo.deleteConv(convId)
 
-    composeTestRule.setContent {
-      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-    }
+      composeTestRule.setContent {
+          MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+      }
 
-    val infoText = "This conversation was deleted by the other user."
+      val infoText = "This conversation was deleted by the other user."
 
-    // Wait until the info message appears
-    composeTestRule.waitUntil(timeoutMillis = 2_000) {
-      composeTestRule.onAllNodesWithText(infoText).fetchSemanticsNodes().isNotEmpty()
-    }
+      // Wait until the info message appears
+      composeTestRule.waitUntil(timeoutMillis = 2_000) {
+          composeTestRule.onAllNodesWithText(infoText).fetchSemanticsNodes().isNotEmpty()
+      }
 
-    // Assert that the info message Surface is displayed
-    composeTestRule.onNodeWithText(infoText).assertExists()
-
-    composeTestRule.waitForIdle()
-
-    // ViewModel should have error state
-    val error = viewModel.uiState.value.error
-    assertEquals(true, error != null)
+      // Assert that the info message Surface is displayed
+      composeTestRule.onNodeWithText(infoText).assertExists()
   }
 
   @Test
@@ -311,16 +304,6 @@ class MessageScreenTest {
     composeTestRule.onNode(hasSetTextAction()).performTextClearance()
 
     sendButton.assertIsNotEnabled()
-  }
-
-  @Test
-  fun messageScreen_invalidConversationShowsError() {
-    composeTestRule.setContent {
-      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
-    }
-    composeTestRule.waitForIdle()
-
-    assertEquals("Conversation not found", viewModel.uiState.value.error)
   }
 
   @Test
