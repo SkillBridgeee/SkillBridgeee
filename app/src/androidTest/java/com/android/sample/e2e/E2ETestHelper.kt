@@ -1,10 +1,19 @@
 package com.android.sample.e2e
 
+import android.content.Context
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.sample.model.booking.BookingRepositoryProvider
+import com.android.sample.model.communication.ConversationManager
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
+import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -21,6 +30,82 @@ import kotlinx.coroutines.withTimeout
  * for authentication, user management, and test setup.
  */
 object E2ETestHelper {
+
+  /**
+   * Initializes all repositories required for E2E tests.
+   * Should be called in @Before setup method.
+   *
+   * @param context The application context
+   */
+  fun initializeRepositories(context: Context) {
+    try {
+      ProfileRepositoryProvider.init(context)
+      ListingRepositoryProvider.init(context)
+      BookingRepositoryProvider.init(context)
+      RatingRepositoryProvider.init(context)
+      OverViewConvRepositoryProvider.init(context)
+      ConversationRepositoryProvider.init(context)
+    } catch (_: Exception) {
+      // Repository initialization may fail if already initialized
+    }
+  }
+
+  /**
+   * Creates a test listing (Proposal) in Firestore.
+   *
+   * @param creatorUserId The user ID of the listing creator
+   * @param skill The skill for the listing
+   * @param title The listing title
+   * @param description The listing description
+   * @param hourlyRate The hourly rate (default: 40.0)
+   * @return The created listing ID
+   */
+  suspend fun createTestListing(
+      creatorUserId: String,
+      skill: Skill,
+      title: String,
+      description: String,
+      hourlyRate: Double = 40.0
+  ): String {
+    val listingId = ListingRepositoryProvider.repository.getNewUid()
+    val proposal = Proposal(
+        listingId = listingId,
+        creatorUserId = creatorUserId,
+        skill = skill,
+        title = title,
+        description = description,
+        location = Location(latitude = 46.5197, longitude = 6.6323),
+        hourlyRate = hourlyRate,
+        isActive = true
+    )
+    ListingRepositoryProvider.repository.addProposal(proposal)
+    waitForDocument("listings", listingId, timeoutMs = 5000L)
+    return listingId
+  }
+
+  /**
+   * Creates a conversation between two users using ConversationManager.
+   *
+   * @param creatorId The user ID of the conversation creator
+   * @param otherUserId The user ID of the other participant
+   * @param convName The name of the conversation
+   * @return The created conversation ID
+   */
+  suspend fun createTestConversation(
+      creatorId: String,
+      otherUserId: String,
+      convName: String
+  ): String {
+    val conversationManager = ConversationManager(
+        convRepo = ConversationRepositoryProvider.repository,
+        overViewRepo = OverViewConvRepositoryProvider.repository
+    )
+    return conversationManager.createConvAndOverviews(
+        creatorId = creatorId,
+        otherUserId = otherUserId,
+        convName = convName
+    )
+  }
 
   /**
    * Creates a test profile for a user in Firestore. This simulates an existing user who has already
