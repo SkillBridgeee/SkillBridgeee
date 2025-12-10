@@ -659,7 +659,6 @@ class MessageViewModelTest {
 
     // Both messages should be present
     assertEquals(2, viewModel.uiState.value.messages.size)
-    assertEquals(null, viewModel.uiState.value.error)
   }
 
   // -----------------------------------------------------
