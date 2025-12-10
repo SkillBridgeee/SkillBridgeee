@@ -71,7 +71,6 @@ class MessageViewModel(
             return@launch
           }
 
-
           val conversation = convManager.getConv(convId)
           if (conversation != null) {
             otherId =
@@ -80,12 +79,10 @@ class MessageViewModel(
 
             val partner = profileRepository.getProfile(otherId!!)
             _uiState.update { it.copy(partnerName = partner?.name ?: "User") }
+          } else {
+            _uiState.update { it.copy(error = convNotFoundError) }
+            return@launch
           }
-            else{
-                _uiState.update { it.copy(error = convNotFoundError) }
-                return@launch
-              }
-
 
           convManager
               .listenMessages(convId)

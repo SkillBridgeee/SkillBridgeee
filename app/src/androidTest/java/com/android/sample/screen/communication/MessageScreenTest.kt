@@ -15,7 +15,6 @@ import com.android.sample.model.communication.conversation.ConvRepository
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.Message
 import com.android.sample.model.communication.overViewConv.OverViewConvRepository
-import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
