@@ -162,6 +162,15 @@ class MessageViewModel(
     }
   }
 
+  fun onScreenLeft() {
+    cleanup()
+  }
+
+  override fun onCleared() {
+    super.onCleared()
+    cleanup()
+  }
+
   /** Updates the text for the new message being composed. */
   fun onMessageChange(newMessage: String) {
     _uiState.update { it.copy(currentMessage = newMessage) }
@@ -198,5 +207,16 @@ class MessageViewModel(
   /** Resets the deletion flag after the conversation has been handled. */
   fun resetDeletionFlag() {
     _uiState.update { it.copy(isDeleted = false) }
+  }
+
+  /** Cancel the laodJob and reset the number of unread messages of the user * */
+  fun cleanup() {
+    loadJob?.cancel()
+    loadJob = null
+
+    val convId = currentConvId ?: return
+    val userId = currentUserId ?: return
+
+    viewModelScope.launch { convManager.resetUnreadCount(convId = convId, userId = userId) }
   }
 }
