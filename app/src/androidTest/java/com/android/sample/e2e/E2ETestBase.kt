@@ -203,10 +203,7 @@ abstract class E2ETestBase {
 
     composeTestRule.waitForIdle()
 
-    // Get the signed-in user
-    testUser = FirebaseAuth.getInstance().currentUser
-
-    // Wait for Home Screen
+    // Wait for Home Screen first
     composeTestRule.waitUntil(timeoutMillis = 15_000L) {
       try {
         composeTestRule
@@ -222,6 +219,23 @@ abstract class E2ETestBase {
         .onNodeWithTag(BottomBarTestTag.NAV_HOME)
         .assertExists("Home button should exist")
         .assertIsDisplayed()
+
+    // Get the signed-in user with retry mechanism
+    // Firebase authentication might take a moment to complete even after UI navigation
+    var retries = 0
+    val maxRetries = 10
+    while (testUser == null && retries < maxRetries) {
+      testUser = FirebaseAuth.getInstance().currentUser
+      if (testUser == null) {
+        kotlinx.coroutines.delay(500) // Wait 500ms between retries
+        retries++
+      }
+    }
+
+    if (testUser == null) {
+      throw AssertionError(
+          "Failed to get authenticated user after sign-in. FirebaseAuth.currentUser is null after $maxRetries retries.")
+    }
 
     return testUser!!
   }
