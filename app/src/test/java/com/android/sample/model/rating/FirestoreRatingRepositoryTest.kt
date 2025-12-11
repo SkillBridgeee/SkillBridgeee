@@ -471,15 +471,14 @@ class FirestoreRatingRepositoryTest : RepositoryTest() {
 
   @Test
   fun delete_rating() = runTest {
-    // Make sure collection is empty or contains only non-matching ratings
     val rating1 =
         Rating(
-            ratingId = "rating-has-2",
-            fromUserId = testUserId,
-            toUserId = otherUserId,
+            ratingId = "rating1",
+            fromUserId = otherUserId,
+            toUserId = testUserId,
             starRating = StarRating.THREE,
             comment = "Irrelevant",
-            ratingType = RatingType.TUTOR,
+            ratingType = RatingType.LISTING,
             targetObjectId = "some-other-listing",
         )
 
@@ -487,17 +486,17 @@ class FirestoreRatingRepositoryTest : RepositoryTest() {
 
     val rating2 =
         Rating(
-            ratingId = "rating-has-2",
+            ratingId = "rating2",
             fromUserId = testUserId,
             toUserId = otherUserId,
             starRating = StarRating.THREE,
-            comment = "Irrelevant",
-            ratingType = RatingType.TUTOR,
-            targetObjectId = "some-other-listing",
+            comment = "Irrelevan1t",
+            ratingType = RatingType.LISTING,
+            targetObjectId = "some-other-listing1",
         )
     firestore.collection(RATINGS_COLLECTION_PATH).document(rating2.ratingId).set(rating2).await()
 
-    ratingRepository.deleteRating(testUserId)
+    ratingRepository.deleteAllRatingOfUser(testUserId)
 
     val ratingListFrom = ratingRepository.getRatingsByFromUser(testUserId)
     val ratingListTo = ratingRepository.getRatingsByToUser(testUserId)
