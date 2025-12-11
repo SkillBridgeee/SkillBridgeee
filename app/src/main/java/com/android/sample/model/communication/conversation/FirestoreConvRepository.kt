@@ -123,7 +123,7 @@ class FirestoreConvRepository(
 
     messagesRef.document(message.msgId).set(message).await()
 
-    convRef.update("updatedAt", message.createdAt)
+    convRef.update("updatedAt", message.createdAt).await()
   }
 
   /**
