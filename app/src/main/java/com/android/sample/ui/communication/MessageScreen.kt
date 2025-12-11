@@ -16,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.communication.conversation.Message
 
@@ -98,7 +99,8 @@ fun MessageScreen(
             }
           } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                modifier =
+                    Modifier.fillMaxSize().padding(horizontal = 8.dp).testTag("message_list"),
                 reverseLayout = true // Shows latest messages at the bottom
                 ) {
                   items(uiState.messages.reversed()) { message ->
