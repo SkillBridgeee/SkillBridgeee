@@ -1,6 +1,7 @@
 package com.android.sample.e2e
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -31,33 +32,55 @@ import kotlinx.coroutines.withTimeout
  */
 object E2ETestHelper {
 
+  private const val TAG = "E2ETestHelper"
+
   /**
    * Initializes all repositories required for E2E tests. Should be called in @Before setup method.
+   * Only catches IllegalStateException for "already initialized" cases.
    *
    * @param context The application context
+   * @throws Exception if initialization fails for reasons other than already being initialized
    */
   fun initializeRepositories(context: Context) {
+    initializeRepository("ProfileRepository") { ProfileRepositoryProvider.init(context) }
+    initializeRepository("ListingRepository") { ListingRepositoryProvider.init(context) }
+    initializeRepository("BookingRepository") { BookingRepositoryProvider.init(context) }
+    initializeRepository("RatingRepository") { RatingRepositoryProvider.init(context) }
+    initializeRepository("OverViewConvRepository") { OverViewConvRepositoryProvider.init(context) }
+    initializeRepository("ConversationRepository") { ConversationRepositoryProvider.init(context) }
+  }
+
+  /** Helper to initialize a single repository, catching only "already initialized" exceptions. */
+  private fun initializeRepository(name: String, init: () -> Unit) {
     try {
-      ProfileRepositoryProvider.init(context)
-      ListingRepositoryProvider.init(context)
-      BookingRepositoryProvider.init(context)
-      RatingRepositoryProvider.init(context)
-      OverViewConvRepositoryProvider.init(context)
-      ConversationRepositoryProvider.init(context)
-    } catch (_: Exception) {
-      // Repository initialization may fail if already initialized
+      init()
+    } catch (e: IllegalStateException) {
+      // Expected if already initialized - safe to ignore
+      Log.d(TAG, "$name already initialized")
+    } catch (e: Exception) {
+      Log.e(TAG, "Failed to initialize $name", e)
+      throw e
     }
   }
 
   /**
+   * Data class to hold the result of creating a test listing.
+   *
+   * @param listingId The ID of the created listing
+   * @param proposal The created Proposal object
+   */
+  data class TestListingResult(val listingId: String, val proposal: Proposal)
+
+  /**
    * Creates a test listing (Proposal) in Firestore.
    *
-   * @param creatorUserId The user ID of the listing creator
+   * @param creatorUserId The user ID of the listing creator (must not be blank)
    * @param skill The skill for the listing
-   * @param title The listing title
-   * @param description The listing description
+   * @param title The listing title (must not be blank)
+   * @param description The listing description (must not be blank)
    * @param hourlyRate The hourly rate (default: 40.0)
-   * @return The created listing ID
+   * @return TestListingResult containing both the listing ID and the created Proposal
+   * @throws IllegalArgumentException if required parameters are blank
    */
   suspend fun createTestListing(
       creatorUserId: String,
@@ -66,6 +89,11 @@ object E2ETestHelper {
       description: String,
       hourlyRate: Double = 40.0
   ): String {
+    // Validate parameters
+    require(creatorUserId.isNotBlank()) { "creatorUserId must not be blank" }
+    require(title.isNotBlank()) { "title must not be blank" }
+    require(description.isNotBlank()) { "description must not be blank" }
+
     val listingId = ListingRepositoryProvider.repository.getNewUid()
     val proposal =
         Proposal(
@@ -83,24 +111,100 @@ object E2ETestHelper {
   }
 
   /**
+   * Creates a test listing and returns both the ID and the Proposal object. Use this when you need
+   * to inspect the created data in assertions.
+   *
+   * @param creatorUserId The user ID of the listing creator (must not be blank)
+   * @param skill The skill for the listing
+   * @param title The listing title (must not be blank)
+   * @param description The listing description (must not be blank)
+   * @param hourlyRate The hourly rate (default: 40.0)
+   * @return TestListingResult containing both the listing ID and the created Proposal
+   * @throws IllegalArgumentException if required parameters are blank
+   */
+  suspend fun createTestListingWithResult(
+      creatorUserId: String,
+      skill: Skill,
+      title: String,
+      description: String,
+      hourlyRate: Double = 40.0
+  ): TestListingResult {
+    require(creatorUserId.isNotBlank()) { "creatorUserId must not be blank" }
+    require(title.isNotBlank()) { "title must not be blank" }
+    require(description.isNotBlank()) { "description must not be blank" }
+
+    val listingId = ListingRepositoryProvider.repository.getNewUid()
+    val proposal =
+        Proposal(
+            listingId = listingId,
+            creatorUserId = creatorUserId,
+            skill = skill,
+            title = title,
+            description = description,
+            location = Location(latitude = 46.5197, longitude = 6.6323),
+            hourlyRate = hourlyRate,
+            isActive = true)
+    ListingRepositoryProvider.repository.addProposal(proposal)
+    waitForDocument("listings", listingId, timeoutMs = 5000L)
+    return TestListingResult(listingId, proposal)
+  }
+
+  /**
+   * Deletes a test listing from Firestore.
+   *
+   * @param listingId The ID of the listing to delete
+   */
+  suspend fun deleteTestListing(listingId: String) {
+    try {
+      ListingRepositoryProvider.repository.deleteListing(listingId)
+      Log.d(TAG, "Deleted test listing: $listingId")
+    } catch (e: Exception) {
+      Log.w(TAG, "Could not delete test listing $listingId: ${e.message}")
+    }
+  }
+
+  /**
    * Creates a conversation between two users using ConversationManager.
    *
-   * @param creatorId The user ID of the conversation creator
-   * @param otherUserId The user ID of the other participant
-   * @param convName The name of the conversation
+   * @param creatorId The user ID of the conversation creator (must not be blank)
+   * @param otherUserId The user ID of the other participant (must not be blank)
+   * @param convName The name of the conversation (must not be blank)
    * @return The created conversation ID
+   * @throws IllegalArgumentException if required parameters are blank
    */
   suspend fun createTestConversation(
       creatorId: String,
       otherUserId: String,
       convName: String
   ): String {
+    require(creatorId.isNotBlank()) { "creatorId must not be blank" }
+    require(otherUserId.isNotBlank()) { "otherUserId must not be blank" }
+    require(convName.isNotBlank()) { "convName must not be blank" }
+
     val conversationManager =
         ConversationManager(
             convRepo = ConversationRepositoryProvider.repository,
             overViewRepo = OverViewConvRepositoryProvider.repository)
     return conversationManager.createConvAndOverviews(
         creatorId = creatorId, otherUserId = otherUserId, convName = convName)
+  }
+
+  /**
+   * Deletes a test conversation and its associated overview entries from Firestore.
+   *
+   * @param convId The ID of the conversation to delete
+   */
+  suspend fun deleteTestConversation(convId: String) {
+    try {
+      val conversationManager =
+          ConversationManager(
+              convRepo = ConversationRepositoryProvider.repository,
+              overViewRepo = OverViewConvRepositoryProvider.repository)
+      conversationManager.deleteConvAndOverviews(convId)
+      Log.d(TAG, "Deleted test conversation: $convId")
+    } catch (e: Exception) {
+      Log.w(TAG, "Could not delete test conversation $convId: ${e.message}")
+    }
   }
 
   /**
