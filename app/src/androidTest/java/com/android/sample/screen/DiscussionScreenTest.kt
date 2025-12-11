@@ -255,10 +255,6 @@ class DiscussionScreenTest {
       TODO("Not yet implemented")
     }
 
-    override suspend fun deleteAccount(userId: String) {
-      TODO("Not yet implemented")
-    }
-
     override fun getNewUid(): String = "fake-profile-uid"
 
     override fun getCurrentUserId(): String = "fake-current-user-id"

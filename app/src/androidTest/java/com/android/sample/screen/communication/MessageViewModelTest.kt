@@ -785,10 +785,6 @@ class FakeProfileRepository : ProfileRepository {
       averageRating: Double,
       totalRatings: Int
   ) {}
-
-  override suspend fun deleteAccount(userId: String) {
-    TODO("Not yet implemented")
-  }
 }
 
 class FakeConvRepo : ConvRepository {

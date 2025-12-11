@@ -260,10 +260,6 @@ class BookingDetailsScreenTest {
         ) {
           // no-op
         }
-
-        override suspend fun deleteAccount(userId: String) {
-          TODO("Not yet implemented")
-        }
       }
 
   private fun fakeViewModel() =
@@ -367,10 +363,6 @@ class BookingDetailsScreenTest {
             totalRatings: Int
         ) {
           throw IllegalStateException("test")
-        }
-
-        override suspend fun deleteAccount(userId: String) {
-          TODO("Not yet implemented")
         }
       }
 

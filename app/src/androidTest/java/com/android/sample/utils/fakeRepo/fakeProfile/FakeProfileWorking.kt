@@ -111,8 +111,4 @@ class FakeProfileWorking : FakeProfileRepo {
       profiles[index] = p.copy(studentRating = RatingInfo(averageRating, totalRatings))
     }
   }
-
-  override suspend fun deleteAccount(userId: String) {
-    TODO("Not yet implemented")
-  }
 }

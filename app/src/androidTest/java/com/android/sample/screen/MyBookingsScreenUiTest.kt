@@ -173,10 +173,6 @@ class MyBookingsScreenUiTest {
                 ) {
                   TODO("Not yet implemented")
                 }
-
-                override suspend fun deleteAccount(userId: String) {
-                  TODO("Not yet implemented")
-                }
               })
 
   @Test
@@ -282,10 +278,6 @@ class MyBookingsScreenUiTest {
               averageRating: Double,
               totalRatings: Int
           ) {
-            TODO("Not yet implemented")
-          }
-
-          override suspend fun deleteAccount(userId: String) {
             TODO("Not yet implemented")
           }
         }

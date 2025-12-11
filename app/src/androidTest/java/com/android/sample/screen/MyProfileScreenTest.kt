@@ -124,10 +124,6 @@ class MyProfileScreenTest {
     ) {
       // no-op
     }
-
-    override suspend fun deleteAccount(userId: String) {
-      TODO("Not yet implemented")
-    }
   }
 
   // Minimal Fake ListingRepository to avoid initializing real Firebase/Firestore in tests

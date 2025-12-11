@@ -245,8 +245,4 @@ class FirestoreProfileRepository(
           "Failed to update student rating for user $userId: ${e.message}", e)
     }
   }
-
-  override suspend fun deleteAccount(userId: String) {
-    deleteProfile(userId)
-  }
 }
