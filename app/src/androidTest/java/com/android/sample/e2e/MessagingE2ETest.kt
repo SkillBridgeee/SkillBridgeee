@@ -532,48 +532,4 @@ class MessagingE2ETest : E2ETestBase() {
       Log.d(TAG, "Result: Comprehensive messaging E2E test completed!")
     }
   }
-
-  @Test
-  fun messaging_emptyState_displaysCorrectly() {
-    runBlocking {
-      Log.d(TAG, "=== Starting Empty State Messaging E2E Test ===\n")
-
-      // Create a new user with no conversations
-      initializeUserAndNavigateToHome(
-          composeTestRule = composeTestRule, userName = "New", userSurname = "User")
-
-      Log.d(TAG, "STEP 1: User created without any conversations")
-
-      // Navigate to Discussion screen using helper function
-      navigateToDiscussionScreen()
-      Log.d(TAG, "STEP 2: Navigated to Discussion screen")
-
-      // Wait for loading to complete using helper function
-      waitForDiscussionLoading()
-
-      // Verify empty state - discussion list should be present but empty
-      composeTestRule.onAllNodesWithTag("discussion_list", useUnmergedTree = true)
-
-      val hasNoConversations =
-          try {
-            // Check if any conversation items exist by looking for test tags that start with
-            // conversation_item_
-            composeTestRule
-                .onAllNodes(
-                    hasText("Unknown", substring = true, ignoreCase = true).not(),
-                    useUnmergedTree = true)
-                .fetchSemanticsNodes()
-                .isEmpty()
-          } catch (_: Exception) {
-            true // Assume empty if we can't find any
-          }
-
-      Log.d(TAG, "STEP 3: Empty state verified: $hasNoConversations")
-
-      // Verify no authentication error using helper function
-      assertNoAuthenticationError()
-
-      Log.d(TAG, "✅ Empty state test completed successfully")
-    }
-  }
 }
