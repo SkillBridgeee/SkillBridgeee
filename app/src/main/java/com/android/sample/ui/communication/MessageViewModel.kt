@@ -74,68 +74,59 @@ class MessageViewModel(
             userId = UserSessionManager.getCurrentUserId()
           }
           if (userId == null) {
-            _uiState.update { it.copy(error = userError) }
+            _uiState.update { it.copy(error = userError, isLoading = false) }
             return@launch
           }
           currentUserId = userId
+
           _uiState.update { it.copy(currentUserId = userId) }
 
-          // Fetch the conversation to find the other user
-          val conversation = convManager.getConv(convId)
-          if (conversation != null) {
-            otherId =
-                if (conversation.convCreatorId == userId) conversation.otherPersonId
-                else conversation.convCreatorId
-
-            try {
-              val partnerProfile = profileRepository.getProfile(otherId!!)
-              _uiState.update { it.copy(partnerName = partnerProfile?.name ?: "User") }
-            } catch (_: Exception) {
-              _uiState.update { it.copy(partnerName = "User") }
-            }
-          } else {
-            _uiState.update {
-              it.copy(
-                  error = null,
-                  infoMessage = "This conversation was deleted by the other user.",
-                  isLoading = false,
-                  messages = emptyList())
-            }
-            return@launch
-          }
-          try {
-            convManager.resetUnreadCount(convId = convId, userId = userId)
-          } catch (_: Exception) {
-            Log.d("MessageViewModel", "Failed to reset unread message count")
-          }
-
-          // Start listening to messages
-          convManager
-              .listenMessages(convId)
-              .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
-              .catch { _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
-              .collect { messages ->
-                // Conversation may have been deleted by the other user while we are on this screen
-                val convStillExists = convManager.getConv(convId) != null
-                if (!convStillExists) {
+          val listenerJob = launch {
+            convManager
+                .listenMessages(convId)
+                .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
+                .catch { _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
+                .collect { messages ->
                   _uiState.update {
                     it.copy(
-                        infoMessage = "This conversation was deleted by the other user.",
-                        messages = emptyList(),
-                        isLoading = false,
-                        error = null)
+                        messages = messages.sortedBy { m -> m.createdAt ?: Date(0) },
+                        isLoading = false)
                   }
-                  return@collect
                 }
+          }
 
-                // Normal behaviour when conversation still exists
-                convManager.resetUnreadCount(convId = convId, userId = userId)
-                _uiState.update {
-                  it.copy(
-                      messages = messages.sortedBy { msg -> msg.createdAt ?: Date(0) },
-                      isLoading = false)
-                }
+          val conversation =
+              try {
+                convManager.getConv(convId)
+              } catch (_: Exception) {
+                null
               }
+
+          if (conversation == null) {
+            _uiState.update {
+              it.copy(
+                  infoMessage = "This conversation was deleted by the other user.",
+                  messages = emptyList(),
+                  error = null)
+            }
+            listenerJob.cancel()
+            return@launch
+          }
+
+          otherId =
+              if (conversation.convCreatorId == userId) conversation.otherPersonId
+              else conversation.convCreatorId
+
+          try {
+            val partner = profileRepository.getProfile(otherId!!)
+            _uiState.update { it.copy(partnerName = partner?.name ?: "User") }
+          } catch (_: Exception) {
+            _uiState.update { it.copy(partnerName = "User") }
+          }
+
+          try {
+            convManager.resetUnreadCount(convId, userId)
+          } catch (_: Exception) {}
         }
   }
 
@@ -155,10 +146,14 @@ class MessageViewModel(
             content = content,
             createdAt = Date())
 
+    _uiState.update { state ->
+      state.copy(
+          messages = (state.messages + message).sortedBy { it.createdAt }, currentMessage = "")
+    }
+
     viewModelScope.launch {
       try {
         convManager.sendMessage(convId, message)
-        _uiState.update { it.copy(currentMessage = "") }
       } catch (_: Exception) {
         _uiState.update { it.copy(error = sendMsgError) }
       }

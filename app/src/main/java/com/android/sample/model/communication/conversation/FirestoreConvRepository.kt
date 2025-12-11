@@ -2,6 +2,7 @@ package com.android.sample.model.communication.conversation
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.MetadataChanges
+import com.google.firebase.firestore.Source
 import java.util.UUID
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -37,14 +38,26 @@ class FirestoreConvRepository(
 
     val convRef = conversationsRef.document(convId)
 
-    val convSnapshot = convRef.get().await()
+    // Prefer CACHE first, fallback to SERVER
+    val convSnapshot =
+        try {
+          convRef.get(Source.CACHE).await()
+        } catch (_: Exception) {
+          convRef.get().await()
+        }
+
     if (!convSnapshot.exists()) return null
 
     val conv = convSnapshot.toObject(Conversation::class.java) ?: return null
     val convWithId = conv.copy(convId = convId)
 
-    // Load messages
-    val messagesSnapshot = convRef.collection("messages").get().await()
+    val messagesSnapshot =
+        try {
+          convRef.collection("messages").get(Source.CACHE).await()
+        } catch (_: Exception) {
+          convRef.collection("messages").get().await()
+        }
+
     val messages =
         messagesSnapshot.documents.mapNotNull { doc ->
           doc.toObject(Message::class.java)?.copy(msgId = doc.id)
@@ -107,13 +120,10 @@ class FirestoreConvRepository(
 
     val convRef = conversationsRef.document(convId)
     val messagesRef = convRef.collection("messages")
-    if (!(convRef.get().await().exists())) {
-      throw IllegalArgumentException("Conversation with ID $convId does not exist")
-    }
 
-    messagesRef.document(message.msgId).set(message).await()
-
-    convRef.update("updatedAt", message.createdAt).await()
+    messagesRef.document(message.msgId).set(message)
+    // DO NOT await offline
+    convRef.update("updatedAt", message.createdAt)
   }
 
   /**
