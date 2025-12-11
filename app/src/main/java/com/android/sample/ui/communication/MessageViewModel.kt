@@ -126,7 +126,9 @@ class MessageViewModel(
 
           try {
             convManager.resetUnreadCount(convId, userId)
-          } catch (_: Exception) {}
+          } catch (_: Exception) {
+            Log.w("MessageViewModel", "Failed to reset unread message count")
+          }
         }
   }
 
