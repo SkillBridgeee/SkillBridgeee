@@ -66,6 +66,11 @@ object E2ETestHelper {
       description: String,
       hourlyRate: Double = 40.0
   ): String {
+    // Validate parameters - fail fast if misconfigured
+    require(creatorUserId.isNotBlank()) { "creatorUserId must not be blank" }
+    require(title.isNotBlank()) { "title must not be blank" }
+    require(description.isNotBlank()) { "description must not be blank" }
+
     val listingId = ListingRepositoryProvider.repository.getNewUid()
     val proposal =
         Proposal(
