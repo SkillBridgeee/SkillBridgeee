@@ -193,14 +193,16 @@ object E2ETestHelper {
    * Deletes a test conversation and its associated overview entries from Firestore.
    *
    * @param convId The ID of the conversation to delete
+   * @param deleterId The user ID of the person deleting the conversation
+   * @param otherId The user ID of the other participant in the conversation
    */
-  suspend fun deleteTestConversation(convId: String) {
+  suspend fun deleteTestConversation(convId: String, deleterId: String, otherId: String) {
     try {
       val conversationManager =
           ConversationManager(
               convRepo = ConversationRepositoryProvider.repository,
               overViewRepo = OverViewConvRepositoryProvider.repository)
-      conversationManager.deleteConvAndOverviews(convId)
+      conversationManager.deleteConvAndOverviews(convId, deleterId, otherId)
       Log.d(TAG, "Deleted test conversation: $convId")
     } catch (e: Exception) {
       Log.w(TAG, "Could not delete test conversation $convId: ${e.message}")
