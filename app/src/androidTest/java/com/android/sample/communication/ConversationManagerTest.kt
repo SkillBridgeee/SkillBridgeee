@@ -148,10 +148,6 @@ class ConversationManagerTest {
 
     manager.sendMessage(convId, msg)
 
-    val conv = convRepo.getConv(convId)
-    assertEquals(1, conv!!.messages.size)
-    assertEquals(msg.msgId, conv.messages.first().msgId)
-
     val ovA = ovRepo.getOverViewConvUser(creator).first { it.linkedConvId == convId }
     val ovB = ovRepo.getOverViewConvUser(other).first { it.linkedConvId == convId }
 

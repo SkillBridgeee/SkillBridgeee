@@ -49,6 +49,7 @@ class MessageViewModel(
   private var loadJob: Job? = null
 
   private val userError: String = "User not authenticated. Please log in to view messages."
+  private val convNotFoundError: String = "Conversation not found"
   private val listenMsgError: String = "Failed to receive messages"
   private val sendMsgError: String = "Failed to send message"
 
@@ -62,92 +63,72 @@ class MessageViewModel(
 
   /** Start listening to real-time messages for a given conversation ID. */
   fun loadConversation(convId: String) {
-
     loadJob?.cancel()
     currentConvId = convId
 
     loadJob =
         viewModelScope.launch {
-
-          // Get current user id (try to refresh if null)
           var userId = currentUserId ?: UserSessionManager.getCurrentUserId()
           if (userId == null) {
-            // Wait a bit and try again (Firebase might still be initializing)
             kotlinx.coroutines.delay(500)
             userId = UserSessionManager.getCurrentUserId()
           }
-
           if (userId == null) {
             _uiState.update { it.copy(error = userError, isLoading = false) }
             return@launch
           }
           currentUserId = userId
+
           _uiState.update { it.copy(currentUserId = userId) }
 
-          // Fetch the conversation to find the other user
-          val conversation = convManager.getConv(convId)
+          val listenerJob = launch {
+            convManager
+                .listenMessages(convId)
+                .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
+                .catch { _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
+                .collect { messages ->
+                  _uiState.update {
+                    it.copy(
+                        messages = messages.sortedBy { m -> m.createdAt ?: Date(0) },
+                        isLoading = false)
+                  }
+                }
+          }
+
+          val conversation =
+              try {
+                convManager.getConv(convId)
+              } catch (_: Exception) {
+                null
+              }
+
           if (conversation == null) {
             _uiState.update {
               it.copy(
-                  error = null,
                   infoMessage = "This conversation was deleted by the other user.",
-                  isLoading = false,
-                  messages = emptyList())
+                  messages = emptyList(),
+                  error = null)
             }
+            listenerJob.cancel()
             return@launch
           }
 
-          // Determine who is the other participant
           otherId =
-              if (conversation.convCreatorId == userId) {
-                conversation.otherPersonId
-              } else {
-                conversation.convCreatorId
-              }
+              if (conversation.convCreatorId == userId) conversation.otherPersonId
+              else conversation.convCreatorId
 
-          // Fetch partner's profile name
           try {
-            val partnerProfile = profileRepository.getProfile(otherId!!)
-            _uiState.update { it.copy(partnerName = partnerProfile?.name ?: "User") }
+            val partner = profileRepository.getProfile(otherId!!)
+            _uiState.update { it.copy(partnerName = partner?.name ?: "User") }
           } catch (_: Exception) {
             _uiState.update { it.copy(partnerName = "User") }
           }
 
-          // Reset unread message count when conversation is loaded
           try {
-            convManager.resetUnreadCount(convId = convId, userId = userId)
+            convManager.resetUnreadCount(convId, userId)
           } catch (_: Exception) {
-            Log.d("MessageViewModel", "Failed to reset unread message count")
+            Log.w("MessageViewModel", "Failed to reset unread message count")
           }
-
-          // Start listening to messages
-          convManager
-              .listenMessages(convId)
-              .onStart { _uiState.update { it.copy(isLoading = true, error = null) } }
-              .catch { _ -> _uiState.update { it.copy(isLoading = false, error = listenMsgError) } }
-              .collect { messages ->
-                // Conversation may have been deleted by the other user while we are on this screen
-                val convStillExists = convManager.getConv(convId) != null
-                if (!convStillExists) {
-                  _uiState.update {
-                    it.copy(
-                        infoMessage = "This conversation was deleted by the other user.",
-                        messages = emptyList(),
-                        isLoading = false,
-                        error = null)
-                  }
-                  return@collect
-                }
-
-                // Normal behaviour when conversation still exists
-                convManager.resetUnreadCount(convId = convId, userId = userId)
-                _uiState.update {
-                  it.copy(
-                      messages = messages.sortedBy { msg -> msg.createdAt },
-                      isLoading = false,
-                      error = null)
-                }
-              }
         }
   }
 
@@ -167,10 +148,14 @@ class MessageViewModel(
             content = content,
             createdAt = Date())
 
+    _uiState.update { state ->
+      state.copy(
+          messages = (state.messages + message).sortedBy { it.createdAt }, currentMessage = "")
+    }
+
     viewModelScope.launch {
       try {
         convManager.sendMessage(convId, message)
-        _uiState.update { it.copy(currentMessage = "") }
       } catch (_: Exception) {
         _uiState.update { it.copy(error = sendMsgError) }
       }
