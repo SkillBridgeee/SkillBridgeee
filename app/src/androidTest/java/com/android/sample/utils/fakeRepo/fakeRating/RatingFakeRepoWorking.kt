@@ -49,6 +49,10 @@ class RatingFakeRepoWorking : FakeRatingRepo {
     TODO("Not yet implemented")
   }
 
+  override suspend fun deleteAllRatingOfUser(userId: String) {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun hasRating(
       fromUserId: String,
       toUserId: String,
