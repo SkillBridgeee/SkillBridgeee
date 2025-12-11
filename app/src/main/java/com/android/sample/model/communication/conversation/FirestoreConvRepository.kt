@@ -121,8 +121,8 @@ class FirestoreConvRepository(
     val convRef = conversationsRef.document(convId)
     val messagesRef = convRef.collection("messages")
 
-    messagesRef.document(message.msgId).set(message)
-    // DO NOT await offline
+    messagesRef.document(message.msgId).set(message).await()
+
     convRef.update("updatedAt", message.createdAt)
   }
 
