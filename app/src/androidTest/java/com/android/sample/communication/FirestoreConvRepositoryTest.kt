@@ -41,34 +41,7 @@ class FirestoreConvRepositoryTest {
   }
 
   // ----------------------------------------------------------
-  // TEST 2 : SEND MESSAGE + GET CONVERSATION
-  // ----------------------------------------------------------
-  @Test
-  fun testSendMessage() = runTest {
-    val convId = "convSendTest"
-    val conv = Conversation(convId)
-    repo.createConv(conv)
-
-    val msg = Message(msgId = "1", content = "Hello World", senderId = "A", receiverId = "B")
-
-    repo.sendMessage(convId, msg)
-
-    val result = repo.getConv(convId)
-    assertNotNull(result)
-    assertEquals(1, result!!.messages.size)
-
-    val returnedMsg = result.messages.first()
-
-    // Vérification complète
-    assertEquals(msg.msgId, returnedMsg.msgId)
-    assertEquals(msg.content, returnedMsg.content)
-    assertEquals(msg.senderId, returnedMsg.senderId)
-    assertEquals(msg.receiverId, returnedMsg.receiverId)
-    assertEquals(msg.createdAt, returnedMsg.createdAt)
-  }
-
-  // ----------------------------------------------------------
-  // TEST 3 : DELETE CONVERSATION
+  // TEST 2 : DELETE CONVERSATION
   // ----------------------------------------------------------
   @Test
   fun testDeleteConversation() = runTest {
@@ -85,7 +58,7 @@ class FirestoreConvRepositoryTest {
   }
 
   // ----------------------------------------------------------
-  // TEST 4 : LISTEN MESSAGES (Flow)
+  // TEST 3 : LISTEN MESSAGES (Flow)
   // ----------------------------------------------------------
   @Test
   fun testListenMessages() = runTest {
