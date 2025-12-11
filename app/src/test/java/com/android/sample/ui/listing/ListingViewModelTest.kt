@@ -347,6 +347,10 @@ class ListingViewModelTest {
     override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private class RecordingRatingRepo(
@@ -391,6 +395,10 @@ class ListingViewModelTest {
     override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private class RecordingProfileRepo(private val profiles: Map<String, Profile>) :
@@ -478,6 +486,10 @@ class ListingViewModelTest {
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> =
         ratingsByStudentMutable[userId] ?: emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
 
     // the rest can be no-op:
     override suspend fun getAllRatings() = emptyList<Rating>()

@@ -118,6 +118,10 @@ class BookingsDetailsViewModelTest {
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> =
         store.values.filter { it.ratingType == RatingType.STUDENT && it.toUserId == userId }
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   class CapturingProfileRepo : ProfileRepository {

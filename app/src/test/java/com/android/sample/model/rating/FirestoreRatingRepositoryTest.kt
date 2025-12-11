@@ -468,4 +468,41 @@ class FirestoreRatingRepositoryTest : RepositoryTest() {
 
     assertFalse(exists)
   }
+
+  @Test
+  fun delete_rating() = runTest {
+    // Make sure collection is empty or contains only non-matching ratings
+    val rating1 =
+        Rating(
+            ratingId = "rating-has-2",
+            fromUserId = testUserId,
+            toUserId = otherUserId,
+            starRating = StarRating.THREE,
+            comment = "Irrelevant",
+            ratingType = RatingType.TUTOR,
+            targetObjectId = "some-other-listing",
+        )
+
+    firestore.collection(RATINGS_COLLECTION_PATH).document(rating1.ratingId).set(rating1).await()
+
+    val rating2 =
+        Rating(
+            ratingId = "rating-has-2",
+            fromUserId = testUserId,
+            toUserId = otherUserId,
+            starRating = StarRating.THREE,
+            comment = "Irrelevant",
+            ratingType = RatingType.TUTOR,
+            targetObjectId = "some-other-listing",
+        )
+    firestore.collection(RATINGS_COLLECTION_PATH).document(rating2.ratingId).set(rating2).await()
+
+    ratingRepository.deleteRating(testUserId)
+
+    val ratingListFrom = ratingRepository.getRatingsByFromUser(testUserId)
+    val ratingListTo = ratingRepository.getRatingsByToUser(testUserId)
+
+    assertTrue(ratingListFrom.isEmpty())
+    assertTrue(ratingListTo.isEmpty())
+  }
 }

@@ -243,6 +243,10 @@ class MyProfileScreenTest {
 
     /** Gets all student ratings received by this user */
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private lateinit var viewModel: MyProfileViewModel

@@ -245,6 +245,10 @@ class MyProfileViewModelTest {
     override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private class SuccessGpsProvider(

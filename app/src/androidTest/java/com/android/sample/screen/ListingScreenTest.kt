@@ -198,6 +198,10 @@ class ListingScreenTest {
     override suspend fun getTutorRatingsOfUser(userId: String) = emptyList<Rating>()
 
     override suspend fun getStudentRatingsOfUser(userId: String) = emptyList<Rating>()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private class FakeListingRepo(private val listing: Listing?) : ListingRepository {
