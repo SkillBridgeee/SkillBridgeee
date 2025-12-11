@@ -183,10 +183,6 @@ class SubjectListScreenTest {
           ) {
             TODO("Not yet implemented")
           }
-
-          override suspend fun deleteAccount(userId: String) {
-            TODO("Not yet implemented")
-          }
         }
 
     return SubjectListViewModel(listingRepo = listingRepo, profileRepo = profileRepo)
