@@ -88,10 +88,6 @@ class MainPageViewModelTest {
     ) {
       /* no-op for this test */
     }
-
-    override suspend fun deleteAccount(userId: String) {
-      TODO("Not yet implemented")
-    }
   }
 
   private open class FakeListingRepository(private val listings: List<Proposal>) :

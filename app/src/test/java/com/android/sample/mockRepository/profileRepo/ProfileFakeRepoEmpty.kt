@@ -78,8 +78,4 @@ class ProfileFakeRepoEmpty : ProfileRepository {
   ) {
     // no-op for empty fake
   }
-
-  override suspend fun deleteAccount(userId: String) {
-    TODO("Not yet implemented")
-  }
 }

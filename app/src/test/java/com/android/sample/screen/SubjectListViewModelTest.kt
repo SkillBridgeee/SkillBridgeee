@@ -165,10 +165,6 @@ class SubjectListViewModelTest {
         averageRating: Double,
         totalRatings: Int
     ) {}
-
-    override suspend fun deleteAccount(userId: String) {
-      TODO("Not yet implemented")
-    }
   }
 
   private val fakeBookingRepo =

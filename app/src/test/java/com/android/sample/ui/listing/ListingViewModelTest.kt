@@ -224,10 +224,6 @@ class ListingViewModelTest {
     ) {
       // no-op
     }
-
-    override suspend fun deleteAccount(userId: String) {
-      TODO("Not yet implemented")
-    }
   }
 
   private open class FakeBookingRepo(
@@ -445,10 +441,6 @@ class ListingViewModelTest {
       lastStudentUserId = userId
       lastStudentAvg = averageRating
       lastStudentTotal = totalRatings
-    }
-
-    override suspend fun deleteAccount(userId: String) {
-      TODO("Not yet implemented")
     }
   }
 

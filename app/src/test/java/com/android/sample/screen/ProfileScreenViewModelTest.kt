@@ -85,10 +85,6 @@ class ProfileScreenViewModelTest {
     ) {
       // no-op in this test fake
     }
-
-    override suspend fun deleteAccount(userId: String) {
-      TODO("Not yet implemented")
-    }
   }
 
   private class FakeListingRepository(

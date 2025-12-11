@@ -119,10 +119,6 @@ class MyProfileViewModelTest {
     ) {
       // no-op in this test fake
     }
-
-    override suspend fun deleteAccount(userId: String) {
-      TODO("Not yet implemented")
-    }
   }
 
   private class FakeLocationRepo(
@@ -1054,10 +1050,6 @@ class MyProfileViewModelTest {
               totalRatings: Int
           ) {
             // not needed in this test
-          }
-
-          override suspend fun deleteAccount(userId: String) {
-            TODO("Not yet implemented")
           }
         }
     UserSessionManager.setCurrentUserId("demo")

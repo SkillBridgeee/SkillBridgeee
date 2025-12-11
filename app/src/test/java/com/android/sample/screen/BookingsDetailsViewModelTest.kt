@@ -173,10 +173,6 @@ class BookingsDetailsViewModelTest {
     ) {
       // not needed for this test
     }
-
-    override suspend fun deleteAccount(userId: String) {
-      TODO("Not yet implemented")
-    }
   }
 
   // Replace the previous factory with one that returns the concrete fake so setup can still call
