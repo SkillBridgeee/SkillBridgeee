@@ -119,11 +119,22 @@ fun HomeScreen(
  */
 @Composable
 fun GreetingSection(welcomeMessage: String) {
-  Column(
-      modifier = Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.WELCOME_SECTION)) {
-        Text(welcomeMessage, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Text("Ready to learn something new today?", color = Color.Gray, fontSize = 14.sp)
-      }
+  Row(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier =
+            Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.WELCOME_SECTION)) {
+          Text(welcomeMessage, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+          Text("Ready to learn something new today?", color = Color.Gray, fontSize = 14.sp)
+        }
+    Spacer(modifier = Modifier.weight(1f))
+    IconButton(
+        modifier = Modifier.padding(end = 16.dp),
+        onClick = {
+          // TODO
+        }) {
+          Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh HomePage")
+        }
+  }
 }
 
 /**

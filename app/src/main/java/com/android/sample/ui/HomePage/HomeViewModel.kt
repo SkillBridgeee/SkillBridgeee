@@ -47,6 +47,9 @@ class MainPageViewModel(
   private val _uiState = MutableStateFlow(HomeUiState())
   val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+  private val numRequestDisplayed = 10
+  private val numProposalDisplayed = 10
+
   init {
     // Load all initial data when the ViewModel is created.
     viewModelScope.launch { load() }
@@ -63,35 +66,31 @@ class MainPageViewModel(
   fun load() {
     viewModelScope.launch {
       try {
-        val allProposals = listingRepository.getProposals()
-        val allRequests = listingRepository.getRequests()
         val welcomeMsg = getWelcomeMsg()
-
-        val topProposals =
-            allProposals.filter { it.isActive }.sortedByDescending { it.createdAt }.take(10)
-
-        val topRequests =
-            allRequests.filter { it.isActive }.sortedByDescending { it.createdAt }.take(10)
+        val topProposals = getTopProposals(numProposalDisplayed)
+        val topRequests = getTopRequests(numRequestDisplayed)
 
         _uiState.update { current ->
           current.copy(
               welcomeMessage = welcomeMsg ?: current.welcomeMessage,
               proposals = topProposals,
-              requests = topRequests
-              // subjects stays whatever it was (currently the default)
-              )
+              requests = topRequests)
         }
       } catch (e: Exception) {
         Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        _uiState.update { current ->
-          current.copy(
-              // keep existing subjects and welcomeMessage if you want,
-              // but reset proposals/requests to safe defaults
-              proposals = emptyList(),
-              requests = emptyList())
-        }
+        _uiState.update { current -> current.copy(proposals = emptyList(), requests = emptyList()) }
       }
     }
+  }
+
+  private suspend fun getTopProposals(numProposal: Int): List<Proposal> {
+    val allProposals = listingRepository.getProposals()
+    return allProposals.filter { it.isActive }.sortedByDescending { it.createdAt }.take(numProposal)
+  }
+
+  private suspend fun getTopRequests(numRequest: Int): List<Request> {
+    val allRequests = listingRepository.getRequests()
+    return allRequests.filter { it.isActive }.sortedByDescending { it.createdAt }.take(numRequest)
   }
 
   /**
