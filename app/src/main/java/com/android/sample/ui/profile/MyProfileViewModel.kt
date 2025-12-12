@@ -6,11 +6,16 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.HttpClientProvider
+import com.android.sample.model.authentication.AuthenticationRepository
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.communication.ConversationManager
+import com.android.sample.model.communication.ConversationManagerInter
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
@@ -43,6 +48,7 @@ const val DESC_EMPTY_MSG = "Description cannot be empty"
 const val GPS_FAILED_MSG = "Failed to obtain GPS location"
 const val LOCATION_PERMISSION_DENIED_MSG = "Location permission denied"
 const val UPDATE_PROFILE_FAILED_MSG = "Failed to update profile. Please try again."
+const val DELETE_ACCOUNT_FAILED_MSG = "Failed to delete account. Please try again."
 
 /** UI state for the MyProfile screen. Holds all data needed to edit a profile */
 data class MyProfileUIState(
@@ -71,6 +77,9 @@ data class MyProfileUIState(
     val updateSuccess: Boolean = false,
     val completedBookings: List<Booking> = emptyList(),
     val ratingRatersById: Map<String, Profile> = emptyMap(),
+    val isDeletingAccount: Boolean = false,
+    val deleteAccountError: String? = null,
+    val deleteAccountSuccess: Boolean = false
 ) {
   /** True if all required fields are valid */
   val isValid: Boolean
@@ -83,15 +92,6 @@ data class MyProfileUIState(
             !email.isNullOrBlank() &&
             selectedLocation != null &&
             !description.isNullOrBlank()
-
-  val toProfile: Profile
-    get() =
-        Profile(
-            userId = userId ?: "",
-            name = name ?: "",
-            email = email ?: "",
-            location = selectedLocation ?: Location(),
-            description = description ?: "")
 }
 
 /**
@@ -110,6 +110,11 @@ class MyProfileViewModel(
     private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
     private val ratingsRepository: RatingRepository = RatingRepositoryProvider.repository,
     private val bookingRepository: BookingRepository = BookingRepositoryProvider.repository,
+    private val authRepository: AuthenticationRepository = AuthenticationRepository(),
+    private val conversationManager: ConversationManagerInter =
+        ConversationManager(
+            convRepo = ConversationRepositoryProvider.repository,
+            overViewRepo = OverViewConvRepositoryProvider.repository),
     sessionManager: UserSessionManager,
 ) : ViewModel() {
 
@@ -545,6 +550,96 @@ class MyProfileViewModel(
       } catch (e: Exception) {
         Log.e(TAG, "Failed to load listings for bookings", e)
       }
+    }
+  }
+
+  /**
+   * Deletes the current user's account:
+   * 1) Deletes profile and other user-related data from Firestore.
+   * 2) Deletes the Firebase Auth user.
+   * 3) Clears the local session.
+   */
+  fun deleteAccount() {
+    val state = _uiState.value
+    val currentId = state.userId ?: userId
+
+    if (currentId.isBlank()) {
+      _uiState.update { it.copy(deleteAccountError = "Unexpected error: missing user id.") }
+      return
+    }
+
+    viewModelScope.launch {
+      _uiState.update {
+        it.copy(
+            isDeletingAccount = true,
+            deleteAccountError = null,
+            deleteAccountSuccess = false,
+        )
+      }
+
+      try {
+
+        val myOverviews = conversationManager.getOverViewConvUser(currentId)
+        myOverviews.forEach { overview ->
+          conversationManager.deleteConvAndOverviews(
+              convId = overview.linkedConvId,
+              deleterId = currentId,
+              otherId = overview.otherPersonId,
+          )
+        }
+
+        profileRepository.deleteProfile(currentId)
+        bookingRepository.deleteAllBookingOfUser(currentId)
+        listingRepository.deleteAllListingOfUser(currentId)
+        ratingsRepository.deleteAllRatingOfUser(currentId)
+
+        val result = authRepository.deleteCurrentUser()
+
+        result.fold(
+            onSuccess = {
+              try {
+                UserSessionManager.logout()
+              } catch (e: Exception) {
+                Log.w(TAG, "Failed to logout after account deletion", e)
+              }
+
+              _uiState.update {
+                it.copy(
+                    isDeletingAccount = false,
+                    deleteAccountSuccess = true,
+                    deleteAccountError = null,
+                )
+              }
+            },
+            onFailure = { e ->
+              _uiState.update {
+                it.copy(
+                    isDeletingAccount = false,
+                    deleteAccountError = e.message ?: DELETE_ACCOUNT_FAILED_MSG,
+                    deleteAccountSuccess = false,
+                )
+              }
+            })
+      } catch (e: Exception) {
+        Log.e(TAG, "Error deleting account for user: $currentId", e)
+        _uiState.update {
+          it.copy(
+              isDeletingAccount = false,
+              deleteAccountError = e.message ?: DELETE_ACCOUNT_FAILED_MSG,
+              deleteAccountSuccess = false,
+          )
+        }
+      }
+    }
+  }
+
+  /** Clears delete-account success and error flags. Call after handling navigation/UI. */
+  fun clearDeleteAccountStatus() {
+    _uiState.update {
+      it.copy(
+          deleteAccountSuccess = false,
+          deleteAccountError = null,
+      )
     }
   }
 }

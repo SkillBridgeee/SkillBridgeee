@@ -120,6 +120,26 @@ fun MyProfileScreen(
     onListingClick: (String) -> Unit = {}
 ) {
   val selectedTab = remember { mutableStateOf(ProfileTab.INFO) }
+  val ui by profileViewModel.uiState.collectAsState()
+
+  // navigate to logout after successful delete
+  LaunchedEffect(ui.deleteAccountSuccess) {
+    if (ui.deleteAccountSuccess) {
+      onLogout()
+      profileViewModel.clearDeleteAccountStatus()
+    }
+  }
+
+  // show error
+  val snackbarHostState = remember { SnackbarHostState() }
+
+  LaunchedEffect(ui.deleteAccountError) {
+    ui.deleteAccountError?.let { msg ->
+      snackbarHostState.showSnackbar(msg)
+      profileViewModel.clearDeleteAccountStatus()
+    }
+  }
+
   Scaffold { pd ->
     val ui by profileViewModel.uiState.collectAsState()
     LaunchedEffect(profileId) { profileViewModel.loadProfile(profileId) }
@@ -188,11 +208,7 @@ private fun MyProfileContent(
 
           item {
             ProfileLogout(
-                onLogout = onLogout,
-                onDeleteAccount = {
-                  // TODO: Call your backend / ViewModel delete here, e.g.:
-
-                })
+                onLogout = onLogout, onDeleteAccount = { profileViewModel.deleteAccount() })
           }
         }
 
