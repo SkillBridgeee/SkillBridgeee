@@ -62,6 +62,10 @@ class ListingFakeRepoEmpty : ListingRepository {
     TODO("Not yet implemented")
   }
 
+  override suspend fun deleteAllListingOfUser(userId: String) {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun deactivateListing(listingId: String) {
     TODO("Not yet implemented")
   }

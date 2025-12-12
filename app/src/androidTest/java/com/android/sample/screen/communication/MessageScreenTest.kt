@@ -25,7 +25,6 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
-import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
@@ -46,6 +45,8 @@ class MessageScreenTest {
 
   private lateinit var convRepo: ConvRepository
   private lateinit var overViewRepo: OverViewConvRepository
+
+  private lateinit var profileRepository: ProfileRepository
   private lateinit var manager: ConversationManager
   private lateinit var viewModel: MessageViewModel
 
@@ -57,9 +58,11 @@ class MessageScreenTest {
   fun setup() {
     convRepo = FakeConvRepo()
     overViewRepo = FakeOverViewRepo()
+    profileRepository = FakeProfileRepository()
+
     manager = ConversationManager(convRepo, overViewRepo)
-    ProfileRepositoryProvider.setForTests(FakeProfileRepository())
-    viewModel = MessageViewModel(manager)
+
+    viewModel = MessageViewModel(manager, profileRepository)
 
     UserSessionManager.setCurrentUserId(userA)
 

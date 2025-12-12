@@ -203,6 +203,19 @@ class FirestoreBookingRepository(
     }
   }
 
+  override suspend fun deleteAllBookingOfUser(userId: String) {
+    require(userId.isNotBlank())
+    try {
+      val allBookings = getBookingsByUserId(userId)
+
+      allBookings.forEach { booking ->
+        db.collection(BOOKINGS_COLLECTION_PATH).document(booking.bookingId).delete().await()
+      }
+    } catch (e: Exception) {
+      throw BookingFirestoreException("Failed to delete bookings for user $userId: ${e.message}", e)
+    }
+  }
+
   override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
     try {
       val documentRef = db.collection(BOOKINGS_COLLECTION_PATH).document(bookingId)

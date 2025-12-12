@@ -140,6 +140,10 @@ class ProfileScreenTest {
 
     override suspend fun deleteListing(listingId: String) {}
 
+    override suspend fun deleteAllListingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
+
     override suspend fun deactivateListing(listingId: String) {}
 
     override suspend fun searchBySkill(skill: Skill) =

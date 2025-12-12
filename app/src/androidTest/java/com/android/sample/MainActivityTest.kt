@@ -12,8 +12,11 @@ import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.user.FakeProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.screen.FakeListingRepository
 import com.android.sample.ui.login.SignInScreenTestTags
+import com.android.sample.utils.fakeRepo.fakeBooking.FakeBookingWorking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,9 +39,9 @@ class MainActivityTest {
   fun initRepositories() {
     val ctx = InstrumentationRegistry.getInstrumentation().targetContext
     try {
-      ProfileRepositoryProvider.init(ctx)
-      ListingRepositoryProvider.init(ctx)
-      BookingRepositoryProvider.init(ctx)
+      ListingRepositoryProvider.setForTests(FakeListingRepository())
+      BookingRepositoryProvider.setForTests(FakeBookingWorking())
+      ProfileRepositoryProvider.setForTests(FakeProfileRepository())
       RatingRepositoryProvider.init(ctx)
       Log.d(TAG, "Repositories initialized successfully")
     } catch (e: Exception) {

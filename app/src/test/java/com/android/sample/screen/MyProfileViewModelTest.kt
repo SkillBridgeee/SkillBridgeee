@@ -156,6 +156,10 @@ class MyProfileViewModelTest {
 
     override suspend fun deleteBooking(bookingId: String) {}
 
+    override suspend fun deleteAllBookingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
+
     override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
     override suspend fun updatePaymentStatus(
@@ -191,6 +195,10 @@ class MyProfileViewModelTest {
     override suspend fun updateListing(listingId: String, listing: Listing) {}
 
     override suspend fun deleteListing(listingId: String) {}
+
+    override suspend fun deleteAllListingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
 
     override suspend fun deactivateListing(listingId: String) {}
 
@@ -233,6 +241,10 @@ class MyProfileViewModelTest {
     override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private class SuccessGpsProvider(
@@ -855,6 +867,10 @@ class MyProfileViewModelTest {
             TODO("Not yet implemented")
           }
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
             TODO("Not yet implemented")
           }
@@ -934,6 +950,10 @@ class MyProfileViewModelTest {
           }
 
           override suspend fun deleteBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun deleteAllBookingOfUser(userId: String) {
             TODO("Not yet implemented")
           }
 
@@ -1077,6 +1097,10 @@ class MyProfileViewModelTest {
             TODO("Not yet implemented")
           }
 
+          override suspend fun deleteAllBookingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
             TODO("Not yet implemented")
           }
@@ -1138,6 +1162,10 @@ class MyProfileViewModelTest {
           }
 
           override suspend fun deleteListing(listingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun deleteAllListingOfUser(userId: String) {
             TODO("Not yet implemented")
           }
 

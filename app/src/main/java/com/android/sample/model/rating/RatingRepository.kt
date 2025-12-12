@@ -25,6 +25,8 @@ interface RatingRepository {
   /** Gets all student ratings received by this user */
   suspend fun getStudentRatingsOfUser(userId: String): List<Rating>
 
+  suspend fun deleteAllRatingOfUser(userId: String)
+
   suspend fun hasRating(
       fromUserId: String,
       toUserId: String,

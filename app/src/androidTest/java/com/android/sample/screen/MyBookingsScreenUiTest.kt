@@ -65,6 +65,10 @@ class MyBookingsScreenUiTest {
 
                 override suspend fun deleteBooking(bookingId: String) {}
 
+                override suspend fun deleteAllBookingOfUser(userId: String) {
+                  TODO("Not yet implemented")
+                }
+
                 override suspend fun updateBookingStatus(
                     bookingId: String,
                     status: BookingStatus
@@ -108,6 +112,10 @@ class MyBookingsScreenUiTest {
                 override suspend fun updateListing(listingId: String, listing: Listing) {}
 
                 override suspend fun deleteListing(listingId: String) {}
+
+                override suspend fun deleteAllListingOfUser(userId: String) {
+                  TODO("Not yet implemented")
+                }
 
                 override suspend fun deactivateListing(listingId: String) {}
 
@@ -215,6 +223,10 @@ class MyBookingsScreenUiTest {
 
           override suspend fun deleteListing(listingId: String) {}
 
+          override suspend fun deleteAllListingOfUser(userId: String) {
+            TODO("Not yet implemented")
+          }
+
           override suspend fun deactivateListing(listingId: String) {}
 
           override suspend fun searchBySkill(skill: com.android.sample.model.skill.Skill) =
@@ -297,6 +309,10 @@ class MyBookingsScreenUiTest {
                   override suspend fun updateBooking(bookingId: String, booking: Booking) {}
 
                   override suspend fun deleteBooking(bookingId: String) {}
+
+                  override suspend fun deleteAllBookingOfUser(userId: String) {
+                    TODO("Not yet implemented")
+                  }
 
                   override suspend fun updateBookingStatus(
                       bookingId: String,
