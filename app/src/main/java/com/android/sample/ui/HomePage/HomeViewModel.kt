@@ -83,16 +83,6 @@ class MainPageViewModel(
     }
   }
 
-  private suspend fun getTopProposals(numProposal: Int): List<Proposal> {
-    val allProposals = listingRepository.getProposals()
-    return allProposals.filter { it.isActive }.sortedByDescending { it.createdAt }.take(numProposal)
-  }
-
-  private suspend fun getTopRequests(numRequest: Int): List<Request> {
-    val allRequests = listingRepository.getRequests()
-    return allRequests.filter { it.isActive }.sortedByDescending { it.createdAt }.take(numRequest)
-  }
-
   /**
    * Retrieves the current user's name.
    * - Gets the logged-in user's ID from the session manager
@@ -130,6 +120,32 @@ class MainPageViewModel(
       if (userName != null) "Welcome back, $userName!" else "Welcome back!"
     } else {
       null // No user ID means temporary auth issue, keep previous message
+    }
+  }
+
+  private suspend fun getTopProposals(numProposal: Int): List<Proposal> {
+    val allProposals = listingRepository.getProposals()
+    return allProposals.filter { it.isActive }.sortedByDescending { it.createdAt }.take(numProposal)
+  }
+
+  private suspend fun getTopRequests(numRequest: Int): List<Request> {
+    val allRequests = listingRepository.getRequests()
+    return allRequests.filter { it.isActive }.sortedByDescending { it.createdAt }.take(numRequest)
+  }
+
+  fun refreshListing() {
+    viewModelScope.launch {
+      try {
+        val topProposals = getTopProposals(numProposalDisplayed)
+        val topRequests = getTopRequests(numRequestDisplayed)
+
+        _uiState.update { current ->
+          current.copy(proposals = topProposals, requests = topRequests)
+        }
+      } catch (e: Exception) {
+        Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
+        _uiState.update { current -> current.copy(proposals = emptyList(), requests = emptyList()) }
+      }
     }
   }
 }
