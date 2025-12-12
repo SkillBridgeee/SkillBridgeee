@@ -77,7 +77,7 @@ class MainPageViewModel(
               requests = topRequests)
         }
       } catch (e: Exception) {
-        Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
+        Log.e("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
         _uiState.update { current -> current.copy(proposals = emptyList(), requests = emptyList()) }
       }
     }
@@ -113,8 +113,6 @@ class MainPageViewModel(
    */
   private suspend fun getWelcomeMsg(): String? {
     val userName = runCatching { getUserName() }.getOrNull()
-    // If we got a user ID but no profile, return generic message
-    // If we couldn't get user ID at all, return null to keep previous message
     val userId = UserSessionManager.getCurrentUserId()
     return if (userId != null) {
       if (userName != null) "Welcome back, $userName!" else "Welcome back!"
@@ -171,8 +169,8 @@ class MainPageViewModel(
           current.copy(proposals = topProposals, requests = topRequests)
         }
       } catch (e: Exception) {
-        Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        _uiState.update { current -> current.copy(proposals = emptyList(), requests = emptyList()) }
+        Log.e("HomePageViewModel", "Failed to refresh HomeUiState", e)
+        // Do not delete old listings list for the user
       }
     }
   }
