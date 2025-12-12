@@ -90,7 +90,7 @@ fun HomeScreen(
               // Greeting
               item {
                 Spacer(modifier = Modifier.height(10.dp))
-                GreetingSection(uiState.welcomeMessage)
+                GreetingSection(uiState.welcomeMessage, mainPageViewModel)
               }
 
               // Explore subjects
@@ -118,22 +118,22 @@ fun HomeScreen(
  * @param welcomeMessage The personalized greeting text shown to the user.
  */
 @Composable
-fun GreetingSection(welcomeMessage: String) {
+fun GreetingSection(welcomeMessage: String, viewModel: MainPageViewModel) {
   Row(modifier = Modifier.fillMaxWidth()) {
+    // Greeting Section
     Column(
         modifier =
             Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.WELCOME_SECTION)) {
           Text(welcomeMessage, fontWeight = FontWeight.Bold, fontSize = 18.sp)
           Text("Ready to learn something new today?", color = Color.Gray, fontSize = 14.sp)
         }
+
     Spacer(modifier = Modifier.weight(1f))
-    IconButton(
-        modifier = Modifier.padding(end = 16.dp),
-        onClick = {
-          // TODO
-        }) {
-          Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh HomePage")
-        }
+
+    // Refresh button
+    IconButton(modifier = Modifier.padding(end = 16.dp), onClick = { viewModel.refreshListing() }) {
+      Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh HomePage")
+    }
   }
 }
 
