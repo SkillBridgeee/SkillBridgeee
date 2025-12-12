@@ -123,16 +123,44 @@ class MainPageViewModel(
     }
   }
 
+  /**
+   * Retrieves the top proposals from the repository.
+   *
+   * This function fetches all proposals, keeps only the active ones, then sorts them by creation
+   * date in descending order (newest first). Finally, it returns only the first [numProposal] items
+   * from the sorted list.
+   *
+   * @param numProposal The maximum number of proposals to return.
+   * @return A list of the most recent active proposals, limited to [numProposal] items.
+   */
   private suspend fun getTopProposals(numProposal: Int): List<Proposal> {
     val allProposals = listingRepository.getProposals()
     return allProposals.filter { it.isActive }.sortedByDescending { it.createdAt }.take(numProposal)
   }
 
+  /**
+   * Retrieves the top requests from the repository.
+   *
+   * This function fetches all requests, keeps only the active ones, then sorts them by creation
+   * date in descending order (newest first). Finally, it returns only the first [numRequest] items
+   * from the sorted list.
+   *
+   * @param numRequest The maximum number of requests to return.
+   * @return A list of the most recent active requests, limited to [numRequest] items.
+   */
   private suspend fun getTopRequests(numRequest: Int): List<Request> {
     val allRequests = listingRepository.getRequests()
     return allRequests.filter { it.isActive }.sortedByDescending { it.createdAt }.take(numRequest)
   }
 
+  /**
+   * Refreshes the home listing data by loading the latest proposals and requests.
+   *
+   * This function launches a coroutine in the ViewModel scope to fetch the most recent active
+   * proposals and requests. Once the data is retrieved, the UI state is updated with the new lists.
+   * If an error occurs during data loading, the function logs a warning and updates the UI state
+   * with empty lists as a fallback.
+   */
   fun refreshListing() {
     viewModelScope.launch {
       try {
