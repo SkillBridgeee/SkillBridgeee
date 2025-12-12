@@ -378,4 +378,16 @@ class FirestoreListingRepositoryTest : RepositoryTest() {
     every { auth.currentUser?.uid } returns testUserId
     assertThrows(Exception::class.java) { runTest { repository.deleteListing("p1") } }
   }
+
+  @Test
+  fun deleteListingByUser() = runTest {
+    repository.addProposal(testProposal)
+    repository.addRequest(testRequest)
+
+    repository.deleteAllListingOfUser(testUserId)
+
+    val allListing = repository.getListingsByUser(testUserId)
+
+    assertEquals(allListing.size, 0)
+  }
 }

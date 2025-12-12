@@ -1,12 +1,18 @@
 package com.android.sample.screen.communication
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.model.authentication.UserSessionManager
@@ -19,7 +25,6 @@ import com.android.sample.model.map.Location
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
-import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.communication.MessageScreen
 import com.android.sample.ui.communication.MessageViewModel
 import com.android.sample.utils.fakeRepo.fakeConvManager.FakeConvRepo
@@ -40,6 +45,8 @@ class MessageScreenTest {
 
   private lateinit var convRepo: ConvRepository
   private lateinit var overViewRepo: OverViewConvRepository
+
+  private lateinit var profileRepository: ProfileRepository
   private lateinit var manager: ConversationManager
   private lateinit var viewModel: MessageViewModel
 
@@ -51,9 +58,11 @@ class MessageScreenTest {
   fun setup() {
     convRepo = FakeConvRepo()
     overViewRepo = FakeOverViewRepo()
+    profileRepository = FakeProfileRepository()
+
     manager = ConversationManager(convRepo, overViewRepo)
-    ProfileRepositoryProvider.setForTests(FakeProfileRepository())
-    viewModel = MessageViewModel(manager)
+
+    viewModel = MessageViewModel(manager, profileRepository)
 
     UserSessionManager.setCurrentUserId(userA)
 
@@ -209,7 +218,6 @@ class MessageScreenTest {
   // -----------------------------------------------------
   @Test
   fun messageScreen_showsInfoMessageWhenConversationDeleted() = runTest {
-    // Delete the conversation before showing the screen
     convRepo.deleteConv(convId)
 
     composeTestRule.setContent {
@@ -225,6 +233,176 @@ class MessageScreenTest {
 
     // Assert that the info message Surface is displayed
     composeTestRule.onNodeWithText(infoText).assertExists()
+  }
+
+  @Test
+  fun messageSendButton_isDisabledWhenMessageIsEmpty() {
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+    composeTestRule.onNode(hasContentDescription("Send message")).assertExists()
+
+    composeTestRule.onNode(hasContentDescription("Send message")).assertIsNotEnabled()
+
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Hello")
+
+    // Now the send button should be enabled
+    composeTestRule.onNode(hasContentDescription("Send message")).assertExists()
+
+    composeTestRule.onNode(hasContentDescription("Send message")).assertIsEnabled()
+
+    composeTestRule.onNode(hasSetTextAction()).performTextClearance()
+
+    composeTestRule.onNode(hasContentDescription("Send message")).assertExists()
+
+    composeTestRule.onNode(hasContentDescription("Send message")).assertIsNotEnabled()
+  }
+
+  @Test
+  fun messageScreen_showsPartnerName() {
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onNodeWithText("Test User").assertExists()
+  }
+
+  @Test
+  fun messageScreen_textInputReflectsInViewModel() {
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Hello World")
+
+    assertEquals("Hello World", viewModel.uiState.value.currentMessage)
+  }
+
+  @Test
+  fun messageScreen_multipleSentMessagesShowUp() {
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+    repeat(3) { index ->
+      composeTestRule.onNode(hasSetTextAction()).performTextInput("Msg $index")
+      composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    }
+
+    assertEquals(3, viewModel.uiState.value.messages.size)
+  }
+
+  @Test
+  fun messageScreen_clearingInputDisablesSendButton() {
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+    val sendButton = composeTestRule.onNode(hasContentDescription("Send message"))
+
+    sendButton.assertIsNotEnabled()
+
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Hello")
+
+    sendButton.assertIsEnabled()
+
+    composeTestRule.onNode(hasSetTextAction()).performTextClearance()
+
+    sendButton.assertIsNotEnabled()
+  }
+
+  @Test
+  fun messageScreen_listUpdatesWhenNewMessagesArrive() = runTest {
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+    val before = viewModel.uiState.value.messages.size
+
+    manager.sendMessage(convId, Message("new", userB, userA, "Remote message", Date()))
+
+    composeTestRule.waitUntil(2000) { viewModel.uiState.value.messages.size > before }
+  }
+
+  @Test
+  fun messageField_isEmptyAfterSendingMessage() {
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+    val messageText = "Test Message"
+
+    composeTestRule.onNode(hasSetTextAction()).performTextInput(messageText)
+
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+
+    composeTestRule.waitForIdle()
+
+    assertEquals("", viewModel.uiState.value.currentMessage)
+  }
+
+  @Test
+  fun sendButton_isDisabledAfterSendingMessage() {
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+    val messageText = "Another Test Message"
+
+    composeTestRule.onNode(hasSetTextAction()).performTextInput(messageText)
+
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+
+    composeTestRule.waitForIdle()
+
+    composeTestRule.onNode(hasContentDescription("Send message")).assertIsNotEnabled()
+  }
+
+  @Test
+  fun messageScreen_scrollsDown() {
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message1")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+    composeTestRule.onNode(hasSetTextAction()).performTextInput("Scroll Test Message")
+    composeTestRule.onNode(hasContentDescription("Send message")).performClick()
+
+    composeTestRule.onNodeWithTag("message_list").assertExists()
+    composeTestRule
+        .onNodeWithTag("message_list")
+        .performScrollToNode(hasText("Scroll Test Message1"))
   }
 
   class FakeProfileRepository : ProfileRepository {

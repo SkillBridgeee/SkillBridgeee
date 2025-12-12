@@ -213,4 +213,22 @@ class FirestoreRatingRepository(
       throw Exception("Failed to fetch student ratings for user $userId: ${e.message}")
     }
   }
+
+  override suspend fun deleteAllRatingOfUser(userId: String) {
+    try {
+      if (!isOnline()) return
+
+      val fromUserRatings = getRatingsByFromUser(userId)
+
+      val toUserRatings = getRatingsByToUser(userId)
+
+      val allRatings = (fromUserRatings + toUserRatings).distinctBy { it.ratingId }
+
+      for (rating in allRatings) {
+        db.collection(RATINGS_COLLECTION_PATH).document(rating.ratingId).delete().await()
+      }
+    } catch (e: Exception) {
+      throw Exception("Failed to delete all ratings for user $userId: ${e.message}")
+    }
+  }
 }

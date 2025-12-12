@@ -171,6 +171,18 @@ class FirestoreListingRepository(
     }
   }
 
+  override suspend fun deleteAllListingOfUser(userId: String) {
+    try {
+      val allListing = getListingsByUser(userId)
+
+      allListing.forEach { listing ->
+        db.collection(LISTINGS_COLLECTION_PATH).document(listing.listingId).delete().await()
+      }
+    } catch (e: Exception) {
+      throw Exception("Failed to delete all listings: ${e.message}")
+    }
+  }
+
   override suspend fun deactivateListing(listingId: String) {
     try {
       val docRef = db.collection(LISTINGS_COLLECTION_PATH).document(listingId)

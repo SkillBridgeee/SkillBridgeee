@@ -93,6 +93,10 @@ class BookingFakeRepoWorking : BookingRepository {
     bookings.removeAll { it.bookingId == bookingId }
   }
 
+  override suspend fun deleteAllBookingOfUser(userId: String) {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
     val booking = bookings.find { it.bookingId == bookingId } ?: return
     val updated = booking.copy(status = status)

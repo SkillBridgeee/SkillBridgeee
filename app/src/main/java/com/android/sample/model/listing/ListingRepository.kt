@@ -21,6 +21,8 @@ interface ListingRepository {
 
   suspend fun deleteListing(listingId: String)
 
+  suspend fun deleteAllListingOfUser(userId: String)
+
   /** Deactivates a listing */
   suspend fun deactivateListing(listingId: String)
 

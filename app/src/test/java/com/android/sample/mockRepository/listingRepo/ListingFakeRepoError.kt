@@ -64,6 +64,10 @@ class ListingFakeRepoError : ListingRepository {
     throw IllegalStateException("Error deleting listing with id: $listingId")
   }
 
+  override suspend fun deleteAllListingOfUser(userId: String) {
+    TODO("Not yet implemented")
+  }
+
   override suspend fun deactivateListing(listingId: String) {
     throw IllegalStateException("Error deactivating listing with id: $listingId")
   }

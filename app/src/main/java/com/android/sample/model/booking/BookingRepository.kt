@@ -21,6 +21,8 @@ interface BookingRepository {
 
   suspend fun deleteBooking(bookingId: String)
 
+  suspend fun deleteAllBookingOfUser(userId: String)
+
   /** Updates booking status */
   suspend fun updateBookingStatus(bookingId: String, status: BookingStatus)
 

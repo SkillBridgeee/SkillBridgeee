@@ -173,6 +173,10 @@ class ListingViewModelTest {
 
     override suspend fun deleteListing(listingId: String) {}
 
+    override suspend fun deleteAllListingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
+
     override suspend fun deactivateListing(listingId: String) {}
 
     override suspend fun searchBySkill(skill: Skill) =
@@ -264,6 +268,10 @@ class ListingViewModelTest {
       storedBookings.removeAll { it.bookingId == bookingId }
     }
 
+    override suspend fun deleteAllBookingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
+
     override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {
       val booking = storedBookings.find { it.bookingId == bookingId }
       booking?.let {
@@ -335,6 +343,10 @@ class ListingViewModelTest {
     override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private class RecordingRatingRepo(
@@ -379,6 +391,10 @@ class ListingViewModelTest {
     override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
   }
 
   private class RecordingProfileRepo(private val profiles: Map<String, Profile>) :
@@ -462,6 +478,10 @@ class ListingViewModelTest {
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> =
         ratingsByStudentMutable[userId] ?: emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
 
     // the rest can be no-op:
     override suspend fun getAllRatings() = emptyList<Rating>()
