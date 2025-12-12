@@ -45,6 +45,8 @@ object HomeScreenTestTags {
   const val PROPOSAL_CARD = "proposalCard"
   const val PROPOSAL_LIST = "proposalList"
 
+  const val REFRESH_BUTTON = "refreshButton"
+
   const val REQUEST_SECTION = "requestSection"
   const val REQUEST_CARD = "requestCard"
 
@@ -131,9 +133,11 @@ fun GreetingSection(welcomeMessage: String, viewModel: MainPageViewModel) {
     Spacer(modifier = Modifier.weight(1f))
 
     // Refresh button
-    IconButton(modifier = Modifier.padding(end = 16.dp), onClick = { viewModel.refreshListing() }) {
-      Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh HomePage")
-    }
+    IconButton(
+        modifier = Modifier.padding(end = 16.dp).testTag(HomeScreenTestTags.REFRESH_BUTTON),
+        onClick = { viewModel.refreshListing() }) {
+          Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh HomePage")
+        }
   }
 }
 
