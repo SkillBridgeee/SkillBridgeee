@@ -45,6 +45,8 @@ object HomeScreenTestTags {
   const val PROPOSAL_CARD = "proposalCard"
   const val PROPOSAL_LIST = "proposalList"
 
+  const val REFRESH_BUTTON = "refreshButton"
+
   const val REQUEST_SECTION = "requestSection"
   const val REQUEST_CARD = "requestCard"
 
@@ -89,7 +91,9 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
               item {
                 Spacer(modifier = Modifier.height(10.dp))
-                GreetingSection(uiState.welcomeMessage)
+                GreetingSection(
+                    welcomeMessage = uiState.welcomeMessage,
+                    refresh = { mainPageViewModel.refreshListing() })
               }
 
               // Explore subjects
@@ -117,12 +121,25 @@ fun HomeScreen(
  * @param welcomeMessage The personalized greeting text shown to the user.
  */
 @Composable
-fun GreetingSection(welcomeMessage: String) {
-  Column(
-      modifier = Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.WELCOME_SECTION)) {
-        Text(welcomeMessage, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Text("Ready to learn something new today?", color = Color.Gray, fontSize = 14.sp)
-      }
+fun GreetingSection(welcomeMessage: String, refresh: () -> Unit) {
+  Row(modifier = Modifier.fillMaxWidth()) {
+    // Greeting Section
+    Column(
+        modifier =
+            Modifier.padding(horizontal = 10.dp).testTag(HomeScreenTestTags.WELCOME_SECTION)) {
+          Text(welcomeMessage, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+          Text("Ready to learn something new today?", color = Color.Gray, fontSize = 14.sp)
+        }
+
+    Spacer(modifier = Modifier.weight(1f))
+
+    // Refresh button
+    IconButton(
+        modifier = Modifier.padding(end = 16.dp).testTag(HomeScreenTestTags.REFRESH_BUTTON),
+        onClick = refresh) {
+          Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh HomePage")
+        }
+  }
 }
 
 /**

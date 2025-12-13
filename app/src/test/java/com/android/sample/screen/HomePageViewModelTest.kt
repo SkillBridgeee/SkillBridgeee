@@ -1,6 +1,8 @@
 package com.android.sample.screen
 
 import android.app.Application
+import com.android.sample.mockRepository.listingRepo.ListingFakeRepoWorking
+import com.android.sample.mockRepository.profileRepo.ProfileFakeRepoWorking
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
@@ -9,6 +11,8 @@ import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.HomePage.MainPageViewModel
 import com.google.firebase.FirebaseApp
+import java.util.Date
+import kotlin.test.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -193,5 +197,40 @@ class MainPageViewModelTest {
     // On failure we fall back to the default HomeUiState()
     Assert.assertTrue(state.proposals.isEmpty())
     Assert.assertEquals("Welcome back!", state.welcomeMessage)
+  }
+
+  @Test
+  fun `test refresh methode`() = runTest {
+    val profileRepo = ProfileFakeRepoWorking()
+    val listingRepo = ListingFakeRepoWorking()
+
+    val vm = MainPageViewModel(profileRepository = profileRepo, listingRepository = listingRepo)
+
+    advanceUntilIdle()
+    val state1 = vm.uiState.first()
+
+    assertEquals(1, state1.proposals.size)
+
+    val newProposal =
+        Proposal(
+            listingId = "testId",
+            creatorUserId = "creator_1",
+            skill = Skill(skill = "Math"),
+            description = "Tutor proposal",
+            location = Location(),
+            createdAt = Date(),
+            hourlyRate = 30.0)
+
+    listingRepo.addProposal(newProposal)
+
+    advanceUntilIdle()
+    val state2 = vm.uiState.first()
+    assertEquals(1, state2.proposals.size)
+
+    vm.refreshListing()
+
+    advanceUntilIdle()
+    val state3 = vm.uiState.first()
+    assertEquals(2, state3.proposals.size)
   }
 }
