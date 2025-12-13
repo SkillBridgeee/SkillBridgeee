@@ -276,8 +276,20 @@ fun BookingDetailsContent(
 private fun BookingHeader(uiState: BookingUIState) {
   val prefixText =
       when (uiState.listing.type) {
-        ListingType.REQUEST -> BookingDetailsStrings.BOOKING_HEADER_STUDENT
-        ListingType.PROPOSAL -> BookingDetailsStrings.BOOKING_HEADER_TEACHER
+        ListingType.REQUEST -> {
+          if (uiState.isTutor) {
+            BookingDetailsStrings.BOOKING_HEADER_STUDENT
+          } else {
+            BookingDetailsStrings.BOOKING_HEADER_TEACHER
+          }
+        }
+        ListingType.PROPOSAL -> {
+          if (uiState.isTutor) {
+            BookingDetailsStrings.BOOKING_HEADER_TEACHER
+          } else {
+            BookingDetailsStrings.BOOKING_HEADER_STUDENT
+          }
+        }
       }
 
   val baseStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal)
