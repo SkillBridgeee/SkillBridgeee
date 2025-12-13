@@ -3,6 +3,7 @@ package com.android.sample.screen
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -419,8 +420,8 @@ class BookingDetailsScreenTest {
   }
 
   @Test
-  fun studentRatingSection_exists_whenBookingCompleted() {
-    val uiState = completedBookingUiState()
+  fun studentRatingSection_exists_whenBookingCompleted_andUserIsBooker() {
+    val uiState = completedBookingUiState().copy(isBooker = true, isCreator = false)
 
     composeTestRule.setContent {
       MaterialTheme {
@@ -444,7 +445,9 @@ class BookingDetailsScreenTest {
   fun bookingDetailsScreen_errorState_doesNotRenderContent() {
     val errorRepo =
         object : BookingRepository by fakeBookingRepo {
-          override suspend fun getBooking(bookingId: String): Booking? = null
+          override suspend fun getBooking(bookingId: String): Booking {
+            throw IllegalStateException("boom")
+          }
         }
 
     val vm =
@@ -457,10 +460,17 @@ class BookingDetailsScreenTest {
       BookingDetailsScreen(bkgViewModel = vm, bookingId = "error-id", onCreatorClick = {})
     }
 
-    composeTestRule.waitForIdle()
-    Thread.sleep(300)
+    // Wait until the error indicator is actually in the tree
+    composeTestRule.waitUntil(5_000) {
+      composeTestRule
+          .onAllNodesWithTag(BookingDetailsTestTag.ERROR, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertExists()
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.ERROR, useUnmergedTree = true)
+        .assertExists()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertDoesNotExist()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertDoesNotExist()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertDoesNotExist()
