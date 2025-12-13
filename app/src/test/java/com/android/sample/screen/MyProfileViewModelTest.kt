@@ -172,6 +172,10 @@ class MyProfileViewModelTest {
     override suspend fun completeBooking(bookingId: String) {}
 
     override suspend fun cancelBooking(bookingId: String) {}
+
+    override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+      TODO("Not yet implemented")
+    }
   }
 
   // Minimal fake ListingRepository to satisfy the ViewModel dependency
@@ -894,6 +898,10 @@ class MyProfileViewModelTest {
             TODO("Not yet implemented")
           }
 
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
+
           override fun getNewUid() = "x"
 
           override suspend fun getAllBookings(): List<Booking> {
@@ -977,6 +985,10 @@ class MyProfileViewModelTest {
           }
 
           override suspend fun cancelBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
             TODO("Not yet implemented")
           }
 
@@ -1121,6 +1133,10 @@ class MyProfileViewModelTest {
           }
 
           override suspend fun cancelBooking(bookingId: String) {
+            TODO("Not yet implemented")
+          }
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
             TODO("Not yet implemented")
           }
 

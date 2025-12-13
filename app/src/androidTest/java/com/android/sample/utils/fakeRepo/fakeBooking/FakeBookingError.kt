@@ -78,4 +78,8 @@ class FakeBookingError : FakeBookingRepo {
   override suspend fun cancelBooking(bookingId: String) {
     throw IOException("Failed to cancel booking (mock error).")
   }
+
+  override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+    throw IOException("Failed to confirm booking between two people.")
+  }
 }

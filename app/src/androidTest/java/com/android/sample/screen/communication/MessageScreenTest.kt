@@ -60,7 +60,7 @@ class MessageScreenTest {
     overViewRepo = FakeOverViewRepo()
     profileRepository = FakeProfileRepository()
 
-    manager = ConversationManager(convRepo, overViewRepo)
+    manager = ConversationManager(convRepo, overViewRepo, null)
 
     viewModel = MessageViewModel(manager, profileRepository)
 

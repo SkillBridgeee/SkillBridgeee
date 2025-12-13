@@ -1014,4 +1014,87 @@ class FirestoreBookingRepositoryTest : RepositoryTest() {
     val bookings = bookingRepo.getBookingsByUserId(testUserId)
     assertEquals(bookings.size, 0)
   }
+
+  @Test
+  fun hasOngoingBookingBetween_returnsTrue_whenUserAIsBooker_userBIsCreator_andConfirmed() =
+      runTest {
+        val booking =
+            Booking(
+                bookingId = "booking_active_1",
+                associatedListingId = "listing1",
+                listingCreatorId = "tutor1",
+                bookerId = testUserId,
+                sessionStart = Date(System.currentTimeMillis()),
+                sessionEnd = Date(System.currentTimeMillis() + 3600000),
+                status = BookingStatus.CONFIRMED)
+
+        bookingRepository.addBooking(booking)
+
+        val result = bookingRepository.hasOngoingBookingBetween(testUserId, "tutor1")
+        assertEquals(true, result)
+      }
+
+  @Test
+  fun hasOngoingBookingBetween_returnsTrue_whenUserBIsBooker_userAIsCreator_andConfirmed() =
+      runTest {
+        val studentAuth = mockk<FirebaseAuth>()
+        val studentUser = mockk<FirebaseUser>()
+        every { studentAuth.currentUser } returns studentUser
+        every { studentUser.uid } returns "student1"
+
+        val studentRepo = FirestoreBookingRepository(firestore, studentAuth, context)
+
+        val booking =
+            Booking(
+                bookingId = "booking_active_2",
+                associatedListingId = "listing2",
+                listingCreatorId = testUserId,
+                bookerId = "student1",
+                sessionStart = Date(System.currentTimeMillis()),
+                sessionEnd = Date(System.currentTimeMillis() + 3600000),
+                status = BookingStatus.CONFIRMED)
+
+        studentRepo.addBooking(booking)
+
+        val result = bookingRepository.hasOngoingBookingBetween(testUserId, "student1")
+        assertEquals(true, result)
+      }
+
+  @Test
+  fun hasOngoingBookingBetween_returnsFalse_whenOnlyPendingBookingsExist() = runTest {
+    val booking =
+        Booking(
+            bookingId = "booking_pending",
+            associatedListingId = "listing3",
+            listingCreatorId = "tutor2",
+            bookerId = testUserId,
+            sessionStart = Date(System.currentTimeMillis()),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            status = BookingStatus.PENDING)
+
+    bookingRepository.addBooking(booking)
+
+    val result = bookingRepository.hasOngoingBookingBetween(testUserId, "tutor2")
+    assertEquals(false, result)
+  }
+
+  @Test
+  fun hasOngoingBookingBetween_returnsFalse_whenNoBookingsExistBetweenUsers() = runTest {
+    val result = bookingRepository.hasOngoingBookingBetween(testUserId, "no-such-user")
+    assertEquals(false, result)
+  }
+
+  @Test
+  fun hasOngoingBookingBetween_throws_whenUserAIsBlank() {
+    assertThrows(IllegalArgumentException::class.java) {
+      runTest { bookingRepository.hasOngoingBookingBetween("", "userB") }
+    }
+  }
+
+  @Test
+  fun hasOngoingBookingBetween_throws_whenUserBIsBlank() {
+    assertThrows(IllegalArgumentException::class.java) {
+      runTest { bookingRepository.hasOngoingBookingBetween("userA", "") }
+    }
+  }
 }

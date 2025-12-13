@@ -103,7 +103,8 @@ object E2ETestHelper {
     val conversationManager =
         ConversationManager(
             convRepo = ConversationRepositoryProvider.repository,
-            overViewRepo = OverViewConvRepositoryProvider.repository)
+            overViewRepo = OverViewConvRepositoryProvider.repository,
+            bookingRepo = BookingRepositoryProvider.repository)
     return conversationManager.createConvAndOverviews(
         creatorId = creatorId, otherUserId = otherUserId, convName = convName)
   }

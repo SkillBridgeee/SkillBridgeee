@@ -307,4 +307,35 @@ class FirestoreBookingRepository(
   override suspend fun cancelBooking(bookingId: String) {
     updateBookingStatus(bookingId, BookingStatus.CANCELLED)
   }
+
+  override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+    require(userA.isNotBlank())
+    require(userB.isNotBlank())
+
+    try {
+      val q1 =
+          db.collection(BOOKINGS_COLLECTION_PATH)
+              .whereEqualTo("bookerId", userA)
+              .whereEqualTo("listingCreatorId", userB)
+              .whereEqualTo("status", BookingStatus.CONFIRMED)
+              .limit(1)
+              .get()
+              .await()
+
+      if (!q1.isEmpty) return true
+
+      val q2 =
+          db.collection(BOOKINGS_COLLECTION_PATH)
+              .whereEqualTo("bookerId", userB)
+              .whereEqualTo("listingCreatorId", userA)
+              .whereEqualTo("status", BookingStatus.CONFIRMED)
+              .limit(1)
+              .get()
+              .await()
+
+      return !q2.isEmpty
+    } catch (e: Exception) {
+      throw Exception("Failed to check ongoing booking between users: ${e.message}")
+    }
+  }
 }

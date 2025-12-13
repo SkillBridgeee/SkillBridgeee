@@ -37,4 +37,7 @@ interface BookingRepository {
 
   /** Cancels a booking */
   suspend fun cancelBooking(bookingId: String)
+
+  /** Checks if there is an ongoing booking between two users */
+  suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean
 }
