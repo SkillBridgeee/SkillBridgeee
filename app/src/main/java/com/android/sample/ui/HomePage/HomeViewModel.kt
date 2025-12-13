@@ -97,7 +97,8 @@ class MainPageViewModel(
           current.copy(
               proposals = emptyList(),
               requests = emptyList(),
-              errorMsg = if (current.errorMsg == null) listingErrorMsg else generalError)
+              errorMsg =
+                  if (current.errorMsg == identificationErrorMsg) generalError else listingErrorMsg)
         }
       }
     }
