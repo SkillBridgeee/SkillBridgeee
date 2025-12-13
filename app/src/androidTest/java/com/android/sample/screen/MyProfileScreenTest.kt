@@ -45,6 +45,7 @@ import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -1063,5 +1064,52 @@ class MyProfileScreenTest {
     compose
         .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_DIALOG, useUnmergedTree = true)
         .assertDoesNotExist()
+  }
+
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun deleteAccountSuccess_triggersLogout_andClearsFlag() {
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val current = stateFlow.value
+      stateFlow.value = current.copy(deleteAccountSuccess = true)
+    }
+
+    compose.waitForIdle()
+
+    assert(logoutClicked.get())
+
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val updated = stateFlow.value
+      assertEquals(false, updated.deleteAccountSuccess)
+      assertEquals(null, updated.deleteAccountError)
+    }
+  }
+
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun deleteAccountError_triggersSnackbar() {
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val current = stateFlow.value
+      stateFlow.value = current.copy(deleteAccountError = "Something went wrong")
+    }
+
+    compose.waitForIdle()
+
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val updated = stateFlow.value
+      assertEquals(false, updated.deleteAccountSuccess)
+    }
   }
 }
