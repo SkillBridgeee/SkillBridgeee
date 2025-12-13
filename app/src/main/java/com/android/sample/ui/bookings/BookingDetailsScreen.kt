@@ -82,6 +82,49 @@ object BookingDetailsTestTag {
   const val RATING_TUTOR = "booking_rating_tutor"
   const val RATING_LISTING = "booking_rating_listing"
   const val RATING_SUBMIT_BUTTON = "booking_rating_submit"
+  const val TOTAL_PRICE_SECTION = "booking_total_price_section"
+}
+
+object BookingDetailsStrings {
+  const val ACCEPT = "Accept"
+  const val DENY = "Deny"
+  const val BOOKING_HEADER_TEACHER = "Teacher for : "
+  const val BOOKING_HEADER_STUDENT = "Student for : "
+  const val CREATOR_STUDENT = "Student"
+  const val CREATOR_TUTOR = "Tutor"
+  const val INFO_ABOUT = "Information about the"
+  const val MORE_INFO = "More Info"
+  const val VIEW_PROFILE = "View Profile"
+  const val NAME = "Name"
+  const val UNKNOWN = "Unknown"
+  const val EMAIL = "Email"
+  const val STUDENT_PROFILE = "Student profile"
+  const val COURSE_INFO = "Information about the course"
+  const val DOMAIN = "Domain"
+  const val SUBJECT = "Subject"
+  const val LOCATION = "Location"
+  const val HOURLY_RATE = "Hourly Rate"
+  const val SCHEDULE = "Schedule"
+  const val START_OF_SESSION = "Start of the session"
+  const val END_OF_SESSION = "End of the session"
+  const val DATE_FORMAT = "dd/MM/yyyy 'to' HH:mm"
+  const val DESCRIPTION_OF_LISTING = "Description of the listing"
+  const val HAS_SESSION_TAKEN_PLACE = "Has the session taken place?"
+  const val MARK_COMPLETED = "Mark as completed"
+
+  const val LISTING = "Listing"
+  const val SUBMIT_RATINGS = "Submit ratings"
+  const val PAYMENT_STATUS = "Payment Status:"
+  const val NOTIFY_TUTOR =
+      "Once you've paid for the session, click the button below to notify the tutor."
+  const val PAYMENT_COMPLETE = "Payment Complete"
+  const val WAITING_PAYMENT_STUDENT = "Waiting for the student to complete the payment."
+  const val STUDENT_PAID =
+      "The student has marked the payment as complete. Confirm once you've received it."
+  const val PAYMENT_RECEIVED = "Payment Received"
+  const val WAITING_PAYMENT_TUTOR = "Waiting for the tutor to confirm receipt of payment."
+  const val PAYMENT_CONFIRMED = "Payment has been successfully completed and confirmed!"
+  const val TOTAL_PRICE = "Total Price"
 }
 
 /**
@@ -188,6 +231,12 @@ fun BookingDetailsContent(
         InfoDesc(uiState)
 
         HorizontalDivider()
+
+        // Total Price
+        TotalPriceLabel(uiState)
+
+        HorizontalDivider()
+
         // Let the student mark the session as completed once it is confirmed
         if (uiState.booking.status == BookingStatus.CONFIRMED) {
           ConfirmCompletionSection(onMarkCompleted)
@@ -210,8 +259,8 @@ fun BookingDetailsContent(
           Spacer(modifier = Modifier.height(8.dp))
 
           Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            Button(onClick = { uiState.onAcceptBooking() }) { Text("Accept") }
-            Button(onClick = { uiState.onDenyBooking() }) { Text("Deny") }
+            Button(onClick = { uiState.onAcceptBooking() }) { Text(BookingDetailsStrings.ACCEPT) }
+            Button(onClick = { uiState.onDenyBooking() }) { Text(BookingDetailsStrings.DENY) }
           }
         }
 
@@ -236,8 +285,20 @@ fun BookingDetailsContent(
 private fun BookingHeader(uiState: BookingUIState) {
   val prefixText =
       when (uiState.listing.type) {
-        ListingType.REQUEST -> "Teacher for : "
-        ListingType.PROPOSAL -> "Student for : "
+        ListingType.REQUEST -> {
+          if (uiState.isTutor) {
+            BookingDetailsStrings.BOOKING_HEADER_STUDENT
+          } else {
+            BookingDetailsStrings.BOOKING_HEADER_TEACHER
+          }
+        }
+        ListingType.PROPOSAL -> {
+          if (uiState.isTutor) {
+            BookingDetailsStrings.BOOKING_HEADER_TEACHER
+          } else {
+            BookingDetailsStrings.BOOKING_HEADER_STUDENT
+          }
+        }
       }
 
   val baseStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal)
@@ -285,8 +346,8 @@ private fun BookingHeader(uiState: BookingUIState) {
 private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Unit) {
   val creatorRole =
       when (uiState.listing.type) {
-        ListingType.REQUEST -> "Student"
-        ListingType.PROPOSAL -> "Tutor"
+        ListingType.REQUEST -> BookingDetailsStrings.CREATOR_STUDENT
+        ListingType.PROPOSAL -> BookingDetailsStrings.CREATOR_TUTOR
       }
 
   Column(modifier = Modifier.testTag(BookingDetailsTestTag.CREATOR_SECTION)) {
@@ -295,7 +356,7 @@ private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Uni
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween) {
           Text(
-              text = "Information about the $creatorRole",
+              text = "${BookingDetailsStrings.INFO_ABOUT} $creatorRole",
               style = MaterialTheme.typography.titleMedium,
               fontWeight = FontWeight.Bold)
 
@@ -307,23 +368,23 @@ private fun InfoCreator(uiState: BookingUIState, onCreatorClick: (String) -> Uni
                       .padding(horizontal = 6.dp, vertical = 2.dp)
                       .testTag(BookingDetailsTestTag.MORE_INFO_BUTTON)) {
                 Text(
-                    text = "More Info",
+                    text = BookingDetailsStrings.MORE_INFO,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary)
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = "View profile",
+                    contentDescription = BookingDetailsStrings.VIEW_PROFILE,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 4.dp).size(18.dp))
               }
         }
     DetailRow(
-        label = "$creatorRole Name",
-        value = uiState.creatorProfile.name ?: "Unknown",
+        label = "$creatorRole ${BookingDetailsStrings.NAME}",
+        value = uiState.creatorProfile.name ?: BookingDetailsStrings.UNKNOWN,
         modifier = Modifier.testTag(BookingDetailsTestTag.CREATOR_NAME))
     DetailRow(
-        label = "Email",
+        label = BookingDetailsStrings.EMAIL,
         value = uiState.creatorProfile.email,
         modifier = Modifier.testTag(BookingDetailsTestTag.CREATOR_EMAIL))
   }
@@ -362,12 +423,12 @@ private fun InfoBooker(uiState: BookingUIState, onBookerClick: (String) -> Unit)
                     .testTag(BookingDetailsTestTag.BOOKER_NAME_ROW)) {
               Icon(
                   imageVector = Icons.Default.Person,
-                  contentDescription = "Student profile",
+                  contentDescription = BookingDetailsStrings.STUDENT_PROFILE,
                   tint = MaterialTheme.colorScheme.primary,
                   modifier = Modifier.size(24.dp))
               Spacer(modifier = Modifier.width(8.dp))
               Text(
-                  text = uiState.bookerProfile.name ?: "Unknown",
+                  text = uiState.bookerProfile.name ?: BookingDetailsStrings.UNKNOWN,
                   style = MaterialTheme.typography.titleLarge,
                   fontWeight = FontWeight.SemiBold,
                   color = MaterialTheme.colorScheme.primary,
@@ -396,12 +457,17 @@ private fun InfoBooker(uiState: BookingUIState, onBookerClick: (String) -> Unit)
 private fun InfoListing(uiState: BookingUIState) {
   Column(modifier = Modifier.testTag(BookingDetailsTestTag.LISTING_SECTION)) {
     Text(
-        text = "Information about the course",
+        text = BookingDetailsStrings.COURSE_INFO,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold)
-    DetailRow(label = "Subject", value = uiState.listing.skill.mainSubject.name.replace("_", " "))
-    DetailRow(label = "Location", value = uiState.listing.location.name)
-    DetailRow(label = "Hourly Rate", value = uiState.booking.price.toString())
+    DetailRow(
+        label = BookingDetailsStrings.DOMAIN,
+        value = uiState.listing.skill.mainSubject.name.replace("_", " "))
+    DetailRow(
+        label = BookingDetailsStrings.SUBJECT,
+        value = uiState.listing.skill.skill.replace("_", " "))
+    DetailRow(label = BookingDetailsStrings.LOCATION, value = uiState.listing.location.name)
+    DetailRow(label = BookingDetailsStrings.HOURLY_RATE, value = "$${uiState.hourlyRate}")
   }
 }
 
@@ -422,17 +488,26 @@ private fun InfoListing(uiState: BookingUIState) {
 private fun InfoSchedule(uiState: BookingUIState) {
   Column(modifier = Modifier.testTag(BookingDetailsTestTag.SCHEDULE_SECTION)) {
     Text(
-        text = "Schedule",
+        text = BookingDetailsStrings.SCHEDULE,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold)
-    val dateFormatter = remember { SimpleDateFormat("dd/MM/yyyy 'to' HH:mm", Locale.getDefault()) }
+    val dateFormatter = remember {
+      SimpleDateFormat(BookingDetailsStrings.DATE_FORMAT, Locale.getDefault())
+    }
 
     DetailRow(
-        label = "Start of the session",
-        value = dateFormatter.format(uiState.booking.sessionStart),
-    )
+        label = BookingDetailsStrings.START_OF_SESSION,
+        value = dateFormatter.format(uiState.booking.sessionStart))
     DetailRow(
-        label = "End of the session", value = dateFormatter.format(uiState.booking.sessionEnd))
+        label = BookingDetailsStrings.END_OF_SESSION,
+        value = dateFormatter.format(uiState.booking.sessionEnd))
+  }
+}
+
+@Composable
+private fun TotalPriceLabel(uiState: BookingUIState) {
+  Row(modifier = Modifier.testTag(BookingDetailsTestTag.TOTAL_PRICE_SECTION)) {
+    DetailRow(label = BookingDetailsStrings.TOTAL_PRICE, value = "$${uiState.booking.price}")
   }
 }
 
@@ -449,7 +524,7 @@ private fun InfoSchedule(uiState: BookingUIState) {
 private fun InfoDesc(uiState: BookingUIState) {
   Column(modifier = Modifier.testTag(BookingDetailsTestTag.DESCRIPTION_SECTION)) {
     Text(
-        text = "Description of the listing",
+        text = BookingDetailsStrings.DESCRIPTION_OF_LISTING,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold)
     Text(text = uiState.listing.description, style = MaterialTheme.typography.bodyMedium)
@@ -518,13 +593,13 @@ private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
       verticalArrangement = Arrangement.spacedBy(8.dp),
       horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = "Has the session taken place?",
+            text = BookingDetailsStrings.HAS_SESSION_TAKEN_PLACE,
             style = MaterialTheme.typography.bodyMedium,
         )
         Button(
             onClick = onMarkCompleted,
             modifier = Modifier.testTag(BookingDetailsTestTag.COMPLETE_BUTTON)) {
-              Text(text = "Mark as completed")
+              Text(text = BookingDetailsStrings.MARK_COMPLETED)
             }
       }
 }
@@ -581,13 +656,13 @@ private fun StudentRatingSection(
       modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.RATING_SECTION),
       verticalArrangement = Arrangement.spacedBy(12.dp)) {
         RatingRow(
-            label = "Tutor",
+            label = BookingDetailsStrings.CREATOR_TUTOR,
             selected = tutorStars,
             onSelected = { tutorStars = it },
             modifier = Modifier.testTag(BookingDetailsTestTag.RATING_TUTOR))
 
         RatingRow(
-            label = "Listing",
+            label = BookingDetailsStrings.LISTING,
             selected = listingStars,
             onSelected = { listingStars = it },
             modifier = Modifier.testTag(BookingDetailsTestTag.RATING_LISTING))
@@ -596,7 +671,7 @@ private fun StudentRatingSection(
             enabled = isButtonEnabled,
             onClick = { onSubmitStudentRatings(tutorStars, listingStars) },
             modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
-              Text("Submit ratings")
+              Text(text = BookingDetailsStrings.SUBMIT_RATINGS)
             }
       }
 }
@@ -624,7 +699,7 @@ private fun PaymentActionSection(
       horizontalAlignment = Alignment.CenterHorizontally) {
         // Display current payment status
         Text(
-            text = "Payment Status: ${booking.paymentStatus.name()}",
+            text = "${BookingDetailsStrings.PAYMENT_STATUS} ${booking.paymentStatus.name()}",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary)
@@ -635,19 +710,18 @@ private fun PaymentActionSection(
             // Student (booker) sees the payment complete button
             if (!isTutor) {
               Text(
-                  text =
-                      "Once you've paid for the session, click the button below to notify the tutor.",
+                  text = BookingDetailsStrings.NOTIFY_TUTOR,
                   style = MaterialTheme.typography.bodyMedium,
               )
               Button(
                   onClick = onPaymentComplete,
                   modifier = Modifier.testTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)) {
-                    Text("Payment Complete")
+                    Text(BookingDetailsStrings.PAYMENT_COMPLETE)
                   }
             } else {
               // Tutor sees waiting message
               Text(
-                  text = "Waiting for the student to complete the payment.",
+                  text = BookingDetailsStrings.WAITING_PAYMENT_STUDENT,
                   style = MaterialTheme.typography.bodyMedium,
                   color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -656,19 +730,18 @@ private fun PaymentActionSection(
             // Tutor (listing creator) sees the payment received button
             if (isTutor) {
               Text(
-                  text =
-                      "The student has marked the payment as complete. Confirm once you've received it.",
+                  text = BookingDetailsStrings.STUDENT_PAID,
                   style = MaterialTheme.typography.bodyMedium,
               )
               Button(
                   onClick = onPaymentReceived,
                   modifier = Modifier.testTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)) {
-                    Text("Payment Received")
+                    Text(BookingDetailsStrings.PAYMENT_RECEIVED)
                   }
             } else {
               // Student sees waiting message
               Text(
-                  text = "Waiting for the tutor to confirm receipt of payment.",
+                  text = BookingDetailsStrings.WAITING_PAYMENT_TUTOR,
                   style = MaterialTheme.typography.bodyMedium,
                   color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -676,7 +749,7 @@ private fun PaymentActionSection(
           PaymentStatus.CONFIRMED -> {
             // Both users see confirmation message
             Text(
-                text = "Payment has been successfully completed and confirmed!",
+                text = BookingDetailsStrings.PAYMENT_CONFIRMED,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.tertiary,
                 fontWeight = FontWeight.SemiBold)

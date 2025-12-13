@@ -503,6 +503,7 @@ private fun ProfileListings(ui: MyProfileUIState, onListingClick: (String) -> Un
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(horizontal = 16.dp))
+    Spacer(modifier = Modifier.height(8.dp))
   }
 
   when {
@@ -561,6 +562,7 @@ private fun ProfileHistory(
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(horizontal = 16.dp))
+    Spacer(modifier = Modifier.height(8.dp))
   }
 
   when {
@@ -581,7 +583,52 @@ private fun ProfileHistory(
                 listing = listing,
                 creator = creator,
                 onClickBookingCard = { onListingClick(listing.listingId) })
+
+            Spacer(Modifier.height(8.dp))
           }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun RatingContent(ui: MyProfileUIState) {
+
+  Column(modifier = Modifier.fillMaxWidth().testTag(MyProfileScreenTestTag.RATING_SECTION)) {
+    Text(
+        text = "Your Ratings",
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(horizontal = 16.dp))
+    Spacer(modifier = Modifier.height(8.dp))
+  }
+
+  when {
+    ui.ratingsLoading -> {
+      Box(
+          modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+          contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+          }
+    }
+    ui.ratingsLoadError != null -> {
+      Text(
+          text = ui.ratingsLoadError,
+          style = MaterialTheme.typography.bodyMedium,
+          color = Color.Red,
+          modifier = Modifier.padding(horizontal = 16.dp))
+    }
+    ui.ratings.isEmpty() -> {
+      Text(
+          text = "You don’t have any ratings yet.", modifier = Modifier.padding(horizontal = 16.dp))
+    }
+    else -> {
+      LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        items(ui.ratings) { rating ->
+          val raterProfile = ui.ratingRatersById[rating.fromUserId]
+          RatingCard(rating = rating, rater = raterProfile)
+          Spacer(modifier = Modifier.height(8.dp))
         }
       }
     }
@@ -704,49 +751,5 @@ fun SelectionRow(selectedTab: MutableState<ProfileTab>) {
     }
 
     Spacer(Modifier.height(16.dp))
-  }
-}
-
-@Composable
-private fun RatingContent(ui: MyProfileUIState) {
-
-  Text(
-      text = "Your Ratings",
-      style = MaterialTheme.typography.titleMedium,
-      fontWeight = FontWeight.Bold,
-      modifier =
-          Modifier.padding(horizontal = 16.dp).testTag(MyProfileScreenTestTag.RATING_SECTION))
-  Spacer(modifier = Modifier.height(8.dp))
-
-  when {
-    ui.ratingsLoading -> {
-      Box(
-          modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-          contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-          }
-    }
-    ui.ratingsLoadError != null -> {
-      Text(
-          text = ui.ratingsLoadError,
-          style = MaterialTheme.typography.bodyMedium,
-          color = Color.Red,
-          modifier = Modifier.padding(horizontal = 16.dp))
-    }
-    ui.ratings.isEmpty() -> {
-      Text(
-          text = "You don’t have any ratings yet.",
-          style = MaterialTheme.typography.bodyMedium,
-          modifier = Modifier.padding(horizontal = 16.dp))
-    }
-    else -> {
-      LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        items(ui.ratings) { rating ->
-          val raterProfile = ui.ratingRatersById[rating.fromUserId]
-          RatingCard(rating = rating, rater = raterProfile)
-          Spacer(modifier = Modifier.height(8.dp))
-        }
-      }
-    }
   }
 }

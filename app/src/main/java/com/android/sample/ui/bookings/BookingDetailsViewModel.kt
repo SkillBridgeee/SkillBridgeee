@@ -37,7 +37,8 @@ data class BookingUIState(
     val ratingSubmitted: Boolean = false,
     val isTutor: Boolean = false, // Added to indicate if the user is a tutor
     val onAcceptBooking: () -> Unit = {}, // Added callback for accepting a booking
-    val onDenyBooking: () -> Unit = {} // Added callback for denying a booking
+    val onDenyBooking: () -> Unit = {}, // Added callback for denying a booking
+    val hourlyRate: Double = 0.0 // Added to hold the hourly rate of the listing
 )
 
 class BookingDetailsViewModel(
@@ -115,6 +116,10 @@ class BookingDetailsViewModel(
 
           val alreadySubmitted = tutorAlreadyRated && listingAlreadyRated
 
+          val hourlyRate =
+              booking.price /
+                  ((booking.sessionEnd.time - booking.sessionStart.time) / (1000 * 60 * 60))
+
           // IMPORTANT: build a FRESH state, don't reuse old ratingSubmitted
           _bookingUiState.value =
               BookingUIState(
@@ -126,7 +131,8 @@ class BookingDetailsViewModel(
                   ratingSubmitted = alreadySubmitted,
                   isTutor = booking.listingCreatorId == profileRepository.getCurrentUserId(),
                   onAcceptBooking = { acceptBooking(booking.bookingId) },
-                  onDenyBooking = { denyBooking(booking.bookingId) })
+                  onDenyBooking = { denyBooking(booking.bookingId) },
+                  hourlyRate = hourlyRate)
         }
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error loading booking details for $bookingId", e)
