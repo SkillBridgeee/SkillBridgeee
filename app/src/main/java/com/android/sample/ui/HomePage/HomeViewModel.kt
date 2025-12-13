@@ -50,6 +50,8 @@ class MainPageViewModel(
 
   private val identificationErrorMsg = "An error occurred during your identification."
   private val listingErrorMsg = "An error occurred while loading proposals and requests."
+  private val generalError =
+      "An error occurred during your identification and while loading proposals and requests."
 
   init {
     // Load all initial data when the ViewModel is created.
