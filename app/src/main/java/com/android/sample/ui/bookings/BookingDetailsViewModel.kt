@@ -94,7 +94,6 @@ class BookingDetailsViewModel(
                   ?: throw IllegalStateException("BookingDetailsViewModel : Listing not found")
           val creatorId = booking.listingCreatorId
           val bookerId = booking.bookerId
-          val currentBookingId = booking.bookingId
           val bookingIdObj = booking.bookingId
           val listingIdObj = listing.listingId
           val currentUserId = profileRepository.getCurrentUserId()
@@ -105,7 +104,6 @@ class BookingDetailsViewModel(
 
           val isCreator = currentUserId == creatorId
           val isBooker = currentUserId == bookerId
-          val fromUserId = bookerId
 
           val bookerRatedTutor =
               ratingRepository.hasRating(
