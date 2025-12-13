@@ -222,21 +222,26 @@ abstract class E2ETestBase {
 
     // Get the signed-in user with retry mechanism
     // Firebase authentication might take a moment to complete even after UI navigation
+    // IMPORTANT: Always get fresh user from FirebaseAuth, don't reuse cached testUser
+    var currentUser: FirebaseUser? = null
     var retries = 0
     val maxRetries = 10
-    while (testUser == null && retries < maxRetries) {
-      testUser = FirebaseAuth.getInstance().currentUser
-      if (testUser == null) {
+    while (currentUser == null && retries < maxRetries) {
+      currentUser = FirebaseAuth.getInstance().currentUser
+      if (currentUser == null) {
         kotlinx.coroutines.delay(500) // Wait 500ms between retries
         retries++
       }
     }
 
-    if (testUser == null) {
+    if (currentUser == null) {
       throw AssertionError(
           "Failed to get authenticated user after sign-in. FirebaseAuth.currentUser is null after $maxRetries retries.")
     }
 
-    return testUser!!
+    // Update the testUser field for compatibility with existing tests
+    testUser = currentUser
+
+    return currentUser
   }
 }
