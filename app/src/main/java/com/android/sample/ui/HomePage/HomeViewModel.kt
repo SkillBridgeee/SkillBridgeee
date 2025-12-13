@@ -29,7 +29,8 @@ data class HomeUiState(
     val welcomeMessage: String = "Welcome back!",
     val subjects: List<MainSubject> = MainSubject.entries.toList(),
     val proposals: List<Proposal> = emptyList(),
-    val requests: List<Request> = emptyList()
+    val requests: List<Request> = emptyList(),
+    val errorMsg: String? = null
 )
 
 /**
@@ -46,6 +47,9 @@ class MainPageViewModel(
 
   private val _uiState = MutableStateFlow(HomeUiState())
   val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+  private val identificationErrorMsg = "An error occurred during your identification."
+  private val listingErrorMsg = "An error occurred while loading proposals and requests."
 
   init {
     // Load all initial data when the ViewModel is created.

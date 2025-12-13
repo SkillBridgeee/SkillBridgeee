@@ -87,7 +87,6 @@ fun HomeScreen(
         LazyColumn(
             modifier = Modifier.padding(paddingValues).fillMaxSize().background(Color.White),
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
-              // Greeting
               item {
                 Spacer(modifier = Modifier.height(10.dp))
                 GreetingSection(uiState.welcomeMessage)
