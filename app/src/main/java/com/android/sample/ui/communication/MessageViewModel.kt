@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.communication.ConversationManager
 import com.android.sample.model.communication.ConversationManagerInter
 import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
@@ -36,7 +37,8 @@ class MessageViewModel(
     private val convManager: ConversationManagerInter =
         ConversationManager(
             convRepo = ConversationRepositoryProvider.repository,
-            overViewRepo = OverViewConvRepositoryProvider.repository),
+            overViewRepo = OverViewConvRepositoryProvider.repository,
+            bookingRepo = BookingRepositoryProvider.repository),
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository
 ) : ViewModel() {
 
@@ -173,7 +175,7 @@ class MessageViewModel(
 
   /** Updates the text for the new message being composed. */
   fun onMessageChange(newMessage: String) {
-    _uiState.update { it.copy(currentMessage = newMessage) }
+    _uiState.update { it.copy(currentMessage = newMessage, infoMessage = null) }
   }
 
   /** Retry loading the conversation (useful after authentication issues). */
@@ -197,6 +199,15 @@ class MessageViewModel(
         otherId = null
 
         _uiState.update { it.copy(isDeleted = true, messages = emptyList()) }
+      } catch (e: IllegalStateException) {
+        Log.w("MessageViewModel", "Delete conversation blocked", e)
+
+        val msg =
+            if (e.message == "BLOCK_DELETE_CONV_ACTIVE_BOOKING")
+                "You can’t delete this conversation while a booking is ongoing."
+            else "Failed to delete conversation"
+
+        _uiState.update { it.copy(error = msg) }
       } catch (e: Exception) {
         Log.e("MessageViewModel", "Failed to delete conversation", e)
         _uiState.update { it.copy(error = "Failed to delete conversation") }
