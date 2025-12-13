@@ -44,12 +44,9 @@ object HomeScreenTestTags {
   const val PROPOSAL_SECTION = "proposalSection"
   const val PROPOSAL_CARD = "proposalCard"
   const val PROPOSAL_LIST = "proposalList"
-
   const val REFRESH_BUTTON = "refreshButton"
-
   const val REQUEST_SECTION = "requestSection"
   const val REQUEST_CARD = "requestCard"
-
   const val FAB_ADD = "fabAdd"
 }
 
@@ -93,7 +90,8 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(10.dp))
                 GreetingSection(
                     welcomeMessage = uiState.welcomeMessage,
-                    refresh = { mainPageViewModel.refreshListing() })
+                    refresh = { mainPageViewModel.refreshListing() },
+                    enableRefresh = (uiState.errorMsg == null))
               }
 
               // Explore subjects
@@ -127,7 +125,7 @@ fun HomeScreen(
  * @param welcomeMessage The personalized greeting text shown to the user.
  */
 @Composable
-fun GreetingSection(welcomeMessage: String, refresh: () -> Unit) {
+fun GreetingSection(welcomeMessage: String, refresh: () -> Unit, enableRefresh: Boolean) {
   Row(modifier = Modifier.fillMaxWidth()) {
     // Greeting Section
     Column(
@@ -142,7 +140,8 @@ fun GreetingSection(welcomeMessage: String, refresh: () -> Unit) {
     // Refresh button
     IconButton(
         modifier = Modifier.padding(end = 16.dp).testTag(HomeScreenTestTags.REFRESH_BUTTON),
-        onClick = refresh) {
+        onClick = refresh,
+        enabled = enableRefresh) {
           Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh HomePage")
         }
   }
@@ -258,7 +257,7 @@ fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (String) -> Uni
 fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
-        text = "Recent Requests",
+        text = "Latest Requests",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
         modifier = Modifier.testTag(HomeScreenTestTags.REQUEST_SECTION))
