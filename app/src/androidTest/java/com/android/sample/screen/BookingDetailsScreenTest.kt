@@ -1,12 +1,20 @@
 package com.android.sample.screen
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.test.core.app.ApplicationProvider
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
@@ -29,6 +37,8 @@ import com.android.sample.ui.bookings.BookingDetailsTestTag
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.BookingUIState
 import com.android.sample.ui.bookings.RatingProgress
+import com.android.sample.ui.components.RatingStarsInputTestTags
+import com.android.sample.ui.listing.ListingScreenTestTags
 import java.util.Date
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
@@ -42,7 +52,6 @@ class BookingDetailsScreenTest {
 
   companion object {
     private const val TEST_TUTOR_ID = "u1"
-    private const val TEST_BOOKING_ID = "b1"
     private const val TEST_LISTING_ID = "l1"
   }
 
@@ -194,6 +203,60 @@ class BookingDetailsScreenTest {
           listingRepository = fakeListingRepo,
           profileRepository = fakeProfileRepo)
 
+  // ----- SCROLL + CLICK HELPERS (FOR Column + verticalScroll) -----
+
+  private fun ComposeTestRule.swipeUpUntilDisplayed(
+      matcher: SemanticsMatcher,
+      timeoutMs: Long = 5_000L,
+      maxSwipes: Int = 10
+  ) {
+    // Wait until it exists somewhere in the tree
+    waitUntil(timeoutMs) {
+      onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    repeat(maxSwipes) {
+      val displayed =
+          runCatching {
+                onNode(matcher, useUnmergedTree = true).assertIsDisplayed()
+                true
+              }
+              .getOrDefault(false)
+
+      if (displayed) return
+
+      onRoot().performTouchInput { swipeUp() }
+      waitForIdle()
+    }
+
+    // Final assert gives a good error if still not visible
+    onNode(matcher, useUnmergedTree = true).assertIsDisplayed()
+  }
+
+  /**
+   * Click a specific star within a specific rating row.
+   *
+   * rowIndex:
+   * - Creator rating: 0
+   * - Booker rating: 0 for Tutor/Student row, 1 for Listing row
+   */
+  private fun ComposeTestRule.clickStarInRow(rowIndex: Int, star: Int) {
+    val tag = "${RatingStarsInputTestTags.STAR_PREFIX}$star"
+
+    waitUntil(5_000) {
+      onAllNodesWithTag(tag, useUnmergedTree = true).fetchSemanticsNodes().size > rowIndex
+    }
+
+    // Make sure we scrolled some (stars are usually below the fold)
+    onRoot().performTouchInput { swipeUp() }
+    waitForIdle()
+
+    val node = onAllNodesWithTag(tag, useUnmergedTree = true)[rowIndex]
+    node.assertExists()
+    node.assertIsDisplayed()
+    node.performClick()
+  }
+
   // ----- TESTS -----
 
   @Test
@@ -309,7 +372,6 @@ class BookingDetailsScreenTest {
     vm.submitBookerRatings(userStars = 5, listingStars = 5)
     Thread.sleep(200)
 
-    // Should not mark any rating progress flags
     assertNoRatings(vm.bookingUiState.value.ratingProgress)
   }
 
@@ -460,7 +522,6 @@ class BookingDetailsScreenTest {
       BookingDetailsScreen(bkgViewModel = vm, bookingId = "error-id", onCreatorClick = {})
     }
 
-    // Wait until the error indicator is actually in the tree
     composeTestRule.waitUntil(5_000) {
       composeTestRule
           .onAllNodesWithTag(BookingDetailsTestTag.ERROR, useUnmergedTree = true)
@@ -474,5 +535,197 @@ class BookingDetailsScreenTest {
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertDoesNotExist()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertDoesNotExist()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertDoesNotExist()
+  }
+
+  // ---------- NEW COVERAGE TESTS ----------
+
+  @Test
+  fun creatorRatingSection_submit_callsCallback() {
+    var receivedStars: Int? = null
+    val uiState = completedBookingUiState().copy(isCreator = true, isBooker = false)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = { stars -> receivedStars = stars },
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.swipeUpUntilDisplayed(hasTestTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON))
+    composeTestRule.clickStarInRow(rowIndex = 0, star = 4)
+
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON, useUnmergedTree = true)
+        .assertIsDisplayed()
+        .assertIsEnabled()
+        .performClick()
+
+    composeTestRule.runOnIdle { assert(receivedStars == 4) }
+  }
+
+  @Test
+  fun bookerRatingSection_submit_callsCallback() {
+    val uiState = completedBookingUiState().copy(isBooker = true, isCreator = false)
+
+    var receivedTutorStars = -1
+    var receivedListingStars = -1
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { tutor, listing ->
+              receivedTutorStars = tutor
+              receivedListingStars = listing
+            },
+            onSubmitCreatorRating = { _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.swipeUpUntilDisplayed(hasTestTag(BookingDetailsTestTag.RATING_SECTION))
+
+    // rowIndex 0 = user row, rowIndex 1 = listing row
+    composeTestRule.clickStarInRow(rowIndex = 0, star = 2)
+    composeTestRule.clickStarInRow(rowIndex = 1, star = 5)
+
+    composeTestRule.swipeUpUntilDisplayed(hasTestTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON))
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON, useUnmergedTree = true)
+        .assertIsDisplayed()
+        .assertIsEnabled()
+        .performClick()
+
+    composeTestRule.runOnIdle {
+      assert(receivedTutorStars == 2)
+      assert(receivedListingStars == 5)
+    }
+  }
+
+  @Test
+  fun paymentPending_student_canMarkPaymentComplete() {
+    var clicked = false
+
+    val base = completedBookingUiState()
+    val uiState =
+        base.copy(
+            isBooker = true,
+            isCreator = false,
+            booking =
+                base.booking.copy(
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.PENDING_PAYMENT))
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = { _ -> },
+            onPaymentComplete = { clicked = true },
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.swipeUpUntilDisplayed(hasTestTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON))
+    composeTestRule.onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON).performClick()
+    assert(clicked)
+  }
+
+  @Test
+  fun paymentPaid_tutor_canConfirmPaymentReceived() {
+    var clicked = false
+
+    val base = completedBookingUiState()
+    val uiState =
+        base.copy(
+            isCreator = true,
+            isBooker = false,
+            booking =
+                base.booking.copy(
+                    status = BookingStatus.CONFIRMED, paymentStatus = PaymentStatus.PAID))
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = { _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = { clicked = true },
+        )
+      }
+    }
+
+    composeTestRule.swipeUpUntilDisplayed(hasTestTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON))
+    composeTestRule.onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON).performClick()
+    assert(clicked)
+  }
+
+  @Test
+  fun paymentConfirmed_showsConfirmationMessage() {
+    val booking =
+        Booking(
+            bookingId = "b1",
+            associatedListingId = "l1",
+            listingCreatorId = TEST_TUTOR_ID,
+            bookerId = "u2",
+            status = BookingStatus.CONFIRMED,
+            paymentStatus = PaymentStatus.CONFIRMED,
+            price = 100.0)
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(listingId = TEST_LISTING_ID, creatorUserId = TEST_TUTOR_ID),
+            creatorProfile = Profile(userId = TEST_TUTOR_ID, name = "Tutor"),
+            bookerProfile = Profile(userId = "u2", name = "Student"),
+            isCreator = false,
+            isBooker = false)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = { _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    composeTestRule.swipeUpUntilDisplayed(
+        SemanticsMatcher.expectValue(
+            androidx.compose.ui.semantics.SemanticsProperties.Text,
+            listOf(
+                androidx.compose.ui.text.AnnotatedString(
+                    "Payment has been successfully completed and confirmed!"))))
+
+    composeTestRule
+        .onNodeWithText("Payment has been successfully completed and confirmed!")
+        .assertIsDisplayed()
   }
 }

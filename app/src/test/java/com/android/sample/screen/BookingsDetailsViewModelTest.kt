@@ -125,30 +125,16 @@ class BookingsDetailsViewModelTest {
     }
   }
 
-  class CapturingProfileRepo : ProfileRepository {
+  private class CapturingProfileRepo : ProfileRepository {
 
-    var lastTutorUserId: String? = null
-    var lastTutorAverage: Double? = null
-    var lastTutorTotal: Int? = null
+    override fun getNewUid() = "u1"
 
-    // the method your ViewModel calls when recomputing tutor rating
-    override suspend fun updateTutorRatingFields(
-        userId: String,
-        averageRating: Double,
-        totalRatings: Int
-    ) {
-      lastTutorUserId = userId
-      lastTutorAverage = averageRating
-      lastTutorTotal = totalRatings
-    }
+    override fun getCurrentUserId() = "u1"
 
-    // --- required, but unused in this test: simple stubs ---
+    override suspend fun getProfile(userId: String): Profile =
+        Profile(userId = userId, name = "User", email = "x@y.com")
 
-    override fun getNewUid(): String = "uid"
-
-    override fun getCurrentUserId(): String = "current-user-id"
-
-    override suspend fun getProfile(userId: String): Profile? = null
+    override suspend fun getProfileById(userId: String): Profile = getProfile(userId)
 
     override suspend fun addProfile(profile: Profile) {}
 
@@ -163,17 +149,49 @@ class BookingsDetailsViewModelTest {
         radiusKm: Double
     ): List<Profile> = emptyList()
 
-    override suspend fun getProfileById(userId: String): Profile? = null
-
     override suspend fun getSkillsForUser(userId: String): List<Skill> = emptyList()
+
+    var lastTutorUserId: String? = null
+    var lastTutorAverage: Double? = null
+    var lastTutorTotal: Int? = null
+
+    var lastStudentUserId: String? = null
+    var lastStudentAverage: Double? = null
+    var lastStudentTotal: Int? = null
+
+    override suspend fun updateTutorRatingFields(
+        userId: String,
+        averageRating: Double,
+        totalRatings: Int
+    ) {
+      lastTutorUserId = userId
+      lastTutorAverage = averageRating
+      lastTutorTotal = totalRatings
+    }
 
     override suspend fun updateStudentRatingFields(
         userId: String,
         averageRating: Double,
         totalRatings: Int
     ) {
-      // not needed for this test
+      lastStudentUserId = userId
+      lastStudentAverage = averageRating
+      lastStudentTotal = totalRatings
     }
+  }
+
+  private fun newVmForCreatorRating(
+      ratingRepo: RatingRepository,
+      profileRepo: ProfileRepository = profileRepoWorking,
+      bookingRepo: BookingRepository = bookingRepoWorking,
+      listingRepo: com.android.sample.model.listing.ListingRepository = listingRepoWorking,
+  ): BookingDetailsViewModel {
+    return BookingDetailsViewModel(
+        bookingRepository = bookingRepo,
+        listingRepository = listingRepo,
+        profileRepository = profileRepo,
+        ratingRepository = ratingRepo,
+    )
   }
 
   // Replace the previous factory with one that returns the concrete fake so setup can still call
@@ -1939,5 +1957,126 @@ class BookingsDetailsViewModelTest {
     assertEquals("b1", vm.bookingUiState.value.booking.bookingId)
     assertEquals("listing_1", vm.bookingUiState.value.booking.associatedListingId)
     assertEquals(100.0, vm.bookingUiState.value.booking.price, 0.01)
+  }
+
+  @Test
+  fun submitCreatorRating_ignoresIfNotCompleted() = runTest {
+    val ratingRepo = FakeRatingRepositoryImpl()
+    val vm = newVmForCreatorRating(ratingRepo)
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "creator_1",
+                    bookerId = "student_1",
+                    status = BookingStatus.CONFIRMED, // not COMPLETED
+                ),
+            listing =
+                Proposal(
+                    listingId = "l1", creatorUserId = "creator_1", type = ListingType.PROPOSAL),
+            ratingProgress = RatingProgress(),
+        ))
+
+    vm.submitCreatorRating(4)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    assertTrue(ratingRepo.addedRatings.isEmpty())
+  }
+
+  @Test
+  fun submitCreatorRating_invalidStars_setsLoadError() = runTest {
+    val ratingRepo = FakeRatingRepositoryImpl()
+    val vm = newVmForCreatorRating(ratingRepo)
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "creator_1",
+                    bookerId = "student_1",
+                    status = BookingStatus.COMPLETED,
+                ),
+            listing =
+                Proposal(
+                    listingId = "l1", creatorUserId = "creator_1", type = ListingType.PROPOSAL),
+            ratingProgress = RatingProgress(),
+        ))
+
+    vm.submitCreatorRating(0)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    assertTrue(vm.bookingUiState.value.loadError)
+    assertTrue(ratingRepo.addedRatings.isEmpty())
+  }
+
+  @Test
+  fun submitCreatorRating_proposal_createsStudentRating() = runTest {
+    val ratingRepo = FakeRatingRepositoryImpl()
+    val vm = newVmForCreatorRating(ratingRepo)
+
+    val booking =
+        Booking(
+            bookingId = "b1",
+            associatedListingId = "l1",
+            listingCreatorId = "tutor-1", // creator is tutor for proposal
+            bookerId = "student-1",
+            status = BookingStatus.COMPLETED,
+        )
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking = booking,
+            listing =
+                Proposal(listingId = "l1", creatorUserId = "tutor-1", type = ListingType.PROPOSAL),
+            ratingProgress = RatingProgress(),
+        ))
+
+    vm.submitCreatorRating(5)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    assertEquals(1, ratingRepo.addedRatings.size)
+    val r = ratingRepo.addedRatings.single()
+
+    assertEquals("tutor-1", r.fromUserId)
+    assertEquals("student-1", r.toUserId)
+    assertEquals(RatingType.STUDENT, r.ratingType)
+    assertEquals("b1", r.targetObjectId)
+  }
+
+  @Test
+  fun submitCreatorRating_whenRatingRepoThrows_setsLoadError() = runTest {
+    val explodingRatingRepo =
+        object : RatingRepository by FakeRatingRepositoryImpl() {
+          override suspend fun addRating(rating: Rating) {
+            throw IllegalStateException("boom")
+          }
+        }
+
+    val vm = newVmForCreatorRating(explodingRatingRepo)
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "tutor-1",
+                    bookerId = "student-1",
+                    status = BookingStatus.COMPLETED,
+                ),
+            listing =
+                Proposal(listingId = "l1", creatorUserId = "tutor-1", type = ListingType.PROPOSAL),
+            ratingProgress = RatingProgress(),
+        ))
+
+    vm.submitCreatorRating(5)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    assertTrue(vm.bookingUiState.value.loadError)
   }
 }

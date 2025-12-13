@@ -602,16 +602,25 @@ private fun CreatorRatingSection(userLabel: String, onSubmit: (Int) -> Unit) {
   var stars by remember { mutableStateOf(0) }
   val enabled = stars in 1..5
 
-  Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-    Text(
-        text = "Your rating",
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold)
+  // Add test tag so tests can find/scroll the creator rating section
+  Column(
+      modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.RATING_SECTION),
+      verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "Your rating",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold)
 
-    RatingRow(label = userLabel, selected = stars, onSelected = { stars = it })
+        RatingRow(label = userLabel, selected = stars, onSelected = { stars = it })
 
-    Button(enabled = enabled, onClick = { onSubmit(stars) }) { Text("Submit") }
-  }
+        // Add test tag to the submit button so tests can scroll to/click it reliably
+        Button(
+            enabled = enabled,
+            onClick = { onSubmit(stars) },
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
+              Text("Submit")
+            }
+      }
 }
 
 /**
