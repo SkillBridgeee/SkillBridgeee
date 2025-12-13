@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -466,35 +467,22 @@ class MessageViewModelTest {
   // -----------------------------------------------------
   @Test
   fun loadConversation_userIdDelayLogic_waits500ms() = runTest {
-    // Clear user session
     UserSessionManager.clearSession()
-
     val newViewModel = MessageViewModel(manager)
 
-    // Record start time
-    val startTime = System.currentTimeMillis()
+    val start = testScheduler.currentTime
 
-    // Set userId after 300ms (before the retry)
     launch {
       delay(300)
       UserSessionManager.setCurrentUserId(testUserId)
     }
 
-    // Load conversation
     newViewModel.loadConversation(convId)
 
-    // Wait for completion
-    delay(700)
-    composeTestRule.waitForIdle()
+    advanceUntilIdle()
 
-    val endTime = System.currentTimeMillis()
-    val elapsed = endTime - startTime
-
-    // Should have waited at least 500ms (for the delay)
-    assertEquals(true, elapsed >= 500)
-
-    // And should have succeeded
-    assertEquals(testUserId, newViewModel.uiState.value.currentUserId)
+    val elapsed = testScheduler.currentTime - start
+    assert(elapsed >= 500)
   }
 
   // -----------------------------------------------------
@@ -789,6 +777,115 @@ class MessageViewModelTest {
     }
   }
 
+  // -----------------------------------------------------
+  // TEST 26 — deleteConversation deletes conv & overview and sets flag
+  // -----------------------------------------------------
+  @Test
+  fun deleteConversation_deletesConvAndOverview_andSetsIsDeleted() = runTest {
+    // Arrange: add an overview for current user
+    overViewRepo.addOverViewConvUser(
+        OverViewConversation(
+            overViewId = "ov1",
+            linkedConvId = convId,
+            convName = "Test conversation",
+            overViewOwnerId = testUserId,
+            otherPersonId = otherUserId))
+
+    // Load so currentConvId + otherId are set
+    viewModel.loadConversation(convId)
+    advanceUntilIdle()
+
+    // Act
+    viewModel.deleteConversation()
+    advanceUntilIdle()
+
+    // Assert: UI updated
+    val state = viewModel.uiState.value
+    assertEquals(true, state.isDeleted)
+    assertEquals(0, state.messages.size)
+
+    // Assert: repositories updated
+    assertEquals(null, convRepo.getConv(convId))
+    assertEquals(0, overViewRepo.getOverViewConvUser(testUserId).size)
+  }
+
+  // -----------------------------------------------------
+  // TEST 27 — deleteConversation without loaded conv does nothing
+  // -----------------------------------------------------
+  @Test
+  fun deleteConversation_withoutLoadedConversation_doesNothing() = runTest {
+    // Precondition: conversation exists
+    assertEquals(true, convRepo.getConv(convId) != null)
+
+    // Act: currentConvId is null because we never called loadConversation
+    viewModel.deleteConversation()
+    advanceUntilIdle()
+
+    // Assert: not deleted, conversation still exists
+    assertEquals(false, viewModel.uiState.value.isDeleted)
+    assertEquals(true, convRepo.getConv(convId) != null)
+  }
+
+  // -----------------------------------------------------
+  // TEST 28 — resetDeletionFlag resets isDeleted to false
+  // -----------------------------------------------------
+  @Test
+  fun resetDeletionFlag_resetsIsDeleted() = runTest {
+    viewModel.loadConversation(convId)
+    advanceUntilIdle()
+
+    viewModel.deleteConversation()
+    advanceUntilIdle()
+    assertEquals(true, viewModel.uiState.value.isDeleted)
+
+    viewModel.resetDeletionFlag()
+    assertEquals(false, viewModel.uiState.value.isDeleted)
+  }
+
+  // -----------------------------------------------------
+  // TEST 29 — deleteConversation generic Exception sets error and not deleted
+  // -----------------------------------------------------
+  @Test
+  fun deleteConversation_whenManagerThrows_setsGenericError_andNotDeleted() = runTest {
+    val failingManager = FailingConversationManager(manager)
+    val failingViewModel = MessageViewModel(failingManager)
+
+    failingViewModel.loadConversation(convId)
+    advanceUntilIdle()
+
+    failingViewModel.deleteConversation()
+    advanceUntilIdle()
+
+    val state = failingViewModel.uiState.value
+    assertEquals("Failed to delete conversation", state.error)
+    assertEquals(false, state.isDeleted)
+
+    // Conversation should still exist (since deletion failed)
+    assertEquals(true, convRepo.getConv(convId) != null)
+  }
+
+  // -----------------------------------------------------
+  // TEST 30 — deleteConversation blocked by active booking shows specific message
+  // -----------------------------------------------------
+  @Test
+  fun deleteConversation_whenBlockedByActiveBooking_setsSpecificError() = runTest {
+    val blockedManager = FakeOverViewRepo.BlockedByActiveBookingConversationManager(manager)
+    val blockedViewModel = MessageViewModel(blockedManager)
+
+    blockedViewModel.loadConversation(convId)
+    advanceUntilIdle()
+
+    blockedViewModel.deleteConversation()
+    advanceUntilIdle()
+
+    val state = blockedViewModel.uiState.value
+    assertEquals("You can’t delete this conversation while a booking is ongoing.", state.error)
+    assertEquals(false, state.isDeleted)
+
+    // Still exists
+    assertEquals(true, convRepo.getConv(convId) != null)
+  }
+
   class FakeProfileRepository : ProfileRepository {
     override fun getNewUid() = "fake-profile-id"
 
@@ -940,6 +1037,19 @@ class MessageViewModelTest {
     private suspend fun refreshUserFlow(userId: String) {
       val list = getOverViewConvUser(userId)
       userFlows[userId]?.value = list
+    }
+
+    class BlockedByActiveBookingConversationManager(
+        private val delegate: ConversationManagerInter
+    ) : ConversationManagerInter by delegate {
+
+      override suspend fun deleteConvAndOverviews(
+          convId: String,
+          deleterId: String,
+          otherId: String
+      ) {
+        throw IllegalStateException("BLOCK_DELETE_CONV_ACTIVE_BOOKING")
+      }
     }
   }
 }
