@@ -99,14 +99,20 @@ fun HomeScreen(
               // Explore subjects
               item { ExploreSubjects(uiState.subjects, onNavigateToSubjectList) }
 
-              item {
-                ProposalsSection(
-                    proposals = uiState.proposals, onProposalClick = onNavigateToListingDetails)
-              }
-
-              item {
-                RequestsSection(
-                    requests = uiState.requests, onRequestClick = onNavigateToListingDetails)
+              when (val error = uiState.errorMsg) {
+                null -> {
+                  item {
+                    ProposalsSection(
+                        proposals = uiState.proposals, onProposalClick = onNavigateToListingDetails)
+                  }
+                  item {
+                    RequestsSection(
+                        requests = uiState.requests, onRequestClick = onNavigateToListingDetails)
+                  }
+                }
+                else -> {
+                  item { ErrorSection(errorMsg = error, reload = { mainPageViewModel.load() }) }
+                }
               }
 
               // Bottom padding
