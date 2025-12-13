@@ -24,11 +24,16 @@ class HomeScreenTest {
 
   @Test
   fun greetingSection_displaysTexts() {
-    composeRule.setContent { MaterialTheme { GreetingSection("Welcome John!") } }
+    composeRule.setContent {
+      MaterialTheme { GreetingSection(welcomeMessage = "Welcome John!", refresh = {}) }
+    }
 
     composeRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
     composeRule.onNodeWithText("Welcome John!").assertIsDisplayed()
     composeRule.onNodeWithText("Ready to learn something new today?").assertIsDisplayed()
+
+    composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).performClick()
   }
 
   @Test
