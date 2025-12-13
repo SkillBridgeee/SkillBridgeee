@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
 class ConversationManager(
     private val convRepo: ConvRepository,
     private val overViewRepo: OverViewConvRepository,
-    private val bookingRepo: BookingRepository,
+    private val bookingRepo: BookingRepository? = null,
 ) : ConversationManagerInter {
 
   companion object {
@@ -94,8 +94,8 @@ class ConversationManager(
    */
   override suspend fun deleteConvAndOverviews(convId: String, deleterId: String, otherId: String) {
     // Check for ongoing bookings between the two users before allowing deletion
-    val blocked = bookingRepo.hasOngoingBookingBetween(deleterId, otherId)
-    if (blocked) {
+    val blocked = bookingRepo?.hasOngoingBookingBetween(deleterId, otherId)
+    if (blocked == true) {
       throw IllegalStateException("BLOCK_DELETE_CONV_ACTIVE_BOOKING")
     }
 

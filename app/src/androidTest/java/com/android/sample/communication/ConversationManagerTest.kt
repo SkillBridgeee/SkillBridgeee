@@ -33,7 +33,7 @@ class ConversationManagerTest {
   fun setup() {
     convRepo = FirestoreConvRepository(TestFirestore.db)
     ovRepo = FirestoreOverViewConvRepository(TestFirestore.db)
-    manager = ConversationManager(convRepo, ovRepo, bookingRepo)
+    manager = ConversationManager(convRepo, ovRepo, null)
   }
 
   @After fun tearDown() = runTest {}

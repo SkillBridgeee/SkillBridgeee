@@ -96,6 +96,7 @@ class ListingScreenTest {
     ConversationRepositoryProvider.setForTests(FakeConvRepository())
     OverViewConvRepositoryProvider.setForTests(FakeOverViewConvRepository())
     RatingRepositoryProvider.setForTests(FakeRatingRepository())
+    BookingRepositoryProvider.setForTests(FakeBookingRepo())
   }
 
   @After

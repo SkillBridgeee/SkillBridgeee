@@ -63,7 +63,7 @@ class MessageViewModelTest {
     ProfileRepositoryProvider.setForTests(FakeProfileRepository())
     convRepo = FakeConvRepo()
     overViewRepo = FakeOverViewRepo()
-    manager = ConversationManager(convRepo, overViewRepo, bookingRepo)
+    manager = ConversationManager(convRepo, overViewRepo, null)
 
     viewModel = MessageViewModel(manager)
 
