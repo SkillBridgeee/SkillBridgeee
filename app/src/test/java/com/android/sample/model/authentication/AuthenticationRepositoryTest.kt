@@ -815,4 +815,48 @@ class AuthenticationRepositoryTest {
     assertTrue(result3.isSuccess)
     verify(exactly = 3) { mockAuth.sendPasswordResetEmail("test@example.com") }
   }
+
+  // -------- Delete Current User Tests --------------------------------------------------------
+
+  @Test
+  fun deleteCurrentUser_success_deletesUserAndReturnsSuccess() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.delete() } returns Tasks.forResult(null)
+
+    val result = repository.deleteCurrentUser()
+
+    assertTrue(result.isSuccess)
+    verify { mockUser.delete() }
+  }
+
+  @Test
+  fun deleteCurrentUser_noUserSignedIn_returnsFailure() = runTest {
+    every { mockAuth.currentUser } returns null
+
+    val result = repository.deleteCurrentUser()
+
+    assertTrue(result.isFailure)
+    assertEquals("No user is currently signed in", result.exceptionOrNull()?.message)
+  }
+
+  @Test
+  fun deleteCurrentUser_failure_returnsNormalizedError() = runTest {
+    val mockUser = mockk<FirebaseUser>(relaxed = true)
+    val firebaseException = mockk<FirebaseAuthException>(relaxed = true)
+
+    every { firebaseException.errorCode } returns "ERROR_REQUIRES_RECENT_LOGIN"
+    every { firebaseException.message } returns "Recent login required"
+
+    every { mockAuth.currentUser } returns mockUser
+    every { mockUser.delete() } returns Tasks.forException(firebaseException)
+
+    val result = repository.deleteCurrentUser()
+
+    assertTrue(result.isFailure)
+    assertEquals(
+        "For security reasons, please log in again before deleting your account",
+        result.exceptionOrNull()?.message)
+  }
 }

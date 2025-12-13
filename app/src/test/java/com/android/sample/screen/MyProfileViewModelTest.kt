@@ -2,12 +2,21 @@ package com.android.sample.screen
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.android.sample.model.authentication.AuthenticationRepository
 import com.android.sample.model.authentication.FirebaseTestRule
 import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.communication.ConversationManagerInter
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -29,8 +38,13 @@ import com.android.sample.ui.profile.LOCATION_EMPTY_MSG
 import com.android.sample.ui.profile.LOCATION_PERMISSION_DENIED_MSG
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.profile.NAME_EMPTY_MSG
+import io.mockk.coEvery
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -43,6 +57,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mockito.mock
+import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -59,6 +74,8 @@ class MyProfileViewModelTest {
   fun setUp() {
     Dispatchers.setMain(dispatcher)
     BookingRepositoryProvider.setForTests(FakeBookingRepo())
+    ConversationRepositoryProvider.setForTests(FakeConversationRepo())
+    OverViewConvRepositoryProvider.setForTests(FakeOverViewConvRepo())
     UserSessionManager.setCurrentUserId("testUid")
   }
 
@@ -121,6 +138,60 @@ class MyProfileViewModelTest {
     }
   }
 
+  private class FakeConversationRepo : ConvRepository {
+    override fun getNewUid(): String {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getConv(convId: String): Conversation? {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun createConv(conversation: Conversation) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteConv(convId: String) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun sendMessage(convId: String, message: Message) {
+      TODO("Not yet implemented")
+    }
+
+    override fun listenMessages(convId: String): Flow<List<Message>> {
+      TODO("Not yet implemented")
+    }
+  }
+
+  private class FakeOverViewConvRepo : OverViewConvRepository {
+
+    private val data = mutableListOf<OverViewConversation>()
+
+    override fun getNewUid(): String = "fake-overview-id"
+
+    override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
+      return data.filter { it.overViewOwnerId == userId }
+    }
+
+    override suspend fun addOverViewConvUser(overView: OverViewConversation) {
+      data.removeAll { it.overViewId == overView.overViewId }
+      data.add(overView)
+    }
+
+    override suspend fun deleteOverViewConvUser(convId: String) {
+      data.removeAll { it.linkedConvId == convId }
+    }
+
+    override suspend fun deleteOverViewById(overViewId: String) {
+      data.removeAll { it.overViewId == overViewId }
+    }
+
+    override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {
+      return flowOf(emptyList())
+    }
+  }
+
   private class FakeLocationRepo(
       private val results: List<Location> =
           listOf(Location(name = "Paris"), Location(name = "Rome"))
@@ -156,9 +227,7 @@ class MyProfileViewModelTest {
 
     override suspend fun deleteBooking(bookingId: String) {}
 
-    override suspend fun deleteAllBookingOfUser(userId: String) {
-      TODO("Not yet implemented")
-    }
+    override suspend fun deleteAllBookingOfUser(userId: String) {}
 
     override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
 
@@ -196,9 +265,7 @@ class MyProfileViewModelTest {
 
     override suspend fun deleteListing(listingId: String) {}
 
-    override suspend fun deleteAllListingOfUser(userId: String) {
-      TODO("Not yet implemented")
-    }
+    override suspend fun deleteAllListingOfUser(userId: String) {}
 
     override suspend fun deactivateListing(listingId: String) {}
 
@@ -242,9 +309,7 @@ class MyProfileViewModelTest {
 
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
 
-    override suspend fun deleteAllRatingOfUser(userId: String) {
-      TODO("Not yet implemented")
-    }
+    override suspend fun deleteAllRatingOfUser(userId: String) {}
   }
 
   private class SuccessGpsProvider(
@@ -1208,5 +1273,119 @@ class MyProfileViewModelTest {
             sessionManager = UserSessionManager)
 
     vm.loadUserBookings("demo")
+  }
+
+  private object EmptyConversationManager : ConversationManagerInter {
+    override suspend fun getOverViewConvUser(userId: String) = emptyList<OverViewConversation>()
+
+    override suspend fun createConvAndOverviews(
+        creatorId: String,
+        otherUserId: String,
+        convName: String
+    ): String {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteConvAndOverviews(
+        convId: String,
+        deleterId: String,
+        otherId: String
+    ) {}
+
+    override suspend fun sendMessage(convId: String, message: Message) {}
+
+    override suspend fun resetUnreadCount(convId: String, userId: String) {}
+
+    override suspend fun getConv(convId: String) = null
+
+    override fun listenMessages(convId: String) = emptyFlow<List<Message>>()
+
+    override fun listenConversationOverviews(userId: String) =
+        emptyFlow<List<OverViewConversation>>()
+
+    override fun getMessageNewUid() = "x"
+  }
+
+  @Test
+  fun deleteAccount_missingUserId_setsError() = runTest {
+    val mockSession = mock(UserSessionManager::class.java)
+    whenever(mockSession.getCurrentUserId()).thenReturn(null)
+
+    val mockAuthRepo = mock(AuthenticationRepository::class.java)
+
+    whenever(mockAuthRepo.deleteCurrentUser()).thenAnswer {
+      throw IllegalStateException("deleteCurrentUser should NOT be called")
+    }
+
+    val vm =
+        MyProfileViewModel(
+            profileRepository = FakeProfileRepo(),
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepos(),
+            bookingRepository = FakeBookingRepo(),
+            authRepository = mockAuthRepo,
+            sessionManager = mockSession,
+        )
+
+    vm.deleteAccount()
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertEquals("Unexpected error: missing user id.", ui.deleteAccountError)
+    assertFalse(ui.deleteAccountSuccess)
+  }
+
+  @Test
+  fun deleteAccount_success_updatesSuccessFlag() = runTest {
+    UserSessionManager.setCurrentUserId("abc")
+
+    val fakeAuthRepo = mockk<AuthenticationRepository>()
+    coEvery { fakeAuthRepo.deleteCurrentUser() } returns Result.success(Unit)
+
+    val vm =
+        MyProfileViewModel(
+            profileRepository = FakeProfileRepo(makeProfile("abc")),
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepos(),
+            bookingRepository = FakeBookingRepo(),
+            authRepository = fakeAuthRepo,
+            conversationManager = EmptyConversationManager,
+            sessionManager = UserSessionManager)
+
+    vm.loadProfile("abc")
+    advanceUntilIdle()
+
+    vm.deleteAccount()
+    advanceUntilIdle()
+
+    assertTrue(vm.uiState.value.deleteAccountSuccess)
+    assertNull(vm.uiState.value.deleteAccountError)
+  }
+
+  @Test
+  fun deleteAccount_failure_setsErrorFlag() = runTest {
+    UserSessionManager.setCurrentUserId("abc")
+
+    val fakeAuthRepo = mockk<AuthenticationRepository>()
+    coEvery { fakeAuthRepo.deleteCurrentUser() } returns Result.failure(Exception("boom"))
+
+    val vm =
+        MyProfileViewModel(
+            profileRepository = FakeProfileRepo(makeProfile("abc")),
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepos(),
+            bookingRepository = FakeBookingRepo(),
+            authRepository = fakeAuthRepo,
+            conversationManager = EmptyConversationManager,
+            sessionManager = UserSessionManager)
+
+    vm.loadProfile("abc")
+    advanceUntilIdle()
+
+    vm.deleteAccount()
+    advanceUntilIdle()
+
+    assertEquals("boom", vm.uiState.value.deleteAccountError)
+    assertFalse(vm.uiState.value.deleteAccountSuccess)
   }
 }

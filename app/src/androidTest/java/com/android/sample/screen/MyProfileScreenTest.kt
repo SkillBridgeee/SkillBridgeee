@@ -18,6 +18,13 @@ import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.booking.PaymentStatus
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -37,6 +44,8 @@ import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -245,6 +254,58 @@ class MyProfileScreenTest {
     }
   }
 
+  private class FakeConversationRepo : ConvRepository {
+    override fun getNewUid(): String {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getConv(convId: String): Conversation? {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun createConv(conversation: Conversation) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteConv(convId: String) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun sendMessage(convId: String, message: Message) {
+      TODO("Not yet implemented")
+    }
+
+    override fun listenMessages(convId: String): Flow<List<Message>> {
+      TODO("Not yet implemented")
+    }
+  }
+
+  private class FakeOverViewConvRepo : OverViewConvRepository {
+    override fun getNewUid(): String {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun addOverViewConvUser(overView: OverViewConversation) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteOverViewConvUser(convId: String) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteOverViewById(overViewId: String) {
+      TODO("Not yet implemented")
+    }
+
+    override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {
+      TODO("Not yet implemented")
+    }
+  }
+
   private lateinit var viewModel: MyProfileViewModel
   private val logoutClicked = AtomicBoolean(false)
   private lateinit var repo: FakeRepo
@@ -254,6 +315,8 @@ class MyProfileScreenTest {
   @Before
   fun setup() {
     BookingRepositoryProvider.setForTests(FakeBookingRepo())
+    ConversationRepositoryProvider.setForTests(FakeConversationRepo())
+    OverViewConvRepositoryProvider.setForTests(FakeOverViewConvRepo())
     repo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
     UserSessionManager.setCurrentUserId("demo")
     viewModel =
@@ -314,6 +377,27 @@ class MyProfileScreenTest {
     compose.waitUntil(timeoutMillis = 2_000) {
       compose
           .onAllNodesWithTag(MyProfileScreenTestTag.LOGOUT_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+  }
+
+  // Helper: scroll so the delete account button becomes visible
+  private fun ensureDeleteVisible() {
+    compose.waitUntil(timeoutMillis = 5_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST, useUnmergedTree = true)
+        .performScrollToNode(hasTestTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON))
+
+    compose.waitUntil(timeoutMillis = 2_000) {
+      compose
+          .onAllNodesWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON)
           .fetchSemanticsNodes()
           .isNotEmpty()
     }
@@ -918,5 +1002,114 @@ class MyProfileScreenTest {
     compose.onNodeWithTag(MyProfileScreenTestTag.HISTORY_TAB).performClick()
 
     compose.onNodeWithText("You don’t have any completed bookings yet.").assertExists()
+  }
+
+  // ----------------------------------------------------------
+  // DELETE ACCOUNT BUTTON & DIALOG TESTS
+  // ----------------------------------------------------------
+  @Test
+  fun deleteAccountButton_isDisplayed() {
+    ensureDeleteVisible()
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).assertIsDisplayed()
+  }
+
+  @Test
+  fun deleteAccountButton_isClickable() {
+    ensureDeleteVisible()
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).assertHasClickAction()
+  }
+
+  @Test
+  fun deleteAccountButton_opensConfirmationDialog() {
+    ensureDeleteVisible()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).performClick()
+
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_DIALOG, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun deleteAccountDialog_showsConfirmAndCancelButtons() {
+    ensureDeleteVisible()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).performClick()
+
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CONFIRM_BUTTON, useUnmergedTree = true)
+        .assertIsDisplayed()
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CANCEL_BUTTON, useUnmergedTree = true)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun deleteAccountDialog_dismissesOnCancel() {
+    ensureDeleteVisible()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).performClick()
+
+    // Dialog should be visible
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_DIALOG, useUnmergedTree = true)
+        .assertIsDisplayed()
+
+    // Tap Cancel
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CANCEL_BUTTON, useUnmergedTree = true)
+        .performClick()
+
+    // Dialog should disappear
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_DIALOG, useUnmergedTree = true)
+        .assertDoesNotExist()
+  }
+
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun deleteAccountSuccess_triggersLogout_andClearsFlag() {
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val current = stateFlow.value
+      stateFlow.value = current.copy(deleteAccountSuccess = true)
+    }
+
+    compose.waitForIdle()
+
+    assert(logoutClicked.get())
+
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val updated = stateFlow.value
+      assertEquals(false, updated.deleteAccountSuccess)
+      assertEquals(null, updated.deleteAccountError)
+    }
+  }
+
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun deleteAccountError_triggersSnackbar() {
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val current = stateFlow.value
+      stateFlow.value = current.copy(deleteAccountError = "Something went wrong")
+    }
+
+    compose.waitForIdle()
+
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val updated = stateFlow.value
+      assertEquals(false, updated.deleteAccountSuccess)
+    }
   }
 }
