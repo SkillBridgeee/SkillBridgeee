@@ -51,9 +51,17 @@ class MessageViewModel(
   private var loadJob: Job? = null
 
   private val userError: String = "User not authenticated. Please log in to view messages."
-  private val convNotFoundError: String = "Conversation not found"
   private val listenMsgError: String = "Failed to receive messages"
   private val sendMsgError: String = "Failed to send message"
+
+  companion object {
+    private const val TAG = "MessageViewModel"
+
+    private const val ERR_DELETE_CONV_GENERIC = "Failed to delete conversation"
+    private const val BLOCK_DELETE_ACTIVE_BOOKING_CODE = "BLOCK_DELETE_CONV_ACTIVE_BOOKING"
+    private const val ERR_DELETE_CONV_ACTIVE_BOOKING =
+        "You can’t delete this conversation while a booking is ongoing."
+  }
 
   init {
     // Initialize current user ID on ViewModel creation
@@ -200,17 +208,16 @@ class MessageViewModel(
 
         _uiState.update { it.copy(isDeleted = true, messages = emptyList()) }
       } catch (e: IllegalStateException) {
-        Log.w("MessageViewModel", "Delete conversation blocked", e)
+        Log.w(TAG, "Delete conversation blocked", e)
 
         val msg =
-            if (e.message == "BLOCK_DELETE_CONV_ACTIVE_BOOKING")
-                "You can’t delete this conversation while a booking is ongoing."
-            else "Failed to delete conversation"
+            if (e.message == BLOCK_DELETE_ACTIVE_BOOKING_CODE) ERR_DELETE_CONV_ACTIVE_BOOKING
+            else ERR_DELETE_CONV_GENERIC
 
         _uiState.update { it.copy(error = msg) }
       } catch (e: Exception) {
-        Log.e("MessageViewModel", "Failed to delete conversation", e)
-        _uiState.update { it.copy(error = "Failed to delete conversation") }
+        Log.e(TAG, ERR_DELETE_CONV_GENERIC, e)
+        _uiState.update { it.copy(error = ERR_DELETE_CONV_GENERIC) }
       }
     }
   }
