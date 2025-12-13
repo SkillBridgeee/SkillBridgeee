@@ -1,7 +1,6 @@
 package com.android.sample.communication
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.android.sample.model.booking.FirestoreBookingRepository
 import com.android.sample.model.communication.ConversationManager
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.FirestoreConvRepository

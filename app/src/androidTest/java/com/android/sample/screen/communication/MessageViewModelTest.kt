@@ -48,7 +48,7 @@ class MessageViewModelTest {
   private lateinit var manager: ConversationManager
   private lateinit var viewModel: MessageViewModel
 
-    private val testUserId = "userA"
+  private val testUserId = "userA"
   private val otherUserId = "userB"
   private val convId = "conv123"
 
