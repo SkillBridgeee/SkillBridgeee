@@ -89,8 +89,7 @@ class MainPageViewModel(
           current.copy(
               welcomeMessage = welcomeMsg ?: current.welcomeMessage,
               proposals = topProposals,
-              requests = topRequests,
-              errorMsg = null)
+              requests = topRequests)
         }
       } catch (e: Exception) {
         Log.e("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
@@ -98,7 +97,7 @@ class MainPageViewModel(
           current.copy(
               proposals = emptyList(),
               requests = emptyList(),
-              errorMsg = current.errorMsg?.let { generalError } ?: listingErrorMsg)
+              errorMsg = if (current.errorMsg == null) listingErrorMsg else generalError)
         }
       }
     }
