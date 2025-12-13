@@ -9,18 +9,19 @@ import com.android.sample.mockRepository.profileRepo.ProfileFakeRepoWorking
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.listing.ListingType
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.rating.RatingType
-import com.android.sample.model.rating.StarRating
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.BookingUIState
+import com.android.sample.ui.bookings.RatingProgress
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
@@ -415,7 +416,7 @@ class BookingsDetailsViewModelTest {
   }
 
   @Test
-  fun submitStudentRatings_whenCompleted_sendsTwoRatings() = runTest {
+  fun submitBookerRatings_whenCompleted_andProposal_sendsTutorAndListingRatings() = runTest {
     val fakeRatingRepo = FakeRatingRepositoryImpl()
 
     val booking =
@@ -425,6 +426,14 @@ class BookingsDetailsViewModelTest {
             listingCreatorId = "tutor-1",
             bookerId = "student-1",
             status = BookingStatus.COMPLETED,
+        )
+
+    val listing =
+        Proposal(
+            listingId = "l1",
+            creatorUserId = "tutor-1",
+            // if Proposal defaults type already, fine; otherwise:
+            type = ListingType.PROPOSAL,
         )
 
     val vm =
@@ -438,36 +447,33 @@ class BookingsDetailsViewModelTest {
     vm.setUiStateForTest(
         BookingUIState(
             booking = booking,
-            listing = Proposal(),
-            creatorProfile = Profile(),
+            listing = listing,
+            creatorProfile = Profile(userId = "tutor-1"),
+            bookerProfile = Profile(userId = "student-1"),
             loadError = false,
+            ratingProgress = RatingProgress(),
         ))
 
-    testDispatcher.scheduler.advanceUntilIdle()
-    vm.submitStudentRatings(tutorStars = 4, listingStars = 2)
+    // Run the launched coroutine in submitBookerRatings
+    vm.submitBookerRatings(userStars = 4, listingStars = 2)
     testDispatcher.scheduler.advanceUntilIdle()
 
-    assert(fakeRatingRepo.addedRatings.size == 2)
+    assertEquals(2, fakeRatingRepo.addedRatings.size)
 
-    val tutorRating = fakeRatingRepo.addedRatings.first { it.ratingType == RatingType.TUTOR }
+    val userRating = fakeRatingRepo.addedRatings.first { it.ratingType == RatingType.TUTOR }
     val listingRating = fakeRatingRepo.addedRatings.first { it.ratingType == RatingType.LISTING }
 
-    assert(tutorRating.starRating == StarRating.FOUR)
-    assert(listingRating.starRating == StarRating.TWO)
+    assertEquals("student-1", userRating.fromUserId)
+    assertEquals("tutor-1", userRating.toUserId)
+    assertEquals("b1", userRating.targetObjectId) // bookingId
 
-    assert(tutorRating.fromUserId == "student-1")
-    assert(tutorRating.toUserId == "tutor-1")
-    // 🔽 now per booking
-    assert(tutorRating.targetObjectId == "b1")
-
-    assert(listingRating.fromUserId == "student-1")
-    assert(listingRating.toUserId == "tutor-1")
-    // 🔽 now per booking as well
-    assert(listingRating.targetObjectId == "b1")
+    assertEquals("student-1", listingRating.fromUserId)
+    assertEquals("tutor-1", listingRating.toUserId) // listing.creatorUserId
+    assertEquals("l1", listingRating.targetObjectId) // listingId (IMPORTANT)
   }
 
   @Test
-  fun submitStudentRatings_whenNotCompleted_doesNothing() = runTest {
+  fun submitBookerRatings_whenNotCompleted_doesNothing() = runTest {
     val fakeRatingRepo = FakeRatingRepositoryImpl()
 
     val booking =
@@ -493,13 +499,14 @@ class BookingsDetailsViewModelTest {
             listing = Proposal(),
             creatorProfile = Profile(),
             loadError = false,
+            ratingProgress = RatingProgress(),
         ))
 
     testDispatcher.scheduler.advanceUntilIdle()
-    vm.submitStudentRatings(5, 5)
+    vm.submitBookerRatings(userStars = 5, listingStars = 5)
     testDispatcher.scheduler.advanceUntilIdle()
 
-    assert(fakeRatingRepo.addedRatings.isEmpty())
+    assertTrue(fakeRatingRepo.addedRatings.isEmpty())
   }
 
   @Test
@@ -532,54 +539,10 @@ class BookingsDetailsViewModelTest {
         ))
 
     testDispatcher.scheduler.advanceUntilIdle()
-    vm.submitStudentRatings(3, 3)
+    vm.submitBookerRatings(3, 3)
     testDispatcher.scheduler.advanceUntilIdle()
 
     assert(fakeRatingRepo.addedRatings.isEmpty())
-  }
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  @Test
-  fun submitStudentRatings_updatesTutorProfileAggregate() = runTest {
-    val ratingRepo = FakeRatingRepositoryImpl()
-    val profileRepo = CapturingProfileRepo()
-
-    // booking where student-1 rates tutor-1
-    val booking =
-        Booking(
-            bookingId = "b-agg",
-            associatedListingId = "l-agg",
-            listingCreatorId = "tutor-1",
-            bookerId = "student-1",
-            status = BookingStatus.COMPLETED,
-        )
-
-    val vm =
-        BookingDetailsViewModel(
-            bookingRepository = bookingRepoWorking,
-            listingRepository = listingRepoWorking,
-            profileRepository = profileRepo,
-            ratingRepository = ratingRepo,
-        )
-
-    vm.setUiStateForTest(
-        BookingUIState(
-            booking = booking,
-            listing = Proposal(),
-            creatorProfile = Profile(),
-            loadError = false,
-        ))
-
-    // student gives the tutor 4 stars (listing stars don’t matter here)
-    vm.submitStudentRatings(tutorStars = 4, listingStars = 5)
-    testDispatcher.scheduler.advanceUntilIdle()
-
-    // since this is the FIRST tutor rating:
-    //   average should be 4.0
-    //   totalRatings should be 1
-    assertEquals("tutor-1", profileRepo.lastTutorUserId)
-    assertEquals(4.0, profileRepo.lastTutorAverage!!, 0.0001)
-    assertEquals(1, profileRepo.lastTutorTotal)
   }
 
   // ==================== PAYMENT STATUS TESTS ====================

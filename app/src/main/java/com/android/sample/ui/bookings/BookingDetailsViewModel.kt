@@ -11,6 +11,7 @@ import com.android.sample.model.booking.PaymentStatus
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.listing.ListingType
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
@@ -34,10 +35,19 @@ data class BookingUIState(
     val creatorProfile: Profile = Profile(),
     val bookerProfile: Profile = Profile(), // Profile of the person who made the booking
     val loadError: Boolean = false,
-    val ratingSubmitted: Boolean = false,
-    val isTutor: Boolean = false, // Added to indicate if the user is a tutor
+    val ratingProgress: RatingProgress = RatingProgress(),
+    val isCreator: Boolean = false,
+    val isBooker: Boolean = false,
     val onAcceptBooking: () -> Unit = {}, // Added callback for accepting a booking
     val onDenyBooking: () -> Unit = {} // Added callback for denying a booking
+)
+
+data class RatingProgress(
+    val bookerRatedTutor: Boolean = false,
+    val bookerRatedStudent: Boolean = false,
+    val bookerRatedListing: Boolean = false,
+    val creatorRatedTutor: Boolean = false,
+    val creatorRatedStudent: Boolean = false,
 )
 
 class BookingDetailsViewModel(
@@ -82,40 +92,70 @@ class BookingDetailsViewModel(
           val listing =
               listingDeferred.await()
                   ?: throw IllegalStateException("BookingDetailsViewModel : Listing not found")
-
-          val fromUserId = booking.bookerId
-          val tutorUserId = booking.listingCreatorId
+          val creatorId = booking.listingCreatorId
+          val bookerId = booking.bookerId
           val currentBookingId = booking.bookingId
+          val bookingIdObj = booking.bookingId
+          val listingIdObj = listing.listingId
+          val currentUserId = profileRepository.getCurrentUserId()
 
-          val tutorAlreadyRated =
-              try {
-                ratingRepository.hasRating(
-                    fromUserId = fromUserId,
-                    toUserId = tutorUserId,
-                    ratingType = RatingType.TUTOR,
-                    targetObjectId = currentBookingId,
-                )
-              } catch (e: Exception) {
-                Log.w("BookingDetailsViewModel", "Error checking tutor rating", e)
-                false
-              }
+          val tutorUserId = if (listing.type == ListingType.PROPOSAL) creatorId else bookerId
 
-          val listingAlreadyRated =
-              try {
-                ratingRepository.hasRating(
-                    fromUserId = fromUserId,
-                    toUserId = tutorUserId,
-                    ratingType = RatingType.LISTING,
-                    targetObjectId = currentBookingId,
-                )
-              } catch (e: Exception) {
-                Log.w("BookingDetailsViewModel", "Error checking listing rating", e)
-                false
-              }
+          val studentUserId = if (listing.type == ListingType.PROPOSAL) bookerId else creatorId
 
-          val alreadySubmitted = tutorAlreadyRated && listingAlreadyRated
+          val isCreator = currentUserId == creatorId
+          val isBooker = currentUserId == bookerId
+          val fromUserId = bookerId
 
-          // IMPORTANT: build a FRESH state, don't reuse old ratingSubmitted
+          val bookerRatedTutor =
+              ratingRepository.hasRating(
+                  fromUserId = bookerId,
+                  toUserId = tutorUserId,
+                  ratingType = RatingType.TUTOR,
+                  targetObjectId = bookingIdObj,
+              )
+
+          val bookerRatedStudent =
+              ratingRepository.hasRating(
+                  fromUserId = bookerId,
+                  toUserId = studentUserId,
+                  ratingType = RatingType.STUDENT,
+                  targetObjectId = bookingIdObj,
+              )
+
+          val bookerRatedListing =
+              ratingRepository.hasRating(
+                  fromUserId = bookerId,
+                  toUserId = listing.creatorUserId, // listing owner; must be nonblank
+                  ratingType = RatingType.LISTING,
+                  targetObjectId = listingIdObj, // IMPORTANT: listingId, not bookingId
+              )
+
+          val creatorRatedTutor =
+              ratingRepository.hasRating(
+                  fromUserId = creatorId,
+                  toUserId = tutorUserId,
+                  ratingType = RatingType.TUTOR,
+                  targetObjectId = bookingIdObj,
+              )
+
+          val creatorRatedStudent =
+              ratingRepository.hasRating(
+                  fromUserId = creatorId,
+                  toUserId = studentUserId,
+                  ratingType = RatingType.STUDENT,
+                  targetObjectId = bookingIdObj,
+              )
+
+          val ratingProgress =
+              RatingProgress(
+                  bookerRatedTutor = bookerRatedTutor,
+                  bookerRatedStudent = bookerRatedStudent,
+                  bookerRatedListing = bookerRatedListing,
+                  creatorRatedTutor = creatorRatedTutor,
+                  creatorRatedStudent = creatorRatedStudent,
+              )
+
           _bookingUiState.value =
               BookingUIState(
                   booking = booking,
@@ -123,8 +163,9 @@ class BookingDetailsViewModel(
                   creatorProfile = creatorProfile,
                   bookerProfile = bookerProfile,
                   loadError = false,
-                  ratingSubmitted = alreadySubmitted,
-                  isTutor = booking.listingCreatorId == profileRepository.getCurrentUserId(),
+                  ratingProgress = ratingProgress,
+                  isCreator = isCreator,
+                  isBooker = isBooker,
                   onAcceptBooking = { acceptBooking(booking.bookingId) },
                   onDenyBooking = { denyBooking(booking.bookingId) })
         }
@@ -160,116 +201,6 @@ class BookingDetailsViewModel(
         }
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error completing booking $currentBookingId", e)
-        _bookingUiState.value = bookingUiState.value.copy(loadError = true)
-      }
-    }
-  }
-
-  /**
-   * Submits the student's ratings for both the tutor and the listing.
-   *
-   * This method:
-   * - Ensures a valid booking is loaded.
-   * - Ensures the booking has been completed (ratings allowed only after completion).
-   * - Validates that both star values are within the range [1–5].
-   * - Converts the raw star values into `StarRating` enums.
-   * - Creates and validates two `Rating` objects:
-   *     - a tutor rating (type = `TUTOR`)
-   *     - a listing rating (type = `LISTING`)
-   * - Persists both ratings via the `RatingRepository`.
-   *
-   * If any step fails (invalid input, missing booking, repository errors), the function logs a
-   * warning/error and updates the UI state with `loadError = true` so the UI can react.
-   *
-   * @param tutorStars The number of stars (1–5) that the student gives to the tutor.
-   * @param listingStars The number of stars (1–5) that the student gives to the listing/course.
-   */
-  fun submitStudentRatings(tutorStars: Int, listingStars: Int) {
-    val booking = bookingUiState.value.booking
-
-    // No booking loaded or not completed -> do nothing
-    if (booking.bookingId.isBlank()) return
-    if (booking.status != BookingStatus.COMPLETED) return
-
-    // Validate inputs: both ratings must be between 1 and 5
-    if (tutorStars !in 1..5 || listingStars !in 1..5) {
-      Log.w(
-          "BookingDetailsViewModel",
-          "Ignoring invalid star values: tutor=$tutorStars, listing=$listingStars")
-      _bookingUiState.value = bookingUiState.value.copy(loadError = true)
-      return
-    }
-
-    val tutorRatingEnum = tutorStars.toStarRating()
-    val listingRatingEnum = listingStars.toStarRating()
-
-    viewModelScope.launch {
-      try {
-        val fromUserId = booking.bookerId
-        val tutorUserId = booking.listingCreatorId
-        val bookingId = booking.bookingId
-        // --- prevent duplicates: one rating per booking ---
-        val tutorAlreadyRated =
-            ratingRepository.hasRating(
-                fromUserId = fromUserId,
-                toUserId = tutorUserId,
-                ratingType = RatingType.TUTOR,
-                targetObjectId = bookingId,
-            )
-
-        val listingAlreadyRated =
-            ratingRepository.hasRating(
-                fromUserId = fromUserId,
-                toUserId = tutorUserId,
-                ratingType = RatingType.LISTING,
-                targetObjectId = bookingId,
-            )
-
-        if (tutorAlreadyRated && listingAlreadyRated) {
-          Log.d(
-              "BookingDetailsViewModel", "Ratings for this booking already exist; skipping submit")
-          _bookingUiState.value = bookingUiState.value.copy(ratingSubmitted = true)
-          return@launch
-        }
-
-        // 1) Student rates the tutor (for THIS booking)
-        val tutorRating =
-            Rating(
-                ratingId = ratingRepository.getNewUid(),
-                fromUserId = fromUserId,
-                toUserId = tutorUserId,
-                starRating = tutorRatingEnum,
-                comment = "",
-                ratingType = RatingType.TUTOR,
-                targetObjectId = bookingId,
-            )
-
-        // 2) Student rates the listing (for THIS booking)
-        val listingRating =
-            Rating(
-                ratingId = ratingRepository.getNewUid(),
-                fromUserId = fromUserId,
-                toUserId = tutorUserId,
-                starRating = listingRatingEnum,
-                comment = "",
-                ratingType = RatingType.LISTING,
-                targetObjectId = bookingId,
-            )
-
-        tutorRating.validate()
-        listingRating.validate()
-
-        if (!tutorAlreadyRated) ratingRepository.addRating(tutorRating)
-        if (!listingAlreadyRated) ratingRepository.addRating(listingRating)
-
-        RatingAggregationHelper.recomputeTutorAggregateRating(
-            tutorUserId = tutorUserId,
-            ratingRepo = ratingRepository,
-            profileRepo = profileRepository)
-
-        _bookingUiState.value = bookingUiState.value.copy(ratingSubmitted = true)
-      } catch (e: Exception) {
-        Log.e("BookingDetailsViewModel", "Error submitting student ratings", e)
         _bookingUiState.value = bookingUiState.value.copy(loadError = true)
       }
     }
@@ -356,6 +287,135 @@ class BookingDetailsViewModel(
         }
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error confirming payment received", e)
+        _bookingUiState.value = bookingUiState.value.copy(loadError = true)
+      }
+    }
+  }
+
+  fun submitBookerRatings(userStars: Int, listingStars: Int) {
+    val booking = bookingUiState.value.booking
+    val listing = bookingUiState.value.listing
+    if (booking.bookingId.isBlank()) return
+    if (booking.status != BookingStatus.COMPLETED) return
+
+    if (userStars !in 1..5 || listingStars !in 1..5) {
+      _bookingUiState.value = bookingUiState.value.copy(loadError = true)
+      return
+    }
+
+    val creatorId = booking.listingCreatorId
+    val bookerId = booking.bookerId
+    val bookingIdObj = booking.bookingId
+    val listingIdObj = listing.listingId
+
+    val tutorUserId = if (listing.type == ListingType.PROPOSAL) creatorId else bookerId
+    val studentUserId = if (listing.type == ListingType.PROPOSAL) bookerId else creatorId
+
+    // Booker rates WHO?
+    val (toUserId, ratingType) =
+        if (listing.type == ListingType.REQUEST) {
+          studentUserId to RatingType.STUDENT
+        } else {
+          tutorUserId to RatingType.TUTOR
+        }
+
+    viewModelScope.launch {
+      try {
+        val userRating =
+            Rating(
+                ratingId = ratingRepository.getNewUid(),
+                fromUserId = bookerId,
+                toUserId = toUserId,
+                starRating = userStars.toStarRating(),
+                comment = "",
+                ratingType = ratingType,
+                targetObjectId = bookingIdObj,
+            )
+
+        val listingRating =
+            Rating(
+                ratingId = ratingRepository.getNewUid(),
+                fromUserId = bookerId,
+                toUserId = listing.creatorUserId,
+                starRating = listingStars.toStarRating(),
+                comment = "",
+                ratingType = RatingType.LISTING,
+                targetObjectId = listingIdObj, // IMPORTANT
+            )
+
+        userRating.validate()
+        listingRating.validate()
+
+        ratingRepository.addRating(userRating)
+        ratingRepository.addRating(listingRating)
+
+        // Optional: recompute tutor aggregate only when ratingType==TUTOR
+        if (ratingType == RatingType.TUTOR) {
+          RatingAggregationHelper.recomputeTutorAggregateRating(
+              tutorUserId = tutorUserId,
+              ratingRepo = ratingRepository,
+              profileRepo = profileRepository)
+        }
+
+        // Refresh progress quickly (minimal approach: just reload)
+        load(bookingIdObj)
+      } catch (e: Exception) {
+        Log.e("BookingDetailsViewModel", "Error submitting booker ratings", e)
+        _bookingUiState.value = bookingUiState.value.copy(loadError = true)
+      }
+    }
+  }
+
+  fun submitCreatorRating(stars: Int) {
+    val booking = bookingUiState.value.booking
+    val listing = bookingUiState.value.listing
+    if (booking.bookingId.isBlank()) return
+    if (booking.status != BookingStatus.COMPLETED) return
+    if (stars !in 1..5) {
+      _bookingUiState.value = bookingUiState.value.copy(loadError = true)
+      return
+    }
+
+    val creatorId = booking.listingCreatorId
+    val bookerId = booking.bookerId
+    val bookingIdObj = booking.bookingId
+
+    val tutorUserId = if (listing.type == ListingType.PROPOSAL) creatorId else bookerId
+    val studentUserId = if (listing.type == ListingType.PROPOSAL) bookerId else creatorId
+
+    val (toUserId, ratingType) =
+        if (listing.type == ListingType.REQUEST) {
+          tutorUserId to RatingType.TUTOR
+        } else {
+          studentUserId to RatingType.STUDENT
+        }
+
+    viewModelScope.launch {
+      try {
+        val rating =
+            Rating(
+                ratingId = ratingRepository.getNewUid(),
+                fromUserId = creatorId,
+                toUserId = toUserId,
+                starRating = stars.toStarRating(),
+                comment = "",
+                ratingType = ratingType,
+                targetObjectId = bookingIdObj,
+            )
+
+        rating.validate()
+        ratingRepository.addRating(rating)
+
+        if (ratingType == RatingType.TUTOR) {
+          RatingAggregationHelper.recomputeTutorAggregateRating(
+              tutorUserId = tutorUserId,
+              ratingRepo = ratingRepository,
+              profileRepo = profileRepository)
+        }
+
+        load(bookingIdObj)
+      } catch (e: Exception) {
+        Log.e("BookingDetailsViewModel", "Error submitting creator rating", e)
         _bookingUiState.value = bookingUiState.value.copy(loadError = true)
       }
     }
