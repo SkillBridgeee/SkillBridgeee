@@ -47,6 +47,8 @@ object HomeScreenTestTags {
   const val REFRESH_BUTTON = "refreshButton"
   const val REQUEST_SECTION = "requestSection"
   const val REQUEST_CARD = "requestCard"
+
+  const val ERROR_TEXT = "errorText"
   const val FAB_ADD = "fabAdd"
 }
 
@@ -292,7 +294,8 @@ fun ErrorSection(errorMsg: String, reload: () -> Unit) {
             text = "Something went wrong",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.error)
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.testTag(HomeScreenTestTags.ERROR_TEXT))
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(text = errorMsg, fontSize = 14.sp, color = Color.Gray)
