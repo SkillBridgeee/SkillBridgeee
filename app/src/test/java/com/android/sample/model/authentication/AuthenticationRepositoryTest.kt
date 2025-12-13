@@ -856,9 +856,7 @@ class AuthenticationRepositoryTest {
 
     assertTrue(result.isFailure)
     assertEquals(
-      "For security reasons, please log in again before deleting your account",
-      result.exceptionOrNull()?.message
-    )
+        "For security reasons, please log in again before deleting your account",
+        result.exceptionOrNull()?.message)
   }
-
 }

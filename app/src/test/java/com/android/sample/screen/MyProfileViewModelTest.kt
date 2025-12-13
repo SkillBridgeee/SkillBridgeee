@@ -192,7 +192,6 @@ class MyProfileViewModelTest {
     }
   }
 
-
   private class FakeLocationRepo(
       private val results: List<Location> =
           listOf(Location(name = "Paris"), Location(name = "Rome"))
@@ -1278,23 +1277,34 @@ class MyProfileViewModelTest {
 
   private object EmptyConversationManager : ConversationManagerInter {
     override suspend fun getOverViewConvUser(userId: String) = emptyList<OverViewConversation>()
+
     override suspend fun createConvAndOverviews(
-      creatorId: String,
-      otherUserId: String,
-      convName: String
+        creatorId: String,
+        otherUserId: String,
+        convName: String
     ): String {
       TODO("Not yet implemented")
     }
 
-    override suspend fun deleteConvAndOverviews(convId: String, deleterId: String, otherId: String) {}
+    override suspend fun deleteConvAndOverviews(
+        convId: String,
+        deleterId: String,
+        otherId: String
+    ) {}
+
     override suspend fun sendMessage(convId: String, message: Message) {}
+
     override suspend fun resetUnreadCount(convId: String, userId: String) {}
+
     override suspend fun getConv(convId: String) = null
+
     override fun listenMessages(convId: String) = emptyFlow<List<Message>>()
-    override fun listenConversationOverviews(userId: String) = emptyFlow<List<OverViewConversation>>()
+
+    override fun listenConversationOverviews(userId: String) =
+        emptyFlow<List<OverViewConversation>>()
+
     override fun getMessageNewUid() = "x"
   }
-
 
   @Test
   fun deleteAccount_missingUserId_setsError() = runTest {
@@ -1308,14 +1318,14 @@ class MyProfileViewModelTest {
     }
 
     val vm =
-      MyProfileViewModel(
-        profileRepository = FakeProfileRepo(),
-        listingRepository = FakeListingRepo(),
-        ratingsRepository = FakeRatingRepos(),
-        bookingRepository = FakeBookingRepo(),
-        authRepository = mockAuthRepo,
-        sessionManager = mockSession,
-      )
+        MyProfileViewModel(
+            profileRepository = FakeProfileRepo(),
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepos(),
+            bookingRepository = FakeBookingRepo(),
+            authRepository = mockAuthRepo,
+            sessionManager = mockSession,
+        )
 
     vm.deleteAccount()
     advanceUntilIdle()
@@ -1325,7 +1335,6 @@ class MyProfileViewModelTest {
     assertFalse(ui.deleteAccountSuccess)
   }
 
-
   @Test
   fun deleteAccount_success_updatesSuccessFlag() = runTest {
     UserSessionManager.setCurrentUserId("abc")
@@ -1333,15 +1342,15 @@ class MyProfileViewModelTest {
     val fakeAuthRepo = mockk<AuthenticationRepository>()
     coEvery { fakeAuthRepo.deleteCurrentUser() } returns Result.success(Unit)
 
-    val vm = MyProfileViewModel(
-      profileRepository = FakeProfileRepo(makeProfile("abc")),
-      listingRepository = FakeListingRepo(),
-      ratingsRepository = FakeRatingRepos(),
-      bookingRepository = FakeBookingRepo(),
-      authRepository = fakeAuthRepo,
-      conversationManager = EmptyConversationManager,
-      sessionManager = UserSessionManager
-    )
+    val vm =
+        MyProfileViewModel(
+            profileRepository = FakeProfileRepo(makeProfile("abc")),
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepos(),
+            bookingRepository = FakeBookingRepo(),
+            authRepository = fakeAuthRepo,
+            conversationManager = EmptyConversationManager,
+            sessionManager = UserSessionManager)
 
     vm.loadProfile("abc")
     advanceUntilIdle()
@@ -1360,15 +1369,15 @@ class MyProfileViewModelTest {
     val fakeAuthRepo = mockk<AuthenticationRepository>()
     coEvery { fakeAuthRepo.deleteCurrentUser() } returns Result.failure(Exception("boom"))
 
-    val vm = MyProfileViewModel(
-      profileRepository = FakeProfileRepo(makeProfile("abc")),
-      listingRepository = FakeListingRepo(),
-      ratingsRepository = FakeRatingRepos(),
-      bookingRepository = FakeBookingRepo(),
-      authRepository = fakeAuthRepo,
-      conversationManager = EmptyConversationManager,
-      sessionManager = UserSessionManager
-    )
+    val vm =
+        MyProfileViewModel(
+            profileRepository = FakeProfileRepo(makeProfile("abc")),
+            listingRepository = FakeListingRepo(),
+            ratingsRepository = FakeRatingRepos(),
+            bookingRepository = FakeBookingRepo(),
+            authRepository = fakeAuthRepo,
+            conversationManager = EmptyConversationManager,
+            sessionManager = UserSessionManager)
 
     vm.loadProfile("abc")
     advanceUntilIdle()
