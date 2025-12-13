@@ -289,7 +289,6 @@ class NavGraphTest {
 
   @Test
   fun bookingDetails_onCreatorClick_navigatesToOthersProfile() {
-    val creatorId = "creator123"
 
     composeRule.runOnIdle {
       // Simulate we are in BOOKING_DETAILS
@@ -306,7 +305,6 @@ class NavGraphTest {
 
   @Test
   fun discussion_onConversationClick_navigatesToMessages() {
-    val convId = "conv-xyz"
 
     composeRule.runOnIdle {
       // Start at DISCUSSION
@@ -397,7 +395,6 @@ class NavGraphTest {
 
   @Test
   fun bookings_onBookingClick_navigatesToBookingDetails() {
-    val bookingId = "B001"
 
     composeRule.runOnIdle {
       navController.navigate(NavRoutes.BOOKINGS)
