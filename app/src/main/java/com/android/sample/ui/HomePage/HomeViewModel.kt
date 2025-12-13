@@ -73,8 +73,15 @@ class MainPageViewModel(
    */
   fun load() {
     viewModelScope.launch {
+      val welcomeMsg = getWelcomeMsg()
+
+      if (welcomeMsg == null) {
+        _uiState.update { current -> current.copy(errorMsg = identificationErrorMsg) }
+      } else {
+        _uiState.update { current -> current.copy(welcomeMessage = welcomeMsg) }
+      }
+
       try {
-        val welcomeMsg = getWelcomeMsg()
         val topProposals = getTopProposals(numProposalDisplayed)
         val topRequests = getTopRequests(numRequestDisplayed)
 
@@ -82,11 +89,17 @@ class MainPageViewModel(
           current.copy(
               welcomeMessage = welcomeMsg ?: current.welcomeMessage,
               proposals = topProposals,
-              requests = topRequests)
+              requests = topRequests,
+              errorMsg = null)
         }
       } catch (e: Exception) {
         Log.e("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        _uiState.update { current -> current.copy(proposals = emptyList(), requests = emptyList()) }
+        _uiState.update { current ->
+          current.copy(
+              proposals = emptyList(),
+              requests = emptyList(),
+              errorMsg = current.errorMsg?.let { generalError } ?: listingErrorMsg)
+        }
       }
     }
   }
