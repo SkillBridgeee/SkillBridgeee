@@ -25,7 +25,6 @@ class ConversationManagerTest {
 
   private lateinit var convRepo: FirestoreConvRepository
   private lateinit var ovRepo: FirestoreOverViewConvRepository
-  private lateinit var bookingRepo: FirestoreBookingRepository
   private lateinit var manager: ConversationManager
   private lateinit var convId: String
 

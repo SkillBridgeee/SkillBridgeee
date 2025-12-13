@@ -46,7 +46,6 @@ class MessageScreenTest {
 
   private lateinit var convRepo: ConvRepository
   private lateinit var overViewRepo: OverViewConvRepository
-  private lateinit var bookingRepo: BookingRepository
 
   private lateinit var profileRepository: ProfileRepository
   private lateinit var manager: ConversationManager
