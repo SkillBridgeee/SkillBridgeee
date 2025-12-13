@@ -82,6 +82,7 @@ object BookingDetailsTestTag {
   const val RATING_TUTOR = "booking_rating_tutor"
   const val RATING_LISTING = "booking_rating_listing"
   const val RATING_SUBMIT_BUTTON = "booking_rating_submit"
+  const val TOTAL_PRICE_SECTION = "booking_total_price_section"
 }
 
 object BookingDetailsStrings {
@@ -99,6 +100,7 @@ object BookingDetailsStrings {
   const val EMAIL = "Email"
   const val STUDENT_PROFILE = "Student profile"
   const val COURSE_INFO = "Information about the course"
+  const val DOMAIN = "Domain"
   const val SUBJECT = "Subject"
   const val LOCATION = "Location"
   const val HOURLY_RATE = "Hourly Rate"
@@ -122,6 +124,7 @@ object BookingDetailsStrings {
   const val PAYMENT_RECEIVED = "Payment Received"
   const val WAITING_PAYMENT_TUTOR = "Waiting for the tutor to confirm receipt of payment."
   const val PAYMENT_CONFIRMED = "Payment has been successfully completed and confirmed!"
+  const val TOTAL_PRICE = "Total Price"
 }
 
 /**
@@ -228,6 +231,12 @@ fun BookingDetailsContent(
         InfoDesc(uiState)
 
         HorizontalDivider()
+
+        // Total Price
+        TotalPriceLabel(uiState)
+
+        HorizontalDivider()
+
         // Let the student mark the session as completed once it is confirmed
         if (uiState.booking.status == BookingStatus.CONFIRMED) {
           ConfirmCompletionSection(onMarkCompleted)
@@ -452,10 +461,13 @@ private fun InfoListing(uiState: BookingUIState) {
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold)
     DetailRow(
-        label = BookingDetailsStrings.SUBJECT,
+        label = BookingDetailsStrings.DOMAIN,
         value = uiState.listing.skill.mainSubject.name.replace("_", " "))
+    DetailRow(
+        label = BookingDetailsStrings.SUBJECT,
+        value = uiState.listing.skill.skill.replace("_", " "))
     DetailRow(label = BookingDetailsStrings.LOCATION, value = uiState.listing.location.name)
-    DetailRow(label = BookingDetailsStrings.HOURLY_RATE, value = uiState.booking.price.toString())
+    DetailRow(label = BookingDetailsStrings.HOURLY_RATE, value = "$${uiState.hourlyRate}")
   }
 }
 
@@ -489,6 +501,13 @@ private fun InfoSchedule(uiState: BookingUIState) {
     DetailRow(
         label = BookingDetailsStrings.END_OF_SESSION,
         value = dateFormatter.format(uiState.booking.sessionEnd))
+  }
+}
+
+@Composable
+private fun TotalPriceLabel(uiState: BookingUIState) {
+  Row(modifier = Modifier.testTag(BookingDetailsTestTag.TOTAL_PRICE_SECTION)) {
+    DetailRow(label = BookingDetailsStrings.TOTAL_PRICE, value = "$${uiState.booking.price}")
   }
 }
 
