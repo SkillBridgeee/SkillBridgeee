@@ -11,6 +11,7 @@ import com.android.sample.model.listing.Request
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,6 +50,8 @@ class MainPageViewModel(
 
   private val numRequestDisplayed = 10
   private val numProposalDisplayed = 10
+
+  private var refreshJob: Job? = null
 
   init {
     // Load all initial data when the ViewModel is created.
@@ -160,18 +163,21 @@ class MainPageViewModel(
    * with empty lists as a fallback.
    */
   fun refreshListing() {
-    viewModelScope.launch {
-      try {
-        val topProposals = getTopProposals(numProposalDisplayed)
-        val topRequests = getTopRequests(numRequestDisplayed)
+    if (refreshJob?.isActive == true) return
 
-        _uiState.update { current ->
-          current.copy(proposals = topProposals, requests = topRequests)
+    refreshJob =
+        viewModelScope.launch {
+          try {
+            val topProposals = getTopProposals(numProposalDisplayed)
+            val topRequests = getTopRequests(numRequestDisplayed)
+
+            _uiState.update { current ->
+              current.copy(proposals = topProposals, requests = topRequests)
+            }
+          } catch (e: Exception) {
+            Log.e("HomePageViewModel", "Failed to refresh HomeUiState", e)
+            // Do not delete old listings list for the user
+          }
         }
-      } catch (e: Exception) {
-        Log.e("HomePageViewModel", "Failed to refresh HomeUiState", e)
-        // Do not delete old listings list for the user
-      }
-    }
   }
 }
