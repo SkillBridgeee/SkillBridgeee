@@ -12,11 +12,8 @@ import com.android.sample.model.skill.Skill
 import com.android.sample.ui.HomePage.ExploreSubjects
 import com.android.sample.ui.HomePage.GreetingSection
 import com.android.sample.ui.HomePage.HomeScreenTestTags
-import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.HomePage.ProposalsSection
 import com.android.sample.ui.HomePage.SubjectCard
-import com.android.sample.utils.fakeRepo.fakeListing.FakeListingWorking
-import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileWorking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -28,14 +25,7 @@ class HomeScreenTest {
   @Test
   fun greetingSection_displaysTexts() {
     composeRule.setContent {
-      MaterialTheme {
-        GreetingSection(
-            welcomeMessage = "Welcome John!",
-            viewModel =
-                MainPageViewModel(
-                    profileRepository = FakeProfileWorking(),
-                    listingRepository = FakeListingWorking()))
-      }
+      MaterialTheme { GreetingSection(welcomeMessage = "Welcome John!", refresh = {}) }
     }
 
     composeRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
