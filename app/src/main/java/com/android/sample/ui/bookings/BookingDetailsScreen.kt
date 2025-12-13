@@ -600,7 +600,7 @@ private fun BookerRatingSection(userLabel: String, onSubmit: (Int, Int) -> Unit)
 
 @Composable
 private fun CreatorRatingSection(userLabel: String, onSubmit: (Int) -> Unit) {
-  var stars by remember { mutableStateOf(0) }
+  var stars by remember { mutableIntStateOf(0) }
   val enabled = stars in 1..5
 
   // Add test tag so tests can find/scroll the creator rating section
