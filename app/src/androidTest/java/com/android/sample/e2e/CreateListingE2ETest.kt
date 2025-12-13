@@ -305,7 +305,8 @@ class CreateListingE2ETest : E2ETestBase() {
           try {
             composeTestRule
                 .onAllNodes(
-                    hasText("Advanced Mathematics Tutoring", substring = true, ignoreCase = true))
+                    hasText("Advanced Mathematics Tutoring", substring = true, ignoreCase = true),
+                    useUnmergedTree = true)
                 .fetchSemanticsNodes()
                 .isNotEmpty()
           } catch (_: Throwable) {
