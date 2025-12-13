@@ -8,6 +8,13 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.communication.conversation.ConvRepository
+import com.android.sample.model.communication.conversation.Conversation
+import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
+import com.android.sample.model.communication.conversation.Message
+import com.android.sample.model.communication.overViewConv.OverViewConvRepository
+import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
+import com.android.sample.model.communication.overViewConv.OverViewConversation
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -31,6 +38,7 @@ import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.profile.NAME_EMPTY_MSG
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -59,6 +67,8 @@ class MyProfileViewModelTest {
   fun setUp() {
     Dispatchers.setMain(dispatcher)
     BookingRepositoryProvider.setForTests(FakeBookingRepo())
+    ConversationRepositoryProvider.setForTests(FakeConversationRepo())
+    OverViewConvRepositoryProvider.setForTests(FakeOverViewConvRepo())
     UserSessionManager.setCurrentUserId("testUid")
   }
 
@@ -118,6 +128,58 @@ class MyProfileViewModelTest {
         totalRatings: Int
     ) {
       // no-op in this test fake
+    }
+  }
+
+  private class FakeConversationRepo : ConvRepository {
+    override fun getNewUid(): String {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getConv(convId: String): Conversation? {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun createConv(conversation: Conversation) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteConv(convId: String) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun sendMessage(convId: String, message: Message) {
+      TODO("Not yet implemented")
+    }
+
+    override fun listenMessages(convId: String): Flow<List<Message>> {
+      TODO("Not yet implemented")
+    }
+  }
+
+  private class FakeOverViewConvRepo : OverViewConvRepository {
+    override fun getNewUid(): String {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun addOverViewConvUser(overView: OverViewConversation) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteOverViewConvUser(convId: String) {
+      TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteOverViewById(overViewId: String) {
+      TODO("Not yet implemented")
+    }
+
+    override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {
+      TODO("Not yet implemented")
     }
   }
 
