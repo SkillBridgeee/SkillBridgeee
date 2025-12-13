@@ -11,6 +11,7 @@ import com.android.sample.model.listing.Request
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,6 +48,11 @@ class MainPageViewModel(
   private val _uiState = MutableStateFlow(HomeUiState())
   val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+  private val numRequestDisplayed = 10
+  private val numProposalDisplayed = 10
+
+  private var refreshJob: Job? = null
+
   init {
     // Load all initial data when the ViewModel is created.
     viewModelScope.launch { load() }
@@ -63,33 +69,19 @@ class MainPageViewModel(
   fun load() {
     viewModelScope.launch {
       try {
-        val allProposals = listingRepository.getProposals()
-        val allRequests = listingRepository.getRequests()
         val welcomeMsg = getWelcomeMsg()
-
-        val topProposals =
-            allProposals.filter { it.isActive }.sortedByDescending { it.createdAt }.take(10)
-
-        val topRequests =
-            allRequests.filter { it.isActive }.sortedByDescending { it.createdAt }.take(10)
+        val topProposals = getTopProposals(numProposalDisplayed)
+        val topRequests = getTopRequests(numRequestDisplayed)
 
         _uiState.update { current ->
           current.copy(
               welcomeMessage = welcomeMsg ?: current.welcomeMessage,
               proposals = topProposals,
-              requests = topRequests
-              // subjects stays whatever it was (currently the default)
-              )
+              requests = topRequests)
         }
       } catch (e: Exception) {
-        Log.w("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        _uiState.update { current ->
-          current.copy(
-              // keep existing subjects and welcomeMessage if you want,
-              // but reset proposals/requests to safe defaults
-              proposals = emptyList(),
-              requests = emptyList())
-        }
+        Log.e("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
+        _uiState.update { current -> current.copy(proposals = emptyList(), requests = emptyList()) }
       }
     }
   }
@@ -124,13 +116,68 @@ class MainPageViewModel(
    */
   private suspend fun getWelcomeMsg(): String? {
     val userName = runCatching { getUserName() }.getOrNull()
-    // If we got a user ID but no profile, return generic message
-    // If we couldn't get user ID at all, return null to keep previous message
     val userId = UserSessionManager.getCurrentUserId()
     return if (userId != null) {
       if (userName != null) "Welcome back, $userName!" else "Welcome back!"
     } else {
       null // No user ID means temporary auth issue, keep previous message
     }
+  }
+
+  /**
+   * Retrieves the top proposals from the repository.
+   *
+   * This function fetches all proposals, keeps only the active ones, then sorts them by creation
+   * date in descending order (newest first). Finally, it returns only the first [numProposal] items
+   * from the sorted list.
+   *
+   * @param numProposal The maximum number of proposals to return.
+   * @return A list of the most recent active proposals, limited to [numProposal] items.
+   */
+  private suspend fun getTopProposals(numProposal: Int): List<Proposal> {
+    val allProposals = listingRepository.getProposals()
+    return allProposals.filter { it.isActive }.sortedByDescending { it.createdAt }.take(numProposal)
+  }
+
+  /**
+   * Retrieves the top requests from the repository.
+   *
+   * This function fetches all requests, keeps only the active ones, then sorts them by creation
+   * date in descending order (newest first). Finally, it returns only the first [numRequest] items
+   * from the sorted list.
+   *
+   * @param numRequest The maximum number of requests to return.
+   * @return A list of the most recent active requests, limited to [numRequest] items.
+   */
+  private suspend fun getTopRequests(numRequest: Int): List<Request> {
+    val allRequests = listingRepository.getRequests()
+    return allRequests.filter { it.isActive }.sortedByDescending { it.createdAt }.take(numRequest)
+  }
+
+  /**
+   * Refreshes the home listing data by loading the latest proposals and requests.
+   *
+   * This function launches a coroutine in the ViewModel scope to fetch the most recent active
+   * proposals and requests. Once the data is retrieved, the UI state is updated with the new lists.
+   * If an error occurs during data loading, the function logs a warning and updates the UI state
+   * with empty lists as a fallback.
+   */
+  fun refreshListing() {
+    if (refreshJob?.isActive == true) return
+
+    refreshJob =
+        viewModelScope.launch {
+          try {
+            val topProposals = getTopProposals(numProposalDisplayed)
+            val topRequests = getTopRequests(numRequestDisplayed)
+
+            _uiState.update { current ->
+              current.copy(proposals = topProposals, requests = topRequests)
+            }
+          } catch (e: Exception) {
+            Log.e("HomePageViewModel", "Failed to refresh HomeUiState", e)
+            // Do not delete old listings list for the user
+          }
+        }
   }
 }
