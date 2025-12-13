@@ -1,6 +1,7 @@
 package com.android.sample.communication
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.sample.model.booking.FirestoreBookingRepository
 import com.android.sample.model.communication.ConversationManager
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.FirestoreConvRepository
@@ -24,6 +25,7 @@ class ConversationManagerTest {
 
   private lateinit var convRepo: FirestoreConvRepository
   private lateinit var ovRepo: FirestoreOverViewConvRepository
+  private lateinit var bookingRepo: FirestoreBookingRepository
   private lateinit var manager: ConversationManager
   private lateinit var convId: String
 
@@ -31,7 +33,7 @@ class ConversationManagerTest {
   fun setup() {
     convRepo = FirestoreConvRepository(TestFirestore.db)
     ovRepo = FirestoreOverViewConvRepository(TestFirestore.db)
-    manager = ConversationManager(convRepo, ovRepo)
+    manager = ConversationManager(convRepo, ovRepo, bookingRepo)
   }
 
   @After fun tearDown() = runTest {}

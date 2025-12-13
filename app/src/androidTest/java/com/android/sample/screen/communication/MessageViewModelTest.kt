@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
 import com.android.sample.model.authentication.UserSessionManager
+import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.communication.ConversationManager
 import com.android.sample.model.communication.ConversationManagerInter
 import com.android.sample.model.communication.conversation.ConvRepository
@@ -47,6 +48,7 @@ class MessageViewModelTest {
   private lateinit var overViewRepo: OverViewConvRepository
   private lateinit var manager: ConversationManager
   private lateinit var viewModel: MessageViewModel
+  private lateinit var bookingRepo: BookingRepository
 
   private val testUserId = "userA"
   private val otherUserId = "userB"
@@ -61,7 +63,7 @@ class MessageViewModelTest {
     ProfileRepositoryProvider.setForTests(FakeProfileRepository())
     convRepo = FakeConvRepo()
     overViewRepo = FakeOverViewRepo()
-    manager = ConversationManager(convRepo, overViewRepo)
+    manager = ConversationManager(convRepo, overViewRepo, bookingRepo)
 
     viewModel = MessageViewModel(manager)
 
