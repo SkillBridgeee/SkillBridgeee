@@ -260,3 +260,22 @@ fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
     }
   }
 }
+
+@Composable
+fun ErrorSection(errorMsg: String, reload: () -> Unit) {
+  Column(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "Something went wrong",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.error)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(text = errorMsg, fontSize = 14.sp, color = Color.Gray)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = reload) { Text("Retry") }
+      }
+}
