@@ -30,7 +30,8 @@ data class HomeUiState(
     val welcomeMessage: String = "Welcome back!",
     val subjects: List<MainSubject> = MainSubject.entries.toList(),
     val proposals: List<Proposal> = emptyList(),
-    val requests: List<Request> = emptyList()
+    val requests: List<Request> = emptyList(),
+    val errorMsg: String? = null
 )
 
 /**
@@ -48,6 +49,10 @@ class MainPageViewModel(
   private val _uiState = MutableStateFlow(HomeUiState())
   val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+  private val identificationErrorMsg = "An error occurred during your identification."
+  private val listingErrorMsg = "An error occurred while loading proposals and requests."
+  private val generalError =
+      "An error occurred during your identification and while loading proposals and requests."
   private val numRequestDisplayed = 10
   private val numProposalDisplayed = 10
 
@@ -68,8 +73,15 @@ class MainPageViewModel(
    */
   fun load() {
     viewModelScope.launch {
+      val welcomeMsg = getWelcomeMsg()
+
+      if (welcomeMsg == null) {
+        _uiState.update { current -> current.copy(errorMsg = identificationErrorMsg) }
+      } else {
+        _uiState.update { current -> current.copy(welcomeMessage = welcomeMsg) }
+      }
+
       try {
-        val welcomeMsg = getWelcomeMsg()
         val topProposals = getTopProposals(numProposalDisplayed)
         val topRequests = getTopRequests(numRequestDisplayed)
 
@@ -81,7 +93,13 @@ class MainPageViewModel(
         }
       } catch (e: Exception) {
         Log.e("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        _uiState.update { current -> current.copy(proposals = emptyList(), requests = emptyList()) }
+        _uiState.update { current ->
+          current.copy(
+              proposals = emptyList(),
+              requests = emptyList(),
+              errorMsg =
+                  if (current.errorMsg == identificationErrorMsg) generalError else listingErrorMsg)
+        }
       }
     }
   }
@@ -176,7 +194,7 @@ class MainPageViewModel(
             }
           } catch (e: Exception) {
             Log.e("HomePageViewModel", "Failed to refresh HomeUiState", e)
-            // Do not delete old listings list for the user
+            _uiState.update { current -> current.copy(errorMsg = listingErrorMsg) }
           }
         }
   }

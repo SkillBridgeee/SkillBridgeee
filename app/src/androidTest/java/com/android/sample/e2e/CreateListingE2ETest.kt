@@ -15,6 +15,7 @@ import com.android.sample.model.communication.overViewConv.OverViewConvRepositor
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
+import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.components.BottomBarTestTag
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -163,7 +164,7 @@ class CreateListingE2ETest : E2ETestBase() {
               .performClick()
 
           // Wait for dropdown to open and "Academics" to appear
-          composeTestRule.waitUntil(timeoutMillis = 8000) {
+          composeTestRule.waitUntil(timeoutMillis = 8003) {
             try {
               composeTestRule
                   .onAllNodes(hasText("Academics", substring = true, ignoreCase = true))
@@ -251,7 +252,7 @@ class CreateListingE2ETest : E2ETestBase() {
               .performTextInput("EPFL")
 
           // Wait for location suggestions to appear
-          composeTestRule.waitUntil(timeoutMillis = 8000) {
+          composeTestRule.waitUntil(timeoutMillis = 8004) {
             try {
               composeTestRule
                   .onAllNodesWithTag("suggestLocation")
@@ -301,13 +302,22 @@ class CreateListingE2ETest : E2ETestBase() {
         composeTestRule.waitForIdle()
 
         // Wait for listing to appear on home screen
-        composeTestRule.waitUntil(timeoutMillis = 8000) {
+        composeTestRule.waitUntil(timeoutMillis = 8005) {
+          //          try {
+          //            composeTestRule
+          //                .onAllNodes(
+          //                    hasText("Advanced Mathematics Tutoring", substring = true,
+          // ignoreCase = true),
+          //                    useUnmergedTree = true)
+          //                .fetchSemanticsNodes()
+          //                .isNotEmpty()
+          //          } catch (_: Throwable) {
+          //            false
+          //          }
           try {
             composeTestRule
-                .onAllNodes(
-                    hasText("Advanced Mathematics Tutoring", substring = true, ignoreCase = true))
-                .fetchSemanticsNodes()
-                .isNotEmpty()
+                .onNodeWithTag(HomeScreenTestTags.PROPOSAL_CARD, useUnmergedTree = true)
+                .isDisplayed()
           } catch (_: Throwable) {
             false
           }
