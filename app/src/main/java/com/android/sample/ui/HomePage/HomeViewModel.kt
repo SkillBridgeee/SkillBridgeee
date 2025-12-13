@@ -194,7 +194,7 @@ class MainPageViewModel(
             }
           } catch (e: Exception) {
             Log.e("HomePageViewModel", "Failed to refresh HomeUiState", e)
-            // Do not delete old listings list for the user
+            _uiState.update { current -> current.copy(errorMsg = listingErrorMsg) }
           }
         }
   }
