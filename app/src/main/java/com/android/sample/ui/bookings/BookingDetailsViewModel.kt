@@ -426,15 +426,6 @@ class BookingDetailsViewModel(
     return RoleIds(tutorUserId = tutorUserId, studentUserId = studentUserId)
   }
 
-  private suspend fun recomputeTutorAggregateIfNeeded(
-      ratingType: RatingType,
-      tutorUserId: String,
-  ) {
-    if (ratingType != RatingType.TUTOR) return
-    RatingAggregationHelper.recomputeTutorAggregateRating(
-        tutorUserId = tutorUserId, ratingRepo = ratingRepository, profileRepo = profileRepository)
-  }
-
   private fun validateRatingSubmission(booking: Booking, stars: IntArray): Boolean {
     if (booking.bookingId.isBlank()) return false
     if (booking.status != BookingStatus.COMPLETED) return false
