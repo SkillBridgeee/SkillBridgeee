@@ -878,6 +878,10 @@ class BookingDetailsScreenTest {
 
     // then: button is visible
     composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.CONTENT)
+        .performScrollToNode(hasTestTag(BookingDetailsTestTag.COMPLETE_BUTTON))
+
+    composeTestRule
         .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
         .assertIsDisplayed()
         .performClick()
@@ -1463,5 +1467,100 @@ class BookingDetailsScreenTest {
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertDoesNotExist()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertDoesNotExist()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertDoesNotExist()
+  }
+
+  @Test
+  fun bookingDetailsDisplaysTotalPriceSection() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 150.0)))
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.TOTAL_PRICE_SECTION).assertExists()
+  }
+
+  @Test
+  fun bookingDetailsDisplaysHourlyPriceSection() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 200.0),
+            listing =
+                Proposal(
+                    listingId = "l1",
+                    hourlyRate = 50.0,
+                )))
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.onNodeWithText(BookingDetailsStrings.HOURLY_RATE).assertExists()
+  }
+
+  @Test
+  fun subjectBookingDetailIsDisplayedCorrectly() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 200.0),
+            listing =
+                Proposal(
+                    skill = Skill(skill = "Mathematics", mainSubject = MainSubject.ACADEMICS),
+                    listingId = "l1",
+                    hourlyRate = 50.0,
+                )))
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+    composeTestRule.onNodeWithText(BookingDetailsStrings.SUBJECT).assertExists()
+    composeTestRule.onNodeWithText("Mathematics").assertExists()
+  }
+
+  @Test
+  fun domainBookingDetailIsDisplayedCorrectly() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 200.0),
+            listing =
+                Proposal(
+                    skill = Skill(skill = "Mathematics", mainSubject = MainSubject.ACADEMICS),
+                    listingId = "l1",
+                    hourlyRate = 50.0,
+                )))
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+    composeTestRule.onNodeWithText(BookingDetailsStrings.DOMAIN).assertExists()
+    composeTestRule.onNodeWithText("ACADEMICS").assertExists()
   }
 }

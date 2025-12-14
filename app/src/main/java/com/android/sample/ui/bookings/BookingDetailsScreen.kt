@@ -83,6 +83,7 @@ object BookingDetailsTestTag {
   const val RATING_LISTING = "booking_rating_listing"
   const val RATING_SUBMIT_BUTTON = "booking_rating_submit"
   const val TOTAL_PRICE_SECTION = "booking_total_price_section"
+  const val CONTENT = "booking_details_content"
 }
 
 object BookingDetailsStrings {
@@ -204,7 +205,11 @@ fun BookingDetailsContent(
     modifier: Modifier = Modifier
 ) {
   Column(
-      modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+      modifier =
+          modifier
+              .fillMaxWidth()
+              .verticalScroll(rememberScrollState())
+              .testTag(BookingDetailsTestTag.CONTENT),
       verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
         // Header

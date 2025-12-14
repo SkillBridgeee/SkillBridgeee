@@ -116,9 +116,7 @@ class BookingDetailsViewModel(
 
           val alreadySubmitted = tutorAlreadyRated && listingAlreadyRated
 
-          val hourlyRate =
-              booking.price /
-                  ((booking.sessionEnd.time - booking.sessionStart.time) / (1000 * 60 * 60))
+          val hourlyRate = listing.hourlyRate
 
           // IMPORTANT: build a FRESH state, don't reuse old ratingSubmitted
           _bookingUiState.value =
