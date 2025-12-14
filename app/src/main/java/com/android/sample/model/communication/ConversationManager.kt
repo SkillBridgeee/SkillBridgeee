@@ -42,8 +42,10 @@ class ConversationManager(
     Log.d(TAG, "Creating conversation between $creatorId and $otherUserId")
 
     // Check if conversation already exists between these two users
-    val existingConversations = overViewRepo.getOverViewConvUser(creatorId)
-    val existingConv = existingConversations.firstOrNull { it.otherPersonId == otherUserId }
+    // Only query otherUserId's overviews since they are typically the calling/authenticated user
+    // This avoids permission issues when trying to read another user's overviews
+    val existingConversations = overViewRepo.getOverViewConvUser(otherUserId)
+    val existingConv = existingConversations.firstOrNull { it.otherPersonId == creatorId }
 
     if (existingConv != null) {
       // Conversation already exists, return existing ID
@@ -144,11 +146,11 @@ class ConversationManager(
     val senderId = message.senderId
     val receiverId = message.receiverId
 
-    // Update sender's overview: DO NOT increment unread count
+    // Update sender's overview: DO NOT increment unread count, explicitly set to 0
     val senderOverview =
         overViewRepo.getOverViewConvUser(senderId).firstOrNull { it.linkedConvId == convId }
     if (senderOverview != null) {
-      val updatedSenderOverview = senderOverview.copy(lastMsg = message)
+      val updatedSenderOverview = senderOverview.copy(lastMsg = message, nonReadMsgNumber = 0)
       overViewRepo.addOverViewConvUser(updatedSenderOverview)
       Log.d(
           TAG,

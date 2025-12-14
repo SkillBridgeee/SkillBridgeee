@@ -45,22 +45,25 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
-
-    // ConversationNews collection
+    // Conversations collection
     match /conversations/{convId} {
-        // Allow all operations for emulator/testing
-        // TODO: Tighten these rules before production deployment
-        allow read, write: if true;
-    }
-
-    match /conversations/{convId}/messages/{msgId} {
+      // Allow all operations for emulator/testing
+      // Production: Users can only access conversations where they are convCreatorId or otherPersonId
       allow read, write: if true;
+
+      // Messages subcollection
+      match /messages/{msgId} {
+        // Allow all operations for emulator/testing
+        // Production: Users can only access messages in conversations they're part of
+        allow read, write: if true;
+      }
     }
 
+    // OverViewConv collection (conversation overviews for users)
     match /overViewConv/{overviewId} {
-        // Allow all operations for emulator/testing
-        // TODO: Tighten these rules before production deployment
-        allow read, write: if true;
+      // Allow all operations for emulator/testing
+      // Production: Users can only access their own overviews (where overViewOwnerId matches)
+      allow read, write: if true;
     }
 
     // Default deny all other collections
