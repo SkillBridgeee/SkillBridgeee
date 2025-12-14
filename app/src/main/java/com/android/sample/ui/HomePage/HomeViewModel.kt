@@ -73,74 +73,83 @@ class MainPageViewModel(
    */
   fun load() {
     viewModelScope.launch {
-      val welcomeMsg = getWelcomeMsg()
+      val welcomeResult = runCatching { getWelcomeMsg() }
+      val proposalsResult = runCatching { getTopProposals(numProposalDisplayed) }
+      val requestsResult = runCatching { getTopRequests(numRequestDisplayed) }
 
-      if (welcomeMsg == null) {
-        _uiState.update { current -> current.copy(errorMsg = identificationErrorMsg) }
-      } else {
-        _uiState.update { current -> current.copy(welcomeMessage = welcomeMsg) }
-      }
+      val welcomeMsg = welcomeResult.getOrNull()
+      val proposals = proposalsResult.getOrNull().orEmpty()
+      val requests = requestsResult.getOrNull().orEmpty()
 
-      try {
-        val topProposals = getTopProposals(numProposalDisplayed)
-        val topRequests = getTopRequests(numRequestDisplayed)
+      val errorMsg =
+          when {
+            welcomeResult.isFailure && (proposalsResult.isFailure || requestsResult.isFailure) ->
+                generalError
+            welcomeResult.isFailure -> identificationErrorMsg
+            proposalsResult.isFailure || requestsResult.isFailure -> listingErrorMsg
+            else -> null
+          }
 
-        _uiState.update { current ->
-          current.copy(
-              welcomeMessage = welcomeMsg ?: current.welcomeMessage,
-              proposals = topProposals,
-              requests = topRequests)
-        }
-      } catch (e: Exception) {
-        Log.e("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        _uiState.update { current ->
-          current.copy(
-              proposals = emptyList(),
-              requests = emptyList(),
-              errorMsg =
-                  if (current.errorMsg == identificationErrorMsg) generalError else listingErrorMsg)
-        }
+      _uiState.update {
+        it.copy(
+            welcomeMessage = welcomeMsg ?: it.welcomeMessage,
+            proposals = proposals,
+            requests = requests,
+            errorMsg = errorMsg)
       }
     }
   }
 
-  /**
-   * Retrieves the current user's name.
-   * - Gets the logged-in user's ID from the session manager
-   * - Fetches the user's profile and returns their name
-   *
-   * Returns null if no user is logged in or if the profile cannot be retrieved. Logs a warning and
-   * safely returns null if an error occurs.
-   */
-  private suspend fun getUserName(): String? {
-    return runCatching {
-          val userId = UserSessionManager.getCurrentUserId()
-          if (userId != null) {
-            profileRepository.getProfile(userId)?.name
-          } else null
-        }
-        .onFailure { Log.w("HomePageViewModel", "Failed to get current profile", it) }
-        .getOrNull()
-  }
+  //  /**
+  //   * Retrieves the current user's name.
+  //   * - Gets the logged-in user's ID from the session manager
+  //   * - Fetches the user's profile and returns their name
+  //   *
+  //   * Returns null if no user is logged in or if the profile cannot be retrieved. Logs a warning
+  // and
+  //   * safely returns null if an error occurs.
+  //   */
+  //  private suspend fun getUserName(): String? {
+  //    return runCatching {
+  //          val userId = UserSessionManager.getCurrentUserId()
+  //          if (userId != null) {
+  //            profileRepository.getProfile(userId)?.name
+  //          } else null
+  //        }
+  //        .onFailure { Log.e("HomePageViewModel", "Failed to get current profile", it) }
+  //        .getOrNull()
+  //  }
+  //
+  //  /**
+  //   * Builds the welcome message displayed to the user.
+  //   *
+  //   * This function attempts to retrieve the current user's name and returns a personalized
+  // welcome
+  //   * message if the name is available. If the username cannot be fetched, it falls back to a
+  // generic
+  //   * welcome message.
+  //   *
+  //   * @return A welcome message string, personalized when possible, or null if user lookup
+  // failed.
+  //   */
+  //  private suspend fun getWelcomeMsg(): String? {
+  //    val userName = runCatching { getUserName() }.getOrNull()
+  //    val userId = UserSessionManager.getCurrentUserId()
+  //    return if (userId != null) {
+  //      if (userName != null) "Welcome back, $userName!" else "Welcome back!"
+  //    } else {
+  //      null // No user ID means temporary auth issue, keep previous message
+  //    }
+  //  }
 
-  /**
-   * Builds the welcome message displayed to the user.
-   *
-   * This function attempts to retrieve the current user's name and returns a personalized welcome
-   * message if the name is available. If the username cannot be fetched, it falls back to a generic
-   * welcome message.
-   *
-   * @return A welcome message string, personalized when possible, or null if user lookup failed.
-   */
-  private suspend fun getWelcomeMsg(): String? {
-    val userName = runCatching { getUserName() }.getOrNull()
-    val userId = UserSessionManager.getCurrentUserId()
-    return if (userId != null) {
-      if (userName != null) "Welcome back, $userName!" else "Welcome back!"
-    } else {
-      null // No user ID means temporary auth issue, keep previous message
-    }
-  }
+  private suspend fun getWelcomeMsg(): String? =
+      runCatching {
+            val userId = UserSessionManager.getCurrentUserId() ?: return null
+            val userName = profileRepository.getProfile(userId)?.name
+            "Welcome back, $userName!"
+          }
+          .onFailure { Log.e("HomePageViewModel", "Failed to build welcome message", it) }
+          .getOrNull()
 
   /**
    * Retrieves the top proposals from the repository.
