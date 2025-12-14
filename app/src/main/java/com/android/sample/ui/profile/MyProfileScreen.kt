@@ -602,22 +602,23 @@ private fun ProfileHistory(
           modifier = Modifier.padding(horizontal = 16.dp))
     }
     else -> {
-      LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        items(historyBookings) { booking ->
-          val listing = ui.listings.firstOrNull { it.listingId == booking.associatedListingId }
-          val creator = ui.profilesById[booking.listingCreatorId]
+      LazyColumn(
+          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("history_list")) {
+            items(historyBookings) { booking ->
+              val listing = ui.listings.firstOrNull { it.listingId == booking.associatedListingId }
+              val creator = ui.profilesById[booking.listingCreatorId]
 
-          if (creator != null && listing != null) {
-            BookingCard(
-                booking = booking,
-                listing = listing,
-                creator = creator,
-                onClickBookingCard = { onListingClick(listing.listingId) })
+              if (creator != null && listing != null) {
+                BookingCard(
+                    booking = booking,
+                    listing = listing,
+                    creator = creator,
+                    onClickBookingCard = { onListingClick(listing.listingId) })
 
-            Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(8.dp))
+              }
+            }
           }
-        }
-      }
     }
   }
 }
@@ -654,13 +655,14 @@ private fun RatingContent(ui: MyProfileUIState) {
           text = "You don’t have any ratings yet.", modifier = Modifier.padding(horizontal = 16.dp))
     }
     else -> {
-      LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-        items(ui.ratings) { rating ->
-          val raterProfile = ui.ratingRatersById[rating.fromUserId]
-          RatingCard(rating = rating, rater = raterProfile)
-          Spacer(modifier = Modifier.height(8.dp))
-        }
-      }
+      LazyColumn(
+          modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("rating_list")) {
+            items(ui.ratings) { rating ->
+              val raterProfile = ui.ratingRatersById[rating.fromUserId]
+              RatingCard(rating = rating, rater = raterProfile)
+              Spacer(modifier = Modifier.height(8.dp))
+            }
+          }
     }
   }
 }
