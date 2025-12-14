@@ -240,7 +240,7 @@ class DiscussionScreenTest {
                     content = "Old message",
                     senderId = "user2",
                     receiverId = currentUserId,
-                    createdAt = Date(System.currentTimeMillis() - 360000000) // 1 hour ago
+                    createdAt = Date(System.currentTimeMillis() - 7200000) // 2 hours ago
                     ),
             nonReadMsgNumber = 0,
             overViewOwnerId = currentUserId,
@@ -258,7 +258,7 @@ class DiscussionScreenTest {
     // Verify the message content is displayed
     compose.onNodeWithText("Old message", substring = true).assertIsDisplayed()
 
-    // Verify timestamp is displayed (should show "1h ago" or similar)
+    // Verify timestamp is displayed (should show "2h ago")
     compose.onNodeWithText("ago", substring = true).assertExists()
   }
   // -----------------------------------------------------
