@@ -95,7 +95,10 @@ class ConversationManager(
   override suspend fun deleteConvAndOverviews(convId: String, deleterId: String, otherId: String) {
     // Check for ongoing bookings between the two users before allowing deletion
     val blocked = bookingRepo?.hasOngoingBookingBetween(deleterId, otherId)
-    check(blocked != true) { "BLOCK_DELETE_CONV_ACTIVE_BOOKING" }
+    check(blocked != true) {
+      "BLOCK_DELETE_CONV_ACTIVE_BOOKING: Cannot delete conversation ($convId): " +
+          "active booking exists between users deleterId=$deleterId and otherId=$otherId"
+    }
 
     convRepo.deleteConv(convId)
 
