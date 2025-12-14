@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -130,9 +131,10 @@ fun BookingDetailsScreen(
           onCreatorClick = { profileId -> onCreatorClick(profileId) },
           onBookerClick = { profileId -> onBookerClick(profileId) },
           onMarkCompleted = { bkgViewModel.markBookingAsCompleted() },
-          onSubmitStudentRatings = { tutorStars, listingStars ->
-            bkgViewModel.submitStudentRatings(tutorStars, listingStars)
+          onSubmitBookerRatings = { userStars, listingStars ->
+            bkgViewModel.submitBookerRatings(userStars, listingStars)
           },
+          onSubmitCreatorRating = { stars -> bkgViewModel.submitCreatorRating(stars) },
           onPaymentComplete = { bkgViewModel.markPaymentComplete() },
           onPaymentReceived = { bkgViewModel.confirmPaymentReceived() },
           modifier = Modifier.padding(paddingValues).fillMaxSize().padding(16.dp))
@@ -161,7 +163,8 @@ fun BookingDetailsContent(
     onCreatorClick: (String) -> Unit,
     onBookerClick: (String) -> Unit,
     onMarkCompleted: () -> Unit,
-    onSubmitStudentRatings: (Int, Int) -> Unit,
+    onSubmitBookerRatings: (Int, Int) -> Unit,
+    onSubmitCreatorRating: (Int) -> Unit,
     onPaymentComplete: () -> Unit,
     onPaymentReceived: () -> Unit,
     modifier: Modifier = Modifier
@@ -203,15 +206,15 @@ fun BookingDetailsContent(
               onMarkCompleted = onMarkCompleted)
         }
 
-        // Once the session is completed, allow the student to rate the tutor and listing
         if (uiState.booking.status == BookingStatus.COMPLETED) {
-          StudentRatingSection(
-              ratingSubmitted = uiState.ratingSubmitted,
-              onSubmitStudentRatings = onSubmitStudentRatings)
+          RatingSections(
+              uiState = uiState,
+              onSubmitBookerRatings = onSubmitBookerRatings,
+              onSubmitCreatorRating = onSubmitCreatorRating)
         }
 
         // Accept/Deny buttons for tutors when a listing is booked
-        if (uiState.booking.status == BookingStatus.PENDING && uiState.isTutor) {
+        if (uiState.booking.status == BookingStatus.PENDING && uiState.isCreator) {
           HorizontalDivider()
 
           // Show booker information
@@ -231,6 +234,7 @@ fun BookingDetailsContent(
               booking = uiState.booking,
               isTutor = uiState.isTutor,
               listingType = uiState.listing.type,
+              isCreator = uiState.isCreator,
               onPaymentComplete = onPaymentComplete,
               onPaymentReceived = onPaymentReceived)
         }
@@ -622,6 +626,106 @@ private fun ConfirmCompletionSection(
       }
 }
 
+@Composable
+private fun RatingSections(
+    uiState: BookingUIState,
+    onSubmitBookerRatings: (Int, Int) -> Unit,
+    onSubmitCreatorRating: (Int) -> Unit
+) {
+  val listingType = uiState.listing.type
+  val progress = uiState.ratingProgress
+
+  // ----- Booker section -----
+  if (uiState.isBooker) {
+    val (userLabel, alreadySubmitted) =
+        when (listingType) {
+          ListingType.REQUEST ->
+              "Student" to (progress.bookerRatedStudent && progress.bookerRatedListing)
+          ListingType.PROPOSAL ->
+              "Tutor" to (progress.bookerRatedTutor && progress.bookerRatedListing)
+        }
+
+    if (!alreadySubmitted) {
+      BookerRatingSection(userLabel = userLabel, onSubmit = onSubmitBookerRatings)
+    }
+  }
+
+  // ----- Creator section -----
+  if (uiState.isCreator) {
+    val (userLabel, alreadySubmitted) =
+        when (listingType) {
+          ListingType.REQUEST -> "Tutor" to progress.creatorRatedTutor
+          ListingType.PROPOSAL -> "Student" to progress.creatorRatedStudent
+        }
+
+    if (!alreadySubmitted) {
+      CreatorRatingSection(userLabel = userLabel, onSubmit = onSubmitCreatorRating)
+    }
+  }
+}
+
+@Composable
+private fun BookerRatingSection(userLabel: String, onSubmit: (Int, Int) -> Unit) {
+  var userStars by remember { mutableIntStateOf(0) }
+  var listingStars by remember { mutableIntStateOf(0) }
+
+  val enabled = userStars in 1..5 && listingStars in 1..5
+
+  Column(
+      modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.RATING_SECTION),
+      verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "Your ratings",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold)
+
+        RatingRow(label = userLabel, selected = userStars, onSelected = { userStars = it })
+
+        RatingRow(label = "Listing", selected = listingStars, onSelected = { listingStars = it })
+
+        if (!enabled) {
+          Text(
+              text = "Please select ratings for both categories",
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.error,
+              modifier = Modifier.padding(top = 4.dp))
+        }
+
+        Button(
+            enabled = enabled,
+            onClick = { onSubmit(userStars, listingStars) },
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
+              Text("Submit")
+            }
+      }
+}
+
+@Composable
+private fun CreatorRatingSection(userLabel: String, onSubmit: (Int) -> Unit) {
+  var stars by remember { mutableIntStateOf(0) }
+  val enabled = stars in 1..5
+
+  // Add test tag so tests can find/scroll the creator rating section
+  Column(
+      modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.RATING_SECTION),
+      verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = "Your rating",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold)
+
+        RatingRow(label = userLabel, selected = stars, onSelected = { stars = it })
+
+        // Add test tag to the submit button so tests can scroll to/click it reliably
+        Button(
+            enabled = enabled,
+            onClick = { onSubmit(stars) },
+            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
+              Text("Submit")
+            }
+      }
+}
+
 /**
  * A reusable UI component that displays a rating input row consisting of:
  * - A label (e.g., "Tutor", "Listing")
@@ -715,6 +819,7 @@ private fun PaymentActionSection(
     booking: Booking,
     isTutor: Boolean,
     listingType: ListingType,
+    isCreator: Boolean,
     onPaymentComplete: () -> Unit,
     onPaymentReceived: () -> Unit
 ) {
