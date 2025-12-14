@@ -36,6 +36,8 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
                   "An account already exists with a different sign-in method"
               "ERROR_CREDENTIAL_ALREADY_IN_USE" ->
                   "This credential is already associated with a different account"
+              "ERROR_REQUIRES_RECENT_LOGIN" ->
+                  "For security reasons, please log in again before deleting your account"
               else -> e.message ?: "Authentication failed"
             }
         Exception(message, e)
@@ -207,6 +209,23 @@ class AuthenticationRepository(private val auth: FirebaseAuth = FirebaseAuth.get
   suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
     return try {
       auth.sendPasswordResetEmail(email).await()
+      Result.success(Unit)
+    } catch (e: Exception) {
+      Result.failure(normalizeAuthException(e))
+    }
+  }
+
+  /**
+   * Permanently delete the currently signed-in Firebase user account.
+   *
+   * NOTE: This ONLY deletes the Firebase Auth user.
+   */
+  suspend fun deleteCurrentUser(): Result<Unit> {
+    return try {
+      val user =
+          auth.currentUser ?: return Result.failure(Exception("No user is currently signed in"))
+      user.delete().await()
+
       Result.success(Unit)
     } catch (e: Exception) {
       Result.failure(normalizeAuthException(e))
