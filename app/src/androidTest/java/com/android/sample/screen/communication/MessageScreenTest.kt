@@ -444,16 +444,14 @@ class MessageScreenTest {
         totalRatings: Int
     ) {}
   }
+
   @Test
   fun messageScreen_callsOnConversationDeletedWhenStateFlagIsTrue() {
     var callbackCalled = false
 
     composeTestRule.setContent {
       MessageScreen(
-        viewModel = viewModel,
-        convId = convId,
-        onConversationDeleted = { callbackCalled = true }
-      )
+          viewModel = viewModel, convId = convId, onConversationDeleted = { callbackCalled = true })
     }
 
     // Force deletion
@@ -468,15 +466,13 @@ class MessageScreenTest {
 
     composeTestRule.setContent {
       MessageScreen(
-        viewModel = viewModel,
-        convId = convId,
-        onConversationDeleted = { deleteCallbackTriggered = true })
+          viewModel = viewModel,
+          convId = convId,
+          onConversationDeleted = { deleteCallbackTriggered = true })
     }
 
     // Click delete icon
-    composeTestRule
-      .onNode(hasContentDescription("Delete conversation"))
-      .performClick()
+    composeTestRule.onNode(hasContentDescription("Delete conversation")).performClick()
 
     composeTestRule.waitUntil(timeoutMillis = 2_000) {
       viewModel.uiState.value.isDeleted || deleteCallbackTriggered
@@ -491,9 +487,7 @@ class MessageScreenTest {
 
     composeTestRule.setContent {
       MessageScreen(
-        viewModel = viewModel,
-        convId = convId,
-        onConversationDeleted = { callbackCalled = true })
+          viewModel = viewModel, convId = convId, onConversationDeleted = { callbackCalled = true })
     }
 
     // Force deletion manually
@@ -503,14 +497,4 @@ class MessageScreenTest {
 
     assert(callbackCalled)
   }
-
-  
-
-
-
-
-
-
-
-
 }

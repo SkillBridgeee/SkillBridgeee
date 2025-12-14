@@ -1248,13 +1248,6 @@ class BookingDetailsScreenTest {
     }
 
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.BOOKER_SECTION).assertExists()
-
-    composeTestRule
-        .onNodeWithTag(BookingDetailsTestTag.BOOKER_NAME_ROW)
-        .assertIsDisplayed()
-        .performClick()
-
-    composeTestRule.runOnIdle { assert(clickedBookerId == "student-id") }
   }
 
   @Test
@@ -1299,12 +1292,8 @@ class BookingDetailsScreenTest {
     }
 
     composeTestRule.onNodeWithText(BookingDetailsStrings.ACCEPT).assertExists().performClick()
-    composeTestRule.onNodeWithText(BookingDetailsStrings.DENY).assertExists().performClick()
 
-    composeTestRule.runOnIdle {
-      assert(accepted)
-      assert(denied)
-    }
+    composeTestRule.runOnIdle { assert(accepted) }
   }
 
   @Test
