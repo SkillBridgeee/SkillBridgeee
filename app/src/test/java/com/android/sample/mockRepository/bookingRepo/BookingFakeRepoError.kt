@@ -85,4 +85,8 @@ class BookingFakeRepoError : BookingRepository {
   override suspend fun cancelBooking(bookingId: String) {
     throw IOException("Failed to cancel booking (mock error).")
   }
+
+  override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+    TODO("Not yet implemented")
+  }
 }
