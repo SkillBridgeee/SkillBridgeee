@@ -447,7 +447,8 @@ fun NavGraphBuilder.addOthersProfileRoute(
  * Registers the listing details route.
  *
  * Declares a required `listingId` route argument, extracts it from the backStackEntry and presents
- * the listing screen. Provides navigation callbacks for back, editing, profile viewing, and bookings.
+ * the listing screen. Provides navigation callbacks for back, editing, profile viewing, and
+ * bookings.
  *
  * @param navController Controller used to navigate from the listing details screen.
  * @param profileID Mutable state used to pass a selected profile id to other screens.
