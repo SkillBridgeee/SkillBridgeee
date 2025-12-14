@@ -844,49 +844,6 @@ class BookingDetailsScreenTest {
   }
 
   @Test
-  fun markCompletedButton_isVisible_whenStatusConfirmed_andCallsCallback() {
-    // given: a CONFIRMED booking
-    val booking =
-        Booking(
-            bookingId = "booking-1",
-            associatedListingId = "listing-1",
-            listingCreatorId = "creator-1",
-            bookerId = "student-1",
-            status = BookingStatus.CONFIRMED,
-        )
-
-    val uiState =
-        BookingUIState(
-            booking = booking,
-            listing = Proposal(), // dummy listing is fine
-            creatorProfile = Profile(),
-            loadError = false)
-
-    var clicked = false
-
-    composeTestRule.setContent {
-      BookingDetailsContent(
-          uiState = uiState,
-          onCreatorClick = {},
-          onBookerClick = {},
-          onMarkCompleted = { clicked = true },
-          onSubmitStudentRatings = { _, _ -> },
-          onPaymentComplete = {},
-          onPaymentReceived = {},
-      )
-    }
-
-    // then: button is visible
-    composeTestRule
-        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
-        .assertIsDisplayed()
-        .performClick()
-
-    // and: callback was triggered
-    assert(clicked)
-  }
-
-  @Test
   fun markCompletedButton_isNotVisible_whenStatusNotConfirmed() {
     // given: a PENDING booking
     val booking =
@@ -1781,41 +1738,6 @@ class BookingDetailsScreenTest {
   }
 
   @Test
-  fun completeButton_proposal_noWarningDialog_forStudent_whenPaymentNotConfirmed() {
-    // PROPOSAL: Student (booker, isTutor=false) is NOT payment receiver
-    // Should NOT see warning, just complete directly
-    val uiState =
-        proposalBookingState(isTutor = false, paymentStatus = PaymentStatus.PENDING_PAYMENT)
-
-    var markCompletedCalled = false
-
-    composeTestRule.setContent {
-      MaterialTheme {
-        BookingDetailsContent(
-            uiState = uiState,
-            onCreatorClick = {},
-            onBookerClick = {},
-            onMarkCompleted = { markCompletedCalled = true },
-            onSubmitStudentRatings = { _, _ -> },
-            onPaymentComplete = {},
-            onPaymentReceived = {})
-      }
-    }
-
-    // Click complete button
-    composeTestRule
-        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
-        .performScrollTo()
-        .performClick()
-
-    // Warning dialog should NOT appear
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertDoesNotExist()
-
-    // Callback should be called directly
-    assert(markCompletedCalled)
-  }
-
-  @Test
   fun completeButton_proposal_noWarningDialog_forTutor_whenPaymentConfirmed() {
     // PROPOSAL: Tutor (creator, isTutor=true) but payment is already CONFIRMED
     // Should NOT see warning
@@ -1877,40 +1799,6 @@ class BookingDetailsScreenTest {
 
     // Warning dialog should appear
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertIsDisplayed()
-  }
-
-  @Test
-  fun completeButton_request_noWarningDialog_forCreator_whenPaymentNotConfirmed() {
-    // REQUEST: Creator (student, isTutor=true) is NOT payment receiver
-    // Should NOT see warning, just complete directly
-    val uiState = requestBookingState(isTutor = true, paymentStatus = PaymentStatus.PENDING_PAYMENT)
-
-    var markCompletedCalled = false
-
-    composeTestRule.setContent {
-      MaterialTheme {
-        BookingDetailsContent(
-            uiState = uiState,
-            onCreatorClick = {},
-            onBookerClick = {},
-            onMarkCompleted = { markCompletedCalled = true },
-            onSubmitStudentRatings = { _, _ -> },
-            onPaymentComplete = {},
-            onPaymentReceived = {})
-      }
-    }
-
-    // Click complete button
-    composeTestRule
-        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
-        .performScrollTo()
-        .performClick()
-
-    // Warning dialog should NOT appear
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertDoesNotExist()
-
-    // Callback should be called directly
-    assert(markCompletedCalled)
   }
 
   @Test
@@ -2030,5 +1918,225 @@ class BookingDetailsScreenTest {
     // Verify buttons have correct text
     composeTestRule.onNodeWithText("Yes, Complete Anyway").assertExists()
     composeTestRule.onNodeWithText("Cancel").assertExists()
+  }
+
+  // ============================================================
+  // TESTS FOR PAYER CANNOT COMPLETE UNTIL PAYMENT CONFIRMED
+  // ============================================================
+
+  @Test
+  fun completeButton_proposal_isDisabled_forStudent_whenPaymentNotConfirmed() {
+    // PROPOSAL: Student (booker, isTutor=false) is the payer
+    // Button should be disabled when payment is not confirmed
+    val uiState =
+        proposalBookingState(isTutor = false, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Button should be disabled
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertIsNotEnabled()
+
+    // Should show the payment required message
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.PAYMENT_REQUIRED_MESSAGE)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun completeButton_proposal_isEnabled_forStudent_whenPaymentConfirmed() {
+    // PROPOSAL: Student (booker, isTutor=false) is the payer
+    // Button should be enabled when payment is confirmed
+    val uiState = proposalBookingState(isTutor = false, paymentStatus = PaymentStatus.CONFIRMED)
+
+    var markCompletedCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = { markCompletedCalled = true },
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Button should be enabled
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertIsEnabled()
+
+    // Should NOT show the payment required message
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.PAYMENT_REQUIRED_MESSAGE)
+        .assertDoesNotExist()
+
+    // Click should work
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .performScrollTo()
+        .performClick()
+
+    assert(markCompletedCalled)
+  }
+
+  @Test
+  fun completeButton_proposal_isEnabled_forTutor_whenPaymentNotConfirmed() {
+    // PROPOSAL: Tutor (creator, isTutor=true) is the payment receiver, NOT the payer
+    // Button should be enabled (but will show warning dialog)
+    val uiState =
+        proposalBookingState(isTutor = true, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Button should be enabled for tutor
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertIsEnabled()
+
+    // Should NOT show the payment required message (that's only for payers)
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.PAYMENT_REQUIRED_MESSAGE)
+        .assertDoesNotExist()
+  }
+
+  @Test
+  fun completeButton_request_isDisabled_forCreator_whenPaymentNotConfirmed() {
+    // REQUEST: Creator (student, isTutor=true) is the payer
+    // Button should be disabled when payment is not confirmed
+    val uiState = requestBookingState(isTutor = true, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Button should be disabled
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertIsNotEnabled()
+
+    // Should show the payment required message
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.PAYMENT_REQUIRED_MESSAGE)
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun completeButton_request_isEnabled_forCreator_whenPaymentConfirmed() {
+    // REQUEST: Creator (student, isTutor=true) is the payer
+    // Button should be enabled when payment is confirmed
+    val uiState = requestBookingState(isTutor = true, paymentStatus = PaymentStatus.CONFIRMED)
+
+    var markCompletedCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = { markCompletedCalled = true },
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Button should be enabled
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertIsEnabled()
+
+    // Should NOT show the payment required message
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.PAYMENT_REQUIRED_MESSAGE)
+        .assertDoesNotExist()
+
+    // Click should work
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .performScrollTo()
+        .performClick()
+
+    assert(markCompletedCalled)
+  }
+
+  @Test
+  fun completeButton_request_isEnabled_forBooker_whenPaymentNotConfirmed() {
+    // REQUEST: Booker (tutor, isTutor=false) is the payment receiver, NOT the payer
+    // Button should be enabled (but will show warning dialog)
+    val uiState =
+        requestBookingState(isTutor = false, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Button should be enabled for tutor (booker in REQUEST)
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertIsEnabled()
+
+    // Should NOT show the payment required message (that's only for payers)
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.PAYMENT_REQUIRED_MESSAGE)
+        .assertDoesNotExist()
+  }
+
+  @Test
+  fun completeButton_showsCorrectMessage_whenDisabledForPayer() {
+    // Test that the correct message is shown when button is disabled
+    val uiState = proposalBookingState(isTutor = false, paymentStatus = PaymentStatus.PAID)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Should show the correct message
+    composeTestRule
+        .onNodeWithText(
+            "You cannot mark the booking as completed until the payment has been confirmed.")
+        .assertIsDisplayed()
   }
 }

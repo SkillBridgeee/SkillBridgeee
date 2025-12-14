@@ -87,6 +87,7 @@ object BookingDetailsTestTag {
   const val PAYMENT_WARNING_DIALOG = "booking_payment_warning_dialog"
   const val PAYMENT_WARNING_CONFIRM = "booking_payment_warning_confirm"
   const val PAYMENT_WARNING_CANCEL = "booking_payment_warning_cancel"
+  const val PAYMENT_REQUIRED_MESSAGE = "booking_payment_required_message"
 }
 
 /**
@@ -547,8 +548,14 @@ private fun ConfirmCompletionSection(
         ListingType.REQUEST -> !isTutor // Booker is tutor, receives payment
       }
 
+  // The payer (student) is the opposite of the payment receiver
+  val isPayer = !isPaymentReceiver
+
   // Check if payment is not yet confirmed
   val paymentNotConfirmed = paymentStatus != PaymentStatus.CONFIRMED
+
+  // Payer cannot complete until payment is confirmed
+  val isButtonDisabledForPayer = isPayer && paymentNotConfirmed
 
   // Show warning dialog if needed
   if (showWarningDialog) {
@@ -588,6 +595,17 @@ private fun ConfirmCompletionSection(
             text = "Has the session taken place?",
             style = MaterialTheme.typography.bodyMedium,
         )
+
+        // Show message to payer if they can't complete yet
+        if (isButtonDisabledForPayer) {
+          Text(
+              text =
+                  "You cannot mark the booking as completed until the payment has been confirmed.",
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.error,
+              modifier = Modifier.testTag(BookingDetailsTestTag.PAYMENT_REQUIRED_MESSAGE))
+        }
+
         Button(
             onClick = {
               // Show warning if payment not confirmed and user is the payment receiver
@@ -597,6 +615,7 @@ private fun ConfirmCompletionSection(
                 onMarkCompleted()
               }
             },
+            enabled = !isButtonDisabledForPayer,
             modifier = Modifier.testTag(BookingDetailsTestTag.COMPLETE_BUTTON)) {
               Text(text = "Mark as completed")
             }
