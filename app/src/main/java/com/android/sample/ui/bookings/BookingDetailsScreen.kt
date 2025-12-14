@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -80,6 +81,11 @@ object BookingDetailsTestTag {
   const val RATING_TUTOR = "booking_rating_tutor"
   const val RATING_LISTING = "booking_rating_listing"
   const val RATING_SUBMIT_BUTTON = "booking_rating_submit"
+
+  const val PAYMENT_WARNING_DIALOG = "booking_payment_warning_dialog"
+  const val PAYMENT_WARNING_CONFIRM = "booking_payment_warning_confirm"
+  const val PAYMENT_WARNING_CANCEL = "booking_payment_warning_cancel"
+  const val PAYMENT_REQUIRED_MESSAGE = "booking_payment_required_message"
   const val TOTAL_PRICE_SECTION = "booking_total_price_section"
   const val CONTENT = "booking_details_content"
 }
@@ -247,7 +253,17 @@ fun BookingDetailsContent(
 
         // Let the student mark the session as completed once it is confirmed
         if (uiState.booking.status == BookingStatus.CONFIRMED) {
-          ConfirmCompletionSection(onMarkCompleted)
+          // Determine if current user is the tutor based on listing type
+          // PROPOSAL: creator is tutor, REQUEST: booker is tutor
+          val isTutor =
+              when (uiState.listing.type) {
+                ListingType.PROPOSAL -> uiState.isCreator
+                ListingType.REQUEST -> uiState.isBooker
+              }
+          ConfirmCompletionSection(
+              paymentStatus = uiState.booking.paymentStatus,
+              isTutor = isTutor,
+              onMarkCompleted = onMarkCompleted)
         }
 
         if (uiState.booking.status == BookingStatus.COMPLETED) {
@@ -274,9 +290,16 @@ fun BookingDetailsContent(
 
         // Payment actions based on the payment status - only for CONFIRMED bookings
         if (uiState.booking.status == BookingStatus.CONFIRMED) {
+          // Determine if current user is the tutor based on listing type
+          // PROPOSAL: creator is tutor, REQUEST: booker is tutor
+          val isTutorForPayment =
+              when (uiState.listing.type) {
+                ListingType.PROPOSAL -> uiState.isCreator
+                ListingType.REQUEST -> uiState.isBooker
+              }
           PaymentActionSection(
               booking = uiState.booking,
-              isCreator = uiState.isCreator,
+              isTutor = isTutorForPayment,
               onPaymentComplete = onPaymentComplete,
               onPaymentReceived = onPaymentReceived)
         }
@@ -584,18 +607,78 @@ private fun BookingStatus(status: BookingStatus) {
 }
 
 /**
- * UI section allowing a tutor to confirm that a booked learning session has been completed.
+ * UI section allowing a user to confirm that a booked learning session has been completed.
  *
  * This component displays a prompt text and a button. When the user taps the **"Mark as
  * completed"** button, the `onMarkCompleted` callback is invoked.
  *
- * It is typically shown when a booking has the status `CONFIRMED` and the tutor can now validate
+ * If the payment has not been confirmed yet and the current user is the one who should receive the
+ * payment (tutor for PROPOSAL, booker/tutor for REQUEST), a warning dialog is shown asking if they
+ * want to proceed without payment confirmation.
+ *
+ * It is typically shown when a booking has the status `CONFIRMED` and the user can now validate
  * that the session actually took place.
  *
- * @param onMarkCompleted Callback triggered when the user clicks the **Mark as completed** button.
+ * @param paymentStatus The current payment status of the booking.
+ * @param listingType The type of listing (PROPOSAL or REQUEST) to determine payment roles.
+ * @param isTutor Whether the current user is the listing creator.
+ * @param onMarkCompleted Callback triggered when the user confirms marking the booking as
+ *   completed.
  */
 @Composable
-private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
+private fun ConfirmCompletionSection(
+    paymentStatus: PaymentStatus,
+    isTutor: Boolean,
+    onMarkCompleted: () -> Unit
+) {
+  var showWarningDialog by remember { mutableStateOf(false) }
+
+  // Determine if the current user is the one who receives payment (the tutor)
+  // isTutor is already computed correctly based on listing type:
+  // - For PROPOSAL: isTutor=true if user is creator (tutor)
+  // - For REQUEST: isTutor=true if user is booker (tutor)
+  // The tutor is always the payment receiver
+  val isPaymentReceiver = isTutor
+
+  // The payer (student) is the opposite of the payment receiver
+  val isPayer = !isPaymentReceiver
+
+  // Check if payment is not yet confirmed
+  val paymentNotConfirmed = paymentStatus != PaymentStatus.CONFIRMED
+
+  // Payer cannot complete until payment is confirmed
+  val isButtonDisabledForPayer = isPayer && paymentNotConfirmed
+
+  // Show warning dialog if needed
+  if (showWarningDialog) {
+    AlertDialog(
+        onDismissRequest = { showWarningDialog = false },
+        title = { Text("Payment Not Confirmed") },
+        text = {
+          Text(
+              "The payment has not been confirmed yet. Are you sure you want to mark this " +
+                  "booking as completed before the payment has been accepted?")
+        },
+        confirmButton = {
+          Button(
+              onClick = {
+                showWarningDialog = false
+                onMarkCompleted()
+              },
+              modifier = Modifier.testTag(BookingDetailsTestTag.PAYMENT_WARNING_CONFIRM)) {
+                Text("Yes, Complete Anyway")
+              }
+        },
+        dismissButton = {
+          Button(
+              onClick = { showWarningDialog = false },
+              modifier = Modifier.testTag(BookingDetailsTestTag.PAYMENT_WARNING_CANCEL)) {
+                Text("Cancel")
+              }
+        },
+        modifier = Modifier.testTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG))
+  }
+
   Column(
       modifier = Modifier.fillMaxWidth(),
       verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -604,8 +687,27 @@ private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
             text = BookingDetailsStrings.HAS_SESSION_TAKEN_PLACE,
             style = MaterialTheme.typography.bodyMedium,
         )
+
+        // Show message to payer if they can't complete yet
+        if (isButtonDisabledForPayer) {
+          Text(
+              text =
+                  "You cannot mark the booking as completed until the payment has been confirmed.",
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.error,
+              modifier = Modifier.testTag(BookingDetailsTestTag.PAYMENT_REQUIRED_MESSAGE))
+        }
+
         Button(
-            onClick = onMarkCompleted,
+            onClick = {
+              // Show warning if payment not confirmed and user is the payment receiver
+              if (paymentNotConfirmed && isPaymentReceiver) {
+                showWarningDialog = true
+              } else {
+                onMarkCompleted()
+              }
+            },
+            enabled = !isButtonDisabledForPayer,
             modifier = Modifier.testTag(BookingDetailsTestTag.COMPLETE_BUTTON)) {
               Text(text = BookingDetailsStrings.MARK_COMPLETED)
             }
@@ -741,8 +843,15 @@ private fun RatingRow(
  * Composable function that displays payment action buttons based on the payment status of the
  * booking.
  *
+ * The payment flow depends on the listing type:
+ * - PROPOSAL: The booker is the student who needs to pay, the listing creator is the tutor who
+ *   receives
+ * - REQUEST: The listing creator is the student who needs to pay, the booker is the tutor who
+ *   receives
+ *
  * @param booking The booking object containing payment status information.
  * @param isTutor Whether the current user is the tutor (listing creator).
+ * @param listingType The type of listing (PROPOSAL or REQUEST) to determine payment roles.
  * @param onPaymentComplete Callback invoked when the "Payment Complete" button is clicked.
  * @param onPaymentReceived Callback invoked when the "Payment Received" button is clicked.
  */
@@ -753,6 +862,12 @@ private fun PaymentActionSection(
     onPaymentComplete: () -> Unit,
     onPaymentReceived: () -> Unit
 ) {
+  // Determine if the current user is the one who should pay (the student)
+  // - For PROPOSAL: isTutor=false means booker (student), who pays
+  // - For REQUEST: isTutor=false means creator (student), who pays
+  // In both cases, the student (non-tutor) is the one who pays
+  val isStudentPaying = !isCreator
+
   // Always display the current payment status
   Column(
       modifier = Modifier.fillMaxWidth(),
@@ -768,8 +883,8 @@ private fun PaymentActionSection(
         // Show appropriate action based on payment status and user role
         when (booking.paymentStatus) {
           PaymentStatus.PENDING_PAYMENT -> {
-            // Student (booker) sees the payment complete button
-            if (!isCreator) {
+            // Student (payer) sees the payment complete button
+            if (isStudentPaying) {
               Text(
                   text = BookingDetailsStrings.NOTIFY_TUTOR,
                   style = MaterialTheme.typography.bodyMedium,
@@ -788,8 +903,8 @@ private fun PaymentActionSection(
             }
           }
           PaymentStatus.PAID -> {
-            // Tutor (listing creator) sees the payment received button
-            if (isCreator) {
+            // Tutor (payment receiver) sees the payment received button
+            if (!isStudentPaying) {
               Text(
                   text = BookingDetailsStrings.STUDENT_PAID,
                   style = MaterialTheme.typography.bodyMedium,
