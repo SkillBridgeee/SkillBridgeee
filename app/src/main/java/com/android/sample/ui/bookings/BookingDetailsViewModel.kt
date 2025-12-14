@@ -157,7 +157,6 @@ class BookingDetailsViewModel(
 
           val hourlyRate = listing.hourlyRate
 
-          // IMPORTANT: build a FRESH state, don't reuse old ratingSubmitted
           _bookingUiState.value =
               BookingUIState(
                   booking = booking,

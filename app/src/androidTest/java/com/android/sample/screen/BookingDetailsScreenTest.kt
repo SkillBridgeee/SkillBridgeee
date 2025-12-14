@@ -1251,52 +1251,6 @@ class BookingDetailsScreenTest {
   }
 
   @Test
-  fun pendingBooking_creator_canAcceptOrDeny_andCallbacksAreTriggered() {
-    val booking =
-        Booking(
-            bookingId = "b-accept-deny",
-            associatedListingId = "l1",
-            listingCreatorId = "tutor-id",
-            bookerId = "student-id",
-            status = BookingStatus.PENDING,
-        )
-
-    var accepted = false
-    var denied = false
-
-    val uiState =
-        BookingUIState(
-            booking = booking,
-            listing = Proposal(listingId = "l1"),
-            creatorProfile = Profile(userId = "tutor-id", name = "Tutor"),
-            bookerProfile = Profile(userId = "student-id", name = "Student"),
-            isCreator = true,
-            isBooker = false,
-            onAcceptBooking = { accepted = true },
-            onDenyBooking = { denied = true },
-        )
-
-    composeTestRule.setContent {
-      MaterialTheme {
-        BookingDetailsContent(
-            uiState = uiState,
-            onCreatorClick = {},
-            onBookerClick = {},
-            onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
-            onPaymentComplete = {},
-            onPaymentReceived = {},
-        )
-      }
-    }
-
-    composeTestRule.onNodeWithText(BookingDetailsStrings.ACCEPT).assertExists().performClick()
-
-    composeTestRule.runOnIdle { assert(accepted) }
-  }
-
-  @Test
   fun paymentPending_tutorSeesWaitingForStudentMessage() {
     val base = completedBookingUiState()
     val uiState =

@@ -31,7 +31,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -52,14 +51,12 @@ import com.android.sample.model.booking.PaymentStatus
 import com.android.sample.model.booking.color
 import com.android.sample.model.booking.name
 import com.android.sample.model.listing.ListingType
+import com.android.sample.ui.bookings.BookingDetailsStrings.BOOKING_REQUEST_FROM
+import com.android.sample.ui.bookings.BookingDetailsStrings.TAP_TO_VIEW_STUDENT_PROFILE
 import com.android.sample.ui.components.RatingStarsInput
 import com.android.sample.ui.listing.ListingScreenTestTags
 import java.text.SimpleDateFormat
 import java.util.Locale
-
-// UI String Constants
-private const val BOOKING_REQUEST_FROM = "Booking Request From:"
-private const val TAP_TO_VIEW_STUDENT_PROFILE = "Tap name to view student profile"
 
 object BookingDetailsTestTag {
   const val ERROR = "booking_details_error"
@@ -88,6 +85,9 @@ object BookingDetailsTestTag {
 }
 
 object BookingDetailsStrings {
+  const val BOOKING_REQUEST_FROM = "Booking Request From:"
+
+  const val TAP_TO_VIEW_STUDENT_PROFILE = "Tap name to view student profile"
   const val ACCEPT = "Accept"
   const val DENY = "Deny"
   const val BOOKING_HEADER_TEACHER = "Teacher for : "
@@ -735,53 +735,6 @@ private fun RatingRow(
     Text(text = label, style = MaterialTheme.typography.bodyMedium)
     RatingStarsInput(selectedStars = selected, onSelected = onSelected)
   }
-}
-
-/**
- * UI section allowing the student to rate the tutor and the listing after the session has been
- * completed.
- *
- * The user selects 1–5 stars for:
- * - the tutor
- * - the listing
- *
- * When the "Submit ratings" button is pressed, the selected values are passed to
- * [onSubmitStudentRatings].
- */
-@Composable
-private fun StudentRatingSection(
-    ratingSubmitted: Boolean,
-    onSubmitStudentRatings: (Int, Int) -> Unit,
-) {
-  if (ratingSubmitted) return
-
-  var tutorStars by remember { mutableStateOf(0) }
-  var listingStars by remember { mutableStateOf(0) }
-
-  val isButtonEnabled = tutorStars > 0 && listingStars > 0
-
-  Column(
-      modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.RATING_SECTION),
-      verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        RatingRow(
-            label = BookingDetailsStrings.CREATOR_TUTOR,
-            selected = tutorStars,
-            onSelected = { tutorStars = it },
-            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_TUTOR))
-
-        RatingRow(
-            label = BookingDetailsStrings.LISTING,
-            selected = listingStars,
-            onSelected = { listingStars = it },
-            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_LISTING))
-
-        Button(
-            enabled = isButtonEnabled,
-            onClick = { onSubmitStudentRatings(tutorStars, listingStars) },
-            modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
-              Text(text = BookingDetailsStrings.SUBMIT_RATINGS)
-            }
-      }
 }
 
 /**
