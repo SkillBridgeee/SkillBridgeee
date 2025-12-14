@@ -97,6 +97,7 @@ class HomeScreenTest {
     composeRule.onNodeWithTag(HomeScreenTestTags.REQUEST_SECTION).assertIsNotDisplayed()
 
     composeRule.onNodeWithTag(HomeScreenTestTags.ERROR_TEXT).assertIsDisplayed()
+
     composeRule.onNodeWithText("An error occurred during your identification.").assertIsDisplayed()
   }
 

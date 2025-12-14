@@ -73,19 +73,18 @@ class MainPageViewModel(
    */
   fun load() {
     viewModelScope.launch {
-      val welcomeResult = runCatching { getWelcomeMsg() }
+      val welcomeMsg = getWelcomeMsg()
       val proposalsResult = runCatching { getTopProposals(numProposalDisplayed) }
       val requestsResult = runCatching { getTopRequests(numRequestDisplayed) }
 
-      val welcomeMsg = welcomeResult.getOrNull()
       val proposals = proposalsResult.getOrNull().orEmpty()
       val requests = requestsResult.getOrNull().orEmpty()
 
       val errorMsg =
           when {
-            welcomeResult.isFailure && (proposalsResult.isFailure || requestsResult.isFailure) ->
+            welcomeMsg == null && (proposalsResult.isFailure || requestsResult.isFailure) ->
                 generalError
-            welcomeResult.isFailure -> identificationErrorMsg
+            welcomeMsg == null -> identificationErrorMsg
             proposalsResult.isFailure || requestsResult.isFailure -> listingErrorMsg
             else -> null
           }
@@ -143,13 +142,15 @@ class MainPageViewModel(
   //  }
 
   private suspend fun getWelcomeMsg(): String? =
-      runCatching {
-            val userId = UserSessionManager.getCurrentUserId() ?: return null
-            val userName = profileRepository.getProfile(userId)?.name
-            "Welcome back, $userName!"
-          }
-          .onFailure { Log.e("HomePageViewModel", "Failed to build welcome message", it) }
-          .getOrNull()
+      try {
+        val userId = UserSessionManager.getCurrentUserId()
+        if (userId == null) throw Exception()
+        val userName = profileRepository.getProfile(userId)?.name
+        "Welcome back, $userName!"
+      } catch (e: Exception) {
+        Log.e("HomePageViewModel", "Failed to build welcome message", e)
+        null
+      }
 
   /**
    * Retrieves the top proposals from the repository.
