@@ -491,6 +491,63 @@ class BookingsDetailsViewModelTest {
   }
 
   @Test
+  fun submitBookerRatings_whenCompleted_andRequest_sendsStudentAndListingRatings() = runTest {
+    val fakeRatingRepo = FakeRatingRepositoryImpl()
+
+    val booking =
+        Booking(
+            bookingId = "b1",
+            associatedListingId = "l1",
+            listingCreatorId = "student-1", // creator is student for REQUEST
+            bookerId = "tutor-1", // booker is tutor for REQUEST
+            status = BookingStatus.COMPLETED,
+        )
+
+    val listing =
+        Proposal(
+            listingId = "l1",
+            creatorUserId = "student-1",
+            type = ListingType.REQUEST,
+        )
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = bookingRepoWorking,
+            listingRepository = listingRepoWorking,
+            profileRepository = profileRepoWorking,
+            ratingRepository = fakeRatingRepo,
+        )
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking = booking,
+            listing = listing,
+            creatorProfile = Profile(userId = "student-1"),
+            bookerProfile = Profile(userId = "tutor-1"),
+            loadError = false,
+            ratingProgress = RatingProgress(),
+        ))
+
+    vm.submitBookerRatings(userStars = 4, listingStars = 2)
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    assertEquals(2, fakeRatingRepo.addedRatings.size)
+
+    val userRating = fakeRatingRepo.addedRatings.first { it.ratingType == RatingType.STUDENT }
+    val listingRating = fakeRatingRepo.addedRatings.first { it.ratingType == RatingType.LISTING }
+
+    // booker is tutor-1
+    assertEquals("tutor-1", userRating.fromUserId)
+    // in REQUEST, booker rates the STUDENT (student-1)
+    assertEquals("student-1", userRating.toUserId)
+    assertEquals("b1", userRating.targetObjectId)
+
+    assertEquals("tutor-1", listingRating.fromUserId)
+    assertEquals("student-1", listingRating.toUserId)
+    assertEquals("l1", listingRating.targetObjectId)
+  }
+
+  @Test
   fun submitBookerRatings_whenNotCompleted_doesNothing() = runTest {
     val fakeRatingRepo = FakeRatingRepositoryImpl()
 
@@ -2005,6 +2062,7 @@ class BookingsDetailsViewModelTest {
                 Proposal(
                     listingId = "l1", creatorUserId = "creator_1", type = ListingType.PROPOSAL),
             ratingProgress = RatingProgress(),
+            isCreator = true, // <<< REQUIRED
         ))
 
     vm.submitCreatorRating(0)
@@ -2023,7 +2081,7 @@ class BookingsDetailsViewModelTest {
         Booking(
             bookingId = "b1",
             associatedListingId = "l1",
-            listingCreatorId = "tutor-1", // creator is tutor for proposal
+            listingCreatorId = "tutor-1",
             bookerId = "student-1",
             status = BookingStatus.COMPLETED,
         )
@@ -2034,6 +2092,7 @@ class BookingsDetailsViewModelTest {
             listing =
                 Proposal(listingId = "l1", creatorUserId = "tutor-1", type = ListingType.PROPOSAL),
             ratingProgress = RatingProgress(),
+            isCreator = true, // <<< REQUIRED
         ))
 
     vm.submitCreatorRating(5)
@@ -2072,6 +2131,7 @@ class BookingsDetailsViewModelTest {
             listing =
                 Proposal(listingId = "l1", creatorUserId = "tutor-1", type = ListingType.PROPOSAL),
             ratingProgress = RatingProgress(),
+            isCreator = true, // <<< REQUIRED
         ))
 
     vm.submitCreatorRating(5)

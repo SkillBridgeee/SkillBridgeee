@@ -293,28 +293,21 @@ class BookingDetailsViewModel(
   fun submitBookerRatings(userStars: Int, listingStars: Int) {
     val booking = bookingUiState.value.booking
     val listing = bookingUiState.value.listing
-    if (booking.bookingId.isBlank()) return
-    if (booking.status != BookingStatus.COMPLETED) return
 
-    if (userStars !in 1..5 || listingStars !in 1..5) {
-      _bookingUiState.value = bookingUiState.value.copy(loadError = true)
-      return
-    }
+    if (!validateRatingSubmission(booking, intArrayOf(userStars, listingStars))) return
 
-    val creatorId = booking.listingCreatorId
-    val bookerId = booking.bookerId
     val bookingIdObj = booking.bookingId
     val listingIdObj = listing.listingId
+    val bookerId = booking.bookerId
 
-    val tutorUserId = if (listing.type == ListingType.PROPOSAL) creatorId else bookerId
-    val studentUserId = if (listing.type == ListingType.PROPOSAL) bookerId else creatorId
+    val roleIds = resolveTutorAndStudentIds(booking, listing.type)
 
     // Booker rates WHO?
     val (toUserId, ratingType) =
         if (listing.type == ListingType.REQUEST) {
-          studentUserId to RatingType.STUDENT
+          roleIds.studentUserId to RatingType.STUDENT
         } else {
-          tutorUserId to RatingType.TUTOR
+          roleIds.tutorUserId to RatingType.TUTOR
         }
 
     viewModelScope.launch {
@@ -347,15 +340,11 @@ class BookingDetailsViewModel(
         ratingRepository.addRating(userRating)
         ratingRepository.addRating(listingRating)
 
-        // Optional: recompute tutor aggregate only when ratingType==TUTOR
-        if (ratingType == RatingType.TUTOR) {
-          RatingAggregationHelper.recomputeTutorAggregateRating(
-              tutorUserId = tutorUserId,
-              ratingRepo = ratingRepository,
-              profileRepo = profileRepository)
-        }
+        recomputeAggregateIfNeeded(
+            ratingType = ratingType,
+            tutorUserId = roleIds.tutorUserId,
+            studentUserId = roleIds.studentUserId)
 
-        // Refresh progress quickly (minimal approach: just reload)
         load(bookingIdObj)
       } catch (e: Exception) {
         Log.e("BookingDetailsViewModel", "Error submitting booker ratings", e)
@@ -365,18 +354,22 @@ class BookingDetailsViewModel(
   }
 
   fun submitCreatorRating(stars: Int) {
-    val booking = bookingUiState.value.booking
-    val listing = bookingUiState.value.listing
+    val state = bookingUiState.value
+    val booking = state.booking
+    val listing = state.listing
+
     if (booking.bookingId.isBlank()) return
+    if (!state.isCreator) return
     if (booking.status != BookingStatus.COMPLETED) return
+
     if (stars !in 1..5) {
-      _bookingUiState.value = bookingUiState.value.copy(loadError = true)
+      _bookingUiState.value = state.copy(loadError = true)
       return
     }
 
     val creatorId = booking.listingCreatorId
     val bookerId = booking.bookerId
-    val bookingIdObj = booking.bookingId
+    val bookingId = booking.bookingId
 
     val tutorUserId = if (listing.type == ListingType.PROPOSAL) creatorId else bookerId
     val studentUserId = if (listing.type == ListingType.PROPOSAL) bookerId else creatorId
@@ -398,7 +391,7 @@ class BookingDetailsViewModel(
                 starRating = stars.toStarRating(),
                 comment = "",
                 ratingType = ratingType,
-                targetObjectId = bookingIdObj,
+                targetObjectId = bookingId,
             )
 
         rating.validate()
@@ -406,16 +399,69 @@ class BookingDetailsViewModel(
 
         if (ratingType == RatingType.TUTOR) {
           RatingAggregationHelper.recomputeTutorAggregateRating(
+              tutorUserId, ratingRepository, profileRepository)
+        } else {
+          RatingAggregationHelper.recomputeStudentAggregateRating(
+              studentUserId, ratingRepository, profileRepository)
+        }
+
+        load(bookingId)
+      } catch (e: Exception) {
+        _bookingUiState.value = state.copy(loadError = true)
+      }
+    }
+  }
+
+  private data class RoleIds(
+      val tutorUserId: String,
+      val studentUserId: String,
+  )
+
+  private fun resolveTutorAndStudentIds(booking: Booking, listingType: ListingType): RoleIds {
+    val creatorId = booking.listingCreatorId
+    val bookerId = booking.bookerId
+
+    val tutorUserId = if (listingType == ListingType.PROPOSAL) creatorId else bookerId
+    val studentUserId = if (listingType == ListingType.PROPOSAL) bookerId else creatorId
+    return RoleIds(tutorUserId = tutorUserId, studentUserId = studentUserId)
+  }
+
+  private suspend fun recomputeTutorAggregateIfNeeded(
+      ratingType: RatingType,
+      tutorUserId: String,
+  ) {
+    if (ratingType != RatingType.TUTOR) return
+    RatingAggregationHelper.recomputeTutorAggregateRating(
+        tutorUserId = tutorUserId, ratingRepo = ratingRepository, profileRepo = profileRepository)
+  }
+
+  private fun validateRatingSubmission(booking: Booking, stars: IntArray): Boolean {
+    if (booking.bookingId.isBlank()) return false
+    if (booking.status != BookingStatus.COMPLETED) return false
+    if (stars.any { it !in 1..5 }) {
+      _bookingUiState.value = bookingUiState.value.copy(loadError = true)
+      return false
+    }
+    return true
+  }
+
+  private suspend fun recomputeAggregateIfNeeded(
+      ratingType: RatingType,
+      tutorUserId: String,
+      studentUserId: String,
+  ) {
+    when (ratingType) {
+      RatingType.TUTOR ->
+          RatingAggregationHelper.recomputeTutorAggregateRating(
               tutorUserId = tutorUserId,
               ratingRepo = ratingRepository,
               profileRepo = profileRepository)
-        }
-
-        load(bookingIdObj)
-      } catch (e: Exception) {
-        Log.e("BookingDetailsViewModel", "Error submitting creator rating", e)
-        _bookingUiState.value = bookingUiState.value.copy(loadError = true)
-      }
+      RatingType.STUDENT ->
+          RatingAggregationHelper.recomputeStudentAggregateRating(
+              studentUserId = studentUserId,
+              ratingRepo = ratingRepository,
+              profileRepo = profileRepository)
+      else -> Unit // LISTING etc.
     }
   }
 }

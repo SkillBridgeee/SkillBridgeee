@@ -222,7 +222,7 @@ fun BookingDetailsContent(
         if (uiState.booking.status == BookingStatus.CONFIRMED) {
           PaymentActionSection(
               booking = uiState.booking,
-              isTutor = uiState.isCreator,
+              isCreator = uiState.isCreator,
               onPaymentComplete = onPaymentComplete,
               onPaymentReceived = onPaymentReceived)
         }
@@ -589,6 +589,14 @@ private fun BookerRatingSection(userLabel: String, onSubmit: (Int, Int) -> Unit)
 
         RatingRow(label = "Listing", selected = listingStars, onSelected = { listingStars = it })
 
+        if (!enabled) {
+          Text(
+              text = "Please select ratings for both categories",
+              style = MaterialTheme.typography.bodySmall,
+              color = MaterialTheme.colorScheme.error,
+              modifier = Modifier.padding(top = 4.dp))
+        }
+
         Button(
             enabled = enabled,
             onClick = { onSubmit(userStars, listingStars) },
@@ -708,7 +716,7 @@ private fun StudentRatingSection(
 @Composable
 private fun PaymentActionSection(
     booking: Booking,
-    isTutor: Boolean,
+    isCreator: Boolean,
     onPaymentComplete: () -> Unit,
     onPaymentReceived: () -> Unit
 ) {
@@ -728,7 +736,7 @@ private fun PaymentActionSection(
         when (booking.paymentStatus) {
           PaymentStatus.PENDING_PAYMENT -> {
             // Student (booker) sees the payment complete button
-            if (!isTutor) {
+            if (!isCreator) {
               Text(
                   text =
                       "Once you've paid for the session, click the button below to notify the tutor.",
@@ -749,7 +757,7 @@ private fun PaymentActionSection(
           }
           PaymentStatus.PAID -> {
             // Tutor (listing creator) sees the payment received button
-            if (isTutor) {
+            if (isCreator) {
               Text(
                   text =
                       "The student has marked the payment as complete. Confirm once you've received it.",
