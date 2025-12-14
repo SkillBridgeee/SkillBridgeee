@@ -220,6 +220,7 @@ fun BookingDetailsContent(
           PaymentActionSection(
               booking = uiState.booking,
               isTutor = uiState.isTutor,
+              listingType = uiState.listing.type,
               onPaymentComplete = onPaymentComplete,
               onPaymentReceived = onPaymentReceived)
         }
@@ -605,8 +606,15 @@ private fun StudentRatingSection(
  * Composable function that displays payment action buttons based on the payment status of the
  * booking.
  *
+ * The payment flow depends on the listing type:
+ * - PROPOSAL: The booker is the student who needs to pay, the listing creator is the tutor who
+ *   receives
+ * - REQUEST: The listing creator is the student who needs to pay, the booker is the tutor who
+ *   receives
+ *
  * @param booking The booking object containing payment status information.
  * @param isTutor Whether the current user is the tutor (listing creator).
+ * @param listingType The type of listing (PROPOSAL or REQUEST) to determine payment roles.
  * @param onPaymentComplete Callback invoked when the "Payment Complete" button is clicked.
  * @param onPaymentReceived Callback invoked when the "Payment Received" button is clicked.
  */
@@ -614,9 +622,19 @@ private fun StudentRatingSection(
 private fun PaymentActionSection(
     booking: Booking,
     isTutor: Boolean,
+    listingType: ListingType,
     onPaymentComplete: () -> Unit,
     onPaymentReceived: () -> Unit
 ) {
+  // Determine if the current user is the one who should pay (the student)
+  // - For PROPOSAL: isTutor=false means booker (student), who pays
+  // - For REQUEST: isTutor=true means creator (student), who pays
+  val isStudentPaying =
+      when (listingType) {
+        ListingType.PROPOSAL -> !isTutor // Booker is student, pays
+        ListingType.REQUEST -> isTutor // Creator is student, pays
+      }
+
   // Always display the current payment status
   Column(
       modifier = Modifier.fillMaxWidth(),
@@ -632,8 +650,8 @@ private fun PaymentActionSection(
         // Show appropriate action based on payment status and user role
         when (booking.paymentStatus) {
           PaymentStatus.PENDING_PAYMENT -> {
-            // Student (booker) sees the payment complete button
-            if (!isTutor) {
+            // Student (payer) sees the payment complete button
+            if (isStudentPaying) {
               Text(
                   text =
                       "Once you've paid for the session, click the button below to notify the tutor.",
@@ -653,8 +671,8 @@ private fun PaymentActionSection(
             }
           }
           PaymentStatus.PAID -> {
-            // Tutor (listing creator) sees the payment received button
-            if (isTutor) {
+            // Tutor (payment receiver) sees the payment received button
+            if (!isStudentPaying) {
               Text(
                   text =
                       "The student has marked the payment as complete. Confirm once you've received it.",
