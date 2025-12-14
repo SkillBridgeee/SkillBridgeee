@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.booking.PaymentStatus
+import com.android.sample.model.listing.ListingType
 import com.android.sample.model.user.Profile
 import com.android.sample.ui.listing.ListingScreenTestTags
 import java.text.SimpleDateFormat
@@ -42,6 +43,7 @@ private const val PROFILE_ICON_CONTENT_DESC = "Profile Icon"
  * @param booking The booking to display
  * @param bookerProfile Profile of the person who made the booking
  * @param currentUserId The ID of the current user (to determine which buttons to show)
+ * @param listingType The type of listing (PROPOSAL or REQUEST) to determine payment roles
  * @param onApprove Callback when approve button is clicked
  * @param onReject Callback when reject button is clicked
  * @param onPaymentComplete Callback when payment complete button is clicked
@@ -51,6 +53,7 @@ data class BookingCardState(
     val booking: Booking,
     val bookerProfile: Profile?,
     val currentUserId: String? = null,
+    val listingType: ListingType? = null,
     val onApprove: () -> Unit,
     val onReject: () -> Unit,
     val onPaymentComplete: () -> Unit = {},
@@ -73,6 +76,7 @@ fun BookingCard(state: BookingCardState, modifier: Modifier = Modifier) {
       onPaymentComplete = state.onPaymentComplete,
       onPaymentReceived = state.onPaymentReceived,
       currentUserId = state.currentUserId,
+      listingType = state.listingType,
       modifier = modifier)
 }
 
@@ -86,6 +90,7 @@ fun BookingCard(state: BookingCardState, modifier: Modifier = Modifier) {
  * @param onPaymentComplete Callback when payment complete button is clicked
  * @param onPaymentReceived Callback when payment received button is clicked
  * @param currentUserId The ID of the current user (to determine which buttons to show)
+ * @param listingType The type of listing (PROPOSAL or REQUEST) to determine payment roles
  * @param modifier Modifier for the card
  */
 @Composable
@@ -97,7 +102,8 @@ fun BookingCard(
     modifier: Modifier = Modifier,
     onPaymentComplete: () -> Unit = {},
     onPaymentReceived: () -> Unit = {},
-    currentUserId: String? = null
+    currentUserId: String? = null,
+    listingType: ListingType? = null
 ) {
   val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
 
@@ -178,6 +184,7 @@ fun BookingCard(
               PaymentActionButtons(
                   booking = booking,
                   currentUserId = currentUserId,
+                  listingType = listingType,
                   onPaymentComplete = onPaymentComplete,
                   onPaymentReceived = onPaymentReceived)
             }
@@ -206,11 +213,29 @@ private fun BookingActionButtons(onApprove: () -> Unit, onReject: () -> Unit) {
 private fun PaymentActionButtons(
     booking: Booking,
     currentUserId: String?,
+    listingType: ListingType?,
     onPaymentComplete: () -> Unit,
     onPaymentReceived: () -> Unit
 ) {
-  // Only show "Payment Complete" button to the learner (bookerId)
-  if (booking.paymentStatus == PaymentStatus.PENDING_PAYMENT && currentUserId == booking.bookerId) {
+  // Determine who should pay based on listing type:
+  // - PROPOSAL: booker is the student who pays, listing creator is the tutor who receives
+  // - REQUEST: listing creator is the student who pays, booker is the tutor who receives
+  val isStudentPaying =
+      when (listingType) {
+        ListingType.PROPOSAL -> currentUserId == booking.bookerId
+        ListingType.REQUEST -> currentUserId == booking.listingCreatorId
+        null -> currentUserId == booking.bookerId // Default to old behavior if type unknown
+      }
+
+  val isTutorReceiving =
+      when (listingType) {
+        ListingType.PROPOSAL -> currentUserId == booking.listingCreatorId
+        ListingType.REQUEST -> currentUserId == booking.bookerId
+        null -> currentUserId == booking.listingCreatorId // Default to old behavior if type unknown
+      }
+
+  // Only show "Payment Complete" button to the student (payer)
+  if (booking.paymentStatus == PaymentStatus.PENDING_PAYMENT && isStudentPaying) {
     Spacer(Modifier.height(8.dp))
     Button(
         onClick = onPaymentComplete,
@@ -218,9 +243,8 @@ private fun PaymentActionButtons(
           Text("Payment Complete")
         }
   }
-  // Only show "Payment Received" button to the tutor (listingCreatorId)
-  else if (booking.paymentStatus == PaymentStatus.PAID &&
-      currentUserId == booking.listingCreatorId) {
+  // Only show "Payment Received" button to the tutor (receiver)
+  else if (booking.paymentStatus == PaymentStatus.PAID && isTutorReceiving) {
     Spacer(Modifier.height(8.dp))
     Button(
         onClick = onPaymentReceived,
