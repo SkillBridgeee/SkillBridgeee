@@ -206,6 +206,10 @@ class MyProfileScreenTest {
     override suspend fun completeBooking(bookingId: String) {}
 
     override suspend fun cancelBooking(bookingId: String) {}
+
+    override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+      TODO("Not yet implemented")
+    }
   }
 
   private class FakeRatingRepo : RatingRepository {
