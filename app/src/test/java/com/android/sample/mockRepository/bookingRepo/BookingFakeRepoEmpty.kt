@@ -83,4 +83,8 @@ class BookingFakeRepoEmpty : BookingRepository {
   override suspend fun cancelBooking(bookingId: String) {
     TODO("Not yet implemented")
   }
+
+  override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+    TODO("Not yet implemented")
+  }
 }

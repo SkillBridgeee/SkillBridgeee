@@ -313,6 +313,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun cancelBooking(bookingId: String) {
             updateBookingStatus(bookingId, BookingStatus.CANCELLED)
           }
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -393,6 +397,10 @@ class BookingsDetailsViewModelTest {
 
           override suspend fun cancelBooking(bookingId: String) {
             /* not used */
+          }
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
           }
         }
 
@@ -638,6 +646,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -714,6 +726,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -778,6 +794,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -857,6 +877,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -933,6 +957,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -997,6 +1025,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1078,6 +1110,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1149,6 +1185,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1226,6 +1266,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1301,6 +1345,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1372,6 +1420,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1449,6 +1501,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1523,6 +1579,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1599,6 +1659,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1668,6 +1732,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1740,6 +1808,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1816,6 +1888,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1885,6 +1961,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
@@ -1956,6 +2036,10 @@ class BookingsDetailsViewModelTest {
           override suspend fun completeBooking(bookingId: String) {}
 
           override suspend fun cancelBooking(bookingId: String) {}
+
+          override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+            TODO("Not yet implemented")
+          }
         }
 
     val vm =
