@@ -580,8 +580,17 @@ class MyProfileViewModel(
 
       val failures = mutableListOf<String>()
 
-      try {
+      suspend fun tryDelete(label: String, block: suspend () -> Unit) {
         try {
+          block()
+        } catch (e: Exception) {
+          failures.add(label)
+          Log.w(TAG, "Failed to delete $label", e)
+        }
+      }
+
+      try {
+        tryDelete("conversations") {
           val myOverviews = conversationManager.getOverViewConvUser(currentId)
           myOverviews.forEach { overview ->
             conversationManager.deleteConvAndOverviews(
@@ -590,38 +599,12 @@ class MyProfileViewModel(
                 otherId = overview.otherPersonId,
             )
           }
-        } catch (e: Exception) {
-          failures.add("conversations")
-          Log.w(TAG, "Failed to delete conversations", e)
         }
 
-        try {
-          profileRepository.deleteProfile(currentId)
-        } catch (e: Exception) {
-          failures.add("profile")
-          Log.w(TAG, "Failed to delete profile", e)
-        }
-
-        try {
-          bookingRepository.deleteAllBookingOfUser(currentId)
-        } catch (e: Exception) {
-          failures.add("bookings")
-          Log.w(TAG, "Failed to delete bookings", e)
-        }
-
-        try {
-          listingRepository.deleteAllListingOfUser(currentId)
-        } catch (e: Exception) {
-          failures.add("listings")
-          Log.w(TAG, "Failed to delete listings", e)
-        }
-
-        try {
-          ratingsRepository.deleteAllRatingOfUser(currentId)
-        } catch (e: Exception) {
-          failures.add("ratings")
-          Log.w(TAG, "Failed to delete ratings", e)
-        }
+        tryDelete("profile") { profileRepository.deleteProfile(currentId) }
+        tryDelete("bookings") { bookingRepository.deleteAllBookingOfUser(currentId) }
+        tryDelete("listings") { listingRepository.deleteAllListingOfUser(currentId) }
+        tryDelete("ratings") { ratingsRepository.deleteAllRatingOfUser(currentId) }
 
         val result = authRepository.deleteCurrentUser()
 
