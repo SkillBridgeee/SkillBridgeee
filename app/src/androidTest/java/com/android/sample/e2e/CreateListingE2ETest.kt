@@ -15,7 +15,6 @@ import com.android.sample.model.communication.overViewConv.OverViewConvRepositor
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
-import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.components.BottomBarTestTag
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -302,36 +301,36 @@ class CreateListingE2ETest : E2ETestBase() {
         composeTestRule.waitForIdle()
 
         // Wait for listing to appear on home screen
-        //        composeTestRule.waitUntil(timeoutMillis = 8005) {
-        //          composeTestRule
-        //              .onNodeWithTag(HomeScreenTestTags.PROPOSAL_CARD, useUnmergedTree = true)
-        //              .isDisplayed()
-        //        }
+        composeTestRule.waitUntil(timeoutMillis = 8005) {
+          try {
+            composeTestRule
+                .onAllNodes(
+                    hasText("Advanced Mathematics Tutoring", substring = true, ignoreCase = true))
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+          } catch (_: Throwable) {
+            false
+          }
+        }
+
         composeTestRule
-            .onNodeWithTag(HomeScreenTestTags.PROPOSAL_CARD, useUnmergedTree = true)
-            .assertIsDisplayed()
+            .onNodeWithText("Advanced Mathematics Tutoring", substring = true, ignoreCase = true)
+            .assertExists()
 
-        //        composeTestRule
-        //            .onNodeWithText("Advanced Mathematics Tutoring", substring = true, ignoreCase
-        // = true)
-        //            .assertExists()
+        // Click on Created Listing to View Details
+        try {
+          composeTestRule
+              .onNodeWithText("Advanced Mathematics Tutoring", substring = true, ignoreCase = true)
+              .performClick()
 
-        //        // Click on Created Listing to View Details
-        //        try {
-        //          composeTestRule
-        //              .onNodeWithText("Advanced Mathematics Tutoring", substring = true,
-        // ignoreCase = true)
-        //              .performClick()
-        //
-        //          composeTestRule.waitForIdle()
-        //        } catch (_: Exception) {
-        //          composeTestRule
-        //              .onAllNodesWithText("Advanced Mathematics", substring = true, ignoreCase =
-        // true)
-        //              .onFirst()
-        //              .performClick()
-        //
-        //          composeTestRule.waitForIdle()
-        //        }
+          composeTestRule.waitForIdle()
+        } catch (_: Exception) {
+          composeTestRule
+              .onAllNodesWithText("Advanced Mathematics", substring = true, ignoreCase = true)
+              .onFirst()
+              .performClick()
+
+          composeTestRule.waitForIdle()
+        }
       }
 }
