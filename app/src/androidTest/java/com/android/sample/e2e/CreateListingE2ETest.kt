@@ -302,11 +302,11 @@ class CreateListingE2ETest : E2ETestBase() {
         composeTestRule.waitForIdle()
 
         // Wait for listing to appear on home screen
-        composeTestRule.waitUntil(timeoutMillis = 8005) {
-          composeTestRule
-              .onNodeWithTag(HomeScreenTestTags.PROPOSAL_CARD, useUnmergedTree = true)
-              .isDisplayed()
-        }
+        //        composeTestRule.waitUntil(timeoutMillis = 8005) {
+        //          composeTestRule
+        //              .onNodeWithTag(HomeScreenTestTags.PROPOSAL_CARD, useUnmergedTree = true)
+        //              .isDisplayed()
+        //        }
         composeTestRule
             .onNodeWithTag(HomeScreenTestTags.PROPOSAL_CARD, useUnmergedTree = true)
             .assertIsDisplayed()
