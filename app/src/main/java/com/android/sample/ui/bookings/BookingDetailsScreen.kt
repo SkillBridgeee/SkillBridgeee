@@ -57,6 +57,7 @@ import com.android.sample.ui.components.RatingStarsInput
 import com.android.sample.ui.listing.ListingScreenTestTags
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.compareTo
 
 // UI String Constants
 private const val BOOKING_REQUEST_FROM = "Booking Request From:"
@@ -595,21 +596,27 @@ private fun BookerRatingSection(userLabel: String, onSubmit: (Int, Int, String, 
             fontWeight = FontWeight.Bold)
 
         RatingRow(label = userLabel, selected = userStars, onSelected = { userStars = it })
+        // In BookerRatingSection - user comment
         OutlinedTextField(
             value = userComment,
-            onValueChange = { userComment = it },
-            label = { Text("Comment about the $userLabel") },
+            onValueChange = { if (it.length <= 500) userComment = it },
+            label = { Text("Comment about the $userLabel (optional)") },
+            supportingText = { Text("${userComment.length}/500") },
             modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.BOOKER_USER_COMMENT),
-            singleLine = false)
+            singleLine = false,
+            maxLines = 5)
 
         RatingRow(label = "Listing", selected = listingStars, onSelected = { listingStars = it })
+        // In BookerRatingSection - listing comment
         OutlinedTextField(
             value = listingComment,
-            onValueChange = { listingComment = it },
-            label = { Text("Comment about the listing") },
+            onValueChange = { if (it.length <= 500) listingComment = it },
+            label = { Text("Comment about the listing (optional)") },
+            supportingText = { Text("${listingComment.length}/500") },
             modifier =
                 Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.BOOKER_LISTING_COMMENT),
-            singleLine = false)
+            singleLine = false,
+            maxLines = 5)
 
         if (!enabled) {
           Text(
@@ -644,12 +651,15 @@ private fun CreatorRatingSection(userLabel: String, onSubmit: (Int, String) -> U
             fontWeight = FontWeight.Bold)
 
         RatingRow(label = userLabel, selected = stars, onSelected = { stars = it })
+        // In CreatorRatingSection - creator comment
         OutlinedTextField(
             value = comment,
-            onValueChange = { comment = it },
-            label = { Text("Comment") },
+            onValueChange = { if (it.length <= 500) comment = it },
+            label = { Text("Comment (optional)") },
+            supportingText = { Text("${comment.length}/500") },
             modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.CREATOR_COMMENT),
-            singleLine = false)
+            singleLine = false,
+            maxLines = 5)
 
         // Add test tag to the submit button so tests can scroll to/click it reliably
         Button(

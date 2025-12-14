@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.test.core.app.ApplicationProvider
@@ -826,5 +827,51 @@ class BookingDetailsScreenTest {
     composeTestRule
         .onNodeWithText("Payment has been successfully completed and confirmed!")
         .assertIsDisplayed()
+  }
+
+  // kotlin
+  @Test
+  fun creatorRatingSection_submitWithComment_callsCallbackWithCorrectComment() {
+    var receivedStars: Int? = null
+    var receivedComment: String? = null
+
+    val uiState = completedBookingUiState().copy(isCreator = true, isBooker = false)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { stars, comment ->
+              receivedStars = stars
+              receivedComment = comment
+            },
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.swipeUpUntilDisplayed(hasTestTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON))
+    composeTestRule.clickStarInRow(rowIndex = 0, star = 4)
+
+    // Input an actual comment into the creator comment field
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.CREATOR_COMMENT, useUnmergedTree = true)
+        .performTextInput("Great session!")
+
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON, useUnmergedTree = true)
+        .assertIsDisplayed()
+        .assertIsEnabled()
+        .performClick()
+
+    composeTestRule.runOnIdle {
+      assert(receivedStars == 4)
+      assert(receivedComment == "Great session!")
+    }
   }
 }

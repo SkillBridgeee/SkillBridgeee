@@ -2225,4 +2225,55 @@ class BookingsDetailsViewModelTest {
 
     assertTrue(vm.bookingUiState.value.loadError)
   }
+
+  @Test
+  fun submitBookerRatings_withComments_savesCommentsCorrectly() = runTest {
+    val fakeRatingRepo = FakeRatingRepositoryImpl()
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = bookingRepoWorking,
+            listingRepository = listingRepoWorking,
+            profileRepository = profileRepoWorking,
+            ratingRepository = fakeRatingRepo,
+        )
+
+    val booking =
+        Booking(
+            bookingId = "b1",
+            associatedListingId = "l1",
+            listingCreatorId = "tutor-1",
+            bookerId = "student-1",
+            status = BookingStatus.COMPLETED,
+        )
+
+    val listing = Proposal(listingId = "l1", creatorUserId = "tutor-1")
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking = booking,
+            listing = listing,
+            creatorProfile = Profile(userId = "tutor-1"),
+            bookerProfile = Profile(userId = "student-1"),
+            loadError = false,
+            ratingProgress = RatingProgress(),
+        ))
+
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    vm.submitBookerRatings(
+        userStars = 4,
+        listingStars = 5,
+        userComment = "Excellent tutor",
+        listingComment = "Great listing")
+
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    assertEquals(2, fakeRatingRepo.addedRatings.size)
+
+    val userRating = fakeRatingRepo.addedRatings.find { it.ratingType == RatingType.TUTOR }
+    assertEquals("Excellent tutor", userRating?.comment)
+
+    val listingRating = fakeRatingRepo.addedRatings.find { it.ratingType == RatingType.LISTING }
+    assertEquals("Great listing", listingRating?.comment)
+  }
 }
