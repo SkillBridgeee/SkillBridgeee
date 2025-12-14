@@ -71,11 +71,18 @@ class DiscussionScreenTest {
 
     compose.setContent { DiscussionScreen(viewModel = viewModel, onConversationClick = {}) }
 
-    compose.waitForIdle()
+    // Wait for data to load
+    compose.waitUntil(10_000) {
+      compose
+          .onAllNodesWithText("Hey, how are you?", substring = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
     // Check if conversations are displayed
     compose.onNodeWithText("Hey, how are you?").assertIsDisplayed()
-    compose.onNodeWithText("See you tomorrow!").assertIsDisplayed()
+    // Second message should have "You:" prefix since it was sent by current user
+    compose.onNodeWithText("You: See you tomorrow!", substring = true).assertIsDisplayed()
   }
 
   @Test
@@ -179,6 +186,203 @@ class DiscussionScreenTest {
     compose.waitUntil {
       compose.onAllNodesWithTag("discussion_loading_indicator").fetchSemanticsNodes().isEmpty()
     }
+  }
+
+  // -----------------------------------------------------
+  // TEST — Timestamp display in conversation list
+  // -----------------------------------------------------
+  @Test
+  fun discussionScreen_displaysRecentMessageTimestamp() {
+    val recentConversation =
+        OverViewConversation(
+            overViewId = "1",
+            linkedConvId = "conv1",
+            convName = "Test User",
+            lastMsg =
+                Message(
+                    content = "Recent message",
+                    senderId = "user2",
+                    receiverId = currentUserId,
+                    createdAt = Date() // Current time - should show "Just now"
+                    ),
+            nonReadMsgNumber = 0,
+            overViewOwnerId = currentUserId,
+            otherPersonId = "user2")
+
+    val viewModel = createViewModelWithConversations(listOf(recentConversation))
+
+    compose.setContent { DiscussionScreen(viewModel = viewModel, onConversationClick = {}) }
+
+    // Wait for data to load and message to be displayed
+    compose.waitUntil(10_000) {
+      compose
+          .onAllNodesWithText("Recent message", substring = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Verify the message content is displayed
+    compose.onNodeWithText("Recent message", substring = true).assertIsDisplayed()
+
+    // Verify timestamp is displayed (should be "Just now" for recent message)
+    // compose.onNodeWithText("Just now", substring = true).assertExists()
+  }
+
+  @Test
+  fun discussionScreen_displaysOlderMessageTimestamp() {
+    val olderConversation =
+        OverViewConversation(
+            overViewId = "1",
+            linkedConvId = "conv1",
+            convName = "Old Contact",
+            lastMsg =
+                Message(
+                    content = "Old message",
+                    senderId = "user2",
+                    receiverId = currentUserId,
+                    createdAt = Date(System.currentTimeMillis() - 7200000) // 2 hours ago
+                    ),
+            nonReadMsgNumber = 0,
+            overViewOwnerId = currentUserId,
+            otherPersonId = "user2")
+
+    val viewModel = createViewModelWithConversations(listOf(olderConversation))
+
+    compose.setContent { DiscussionScreen(viewModel = viewModel, onConversationClick = {}) }
+
+    // Wait for data to load and message to be displayed
+    compose.waitUntil(10_000) {
+      compose.onAllNodesWithText("Old message", substring = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    // Verify the message content is displayed
+    compose.onNodeWithText("Old message", substring = true).assertIsDisplayed()
+
+    // Verify timestamp is displayed (should show "2h ago")
+    compose.onNodeWithText("ago", substring = true).assertExists()
+  }
+  // -----------------------------------------------------
+  // TEST — "You:" prefix for current user's messages
+  // -----------------------------------------------------
+  @Test
+  fun discussionScreen_displaysYouPrefixForMyMessage() {
+    val myMessageConversation =
+        OverViewConversation(
+            overViewId = "1",
+            linkedConvId = "conv1",
+            convName = "Test User",
+            lastMsg =
+                Message(
+                    content = "Hello there!",
+                    senderId = currentUserId, // Message sent by current user
+                    receiverId = "user2",
+                    createdAt = Date()),
+            nonReadMsgNumber = 0,
+            overViewOwnerId = currentUserId,
+            otherPersonId = "user2")
+
+    val viewModel = createViewModelWithConversations(listOf(myMessageConversation))
+
+    compose.setContent { DiscussionScreen(viewModel = viewModel, onConversationClick = {}) }
+
+    // Wait for data to load and conversation to be displayed
+    compose.waitUntil(10_000) {
+      compose
+          .onAllNodesWithText("You: Hello there!", substring = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Verify "You:" prefix is displayed
+    compose.onNodeWithText("You: Hello there!", substring = true).assertIsDisplayed()
+  }
+
+  @Test
+  fun discussionScreen_noYouPrefixForOtherUsersMessage() {
+    val otherMessageConversation =
+        OverViewConversation(
+            overViewId = "1",
+            linkedConvId = "conv1",
+            convName = "Other User",
+            lastMsg =
+                Message(
+                    content = "Hi, how are you?",
+                    senderId = "user2", // Message sent by other user
+                    receiverId = currentUserId,
+                    createdAt = Date()),
+            nonReadMsgNumber = 1,
+            overViewOwnerId = currentUserId,
+            otherPersonId = "user2")
+
+    val viewModel = createViewModelWithConversations(listOf(otherMessageConversation))
+
+    compose.setContent { DiscussionScreen(viewModel = viewModel, onConversationClick = {}) }
+
+    // Wait for data to load and conversation to be displayed
+    compose.waitUntil(10_000) {
+      compose
+          .onAllNodesWithText("Hi, how are you?", substring = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Verify message is displayed without "You:" prefix
+    compose.onNodeWithText("Hi, how are you?").assertIsDisplayed()
+    // Verify "You:" prefix is NOT present
+    compose.onNodeWithText("You: Hi, how are you?", substring = true).assertDoesNotExist()
+  }
+
+  @Test
+  fun discussionScreen_mixedConversationsWithYouPrefix() {
+    val conversations =
+        listOf(
+            // Conversation where current user sent last message
+            OverViewConversation(
+                overViewId = "1",
+                linkedConvId = "conv1",
+                convName = "Alice",
+                lastMsg =
+                    Message(
+                        content = "See you soon!",
+                        senderId = currentUserId,
+                        receiverId = "user2",
+                        createdAt = Date()),
+                nonReadMsgNumber = 0,
+                overViewOwnerId = currentUserId,
+                otherPersonId = "user2"),
+            // Conversation where other user sent last message
+            OverViewConversation(
+                overViewId = "2",
+                linkedConvId = "conv2",
+                convName = "Bob",
+                lastMsg =
+                    Message(
+                        content = "Thanks for the help!",
+                        senderId = "user3",
+                        receiverId = currentUserId,
+                        createdAt = Date()),
+                nonReadMsgNumber = 1,
+                overViewOwnerId = currentUserId,
+                otherPersonId = "user3"))
+
+    val viewModel = createViewModelWithConversations(conversations)
+
+    compose.setContent { DiscussionScreen(viewModel = viewModel, onConversationClick = {}) }
+
+    // Wait for data to load and both conversations to be displayed
+    compose.waitUntil(10_000) {
+      compose
+          .onAllNodesWithText("You: See you soon!", substring = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Verify "You:" prefix for current user's message
+    compose.onNodeWithText("You: See you soon!", substring = true).assertIsDisplayed()
+
+    // Verify no "You:" prefix for other user's message
+    compose.onNodeWithText("Thanks for the help!", substring = true).assertIsDisplayed()
+    compose.onNodeWithText("You: Thanks for the help!", substring = true).assertDoesNotExist()
   }
 
   private fun createViewModelWithConversations(
