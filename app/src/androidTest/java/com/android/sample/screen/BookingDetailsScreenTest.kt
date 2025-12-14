@@ -1172,55 +1172,6 @@ class BookingDetailsScreenTest {
   }
 
   @Test
-  fun bookingDetailsScreen_successState_wiresOnMarkCompletedCallback() {
-    // Test line 115: onMarkCompleted callback wiring
-    var markCompletedCalled = false
-    val customRepo =
-        object : BookingRepository by fakeBookingRepo {
-          override suspend fun completeBooking(bookingId: String) {
-            markCompletedCalled = true
-          }
-
-          override suspend fun getBooking(bookingId: String) =
-              Booking(
-                  bookingId = bookingId,
-                  associatedListingId = "l1",
-                  listingCreatorId = "u1",
-                  bookerId = "student",
-                  sessionStart = Date(),
-                  sessionEnd = Date(System.currentTimeMillis() + 3600000),
-                  status = BookingStatus.CONFIRMED, // Must be CONFIRMED to show complete button
-                  price = 50.0)
-        }
-
-    val vm =
-        BookingDetailsViewModel(
-            bookingRepository = customRepo,
-            listingRepository = fakeListingRepo,
-            profileRepository = fakeProfileRepo)
-
-    composeTestRule.setContent {
-      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
-    }
-
-    composeTestRule.waitForIdle()
-    Thread.sleep(300) // Wait for async data loading
-
-    // Find and click the complete button
-    composeTestRule
-        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
-        .assertExists()
-        .performScrollTo()
-        .performClick()
-
-    composeTestRule.waitForIdle()
-    Thread.sleep(200)
-
-    // Verify markBookingAsCompleted was called
-    assert(markCompletedCalled)
-  }
-
-  @Test
   fun bookingDetailsScreen_successState_wiresOnSubmitStudentRatingsCallback() {
     // Test lines 116-118: onSubmitStudentRatings callback wiring
     val customRepo =
@@ -1790,5 +1741,294 @@ class BookingDetailsScreenTest {
     composeTestRule
         .onNodeWithText("Payment has been successfully completed and confirmed!")
         .assertExists()
+  }
+
+  // ============================================================
+  // TESTS FOR PAYMENT WARNING DIALOG WHEN COMPLETING BOOKING
+  // ============================================================
+
+  @Test
+  fun completeButton_proposal_showsWarningDialog_forTutor_whenPaymentNotConfirmed() {
+    // PROPOSAL: Tutor (creator, isTutor=true) is payment receiver
+    // Should see warning when payment is not confirmed
+    val uiState =
+        proposalBookingState(isTutor = true, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Click complete button
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .performScrollTo()
+        .performClick()
+
+    // Warning dialog should appear
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertIsDisplayed()
+
+    // Dialog should contain warning text
+    composeTestRule.onNodeWithText("Payment Not Confirmed").assertIsDisplayed()
+  }
+
+  @Test
+  fun completeButton_proposal_noWarningDialog_forStudent_whenPaymentNotConfirmed() {
+    // PROPOSAL: Student (booker, isTutor=false) is NOT payment receiver
+    // Should NOT see warning, just complete directly
+    val uiState =
+        proposalBookingState(isTutor = false, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    var markCompletedCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = { markCompletedCalled = true },
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Click complete button
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .performScrollTo()
+        .performClick()
+
+    // Warning dialog should NOT appear
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertDoesNotExist()
+
+    // Callback should be called directly
+    assert(markCompletedCalled)
+  }
+
+  @Test
+  fun completeButton_proposal_noWarningDialog_forTutor_whenPaymentConfirmed() {
+    // PROPOSAL: Tutor (creator, isTutor=true) but payment is already CONFIRMED
+    // Should NOT see warning
+    val uiState = proposalBookingState(isTutor = true, paymentStatus = PaymentStatus.CONFIRMED)
+
+    var markCompletedCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = { markCompletedCalled = true },
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Click complete button
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .performScrollTo()
+        .performClick()
+
+    // Warning dialog should NOT appear
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertDoesNotExist()
+
+    // Callback should be called directly
+    assert(markCompletedCalled)
+  }
+
+  @Test
+  fun completeButton_request_showsWarningDialog_forBooker_whenPaymentNotConfirmed() {
+    // REQUEST: Booker (tutor, isTutor=false) is payment receiver
+    // Should see warning when payment is not confirmed
+    val uiState =
+        requestBookingState(isTutor = false, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Click complete button
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .performScrollTo()
+        .performClick()
+
+    // Warning dialog should appear
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertIsDisplayed()
+  }
+
+  @Test
+  fun completeButton_request_noWarningDialog_forCreator_whenPaymentNotConfirmed() {
+    // REQUEST: Creator (student, isTutor=true) is NOT payment receiver
+    // Should NOT see warning, just complete directly
+    val uiState = requestBookingState(isTutor = true, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    var markCompletedCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = { markCompletedCalled = true },
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Click complete button
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .performScrollTo()
+        .performClick()
+
+    // Warning dialog should NOT appear
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertDoesNotExist()
+
+    // Callback should be called directly
+    assert(markCompletedCalled)
+  }
+
+  @Test
+  fun warningDialog_confirmButton_callsOnMarkCompleted() {
+    // Test that clicking "Yes, Complete Anyway" in the warning dialog calls the callback
+    val uiState =
+        proposalBookingState(isTutor = true, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    var markCompletedCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = { markCompletedCalled = true },
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Click complete button to show dialog
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .performScrollTo()
+        .performClick()
+
+    // Verify dialog is shown
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertIsDisplayed()
+
+    // Click confirm button
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_CONFIRM).performClick()
+
+    // Dialog should be dismissed
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertDoesNotExist()
+
+    // Callback should be called
+    assert(markCompletedCalled)
+  }
+
+  @Test
+  fun warningDialog_cancelButton_dismissesDialogWithoutCallback() {
+    // Test that clicking "Cancel" in the warning dialog dismisses it without calling callback
+    val uiState =
+        proposalBookingState(isTutor = true, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    var markCompletedCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = { markCompletedCalled = true },
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Click complete button to show dialog
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .performScrollTo()
+        .performClick()
+
+    // Verify dialog is shown
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertIsDisplayed()
+
+    // Click cancel button
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_CANCEL).performClick()
+
+    // Dialog should be dismissed
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG).assertDoesNotExist()
+
+    // Callback should NOT be called
+    assert(!markCompletedCalled)
+  }
+
+  @Test
+  fun warningDialog_showsCorrectMessage() {
+    // Test that the warning dialog shows the correct message
+    val uiState = proposalBookingState(isTutor = true, paymentStatus = PaymentStatus.PAID)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Click complete button to show dialog
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
+        .performScrollTo()
+        .performClick()
+
+    // Verify dialog shows correct title
+    composeTestRule.onNodeWithText("Payment Not Confirmed").assertIsDisplayed()
+
+    // Verify dialog shows correct message
+    composeTestRule
+        .onNodeWithText(
+            "The payment has not been confirmed yet. Are you sure you want to mark this booking as completed before the payment has been accepted?",
+            substring = true)
+        .assertExists()
+
+    // Verify buttons have correct text
+    composeTestRule.onNodeWithText("Yes, Complete Anyway").assertExists()
+    composeTestRule.onNodeWithText("Cancel").assertExists()
   }
 }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -82,6 +83,10 @@ object BookingDetailsTestTag {
   const val RATING_TUTOR = "booking_rating_tutor"
   const val RATING_LISTING = "booking_rating_listing"
   const val RATING_SUBMIT_BUTTON = "booking_rating_submit"
+
+  const val PAYMENT_WARNING_DIALOG = "booking_payment_warning_dialog"
+  const val PAYMENT_WARNING_CONFIRM = "booking_payment_warning_confirm"
+  const val PAYMENT_WARNING_CANCEL = "booking_payment_warning_cancel"
 }
 
 /**
@@ -188,9 +193,13 @@ fun BookingDetailsContent(
         InfoDesc(uiState)
 
         HorizontalDivider()
-        // Let the student mark the session as completed once it is confirmed
+        // Let the user mark the session as completed once it is confirmed
         if (uiState.booking.status == BookingStatus.CONFIRMED) {
-          ConfirmCompletionSection(onMarkCompleted)
+          ConfirmCompletionSection(
+              paymentStatus = uiState.booking.paymentStatus,
+              listingType = uiState.listing.type,
+              isTutor = uiState.isTutor,
+              onMarkCompleted = onMarkCompleted)
         }
 
         // Once the session is completed, allow the student to rate the tutor and listing
@@ -502,18 +511,75 @@ private fun BookingStatus(status: BookingStatus) {
 }
 
 /**
- * UI section allowing a tutor to confirm that a booked learning session has been completed.
+ * UI section allowing a user to confirm that a booked learning session has been completed.
  *
  * This component displays a prompt text and a button. When the user taps the **"Mark as
  * completed"** button, the `onMarkCompleted` callback is invoked.
  *
- * It is typically shown when a booking has the status `CONFIRMED` and the tutor can now validate
+ * If the payment has not been confirmed yet and the current user is the one who should receive the
+ * payment (tutor for PROPOSAL, booker/tutor for REQUEST), a warning dialog is shown asking if they
+ * want to proceed without payment confirmation.
+ *
+ * It is typically shown when a booking has the status `CONFIRMED` and the user can now validate
  * that the session actually took place.
  *
- * @param onMarkCompleted Callback triggered when the user clicks the **Mark as completed** button.
+ * @param paymentStatus The current payment status of the booking.
+ * @param listingType The type of listing (PROPOSAL or REQUEST) to determine payment roles.
+ * @param isTutor Whether the current user is the listing creator.
+ * @param onMarkCompleted Callback triggered when the user confirms marking the booking as
+ *   completed.
  */
 @Composable
-private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
+private fun ConfirmCompletionSection(
+    paymentStatus: PaymentStatus,
+    listingType: ListingType,
+    isTutor: Boolean,
+    onMarkCompleted: () -> Unit
+) {
+  var showWarningDialog by remember { mutableStateOf(false) }
+
+  // Determine if the current user is the one who receives payment (the tutor)
+  // - For PROPOSAL: isTutor=true means creator (tutor), who receives payment
+  // - For REQUEST: isTutor=false means booker (tutor), who receives payment
+  val isPaymentReceiver =
+      when (listingType) {
+        ListingType.PROPOSAL -> isTutor // Creator is tutor, receives payment
+        ListingType.REQUEST -> !isTutor // Booker is tutor, receives payment
+      }
+
+  // Check if payment is not yet confirmed
+  val paymentNotConfirmed = paymentStatus != PaymentStatus.CONFIRMED
+
+  // Show warning dialog if needed
+  if (showWarningDialog) {
+    AlertDialog(
+        onDismissRequest = { showWarningDialog = false },
+        title = { Text("Payment Not Confirmed") },
+        text = {
+          Text(
+              "The payment has not been confirmed yet. Are you sure you want to mark this " +
+                  "booking as completed before the payment has been accepted?")
+        },
+        confirmButton = {
+          Button(
+              onClick = {
+                showWarningDialog = false
+                onMarkCompleted()
+              },
+              modifier = Modifier.testTag(BookingDetailsTestTag.PAYMENT_WARNING_CONFIRM)) {
+                Text("Yes, Complete Anyway")
+              }
+        },
+        dismissButton = {
+          Button(
+              onClick = { showWarningDialog = false },
+              modifier = Modifier.testTag(BookingDetailsTestTag.PAYMENT_WARNING_CANCEL)) {
+                Text("Cancel")
+              }
+        },
+        modifier = Modifier.testTag(BookingDetailsTestTag.PAYMENT_WARNING_DIALOG))
+  }
+
   Column(
       modifier = Modifier.fillMaxWidth(),
       verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -523,7 +589,14 @@ private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
         )
         Button(
-            onClick = onMarkCompleted,
+            onClick = {
+              // Show warning if payment not confirmed and user is the payment receiver
+              if (paymentNotConfirmed && isPaymentReceiver) {
+                showWarningDialog = true
+              } else {
+                onMarkCompleted()
+              }
+            },
             modifier = Modifier.testTag(BookingDetailsTestTag.COMPLETE_BUTTON)) {
               Text(text = "Mark as completed")
             }
