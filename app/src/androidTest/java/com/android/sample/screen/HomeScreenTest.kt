@@ -71,6 +71,8 @@ class HomeScreenTest {
 
     composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_SECTION).assertIsDisplayed()
     composeRule.onNodeWithTag(HomeScreenTestTags.REQUEST_SECTION).assertIsDisplayed()
+
+    composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_CARD).assertIsDisplayed()
   }
 
   @Test
