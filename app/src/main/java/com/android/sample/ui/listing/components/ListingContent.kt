@@ -345,8 +345,11 @@ private fun LazyListScope.actionSection(
 
     // Determine whether editing is allowed:
     // - don't allow edit while bookings are still loading
-    // - don't allow edit if there is any booking that isn't CANCELLED
-    val hasActiveBookings = uiState.listingBookings.any { it.status != BookingStatus.CANCELLED }
+    // - don't allow edit if there is any active booking (not CANCELLED or COMPLETED)
+    val hasActiveBookings =
+        uiState.listingBookings.any {
+          it.status != BookingStatus.CANCELLED && it.status != BookingStatus.COMPLETED
+        }
     val canEdit = !uiState.bookingsLoading && !hasActiveBookings
 
     item {
@@ -364,7 +367,7 @@ private fun LazyListScope.actionSection(
         Text(
             text =
                 if (uiState.bookingsLoading) "Loading bookings..."
-                else "Cannot edit listing: it has bookings",
+                else "Cannot edit listing: it has active bookings",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
       }
