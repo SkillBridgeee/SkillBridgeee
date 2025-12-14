@@ -79,8 +79,7 @@ object BookingDetailsTestTag {
   const val COMPLETE_BUTTON = "booking_complete_button"
 
   const val RATING_SECTION = "booking_rating_section"
-  const val RATING_TUTOR = "booking_rating_tutor"
-  const val RATING_LISTING = "booking_rating_listing"
+
   const val RATING_SUBMIT_BUTTON = "booking_rating_submit"
 
   const val PAYMENT_WARNING_DIALOG = "booking_payment_warning_dialog"
