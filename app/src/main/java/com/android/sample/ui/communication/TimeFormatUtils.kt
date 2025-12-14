@@ -37,7 +37,7 @@ object TimeFormatUtils {
         SimpleDateFormat("EEE h:mm a", Locale.getDefault()).format(timestamp)
       }
       // Within same year - show month, day, time
-      now.get(Calendar.YEAR) == messageTime.get(Calendar.YEAR) -> {
+      now[Calendar.YEAR] == messageTime[Calendar.YEAR] -> {
         SimpleDateFormat("MMM d, h:mm a", Locale.getDefault()).format(timestamp)
       }
       // Different year - show full date and time
@@ -75,7 +75,7 @@ object TimeFormatUtils {
       // Within last week
       diffInDays < 7 -> SimpleDateFormat("EEEE", Locale.getDefault()).format(timestamp)
       // Within same year
-      now.get(Calendar.YEAR) == messageTime.get(Calendar.YEAR) -> {
+      now[Calendar.YEAR] == messageTime[Calendar.YEAR] -> {
         SimpleDateFormat("MMM d", Locale.getDefault()).format(timestamp)
       }
       // Different year
@@ -85,7 +85,7 @@ object TimeFormatUtils {
 
   /** Checks if two Calendar instances represent the same day. */
   private fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {
-    return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-        cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    return cal1[Calendar.YEAR] == cal2[Calendar.YEAR] &&
+        cal1[Calendar.DAY_OF_YEAR] == cal2[Calendar.DAY_OF_YEAR]
   }
 }

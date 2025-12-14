@@ -94,7 +94,7 @@ class TimeFormatUtilsTest {
     // Assert
     assertTrue(result.contains(":"))
     // Should contain year
-    val expectedYear = lastYear.get(Calendar.YEAR).toString()
+    val expectedYear = lastYear[Calendar.YEAR].toString()
     assertTrue(result.contains(expectedYear))
   }
 
@@ -201,7 +201,7 @@ class TimeFormatUtilsTest {
 
     // Assert
     // Should contain year
-    val expectedYear = lastYear.get(Calendar.YEAR).toString()
+    val expectedYear = lastYear[Calendar.YEAR].toString()
     assertTrue(result.contains(expectedYear))
   }
 
