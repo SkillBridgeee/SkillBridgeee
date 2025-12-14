@@ -444,130 +444,38 @@ class BookingDetailsScreenTest {
   }
 
   @Test
-  fun markCompletedButton_isVisible_whenStatusConfirmed_andCallsCallback() {
   fun bookingDetailsScreen_errorScreen() {
-    val vm = fakeViewModelError()
+    val errorRepo =
+        object : BookingRepository by fakeBookingRepo {
+          override suspend fun getBooking(bookingId: String): Booking {
+            throw IllegalStateException("boom")
+          }
+        }
+
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = errorRepo,
+            listingRepository = fakeListingRepo,
+            profileRepository = fakeProfileRepo)
+
     composeTestRule.setContent {
       BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
     }
 
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.ERROR).assertIsDisplayed()
-  }
-
-  private val fakeBookingRepo2 =
-      object : BookingRepository {
-        override fun getNewUid() = "b1"
-
-        override suspend fun getBooking(bookingId: String) =
-            Booking(
-                bookingId = bookingId,
-                associatedListingId = "l1",
-                listingCreatorId = "u1",
-                price = 50.0,
-                sessionStart = Date(1736546400000),
-                sessionEnd = Date(1736550000000),
-                status = BookingStatus.PENDING,
-                bookerId = "asdf")
-
-        override suspend fun getBookingsByUserId(userId: String) = emptyList<Booking>()
-
-        override suspend fun getAllBookings() = emptyList<Booking>()
-
-        override suspend fun getBookingsByTutor(tutorId: String) = emptyList<Booking>()
-
-        override suspend fun getBookingsByStudent(studentId: String) = emptyList<Booking>()
-
-        override suspend fun getBookingsByListing(listingId: String) = emptyList<Booking>()
-
-        override suspend fun addBooking(booking: Booking) {}
-
-        override suspend fun updateBooking(bookingId: String, booking: Booking) {}
-
-        override suspend fun deleteBooking(bookingId: String) {}
-
-        override suspend fun deleteAllBookingOfUser(userId: String) {
-          TODO("Not yet implemented")
-        }
-
-        override suspend fun updateBookingStatus(bookingId: String, status: BookingStatus) {}
-
-        override suspend fun updatePaymentStatus(bookingId: String, paymentStatus: PaymentStatus) {}
-
-        override suspend fun confirmBooking(bookingId: String) {}
-
-        override suspend fun completeBooking(bookingId: String) {}
-
-        override suspend fun cancelBooking(bookingId: String) {}
-
-        override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
-          TODO("Not yet implemented")
-        }
-      }
-
-  private val fakeListingRepo2 =
-      object : ListingRepository {
-        override fun getNewUid() = "l1"
-
-        override suspend fun getListing(listingId: String) =
-            Request(
-                listingId = listingId,
-                description = "Cours de maths",
-                skill = Skill(skill = "Algebra", mainSubject = MainSubject.ACADEMICS),
-                location = Location(name = "Geneva"))
-
-        override suspend fun getAllListings() = emptyList<Listing>()
-
-        override suspend fun getProposals() = emptyList<Proposal>()
-
-        override suspend fun getRequests() = emptyList<Request>()
-
-        override suspend fun getListingsByUser(userId: String) = emptyList<Listing>()
-
-        override suspend fun addProposal(proposal: Proposal) {}
-
-        override suspend fun addRequest(request: Request) {}
-
-        override suspend fun updateListing(listingId: String, listing: Listing) {}
-
-        override suspend fun deleteListing(listingId: String) {}
-
-        override suspend fun deleteAllListingOfUser(userId: String) {
-          TODO("Not yet implemented")
-        }
-
-        override suspend fun deactivateListing(listingId: String) {}
-
-        override suspend fun searchBySkill(skill: Skill) = emptyList<Listing>()
-
-        override suspend fun searchByLocation(location: Location, radiusKm: Double) =
-            emptyList<Listing>()
-      }
-
-  private fun fakeViewModel2() =
-      BookingDetailsViewModel(
-          bookingRepository = fakeBookingRepo2,
-          listingRepository = fakeListingRepo2,
-          profileRepository = fakeProfileRepo)
-
-  @Test
-  fun bookingDetailsScreen_displaysAllSections2() {
-    val vm = fakeViewModel2()
-    composeTestRule.setContent {
-      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    composeTestRule.waitUntil(5_000) {
+      composeTestRule
+          .onAllNodesWithTag(BookingDetailsTestTag.ERROR, useUnmergedTree = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
     }
 
-    // Vérifie les sections visibles
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertExists()
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertExists()
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertExists()
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.SCHEDULE_SECTION).assertExists()
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.DESCRIPTION_SECTION).assertExists()
-    composeTestRule.onNodeWithTag(BookingDetailsTestTag.STATUS).assertExists()
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.ERROR, useUnmergedTree = true)
+        .assertIsDisplayed()
   }
 
   @Test
   fun markCompletedButton_isVisible_whenStatusConfirmed_andCallsCallback() {
-    // given: a CONFIRMED booking
     val booking =
         Booking(
             bookingId = "booking-1",
@@ -589,23 +497,60 @@ class BookingDetailsScreenTest {
     var clicked = false
 
     composeTestRule.setContent {
-      BookingDetailsContent(
-          uiState = uiState,
-          onCreatorClick = {},
-          onBookerClick = {},
-          onMarkCompleted = { clicked = true },
-          onSubmitBookerRatings = { _, _ -> },
-          onSubmitCreatorRating = { _ -> },
-          onPaymentComplete = {},
-          onPaymentReceived = {},
-      )
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = { clicked = true },
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = { _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
     }
 
     composeTestRule
         .onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON)
         .assertIsDisplayed()
         .performClick()
-    assert(clicked)
+
+    composeTestRule.runOnIdle { assert(clicked) }
+  }
+
+  private fun fakeViewModel2() =
+      BookingDetailsViewModel(
+          bookingRepository =
+              object : BookingRepository by fakeBookingRepo {
+                override suspend fun getBooking(bookingId: String) =
+                    Booking(
+                        bookingId = bookingId,
+                        associatedListingId = "l1",
+                        listingCreatorId = "u1",
+                        price = 50.0,
+                        sessionStart = Date(1736546400000),
+                        sessionEnd = Date(1736550000000),
+                        status = BookingStatus.PENDING,
+                        bookerId = "asdf")
+              },
+          listingRepository = fakeListingRepo,
+          profileRepository = fakeProfileRepo)
+
+  @Test
+  fun bookingDetailsScreen_displaysAllSections2() {
+    val vm = fakeViewModel2()
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    // Vérifie les sections visibles
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.SCHEDULE_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.DESCRIPTION_SECTION).assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.STATUS).assertExists()
   }
 
   @Test
