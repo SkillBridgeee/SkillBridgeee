@@ -24,6 +24,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -83,6 +84,10 @@ object BookingDetailsTestTag {
   const val RATING_TUTOR = "booking_rating_tutor"
   const val RATING_LISTING = "booking_rating_listing"
   const val RATING_SUBMIT_BUTTON = "booking_rating_submit"
+
+  const val BOOKER_USER_COMMENT = "booking_booker_user_comment"
+  const val BOOKER_LISTING_COMMENT = "booking_booker_listing_comment"
+  const val CREATOR_COMMENT = "booking_creator_comment"
 }
 
 /**
@@ -125,10 +130,12 @@ fun BookingDetailsScreen(
           onCreatorClick = { profileId -> onCreatorClick(profileId) },
           onBookerClick = { profileId -> onBookerClick(profileId) },
           onMarkCompleted = { bkgViewModel.markBookingAsCompleted() },
-          onSubmitBookerRatings = { userStars, listingStars ->
-            bkgViewModel.submitBookerRatings(userStars, listingStars)
+          onSubmitBookerRatings = { userStars, listingStars, userComment, listingComment ->
+            bkgViewModel.submitBookerRatings(userStars, listingStars, userComment, listingComment)
           },
-          onSubmitCreatorRating = { stars -> bkgViewModel.submitCreatorRating(stars) },
+          onSubmitCreatorRating = { stars, comment ->
+            bkgViewModel.submitCreatorRating(stars, comment)
+          },
           onPaymentComplete = { bkgViewModel.markPaymentComplete() },
           onPaymentReceived = { bkgViewModel.confirmPaymentReceived() },
           modifier = Modifier.padding(paddingValues).fillMaxSize().padding(16.dp))
@@ -157,8 +164,8 @@ fun BookingDetailsContent(
     onCreatorClick: (String) -> Unit,
     onBookerClick: (String) -> Unit,
     onMarkCompleted: () -> Unit,
-    onSubmitBookerRatings: (Int, Int) -> Unit,
-    onSubmitCreatorRating: (Int) -> Unit,
+    onSubmitBookerRatings: (Int, Int, String, String) -> Unit,
+    onSubmitCreatorRating: (Int, String) -> Unit,
     onPaymentComplete: () -> Unit,
     onPaymentReceived: () -> Unit,
     modifier: Modifier = Modifier
@@ -535,8 +542,8 @@ private fun ConfirmCompletionSection(onMarkCompleted: () -> Unit) {
 @Composable
 private fun RatingSections(
     uiState: BookingUIState,
-    onSubmitBookerRatings: (Int, Int) -> Unit,
-    onSubmitCreatorRating: (Int) -> Unit
+    onSubmitBookerRatings: (Int, Int, String, String) -> Unit,
+    onSubmitCreatorRating: (Int, String) -> Unit
 ) {
   val listingType = uiState.listing.type
   val progress = uiState.ratingProgress
@@ -571,9 +578,11 @@ private fun RatingSections(
 }
 
 @Composable
-private fun BookerRatingSection(userLabel: String, onSubmit: (Int, Int) -> Unit) {
+private fun BookerRatingSection(userLabel: String, onSubmit: (Int, Int, String, String) -> Unit) {
   var userStars by remember { mutableIntStateOf(0) }
   var listingStars by remember { mutableIntStateOf(0) }
+  var userComment by remember { mutableStateOf("") }
+  var listingComment by remember { mutableStateOf("") }
 
   val enabled = userStars in 1..5 && listingStars in 1..5
 
@@ -586,8 +595,21 @@ private fun BookerRatingSection(userLabel: String, onSubmit: (Int, Int) -> Unit)
             fontWeight = FontWeight.Bold)
 
         RatingRow(label = userLabel, selected = userStars, onSelected = { userStars = it })
+        OutlinedTextField(
+            value = userComment,
+            onValueChange = { userComment = it },
+            label = { Text("Comment about the $userLabel") },
+            modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.BOOKER_USER_COMMENT),
+            singleLine = false)
 
         RatingRow(label = "Listing", selected = listingStars, onSelected = { listingStars = it })
+        OutlinedTextField(
+            value = listingComment,
+            onValueChange = { listingComment = it },
+            label = { Text("Comment about the listing") },
+            modifier =
+                Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.BOOKER_LISTING_COMMENT),
+            singleLine = false)
 
         if (!enabled) {
           Text(
@@ -599,7 +621,7 @@ private fun BookerRatingSection(userLabel: String, onSubmit: (Int, Int) -> Unit)
 
         Button(
             enabled = enabled,
-            onClick = { onSubmit(userStars, listingStars) },
+            onClick = { onSubmit(userStars, listingStars, userComment, listingComment) },
             modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
               Text("Submit")
             }
@@ -607,9 +629,10 @@ private fun BookerRatingSection(userLabel: String, onSubmit: (Int, Int) -> Unit)
 }
 
 @Composable
-private fun CreatorRatingSection(userLabel: String, onSubmit: (Int) -> Unit) {
+private fun CreatorRatingSection(userLabel: String, onSubmit: (Int, String) -> Unit) {
   var stars by remember { mutableIntStateOf(0) }
   val enabled = stars in 1..5
+  var comment by remember { mutableStateOf("") }
 
   // Add test tag so tests can find/scroll the creator rating section
   Column(
@@ -621,11 +644,17 @@ private fun CreatorRatingSection(userLabel: String, onSubmit: (Int) -> Unit) {
             fontWeight = FontWeight.Bold)
 
         RatingRow(label = userLabel, selected = stars, onSelected = { stars = it })
+        OutlinedTextField(
+            value = comment,
+            onValueChange = { comment = it },
+            label = { Text("Comment") },
+            modifier = Modifier.fillMaxWidth().testTag(BookingDetailsTestTag.CREATOR_COMMENT),
+            singleLine = false)
 
         // Add test tag to the submit button so tests can scroll to/click it reliably
         Button(
             enabled = enabled,
-            onClick = { onSubmit(stars) },
+            onClick = { onSubmit(stars, comment) },
             modifier = Modifier.testTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON)) {
               Text("Submit")
             }

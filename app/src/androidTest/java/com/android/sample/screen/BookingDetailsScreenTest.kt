@@ -332,7 +332,7 @@ class BookingDetailsScreenTest {
             ratingProgress = RatingProgress(),
         ))
 
-    vm.submitBookerRatings(userStars = 0, listingStars = 3)
+    vm.submitBookerRatings(userStars = 0, listingStars = 3, userComment = "", listingComment = "")
     Thread.sleep(200)
     assert(vm.bookingUiState.value.loadError)
 
@@ -351,7 +351,7 @@ class BookingDetailsScreenTest {
             ratingProgress = RatingProgress(),
         ))
 
-    vm.submitBookerRatings(userStars = 3, listingStars = 6)
+    vm.submitBookerRatings(userStars = 3, listingStars = 6, userComment = "", listingComment = "")
     Thread.sleep(200)
     assert(vm.bookingUiState.value.loadError)
   }
@@ -373,7 +373,7 @@ class BookingDetailsScreenTest {
             ratingProgress = RatingProgress(),
         ))
 
-    vm.submitBookerRatings(userStars = 5, listingStars = 5)
+    vm.submitBookerRatings(userStars = 5, listingStars = 5, userComment = "", listingComment = "")
     Thread.sleep(200)
 
     assertNoRatings(vm.bookingUiState.value.ratingProgress)
@@ -410,7 +410,7 @@ class BookingDetailsScreenTest {
             ratingProgress = RatingProgress(),
         ))
 
-    vm.submitBookerRatings(userStars = 5, listingStars = 5)
+    vm.submitBookerRatings(userStars = 5, listingStars = 5, userComment = "", listingComment = "")
     Thread.sleep(250)
 
     assert(vm.bookingUiState.value.loadError)
@@ -503,8 +503,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = { clicked = true },
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -564,8 +564,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -614,6 +614,8 @@ class BookingDetailsScreenTest {
   @Test
   fun creatorRatingSection_submit_callsCallback() {
     var receivedStars: Int? = null
+    var receivedComment: String? = null
+
     val uiState = completedBookingUiState().copy(isCreator = true, isBooker = false)
 
     composeTestRule.setContent {
@@ -623,8 +625,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = { stars -> receivedStars = stars },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { stars, comment ->
+              receivedStars = stars
+              receivedComment = comment
+            },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -634,13 +639,22 @@ class BookingDetailsScreenTest {
     composeTestRule.swipeUpUntilDisplayed(hasTestTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON))
     composeTestRule.clickStarInRow(rowIndex = 0, star = 4)
 
+    // If your UI has a comment TextField with a testTag, set it here.
+    // Example:
+    // composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_RATING_COMMENT)
+    //   .performTextInput("Great session")
+
     composeTestRule
         .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON, useUnmergedTree = true)
         .assertIsDisplayed()
         .assertIsEnabled()
         .performClick()
 
-    composeTestRule.runOnIdle { assert(receivedStars == 4) }
+    composeTestRule.runOnIdle {
+      assert(receivedStars == 4)
+      // If you did not input text, this should remain "" (or whatever default you used in UI)
+      assert(receivedComment != null)
+    }
   }
 
   @Test
@@ -649,6 +663,8 @@ class BookingDetailsScreenTest {
 
     var receivedTutorStars = -1
     var receivedListingStars = -1
+    var receivedUserComment: String? = null
+    var receivedListingComment: String? = null
 
     composeTestRule.setContent {
       MaterialTheme {
@@ -657,11 +673,13 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { tutor, listing ->
+            onSubmitBookerRatings = { tutor, listing, userComment, listingComment ->
               receivedTutorStars = tutor
               receivedListingStars = listing
+              receivedUserComment = userComment
+              receivedListingComment = listingComment
             },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -674,6 +692,13 @@ class BookingDetailsScreenTest {
     composeTestRule.clickStarInRow(rowIndex = 0, star = 2)
     composeTestRule.clickStarInRow(rowIndex = 1, star = 5)
 
+    // If your UI has comment TextFields with testTags, set them here.
+    // Example:
+    // composeTestRule.onNodeWithTag(BookingDetailsTestTag.BOOKER_USER_RATING_COMMENT)
+    //   .performTextInput("Nice teacher")
+    // composeTestRule.onNodeWithTag(BookingDetailsTestTag.BOOKER_LISTING_RATING_COMMENT)
+    //   .performTextInput("Accurate description")
+
     composeTestRule.swipeUpUntilDisplayed(hasTestTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON))
     composeTestRule
         .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON, useUnmergedTree = true)
@@ -684,6 +709,8 @@ class BookingDetailsScreenTest {
     composeTestRule.runOnIdle {
       assert(receivedTutorStars == 2)
       assert(receivedListingStars == 5)
+      assert(receivedUserComment != null)
+      assert(receivedListingComment != null)
     }
   }
 
@@ -708,8 +735,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = { clicked = true },
             onPaymentReceived = {},
         )
@@ -741,8 +768,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = { clicked = true },
         )
@@ -782,8 +809,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {})
       }

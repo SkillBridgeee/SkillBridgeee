@@ -290,7 +290,12 @@ class BookingDetailsViewModel(
     }
   }
 
-  fun submitBookerRatings(userStars: Int, listingStars: Int) {
+  fun submitBookerRatings(
+      userStars: Int,
+      listingStars: Int,
+      userComment: String,
+      listingComment: String
+  ) {
     val booking = bookingUiState.value.booking
     val listing = bookingUiState.value.listing
 
@@ -318,7 +323,7 @@ class BookingDetailsViewModel(
                 fromUserId = bookerId,
                 toUserId = toUserId,
                 starRating = userStars.toStarRating(),
-                comment = "",
+                comment = userComment,
                 ratingType = ratingType,
                 targetObjectId = bookingIdObj,
             )
@@ -329,7 +334,7 @@ class BookingDetailsViewModel(
                 fromUserId = bookerId,
                 toUserId = listing.creatorUserId,
                 starRating = listingStars.toStarRating(),
-                comment = "",
+                comment = listingComment,
                 ratingType = RatingType.LISTING,
                 targetObjectId = listingIdObj, // IMPORTANT
             )
@@ -353,7 +358,7 @@ class BookingDetailsViewModel(
     }
   }
 
-  fun submitCreatorRating(stars: Int) {
+  fun submitCreatorRating(stars: Int, comment: String) {
     val state = bookingUiState.value
     val booking = state.booking
     val listing = state.listing
@@ -389,7 +394,7 @@ class BookingDetailsViewModel(
                 fromUserId = creatorId,
                 toUserId = toUserId,
                 starRating = stars.toStarRating(),
-                comment = "",
+                comment = comment,
                 ratingType = ratingType,
                 targetObjectId = bookingId,
             )
