@@ -6,7 +6,16 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-/** Utility object for formatting timestamps in the communication UI. */
+/**
+ * Utility object for formatting timestamps in the communication UI.
+ *
+ * **Important Notes on Timestamp Behavior:**
+ * - Timestamps are formatted relative to the device's current time and timezone
+ * - Clock changes, timezone switches, or DST transitions may cause unexpected relative times
+ * - Future timestamps (due to clock skew or server time differences) are treated as "just now"
+ * - Locale settings affect day/month name formatting
+ * - These edge cases are difficult to handle perfectly but are generally acceptable for UI display
+ */
 object TimeFormatUtils {
 
   /**
@@ -20,7 +29,8 @@ object TimeFormatUtils {
     val now = Calendar.getInstance()
     val messageTime = Calendar.getInstance().apply { time = timestamp }
 
-    val diffInMillis = now.timeInMillis - messageTime.timeInMillis
+    // Safeguard against negative differences (future timestamps or clock changes)
+    val diffInMillis = maxOf(0L, now.timeInMillis - messageTime.timeInMillis)
     val diffInDays = TimeUnit.MILLISECONDS.toDays(diffInMillis)
 
     return when {
@@ -58,7 +68,8 @@ object TimeFormatUtils {
     val now = Calendar.getInstance()
     val messageTime = Calendar.getInstance().apply { time = timestamp }
 
-    val diffInMillis = now.timeInMillis - messageTime.timeInMillis
+    // Safeguard against negative differences (future timestamps or clock changes)
+    val diffInMillis = maxOf(0L, now.timeInMillis - messageTime.timeInMillis)
     val diffInMinutes = TimeUnit.MILLISECONDS.toMinutes(diffInMillis)
     val diffInHours = TimeUnit.MILLISECONDS.toHours(diffInMillis)
     val diffInDays = TimeUnit.MILLISECONDS.toDays(diffInMillis)
