@@ -177,7 +177,7 @@ private fun NavGraphBuilder.addMapRoute() {
  * @param profileViewModel ViewModel used to populate profile content.
  * @param authViewModel Authentication view model used to perform sign out.
  */
-private fun NavGraphBuilder.addProfileRoute(
+internal fun NavGraphBuilder.addProfileRoute(
     navController: NavHostController,
     profileViewModel: MyProfileViewModel,
     authViewModel: AuthenticationViewModel,
@@ -206,7 +206,7 @@ private fun NavGraphBuilder.addProfileRoute(
  * @param mainPageViewModel ViewModel for home content.
  * @param academicSubject Mutable state used to pass the selected subject to the skills screen.
  */
-private fun NavGraphBuilder.addHomeRoute(
+internal fun NavGraphBuilder.addHomeRoute(
     navController: NavHostController,
     mainPageViewModel: MainPageViewModel,
     academicSubject: MutableState<MainSubject?>,
@@ -262,7 +262,7 @@ private fun NavGraphBuilder.addSkillsRoute(
  * @param bookingsViewModel ViewModel that backs the bookings list screen.
  * @param bookingId Mutable state used to store the selected booking id for details screen.
  */
-private fun NavGraphBuilder.addBookingsRoute(
+internal fun NavGraphBuilder.addBookingsRoute(
     navController: NavHostController,
     bookingsViewModel: MyBookingsViewModel,
     bookingId: MutableState<String>,
