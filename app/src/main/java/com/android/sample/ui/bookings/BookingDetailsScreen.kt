@@ -199,10 +199,17 @@ fun BookingDetailsContent(
         HorizontalDivider()
         // Let the user mark the session as completed once it is confirmed
         if (uiState.booking.status == BookingStatus.CONFIRMED) {
+          // Determine if current user is the tutor based on listing type
+          // PROPOSAL: creator is tutor, REQUEST: booker is tutor
+          val isTutor =
+              when (uiState.listing.type) {
+                ListingType.PROPOSAL -> uiState.isCreator
+                ListingType.REQUEST -> uiState.isBooker
+              }
           ConfirmCompletionSection(
               paymentStatus = uiState.booking.paymentStatus,
               listingType = uiState.listing.type,
-              isTutor = uiState.isTutor,
+              isTutor = isTutor,
               onMarkCompleted = onMarkCompleted)
         }
 
@@ -230,9 +237,16 @@ fun BookingDetailsContent(
 
         // Payment actions based on the payment status - only for CONFIRMED bookings
         if (uiState.booking.status == BookingStatus.CONFIRMED) {
+          // Determine if current user is the tutor based on listing type
+          // PROPOSAL: creator is tutor, REQUEST: booker is tutor
+          val isTutorForPayment =
+              when (uiState.listing.type) {
+                ListingType.PROPOSAL -> uiState.isCreator
+                ListingType.REQUEST -> uiState.isBooker
+              }
           PaymentActionSection(
               booking = uiState.booking,
-              isTutor = uiState.isTutor,
+              isTutor = isTutorForPayment,
               listingType = uiState.listing.type,
               isCreator = uiState.isCreator,
               onPaymentComplete = onPaymentComplete,
