@@ -63,8 +63,7 @@ data class ListingUiState(
     val bookerProfiles: Map<String, Profile> = emptyMap(),
     val tutorRatingPending: Boolean = false,
     val currentUserId: String? = null,
-    val hasExistingBooking: Boolean = false,
-    val showDuplicateBookingWarning: Boolean = false
+    val hasExistingBooking: Boolean = false
 )
 
 /**
@@ -155,13 +154,22 @@ class ListingViewModel(
     viewModelScope.launch {
       try {
         val bookings = bookingRepo.getBookingsByListing(listingId)
+        // Active bookings are those that are not CANCELLED or COMPLETED
         val hasExistingBooking =
             bookings.any { booking ->
-              booking.bookerId == userId && booking.status != BookingStatus.CANCELLED
+              booking.bookerId == userId &&
+                  booking.status != BookingStatus.CANCELLED &&
+                  booking.status != BookingStatus.COMPLETED
             }
         _uiState.update { it.copy(hasExistingBooking = hasExistingBooking) }
       } catch (e: Exception) {
-        Log.w("ListingViewModel", "Failed to check existing bookings", e)
+        Log.e("ListingViewModel", "Failed to check existing bookings", e)
+        // On error, show a warning message to the user
+        _uiState.update {
+          it.copy(
+              error = "Failed to check existing bookings. Please try again.",
+              hasExistingBooking = false)
+        }
       }
     }
   }
@@ -495,16 +503,6 @@ class ListingViewModel(
 
   fun showBookingError(message: String) {
     _uiState.update { it.copy(bookingError = message) }
-  }
-
-  /** Shows the duplicate booking warning dialog. */
-  fun showDuplicateBookingWarning() {
-    _uiState.update { it.copy(showDuplicateBookingWarning = true) }
-  }
-
-  /** Dismisses the duplicate booking warning dialog. */
-  fun dismissDuplicateBookingWarning() {
-    _uiState.update { it.copy(showDuplicateBookingWarning = false) }
   }
 
   /**

@@ -354,7 +354,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.SCREEN).assertIsDisplayed()
@@ -369,7 +374,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
 
     compose.onNodeWithTag(ListingScreenTestTags.SCREEN).assertIsDisplayed()
@@ -384,7 +394,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
 
     compose.waitUntil(WAIT_TIMEOUT_MS) {
@@ -404,7 +419,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
 
     // Use helper function for waiting
@@ -424,7 +444,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
 
     // Wait for screen to load using helper function
@@ -456,7 +481,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
 
     // Use helper function for waiting
@@ -471,7 +501,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
 
     // Use helper function for waiting
@@ -491,6 +526,8 @@ class ListingScreenTest {
           listingId = sampleRequest.listingId,
           onNavigateBack = {},
           onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
           viewModel = vm)
     }
 
@@ -510,7 +547,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = TEST_LISTING_ID, onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
 
     // Use helper function for waiting
@@ -525,7 +567,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
     compose.onNodeWithTag(ListingScreenTestTags.SCREEN).assertIsDisplayed()
   }
@@ -536,7 +583,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
 
     // Initially loading or content
@@ -558,7 +610,12 @@ class ListingScreenTest {
 
     compose.setContent {
       ListingScreen(
-          listingId = "listing-123", onNavigateBack = {}, onEditListing = {}, viewModel = vm)
+          listingId = "listing-123",
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
+          viewModel = vm)
     }
 
     // Wait for content to load using helper function
@@ -589,21 +646,23 @@ class ListingScreenTest {
   }
 
   @Test
-  fun listingScreen_bookingSuccess_successDialogOk_clearsSuccessAndNavigatesBack() {
+  fun listingScreen_bookingSuccess_successDialogOk_clearsSuccessAndNavigatesToBookings() {
     // given: a valid listing + creator + bookings repo that can succeed
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
     val bookingRepo = FakeBookingRepo(shouldSucceed = true)
     val vm = ListingViewModel(listingRepo, profileRepo, bookingRepo)
 
-    var navigatedBack = false
+    var navigatedToBookings = false
 
     compose.setContent {
       ListingScreen(
           listingId = "listing-123",
-          onNavigateBack = { navigatedBack = true },
-          viewModel = vm,
-          onEditListing = {})
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = { navigatedToBookings = true },
+          viewModel = vm)
     }
 
     // Wait for content to load using helper function
@@ -624,7 +683,7 @@ class ListingScreenTest {
     // when: user taps "OK"
     compose.onNodeWithText("OK", useUnmergedTree = true).assertIsDisplayed().performClick()
 
-    // then: dialog disappears and success flag is cleared, and navigateBack is called
+    // then: dialog disappears and success flag is cleared, and navigates to bookings
     compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.SUCCESS_DIALOG, useUnmergedTree = true)
@@ -632,7 +691,10 @@ class ListingScreenTest {
           .isEmpty()
     }
 
-    compose.runOnIdle { assert(!vm.uiState.value.bookingSuccess) }
+    compose.runOnIdle {
+      assert(!vm.uiState.value.bookingSuccess)
+      assert(navigatedToBookings) { "Expected navigation to bookings page" }
+    }
   }
 
   // ----- NEW TESTS FOR CREATOR PROFILE FEATURE -----
@@ -649,6 +711,7 @@ class ListingScreenTest {
           onNavigateBack = {},
           onEditListing = {},
           onNavigateToProfile = {},
+          onNavigateToBookings = {},
           viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
     }
 
@@ -674,6 +737,7 @@ class ListingScreenTest {
           onNavigateBack = {},
           onEditListing = {},
           onNavigateToProfile = {},
+          onNavigateToBookings = {},
           viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
     }
 
@@ -698,6 +762,7 @@ class ListingScreenTest {
           onNavigateBack = {},
           onEditListing = {},
           onNavigateToProfile = { profileId -> clickedProfileId = profileId },
+          onNavigateToBookings = {},
           viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
     }
 
@@ -727,6 +792,7 @@ class ListingScreenTest {
           onNavigateBack = {},
           onEditListing = {},
           onNavigateToProfile = {},
+          onNavigateToBookings = {},
           viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo))
     }
 
@@ -753,6 +819,8 @@ class ListingScreenTest {
           listingId = TEST_LISTING_ID,
           onNavigateBack = {},
           onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
           viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
           autoFillDatesForTesting = true)
     }
@@ -809,6 +877,8 @@ class ListingScreenTest {
           listingId = TEST_LISTING_ID,
           onNavigateBack = {},
           onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
           viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
           autoFillDatesForTesting = true)
     }
@@ -871,6 +941,8 @@ class ListingScreenTest {
           listingId = TEST_LISTING_ID,
           onNavigateBack = {},
           onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
           viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
           autoFillDatesForTesting = true)
     }
@@ -938,6 +1010,8 @@ class ListingScreenTest {
           listingId = TEST_LISTING_ID,
           onNavigateBack = {},
           onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
           viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
           autoFillDatesForTesting = true)
     }
@@ -1006,6 +1080,8 @@ class ListingScreenTest {
           listingId = TEST_LISTING_ID,
           onNavigateBack = {},
           onEditListing = {},
+          onNavigateToProfile = {},
+          onNavigateToBookings = {},
           viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
           autoFillDatesForTesting = true)
     }
