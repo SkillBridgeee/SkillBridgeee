@@ -1,6 +1,7 @@
 package com.android.sample.ui.listing.components
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -88,51 +89,6 @@ class ListingContentTest {
 
   // ---------- Tests ----------
 
-  //  @Test
-  //  fun listingContent_showsTutorRatingSection_whenOwnListingAndPending() {
-  //    val state = uiState(isOwnListing = true, tutorRatingPending = true)
-  //
-  //    compose.setContent {
-  //      MaterialTheme {
-  //        ListingContent(
-  //            uiState = state,
-  //            onBook = { _, _ -> },
-  //            onApproveBooking = {},
-  //            onRejectBooking = {},
-  //            onSubmitTutorRating = {},
-  //            onDeleteListing = {},
-  //            onEditListing = {})
-  //      }
-  //    }
-  //
-  //    // Wait up to 5s for the node to appear in either the unmerged or merged semantics tree,
-  //    // then pick the tree that contains it and perform the scroll.
-  //    val tag = ListingScreenTestTags.TUTOR_RATING_SECTION
-  //    compose.waitUntil(5000) {
-  //      compose
-  //          .onAllNodes(hasTestTag(tag), useUnmergedTree = true)
-  //          .fetchSemanticsNodes()
-  //          .isNotEmpty() ||
-  //          compose
-  //              .onAllNodes(hasTestTag(tag), useUnmergedTree = false)
-  //              .fetchSemanticsNodes()
-  //              .isNotEmpty()
-  //    }
-  //
-  //    val node =
-  //        if (compose
-  //            .onAllNodes(hasTestTag(tag), useUnmergedTree = true)
-  //            .fetchSemanticsNodes()
-  //            .isNotEmpty()) {
-  //          compose.onNodeWithTag(tag, useUnmergedTree = true)
-  //        } else {
-  //          compose.onNodeWithTag(tag, useUnmergedTree = false)
-  //        }
-  //
-  //    node.performScrollTo()
-  //    node.assertIsDisplayed()
-  //  }
-
   @Test
   fun listingContent_hidesTutorRatingSection_whenNotOwnListing() {
     val state = uiState(isOwnListing = false, tutorRatingPending = true)
@@ -144,13 +100,15 @@ class ListingContentTest {
             onBook = { _, _ -> },
             onApproveBooking = {},
             onRejectBooking = {},
-            onSubmitTutorRating = {},
+            onDeleteListing = {},
             onEditListing = {},
-            onDeleteListing = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
-    // Not own listing → section must not exist
     compose.onNodeWithTag(ListingScreenTestTags.TUTOR_RATING_SECTION).assertDoesNotExist()
   }
 
@@ -165,13 +123,15 @@ class ListingContentTest {
             onBook = { _, _ -> },
             onApproveBooking = {},
             onRejectBooking = {},
-            onSubmitTutorRating = {},
+            onDeleteListing = {},
             onEditListing = {},
-            onDeleteListing = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
-    // Own listing but no pending rating → section must not exist
     compose.onNodeWithTag(ListingScreenTestTags.TUTOR_RATING_SECTION).assertDoesNotExist()
   }
 
@@ -188,7 +148,10 @@ class ListingContentTest {
             onRejectBooking = {},
             onDeleteListing = {},
             onEditListing = {},
-            onSubmitTutorRating = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
@@ -209,7 +172,10 @@ class ListingContentTest {
             onRejectBooking = {},
             onDeleteListing = {},
             onEditListing = {},
-            onSubmitTutorRating = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
@@ -230,7 +196,10 @@ class ListingContentTest {
             onRejectBooking = {},
             onDeleteListing = {},
             onEditListing = {},
-            onSubmitTutorRating = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
@@ -253,7 +222,10 @@ class ListingContentTest {
 
     val state =
         uiState(
-            isOwnListing = true, bookingsLoading = false, listingBookings = listOf(activeBooking))
+            isOwnListing = true,
+            bookingsLoading = false,
+            listingBookings = listOf(activeBooking),
+        )
 
     compose.setContent {
       MaterialTheme {
@@ -262,14 +234,16 @@ class ListingContentTest {
             onBook = { _, _ -> },
             onApproveBooking = {},
             onRejectBooking = {},
-            onSubmitTutorRating = {},
             onDeleteListing = {},
-            onEditListing = {})
+            onEditListing = {},
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
     compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
-
     compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertIsNotEnabled()
   }
 
@@ -299,12 +273,14 @@ class ListingContentTest {
             onRejectBooking = {},
             onDeleteListing = {},
             onEditListing = {},
-            onSubmitTutorRating = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
     compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
-
     compose.onNodeWithTag(ListingContentTestTags.EDIT_BUTTON).assertIsEnabled()
   }
 
@@ -321,12 +297,14 @@ class ListingContentTest {
             onRejectBooking = {},
             onDeleteListing = {},
             onEditListing = {},
-            onSubmitTutorRating = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
     compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
-
     compose.onNodeWithTag(ListingContentTestTags.DELETE_BUTTON).assertExists()
   }
 
@@ -343,21 +321,21 @@ class ListingContentTest {
             onRejectBooking = {},
             onDeleteListing = {},
             onEditListing = {},
-            onSubmitTutorRating = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
     compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
-
     compose.onNodeWithTag(ListingContentTestTags.DELETE_BUTTON).performClick()
 
-    // Check for the dialog's body text instead (unique to the dialog)
     compose
         .onNodeWithText(
             "Are you sure you want to delete this listing? This action cannot be undone.")
         .assertExists()
 
-    // Or check for both "Delete" and "Cancel" buttons in the dialog
     compose.onNodeWithText("Delete").assertExists()
     compose.onNodeWithText("Cancel").assertExists()
   }
@@ -376,12 +354,14 @@ class ListingContentTest {
             onRejectBooking = {},
             onDeleteListing = { deleteCalled = true },
             onEditListing = {},
-            onSubmitTutorRating = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
     compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(10)
-
     compose.onNodeWithTag(ListingContentTestTags.DELETE_BUTTON).performClick()
     compose.onNodeWithText("Delete").performClick()
 
@@ -402,7 +382,10 @@ class ListingContentTest {
             onRejectBooking = {},
             onDeleteListing = {},
             onEditListing = { editClicked = true },
-            onSubmitTutorRating = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
@@ -425,7 +408,10 @@ class ListingContentTest {
             onRejectBooking = {},
             onDeleteListing = {},
             onEditListing = {},
-            onSubmitTutorRating = {})
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+        )
       }
     }
 
