@@ -282,26 +282,29 @@ class ListingScreenTest {
   }
 
   private class FakeBookingRepo(
-      private val bookings: List<Booking> = emptyList(),
+      bookings: List<Booking> = emptyList(),
       private val shouldSucceed: Boolean = true
   ) : BookingRepository {
+    private val bookingsList = bookings.toMutableList()
+
     override fun getNewUid() = "new-booking-id"
 
-    override suspend fun getAllBookings() = bookings
+    override suspend fun getAllBookings() = bookingsList
 
-    override suspend fun getBooking(bookingId: String) = bookings.find { it.bookingId == bookingId }
+    override suspend fun getBooking(bookingId: String) =
+        bookingsList.find { it.bookingId == bookingId }
 
     override suspend fun getBookingsByTutor(tutorId: String) =
-        bookings.filter { it.listingCreatorId == tutorId }
+        bookingsList.filter { it.listingCreatorId == tutorId }
 
     override suspend fun getBookingsByUserId(userId: String) =
-        bookings.filter { it.bookerId == userId }
+        bookingsList.filter { it.bookerId == userId }
 
     override suspend fun getBookingsByStudent(studentId: String) =
-        bookings.filter { it.bookerId == studentId }
+        bookingsList.filter { it.bookerId == studentId }
 
     override suspend fun getBookingsByListing(listingId: String) =
-        bookings.filter { it.associatedListingId == listingId }
+        bookingsList.filter { it.associatedListingId == listingId }
 
     override suspend fun addBooking(booking: Booking) {
       if (!shouldSucceed) throw Exception("Booking failed")
@@ -743,7 +746,7 @@ class ListingScreenTest {
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
     // No existing bookings
-    val bookingRepo = FakeBookingRepo(mutableListOf(), shouldSucceed = true)
+    val bookingRepo = FakeBookingRepo(emptyList(), shouldSucceed = true)
 
     compose.setContent {
       ListingScreen(
@@ -794,7 +797,7 @@ class ListingScreenTest {
 
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
-    val bookingRepo = FakeBookingRepo(mutableListOf(existingBooking), shouldSucceed = true)
+    val bookingRepo = FakeBookingRepo(listOf(existingBooking), shouldSucceed = true)
 
     compose.setContent {
       ListingScreen(
@@ -805,7 +808,10 @@ class ListingScreenTest {
           autoFillDatesForTesting = true)
     }
 
-    // Wait for content to load
+    // Wait for listing to load first
+    waitForListingLoaded()
+
+    // Wait for Book button to be available
     compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
@@ -850,7 +856,7 @@ class ListingScreenTest {
 
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
-    val bookingRepo = FakeBookingRepo(mutableListOf(existingBooking), shouldSucceed = true)
+    val bookingRepo = FakeBookingRepo(listOf(existingBooking), shouldSucceed = true)
 
     compose.setContent {
       ListingScreen(
@@ -861,7 +867,10 @@ class ListingScreenTest {
           autoFillDatesForTesting = true)
     }
 
-    // Wait for content and click Book Now
+    // Wait for listing to load first
+    waitForListingLoaded()
+
+    // Wait for Book button and click
     compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
@@ -909,7 +918,7 @@ class ListingScreenTest {
 
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
-    val bookingRepo = FakeBookingRepo(mutableListOf(existingBooking), shouldSucceed = true)
+    val bookingRepo = FakeBookingRepo(listOf(existingBooking), shouldSucceed = true)
 
     compose.setContent {
       ListingScreen(
@@ -920,7 +929,10 @@ class ListingScreenTest {
           autoFillDatesForTesting = true)
     }
 
-    // Wait for content and click Book Now
+    // Wait for listing to load first
+    waitForListingLoaded()
+
+    // Wait for Book button and click
     compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
@@ -970,7 +982,7 @@ class ListingScreenTest {
 
     val listingRepo = FakeListingRepo(sampleProposal)
     val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
-    val bookingRepo = FakeBookingRepo(mutableListOf(cancelledBooking), shouldSucceed = true)
+    val bookingRepo = FakeBookingRepo(listOf(cancelledBooking), shouldSucceed = true)
 
     compose.setContent {
       ListingScreen(
@@ -981,7 +993,10 @@ class ListingScreenTest {
           autoFillDatesForTesting = true)
     }
 
-    // Wait for content and click Book Now
+    // Wait for listing to load first
+    waitForListingLoaded()
+
+    // Wait for Book button and click
     compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
@@ -1022,7 +1037,10 @@ class ListingScreenTest {
           autoFillDatesForTesting = true)
     }
 
-    // Wait for content and click Book Now
+    // Wait for listing to load first
+    waitForListingLoaded()
+
+    // Wait for Book button and click
     compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
@@ -1078,7 +1096,10 @@ class ListingScreenTest {
           autoFillDatesForTesting = true)
     }
 
-    // Wait for content and complete booking flow
+    // Wait for listing to load first
+    waitForListingLoaded()
+
+    // Wait for Book button and click
     compose.waitUntil(WAIT_TIMEOUT_MS) {
       compose
           .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
