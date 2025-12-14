@@ -80,7 +80,8 @@ class ListingViewModel(
     private val conversationManager: ConversationManager =
         ConversationManager(
             convRepo = ConversationRepositoryProvider.repository,
-            overViewRepo = OverViewConvRepositoryProvider.repository)
+            overViewRepo = OverViewConvRepositoryProvider.repository,
+            bookingRepo = BookingRepositoryProvider.repository)
 ) : ViewModel() {
 
   companion object {

@@ -89,4 +89,16 @@ class FakeBookingEmpty : FakeBookingRepo {
   override suspend fun cancelBooking(bookingId: String) {
     updateBookingStatus(bookingId, BookingStatus.CANCELLED)
   }
+
+  override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+    if (userA.isBlank() || userB.isBlank()) return false
+
+    return bookings.any { booking ->
+      val participantsMatch =
+          (booking.bookerId == userA && booking.listingCreatorId == userB) ||
+              (booking.bookerId == userB && booking.listingCreatorId == userA)
+
+      participantsMatch && booking.status == BookingStatus.CONFIRMED
+    }
+  }
 }

@@ -108,7 +108,7 @@ class DiscussionViewModel(
             otherParticipantIds.forEach { participantId ->
               try {
                 val profile = profileRepository.getProfile(participantId)
-                participantNames[participantId] = profile?.name ?: "Unknown User"
+                participantNames[participantId] = profile?.name ?: "Deleted account"
               } catch (e: Exception) {
                 Log.w(TAG, "Failed to fetch profile for $participantId", e)
                 participantNames[participantId] = "Unknown User"

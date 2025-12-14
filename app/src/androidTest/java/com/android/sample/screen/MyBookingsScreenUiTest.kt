@@ -84,6 +84,13 @@ class MyBookingsScreenUiTest {
                 override suspend fun completeBooking(bookingId: String) {}
 
                 override suspend fun cancelBooking(bookingId: String) {}
+
+                override suspend fun hasOngoingBookingBetween(
+                    userA: String,
+                    userB: String
+                ): Boolean {
+                  TODO("Not yet implemented")
+                }
               },
           listingRepo =
               object : ListingRepository {
@@ -329,6 +336,13 @@ class MyBookingsScreenUiTest {
                   override suspend fun completeBooking(bookingId: String) {}
 
                   override suspend fun cancelBooking(bookingId: String) {}
+
+                  override suspend fun hasOngoingBookingBetween(
+                      userA: String,
+                      userB: String
+                  ): Boolean {
+                    TODO("Not yet implemented")
+                  }
                 },
             listingRepo = listingRepo,
             profileRepo = profileRepo)
