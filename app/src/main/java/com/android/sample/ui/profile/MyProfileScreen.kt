@@ -208,7 +208,9 @@ private fun MyProfileContent(
 
           item {
             ProfileLogout(
-                onLogout = onLogout, onDeleteAccount = { profileViewModel.deleteAccount() })
+                onLogout = onLogout,
+                onDeleteAccount = { profileViewModel.deleteAccount() },
+                isDeletingAccount = ui.isDeletingAccount)
           }
         }
 
@@ -629,6 +631,7 @@ private fun ProfileHistory(
 private fun ProfileLogout(
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit,
+    isDeletingAccount: Boolean
 ) {
   var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -637,6 +640,7 @@ private fun ProfileLogout(
   // Logout button
   Button(
       onClick = onLogout,
+      enabled = !isDeletingAccount,
       modifier =
           Modifier.fillMaxWidth()
               .padding(horizontal = 16.dp)
@@ -649,6 +653,7 @@ private fun ProfileLogout(
   // Delete account button
   OutlinedButton(
       onClick = { showDeleteDialog = true },
+      enabled = !isDeletingAccount,
       modifier =
           Modifier.fillMaxWidth()
               .padding(horizontal = 16.dp)
@@ -684,13 +689,21 @@ private fun ProfileLogout(
                 showDeleteDialog = false
                 onDeleteAccount()
               },
+              enabled = !isDeletingAccount,
               modifier = Modifier.testTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CONFIRM_BUTTON)) {
-                Text("Delete", color = MaterialTheme.colorScheme.error)
+                if (isDeletingAccount) {
+                  CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                  Spacer(Modifier.width(8.dp))
+                  Text("Deleting…", color = MaterialTheme.colorScheme.error)
+                } else {
+                  Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
               }
         },
         dismissButton = {
           TextButton(
               onClick = { showDeleteDialog = false },
+              enabled = !isDeletingAccount,
               modifier = Modifier.testTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CANCEL_BUTTON)) {
                 Text("Cancel")
               }

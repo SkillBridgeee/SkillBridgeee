@@ -560,6 +560,7 @@ class MyProfileViewModel(
    * 3) Clears the local session.
    */
   fun deleteAccount() {
+    if (_uiState.value.isDeletingAccount) return
     val state = _uiState.value
     val currentId = state.userId ?: userId
 
@@ -577,30 +578,60 @@ class MyProfileViewModel(
         )
       }
 
-      try {
+      val failures = mutableListOf<String>()
 
-        val myOverviews = conversationManager.getOverViewConvUser(currentId)
-        myOverviews.forEach { overview ->
-          conversationManager.deleteConvAndOverviews(
-              convId = overview.linkedConvId,
-              deleterId = currentId,
-              otherId = overview.otherPersonId,
-          )
+      try {
+        try {
+          val myOverviews = conversationManager.getOverViewConvUser(currentId)
+          myOverviews.forEach { overview ->
+            conversationManager.deleteConvAndOverviews(
+                convId = overview.linkedConvId,
+                deleterId = currentId,
+                otherId = overview.otherPersonId,
+            )
+          }
+        } catch (e: Exception) {
+          failures.add("conversations")
+          Log.w(TAG, "Failed to delete conversations", e)
         }
 
-        profileRepository.deleteProfile(currentId)
-        bookingRepository.deleteAllBookingOfUser(currentId)
-        listingRepository.deleteAllListingOfUser(currentId)
-        ratingsRepository.deleteAllRatingOfUser(currentId)
+        try {
+          profileRepository.deleteProfile(currentId)
+        } catch (e: Exception) {
+          failures.add("profile")
+          Log.w(TAG, "Failed to delete profile", e)
+        }
+
+        try {
+          bookingRepository.deleteAllBookingOfUser(currentId)
+        } catch (e: Exception) {
+          failures.add("bookings")
+          Log.w(TAG, "Failed to delete bookings", e)
+        }
+
+        try {
+          listingRepository.deleteAllListingOfUser(currentId)
+        } catch (e: Exception) {
+          failures.add("listings")
+          Log.w(TAG, "Failed to delete listings", e)
+        }
+
+        try {
+          ratingsRepository.deleteAllRatingOfUser(currentId)
+        } catch (e: Exception) {
+          failures.add("ratings")
+          Log.w(TAG, "Failed to delete ratings", e)
+        }
 
         val result = authRepository.deleteCurrentUser()
 
         result.fold(
             onSuccess = {
-              try {
-                UserSessionManager.logout()
-              } catch (e: Exception) {
-                Log.w(TAG, "Failed to logout after account deletion", e)
+              runCatching { UserSessionManager.logout() }
+                  .onFailure { Log.w(TAG, "Failed to logout after account deletion", it) }
+
+              if (failures.isNotEmpty()) {
+                Log.w(TAG, "Account deleted with partial failures: ${failures.joinToString()}")
               }
 
               _uiState.update {
@@ -637,6 +668,7 @@ class MyProfileViewModel(
   fun clearDeleteAccountStatus() {
     _uiState.update {
       it.copy(
+          isDeletingAccount = false,
           deleteAccountSuccess = false,
           deleteAccountError = null,
       )

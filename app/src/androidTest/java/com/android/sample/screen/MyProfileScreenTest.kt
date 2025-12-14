@@ -18,13 +18,8 @@ import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.booking.PaymentStatus
-import com.android.sample.model.communication.conversation.ConvRepository
-import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
-import com.android.sample.model.communication.conversation.Message
-import com.android.sample.model.communication.overViewConv.OverViewConvRepository
 import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
-import com.android.sample.model.communication.overViewConv.OverViewConversation
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
@@ -42,9 +37,10 @@ import com.android.sample.ui.profile.MyProfileScreen
 import com.android.sample.ui.profile.MyProfileScreenTestTag
 import com.android.sample.ui.profile.MyProfileUIState
 import com.android.sample.ui.profile.MyProfileViewModel
+import com.android.sample.utils.FakeConversationRepo
+import com.android.sample.utils.FakeOverViewConvRepo
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -250,58 +246,6 @@ class MyProfileScreenTest {
     override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
 
     override suspend fun deleteAllRatingOfUser(userId: String) {
-      TODO("Not yet implemented")
-    }
-  }
-
-  private class FakeConversationRepo : ConvRepository {
-    override fun getNewUid(): String {
-      TODO("Not yet implemented")
-    }
-
-    override suspend fun getConv(convId: String): Conversation? {
-      TODO("Not yet implemented")
-    }
-
-    override suspend fun createConv(conversation: Conversation) {
-      TODO("Not yet implemented")
-    }
-
-    override suspend fun deleteConv(convId: String) {
-      TODO("Not yet implemented")
-    }
-
-    override suspend fun sendMessage(convId: String, message: Message) {
-      TODO("Not yet implemented")
-    }
-
-    override fun listenMessages(convId: String): Flow<List<Message>> {
-      TODO("Not yet implemented")
-    }
-  }
-
-  private class FakeOverViewConvRepo : OverViewConvRepository {
-    override fun getNewUid(): String {
-      TODO("Not yet implemented")
-    }
-
-    override suspend fun getOverViewConvUser(userId: String): List<OverViewConversation> {
-      TODO("Not yet implemented")
-    }
-
-    override suspend fun addOverViewConvUser(overView: OverViewConversation) {
-      TODO("Not yet implemented")
-    }
-
-    override suspend fun deleteOverViewConvUser(convId: String) {
-      TODO("Not yet implemented")
-    }
-
-    override suspend fun deleteOverViewById(overViewId: String) {
-      TODO("Not yet implemented")
-    }
-
-    override fun listenOverView(userId: String): Flow<List<OverViewConversation>> {
       TODO("Not yet implemented")
     }
   }
@@ -1111,5 +1055,33 @@ class MyProfileScreenTest {
       val updated = stateFlow.value
       assertEquals(false, updated.deleteAccountSuccess)
     }
+  }
+
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun deleteAccountDialog_confirmButtonDisabled_whenDeleting() {
+    ensureDeleteVisible()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_BUTTON).performClick()
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_DIALOG, useUnmergedTree = true)
+        .assertIsDisplayed()
+
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      stateFlow.value = stateFlow.value.copy(isDeletingAccount = true)
+    }
+
+    compose.waitForIdle()
+
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CONFIRM_BUTTON, useUnmergedTree = true)
+        .assertIsNotEnabled()
+
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CANCEL_BUTTON, useUnmergedTree = true)
+        .assertIsNotEnabled()
   }
 }
