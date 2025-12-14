@@ -99,48 +99,11 @@ class MainPageViewModel(
     }
   }
 
-  //  /**
-  //   * Retrieves the current user's name.
-  //   * - Gets the logged-in user's ID from the session manager
-  //   * - Fetches the user's profile and returns their name
-  //   *
-  //   * Returns null if no user is logged in or if the profile cannot be retrieved. Logs a warning
-  // and
-  //   * safely returns null if an error occurs.
-  //   */
-  //  private suspend fun getUserName(): String? {
-  //    return runCatching {
-  //          val userId = UserSessionManager.getCurrentUserId()
-  //          if (userId != null) {
-  //            profileRepository.getProfile(userId)?.name
-  //          } else null
-  //        }
-  //        .onFailure { Log.e("HomePageViewModel", "Failed to get current profile", it) }
-  //        .getOrNull()
-  //  }
-  //
-  //  /**
-  //   * Builds the welcome message displayed to the user.
-  //   *
-  //   * This function attempts to retrieve the current user's name and returns a personalized
-  // welcome
-  //   * message if the name is available. If the username cannot be fetched, it falls back to a
-  // generic
-  //   * welcome message.
-  //   *
-  //   * @return A welcome message string, personalized when possible, or null if user lookup
-  // failed.
-  //   */
-  //  private suspend fun getWelcomeMsg(): String? {
-  //    val userName = runCatching { getUserName() }.getOrNull()
-  //    val userId = UserSessionManager.getCurrentUserId()
-  //    return if (userId != null) {
-  //      if (userName != null) "Welcome back, $userName!" else "Welcome back!"
-  //    } else {
-  //      null // No user ID means temporary auth issue, keep previous message
-  //    }
-  //  }
-
+  /**
+   * Builds a welcome message for the current user.
+   *
+   * @return A welcome message, or `null` if an error occurs.
+   */
   private suspend fun getWelcomeMsg(): String? =
       try {
         val userId = UserSessionManager.getCurrentUserId()

@@ -285,6 +285,12 @@ fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
   }
 }
 
+/**
+ * Displays an error message with a retry action.
+ *
+ * @param errorMsg The error details to display.
+ * @param reload Callback invoked when the user taps the retry button.
+ */
 @Composable
 fun ErrorSection(errorMsg: String, reload: () -> Unit) {
   Column(
