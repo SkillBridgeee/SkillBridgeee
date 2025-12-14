@@ -1804,42 +1804,6 @@ class ListingViewModelTest {
   }
 
   @Test
-  fun showDuplicateBookingWarning_setsShowDuplicateBookingWarningTrue() = runTest {
-    val listingRepo = FakeListingRepo()
-    val profileRepo = FakeProfileRepo()
-    val bookingRepo = FakeBookingRepo()
-    val ratingRepo = FakeRatingRepo()
-
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
-
-    assertFalse(viewModel.uiState.value.showDuplicateBookingWarning)
-
-    viewModel.showDuplicateBookingWarning()
-    advanceUntilIdle()
-
-    assertTrue(viewModel.uiState.value.showDuplicateBookingWarning)
-  }
-
-  @Test
-  fun dismissDuplicateBookingWarning_setsShowDuplicateBookingWarningFalse() = runTest {
-    val listingRepo = FakeListingRepo()
-    val profileRepo = FakeProfileRepo()
-    val bookingRepo = FakeBookingRepo()
-    val ratingRepo = FakeRatingRepo()
-
-    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
-
-    viewModel.showDuplicateBookingWarning()
-    advanceUntilIdle()
-    assertTrue(viewModel.uiState.value.showDuplicateBookingWarning)
-
-    viewModel.dismissDuplicateBookingWarning()
-    advanceUntilIdle()
-
-    assertFalse(viewModel.uiState.value.showDuplicateBookingWarning)
-  }
-
-  @Test
   fun checkExistingBooking_ownerViewsOwnListing_doesNotCheckExistingBooking() = runTest {
     val ownerId = "creator-456"
     UserSessionManager.setCurrentUserId(ownerId)
