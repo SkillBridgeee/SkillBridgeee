@@ -208,7 +208,6 @@ fun BookingDetailsContent(
               }
           ConfirmCompletionSection(
               paymentStatus = uiState.booking.paymentStatus,
-              listingType = uiState.listing.type,
               isTutor = isTutor,
               onMarkCompleted = onMarkCompleted)
         }
@@ -247,8 +246,6 @@ fun BookingDetailsContent(
           PaymentActionSection(
               booking = uiState.booking,
               isTutor = isTutorForPayment,
-              listingType = uiState.listing.type,
-              isCreator = uiState.isCreator,
               onPaymentComplete = onPaymentComplete,
               onPaymentReceived = onPaymentReceived)
         }
@@ -551,7 +548,6 @@ private fun BookingStatus(status: BookingStatus) {
 @Composable
 private fun ConfirmCompletionSection(
     paymentStatus: PaymentStatus,
-    listingType: ListingType,
     isTutor: Boolean,
     onMarkCompleted: () -> Unit
 ) {
@@ -830,8 +826,6 @@ private fun StudentRatingSection(
 private fun PaymentActionSection(
     booking: Booking,
     isTutor: Boolean,
-    listingType: ListingType,
-    isCreator: Boolean,
     onPaymentComplete: () -> Unit,
     onPaymentReceived: () -> Unit
 ) {
