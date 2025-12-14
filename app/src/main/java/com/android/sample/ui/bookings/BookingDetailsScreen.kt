@@ -294,14 +294,14 @@ private fun BookingHeader(uiState: BookingUIState) {
   val prefixText =
       when (uiState.listing.type) {
         ListingType.REQUEST -> {
-          if (uiState.isTutor) {
+          if (uiState.isCreator) {
             BookingDetailsStrings.BOOKING_HEADER_STUDENT
           } else {
             BookingDetailsStrings.BOOKING_HEADER_TEACHER
           }
         }
         ListingType.PROPOSAL -> {
-          if (uiState.isTutor) {
+          if (uiState.isCreator) {
             BookingDetailsStrings.BOOKING_HEADER_TEACHER
           } else {
             BookingDetailsStrings.BOOKING_HEADER_STUDENT

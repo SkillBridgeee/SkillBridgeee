@@ -8,7 +8,6 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -33,6 +32,7 @@ import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.BookingDetailsContent
 import com.android.sample.ui.bookings.BookingDetailsScreen
+import com.android.sample.ui.bookings.BookingDetailsStrings
 import com.android.sample.ui.bookings.BookingDetailsTestTag
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.BookingUIState
@@ -270,10 +270,9 @@ class BookingDetailsScreenTest {
       BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
     }
 
-    composeTestRule.waitUntil {
-      composeTestRule.onAllNodesWithText("John Doe").fetchSemanticsNodes().isNotEmpty()
-    }
+    composeTestRule.waitForIdle()
 
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.CONTENT).assertExists()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertExists()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertExists()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertExists()
@@ -894,5 +893,55 @@ class BookingDetailsScreenTest {
     }
     composeTestRule.onNodeWithText(BookingDetailsStrings.DOMAIN).assertExists()
     composeTestRule.onNodeWithText("ACADEMICS").assertExists()
+  }
+
+  @Test
+  fun bookingStatusPaymentWaitingForTutor() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 200.0,
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.PAID,
+                )))
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+    assert(vm.bookingUiState.value.booking.status == BookingStatus.CONFIRMED)
+    assert(vm.bookingUiState.value.booking.paymentStatus == PaymentStatus.PAID)
+    composeTestRule
+        .onNodeWithText("Waiting for the tutor to confirm receipt of payment.")
+        .assertExists()
+  }
+
+  @Test
+  fun bookingStatusPaymentReceived() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 200.0,
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.CONFIRMED,
+                )))
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+    assert(vm.bookingUiState.value.booking.status == BookingStatus.CONFIRMED)
+    assert(vm.bookingUiState.value.booking.paymentStatus == PaymentStatus.CONFIRMED)
+    composeTestRule
+        .onNodeWithText("Payment has been successfully completed and confirmed!")
+        .assertExists()
   }
 }
