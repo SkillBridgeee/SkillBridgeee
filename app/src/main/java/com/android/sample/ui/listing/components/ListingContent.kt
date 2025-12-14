@@ -23,6 +23,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,8 +69,8 @@ fun ListingContent(
     onRejectBooking: (String) -> Unit,
     onDeleteListing: () -> Unit,
     onEditListing: () -> Unit,
+    onNavigateToProfile: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onNavigateToProfile: (String) -> Unit = {},
     autoFillDatesForTesting: Boolean = false
 ) {
   val listing = uiState.listing ?: return
@@ -152,7 +153,7 @@ fun ListingContent(
               "You already have a booking for this listing. Are you sure you want to create another booking?")
         },
         confirmButton = {
-          Button(
+          TextButton(
               onClick = {
                 showDuplicateWarningDialog = false
                 showBookingDialog = true
@@ -162,7 +163,7 @@ fun ListingContent(
               }
         },
         dismissButton = {
-          Button(
+          TextButton(
               onClick = { showDuplicateWarningDialog = false },
               modifier = Modifier.testTag(ListingScreenTestTags.DUPLICATE_BOOKING_CANCEL)) {
                 Text("Cancel")

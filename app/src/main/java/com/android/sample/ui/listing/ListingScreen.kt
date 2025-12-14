@@ -82,8 +82,8 @@ fun ListingScreen(
     listingId: String,
     onNavigateBack: () -> Unit,
     onEditListing: () -> Unit,
-    onNavigateToProfile: (String) -> Unit = {},
-    onNavigateToBookings: () -> Unit = {},
+    onNavigateToProfile: (String) -> Unit,
+    onNavigateToBookings: () -> Unit,
     viewModel: ListingViewModel = viewModel(),
     autoFillDatesForTesting: Boolean = false
 ) {
