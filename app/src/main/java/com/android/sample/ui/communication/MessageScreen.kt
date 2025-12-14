@@ -45,7 +45,7 @@ fun MessageScreen(
       modifier = Modifier.fillMaxSize(),
       topBar = {
         TopAppBar(
-            title = { Text(uiState.partnerName ?: "Messages") },
+            title = { Text(uiState.partnerName)},
             actions = {
               IconButton(onClick = { viewModel.deleteConversation() }) {
                 Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete conversation")
