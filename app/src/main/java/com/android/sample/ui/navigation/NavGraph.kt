@@ -461,7 +461,8 @@ fun NavGraphBuilder.addListingRoute(navController: NavHostController) {
         ListingScreen(
             listingId = listingId,
             onNavigateBack = { navController.popBackStack() },
-            onEditListing = { navigateToNewListing(navController, listingId) })
+            onEditListing = { navigateToNewListing(navController, listingId) },
+            onNavigateToBookings = { navController.navigate(NavRoutes.BOOKINGS) })
       }
 }
 

@@ -1712,4 +1712,150 @@ class ListingViewModelTest {
     assertEquals(3, profileRepo.lastStudentTotal)
     assertEquals(expectedAvg, profileRepo.lastStudentAvg!!, 0.001)
   }
+
+  @Test
+  fun checkExistingBooking_userHasActiveBooking_setsHasExistingBookingTrue() = runTest {
+    val currentUserId = "booker-123"
+    UserSessionManager.setCurrentUserId(currentUserId)
+
+    val existingBooking =
+        sampleBooking.copy(
+            bookerId = currentUserId,
+            associatedListingId = "listing-123",
+            status = BookingStatus.PENDING)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo(mutableListOf(existingBooking))
+    val ratingRepo = FakeRatingRepo()
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    assertTrue(viewModel.uiState.value.hasExistingBooking)
+  }
+
+  @Test
+  fun checkExistingBooking_userHasCancelledBooking_setsHasExistingBookingFalse() = runTest {
+    val currentUserId = "booker-123"
+    UserSessionManager.setCurrentUserId(currentUserId)
+
+    val cancelledBooking =
+        sampleBooking.copy(
+            bookerId = currentUserId,
+            associatedListingId = "listing-123",
+            status = BookingStatus.CANCELLED)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo(mutableListOf(cancelledBooking))
+    val ratingRepo = FakeRatingRepo()
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    assertFalse(viewModel.uiState.value.hasExistingBooking)
+  }
+
+  @Test
+  fun checkExistingBooking_userHasNoBooking_setsHasExistingBookingFalse() = runTest {
+    val currentUserId = "booker-123"
+    UserSessionManager.setCurrentUserId(currentUserId)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val ratingRepo = FakeRatingRepo()
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    assertFalse(viewModel.uiState.value.hasExistingBooking)
+  }
+
+  @Test
+  fun checkExistingBooking_otherUserHasBooking_setsHasExistingBookingFalse() = runTest {
+    val currentUserId = "booker-123"
+    UserSessionManager.setCurrentUserId(currentUserId)
+
+    val otherUserBooking =
+        sampleBooking.copy(
+            bookerId = "other-user",
+            associatedListingId = "listing-123",
+            status = BookingStatus.PENDING)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo(mutableListOf(otherUserBooking))
+    val ratingRepo = FakeRatingRepo()
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    assertFalse(viewModel.uiState.value.hasExistingBooking)
+  }
+
+  @Test
+  fun showDuplicateBookingWarning_setsShowDuplicateBookingWarningTrue() = runTest {
+    val listingRepo = FakeListingRepo()
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val ratingRepo = FakeRatingRepo()
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    assertFalse(viewModel.uiState.value.showDuplicateBookingWarning)
+
+    viewModel.showDuplicateBookingWarning()
+    advanceUntilIdle()
+
+    assertTrue(viewModel.uiState.value.showDuplicateBookingWarning)
+  }
+
+  @Test
+  fun dismissDuplicateBookingWarning_setsShowDuplicateBookingWarningFalse() = runTest {
+    val listingRepo = FakeListingRepo()
+    val profileRepo = FakeProfileRepo()
+    val bookingRepo = FakeBookingRepo()
+    val ratingRepo = FakeRatingRepo()
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.showDuplicateBookingWarning()
+    advanceUntilIdle()
+    assertTrue(viewModel.uiState.value.showDuplicateBookingWarning)
+
+    viewModel.dismissDuplicateBookingWarning()
+    advanceUntilIdle()
+
+    assertFalse(viewModel.uiState.value.showDuplicateBookingWarning)
+  }
+
+  @Test
+  fun checkExistingBooking_ownerViewsOwnListing_doesNotCheckExistingBooking() = runTest {
+    val ownerId = "creator-456"
+    UserSessionManager.setCurrentUserId(ownerId)
+
+    val listingRepo = FakeListingRepo(sampleProposal.copy(creatorUserId = ownerId))
+    val profileRepo = FakeProfileRepo(mapOf(ownerId to sampleCreator.copy(userId = ownerId)))
+    val bookingRepo = FakeBookingRepo()
+    val ratingRepo = FakeRatingRepo()
+
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Owner should not have hasExistingBooking checked
+    assertFalse(viewModel.uiState.value.hasExistingBooking)
+    assertTrue(viewModel.uiState.value.isOwnListing)
+  }
 }

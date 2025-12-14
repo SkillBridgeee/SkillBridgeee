@@ -62,7 +62,9 @@ data class ListingUiState(
     val listingDeleted: Boolean = false,
     val bookerProfiles: Map<String, Profile> = emptyMap(),
     val tutorRatingPending: Boolean = false,
-    val currentUserId: String? = null
+    val currentUserId: String? = null,
+    val hasExistingBooking: Boolean = false,
+    val showDuplicateBookingWarning: Boolean = false
 )
 
 /**
@@ -129,11 +131,37 @@ class ListingViewModel(
         // If this is the owner's listing, load bookings
         if (isOwnListing) {
           loadBookingsForListing(listingId)
+        } else {
+          // Check if the user already has a booking for this listing
+          checkExistingBooking(listingId, currentUserId)
         }
       } catch (e: Exception) {
         _uiState.update {
           it.copy(isLoading = false, error = "Failed to load listing: ${e.message}")
         }
+      }
+    }
+  }
+
+  /**
+   * Check if the current user already has a booking for this listing
+   *
+   * @param listingId The ID of the listing
+   * @param userId The current user's ID
+   */
+  private fun checkExistingBooking(listingId: String, userId: String?) {
+    if (userId == null) return
+
+    viewModelScope.launch {
+      try {
+        val bookings = bookingRepo.getBookingsByListing(listingId)
+        val hasExistingBooking =
+            bookings.any { booking ->
+              booking.bookerId == userId && booking.status != BookingStatus.CANCELLED
+            }
+        _uiState.update { it.copy(hasExistingBooking = hasExistingBooking) }
+      } catch (e: Exception) {
+        Log.w("ListingViewModel", "Failed to check existing bookings", e)
       }
     }
   }
@@ -467,6 +495,16 @@ class ListingViewModel(
 
   fun showBookingError(message: String) {
     _uiState.update { it.copy(bookingError = message) }
+  }
+
+  /** Shows the duplicate booking warning dialog. */
+  fun showDuplicateBookingWarning() {
+    _uiState.update { it.copy(showDuplicateBookingWarning = true) }
+  }
+
+  /** Dismisses the duplicate booking warning dialog. */
+  fun dismissDuplicateBookingWarning() {
+    _uiState.update { it.copy(showDuplicateBookingWarning = false) }
   }
 
   /**
