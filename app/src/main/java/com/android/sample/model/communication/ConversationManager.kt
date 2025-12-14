@@ -1,6 +1,7 @@
 package com.android.sample.model.communication
 
 import android.util.Log
+import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.communication.conversation.ConvRepository
 import com.android.sample.model.communication.conversation.Conversation
 import com.android.sample.model.communication.conversation.Message
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 class ConversationManager(
     private val convRepo: ConvRepository,
     private val overViewRepo: OverViewConvRepository,
+    private val bookingRepo: BookingRepository? = null,
 ) : ConversationManagerInter {
 
   companion object {
@@ -93,6 +95,13 @@ class ConversationManager(
    * @param otherId The ID of the other participant in the conversation.
    */
   override suspend fun deleteConvAndOverviews(convId: String, deleterId: String, otherId: String) {
+    // Check for ongoing bookings between the two users before allowing deletion
+    val blocked = bookingRepo?.hasOngoingBookingBetween(deleterId, otherId)
+    check(blocked != true) {
+      "BLOCK_DELETE_CONV_ACTIVE_BOOKING: Cannot delete conversation ($convId): " +
+          "active booking exists between users deleterId=$deleterId and otherId=$otherId"
+    }
+
     convRepo.deleteConv(convId)
 
     val myOverviews = overViewRepo.getOverViewConvUser(deleterId)

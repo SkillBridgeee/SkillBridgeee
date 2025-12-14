@@ -96,6 +96,7 @@ class ListingScreenTest {
     ConversationRepositoryProvider.setForTests(FakeConvRepository())
     OverViewConvRepositoryProvider.setForTests(FakeOverViewConvRepository())
     RatingRepositoryProvider.setForTests(FakeRatingRepository())
+    BookingRepositoryProvider.setForTests(FakeBookingRepo())
   }
 
   @After
@@ -323,6 +324,10 @@ class ListingScreenTest {
     override suspend fun completeBooking(bookingId: String) {}
 
     override suspend fun cancelBooking(bookingId: String) {}
+
+    override suspend fun hasOngoingBookingBetween(userA: String, userB: String): Boolean {
+      TODO("Not yet implemented")
+    }
   }
 
   private fun createViewModel(
