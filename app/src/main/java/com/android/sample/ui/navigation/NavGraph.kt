@@ -470,8 +470,7 @@ fun NavGraphBuilder.addListingRoute(
             onNavigateToProfile = { profileId ->
               profileID.value = profileId
               navController.navigate(NavRoutes.OTHERS_PROFILE)
-            },
-            onNavigateToBookings = { navController.navigate(NavRoutes.BOOKINGS) })
+            })
       }
 }
 
