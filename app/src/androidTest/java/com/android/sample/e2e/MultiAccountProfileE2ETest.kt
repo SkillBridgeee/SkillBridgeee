@@ -47,6 +47,9 @@ class MultiAccountProfileE2ETest : E2ETestBase() {
 
   companion object {
     private const val TAG = "MultiAccountProfileE2E"
+    private const val PROFILE_LOAD_DELAY = 5000L
+    private const val NAVIGATION_DELAY = 1000L
+    private const val SCREEN_TRANSITION_DELAY = 3000L
   }
 
   @get:Rule val composeTestRule = createAndroidComposeRule<MainActivity>()
@@ -126,6 +129,84 @@ class MultiAccountProfileE2ETest : E2ETestBase() {
     }
   }
 
+  /**
+   * Helper function to navigate to profile page Handles waiting, navigation click, and verification
+   * that profile screen is displayed
+   */
+  private suspend fun navigateToProfilePage() {
+    composeTestRule.waitForIdle()
+    delay(NAVIGATION_DELAY)
+
+    composeTestRule
+        .onNodeWithTag(BottomBarTestTag.NAV_PROFILE)
+        .assertExists("Profile navigation button should exist")
+        .assertIsDisplayed()
+        .performClick()
+
+    composeTestRule.waitForIdle()
+    delay(SCREEN_TRANSITION_DELAY)
+
+    composeTestRule
+        .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST)
+        .assertExists("Profile page should be displayed")
+  }
+
+  /** Helper function to wait for profile data to load from Firestore */
+  private suspend fun waitForProfileDataLoad() {
+    Log.d(TAG, "→ Waiting for profile data to load from Firestore...")
+    delay(PROFILE_LOAD_DELAY)
+    composeTestRule.waitForIdle()
+    Log.d(TAG, "→ Profile data should be loaded, verifying name...")
+  }
+
+  /**
+   * Helper function to verify a user's name is displayed on the profile page
+   *
+   * @param expectedName The full name expected to be displayed
+   * @param userName The first name for logging purposes
+   */
+  private fun verifyProfileName(expectedName: String, userName: String) {
+    try {
+      composeTestRule
+          .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
+          .assertExists("Name display should exist")
+
+      composeTestRule
+          .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
+          .assertTextContains(expectedName, ignoreCase = true)
+
+      Log.d(TAG, "→ $userName's name '$expectedName' found on profile page")
+    } catch (e: AssertionError) {
+      Log.e(TAG, "→ Name verification failed: ${e.message}")
+      // Try to log what text is actually displayed
+      try {
+        val nameNode =
+            composeTestRule.onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY).fetchSemanticsNode()
+        Log.e(TAG, "→ Actual name displayed: ${nameNode.config}")
+      } catch (ex: Exception) {
+        Log.e(TAG, "→ Could not fetch name node: ${ex.message}")
+      }
+      throw AssertionError("$userName's name should be displayed on profile page")
+    }
+  }
+
+  /**
+   * Helper function to verify a name is NOT displayed on the profile page
+   *
+   * @param nameToNotExist The name that should not be present
+   */
+  private fun verifyNameNotDisplayed(nameToNotExist: String) {
+    try {
+      composeTestRule
+          .onNodeWithText(nameToNotExist, substring = true, ignoreCase = true)
+          .assertDoesNotExist()
+      Log.d(TAG, "→ Verified '$nameToNotExist' is NOT displayed (correct behavior)")
+    } catch (_: AssertionError) {
+      Log.e(TAG, "→ ERROR: '$nameToNotExist' is still displayed!")
+      throw AssertionError("'$nameToNotExist' should NOT be displayed on profile page")
+    }
+  }
+
   @Test
   fun multiAccountProfile_signInViewProfileSignOutCreateNewAccountAndViewProfile_profilesAreDifferent() {
     runBlocking {
@@ -152,41 +233,12 @@ class MultiAccountProfileE2ETest : E2ETestBase() {
       // ═══════════════════════════════════════════════════════════
       Log.d(TAG, "PHASE 2: Navigating to first user's profile page")
 
-      composeTestRule.waitForIdle()
-      delay(1000)
-
-      composeTestRule
-          .onNodeWithTag(BottomBarTestTag.NAV_PROFILE)
-          .assertExists("Profile navigation button should exist")
-          .assertIsDisplayed()
-          .performClick()
-
-      composeTestRule.waitForIdle()
-      delay(3000) // Wait for profile to load
-
-      // Verify we're on the profile page by checking for profile elements
-      composeTestRule
-          .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST)
-          .assertExists("Profile page should be displayed")
-
-      // Give extra time for profile data to load and render from Firestore
-      Log.d(TAG, "→ Waiting for profile data to load from Firestore...")
-      delay(5000) // Increased delay to ensure data is fully loaded
-      composeTestRule.waitForIdle()
-
-      Log.d(TAG, "→ Profile data should be loaded, verifying name...")
+      navigateToProfilePage()
+      waitForProfileDataLoad()
 
       // Verify first user's name is displayed
       try {
-        composeTestRule
-            .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
-            .assertExists("Name display should exist")
-
-        composeTestRule
-            .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
-            .assertTextContains("Alice Smith", ignoreCase = true)
-
-        Log.d(TAG, "→ First user's name 'Alice Smith' found on profile page")
+        verifyProfileName("Alice Smith", "First user")
       } catch (e: AssertionError) {
         Log.d(TAG, "→ Name verification: ${e.message}")
       }
@@ -288,68 +340,14 @@ class MultiAccountProfileE2ETest : E2ETestBase() {
       // ═══════════════════════════════════════════════════════════
       Log.d(TAG, "PHASE 5: Navigating to second user's profile page and verifying")
 
-      composeTestRule.waitForIdle()
-      delay(1000)
-
-      composeTestRule
-          .onNodeWithTag(BottomBarTestTag.NAV_PROFILE)
-          .assertExists("Profile navigation button should exist")
-          .assertIsDisplayed()
-          .performClick()
-
-      composeTestRule.waitForIdle()
-      delay(3000) // Wait for profile to load
-
-      // Verify we're on the profile page
-      composeTestRule
-          .onNodeWithTag(MyProfileScreenTestTag.ROOT_LIST)
-          .assertExists("Profile page should be displayed")
-
-      // Give extra time for profile data to load and render from Firestore
-      Log.d(TAG, "→ Waiting for profile data to load from Firestore...")
-      delay(5000) // Increased delay to ensure data is fully loaded
-      composeTestRule.waitForIdle()
-
-      Log.d(TAG, "→ Profile data should be loaded, verifying name...")
+      navigateToProfilePage()
+      waitForProfileDataLoad()
 
       // Verify second user's name is displayed (NOT first user's name)
-      // Use the NAME_DISPLAY test tag for more reliable verification
-      try {
-        composeTestRule
-            .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
-            .assertExists("Name display should exist")
-
-        // Now check that it contains Bob Johnson
-        composeTestRule
-            .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
-            .assertTextContains("Bob Johnson", ignoreCase = true)
-
-        Log.d(TAG, "→ Second user's name 'Bob Johnson' found on profile page")
-      } catch (e: AssertionError) {
-        Log.e(TAG, "→ Name verification failed: ${e.message}")
-        // Try to log what text is actually displayed
-        try {
-          val nameNode =
-              composeTestRule
-                  .onNodeWithTag(MyProfileScreenTestTag.NAME_DISPLAY)
-                  .fetchSemanticsNode()
-          Log.e(TAG, "→ Actual name displayed: ${nameNode.config}")
-        } catch (ex: Exception) {
-          Log.e(TAG, "→ Could not fetch name node: ${ex.message}")
-        }
-        throw AssertionError("Second user's name should be displayed on profile page")
-      }
+      verifyProfileName("Bob Johnson", "Second user")
 
       // Verify first user's name is NOT displayed
-      try {
-        composeTestRule
-            .onNodeWithText("Alice Smith", substring = true, ignoreCase = true)
-            .assertDoesNotExist()
-        Log.d(TAG, "→ Verified first user's name is NOT displayed (correct behavior)")
-      } catch (_: AssertionError) {
-        Log.e(TAG, "→ ERROR: First user's name is still displayed!")
-        throw AssertionError("First user's name should NOT be displayed on second user's profile")
-      }
+      verifyNameNotDisplayed("Alice Smith")
 
       // Verify the user IDs are different
       assert(firstUser?.uid != secondUser?.uid) {
