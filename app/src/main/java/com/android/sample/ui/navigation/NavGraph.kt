@@ -120,7 +120,7 @@ fun AppNavGraph(
     addNewSkillRoute(navController, newListingViewModel)
     addSignUpRoute(navController)
     addOthersProfileRoute(navController, profileID)
-    addListingRoute(navController)
+    addListingRoute(navController, profileID)
     addBookingDetailsRoute(navController, bookingDetailsViewModel, bookingId, profileID)
     addDiscussionRoute(navController, discussionViewModel, convId)
     addToSRoute()
@@ -450,8 +450,12 @@ fun NavGraphBuilder.addOthersProfileRoute(
  * the listing screen. Provides navigation callbacks for back and editing.
  *
  * @param navController Controller used to navigate from the listing details screen.
+ * @param profileID Mutable state used to pass a selected profile id to other screens.
  */
-fun NavGraphBuilder.addListingRoute(navController: NavHostController) {
+fun NavGraphBuilder.addListingRoute(
+    navController: NavHostController,
+    profileID: MutableState<String>
+) {
   composable(
       route = NavRoutes.LISTING,
       arguments = listOf(navArgument("listingId") { type = NavType.StringType })) { backStackEntry
@@ -462,6 +466,10 @@ fun NavGraphBuilder.addListingRoute(navController: NavHostController) {
             listingId = listingId,
             onNavigateBack = { navController.popBackStack() },
             onEditListing = { navigateToNewListing(navController, listingId) },
+            onNavigateToProfile = { profileId ->
+              profileID.value = profileId
+              navController.navigate(NavRoutes.OTHERS_PROFILE)
+            },
             onNavigateToBookings = { navController.navigate(NavRoutes.BOOKINGS) })
       }
 }
