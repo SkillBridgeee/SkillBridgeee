@@ -558,13 +558,11 @@ private fun ConfirmCompletionSection(
   var showWarningDialog by remember { mutableStateOf(false) }
 
   // Determine if the current user is the one who receives payment (the tutor)
-  // - For PROPOSAL: isTutor=true means creator (tutor), who receives payment
-  // - For REQUEST: isTutor=false means booker (tutor), who receives payment
-  val isPaymentReceiver =
-      when (listingType) {
-        ListingType.PROPOSAL -> isTutor // Creator is tutor, receives payment
-        ListingType.REQUEST -> !isTutor // Booker is tutor, receives payment
-      }
+  // isTutor is already computed correctly based on listing type:
+  // - For PROPOSAL: isTutor=true if user is creator (tutor)
+  // - For REQUEST: isTutor=true if user is booker (tutor)
+  // The tutor is always the payment receiver
+  val isPaymentReceiver = isTutor
 
   // The payer (student) is the opposite of the payment receiver
   val isPayer = !isPaymentReceiver
@@ -839,12 +837,9 @@ private fun PaymentActionSection(
 ) {
   // Determine if the current user is the one who should pay (the student)
   // - For PROPOSAL: isTutor=false means booker (student), who pays
-  // - For REQUEST: isTutor=true means creator (student), who pays
-  val isStudentPaying =
-      when (listingType) {
-        ListingType.PROPOSAL -> !isTutor // Booker is student, pays
-        ListingType.REQUEST -> isTutor // Creator is student, pays
-      }
+  // - For REQUEST: isTutor=false means creator (student), who pays
+  // In both cases, the student (non-tutor) is the one who pays
+  val isStudentPaying = !isTutor
 
   // Always display the current payment status
   Column(
