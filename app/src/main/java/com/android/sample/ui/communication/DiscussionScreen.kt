@@ -28,6 +28,7 @@ fun DiscussionScreen(
     onConversationClick: (conversationId: String) -> Unit
 ) {
   val uiState by viewModel.uiState.collectAsState()
+  val currentUserId = com.android.sample.model.authentication.UserSessionManager.getCurrentUserId()
 
   Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
     Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
@@ -67,6 +68,7 @@ fun DiscussionScreen(
             ConversationItem(
                 conversation = conversation,
                 participantName = participantName,
+                currentUserId = currentUserId,
                 onClick = { onConversationClick(conversation.linkedConvId) },
                 index = index)
           }
@@ -80,6 +82,7 @@ fun DiscussionScreen(
 fun ConversationItem(
     conversation: OverViewConversation,
     participantName: String,
+    currentUserId: String?,
     onClick: () -> Unit,
     index: Int
 ) {
@@ -89,6 +92,18 @@ fun ConversationItem(
       } else {
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
       }
+
+  // Determine if the last message was sent by the current user
+  val lastMessageText =
+      conversation.lastMsg?.let { lastMsg ->
+        val isMyMessage = currentUserId != null && lastMsg.senderId == currentUserId
+        if (isMyMessage) {
+          "You: ${lastMsg.content}"
+        } else {
+          lastMsg.content
+        }
+      } ?: ""
+
   Row(
       modifier =
           Modifier.fillMaxWidth()
@@ -113,9 +128,24 @@ fun ConversationItem(
         Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-          Text(text = participantName, style = MaterialTheme.typography.titleMedium)
+          Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = participantName,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f, fill = false))
+                conversation.lastMsg?.createdAt?.let { timestamp ->
+                  Text(
+                      text = TimeFormatUtils.formatDiscussionTimestamp(timestamp),
+                      style = MaterialTheme.typography.labelSmall,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      modifier = Modifier.padding(start = 8.dp))
+                }
+              }
           Text(
-              text = conversation.lastMsg?.content ?: "",
+              text = lastMessageText,
               style = MaterialTheme.typography.bodyMedium,
               color = MaterialTheme.colorScheme.onSurfaceVariant,
               maxLines = 1,
