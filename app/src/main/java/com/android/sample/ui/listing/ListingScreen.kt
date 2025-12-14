@@ -63,6 +63,9 @@ object ListingScreenTestTags {
   const val TUTOR_RATING_SECTION = "listing_tutor_rating_section"
   const val TUTOR_RATING_STARS = "listing_tutor_rating_stars"
   const val TUTOR_RATING_SUBMIT = "listing_tutor_rating_submit"
+  const val DUPLICATE_BOOKING_DIALOG = "listingScreenDuplicateBookingDialog"
+  const val DUPLICATE_BOOKING_CONFIRM = "listingScreenDuplicateBookingConfirm"
+  const val DUPLICATE_BOOKING_CANCEL = "listingScreenDuplicateBookingCancel"
 }
 
 /**
@@ -80,6 +83,7 @@ fun ListingScreen(
     onNavigateBack: () -> Unit,
     onEditListing: () -> Unit,
     onNavigateToProfile: (String) -> Unit = {},
+    onNavigateToBookings: () -> Unit = {},
     viewModel: ListingViewModel = viewModel(),
     autoFillDatesForTesting: Boolean = false
 ) {
@@ -113,7 +117,7 @@ fun ListingScreen(
         onDismissRequest = {
           viewModel.clearBookingSuccess()
           viewModel.clearConversationWarning()
-          onNavigateBack()
+          onNavigateToBookings()
         },
         title = { Text("Booking Created") },
         text = { Text(successMessage) },
@@ -122,7 +126,7 @@ fun ListingScreen(
               onClick = {
                 viewModel.clearBookingSuccess()
                 viewModel.clearConversationWarning()
-                onNavigateBack()
+                onNavigateToBookings()
               }) {
                 Text("OK")
               }
@@ -139,6 +143,10 @@ fun ListingScreen(
         confirmButton = { Button(onClick = { viewModel.clearBookingError() }) { Text("OK") } },
         modifier = Modifier.testTag(ListingScreenTestTags.ERROR_DIALOG))
   }
+
+  // Show duplicate booking warning dialog
+  // Note: We need to track separately whether user confirmed to proceed with duplicate booking
+  // This state is managed by passing a callback that will be handled in ListingContent
 
   Scaffold(
       modifier = Modifier.fillMaxSize().testTag(ListingScreenTestTags.SCREEN),
