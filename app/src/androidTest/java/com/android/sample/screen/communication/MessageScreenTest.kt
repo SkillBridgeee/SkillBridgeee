@@ -444,4 +444,73 @@ class MessageScreenTest {
         totalRatings: Int
     ) {}
   }
+  @Test
+  fun messageScreen_callsOnConversationDeletedWhenStateFlagIsTrue() {
+    var callbackCalled = false
+
+    composeTestRule.setContent {
+      MessageScreen(
+        viewModel = viewModel,
+        convId = convId,
+        onConversationDeleted = { callbackCalled = true }
+      )
+    }
+
+    // Force deletion
+    viewModel.deleteConversation()
+
+    composeTestRule.waitUntil(2000) { callbackCalled }
+  }
+
+  @Test
+  fun messageScreen_deleteButtonDeletesConversation() {
+    var deleteCallbackTriggered = false
+
+    composeTestRule.setContent {
+      MessageScreen(
+        viewModel = viewModel,
+        convId = convId,
+        onConversationDeleted = { deleteCallbackTriggered = true })
+    }
+
+    // Click delete icon
+    composeTestRule
+      .onNode(hasContentDescription("Delete conversation"))
+      .performClick()
+
+    composeTestRule.waitUntil(timeoutMillis = 2_000) {
+      viewModel.uiState.value.isDeleted || deleteCallbackTriggered
+    }
+
+    assert(viewModel.uiState.value.isDeleted)
+  }
+
+  @Test
+  fun messageScreen_onConversationDeletedCallbackCalled() {
+    var callbackCalled = false
+
+    composeTestRule.setContent {
+      MessageScreen(
+        viewModel = viewModel,
+        convId = convId,
+        onConversationDeleted = { callbackCalled = true })
+    }
+
+    // Force deletion manually
+    viewModel.deleteConversation()
+
+    composeTestRule.waitUntil(2_000) { callbackCalled }
+
+    assert(callbackCalled)
+  }
+
+  
+
+
+
+
+
+
+
+
 }
