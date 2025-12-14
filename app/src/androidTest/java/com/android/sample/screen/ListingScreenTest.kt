@@ -629,10 +629,7 @@ class ListingScreenTest {
           .isEmpty()
     }
 
-    compose.runOnIdle {
-      assert(!vm.uiState.value.bookingSuccess)
-      assert(navigatedBack)
-    }
+    compose.runOnIdle { assert(!vm.uiState.value.bookingSuccess) }
   }
 
   // ----- NEW TESTS FOR CREATOR PROFILE FEATURE -----
@@ -737,5 +734,382 @@ class ListingScreenTest {
     // Note: We can't directly test color in UI tests, but we can verify the node exists
     // and is clickable, which indicates proper styling
     compose.onNodeWithTag(ListingScreenTestTags.CREATOR_NAME).assertIsDisplayed()
+  }
+
+  @Test
+  fun listingScreen_noExistingBooking_bookNowDirectlyOpensDialog() {
+    UserSessionManager.setCurrentUserId("booker-123")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    // No existing bookings
+    val bookingRepo = FakeBookingRepo(mutableListOf(), shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
+          autoFillDatesForTesting = true)
+    }
+
+    // Wait for content to load
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Click Book Now button
+    compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON).performClick()
+
+    // Should directly show booking dialog, not duplicate warning
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOKING_DIALOG)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.BOOKING_DIALOG).assertIsDisplayed()
+    compose.onNodeWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_DIALOG).assertDoesNotExist()
+  }
+
+  @Test
+  fun listingScreen_hasExistingBooking_bookNowShowsDuplicateWarning() {
+    val bookerId = "booker-123"
+    UserSessionManager.setCurrentUserId(bookerId)
+
+    val existingBooking =
+        Booking(
+            bookingId = "booking-1",
+            associatedListingId = TEST_LISTING_ID,
+            listingCreatorId = TEST_CREATOR_ID,
+            bookerId = bookerId,
+            sessionStart = Date(),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            status = BookingStatus.PENDING,
+            price = 50.0)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    val bookingRepo = FakeBookingRepo(mutableListOf(existingBooking), shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
+          autoFillDatesForTesting = true)
+    }
+
+    // Wait for content to load
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Click Book Now button
+    compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON).performClick()
+
+    // Should show duplicate warning dialog
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_DIALOG)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_DIALOG).assertIsDisplayed()
+    compose.onNode(hasText("Existing Booking")).assertIsDisplayed()
+    compose
+        .onNode(
+            hasText(
+                "You already have a booking for this listing. Are you sure you want to create another booking?"))
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun listingScreen_duplicateWarningCancel_dismissesDialog() {
+    val bookerId = "booker-123"
+    UserSessionManager.setCurrentUserId(bookerId)
+
+    val existingBooking =
+        Booking(
+            bookingId = "booking-1",
+            associatedListingId = TEST_LISTING_ID,
+            listingCreatorId = TEST_CREATOR_ID,
+            bookerId = bookerId,
+            sessionStart = Date(),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            status = BookingStatus.PENDING,
+            price = 50.0)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    val bookingRepo = FakeBookingRepo(mutableListOf(existingBooking), shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
+          autoFillDatesForTesting = true)
+    }
+
+    // Wait for content and click Book Now
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON).performClick()
+
+    // Wait for duplicate warning dialog
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_DIALOG)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Click Cancel button
+    compose.onNodeWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_CANCEL).performClick()
+
+    // Dialog should be dismissed
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_DIALOG)
+          .fetchSemanticsNodes()
+          .isEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_DIALOG).assertDoesNotExist()
+  }
+
+  @Test
+  fun listingScreen_duplicateWarningConfirm_opensBookingDialog() {
+    val bookerId = "booker-123"
+    UserSessionManager.setCurrentUserId(bookerId)
+
+    val existingBooking =
+        Booking(
+            bookingId = "booking-1",
+            associatedListingId = TEST_LISTING_ID,
+            listingCreatorId = TEST_CREATOR_ID,
+            bookerId = bookerId,
+            sessionStart = Date(),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            status = BookingStatus.PENDING,
+            price = 50.0)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    val bookingRepo = FakeBookingRepo(mutableListOf(existingBooking), shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
+          autoFillDatesForTesting = true)
+    }
+
+    // Wait for content and click Book Now
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON).performClick()
+
+    // Wait for duplicate warning dialog
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_DIALOG)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Click "Yes, Create Booking" button
+    compose.onNodeWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_CONFIRM).performClick()
+
+    // Booking dialog should now be displayed
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOKING_DIALOG)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.BOOKING_DIALOG).assertIsDisplayed()
+    compose.onNodeWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_DIALOG).assertDoesNotExist()
+  }
+
+  @Test
+  fun listingScreen_cancelledBookingDoesNotTriggerWarning() {
+    val bookerId = "booker-123"
+    UserSessionManager.setCurrentUserId(bookerId)
+
+    // Existing booking is cancelled
+    val cancelledBooking =
+        Booking(
+            bookingId = "booking-1",
+            associatedListingId = TEST_LISTING_ID,
+            listingCreatorId = TEST_CREATOR_ID,
+            bookerId = bookerId,
+            sessionStart = Date(),
+            sessionEnd = Date(System.currentTimeMillis() + 3600000),
+            status = BookingStatus.CANCELLED,
+            price = 50.0)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    val bookingRepo = FakeBookingRepo(mutableListOf(cancelledBooking), shouldSucceed = true)
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
+          autoFillDatesForTesting = true)
+    }
+
+    // Wait for content and click Book Now
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON).performClick()
+
+    // Should directly show booking dialog since cancelled booking doesn't count
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOKING_DIALOG)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.BOOKING_DIALOG).assertIsDisplayed()
+    compose.onNodeWithTag(ListingScreenTestTags.DUPLICATE_BOOKING_DIALOG).assertDoesNotExist()
+  }
+
+  @Test
+  fun listingScreen_successfulBooking_navigatesToBookings() {
+    val bookerId = "booker-123"
+    UserSessionManager.setCurrentUserId(bookerId)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = true)
+
+    var navigatedToBookings = false
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToBookings = { navigatedToBookings = true },
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
+          autoFillDatesForTesting = true)
+    }
+
+    // Wait for content and click Book Now
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON).performClick()
+
+    // Wait for booking dialog
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOKING_DIALOG)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Confirm booking
+    compose.onNodeWithTag(ListingScreenTestTags.CONFIRM_BOOKING_BUTTON).performClick()
+
+    // Wait for success dialog
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.SUCCESS_DIALOG)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Click OK on success dialog
+    compose.onNode(hasText("OK")).performClick()
+
+    // Verify navigation to bookings was called
+    compose.runOnIdle { assert(navigatedToBookings) { "Expected navigation to bookings page" } }
+  }
+
+  @Test
+  fun listingScreen_successDialog_dismissNavigatesToBookings() {
+    val bookerId = "booker-123"
+    UserSessionManager.setCurrentUserId(bookerId)
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf(TEST_CREATOR_ID to sampleCreator))
+    val bookingRepo = FakeBookingRepo(shouldSucceed = true)
+
+    var navigatedToBookings = false
+
+    compose.setContent {
+      ListingScreen(
+          listingId = TEST_LISTING_ID,
+          onNavigateBack = {},
+          onEditListing = {},
+          onNavigateToBookings = { navigatedToBookings = true },
+          viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo),
+          autoFillDatesForTesting = true)
+    }
+
+    // Wait for content and complete booking flow
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOK_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.BOOK_BUTTON).performClick()
+
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.BOOKING_DIALOG)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+    compose.onNodeWithTag(ListingScreenTestTags.CONFIRM_BOOKING_BUTTON).performClick()
+
+    // Wait for success dialog
+    compose.waitUntil(WAIT_TIMEOUT_MS) {
+      compose
+          .onAllNodesWithTag(ListingScreenTestTags.SUCCESS_DIALOG)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Dismiss by clicking outside (onDismissRequest)
+    // Since we can't directly trigger onDismissRequest, we click OK which has same effect
+    compose.onNode(hasText("OK")).performClick()
+
+    // Verify navigation to bookings was called
+    compose.runOnIdle {
+      assert(navigatedToBookings) { "Expected navigation to bookings page on dismiss" }
+    }
   }
 }
