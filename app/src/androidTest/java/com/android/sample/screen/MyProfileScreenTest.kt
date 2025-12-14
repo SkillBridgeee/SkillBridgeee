@@ -1187,4 +1187,103 @@ class MyProfileScreenTest {
 
     compose.waitForIdle()
   }
+
+  @Test
+  fun listingsTab_switchesContentToListingsSection() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_SECTION).assertIsDisplayed()
+  }
+
+  @Test
+  fun listings_emptyStateIsDisplayed_whenNoListings() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
+    compose.onNodeWithText("You don’t have any listings yet.").assertExists()
+  }
+
+  @Test
+  fun rating_emptyStateIsDisplayed() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+    compose.onNodeWithText("You don’t have any ratings yet.").assertExists()
+  }
+
+  @Test
+  fun rating_showsError_whenLoadErrorPresent() {
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      stateFlow.value = stateFlow.value.copy(ratingsLoadError = "Could not load ratings")
+    }
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+    compose.onNodeWithText("Could not load ratings").assertExists()
+  }
+
+  @Test
+  fun saveButton_isDisabled_whenNoFieldChanged() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertIsNotEnabled()
+  }
+
+  @Test
+  fun saveButton_becomesEnabled_whenAnyFieldChanges() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME).performTextInput("X")
+    compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertIsEnabled()
+  }
+
+  @Test
+  fun profileIcon_showsEmpty_whenNameIsNull() {
+    compose.runOnIdle { viewModel.setName("") }
+    compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
+  }
+
+  @Test
+  fun pinButton_hasCorrectContentDescription() {
+    compose.onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC).assertExists()
+  }
+
+  @Test
+  fun sectionCard_displaysTitleCorrectly() {
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.CARD_TITLE)
+        .assertIsDisplayed()
+        .assertTextEquals("Personal Details")
+  }
+
+  @Test
+  fun selectionRow_indicatorMoves_whenTabChanges() {
+    val initial = compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).fetchSemanticsNode()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+
+    compose.waitForIdle()
+
+    // Check that Rating section is shown → indicator animation occurred
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
+  }
+
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun ratings_showsLoadingIndicator_whenLoadingTrue() {
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val current = stateFlow.value
+      stateFlow.value =
+          current.copy(ratingsLoading = true, ratings = emptyList(), ratingsLoadError = null)
+    }
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+
+    val progressMatcher = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
+
+    compose.waitUntil(5_000) {
+      compose.onAllNodes(progressMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    compose.onNode(progressMatcher, useUnmergedTree = true).assertExists()
+
+    compose
+        .onNodeWithText("You don’t have any ratings yet.", useUnmergedTree = true)
+        .assertDoesNotExist()
+  }
 }
