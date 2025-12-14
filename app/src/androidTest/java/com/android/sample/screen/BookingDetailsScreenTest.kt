@@ -1464,4 +1464,331 @@ class BookingDetailsScreenTest {
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertDoesNotExist()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertDoesNotExist()
   }
+
+  // ============================================================
+  // TESTS FOR LISTING TYPE SPECIFIC PAYMENT BUTTON BEHAVIOR
+  // ============================================================
+
+  /**
+   * Helper to create a BookingUIState for PROPOSAL listing type. In PROPOSAL: Creator is tutor,
+   * booker is student (student pays).
+   */
+  private fun proposalBookingState(
+      isTutor: Boolean,
+      paymentStatus: PaymentStatus = PaymentStatus.PENDING_PAYMENT
+  ): BookingUIState {
+    return BookingUIState(
+        booking =
+            Booking(
+                bookingId = "booking-proposal",
+                listingCreatorId = "tutor-id",
+                bookerId = "student-id",
+                associatedListingId = "listing-proposal",
+                price = 50.0,
+                sessionStart = Date(),
+                sessionEnd = Date(System.currentTimeMillis() + 3600000),
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = paymentStatus),
+        listing =
+            Proposal(
+                listingId = "listing-proposal",
+                description = "Teaching math",
+                skill = Skill(skill = "Math", mainSubject = MainSubject.ACADEMICS),
+                location = Location(name = "Geneva")),
+        creatorProfile =
+            Profile(userId = "tutor-id", name = "Tutor Name", email = "tutor@example.com"),
+        bookerProfile =
+            Profile(userId = "student-id", name = "Student Name", email = "student@example.com"),
+        isTutor = isTutor,
+        onAcceptBooking = {},
+        onDenyBooking = {})
+  }
+
+  /**
+   * Helper to create a BookingUIState for REQUEST listing type. In REQUEST: Creator is student
+   * (looking for tutor), booker is tutor (student pays).
+   */
+  private fun requestBookingState(
+      isTutor: Boolean,
+      paymentStatus: PaymentStatus = PaymentStatus.PENDING_PAYMENT
+  ): BookingUIState {
+    return BookingUIState(
+        booking =
+            Booking(
+                bookingId = "booking-request",
+                listingCreatorId = "student-id", // Creator is student in REQUEST
+                bookerId = "tutor-id", // Booker is tutor in REQUEST
+                associatedListingId = "listing-request",
+                price = 50.0,
+                sessionStart = Date(),
+                sessionEnd = Date(System.currentTimeMillis() + 3600000),
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = paymentStatus),
+        listing =
+            Request(
+                listingId = "listing-request",
+                description = "Looking for math tutor",
+                skill = Skill(skill = "Math", mainSubject = MainSubject.ACADEMICS),
+                location = Location(name = "Geneva")),
+        creatorProfile =
+            Profile(userId = "student-id", name = "Student Name", email = "student@example.com"),
+        bookerProfile =
+            Profile(userId = "tutor-id", name = "Tutor Name", email = "tutor@example.com"),
+        isTutor = isTutor, // isTutor means current user is creator (student in REQUEST)
+        onAcceptBooking = {},
+        onDenyBooking = {})
+  }
+
+  @Test
+  fun paymentSection_proposal_showsPaymentCompleteButton_forStudent() {
+    // PROPOSAL: Student (booker, isTutor=false) should see Payment Complete button
+    val uiState =
+        proposalBookingState(isTutor = false, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    var paymentCompleteCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = { paymentCompleteCalled = true },
+            onPaymentReceived = {})
+      }
+    }
+
+    // Student should see the Payment Complete button
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)
+        .assertExists()
+        .performScrollTo()
+        .performClick()
+
+    assert(paymentCompleteCalled)
+  }
+
+  @Test
+  fun paymentSection_proposal_hidesPaymentCompleteButton_forTutor() {
+    // PROPOSAL: Tutor (creator, isTutor=true) should NOT see Payment Complete button
+    val uiState =
+        proposalBookingState(isTutor = true, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Tutor should NOT see the Payment Complete button
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)
+        .assertDoesNotExist()
+  }
+
+  @Test
+  fun paymentSection_proposal_showsPaymentReceivedButton_forTutor() {
+    // PROPOSAL: Tutor (creator, isTutor=true) should see Payment Received button when status is
+    // PAID
+    val uiState = proposalBookingState(isTutor = true, paymentStatus = PaymentStatus.PAID)
+
+    var paymentReceivedCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = { paymentReceivedCalled = true })
+      }
+    }
+
+    // Tutor should see the Payment Received button
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)
+        .assertExists()
+        .performScrollTo()
+        .performClick()
+
+    assert(paymentReceivedCalled)
+  }
+
+  @Test
+  fun paymentSection_proposal_hidesPaymentReceivedButton_forStudent() {
+    // PROPOSAL: Student (booker, isTutor=false) should NOT see Payment Received button
+    val uiState = proposalBookingState(isTutor = false, paymentStatus = PaymentStatus.PAID)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Student should NOT see the Payment Received button
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)
+        .assertDoesNotExist()
+  }
+
+  @Test
+  fun paymentSection_request_showsPaymentCompleteButton_forCreator() {
+    // REQUEST: Creator (student, isTutor=true because creator) should see Payment Complete button
+    val uiState = requestBookingState(isTutor = true, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    var paymentCompleteCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = { paymentCompleteCalled = true },
+            onPaymentReceived = {})
+      }
+    }
+
+    // Creator (student in REQUEST) should see the Payment Complete button
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)
+        .assertExists()
+        .performScrollTo()
+        .performClick()
+
+    assert(paymentCompleteCalled)
+  }
+
+  @Test
+  fun paymentSection_request_hidesPaymentCompleteButton_forBooker() {
+    // REQUEST: Booker (tutor, isTutor=false because not creator) should NOT see Payment Complete
+    // button
+    val uiState =
+        requestBookingState(isTutor = false, paymentStatus = PaymentStatus.PENDING_PAYMENT)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Booker (tutor in REQUEST) should NOT see the Payment Complete button
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)
+        .assertDoesNotExist()
+  }
+
+  @Test
+  fun paymentSection_request_showsPaymentReceivedButton_forBooker() {
+    // REQUEST: Booker (tutor, isTutor=false) should see Payment Received button when status is PAID
+    val uiState = requestBookingState(isTutor = false, paymentStatus = PaymentStatus.PAID)
+
+    var paymentReceivedCalled = false
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = { paymentReceivedCalled = true })
+      }
+    }
+
+    // Booker (tutor in REQUEST) should see the Payment Received button
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)
+        .assertExists()
+        .performScrollTo()
+        .performClick()
+
+    assert(paymentReceivedCalled)
+  }
+
+  @Test
+  fun paymentSection_request_hidesPaymentReceivedButton_forCreator() {
+    // REQUEST: Creator (student, isTutor=true) should NOT see Payment Received button
+    val uiState = requestBookingState(isTutor = true, paymentStatus = PaymentStatus.PAID)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // Creator (student in REQUEST) should NOT see the Payment Received button
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)
+        .assertDoesNotExist()
+  }
+
+  @Test
+  fun paymentSection_showsConfirmedMessage_forBothUsers() {
+    // When payment is CONFIRMED, both users should see confirmation message
+    val uiState = proposalBookingState(isTutor = true, paymentStatus = PaymentStatus.CONFIRMED)
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitStudentRatings = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {})
+      }
+    }
+
+    // No payment action buttons should be visible
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)
+        .assertDoesNotExist()
+    composeTestRule
+        .onNodeWithTag(ListingScreenTestTags.PAYMENT_RECEIVED_BUTTON)
+        .assertDoesNotExist()
+
+    // Confirmation message should be shown
+    composeTestRule
+        .onNodeWithText("Payment has been successfully completed and confirmed!")
+        .assertExists()
+  }
 }
