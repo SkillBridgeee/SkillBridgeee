@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.core.content.ContextCompat
@@ -308,5 +309,37 @@ class SignUpScreenRobolectricTest {
     coEvery { provider.getCurrentLocation() } throws RuntimeException("boom")
 
     vm.fetchLocationFromGps(provider, context)
+  }
+
+  @Test
+  fun fetchLocationFromGps_when_location_disabled_sets_error_message() = runTest {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val vm = SignUpViewModel()
+
+    val provider = mockk<GpsLocationProvider>()
+    every { provider.isLocationEnabled() } returns false
+
+    vm.fetchLocationFromGps(provider, context)
+
+    // Verify error message is set and contains expected text
+    assert(vm.state.value.error != null)
+    assert(vm.state.value.error!!.contains("Location services are disabled"))
+  }
+
+  @Test
+  fun signUpScreen_displays_location_error_below_field() {
+    rule.setContent {
+      SampleAppTheme {
+        val vm = SignUpViewModel()
+        vm.onLocationPermissionDenied() // Set a location error
+        SignUpScreen(vm = vm, onNavigateToToS = { /* Mock navigation action */})
+      }
+    }
+
+    rule.waitForIdle()
+    waitForTag()
+
+    // Verify error message is displayed
+    rule.onNodeWithText("Location permission denied", useUnmergedTree = true).assertExists()
   }
 }

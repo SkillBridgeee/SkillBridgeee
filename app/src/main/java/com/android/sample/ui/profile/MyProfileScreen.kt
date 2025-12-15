@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.ui.components.BookingCard
 import com.android.sample.ui.components.LocationInputField
+import com.android.sample.ui.components.LocationInputFieldTestTags
 import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RatingCard
 import com.android.sample.ui.components.RequestCard
@@ -465,38 +466,51 @@ private fun ProfileForm(
           Spacer(modifier = Modifier.height(fieldSpacing))
 
           // Location input + pin icon overlay
-          Box(modifier = Modifier.fillMaxWidth()) {
-            LocationInputField(
-                locationQuery = ui.locationQuery,
-                locationSuggestions = ui.locationSuggestions,
-                onLocationQueryChange = {
-                  profileViewModel.setLocationQuery(it)
-                  locationChanged = true
-                },
-                errorMsg = ui.invalidLocationMsg,
-                onLocationSelected = { location ->
-                  profileViewModel.setLocationQuery(location.name)
-                  profileViewModel.setLocation(location)
-                },
-                modifier = Modifier.fillMaxWidth())
+          Column(modifier = Modifier.fillMaxWidth()) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+              LocationInputField(
+                  locationQuery = ui.locationQuery,
+                  locationSuggestions = ui.locationSuggestions,
+                  onLocationQueryChange = {
+                    profileViewModel.setLocationQuery(it)
+                    locationChanged = true
+                  },
+                  errorMsg = null, // Don't pass error to the field to prevent button sliding
+                  onLocationSelected = { location ->
+                    profileViewModel.setLocationQuery(location.name)
+                    profileViewModel.setLocation(location)
+                  },
+                  modifier = Modifier.fillMaxWidth())
 
-            IconButton(
-                onClick = {
-                  val granted =
-                      ContextCompat.checkSelfPermission(context, permission) ==
-                          PackageManager.PERMISSION_GRANTED
-                  if (granted) {
-                    profileViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
-                  } else {
-                    permissionLauncher.launch(permission)
+              IconButton(
+                  onClick = {
+                    val granted =
+                        ContextCompat.checkSelfPermission(context, permission) ==
+                            PackageManager.PERMISSION_GRANTED
+                    if (granted) {
+                      profileViewModel.fetchLocationFromGps(GpsLocationProvider(context), context)
+                    } else {
+                      permissionLauncher.launch(permission)
+                    }
+                  },
+                  modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.MyLocation,
+                        contentDescription = MyProfileScreenTestTag.PIN_CONTENT_DESC,
+                        tint = MaterialTheme.colorScheme.primary)
                   }
-                },
-                modifier = Modifier.align(Alignment.CenterEnd).size(36.dp)) {
-                  Icon(
-                      imageVector = Icons.Filled.MyLocation,
-                      contentDescription = MyProfileScreenTestTag.PIN_CONTENT_DESC,
-                      tint = MaterialTheme.colorScheme.primary)
-                }
+            }
+
+            // Display error message outside the Box so button doesn't move
+            ui.invalidLocationMsg?.let { errorMsg ->
+              Text(
+                  text = errorMsg,
+                  color = MaterialTheme.colorScheme.error,
+                  style = MaterialTheme.typography.bodySmall,
+                  modifier =
+                      Modifier.padding(start = 16.dp, top = 4.dp)
+                          .testTag(LocationInputFieldTestTags.ERROR_MSG))
+            }
           }
           Spacer(modifier = Modifier.height(fieldSpacing))
 

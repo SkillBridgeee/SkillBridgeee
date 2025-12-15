@@ -694,4 +694,30 @@ class NewSkillScreenTest {
     // Floating action button should show save changes
     composeRule.onNodeWithText("Save Changes").assertIsDisplayed()
   }
+
+  @Test
+  fun newListingScreen_displays_location_error_below_field() {
+    val vm = NewListingViewModel(FakeListingRepository(), FakeLocationRepository())
+
+    composeRule.setContent {
+      SampleAppTheme {
+        NewListingScreen(
+            skillViewModel = vm,
+            profileId = "test-user",
+            listingId = null,
+            navController = createTestNavController(),
+        )
+      }
+    }
+
+    composeRule.waitForIdle()
+
+    // Set a location error
+    vm.onLocationPermissionDenied()
+
+    composeRule.waitForIdle()
+
+    // Verify error message is displayed
+    composeRule.onNodeWithText("Location permission denied", useUnmergedTree = true).assertExists()
+  }
 }

@@ -1,5 +1,7 @@
 package com.android.sample.ui.profile
 
+import android.location.Address
+import android.location.Geocoder
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,7 +21,6 @@ import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
-import com.android.sample.model.map.LocationHelper
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.map.NominatimLocationRepository
 import com.android.sample.model.rating.Rating
@@ -29,6 +30,7 @@ import com.android.sample.model.rating.RatingType
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
+import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +45,10 @@ const val EMAIL_EMPTY_MSG = "Email cannot be empty"
 const val EMAIL_INVALID_MSG = "Email is not in the right format"
 const val LOCATION_EMPTY_MSG = "Location cannot be empty"
 const val DESC_EMPTY_MSG = "Description cannot be empty"
+const val GPS_FAILED_MSG = "Failed to obtain GPS location"
+const val LOCATION_PERMISSION_DENIED_MSG = "Location permission denied"
+const val LOCATION_DISABLED_MSG =
+    "Location services are disabled. Please enable location in your device settings."
 const val UPDATE_PROFILE_FAILED_MSG = "Failed to update profile. Please try again."
 const val DELETE_ACCOUNT_FAILED_MSG = "Failed to delete account. Please try again."
 
@@ -421,18 +427,50 @@ class MyProfileViewModel(
    * @param provider The [GpsLocationProvider] used to obtain the current GPS location.
    * @param context The Android context used for geocoding.
    */
+  @Suppress("DEPRECATION")
   fun fetchLocationFromGps(provider: GpsLocationProvider, context: android.content.Context) {
     viewModelScope.launch {
-      val result = LocationHelper.fetchLocationFromGps(provider, context)
-      if (result.isSuccess) {
-        _uiState.update {
-          it.copy(
-              selectedLocation = result.location,
-              locationQuery = result.addressText ?: "",
-              invalidLocationMsg = null)
+      // Check if location services are enabled
+      if (!provider.isLocationEnabled()) {
+        _uiState.update { it.copy(invalidLocationMsg = LOCATION_DISABLED_MSG) }
+        return@launch
+      }
+
+      try {
+        val androidLoc = provider.getCurrentLocation()
+        if (androidLoc != null) {
+          val geocoder = Geocoder(context, Locale.getDefault())
+          val addresses: List<Address> =
+              geocoder.getFromLocation(androidLoc.latitude, androidLoc.longitude, 1)?.toList()
+                  ?: emptyList()
+          val addressText =
+              if (addresses.isNotEmpty()) {
+                val address = addresses[0]
+                listOfNotNull(address.locality, address.adminArea, address.countryName)
+                    .joinToString(", ")
+              } else {
+                "${androidLoc.latitude}, ${androidLoc.longitude}"
+              }
+
+          val mapLocation =
+              Location(
+                  latitude = androidLoc.latitude,
+                  longitude = androidLoc.longitude,
+                  name = addressText)
+
+          _uiState.update {
+            it.copy(
+                selectedLocation = mapLocation,
+                locationQuery = addressText,
+                invalidLocationMsg = null)
+          }
+        } else {
+          _uiState.update { it.copy(invalidLocationMsg = GPS_FAILED_MSG) }
         }
-      } else {
-        _uiState.update { it.copy(invalidLocationMsg = result.errorMessage) }
+      } catch (_: SecurityException) {
+        _uiState.update { it.copy(invalidLocationMsg = LOCATION_PERMISSION_DENIED_MSG) }
+      } catch (_: Exception) {
+        _uiState.update { it.copy(invalidLocationMsg = GPS_FAILED_MSG) }
       }
     }
   }
@@ -442,7 +480,7 @@ class MyProfileViewModel(
    * appropriate error message.
    */
   fun onLocationPermissionDenied() {
-    _uiState.update { it.copy(invalidLocationMsg = LocationHelper.LOCATION_PERMISSION_DENIED_MSG) }
+    _uiState.update { it.copy(invalidLocationMsg = LOCATION_PERMISSION_DENIED_MSG) }
   }
 
   /** Clears the update success flag in the UI state. */

@@ -223,7 +223,7 @@ class MyProfileScreenTest {
     override suspend fun hasRating(
         fromUserId: String,
         toUserId: String,
-        ratingType: com.android.sample.model.rating.RatingType,
+        ratingType: RatingType,
         targetObjectId: String
     ): Boolean {
       // MyProfileScreen tests don't care about this, so always "no rating yet" is fine.
@@ -268,7 +268,7 @@ class MyProfileScreenTest {
     override suspend fun hasRating(
         fromUserId: String,
         toUserId: String,
-        ratingType: com.android.sample.model.rating.RatingType,
+        ratingType: RatingType,
         targetObjectId: String
     ): Boolean {
       // MyProfileScreen tests don't care about this, so always "no rating yet" is fine.
@@ -981,7 +981,7 @@ class MyProfileScreenTest {
         val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
         field.isAccessible = true
         val stateFlow =
-            field.get(this) as kotlinx.coroutines.flow.MutableStateFlow<MyProfileUIState>
+            field.get(this) as MutableStateFlow<MyProfileUIState>
         stateFlow.value = newState
       }
     }
@@ -1285,5 +1285,16 @@ class MyProfileScreenTest {
     compose
         .onNodeWithText("You don’t have any ratings yet.", useUnmergedTree = true)
         .assertDoesNotExist()
+  }
+
+  @Test
+  fun myProfileScreen_displays_location_error_below_field() {
+    // Set a location error
+    viewModel.onLocationPermissionDenied()
+
+    compose.waitForIdle()
+
+    // Verify error message is displayed
+    compose.onNodeWithText("Location permission denied", useUnmergedTree = true).assertExists()
   }
 }
