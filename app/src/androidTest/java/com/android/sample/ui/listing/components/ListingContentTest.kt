@@ -940,4 +940,38 @@ class ListingContentTest {
     compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(8)
     compose.onNodeWithText("Bookings").assertExists()
   }
+
+  @Test
+  fun listingContent_showsCommentsSection_andRendersBullets_whenListingCommentsProvided() {
+    val comments = listOf("Great lesson", "Very clear explanations")
+
+    val state = uiState(isOwnListing = false)
+
+    compose.setContent {
+      MaterialTheme {
+        ListingContent(
+            uiState = state,
+            onBook = { _, _ -> },
+            onApproveBooking = {},
+            onRejectBooking = {},
+            onDeleteListing = {},
+            onEditListing = {},
+            modifier = Modifier,
+            onNavigateToProfile = {},
+            autoFillDatesForTesting = false,
+            listingComments = comments,
+        )
+      }
+    }
+
+    // Scroll far enough to ensure the comments section is composed (safe even if already visible)
+    compose.onNodeWithTag("listingContentLazyColumn").performScrollToIndex(8)
+
+    // Header
+    compose.onNodeWithText("Comments").assertExists()
+
+    // Bullet lines rendered by forEachIndexed
+    compose.onNodeWithText("• Great lesson").assertExists()
+    compose.onNodeWithText("• Very clear explanations").assertExists()
+  }
 }
