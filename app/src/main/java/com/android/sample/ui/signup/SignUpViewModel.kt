@@ -93,6 +93,8 @@ class SignUpViewModel(
     private const val TAG = "SignUpViewModel"
     private const val GPS_FAILED_MSG = "Failed to obtain GPS location"
     private const val LOCATION_PERMISSION_DENIED_MSG = "Location permission denied"
+    private const val LOCATION_DISABLED_MSG =
+        "Location services are disabled. Please enable location in your device settings."
   }
 
   private val _state = MutableStateFlow(SignUpUiState())
@@ -209,6 +211,12 @@ class SignUpViewModel(
   fun fetchLocationFromGps(provider: GpsLocationProvider, context: Context) {
     viewModelScope.launch {
       try {
+        // Check if location services are enabled
+        if (!provider.isLocationEnabled()) {
+          _state.update { it.copy(error = LOCATION_DISABLED_MSG) }
+          return@launch
+        }
+
         val androidLoc = provider.getCurrentLocation()
         if (androidLoc != null) {
           val geocoder = Geocoder(context, Locale.getDefault())

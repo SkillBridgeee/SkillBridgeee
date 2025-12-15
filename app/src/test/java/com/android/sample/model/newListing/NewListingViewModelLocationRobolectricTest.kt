@@ -59,6 +59,7 @@ class NewListingViewModelLocationRobolectricTest {
     val vm = NewListingViewModel()
 
     val mockProvider = mockk<GpsLocationProvider>()
+    io.mockk.every { mockProvider.isLocationEnabled() } returns true
     val androidLoc =
         AndroidLocation("test").apply {
           latitude = 48.8566
@@ -88,6 +89,7 @@ class NewListingViewModelLocationRobolectricTest {
     val vm = NewListingViewModel()
 
     val mockProvider = mockk<GpsLocationProvider>()
+    io.mockk.every { mockProvider.isLocationEnabled() } returns true
     coEvery { mockProvider.getCurrentLocation() } returns null
 
     vm.fetchLocationFromGps(mockProvider, context)
@@ -103,6 +105,7 @@ class NewListingViewModelLocationRobolectricTest {
     val vm = NewListingViewModel()
 
     val mockProvider = mockk<GpsLocationProvider>()
+    io.mockk.every { mockProvider.isLocationEnabled() } returns true
     coEvery { mockProvider.getCurrentLocation() } throws RuntimeException("boom")
 
     vm.fetchLocationFromGps(mockProvider, context)
@@ -110,5 +113,22 @@ class NewListingViewModelLocationRobolectricTest {
 
     val s = vm.uiState.value
     assertEquals("Failed to obtain GPS location", s.invalidLocationMsg)
+  }
+
+  @Test
+  fun fetchLocationFromGps_when_location_disabled_sets_error_message() = runTest {
+    val context = ApplicationProvider.getApplicationContext<Context>()
+    val vm = NewListingViewModel()
+
+    val mockProvider = mockk<GpsLocationProvider>()
+    io.mockk.every { mockProvider.isLocationEnabled() } returns false
+
+    vm.fetchLocationFromGps(mockProvider, context)
+    advanceUntilIdle()
+
+    val s = vm.uiState.value
+    assertEquals(
+        "Location services are disabled. Please enable location in your device settings.",
+        s.invalidLocationMsg)
   }
 }

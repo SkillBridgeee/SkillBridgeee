@@ -248,6 +248,7 @@ class SignUpScreenRobolectricTest {
         listOf(address)
 
     val provider = mockk<GpsLocationProvider>()
+    every { provider.isLocationEnabled() } returns true
     val androidLoc =
         android.location.Location("mock").apply {
           latitude = 48.85
@@ -271,6 +272,7 @@ class SignUpScreenRobolectricTest {
     every { anyConstructed<Geocoder>().getFromLocation(any(), any(), any()) } returns emptyList()
 
     val provider = mockk<GpsLocationProvider>()
+    every { provider.isLocationEnabled() } returns true
     val androidLoc =
         android.location.Location("mock").apply {
           latitude = 10.0
@@ -290,6 +292,7 @@ class SignUpScreenRobolectricTest {
     val vm = SignUpViewModel()
 
     val provider = mockk<GpsLocationProvider>()
+    every { provider.isLocationEnabled() } returns true
     coEvery { provider.getCurrentLocation() } throws SecurityException()
 
     vm.fetchLocationFromGps(provider, context)
@@ -301,6 +304,7 @@ class SignUpScreenRobolectricTest {
     val vm = SignUpViewModel()
 
     val provider = mockk<GpsLocationProvider>()
+    every { provider.isLocationEnabled() } returns true
     coEvery { provider.getCurrentLocation() } throws RuntimeException("boom")
 
     vm.fetchLocationFromGps(provider, context)

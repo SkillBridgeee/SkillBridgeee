@@ -47,6 +47,8 @@ const val LOCATION_EMPTY_MSG = "Location cannot be empty"
 const val DESC_EMPTY_MSG = "Description cannot be empty"
 const val GPS_FAILED_MSG = "Failed to obtain GPS location"
 const val LOCATION_PERMISSION_DENIED_MSG = "Location permission denied"
+const val LOCATION_DISABLED_MSG =
+    "Location services are disabled. Please enable location in your device settings."
 const val UPDATE_PROFILE_FAILED_MSG = "Failed to update profile. Please try again."
 const val DELETE_ACCOUNT_FAILED_MSG = "Failed to delete account. Please try again."
 
@@ -429,6 +431,12 @@ class MyProfileViewModel(
   fun fetchLocationFromGps(provider: GpsLocationProvider, context: android.content.Context) {
     viewModelScope.launch {
       try {
+        // Check if location services are enabled
+        if (!provider.isLocationEnabled()) {
+          _uiState.update { it.copy(invalidLocationMsg = LOCATION_DISABLED_MSG) }
+          return@launch
+        }
+
         val androidLoc = provider.getCurrentLocation()
         if (androidLoc != null) {
           val geocoder = Geocoder(context, Locale.getDefault())

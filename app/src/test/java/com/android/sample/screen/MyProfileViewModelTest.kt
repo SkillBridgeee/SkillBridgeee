@@ -32,6 +32,7 @@ import com.android.sample.ui.profile.DESC_EMPTY_MSG
 import com.android.sample.ui.profile.EMAIL_EMPTY_MSG
 import com.android.sample.ui.profile.EMAIL_INVALID_MSG
 import com.android.sample.ui.profile.GPS_FAILED_MSG
+import com.android.sample.ui.profile.LOCATION_DISABLED_MSG
 import com.android.sample.ui.profile.LOCATION_EMPTY_MSG
 import com.android.sample.ui.profile.LOCATION_PERMISSION_DENIED_MSG
 import com.android.sample.ui.profile.MyProfileViewModel
@@ -308,6 +309,11 @@ class MyProfileViewModelTest {
     override suspend fun getCurrentLocation(timeoutMs: Long): android.location.Location? {
       throw SecurityException("Permission denied")
     }
+  }
+
+  private class LocationDisabledGpsProvider :
+      GpsLocationProvider(ApplicationProvider.getApplicationContext()) {
+    override fun isLocationEnabled(): Boolean = false
   }
   // -------- Tests --------------------------------------------------------
 
@@ -609,6 +615,18 @@ class MyProfileViewModelTest {
 
     val ui = vm.uiState.value
     assertEquals(LOCATION_PERMISSION_DENIED_MSG, ui.invalidLocationMsg)
+  }
+
+  @Test
+  fun fetchLocationFromGps_when_location_disabled_sets_error_message() = runTest {
+    val vm = newVm()
+    val provider = LocationDisabledGpsProvider()
+
+    vm.fetchLocationFromGps(provider, context = ApplicationProvider.getApplicationContext())
+    advanceUntilIdle()
+
+    val ui = vm.uiState.value
+    assertEquals(LOCATION_DISABLED_MSG, ui.invalidLocationMsg)
   }
 
   @Test
