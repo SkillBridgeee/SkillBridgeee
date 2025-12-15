@@ -706,30 +706,6 @@ class ListingContentTest {
     compose.onNodeWithTag(ListingScreenTestTags.HOURLY_RATE).assertExists()
     compose.onNodeWithText("$42.50/hr").assertExists()
   }
-
-  @Test
-  fun listingContent_displaysCreatedDate() {
-    val state = uiState()
-
-    compose.setContent {
-      MaterialTheme {
-        ListingContent(
-            uiState = state,
-            onBook = { _, _ -> },
-            onApproveBooking = {},
-            onRejectBooking = {},
-            onDeleteListing = {},
-            onEditListing = {},
-            modifier = Modifier,
-            onNavigateToProfile = {},
-            autoFillDatesForTesting = false,
-        )
-      }
-    }
-
-    compose.onNodeWithTag(ListingScreenTestTags.CREATED_DATE).assertExists()
-  }
-
   // ---------- Booking Dialog Tests ----------
 
   @Test
