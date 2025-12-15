@@ -9,9 +9,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.listing.Request
+import com.android.sample.model.rating.RatingInfo
 import java.util.Locale
 
 object RequestCardTestTags {
@@ -36,6 +38,7 @@ object RequestCardTestTags {
 fun RequestCard(
     request: Request,
     onClick: (String) -> Unit,
+    rating: RatingInfo? = null, // <- added parameter
     modifier: Modifier = Modifier,
     testTag: String = RequestCardTestTags.CARD
 ) {
@@ -47,7 +50,7 @@ fun RequestCard(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
-              RequestCardContent(request = request)
+              RequestCardContent(request = request, rating = rating) // <- forward rating
               Spacer(modifier = Modifier.width(16.dp))
               RequestCardPriceSection(hourlyRate = request.hourlyRate)
             }
@@ -55,7 +58,7 @@ fun RequestCard(
 }
 
 @Composable
-private fun RowScope.RequestCardContent(request: Request) {
+private fun RowScope.RequestCardContent(request: Request, rating: RatingInfo?) {
   Column(modifier = Modifier.weight(1f)) {
     StatusBadge(
         isActive = request.isActive,
@@ -71,6 +74,26 @@ private fun RowScope.RequestCardContent(request: Request) {
         createdAt = request.createdAt,
         locationTestTag = RequestCardTestTags.LOCATION,
         dateTestTag = RequestCardTestTags.CREATED_DATE)
+
+    rating?.let {
+      Spacer(modifier = Modifier.height(8.dp))
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        val avg = it.averageRating.coerceIn(0.0, 5.0)
+        RatingStars(ratingOutOfFive = avg)
+        Spacer(Modifier.width(8.dp))
+        val ratingText =
+            if (it.totalRatings == 0) {
+              "No ratings yet"
+            } else {
+              String.format(Locale.getDefault(), "%.1f (%d)", avg, it.totalRatings)
+            }
+        Text(
+            text = ratingText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontStyle = if (it.totalRatings == 0) FontStyle.Italic else FontStyle.Normal)
+      }
+    }
   }
 }
 

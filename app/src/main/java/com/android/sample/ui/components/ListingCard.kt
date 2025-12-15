@@ -23,12 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.listing.Listing
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.user.Profile
 import java.util.Locale
+import kotlin.compareTo
 
 object ListingCardTestTags {
   const val CARD = "ListingCardTestTags.CARD"
@@ -151,8 +153,6 @@ fun ListingCard(
 
 @Composable
 private fun RatingsLine(label: String, rating: RatingInfo, modifier: Modifier = Modifier) {
-  val avg = rating.averageRating.coerceIn(0.0, 5.0)
-
   Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
     Text(
         text = label,
@@ -161,13 +161,22 @@ private fun RatingsLine(label: String, rating: RatingInfo, modifier: Modifier = 
 
     Spacer(Modifier.width(6.dp))
 
-    RatingStars(ratingOutOfFive = avg)
+    if (rating.totalRatings > 0) {
+      val avg = rating.averageRating.coerceIn(0.0, 5.0)
+      RatingStars(ratingOutOfFive = avg)
 
-    Spacer(Modifier.width(6.dp))
+      Spacer(Modifier.width(6.dp))
 
-    Text(
-        text = "(${rating.totalRatings})",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant)
+      Text(
+          text = "(${rating.totalRatings})",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant)
+    } else {
+      Text(
+          text = "No ratings yet",
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          fontStyle = FontStyle.Italic)
+    }
   }
 }

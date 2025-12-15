@@ -331,6 +331,7 @@ private fun PostedDate(date: Date) {
       modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
 }
 
+/** Listing rating card */
 @Composable
 private fun ListingRatingCard(rating: com.android.sample.model.rating.RatingInfo) {
   val avg = rating.averageRating.coerceIn(0.0, 5.0)
@@ -346,8 +347,14 @@ private fun ListingRatingCard(rating: com.android.sample.model.rating.RatingInfo
       Row(verticalAlignment = Alignment.CenterVertically) {
         RatingStars(ratingOutOfFive = filledValue)
         Spacer(Modifier.width(8.dp))
+        val ratingText =
+            if (rating.totalRatings == 0) {
+              "No ratings yet"
+            } else {
+              String.format(Locale.getDefault(), "%.1f (%d)", avg, rating.totalRatings)
+            }
         Text(
-            text = String.format(Locale.getDefault(), "%.1f (%d)", avg, rating.totalRatings),
+            text = ratingText,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
       }

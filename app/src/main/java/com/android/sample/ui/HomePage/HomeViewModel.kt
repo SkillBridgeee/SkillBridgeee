@@ -8,6 +8,9 @@ import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
+import com.android.sample.model.rating.RatingInfo
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.model.user.ProfileRepositoryProvider
@@ -30,7 +33,8 @@ data class HomeUiState(
     val welcomeMessage: String = "Welcome back!",
     val subjects: List<MainSubject> = MainSubject.entries.toList(),
     val proposals: List<Proposal> = emptyList(),
-    val requests: List<Request> = emptyList()
+    val requests: List<Request> = emptyList(),
+    val listingRatings: Map<String, RatingInfo> = emptyMap(),
 )
 
 /**
@@ -42,7 +46,8 @@ data class HomeUiState(
  */
 class MainPageViewModel(
     private val profileRepository: ProfileRepository = ProfileRepositoryProvider.repository,
-    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository
+    private val listingRepository: ListingRepository = ListingRepositoryProvider.repository,
+    private val ratingRepository: RatingRepository = RatingRepositoryProvider.repository,
 ) : ViewModel() {
 
   private val _uiState = MutableStateFlow(HomeUiState())
@@ -72,16 +77,39 @@ class MainPageViewModel(
         val welcomeMsg = getWelcomeMsg()
         val topProposals = getTopProposals(numProposalDisplayed)
         val topRequests = getTopRequests(numRequestDisplayed)
+        val allListings =
+            (topProposals.map { it.listingId } + topRequests.map { it.listingId }).distinct()
+        val ratingsMap: Map<String, RatingInfo> =
+            allListings.associateWith { listingId ->
+              val ratings = ratingRepository.getRatingsOfListing(listingId)
+              val count = ratings.size
+
+              if (count == 0) {
+                RatingInfo()
+              } else {
+                val avg = ratings.sumOf { it.starRating.value.toDouble() } / count
+
+                RatingInfo(averageRating = avg, totalRatings = count)
+              }
+            }
 
         _uiState.update { current ->
           current.copy(
               welcomeMessage = welcomeMsg ?: current.welcomeMessage,
               proposals = topProposals,
-              requests = topRequests)
+              requests = topRequests,
+              listingRatings = ratingsMap,
+          )
         }
       } catch (e: Exception) {
         Log.e("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        _uiState.update { current -> current.copy(proposals = emptyList(), requests = emptyList()) }
+        _uiState.update { current ->
+          current.copy(
+              proposals = emptyList(),
+              requests = emptyList(),
+              listingRatings = emptyMap(),
+          )
+        }
       }
     }
   }

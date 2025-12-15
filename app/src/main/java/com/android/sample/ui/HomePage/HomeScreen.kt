@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
+import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.SkillsHelper
 import com.android.sample.ui.components.HorizontalScrollHint
@@ -102,12 +103,16 @@ fun HomeScreen(
 
               item {
                 ProposalsSection(
-                    proposals = uiState.proposals, onProposalClick = onNavigateToListingDetails)
+                    proposals = uiState.proposals,
+                    ratings = uiState.listingRatings,
+                    onProposalClick = onNavigateToListingDetails)
               }
 
               item {
                 RequestsSection(
-                    requests = uiState.requests, onRequestClick = onNavigateToListingDetails)
+                    requests = uiState.requests,
+                    ratings = uiState.listingRatings,
+                    onRequestClick = onNavigateToListingDetails)
               }
 
               // Bottom padding
@@ -213,7 +218,11 @@ fun SubjectCard(
  * Shows a section title and a scrollable list of proposal cards.
  */
 @Composable
-fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (String) -> Unit) {
+fun ProposalsSection(
+    proposals: List<Proposal>,
+    ratings: Map<String, RatingInfo>,
+    onProposalClick: (String) -> Unit
+) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
         text = "Latest Proposals",
@@ -234,9 +243,11 @@ fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (String) -> Uni
           modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.PROPOSAL_LIST),
           verticalArrangement = Arrangement.spacedBy(8.dp)) {
             proposals.forEach { proposal ->
+              // pass rating if the model has it; otherwise pass null
               ProposalCard(
                   proposal = proposal,
                   onClick = onProposalClick,
+                  rating = ratings[proposal.listingId],
                   modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.PROPOSAL_CARD))
             }
           }
@@ -250,7 +261,11 @@ fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (String) -> Uni
  * Shows a section title and a scrollable list of request cards.
  */
 @Composable
-fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
+fun RequestsSection(
+    requests: List<Request>,
+    ratings: Map<String, RatingInfo>,
+    onRequestClick: (String) -> Unit
+) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
         text = "Recent Requests",
@@ -272,6 +287,7 @@ fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
           RequestCard(
               request = request,
               onClick = onRequestClick,
+              rating = ratings[request.listingId],
               modifier = Modifier.fillMaxWidth().testTag(HomeScreenTestTags.REQUEST_CARD))
         }
       }

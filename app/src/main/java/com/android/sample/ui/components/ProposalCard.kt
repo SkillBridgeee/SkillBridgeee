@@ -9,10 +9,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.listing.Proposal
+import com.android.sample.model.map.Location
+import com.android.sample.model.rating.RatingInfo
+import com.android.sample.model.skill.ExpertiseLevel
+import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.Skill
+import java.util.Date
 import java.util.Locale
 
 object ProposalCardTestTags {
@@ -37,6 +44,7 @@ object ProposalCardTestTags {
 fun ProposalCard(
     proposal: Proposal,
     onClick: (String) -> Unit,
+    rating: RatingInfo? = null,
     modifier: Modifier = Modifier,
     testTag: String = ProposalCardTestTags.CARD
 ) {
@@ -48,7 +56,7 @@ fun ProposalCard(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically) {
-              ProposalCardContent(proposal = proposal)
+              ProposalCardContent(proposal = proposal, rating = rating)
               Spacer(modifier = Modifier.width(16.dp))
               ProposalCardPriceSection(hourlyRate = proposal.hourlyRate)
             }
@@ -56,7 +64,7 @@ fun ProposalCard(
 }
 
 @Composable
-private fun RowScope.ProposalCardContent(proposal: Proposal) {
+private fun RowScope.ProposalCardContent(proposal: Proposal, rating: RatingInfo?) {
   Column(modifier = Modifier.weight(1f)) {
     StatusBadge(
         isActive = proposal.isActive,
@@ -72,6 +80,27 @@ private fun RowScope.ProposalCardContent(proposal: Proposal) {
         createdAt = proposal.createdAt,
         locationTestTag = ProposalCardTestTags.LOCATION,
         dateTestTag = ProposalCardTestTags.CREATED_DATE)
+
+    // Compact rating row (optional)
+    rating?.let {
+      Spacer(modifier = Modifier.height(8.dp))
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        val avg = it.averageRating.coerceIn(0.0, 5.0)
+        RatingStars(ratingOutOfFive = avg)
+        Spacer(Modifier.width(8.dp))
+        val ratingText =
+            if (it.totalRatings == 0) {
+              "No ratings yet"
+            } else {
+              String.format(Locale.getDefault(), "%.1f (%d)", avg, it.totalRatings)
+            }
+        Text(
+            text = ratingText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontStyle = if (it.totalRatings == 0) FontStyle.Italic else FontStyle.Normal)
+      }
+    }
   }
 }
 
@@ -105,15 +134,16 @@ private fun ProposalCardPreview() {
                 creatorUserId = "user-42",
                 description = "Math tutoring for high school students",
                 hourlyRate = 25.0,
-                location = com.android.sample.model.map.Location(name = "Campus Library"),
+                location = Location(name = "Campus Library"),
                 isActive = true,
                 skill =
-                    com.android.sample.model.skill.Skill(
-                        mainSubject = com.android.sample.model.skill.MainSubject.ACADEMICS,
+                    Skill(
+                        mainSubject = MainSubject.ACADEMICS,
                         skill = "Algebra",
                         skillTime = 5.0,
-                        expertise = com.android.sample.model.skill.ExpertiseLevel.ADVANCED),
-                createdAt = java.util.Date()),
-        onClick = {})
+                        expertise = ExpertiseLevel.ADVANCED),
+                createdAt = Date()),
+        onClick = {},
+        rating = RatingInfo(averageRating = 4.5, totalRatings = 10))
   }
 }
