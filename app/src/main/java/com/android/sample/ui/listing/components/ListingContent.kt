@@ -24,6 +24,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,13 +71,14 @@ fun ListingContent(
     onRejectBooking: (String) -> Unit,
     onDeleteListing: () -> Unit,
     onEditListing: () -> Unit,
+    onNavigateToProfile: (String) -> Unit,
     modifier: Modifier = Modifier,
-    onNavigateToProfile: (String) -> Unit = {},
     autoFillDatesForTesting: Boolean = false
 ) {
   val listing = uiState.listing ?: return
   val creator = uiState.creator
   var showBookingDialog by remember { mutableStateOf(false) }
+  var showDuplicateWarningDialog by remember { mutableStateOf(false) }
 
   LazyColumn(
       modifier = modifier.fillMaxSize().padding(16.dp).testTag("listingContentLazyColumn"),
@@ -133,10 +135,11 @@ fun ListingContent(
             onApproveBooking = onApproveBooking,
             onRejectBooking = onRejectBooking,
             onDeleteListing = onDeleteListing,
-            onEditListing = onEditListing)
+            onEditListing = onEditListing,
+            onShowDuplicateWarning = { showDuplicateWarningDialog = true })
       }
 
-  // Booking dialog (unchanged)
+  // Booking dialog
   if (showBookingDialog) {
     BookingDialog(
         onDismiss = { showBookingDialog = false },
@@ -145,6 +148,35 @@ fun ListingContent(
           showBookingDialog = false
         },
         autoFillDatesForTesting = autoFillDatesForTesting)
+  }
+
+  // Duplicate booking warning dialog
+  if (showDuplicateWarningDialog) {
+    AlertDialog(
+        onDismissRequest = { showDuplicateWarningDialog = false },
+        title = { Text("Existing Booking") },
+        text = {
+          Text(
+              "You already have a booking for this listing. Are you sure you want to create another booking?")
+        },
+        confirmButton = {
+          TextButton(
+              onClick = {
+                showDuplicateWarningDialog = false
+                showBookingDialog = true
+              },
+              modifier = Modifier.testTag(ListingScreenTestTags.DUPLICATE_BOOKING_CONFIRM)) {
+                Text("Yes, Create Booking")
+              }
+        },
+        dismissButton = {
+          TextButton(
+              onClick = { showDuplicateWarningDialog = false },
+              modifier = Modifier.testTag(ListingScreenTestTags.DUPLICATE_BOOKING_CANCEL)) {
+                Text("Cancel")
+              }
+        },
+        modifier = Modifier.testTag(ListingScreenTestTags.DUPLICATE_BOOKING_DIALOG))
   }
 }
 
@@ -330,7 +362,8 @@ private fun LazyListScope.actionSection(
     onApproveBooking: (String) -> Unit,
     onRejectBooking: (String) -> Unit,
     onDeleteListing: () -> Unit,
-    onEditListing: () -> Unit
+    onEditListing: () -> Unit,
+    onShowDuplicateWarning: () -> Unit = {}
 ) {
   if (uiState.isOwnListing) {
     bookingsSection(
@@ -402,7 +435,13 @@ private fun LazyListScope.actionSection(
   } else {
     item {
       Button(
-          onClick = onShowBookingDialog,
+          onClick = {
+            if (uiState.hasExistingBooking) {
+              onShowDuplicateWarning()
+            } else {
+              onShowBookingDialog()
+            }
+          },
           modifier = Modifier.fillMaxWidth().testTag(ListingScreenTestTags.BOOK_BUTTON),
           enabled = !uiState.bookingInProgress) {
             if (uiState.bookingInProgress) {
