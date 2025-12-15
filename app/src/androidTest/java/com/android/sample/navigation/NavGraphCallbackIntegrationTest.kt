@@ -272,4 +272,45 @@ class NavGraphCallbackIntegrationTest : AppTest() {
     // Verify we navigated to listing screen
     composeRule.onNodeWithTag(ListingScreenTestTags.SCREEN).assertIsDisplayed()
   }
+
+  /**
+   * Test for addBookingDetailsRoute onBookerClick callback (lines 502-505) Navigate to a PENDING
+   * booking where current user is the creator, then click on booker name row to view booker's
+   * profile
+   */
+  @Test
+  fun bookingDetailsScreen_clickBookerNameRow_navigatesToBookerProfile() {
+    composeRule.setContent { CreateAppContent() }
+    composeRule.waitForIdle()
+
+    // Navigate to Bookings screen
+    composeRule.onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).performClick()
+    composeRule.waitForIdle()
+
+    // Wait for booking cards to be displayed (creator_1 sees b1, b2, b3 = 3 bookings)
+    composeRule.waitUntil(timeoutMillis = 5000) {
+      composeRule.onAllNodesWithTag(BookingCardTestTag.CARD).fetchSemanticsNodes().size >= 3
+    }
+
+    // Click on the third booking card (b3) which has PENDING status and creator_1 as listing
+    // creator
+    // This will show the booker info section since creator_1 is the listing creator
+    composeRule.onAllNodesWithTag(BookingCardTestTag.CARD)[2].performClick()
+    composeRule.waitForIdle()
+
+    // Wait for booking details to load and booker section to appear
+    composeRule.waitUntil(timeoutMillis = 5000) {
+      composeRule
+          .onAllNodesWithTag(BookingDetailsTestTag.BOOKER_NAME_ROW)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Click on booker name row to trigger onBookerClick
+    composeRule.onNodeWithTag(BookingDetailsTestTag.BOOKER_NAME_ROW).performClick()
+    composeRule.waitForIdle()
+
+    // Verify we navigated to profile screen (booker's profile)
+    composeRule.onNodeWithTag(ProfileScreenTestTags.SCREEN).assertIsDisplayed()
+  }
 }
