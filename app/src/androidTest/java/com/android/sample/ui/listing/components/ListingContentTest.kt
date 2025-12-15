@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
@@ -695,17 +696,18 @@ class ListingContentTest {
             onRejectBooking = {},
             onDeleteListing = {},
             onEditListing = {},
-            modifier = Modifier,
-            onNavigateToProfile = {},
-            autoFillDatesForTesting = false,
         )
       }
     }
+
+    // Ensure lazy content is composed/visible on CI
+    compose.onNodeWithTag(ListingScreenTestTags.HOURLY_RATE).performScrollTo()
 
     compose.onNodeWithText("Hourly Rate:").assertExists()
     compose.onNodeWithTag(ListingScreenTestTags.HOURLY_RATE).assertExists()
     compose.onNodeWithText("$42.50/hr").assertExists()
   }
+
   // ---------- Booking Dialog Tests ----------
 
   @Test
