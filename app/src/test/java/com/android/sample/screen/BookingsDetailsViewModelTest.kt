@@ -481,7 +481,8 @@ class BookingsDetailsViewModelTest {
         ))
 
     // Run the launched coroutine in submitBookerRatings
-    vm.submitBookerRatings(userStars = 4, listingStars = 2)
+    vm.submitBookerRatings(userStars = 4, listingStars = 2, userComment = "", listingComment = "")
+
     testDispatcher.scheduler.advanceUntilIdle()
 
     assertEquals(2, fakeRatingRepo.addedRatings.size)
@@ -536,7 +537,8 @@ class BookingsDetailsViewModelTest {
             ratingProgress = RatingProgress(),
         ))
 
-    vm.submitBookerRatings(userStars = 4, listingStars = 2)
+    vm.submitBookerRatings(userStars = 4, listingStars = 2, userComment = "", listingComment = "")
+
     testDispatcher.scheduler.advanceUntilIdle()
 
     assertEquals(2, fakeRatingRepo.addedRatings.size)
@@ -586,7 +588,7 @@ class BookingsDetailsViewModelTest {
         ))
 
     testDispatcher.scheduler.advanceUntilIdle()
-    vm.submitBookerRatings(userStars = 5, listingStars = 5)
+    vm.submitBookerRatings(userStars = 5, listingStars = 5, userComment = "", listingComment = "")
     testDispatcher.scheduler.advanceUntilIdle()
 
     assertTrue(fakeRatingRepo.addedRatings.isEmpty())
@@ -622,7 +624,7 @@ class BookingsDetailsViewModelTest {
         ))
 
     testDispatcher.scheduler.advanceUntilIdle()
-    vm.submitBookerRatings(3, 3)
+    vm.submitBookerRatings(userStars = 3, listingStars = 3, userComment = "", listingComment = "")
     testDispatcher.scheduler.advanceUntilIdle()
 
     assert(fakeRatingRepo.addedRatings.isEmpty())
@@ -2121,7 +2123,7 @@ class BookingsDetailsViewModelTest {
             ratingProgress = RatingProgress(),
         ))
 
-    vm.submitCreatorRating(4)
+    vm.submitCreatorRating(4, "")
     testDispatcher.scheduler.advanceUntilIdle()
 
     assertTrue(ratingRepo.addedRatings.isEmpty())
@@ -2149,7 +2151,7 @@ class BookingsDetailsViewModelTest {
             isCreator = true, // <<< REQUIRED
         ))
 
-    vm.submitCreatorRating(0)
+    vm.submitCreatorRating(0, "")
     testDispatcher.scheduler.advanceUntilIdle()
 
     assertTrue(vm.bookingUiState.value.loadError)
@@ -2179,7 +2181,7 @@ class BookingsDetailsViewModelTest {
             isCreator = true, // <<< REQUIRED
         ))
 
-    vm.submitCreatorRating(5)
+    vm.submitCreatorRating(5, "")
     testDispatcher.scheduler.advanceUntilIdle()
 
     assertEquals(1, ratingRepo.addedRatings.size)
@@ -2218,9 +2220,60 @@ class BookingsDetailsViewModelTest {
             isCreator = true, // <<< REQUIRED
         ))
 
-    vm.submitCreatorRating(5)
+    vm.submitCreatorRating(5, "")
     testDispatcher.scheduler.advanceUntilIdle()
 
     assertTrue(vm.bookingUiState.value.loadError)
+  }
+
+  @Test
+  fun submitBookerRatings_withComments_savesCommentsCorrectly() = runTest {
+    val fakeRatingRepo = FakeRatingRepositoryImpl()
+    val vm =
+        BookingDetailsViewModel(
+            bookingRepository = bookingRepoWorking,
+            listingRepository = listingRepoWorking,
+            profileRepository = profileRepoWorking,
+            ratingRepository = fakeRatingRepo,
+        )
+
+    val booking =
+        Booking(
+            bookingId = "b1",
+            associatedListingId = "l1",
+            listingCreatorId = "tutor-1",
+            bookerId = "student-1",
+            status = BookingStatus.COMPLETED,
+        )
+
+    val listing = Proposal(listingId = "l1", creatorUserId = "tutor-1")
+
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking = booking,
+            listing = listing,
+            creatorProfile = Profile(userId = "tutor-1"),
+            bookerProfile = Profile(userId = "student-1"),
+            loadError = false,
+            ratingProgress = RatingProgress(),
+        ))
+
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    vm.submitBookerRatings(
+        userStars = 4,
+        listingStars = 5,
+        userComment = "Excellent tutor",
+        listingComment = "Great listing")
+
+    testDispatcher.scheduler.advanceUntilIdle()
+
+    assertEquals(2, fakeRatingRepo.addedRatings.size)
+
+    val userRating = fakeRatingRepo.addedRatings.find { it.ratingType == RatingType.TUTOR }
+    assertEquals("Excellent tutor", userRating?.comment)
+
+    val listingRating = fakeRatingRepo.addedRatings.find { it.ratingType == RatingType.LISTING }
+    assertEquals("Great listing", listingRating?.comment)
   }
 }
