@@ -514,4 +514,106 @@ class NavGraphTest {
     composeRule.waitForIdle()
     assertEquals(NavRoutes.LOGIN, navController.currentDestination?.route)
   }
+
+  // ---------- Tests for addListingRoute ----------
+
+  @Test
+  fun listing_route_is_reached_with_listingId_argument() {
+    val listingId = "test-listing-123"
+
+    composeRule.runOnIdle {
+      // Navigate to listing route with a specific listingId
+      navigateToListing(navController, listingId)
+
+      // Verify the route pattern matches LISTING
+      assertEquals(NavRoutes.LISTING, navController.currentDestination?.route)
+
+      // Verify the listingId argument is correctly passed
+      val args = navController.currentBackStackEntry?.arguments
+      assertEquals(listingId, args?.getString("listingId"))
+    }
+  }
+
+  @Test
+  fun listing_onNavigateBack_popsBackStack() {
+    composeRule.runOnIdle {
+      // Navigate to home first, then to listing
+      navController.navigate(NavRoutes.HOME)
+      assertEquals(NavRoutes.HOME, navController.currentDestination?.route)
+
+      navigateToListing(navController, "listing-abc")
+      assertEquals(NavRoutes.LISTING, navController.currentDestination?.route)
+
+      // Simulate onNavigateBack by calling popBackStack (same as in addListingRoute)
+      navController.popBackStack()
+
+      // Should return to HOME
+      assertEquals(NavRoutes.HOME, navController.currentDestination?.route)
+    }
+  }
+
+  @Test
+  fun listing_onEditListing_navigatesToNewSkill_whenUserLoggedIn() {
+    val userId = "user-edit-123"
+    val listingId = "listing-to-edit"
+
+    // Set user session so navigateToNewListing works
+    UserSessionManager.setCurrentUserId(userId)
+
+    composeRule.runOnIdle {
+      // Navigate to listing first
+      navigateToListing(navController, listingId)
+      assertEquals(NavRoutes.LISTING, navController.currentDestination?.route)
+
+      // Simulate onEditListing callback - same code as in addListingRoute
+      navigateToNewListing(navController, listingId)
+
+      // Should navigate to NEW_SKILL route
+      assertEquals(NavRoutes.NEW_SKILL, navController.currentDestination?.route)
+
+      // Verify arguments
+      val args = navController.currentBackStackEntry?.arguments
+      assertEquals(userId, args?.getString("profileId"))
+      assertEquals(listingId, args?.getString("listingId"))
+    }
+  }
+
+  @Test
+  fun listing_onNavigateToProfile_navigatesToOthersProfile() {
+    val listingId = "listing-xyz"
+
+    composeRule.runOnIdle {
+      // Navigate to listing first
+      navigateToListing(navController, listingId)
+      assertEquals(NavRoutes.LISTING, navController.currentDestination?.route)
+
+      // Simulate onNavigateToProfile callback - same navigation as in addListingRoute
+      navController.navigate(NavRoutes.OTHERS_PROFILE)
+
+      // Should navigate to OTHERS_PROFILE route
+      assertEquals(NavRoutes.OTHERS_PROFILE, navController.currentDestination?.route)
+    }
+  }
+
+  @Test
+  fun listing_onEditListing_doesNothing_whenNoUserLoggedIn() {
+    mockkObject(UserSessionManager)
+    every { UserSessionManager.getCurrentUserId() } returns null
+
+    composeRule.runOnIdle {
+      val listingId = "listing-no-user"
+
+      // Navigate to listing first
+      navigateToListing(navController, listingId)
+      assertEquals(NavRoutes.LISTING, navController.currentDestination?.route)
+
+      // Simulate onEditListing when no user is logged in
+      navigateToNewListing(navController, listingId)
+
+      // Should stay on LISTING route since no user is logged in
+      assertEquals(NavRoutes.LISTING, navController.currentDestination?.route)
+    }
+
+    unmockkObject(UserSessionManager)
+  }
 }

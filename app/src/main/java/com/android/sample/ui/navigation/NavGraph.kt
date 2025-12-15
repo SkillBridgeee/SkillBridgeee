@@ -177,7 +177,7 @@ private fun NavGraphBuilder.addMapRoute() {
  * @param profileViewModel ViewModel used to populate profile content.
  * @param authViewModel Authentication view model used to perform sign out.
  */
-private fun NavGraphBuilder.addProfileRoute(
+internal fun NavGraphBuilder.addProfileRoute(
     navController: NavHostController,
     profileViewModel: MyProfileViewModel,
     authViewModel: AuthenticationViewModel,
@@ -206,7 +206,7 @@ private fun NavGraphBuilder.addProfileRoute(
  * @param mainPageViewModel ViewModel for home content.
  * @param academicSubject Mutable state used to pass the selected subject to the skills screen.
  */
-private fun NavGraphBuilder.addHomeRoute(
+internal fun NavGraphBuilder.addHomeRoute(
     navController: NavHostController,
     mainPageViewModel: MainPageViewModel,
     academicSubject: MutableState<MainSubject?>,
@@ -262,7 +262,7 @@ private fun NavGraphBuilder.addSkillsRoute(
  * @param bookingsViewModel ViewModel that backs the bookings list screen.
  * @param bookingId Mutable state used to store the selected booking id for details screen.
  */
-private fun NavGraphBuilder.addBookingsRoute(
+internal fun NavGraphBuilder.addBookingsRoute(
     navController: NavHostController,
     bookingsViewModel: MyBookingsViewModel,
     bookingId: MutableState<String>,
@@ -447,8 +447,7 @@ fun NavGraphBuilder.addOthersProfileRoute(
  * Registers the listing details route.
  *
  * Declares a required `listingId` route argument, extracts it from the backStackEntry and presents
- * the listing screen. Provides navigation callbacks for back, editing, profile viewing, and
- * bookings.
+ * the listing screen. Provides navigation callbacks for back, editing, and profile viewing.
  *
  * @param navController Controller used to navigate from the listing details screen.
  * @param profileID Mutable state used to pass a selected profile id to other screens.
@@ -467,8 +466,8 @@ fun NavGraphBuilder.addListingRoute(
             listingId = listingId,
             onNavigateBack = { navController.popBackStack() },
             onEditListing = { navigateToNewListing(navController, listingId) },
-            onNavigateToProfile = { profileId ->
-              profileID.value = profileId
+            onNavigateToProfile = { creatorId ->
+              profileID.value = creatorId
               navController.navigate(NavRoutes.OTHERS_PROFILE)
             },
             onNavigateToBookings = { navController.navigate(NavRoutes.BOOKINGS) })
@@ -497,6 +496,10 @@ fun NavGraphBuilder.addBookingDetailsRoute(
     BookingDetailsScreen(
         bookingId = bookingId.value,
         onCreatorClick = { profileId ->
+          profileID.value = profileId
+          navController.navigate(NavRoutes.OTHERS_PROFILE)
+        },
+        onBookerClick = { profileId ->
           profileID.value = profileId
           navController.navigate(NavRoutes.OTHERS_PROFILE)
         },

@@ -26,7 +26,7 @@ class RatingFakeRepoWorking : FakeRatingRepo {
   }
 
   override suspend fun getRatingsOfListing(listingId: String): List<Rating> {
-    TODO("Not yet implemented")
+    return emptyList()
   }
 
   override suspend fun addRating(rating: Rating) {
@@ -59,6 +59,6 @@ class RatingFakeRepoWorking : FakeRatingRepo {
       ratingType: RatingType,
       targetObjectId: String
   ): Boolean {
-    TODO("Not yet implemented")
+    return false
   }
 }

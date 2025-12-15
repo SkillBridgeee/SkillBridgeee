@@ -25,7 +25,7 @@ import java.util.UUID
  */
 class FakeBookingWorking : FakeBookingRepo {
 
-  val initialNumBooking = 2
+  val initialNumBooking = 3
 
   private val bookings =
       mutableListOf(
@@ -46,7 +46,16 @@ class FakeBookingWorking : FakeBookingRepo {
               sessionStart = Date(System.currentTimeMillis() + 10800000L),
               sessionEnd = Date(System.currentTimeMillis() + 14400000L),
               status = BookingStatus.PENDING,
-              price = 45.0))
+              price = 45.0),
+          Booking(
+              bookingId = "b3",
+              associatedListingId = "listing_1",
+              listingCreatorId = "creator_1",
+              bookerId = "creator_2",
+              sessionStart = Date(System.currentTimeMillis() + 18000000L),
+              sessionEnd = Date(System.currentTimeMillis() + 21600000L),
+              status = BookingStatus.PENDING,
+              price = 30.0))
 
   // --- Génération simple d'ID ---
   override fun getNewUid(): String {
@@ -66,7 +75,9 @@ class FakeBookingWorking : FakeBookingRepo {
   }
 
   override suspend fun getBookingsByUserId(userId: String): List<Booking> {
-    return bookings.filter { booking -> booking.bookerId == userId }
+    return bookings.filter { booking ->
+      booking.bookerId == userId || booking.listingCreatorId == userId
+    }
   }
 
   override suspend fun getBookingsByStudent(studentId: String): List<Booking> {
