@@ -120,7 +120,7 @@ abstract class E2ETestBase {
         .performTextInput("epfl")
 
     // Wait for location suggestions to appear
-    composeTestRule.waitUntil(timeoutMillis = 8000) {
+    composeTestRule.waitUntil(timeoutMillis = 8001) {
       try {
         composeTestRule
             .onAllNodes(
@@ -166,7 +166,7 @@ abstract class E2ETestBase {
     forceEmailVerification(testEmail)
 
     // Wait for navigation back to login screen
-    composeTestRule.waitUntil(timeoutMillis = 8000) {
+    composeTestRule.waitUntil(timeoutMillis = 8002) {
       try {
         composeTestRule
             .onAllNodes(hasTestTag(SignInScreenTestTags.TITLE))

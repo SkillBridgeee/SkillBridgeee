@@ -44,12 +44,11 @@ object HomeScreenTestTags {
   const val PROPOSAL_SECTION = "proposalSection"
   const val PROPOSAL_CARD = "proposalCard"
   const val PROPOSAL_LIST = "proposalList"
-
   const val REFRESH_BUTTON = "refreshButton"
-
   const val REQUEST_SECTION = "requestSection"
   const val REQUEST_CARD = "requestCard"
 
+  const val ERROR_TEXT = "errorText"
   const val FAB_ADD = "fabAdd"
 }
 
@@ -89,25 +88,31 @@ fun HomeScreen(
         LazyColumn(
             modifier = Modifier.padding(paddingValues).fillMaxSize().background(Color.White),
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
-              // Greeting
               item {
                 Spacer(modifier = Modifier.height(10.dp))
                 GreetingSection(
                     welcomeMessage = uiState.welcomeMessage,
-                    refresh = { mainPageViewModel.refreshListing() })
+                    refresh = { mainPageViewModel.refreshListing() },
+                    enableRefresh = (uiState.errorMsg == null))
               }
 
               // Explore subjects
               item { ExploreSubjects(uiState.subjects, onNavigateToSubjectList) }
 
-              item {
-                ProposalsSection(
-                    proposals = uiState.proposals, onProposalClick = onNavigateToListingDetails)
-              }
-
-              item {
-                RequestsSection(
-                    requests = uiState.requests, onRequestClick = onNavigateToListingDetails)
+              when (val error = uiState.errorMsg) {
+                null -> {
+                  item {
+                    ProposalsSection(
+                        proposals = uiState.proposals, onProposalClick = onNavigateToListingDetails)
+                  }
+                  item {
+                    RequestsSection(
+                        requests = uiState.requests, onRequestClick = onNavigateToListingDetails)
+                  }
+                }
+                else -> {
+                  item { ErrorSection(errorMsg = error, reload = { mainPageViewModel.load() }) }
+                }
               }
 
               // Bottom padding
@@ -122,7 +127,7 @@ fun HomeScreen(
  * @param welcomeMessage The personalized greeting text shown to the user.
  */
 @Composable
-fun GreetingSection(welcomeMessage: String, refresh: () -> Unit) {
+fun GreetingSection(welcomeMessage: String, refresh: () -> Unit, enableRefresh: Boolean) {
   Row(modifier = Modifier.fillMaxWidth()) {
     // Greeting Section
     Column(
@@ -137,7 +142,8 @@ fun GreetingSection(welcomeMessage: String, refresh: () -> Unit) {
     // Refresh button
     IconButton(
         modifier = Modifier.padding(end = 16.dp).testTag(HomeScreenTestTags.REFRESH_BUTTON),
-        onClick = refresh) {
+        onClick = refresh,
+        enabled = enableRefresh) {
           Icon(imageVector = Icons.Filled.Refresh, contentDescription = "Refresh HomePage")
         }
   }
@@ -253,7 +259,7 @@ fun ProposalsSection(proposals: List<Proposal>, onProposalClick: (String) -> Uni
 fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
   Column(modifier = Modifier.padding(horizontal = 10.dp)) {
     Text(
-        text = "Recent Requests",
+        text = "Latest Requests",
         fontWeight = FontWeight.Bold,
         fontSize = 16.sp,
         modifier = Modifier.testTag(HomeScreenTestTags.REQUEST_SECTION))
@@ -277,4 +283,30 @@ fun RequestsSection(requests: List<Request>, onRequestClick: (String) -> Unit) {
       }
     }
   }
+}
+
+/**
+ * Displays an error message with a retry action.
+ *
+ * @param errorMsg The error details to display.
+ * @param reload Callback invoked when the user taps the retry button.
+ */
+@Composable
+fun ErrorSection(errorMsg: String, reload: () -> Unit) {
+  Column(
+      modifier = Modifier.fillMaxWidth().padding(16.dp),
+      horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "Something went wrong",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.testTag(HomeScreenTestTags.ERROR_TEXT))
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(text = errorMsg, fontSize = 14.sp, color = Color.Gray)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = reload) { Text("Retry") }
+      }
 }
