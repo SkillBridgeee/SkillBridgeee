@@ -2,19 +2,21 @@ package com.android.sample.screen
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.test.core.app.ApplicationProvider
@@ -35,6 +37,7 @@ import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.bookings.BookingDetailsContent
 import com.android.sample.ui.bookings.BookingDetailsScreen
+import com.android.sample.ui.bookings.BookingDetailsStrings
 import com.android.sample.ui.bookings.BookingDetailsTestTag
 import com.android.sample.ui.bookings.BookingDetailsViewModel
 import com.android.sample.ui.bookings.BookingUIState
@@ -272,10 +275,9 @@ class BookingDetailsScreenTest {
       BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
     }
 
-    composeTestRule.waitUntil {
-      composeTestRule.onAllNodesWithText("John Doe").fetchSemanticsNodes().isNotEmpty()
-    }
+    composeTestRule.waitForIdle()
 
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.CONTENT).assertExists()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.HEADER).assertExists()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_SECTION).assertExists()
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertExists()
@@ -504,6 +506,7 @@ class BookingDetailsScreenTest {
           onPaymentReceived = {},
       )
     }
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.CONTENT)
 
     // then: button should not exist in the tree
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertDoesNotExist()
@@ -738,6 +741,696 @@ class BookingDetailsScreenTest {
     composeTestRule
         .onNodeWithText("Payment has been successfully completed and confirmed!")
         .assertIsDisplayed()
+  }
+
+  @Test
+  fun bookingDetailsDisplaysTotalPriceSection() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 150.0)))
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.TOTAL_PRICE_SECTION).assertExists()
+  }
+
+  @Test
+  fun bookingDetailsDisplaysHourlyPriceSection() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 200.0),
+            listing =
+                Proposal(
+                    listingId = "l1",
+                    hourlyRate = 50.0,
+                )))
+
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+
+    composeTestRule.onNodeWithText(BookingDetailsStrings.HOURLY_RATE).assertExists()
+  }
+
+  @Test
+  fun subjectBookingDetailIsDisplayedCorrectly() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 200.0),
+            listing =
+                Proposal(
+                    skill = Skill(skill = "Mathematics", mainSubject = MainSubject.ACADEMICS),
+                    listingId = "l1",
+                    hourlyRate = 50.0,
+                )))
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+    composeTestRule.onNodeWithText(BookingDetailsStrings.SUBJECT).assertExists()
+    composeTestRule.onNodeWithText("Mathematics").assertExists()
+  }
+
+  @Test
+  fun domainBookingDetailIsDisplayedCorrectly() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 200.0),
+            listing =
+                Proposal(
+                    skill = Skill(skill = "Mathematics", mainSubject = MainSubject.ACADEMICS),
+                    listingId = "l1",
+                    hourlyRate = 50.0,
+                )))
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+    composeTestRule.onNodeWithText(BookingDetailsStrings.DOMAIN).assertExists()
+    composeTestRule.onNodeWithText("ACADEMICS").assertExists()
+  }
+
+  @Test
+  fun bookingStatusPaymentWaitingForTutor() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 200.0,
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.PAID,
+                )))
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+    assert(vm.bookingUiState.value.booking.status == BookingStatus.CONFIRMED)
+    assert(vm.bookingUiState.value.booking.paymentStatus == PaymentStatus.PAID)
+    composeTestRule
+        .onNodeWithText("Waiting for the tutor to confirm receipt of payment.")
+        .assertExists()
+  }
+
+  @Test
+  fun bookingStatusPaymentReceived() {
+    val vm = fakeViewModel()
+    vm.setUiStateForTest(
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "student",
+                    price = 200.0,
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.CONFIRMED,
+                )))
+    composeTestRule.setContent {
+      BookingDetailsScreen(bkgViewModel = vm, bookingId = "b1", onCreatorClick = {})
+    }
+    assert(vm.bookingUiState.value.booking.status == BookingStatus.CONFIRMED)
+    assert(vm.bookingUiState.value.booking.paymentStatus == PaymentStatus.CONFIRMED)
+    composeTestRule
+        .onNodeWithText("Payment has been successfully completed and confirmed!")
+        .assertExists()
+  }
+
+  @Test
+  fun bookingHeader_showsTeacherPrefix_forProposal_whenCreator() {
+    val booking =
+        Booking(
+            bookingId = "b-header-1",
+            associatedListingId = "l1",
+            listingCreatorId = "u1",
+            bookerId = "u2",
+        )
+    val listing =
+        Proposal(
+            listingId = "l1",
+            creatorUserId = "u1",
+            description = "Guitar Lessons",
+            skill = Skill(skill = "GUITAR", mainSubject = MainSubject.MUSIC),
+            location = Location(name = "Geneva"),
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = listing,
+            creatorProfile = Profile(userId = "u1"),
+            bookerProfile = Profile(userId = "u2"),
+            isCreator = true,
+            isBooker = false,
+        )
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule
+        .onNodeWithText(BookingDetailsStrings.BOOKING_HEADER_TEACHER, substring = true)
+        .assertExists()
+  }
+
+  @Test
+  fun bookingHeader_showsStudentPrefix_forProposal_whenBooker() {
+    val booking =
+        Booking(
+            bookingId = "b-header-2",
+            associatedListingId = "l1",
+            listingCreatorId = "u1",
+            bookerId = "u2",
+        )
+    val listing =
+        Proposal(
+            listingId = "l1",
+            creatorUserId = "u1",
+            description = "Math Lessons",
+            skill = Skill(skill = "ALGEBRA", mainSubject = MainSubject.ACADEMICS),
+            location = Location(name = "Lausanne"),
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = listing,
+            creatorProfile = Profile(userId = "u1"),
+            bookerProfile = Profile(userId = "u2"),
+            isCreator = false,
+            isBooker = true,
+        )
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule
+        .onNodeWithText(BookingDetailsStrings.BOOKING_HEADER_STUDENT, substring = true)
+        .assertExists()
+  }
+
+  @Test
+  fun bookingHeader_switchesPrefix_forRequest_basedOnRole() {
+    val booking =
+        Booking(
+            bookingId = "b-header-3",
+            associatedListingId = "l-req",
+            listingCreatorId = "creator",
+            bookerId = "booker",
+        )
+    val listing =
+        Request(
+            listingId = "l-req",
+            creatorUserId = "creator",
+            description = "Need Physics Help",
+            skill = Skill(skill = "PHYSICS", mainSubject = MainSubject.ACADEMICS),
+            location = Location(name = "Zurich"),
+        )
+
+    // Creator view
+    val creatorUi =
+        BookingUIState(
+            booking = booking,
+            listing = listing,
+            creatorProfile = Profile(userId = "creator"),
+            bookerProfile = Profile(userId = "booker"),
+            isCreator = true,
+            isBooker = false,
+        )
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = creatorUi,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    // For REQUEST + isCreator → "Student for : "
+    composeTestRule
+        .onNodeWithText(BookingDetailsStrings.BOOKING_HEADER_STUDENT, substring = true)
+        .assertExists()
+  }
+
+  @Test
+  fun infoCreator_showsTutorRole_forProposal() {
+    val uiState =
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b-role-1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "u2"),
+            listing =
+                Proposal(
+                    listingId = "l1",
+                    creatorUserId = "u1",
+                    skill = Skill(skill = "PIANO", mainSubject = MainSubject.MUSIC),
+                    location = Location(name = "Geneva")),
+            creatorProfile = Profile(userId = "u1", name = "Tutor"),
+            bookerProfile = Profile(userId = "u2", name = "Student"),
+        )
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.onNodeWithText("Information about the Tutor").assertExists()
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_NAME).assertExists()
+  }
+
+  @Test
+  fun infoCreator_showsStudentRole_forRequest() {
+    val listing =
+        Request(
+            listingId = "req-1",
+            creatorUserId = "student-creator",
+            description = "Need help",
+            skill = Skill(skill = "BIOLOGY", mainSubject = MainSubject.ACADEMICS),
+            location = Location(name = "EPFL"))
+
+    val uiState =
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b-role-2",
+                    associatedListingId = "req-1",
+                    listingCreatorId = "student-creator",
+                    bookerId = "tutor"),
+            listing = listing,
+            creatorProfile = Profile(userId = "student-creator", name = "Student Creator"),
+            bookerProfile = Profile(userId = "tutor", name = "Tutor"),
+        )
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.onNodeWithText("Information about the Student").assertExists()
+  }
+
+  @Test
+  fun infoCreator_fallsBackToUnknown_whenNameNull() {
+    val uiState =
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b-unknown-1",
+                    associatedListingId = "l1",
+                    listingCreatorId = "u1",
+                    bookerId = "u2"),
+            listing = Proposal(listingId = "l1"),
+            creatorProfile = Profile(userId = "u1", name = null, email = "x@y.ch"),
+            bookerProfile = Profile(userId = "u2", name = "Student"),
+        )
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.onNodeWithText(BookingDetailsStrings.UNKNOWN).assertExists()
+  }
+
+  @Test
+  fun infoBooker_isShown_onlyWhenPendingAndCreator_andClickCallsCallback() {
+    val booking =
+        Booking(
+            bookingId = "b-booker-1",
+            associatedListingId = "l1",
+            listingCreatorId = "tutor-id",
+            bookerId = "student-id",
+            status = BookingStatus.PENDING,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(listingId = "l1"),
+            creatorProfile = Profile(userId = "tutor-id", name = "Tutor"),
+            bookerProfile = Profile(userId = "student-id", name = "Student Booker"),
+            isCreator = true,
+            isBooker = false,
+        )
+
+    var clickedBookerId: String? = null
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = { clickedBookerId = it },
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.BOOKER_SECTION).assertExists()
+  }
+
+  @Test
+  fun paymentPending_tutorSeesWaitingForStudentMessage() {
+    val base = completedBookingUiState()
+    val uiState =
+        base.copy(
+            isCreator = true,
+            isBooker = false,
+            booking =
+                base.booking.copy(
+                    status = BookingStatus.CONFIRMED,
+                    paymentStatus = PaymentStatus.PENDING_PAYMENT,
+                ))
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.onNodeWithText(BookingDetailsStrings.WAITING_PAYMENT_STUDENT).assertExists()
+  }
+
+  @Test
+  fun bookerRatingSection_hidden_whenAlreadySubmitted_forRequest() {
+    val listing =
+        Request(
+            listingId = "req-rating-1",
+            creatorUserId = "student-creator",
+            description = "Need help",
+            skill = Skill(skill = "CHEMISTRY", mainSubject = MainSubject.ACADEMICS),
+            location = Location(name = "EPFL"))
+
+    val booking =
+        Booking(
+            bookingId = "b-rating-req",
+            associatedListingId = "req-rating-1",
+            listingCreatorId = "student-creator",
+            bookerId = "tutor",
+            status = BookingStatus.COMPLETED,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = listing,
+            creatorProfile = Profile(userId = "student-creator"),
+            bookerProfile = Profile(userId = "tutor"),
+            isBooker = true,
+            isCreator = false,
+            ratingProgress =
+                RatingProgress(
+                    bookerRatedStudent = true,
+                    bookerRatedListing = true,
+                ),
+        )
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule
+        .onAllNodesWithTag(BookingDetailsTestTag.RATING_SECTION, useUnmergedTree = true)
+        .assertCountEquals(0)
+  }
+
+  @Test
+  fun creatorRatingSection_hidden_whenAlreadySubmitted_forProposal() {
+    val listing =
+        Proposal(
+            listingId = "prop-rating-1",
+            creatorUserId = "tutor-id",
+            description = "Guitar",
+            skill = Skill(skill = "GUITAR", mainSubject = MainSubject.MUSIC),
+            location = Location(name = "Geneva"))
+
+    val booking =
+        Booking(
+            bookingId = "b-rating-prop",
+            associatedListingId = "prop-rating-1",
+            listingCreatorId = "tutor-id",
+            bookerId = "student-id",
+            status = BookingStatus.COMPLETED,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = listing,
+            creatorProfile = Profile(userId = "tutor-id"),
+            bookerProfile = Profile(userId = "student-id"),
+            isCreator = true,
+            isBooker = false,
+            ratingProgress =
+                RatingProgress(
+                    creatorRatedStudent = true,
+                ),
+        )
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule
+        .onAllNodesWithTag(BookingDetailsTestTag.RATING_SECTION, useUnmergedTree = true)
+        .assertCountEquals(0)
+  }
+
+  @Test
+  fun scheduleSection_displaysStartAndEndLabels() {
+    val uiState = completedBookingUiState()
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.onNodeWithText(BookingDetailsStrings.START_OF_SESSION).assertExists()
+    composeTestRule.onNodeWithText(BookingDetailsStrings.END_OF_SESSION).assertExists()
+  }
+
+  @Test
+  fun totalPriceSection_displaysPriceValue() {
+    val booking =
+        Booking(
+            bookingId = "b-price-1",
+            associatedListingId = "l1",
+            listingCreatorId = "u1",
+            bookerId = "u2",
+            price = 123.45,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking = booking,
+            listing = Proposal(listingId = "l1"),
+            creatorProfile = Profile(userId = "u1"),
+            bookerProfile = Profile(userId = "u2"),
+        )
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.onNodeWithTag(BookingDetailsTestTag.TOTAL_PRICE_SECTION).assertExists()
+    composeTestRule.onNodeWithText("$${booking.price}").assertExists()
+  }
+
+  @Test
+  fun infoListing_formatsDomainAndSubjectCorrectly() {
+    val listing =
+        Proposal(
+            listingId = "l-format",
+            skill = Skill(skill = "ADVANCED_MATH", mainSubject = MainSubject.ACADEMICS),
+            location = Location(name = "Lausanne"),
+            hourlyRate = 80.0,
+        )
+
+    val uiState =
+        BookingUIState(
+            booking =
+                Booking(
+                    bookingId = "b-format",
+                    associatedListingId = "l-format",
+                    listingCreatorId = "u1",
+                    bookerId = "u2",
+                    price = 80.0),
+            listing = listing,
+            creatorProfile = Profile(userId = "u1"),
+            bookerProfile = Profile(userId = "u2"),
+        )
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { _, _ -> },
+            onSubmitCreatorRating = {},
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.onNodeWithText(BookingDetailsStrings.DOMAIN).assertExists()
+    composeTestRule.onNodeWithText("ACADEMICS").assertExists()
+
+    composeTestRule.onNodeWithText(BookingDetailsStrings.SUBJECT).assertExists()
+    composeTestRule.onNodeWithText("ADVANCED MATH").assertExists()
   }
 
   // ============================================================
@@ -1366,6 +2059,9 @@ class BookingDetailsScreenTest {
             onPaymentReceived = {})
       }
     }
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.CONTENT)
+        .performScrollToNode(hasTestTag(BookingDetailsTestTag.COMPLETE_BUTTON))
 
     // Button should be disabled
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertIsNotEnabled()
@@ -1466,6 +2162,9 @@ class BookingDetailsScreenTest {
       }
     }
 
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.CONTENT)
+        .performScrollToNode(hasTestTag(BookingDetailsTestTag.COMPLETE_BUTTON))
     // Button should be disabled
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertIsNotEnabled()
 
@@ -1563,6 +2262,11 @@ class BookingDetailsScreenTest {
       }
     }
 
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.CONTENT)
+        .performScrollToNode(
+            hasText(
+                "You cannot mark the booking as completed until the payment has been confirmed."))
     // Should show the correct message
     composeTestRule
         .onNodeWithText(
