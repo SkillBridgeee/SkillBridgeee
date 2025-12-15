@@ -148,8 +148,6 @@ class NavGraphCallbackIntegrationTest : AppTest() {
     // Navigate to Bookings screen
     composeRule.onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).performClick()
 
-    // Wait a bit longer for the screen to settle
-    Thread.sleep(2000)
     composeRule.waitForIdle()
 
     // Wait for booking cards to be displayed (wait for at least 1 card)
@@ -177,8 +175,6 @@ class NavGraphCallbackIntegrationTest : AppTest() {
     // Navigate to Bookings screen
     composeRule.onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).performClick()
 
-    // Wait a bit longer for the screen to settle
-    Thread.sleep(2000)
     composeRule.waitForIdle()
 
     // Wait for booking cards to be displayed (wait for at least 1 card)
@@ -312,8 +308,6 @@ class NavGraphCallbackIntegrationTest : AppTest() {
     // Navigate to Bookings screen
     composeRule.onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).performClick()
 
-    // Wait a bit longer for the screen to settle (especially important for CI)
-    Thread.sleep(2000)
     composeRule.waitForIdle()
 
     // Wait for booking cards to be displayed (creator_1 sees b1, b2, b3 = 3 bookings)
