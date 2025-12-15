@@ -41,7 +41,7 @@ fun RequestCard(
 ) {
   Card(
       shape = MaterialTheme.shapes.medium,
-      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
       modifier = modifier.clickable { onClick(request.listingId) }.testTag(testTag)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
