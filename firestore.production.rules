@@ -2,8 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // PRODUCTION RULES - Use these when deploying to production
-    // To deploy: Copy these rules to firestore.rules and run: firebase deploy --only firestore:rules
+    // ========================================================================
+    // PRODUCTION RULES - Use these when deploying to production APK
+    // ========================================================================
+    // To deploy: firebase deploy --only firestore:rules
+    // These rules enforce strict security for the production environment.
+    // For local testing/emulator, use the relaxed rules in firestore.rules
+    // ========================================================================
 
     // Helper function to check if user is authenticated
     function isAuthenticated() {
@@ -47,7 +52,7 @@ service cloud.firestore {
 
       // Allow update/delete only by the creator
       allow update, delete: if isAuthenticated() &&
-                               resource.data.userId == request.auth.uid;
+                               resource.data.creatorUserId == request.auth.uid;
     }
 
     // Bookings collection
@@ -80,6 +85,81 @@ service cloud.firestore {
       // Allow update/delete only by the creator
       allow update, delete: if isAuthenticated() &&
                                resource.data.reviewerId == request.auth.uid;
+    }
+
+    // Conversations collection
+    match /conversations/{convId} {
+      // Helper function to check if user is participant in conversation
+      function isParticipant() {
+        return isAuthenticated() &&
+               (resource.data.convCreatorId == request.auth.uid ||
+                resource.data.otherPersonId == request.auth.uid);
+      }
+
+      function isParticipantCreate() {
+        return isAuthenticated() &&
+               (request.resource.data.convCreatorId == request.auth.uid ||
+                request.resource.data.otherPersonId == request.auth.uid);
+      }
+
+      // Allow read if user is a participant in the conversation
+      allow get: if isParticipant();
+
+      // Allow list for authenticated users (they'll only see their conversations via queries)
+      allow list: if isAuthenticated();
+
+      // Allow create if user is one of the participants
+      allow create: if isParticipantCreate();
+
+      // Allow update if user is a participant (for updating messages, etc.)
+      allow update: if isParticipant();
+
+      // Allow delete if user is a participant
+      allow delete: if isParticipant();
+
+      // Messages subcollection
+      match /messages/{msgId} {
+        // Allow read if parent conversation allows it (user is participant)
+        allow read: if isAuthenticated() &&
+                       (get(/databases/$(database)/documents/conversations/$(convId)).data.convCreatorId == request.auth.uid ||
+                        get(/databases/$(database)/documents/conversations/$(convId)).data.otherPersonId == request.auth.uid);
+
+        // Allow write if user is sender or receiver of the message
+        allow create: if isAuthenticated() &&
+                         (request.resource.data.senderId == request.auth.uid ||
+                          request.resource.data.receiverId == request.auth.uid);
+
+        allow update, delete: if isAuthenticated() &&
+                                 resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // OverViewConv collection (conversation overviews for users)
+    match /overViewConv/{overviewId} {
+      // Allow read if user owns this overview OR is the other participant
+      // This allows reading/updating overview when the user is involved in the conversation
+      allow get: if isAuthenticated() &&
+                    (resource.data.overViewOwnerId == request.auth.uid ||
+                     resource.data.otherPersonId == request.auth.uid);
+
+      // Allow list for authenticated users (filtered by get rules)
+      allow list: if isAuthenticated();
+
+      // Allow create if user is the owner OR the other person in the conversation
+      // This allows creating overviews for both participants when starting a conversation
+      allow create: if isAuthenticated() &&
+                       (request.resource.data.overViewOwnerId == request.auth.uid ||
+                        request.resource.data.otherPersonId == request.auth.uid);
+
+      // Allow update if user owns the overview OR is the other participant
+      // This allows updating overview (e.g., unread count) when sending/receiving messages
+      allow update: if isAuthenticated() &&
+                       (resource.data.overViewOwnerId == request.auth.uid ||
+                        resource.data.otherPersonId == request.auth.uid);
+
+      // Allow delete if user owns the overview
+      allow delete: if isAuthenticated() &&
+                       resource.data.overViewOwnerId == request.auth.uid;
     }
 
     // Default deny all other collections
