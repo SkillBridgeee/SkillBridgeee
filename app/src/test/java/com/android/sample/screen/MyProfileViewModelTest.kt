@@ -21,6 +21,9 @@ import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.map.GpsLocationProvider
 import com.android.sample.model.map.Location
+import com.android.sample.model.map.LocationHelper.GPS_FAILED_MSG
+import com.android.sample.model.map.LocationHelper.LOCATION_DISABLED_MSG
+import com.android.sample.model.map.LocationHelper.LOCATION_PERMISSION_DENIED_MSG
 import com.android.sample.model.map.LocationRepository
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
@@ -31,10 +34,7 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.profile.DESC_EMPTY_MSG
 import com.android.sample.ui.profile.EMAIL_EMPTY_MSG
 import com.android.sample.ui.profile.EMAIL_INVALID_MSG
-import com.android.sample.ui.profile.GPS_FAILED_MSG
-import com.android.sample.ui.profile.LOCATION_DISABLED_MSG
 import com.android.sample.ui.profile.LOCATION_EMPTY_MSG
-import com.android.sample.ui.profile.LOCATION_PERMISSION_DENIED_MSG
 import com.android.sample.ui.profile.MyProfileViewModel
 import com.android.sample.ui.profile.NAME_EMPTY_MSG
 import com.android.sample.utils.FakeConversationRepo
