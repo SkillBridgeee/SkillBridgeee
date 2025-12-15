@@ -5,15 +5,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.ui.HomePage.ExploreSubjects
 import com.android.sample.ui.HomePage.GreetingSection
+import com.android.sample.ui.HomePage.HomeScreen
 import com.android.sample.ui.HomePage.HomeScreenTestTags
+import com.android.sample.ui.HomePage.MainPageViewModel
 import com.android.sample.ui.HomePage.ProposalsSection
 import com.android.sample.ui.HomePage.SubjectCard
+import com.android.sample.utils.fakeRepo.fakeListing.FakeListingError
+import com.android.sample.utils.fakeRepo.fakeListing.FakeListingWorking
+import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileError
+import com.android.sample.utils.fakeRepo.fakeProfile.FakeProfileWorking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -25,7 +32,9 @@ class HomeScreenTest {
   @Test
   fun greetingSection_displaysTexts() {
     composeRule.setContent {
-      MaterialTheme { GreetingSection(welcomeMessage = "Welcome John!", refresh = {}) }
+      MaterialTheme {
+        GreetingSection(welcomeMessage = "Welcome John!", refresh = {}, enableRefresh = true)
+      }
     }
 
     composeRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
@@ -34,6 +43,117 @@ class HomeScreenTest {
 
     composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).assertIsDisplayed()
     composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).performClick()
+  }
+
+  @Test
+  fun whenNoError() {
+
+    UserSessionManager.setCurrentUserId("creator_1")
+
+    val vm =
+        MainPageViewModel(
+            profileRepository = FakeProfileWorking(), listingRepository = FakeListingWorking())
+
+    composeRule.setContent {
+      MaterialTheme {
+        HomeScreen(
+            mainPageViewModel = vm,
+            onNavigateToSubjectList = {},
+            onNavigateToAddNewListing = {},
+        ) {}
+      }
+    }
+
+    composeRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
+
+    composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).performClick()
+
+    composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_SECTION).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REQUEST_SECTION).assertIsDisplayed()
+
+    composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_CARD).assertIsDisplayed()
+  }
+
+  @Test
+  fun whenIdentificationError() {
+
+    val vm =
+        MainPageViewModel(
+            profileRepository = FakeProfileWorking(), listingRepository = FakeListingWorking())
+    composeRule.setContent {
+      MaterialTheme {
+        HomeScreen(
+            mainPageViewModel = vm,
+            onNavigateToSubjectList = {},
+            onNavigateToAddNewListing = {},
+        ) {}
+      }
+    }
+    composeRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).performClick()
+    composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_SECTION).assertIsNotDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REQUEST_SECTION).assertIsNotDisplayed()
+
+    composeRule.onNodeWithTag(HomeScreenTestTags.ERROR_TEXT).assertIsDisplayed()
+
+    composeRule.onNodeWithText("An error occurred during your identification.").assertIsDisplayed()
+  }
+
+  @Test
+  fun whenListingError() {
+    UserSessionManager.setCurrentUserId("creator_1")
+
+    val vm =
+        MainPageViewModel(
+            profileRepository = FakeProfileWorking(), listingRepository = FakeListingError())
+    composeRule.setContent {
+      MaterialTheme {
+        HomeScreen(
+            mainPageViewModel = vm,
+            onNavigateToSubjectList = {},
+            onNavigateToAddNewListing = {},
+        ) {}
+      }
+    }
+    composeRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).performClick()
+    composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_SECTION).assertIsNotDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REQUEST_SECTION).assertIsNotDisplayed()
+
+    composeRule.onNodeWithTag(HomeScreenTestTags.ERROR_TEXT).assertIsDisplayed()
+    composeRule
+        .onNodeWithText("An error occurred while loading proposals and requests.")
+        .assertIsDisplayed()
+  }
+
+  @Test
+  fun whenBothError() {
+    val vm =
+        MainPageViewModel(
+            profileRepository = FakeProfileError(), listingRepository = FakeListingError())
+    composeRule.setContent {
+      MaterialTheme {
+        HomeScreen(
+            mainPageViewModel = vm,
+            onNavigateToSubjectList = {},
+            onNavigateToAddNewListing = {},
+        ) {}
+      }
+    }
+    composeRule.onNodeWithTag(HomeScreenTestTags.WELCOME_SECTION).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).assertIsDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REFRESH_BUTTON).performClick()
+    composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_SECTION).assertIsNotDisplayed()
+    composeRule.onNodeWithTag(HomeScreenTestTags.REQUEST_SECTION).assertIsNotDisplayed()
+
+    composeRule.onNodeWithTag(HomeScreenTestTags.ERROR_TEXT).assertIsDisplayed()
+    composeRule
+        .onNodeWithText(
+            "An error occurred during your identification and while loading proposals and requests.")
+        .assertIsDisplayed()
   }
 
   @Test
