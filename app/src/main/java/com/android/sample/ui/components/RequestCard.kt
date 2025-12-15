@@ -1,19 +1,12 @@
 package com.android.sample.ui.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.android.sample.model.listing.Request
 import com.android.sample.model.rating.RatingInfo
-import java.util.Locale
 
 object RequestCardTestTags {
   const val CARD = "RequestCardTestTags.CARD"
@@ -63,63 +56,4 @@ fun RequestCard(
       testTagStatusBadge = RequestCardTestTags.STATUS_BADGE,
       onClick = onClick,
       modifier = modifier)
-}
-
-@Composable
-private fun RowScope.RequestCardContent(request: Request, rating: RatingInfo?) {
-  Column(modifier = Modifier.weight(1f)) {
-    StatusBadge(
-        isActive = request.isActive,
-        activeColor = MaterialTheme.colorScheme.secondaryContainer,
-        activeTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        testTag = RequestCardTestTags.STATUS_BADGE)
-
-    CardTitle(title = request.displayTitle(), testTag = RequestCardTestTags.TITLE)
-    Spacer(modifier = Modifier.height(4.dp))
-    CardDescription(description = request.description, testTag = RequestCardTestTags.DESCRIPTION)
-    LocationAndDateRow(
-        locationName = request.location.name,
-        createdAt = request.createdAt,
-        locationTestTag = RequestCardTestTags.LOCATION,
-        dateTestTag = RequestCardTestTags.CREATED_DATE)
-
-    rating?.let {
-      Spacer(modifier = Modifier.height(8.dp))
-      Row(verticalAlignment = Alignment.CenterVertically) {
-        val avg = it.averageRating.coerceIn(0.0, 5.0)
-        RatingStars(ratingOutOfFive = avg)
-        Spacer(Modifier.width(8.dp))
-        val ratingText =
-            if (it.totalRatings == 0) {
-              "No ratings yet"
-            } else {
-              String.format(Locale.getDefault(), "%.1f (%d)", avg, it.totalRatings)
-            }
-        Text(
-            text = ratingText,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontStyle = if (it.totalRatings == 0) FontStyle.Italic else FontStyle.Normal)
-      }
-    }
-  }
-}
-
-@Composable
-private fun RequestCardPriceSection(hourlyRate: Double) {
-  Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center) {
-    Text(
-        text = String.format(Locale.getDefault(), "$%.2f/hr", hourlyRate),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.secondary,
-        modifier = Modifier.testTag(RequestCardTestTags.HOURLY_RATE))
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Icon(
-        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-        contentDescription = "View details",
-        tint = MaterialTheme.colorScheme.onSurfaceVariant)
-  }
 }
