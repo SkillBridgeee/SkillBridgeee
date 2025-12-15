@@ -305,17 +305,17 @@ class ListingViewModel(
 
         // Create a conversation between the booker and listing creator
         try {
-          val creatorProfile = profileRepo.getProfile(listing.creatorUserId)
-          val conversationName = creatorProfile?.name ?: "Booking Discussion"
+          val bookerProfile = profileRepo.getProfile(currentUserId)
+          val conversationName = bookerProfile?.name ?: "Booking Discussion"
 
           val convId =
               conversationManager.createConvAndOverviews(
-                  creatorId = currentUserId,
-                  otherUserId = listing.creatorUserId,
+                  creatorId = listing.creatorUserId,
+                  otherUserId = currentUserId,
                   convName = conversationName)
           Log.d(
               "ListingViewModel",
-              "Conversation created successfully: $convId between $currentUserId and ${listing.creatorUserId}")
+              "Conversation created successfully: $convId between ${listing.creatorUserId} and $currentUserId")
         } catch (e: Exception) {
           Log.e("ListingViewModel", "Failed to create conversation", e)
           _uiState.update {
