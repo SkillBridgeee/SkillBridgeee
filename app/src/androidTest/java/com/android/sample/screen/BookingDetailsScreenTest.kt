@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeUp
 import androidx.test.core.app.ApplicationProvider
@@ -2057,6 +2058,9 @@ class BookingDetailsScreenTest {
             onPaymentReceived = {})
       }
     }
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.CONTENT)
+        .performScrollToNode(hasTestTag(BookingDetailsTestTag.COMPLETE_BUTTON))
 
     // Button should be disabled
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertIsNotEnabled()
@@ -2157,6 +2161,9 @@ class BookingDetailsScreenTest {
       }
     }
 
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.CONTENT)
+        .performScrollToNode(hasTestTag(BookingDetailsTestTag.COMPLETE_BUTTON))
     // Button should be disabled
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.COMPLETE_BUTTON).assertIsNotEnabled()
 
