@@ -20,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.Skill
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.HomePage.ProposalsSection
@@ -52,6 +53,7 @@ class HomeScreenProfileNavigationTest {
           composable("home") {
             ProposalsSection(
                 proposals = listOf(proposal),
+                ratings = emptyMap<String, RatingInfo>(),
                 onProposalClick = { listingId ->
                   clickedCreatorId.value = listingId
                   navController.navigate(NavRoutes.OTHERS_PROFILE)

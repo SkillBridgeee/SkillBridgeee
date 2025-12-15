@@ -7,6 +7,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
 import com.android.sample.ui.HomePage.ExploreSubjects
@@ -90,7 +91,10 @@ class HomeScreenTest {
 
     composeRule.setContent {
       MaterialTheme {
-        ProposalsSection(proposals = proposals, onProposalClick = { id -> clickedProposalId = id })
+        ProposalsSection(
+            proposals = proposals,
+            ratings = emptyMap<String, RatingInfo>(),
+            onProposalClick = { id -> clickedProposalId = id })
       }
     }
 
@@ -112,7 +116,14 @@ class HomeScreenTest {
 
   @Test
   fun proposalsSection_handlesEmptyListGracefully() {
-    composeRule.setContent { MaterialTheme { ProposalsSection(emptyList()) { /* no-op */} } }
+    composeRule.setContent {
+      MaterialTheme {
+        ProposalsSection(
+            proposals = emptyList(),
+            ratings = emptyMap<String, RatingInfo>(),
+            onProposalClick = { /* no-op */})
+      }
+    }
 
     composeRule.onNodeWithTag(HomeScreenTestTags.PROPOSAL_SECTION).assertIsDisplayed()
   }
