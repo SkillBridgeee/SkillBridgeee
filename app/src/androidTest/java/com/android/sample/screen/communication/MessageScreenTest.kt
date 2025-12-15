@@ -405,6 +405,74 @@ class MessageScreenTest {
         .performScrollToNode(hasText("Scroll Test Message1"))
   }
 
+  // -----------------------------------------------------
+  // TEST — Timestamp display
+  // -----------------------------------------------------
+  @Test
+  fun messageScreen_displaysSingleMessageTimestamp() = runTest {
+    // Add a message with a specific timestamp
+    val testMessage =
+        Message(
+            msgId = "msg1",
+            content = "Test with timestamp",
+            senderId = userA,
+            receiverId = userB,
+            createdAt = Date())
+    manager.sendMessage(convId, testMessage)
+
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+
+    composeTestRule.waitForIdle()
+
+    // Verify the message content is displayed
+    composeTestRule.onNodeWithText("Test with timestamp").assertExists()
+
+    // Verify that a timestamp is displayed (should contain "ago" or time format like ":")
+    // The timestamp should be visible somewhere on the screen
+    composeTestRule.waitUntil(3000) {
+      composeTestRule
+          .onAllNodesWithText("Just now", substring = true)
+          .fetchSemanticsNodes()
+          .isNotEmpty() ||
+          composeTestRule
+              .onAllNodesWithText(":", substring = true)
+              .fetchSemanticsNodes()
+              .isNotEmpty()
+    }
+  }
+
+  @Test
+  fun messageScreen_displaysMultipleMessagesWithTimestamps() = runTest {
+    // Add multiple messages
+    val messages =
+        listOf(
+            Message(
+                "msg1", "First message", userA, userB, Date(System.currentTimeMillis() - 3600000)),
+            Message(
+                "msg2", "Second message", userB, userA, Date(System.currentTimeMillis() - 1800000)),
+            Message("msg3", "Third message", userA, userB, Date()))
+
+    messages.forEach { manager.sendMessage(convId, it) }
+
+    composeTestRule.setContent {
+      MessageScreen(viewModel = viewModel, convId = convId, onConversationDeleted = {})
+    }
+
+    composeTestRule.waitForIdle()
+
+    // Verify all messages are displayed
+    composeTestRule.onNodeWithText("First message").assertExists()
+    composeTestRule.onNodeWithText("Second message").assertExists()
+    composeTestRule.onNodeWithText("Third message").assertExists()
+
+    // At least one timestamp should be visible
+    composeTestRule.waitUntil(3000) {
+      composeTestRule.onAllNodesWithText(":", substring = true).fetchSemanticsNodes().size >= 3
+    }
+  }
+
   class FakeProfileRepository : ProfileRepository {
     override fun getNewUid() = "fake-profile-id"
 
@@ -443,5 +511,58 @@ class MessageScreenTest {
         averageRating: Double,
         totalRatings: Int
     ) {}
+  }
+
+  @Test
+  fun messageScreen_callsOnConversationDeletedWhenStateFlagIsTrue() {
+    var callbackCalled = false
+
+    composeTestRule.setContent {
+      MessageScreen(
+          viewModel = viewModel, convId = convId, onConversationDeleted = { callbackCalled = true })
+    }
+
+    // Force deletion
+    viewModel.deleteConversation()
+
+    composeTestRule.waitUntil(2000) { callbackCalled }
+  }
+
+  @Test
+  fun messageScreen_deleteButtonDeletesConversation() {
+    var deleteCallbackTriggered = false
+
+    composeTestRule.setContent {
+      MessageScreen(
+          viewModel = viewModel,
+          convId = convId,
+          onConversationDeleted = { deleteCallbackTriggered = true })
+    }
+
+    // Click delete icon
+    composeTestRule.onNode(hasContentDescription("Delete conversation")).performClick()
+
+    composeTestRule.waitUntil(timeoutMillis = 2_000) {
+      viewModel.uiState.value.isDeleted || deleteCallbackTriggered
+    }
+
+    assert(viewModel.uiState.value.isDeleted)
+  }
+
+  @Test
+  fun messageScreen_onConversationDeletedCallbackCalled() {
+    var callbackCalled = false
+
+    composeTestRule.setContent {
+      MessageScreen(
+          viewModel = viewModel, convId = convId, onConversationDeleted = { callbackCalled = true })
+    }
+
+    // Force deletion manually
+    viewModel.deleteConversation()
+
+    composeTestRule.waitUntil(2_000) { callbackCalled }
+
+    assert(callbackCalled)
   }
 }

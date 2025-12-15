@@ -45,7 +45,7 @@ fun MessageScreen(
       modifier = Modifier.fillMaxSize(),
       topBar = {
         TopAppBar(
-            title = { Text(uiState.partnerName ?: "Messages") },
+            title = { Text(uiState.partnerName) },
             actions = {
               IconButton(onClick = { viewModel.deleteConversation() }) {
                 Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete conversation")
@@ -137,7 +137,12 @@ fun MessageBubble(message: Message, isCurrentUser: Boolean) {
                 .padding(horizontal = 12.dp, vertical = 8.dp)
                 .widthIn(max = 300.dp)) {
           Text(text = message.content, style = MaterialTheme.typography.bodyLarge)
-          // Optionally, add a timestamp here
+          Spacer(modifier = Modifier.height(4.dp))
+          Text(
+              text = TimeFormatUtils.formatMessageTimestamp(message.createdAt),
+              style = MaterialTheme.typography.labelSmall,
+              color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+              modifier = Modifier.align(if (isCurrentUser) Alignment.End else Alignment.Start))
         }
   }
 }
