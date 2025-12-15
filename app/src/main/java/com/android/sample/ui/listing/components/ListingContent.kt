@@ -69,9 +69,10 @@ fun ListingContent(
     onRejectBooking: (String) -> Unit,
     onDeleteListing: () -> Unit,
     onEditListing: () -> Unit,
-    onNavigateToProfile: (String) -> Unit,
     modifier: Modifier = Modifier,
-    autoFillDatesForTesting: Boolean = false
+    onNavigateToProfile: (String) -> Unit = {},
+    autoFillDatesForTesting: Boolean = false,
+    listingComments: List<String> = emptyList(),
 ) {
   val listing = uiState.listing ?: return
   val creator = uiState.creator
@@ -112,6 +113,10 @@ fun ListingContent(
 
         item { // Hourly rate
           HourlyRateCard(hourlyRate = listing.hourlyRate)
+        }
+
+        if (listingComments.isNotEmpty()) {
+          item { CommentsSection(listingComments) }
         }
 
         item { // Created date
@@ -322,6 +327,25 @@ private fun PostedDate(date: Date) {
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
+}
+
+@Composable
+private fun CommentsSection(comments: List<String>) {
+  Card(
+      modifier = Modifier.fillMaxWidth(),
+      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(modifier = Modifier.padding(16.dp)) {
+          Text(
+              "Comments",
+              style = MaterialTheme.typography.titleMedium,
+              fontWeight = FontWeight.Bold)
+          Spacer(Modifier.height(12.dp))
+          comments.forEachIndexed { idx, c ->
+            Text(text = "• $c", style = MaterialTheme.typography.bodyMedium)
+            if (idx != comments.lastIndex) Spacer(Modifier.height(8.dp))
+          }
+        }
+      }
 }
 
 /** Action button section (book now or bookings management) */

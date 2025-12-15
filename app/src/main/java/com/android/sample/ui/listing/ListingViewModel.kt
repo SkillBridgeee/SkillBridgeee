@@ -63,6 +63,7 @@ data class ListingUiState(
     val bookerProfiles: Map<String, Profile> = emptyMap(),
     val tutorRatingPending: Boolean = false,
     val currentUserId: String? = null,
+    val listingComments: List<String> = emptyList(),
     val hasExistingBooking: Boolean = false
 )
 
@@ -127,7 +128,10 @@ class ListingViewModel(
               error = null)
         }
 
-        // If this is the owner's listing, load bookings
+        val listingRatings = ratingRepo.getRatingsOfListing(listingId)
+        val comments = listingRatings.map { it.comment.trim() }.filter { it.isNotBlank() }
+        _uiState.update { it.copy(listingComments = comments) }
+
         if (isOwnListing) {
           loadBookingsForListing(listingId)
         } else {
@@ -296,17 +300,17 @@ class ListingViewModel(
 
         // Create a conversation between the booker and listing creator
         try {
-          val creatorProfile = profileRepo.getProfile(listing.creatorUserId)
-          val conversationName = creatorProfile?.name ?: "Booking Discussion"
+          val bookerProfile = profileRepo.getProfile(currentUserId)
+          val conversationName = bookerProfile?.name ?: "Booking Discussion"
 
           val convId =
               conversationManager.createConvAndOverviews(
-                  creatorId = currentUserId,
-                  otherUserId = listing.creatorUserId,
+                  creatorId = listing.creatorUserId,
+                  otherUserId = currentUserId,
                   convName = conversationName)
           Log.d(
               "ListingViewModel",
-              "Conversation created successfully: $convId between $currentUserId and ${listing.creatorUserId}")
+              "Conversation created successfully: $convId between ${listing.creatorUserId} and $currentUserId")
         } catch (e: Exception) {
           Log.e("ListingViewModel", "Failed to create conversation", e)
           _uiState.update {

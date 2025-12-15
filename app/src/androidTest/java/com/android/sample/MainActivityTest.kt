@@ -98,20 +98,6 @@ class MainActivityTest {
   }
 
   @Test
-  fun mainApp_contains_navigation_components() {
-    composeTestRule.waitForIdle()
-
-    composeTestRule.onRoot().assertExists()
-
-    // Try checking login UI, but NEVER fail if it's not there
-    try {
-      composeTestRule.onNodeWithTag(SignInScreenTestTags.TITLE).assertExists()
-    } catch (_: Throwable) {
-      // If it's not the login screen, that's fine
-    }
-  }
-
-  @Test
   fun mainApp_authResult_requiresSignUp_navigates_to_signup() {
     // This test covers the LaunchedEffect(authResult) RequiresSignUp branch (lines 224-231)
     // The test verifies that when AuthResult.RequiresSignUp is emitted, navigation to
