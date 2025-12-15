@@ -178,8 +178,8 @@ class AuthenticationViewModel(
             _authResult.value = AuthResult.Error("No ID token received")
             setErrorState("No ID token received")
           }
-    } catch (e: ApiException) {
-      val errorMessage = "Google sign in failed: ${e.message}"
+    } catch (_: ApiException) {
+      val errorMessage = "Google sign in failed"
       _authResult.value = AuthResult.Error(errorMessage)
       setErrorState(errorMessage)
     }
@@ -205,7 +205,7 @@ class AuthenticationViewModel(
                   message = "Credential loaded")
             }
           },
-          onFailure = { exception ->
+          onFailure = { _ ->
             // Silently fail - no saved credentials is not an error
             _uiState.update { it.copy(isLoading = false) }
           })
