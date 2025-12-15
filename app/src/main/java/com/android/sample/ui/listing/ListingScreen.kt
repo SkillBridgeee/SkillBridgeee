@@ -179,7 +179,9 @@ fun ListingScreen(
             onEditListing = onEditListing,
             modifier = Modifier.padding(padding),
             onNavigateToProfile = onNavigateToProfile,
-            autoFillDatesForTesting = autoFillDatesForTesting)
+            autoFillDatesForTesting = autoFillDatesForTesting,
+            listingComments = uiState.listingComments,
+        )
       }
     }
   }
