@@ -145,10 +145,18 @@ class NavGraphCallbackIntegrationTest : AppTest() {
 
     // Navigate to Bookings screen
     composeRule.onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).performClick()
+
+    // Wait a bit longer for the screen to settle
+    Thread.sleep(2000)
     composeRule.waitForIdle()
 
-    // Click on a booking card to trigger onBookingClick
-    composeRule.onNodeWithTag(BookingCardTestTag.CARD).performClick()
+    // Wait for booking cards to be displayed (wait for at least 1 card)
+    composeRule.waitUntil(timeoutMillis = 10000) {
+      composeRule.onAllNodesWithTag(BookingCardTestTag.CARD).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    // Click on first booking card to trigger onBookingClick
+    composeRule.onAllNodesWithTag(BookingCardTestTag.CARD)[0].performClick()
     composeRule.waitForIdle()
 
     // Verify we navigated to booking details
@@ -166,11 +174,27 @@ class NavGraphCallbackIntegrationTest : AppTest() {
 
     // Navigate to Bookings screen
     composeRule.onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).performClick()
+
+    // Wait a bit longer for the screen to settle
+    Thread.sleep(2000)
     composeRule.waitForIdle()
 
-    // Click on a booking card
-    composeRule.onNodeWithTag(BookingCardTestTag.CARD).performClick()
+    // Wait for booking cards to be displayed (wait for at least 1 card)
+    composeRule.waitUntil(timeoutMillis = 10000) {
+      composeRule.onAllNodesWithTag(BookingCardTestTag.CARD).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    // Click on first booking card
+    composeRule.onAllNodesWithTag(BookingCardTestTag.CARD)[0].performClick()
     composeRule.waitForIdle()
+
+    // Wait for More Info button to be displayed
+    composeRule.waitUntil(timeoutMillis = 10000) {
+      composeRule
+          .onAllNodesWithTag(BookingDetailsTestTag.MORE_INFO_BUTTON)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
 
     // Click on More Info button to trigger onCreatorClick
     composeRule.onNodeWithTag(BookingDetailsTestTag.MORE_INFO_BUTTON).performClick()
