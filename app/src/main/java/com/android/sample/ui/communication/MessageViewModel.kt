@@ -26,7 +26,7 @@ data class ConvUIState(
     val messages: List<Message> = emptyList(),
     val currentMessage: String = "",
     val currentUserId: String = "",
-    val partnerName: String? = null,
+    val partnerName: String = "User",
     val isLoading: Boolean = false,
     val error: String? = null,
     val isDeleted: Boolean = false,
@@ -117,6 +117,7 @@ class MessageViewModel(
               it.copy(
                   infoMessage = "This conversation was deleted by the other user.",
                   messages = emptyList(),
+                  isLoading = false,
                   error = null)
             }
             listenerJob.cancel()
