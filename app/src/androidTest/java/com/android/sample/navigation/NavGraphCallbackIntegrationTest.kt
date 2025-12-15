@@ -2,10 +2,12 @@ package com.android.sample.ui.navigation
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.android.sample.ui.HomePage.HomeScreenTestTags
 import com.android.sample.ui.bookings.BookingDetailsTestTag
@@ -309,10 +311,13 @@ class NavGraphCallbackIntegrationTest : AppTest() {
 
     // Navigate to Bookings screen
     composeRule.onNodeWithTag(BottomBarTestTag.NAV_BOOKINGS).performClick()
+
+    // Wait a bit longer for the screen to settle (especially important for CI)
+    Thread.sleep(2000)
     composeRule.waitForIdle()
 
     // Wait for booking cards to be displayed (creator_1 sees b1, b2, b3 = 3 bookings)
-    composeRule.waitUntil(timeoutMillis = 5000) {
+    composeRule.waitUntil(timeoutMillis = 10000) {
       composeRule.onAllNodesWithTag(BookingCardTestTag.CARD).fetchSemanticsNodes().size >= 3
     }
 
@@ -322,8 +327,22 @@ class NavGraphCallbackIntegrationTest : AppTest() {
     composeRule.onAllNodesWithTag(BookingCardTestTag.CARD)[2].performClick()
     composeRule.waitForIdle()
 
-    // Wait for booking details to load and booker section to appear
-    composeRule.waitUntil(timeoutMillis = 5000) {
+    // Wait for booking details content to load
+    composeRule.waitUntil(timeoutMillis = 10000) {
+      composeRule
+          .onAllNodesWithTag(BookingDetailsTestTag.CONTENT)
+          .fetchSemanticsNodes()
+          .isNotEmpty()
+    }
+
+    // Scroll to make sure the booker section is visible (important for smaller screens in CI)
+    composeRule
+        .onNodeWithTag(BookingDetailsTestTag.CONTENT)
+        .performScrollToNode(hasTestTag(BookingDetailsTestTag.BOOKER_SECTION))
+    composeRule.waitForIdle()
+
+    // Wait for booker section to appear after scrolling
+    composeRule.waitUntil(timeoutMillis = 10000) {
       composeRule
           .onAllNodesWithTag(BookingDetailsTestTag.BOOKER_NAME_ROW)
           .fetchSemanticsNodes()
