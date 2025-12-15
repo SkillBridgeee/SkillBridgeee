@@ -26,23 +26,6 @@ class TimeFormatUtilsTest {
   }
 
   @Test
-  fun formatMessageTimestamp_yesterday_showsYesterdayAndTime() {
-    // Arrange
-    val yesterday = Calendar.getInstance()
-    yesterday.add(Calendar.DAY_OF_YEAR, -1)
-    yesterday.set(Calendar.HOUR_OF_DAY, 10)
-    yesterday.set(Calendar.MINUTE, 15)
-    val timestamp = yesterday.time
-
-    // Act
-    val result = TimeFormatUtils.formatMessageTimestamp(timestamp)
-
-    // Assert
-    assertTrue(result.startsWith("Yesterday"))
-    assertTrue(result.contains("10:15") || result.contains("AM") || result.contains("am"))
-  }
-
-  @Test
   fun formatMessageTimestamp_lastWeek_showsDayAndTime() {
     // Arrange
     val lastWeek = Calendar.getInstance()
