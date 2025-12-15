@@ -78,49 +78,50 @@ class MainPageViewModel(
    */
   fun load() {
     viewModelScope.launch {
-    val welcomeMsg = getWelcomeMsg()
+      val welcomeMsg = getWelcomeMsg()
 
-    val proposalsResult = runCatching { getTopProposals(numProposalDisplayed) }
-    val requestsResult = runCatching { getTopRequests(numRequestDisplayed) }
+      val proposalsResult = runCatching { getTopProposals(numProposalDisplayed) }
+      val requestsResult = runCatching { getTopRequests(numRequestDisplayed) }
 
-    val proposals = proposalsResult.getOrNull().orEmpty()
-    val requests = requestsResult.getOrNull().orEmpty()
+      val proposals = proposalsResult.getOrNull().orEmpty()
+      val requests = requestsResult.getOrNull().orEmpty()
 
-    // Ratings should not block the page if they fail.
-    val ratingsMap: Map<String, RatingInfo> =
-        runCatching {
-              val allListingIds = (proposals.map { it.listingId } + requests.map { it.listingId }).distinct()
-              allListingIds.associateWith { listingId ->
-                val ratings = ratingRepository.getRatingsOfListing(listingId)
-                val count = ratings.size
-                if (count == 0) RatingInfo()
-                else {
-                  val avg = ratings.sumOf { it.starRating.value.toDouble() } / count.toDouble()
-                  RatingInfo(averageRating = avg, totalRatings = count)
+      // Ratings should not block the page if they fail.
+      val ratingsMap: Map<String, RatingInfo> =
+          runCatching {
+                val allListingIds =
+                    (proposals.map { it.listingId } + requests.map { it.listingId }).distinct()
+                allListingIds.associateWith { listingId ->
+                  val ratings = ratingRepository.getRatingsOfListing(listingId)
+                  val count = ratings.size
+                  if (count == 0) RatingInfo()
+                  else {
+                    val avg = ratings.sumOf { it.starRating.value.toDouble() } / count.toDouble()
+                    RatingInfo(averageRating = avg, totalRatings = count)
+                  }
                 }
               }
-            }
-            .getOrElse { e ->
-              Log.w("HomePageViewModel", "Failed to load listing ratings", e)
-              emptyMap()
-            }
+              .getOrElse { e ->
+                Log.w("HomePageViewModel", "Failed to load listing ratings", e)
+                emptyMap()
+              }
 
-    val errorMsg =
-        when {
-          welcomeMsg == null && (proposalsResult.isFailure || requestsResult.isFailure) -> generalError
-          welcomeMsg == null -> identificationErrorMsg
-          proposalsResult.isFailure || requestsResult.isFailure -> listingErrorMsg
-          else -> null
-        }
+      val errorMsg =
+          when {
+            welcomeMsg == null && (proposalsResult.isFailure || requestsResult.isFailure) ->
+                generalError
+            welcomeMsg == null -> identificationErrorMsg
+            proposalsResult.isFailure || requestsResult.isFailure -> listingErrorMsg
+            else -> null
+          }
 
-    _uiState.update {
-      it.copy(
-          welcomeMessage = welcomeMsg ?: it.welcomeMessage,
-          proposals = proposals,
-          requests = requests,
-          listingRatings = ratingsMap,
-          errorMsg = errorMsg
-      )
+      _uiState.update {
+        it.copy(
+            welcomeMessage = welcomeMsg ?: it.welcomeMessage,
+            proposals = proposals,
+            requests = requests,
+            listingRatings = ratingsMap,
+            errorMsg = errorMsg)
       }
     }
   }

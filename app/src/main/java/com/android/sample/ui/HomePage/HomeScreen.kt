@@ -97,30 +97,21 @@ fun HomeScreen(
                     enableRefresh = (uiState.errorMsg == null))
               }
 
-              // Explore subjects
               item { ExploreSubjects(uiState.subjects, onNavigateToSubjectList) }
 
-              item {
-                ProposalsSection(
-                    proposals = uiState.proposals,
-                    ratings = uiState.listingRatings,
-                    onProposalClick = onNavigateToListingDetails)
-              }
-
-              item {
-                RequestsSection(
-                    requests = uiState.requests,
-                    ratings = uiState.listingRatings,
-                    onRequestClick = onNavigateToListingDetails)
               when (val error = uiState.errorMsg) {
                 null -> {
                   item {
                     ProposalsSection(
-                        proposals = uiState.proposals, onProposalClick = onNavigateToListingDetails)
+                        proposals = uiState.proposals,
+                        ratings = uiState.listingRatings,
+                        onProposalClick = onNavigateToListingDetails)
                   }
                   item {
                     RequestsSection(
-                        requests = uiState.requests, onRequestClick = onNavigateToListingDetails)
+                        requests = uiState.requests,
+                        ratings = uiState.listingRatings,
+                        onRequestClick = onNavigateToListingDetails)
                   }
                 }
                 else -> {
@@ -128,7 +119,6 @@ fun HomeScreen(
                 }
               }
 
-              // Bottom padding
               item { Spacer(modifier = Modifier.height(16.dp)) }
             }
       }

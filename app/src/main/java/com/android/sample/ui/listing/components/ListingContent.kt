@@ -365,6 +365,8 @@ private fun ListingRatingCard(rating: com.android.sample.model.rating.RatingInfo
       }
     }
   }
+}
+
 @Composable
 private fun CommentsSection(comments: List<String>) {
   Card(
