@@ -27,6 +27,8 @@ import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingType
+import com.android.sample.model.rating.StarRating
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
@@ -41,6 +43,7 @@ import com.android.sample.utils.FakeConversationRepo
 import com.android.sample.utils.FakeOverViewConvRepo
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -224,10 +227,64 @@ class MyProfileScreenTest {
         targetObjectId: String
     ): Boolean {
       // MyProfileScreen tests don't care about this, so always "no rating yet" is fine.
-      return false
+      return true
     }
 
-    override suspend fun getAllRatings(): List<Rating> = emptyList()
+    override suspend fun getAllRatings(): List<Rating> {
+      delay(500_000_000) // 500 seconds (or whatever you meant)
+      return emptyList()
+    }
+
+    override suspend fun getRating(ratingId: String): Rating? = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsByToUser(toUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
+
+    override suspend fun addRating(rating: Rating) {}
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+    override suspend fun deleteRating(ratingId: String) {}
+
+    /** Gets all tutor ratings for listings owned by this user */
+    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    /** Gets all student ratings received by this user */
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {
+      TODO("Not yet implemented")
+    }
+  }
+
+  private class FakeRatingRepoOneItem : RatingRepository {
+
+    override fun getNewUid(): String = "fake-rating-id"
+
+    // NEW: required by RatingRepository
+    override suspend fun hasRating(
+        fromUserId: String,
+        toUserId: String,
+        ratingType: com.android.sample.model.rating.RatingType,
+        targetObjectId: String
+    ): Boolean {
+      // MyProfileScreen tests don't care about this, so always "no rating yet" is fine.
+      return true
+    }
+
+    override suspend fun getAllRatings(): List<Rating> {
+      return listOf(
+          Rating(
+              ratingId = "r1",
+              fromUserId = "demo",
+              toUserId = "demo",
+              starRating = StarRating.FIVE,
+              ratingType = RatingType.TUTOR,
+          ))
+    }
 
     override suspend fun getRating(ratingId: String): Rating? = null
 
@@ -876,6 +933,15 @@ class MyProfileScreenTest {
           hourlyRate = 25.0,
           isActive = true)
 
+  private fun makeTestRating(): Rating =
+      Rating(
+          ratingId = "r1",
+          fromUserId = "userA",
+          toUserId = "demo",
+          starRating = StarRating.FIVE,
+          ratingType = RatingType.TUTOR,
+      )
+
   @Test
   fun listings_rendersNonEmptyList_elseBranch() {
     val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
@@ -1087,5 +1153,137 @@ class MyProfileScreenTest {
     compose
         .onNodeWithTag(MyProfileScreenTestTag.DELETE_ACCOUNT_CANCEL_BUTTON, useUnmergedTree = true)
         .assertIsNotEnabled()
+  }
+
+  @Test
+  fun noListings() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
+
+    compose
+        .onNodeWithText("You don’t have any listings yet.", useUnmergedTree = true)
+        .assertExists()
+  }
+
+  @Test
+  fun oneRatingIsDisplayed() {
+    val pRepo = FakeRepo().apply { seed(sampleProfile, sampleSkills) }
+    val listing = makeTestListing()
+    val ratingRepo = FakeRatingRepoOneItem()
+    val oneItemRepo = OneItemListingRepo(listing)
+    UserSessionManager.setCurrentUserId("demo")
+    val vm =
+        MyProfileViewModel(
+            pRepo,
+            listingRepository = oneItemRepo,
+            ratingsRepository = ratingRepo,
+            sessionManager = UserSessionManager)
+    compose.runOnIdle {
+      contentSlot.value = {
+        MyProfileScreen(
+            profileViewModel = vm, profileId = "demo", onLogout = { logoutClicked.set(true) })
+      }
+    }
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+
+    compose.waitForIdle()
+  }
+
+  @Test
+  fun listingsTab_switchesContentToListingsSection() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_SECTION).assertIsDisplayed()
+  }
+
+  @Test
+  fun listings_emptyStateIsDisplayed_whenNoListings() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.LISTINGS_TAB).performClick()
+    compose.onNodeWithText("You don’t have any listings yet.").assertExists()
+  }
+
+  @Test
+  fun rating_emptyStateIsDisplayed() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+    compose.onNodeWithText("You don’t have any ratings yet.").assertExists()
+  }
+
+  @Test
+  fun rating_showsError_whenLoadErrorPresent() {
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      stateFlow.value = stateFlow.value.copy(ratingsLoadError = "Could not load ratings")
+    }
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+    compose.onNodeWithText("Could not load ratings").assertExists()
+  }
+
+  @Test
+  fun saveButton_isDisabled_whenNoFieldChanged() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertIsNotEnabled()
+  }
+
+  @Test
+  fun saveButton_becomesEnabled_whenAnyFieldChanges() {
+    compose.onNodeWithTag(MyProfileScreenTestTag.INPUT_PROFILE_NAME).performTextInput("X")
+    compose.onNodeWithTag(MyProfileScreenTestTag.SAVE_BUTTON).assertIsEnabled()
+  }
+
+  @Test
+  fun profileIcon_showsEmpty_whenNameIsNull() {
+    compose.runOnIdle { viewModel.setName("") }
+    compose.onNodeWithTag(MyProfileScreenTestTag.PROFILE_ICON).assertIsDisplayed()
+  }
+
+  @Test
+  fun pinButton_hasCorrectContentDescription() {
+    compose.onNodeWithContentDescription(MyProfileScreenTestTag.PIN_CONTENT_DESC).assertExists()
+  }
+
+  @Test
+  fun sectionCard_displaysTitleCorrectly() {
+    compose
+        .onNodeWithTag(MyProfileScreenTestTag.CARD_TITLE)
+        .assertIsDisplayed()
+        .assertTextEquals("Personal Details")
+  }
+
+  @Test
+  fun selectionRow_indicatorMoves_whenTabChanges() {
+    val initial = compose.onNodeWithTag(MyProfileScreenTestTag.INFO_TAB).fetchSemanticsNode()
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+
+    compose.waitForIdle()
+
+    // Check that Rating section is shown → indicator animation occurred
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_SECTION).assertIsDisplayed()
+  }
+
+  @Test
+  @Suppress("UNCHECKED_CAST")
+  fun ratings_showsLoadingIndicator_whenLoadingTrue() {
+    compose.runOnIdle {
+      val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
+      field.isAccessible = true
+      val stateFlow = field.get(viewModel) as MutableStateFlow<MyProfileUIState>
+      val current = stateFlow.value
+      stateFlow.value =
+          current.copy(ratingsLoading = true, ratings = emptyList(), ratingsLoadError = null)
+    }
+
+    compose.onNodeWithTag(MyProfileScreenTestTag.RATING_TAB).performClick()
+
+    val progressMatcher = hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
+
+    compose.waitUntil(5_000) {
+      compose.onAllNodes(progressMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+    }
+
+    compose.onNode(progressMatcher, useUnmergedTree = true).assertExists()
+
+    compose
+        .onNodeWithText("You don’t have any ratings yet.", useUnmergedTree = true)
+        .assertDoesNotExist()
   }
 }
