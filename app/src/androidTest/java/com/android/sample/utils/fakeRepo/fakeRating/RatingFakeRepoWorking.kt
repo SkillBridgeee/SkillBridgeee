@@ -59,6 +59,6 @@ class RatingFakeRepoWorking : FakeRatingRepo {
       ratingType: RatingType,
       targetObjectId: String
   ): Boolean {
-    TODO("Not yet implemented")
+    return false
   }
 }
