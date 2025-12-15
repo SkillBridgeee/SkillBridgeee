@@ -60,6 +60,16 @@ class BookingDetailsScreenTest {
     private const val TEST_LISTING_ID = "l1"
   }
 
+  private var clicked: Boolean = false
+
+  private var receivedTutorStars: Int = -1
+  private var receivedListingStars: Int = -1
+  private var receivedUserComment: String? = null
+  private var receivedListingComment: String? = null
+
+  private var receivedStars: Int? = null
+  private var receivedComment: String? = null
+
   private fun assertNoRatings(progress: RatingProgress) {
     assert(!progress.bookerRatedTutor)
     assert(!progress.bookerRatedStudent)
@@ -336,7 +346,7 @@ class BookingDetailsScreenTest {
             ratingProgress = RatingProgress(),
         ))
 
-    vm.submitBookerRatings(userStars = 0, listingStars = 3)
+    vm.submitBookerRatings(userStars = 0, listingStars = 3, userComment = "", listingComment = "")
     Thread.sleep(200)
     assert(vm.bookingUiState.value.loadError)
 
@@ -355,7 +365,7 @@ class BookingDetailsScreenTest {
             ratingProgress = RatingProgress(),
         ))
 
-    vm.submitBookerRatings(userStars = 3, listingStars = 6)
+    vm.submitBookerRatings(userStars = 3, listingStars = 6, userComment = "", listingComment = "")
     Thread.sleep(200)
     assert(vm.bookingUiState.value.loadError)
   }
@@ -377,7 +387,7 @@ class BookingDetailsScreenTest {
             ratingProgress = RatingProgress(),
         ))
 
-    vm.submitBookerRatings(userStars = 5, listingStars = 5)
+    vm.submitBookerRatings(userStars = 5, listingStars = 5, userComment = "", listingComment = "")
     Thread.sleep(200)
 
     assertNoRatings(vm.bookingUiState.value.ratingProgress)
@@ -414,7 +424,7 @@ class BookingDetailsScreenTest {
             ratingProgress = RatingProgress(),
         ))
 
-    vm.submitBookerRatings(userStars = 5, listingStars = 5)
+    vm.submitBookerRatings(userStars = 5, listingStars = 5, userComment = "", listingComment = "")
     Thread.sleep(250)
 
     assert(vm.bookingUiState.value.loadError)
@@ -495,16 +505,18 @@ class BookingDetailsScreenTest {
             booking = booking, listing = Proposal(), creatorProfile = Profile(), loadError = false)
 
     composeTestRule.setContent {
-      BookingDetailsContent(
-          uiState = uiState,
-          onCreatorClick = {},
-          onBookerClick = {},
-          onMarkCompleted = {},
-          onSubmitBookerRatings = { _, _ -> },
-          onSubmitCreatorRating = {},
-          onPaymentComplete = {},
-          onPaymentReceived = {},
-      )
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = { clicked = true },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
     }
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.CONTENT)
 
@@ -539,8 +551,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -584,13 +596,14 @@ class BookingDetailsScreenTest {
     composeTestRule.onNodeWithTag(BookingDetailsTestTag.LISTING_SECTION).assertDoesNotExist()
   }
 
-  @Test
-  fun bookingDetailsScreen_successState_wiresOnSubmitStudentRatingsCallback() {
-    // Test lines 116-118: onSubmitStudentRatings callback wiring
-    val uiState = completedBookingUiState().copy(isBooker = true, isCreator = false)
+  // ---------- NEW COVERAGE TESTS ----------
 
-    var receivedTutorStars = -1
-    var receivedListingStars = -1
+  @Test
+  fun creatorRatingSection_submit_callsCallback() {
+    var receivedStars: Int? = null
+    var receivedComment: String? = null
+
+    val uiState = completedBookingUiState().copy(isCreator = true, isBooker = false)
 
     composeTestRule.setContent {
       MaterialTheme {
@@ -599,11 +612,62 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { tutor, listing ->
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { stars, comment ->
+              receivedStars = stars
+              receivedComment = comment
+            },
+            onPaymentComplete = {},
+            onPaymentReceived = {},
+        )
+      }
+    }
+
+    composeTestRule.swipeUpUntilDisplayed(hasTestTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON))
+    composeTestRule.clickStarInRow(rowIndex = 0, star = 4)
+
+    // If your UI has a comment TextField with a testTag, set it here.
+    // Example:
+    // composeTestRule.onNodeWithTag(BookingDetailsTestTag.CREATOR_RATING_COMMENT)
+    //   .performTextInput("Great session")
+
+    composeTestRule
+        .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON, useUnmergedTree = true)
+        .assertIsDisplayed()
+        .assertIsEnabled()
+        .performClick()
+
+    composeTestRule.runOnIdle {
+      assert(receivedStars == 4)
+      // If you did not input text, this should remain "" (or whatever default you used in UI)
+      assert(receivedComment != null)
+    }
+  }
+
+  @Test
+  fun bookingDetailsScreen_successState_wiresOnSubmitStudentRatingsCallback() {
+    // Test lines 116-118: onSubmitStudentRatings callback wiring
+    val uiState = completedBookingUiState().copy(isBooker = true, isCreator = false)
+
+    var receivedTutorStars = -1
+    var receivedListingStars = -1
+    var receivedUserComment: String? = null
+    var receivedListingComment: String? = null
+
+    composeTestRule.setContent {
+      MaterialTheme {
+        BookingDetailsContent(
+            uiState = uiState,
+            onCreatorClick = {},
+            onBookerClick = {},
+            onMarkCompleted = {},
+            onSubmitBookerRatings = { tutor, listing, userComment, listingComment ->
               receivedTutorStars = tutor
               receivedListingStars = listing
+              receivedUserComment = userComment
+              receivedListingComment = listingComment
             },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -616,6 +680,13 @@ class BookingDetailsScreenTest {
     composeTestRule.clickStarInRow(rowIndex = 0, star = 2)
     composeTestRule.clickStarInRow(rowIndex = 1, star = 5)
 
+    // If your UI has comment TextFields with testTags, set them here.
+    // Example:
+    // composeTestRule.onNodeWithTag(BookingDetailsTestTag.BOOKER_USER_RATING_COMMENT)
+    //   .performTextInput("Nice teacher")
+    // composeTestRule.onNodeWithTag(BookingDetailsTestTag.BOOKER_LISTING_RATING_COMMENT)
+    //   .performTextInput("Accurate description")
+
     composeTestRule.swipeUpUntilDisplayed(hasTestTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON))
     composeTestRule
         .onNodeWithTag(BookingDetailsTestTag.RATING_SUBMIT_BUTTON, useUnmergedTree = true)
@@ -626,6 +697,8 @@ class BookingDetailsScreenTest {
     composeTestRule.runOnIdle {
       assert(receivedTutorStars == 2)
       assert(receivedListingStars == 5)
+      assert(receivedUserComment != null)
+      assert(receivedListingComment != null)
     }
   }
 
@@ -650,8 +723,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = { clicked = true },
             onPaymentReceived = {},
         )
@@ -683,8 +756,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = { clicked = true },
         )
@@ -724,8 +797,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = { _ -> },
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {})
       }
@@ -923,8 +996,13 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { tutor, listing, userComment, listingComment ->
+              receivedTutorStars = tutor
+              receivedListingStars = listing
+              receivedUserComment = userComment
+              receivedListingComment = listingComment
+            },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -971,8 +1049,13 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { tutor, listing, userComment, listingComment ->
+              receivedTutorStars = tutor
+              receivedListingStars = listing
+              receivedUserComment = userComment
+              receivedListingComment = listingComment
+            },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1020,8 +1103,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1061,8 +1144,13 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { tutor, listing, userComment, listingComment ->
+              receivedTutorStars = tutor
+              receivedListingStars = listing
+              receivedUserComment = userComment
+              receivedListingComment = listingComment
+            },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1103,8 +1191,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1136,8 +1224,13 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { tutor, listing, userComment, listingComment ->
+              receivedTutorStars = tutor
+              receivedListingStars = listing
+              receivedUserComment = userComment
+              receivedListingComment = listingComment
+            },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1175,10 +1268,15 @@ class BookingDetailsScreenTest {
         BookingDetailsContent(
             uiState = uiState,
             onCreatorClick = {},
-            onBookerClick = { clickedBookerId = it },
+            onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { tutor, listing, userComment, listingComment ->
+              receivedTutorStars = tutor
+              receivedListingStars = listing
+              receivedUserComment = userComment
+              receivedListingComment = listingComment
+            },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1208,8 +1306,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1260,8 +1358,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1313,8 +1411,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1337,8 +1435,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1375,8 +1473,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1418,8 +1516,8 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
             onPaymentReceived = {},
         )
@@ -1511,7 +1609,6 @@ class BookingDetailsScreenTest {
 
   @Test
   fun paymentSection_proposal_showsPaymentCompleteButton_forStudent() {
-    // PROPOSAL: Student (booker, isCreator=false) should see Payment Complete button
     val uiState =
         proposalBookingState(isCreator = false, paymentStatus = PaymentStatus.PENDING_PAYMENT)
 
@@ -1524,14 +1621,14 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = { paymentCompleteCalled = true },
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
-    // Student should see the Payment Complete button
     composeTestRule
         .onNodeWithTag(ListingScreenTestTags.PAYMENT_COMPLETE_BUTTON)
         .assertExists()
@@ -1554,10 +1651,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1581,10 +1679,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1607,10 +1706,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = { paymentReceivedCalled = true })
+            onPaymentReceived = { paymentReceivedCalled = true },
+        )
       }
     }
 
@@ -1635,10 +1735,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1661,10 +1762,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1689,10 +1791,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1715,10 +1818,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = { paymentReceivedCalled = true })
+            onPaymentReceived = { paymentReceivedCalled = true },
+        )
       }
     }
 
@@ -1743,10 +1847,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1767,10 +1872,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1798,8 +1904,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { stars, comment ->
+              receivedStars = stars
+              receivedComment = comment
+            },
             onPaymentComplete = {},
             onPaymentReceived = {})
       }
@@ -1833,10 +1942,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = { markCompletedCalled = true },
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1868,10 +1978,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = { markCompletedCalled = true },
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1902,10 +2013,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1934,10 +2046,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = { markCompletedCalled = true },
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -1969,10 +2082,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = { markCompletedCalled = true },
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -2009,10 +2123,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = { markCompletedCalled = true },
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -2053,10 +2168,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
     composeTestRule
@@ -2087,10 +2203,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = { markCompletedCalled = true },
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -2125,10 +2242,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -2155,10 +2273,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -2189,10 +2308,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = { markCompletedCalled = true },
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -2227,10 +2347,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 
@@ -2255,10 +2376,11 @@ class BookingDetailsScreenTest {
             onCreatorClick = {},
             onBookerClick = {},
             onMarkCompleted = {},
-            onSubmitBookerRatings = { _, _ -> },
-            onSubmitCreatorRating = {},
+            onSubmitBookerRatings = { _, _, _, _ -> },
+            onSubmitCreatorRating = { _, _ -> },
             onPaymentComplete = {},
-            onPaymentReceived = {})
+            onPaymentReceived = {},
+        )
       }
     }
 

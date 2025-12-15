@@ -294,9 +294,30 @@ class BookingDetailsViewModel(
     }
   }
 
-  fun submitBookerRatings(userStars: Int, listingStars: Int) {
+  private fun sanitizeComment(input: String, maxLen: Int = 500): String {
+    // Remove HTML tags, control chars, collapse whitespace, trim, and truncate.
+    var s =
+        input
+            .replace(Regex("<.*?>"), "") // strip simple HTML tags
+            .replace(Regex("\\p{C}"), "") // remove control chars
+            .replace(Regex("\\s+"), " ") // normalize whitespace
+            .trim()
+    if (s.length > maxLen) s = s.take(maxLen)
+    return s
+  }
+
+  fun submitBookerRatings(
+      userStars: Int,
+      listingStars: Int,
+      userComment: String,
+      listingComment: String
+  ) {
     val booking = bookingUiState.value.booking
     val listing = bookingUiState.value.listing
+
+    // Sanitize comments
+    val sanitizedUserComment = sanitizeComment(userComment)
+    val sanitizedListingComment = sanitizeComment(listingComment)
 
     if (!validateRatingSubmission(booking, intArrayOf(userStars, listingStars))) return
 
@@ -322,7 +343,7 @@ class BookingDetailsViewModel(
                 fromUserId = bookerId,
                 toUserId = toUserId,
                 starRating = userStars.toStarRating(),
-                comment = "",
+                comment = sanitizedUserComment,
                 ratingType = ratingType,
                 targetObjectId = bookingIdObj,
             )
@@ -333,9 +354,9 @@ class BookingDetailsViewModel(
                 fromUserId = bookerId,
                 toUserId = listing.creatorUserId,
                 starRating = listingStars.toStarRating(),
-                comment = "",
+                comment = sanitizedListingComment,
                 ratingType = RatingType.LISTING,
-                targetObjectId = listingIdObj, // IMPORTANT
+                targetObjectId = listingIdObj,
             )
 
         userRating.validate()
@@ -357,7 +378,7 @@ class BookingDetailsViewModel(
     }
   }
 
-  fun submitCreatorRating(stars: Int) {
+  fun submitCreatorRating(stars: Int, comment: String) {
     val state = bookingUiState.value
     val booking = state.booking
     val listing = state.listing
@@ -370,6 +391,9 @@ class BookingDetailsViewModel(
       _bookingUiState.value = state.copy(loadError = true)
       return
     }
+
+    // Sanitize creator comment
+    val sanitizedComment = sanitizeComment(comment)
 
     val creatorId = booking.listingCreatorId
     val bookerId = booking.bookerId
@@ -393,7 +417,7 @@ class BookingDetailsViewModel(
                 fromUserId = creatorId,
                 toUserId = toUserId,
                 starRating = stars.toStarRating(),
-                comment = "",
+                comment = sanitizedComment,
                 ratingType = ratingType,
                 targetObjectId = bookingId,
             )

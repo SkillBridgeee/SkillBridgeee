@@ -35,6 +35,7 @@ data class HomeUiState(
     val proposals: List<Proposal> = emptyList(),
     val requests: List<Request> = emptyList(),
     val listingRatings: Map<String, RatingInfo> = emptyMap(),
+    val errorMsg: String? = null
 )
 
 /**
@@ -53,6 +54,10 @@ class MainPageViewModel(
   private val _uiState = MutableStateFlow(HomeUiState())
   val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+  private val identificationErrorMsg = "An error occurred during your identification."
+  private val listingErrorMsg = "An error occurred while loading proposals and requests."
+  private val generalError =
+      "An error occurred during your identification and while loading proposals and requests."
   private val numRequestDisplayed = 10
   private val numProposalDisplayed = 10
 
@@ -73,84 +78,68 @@ class MainPageViewModel(
    */
   fun load() {
     viewModelScope.launch {
-      try {
-        val welcomeMsg = getWelcomeMsg()
-        val topProposals = getTopProposals(numProposalDisplayed)
-        val topRequests = getTopRequests(numRequestDisplayed)
-        val allListings =
-            (topProposals.map { it.listingId } + topRequests.map { it.listingId }).distinct()
-        val ratingsMap: Map<String, RatingInfo> =
-            allListings.associateWith { listingId ->
-              val ratings = ratingRepository.getRatingsOfListing(listingId)
-              val count = ratings.size
+    val welcomeMsg = getWelcomeMsg()
 
-              if (count == 0) {
-                RatingInfo()
-              } else {
-                val avg = ratings.sumOf { it.starRating.value.toDouble() } / count
+    val proposalsResult = runCatching { getTopProposals(numProposalDisplayed) }
+    val requestsResult = runCatching { getTopRequests(numRequestDisplayed) }
 
-                RatingInfo(averageRating = avg, totalRatings = count)
+    val proposals = proposalsResult.getOrNull().orEmpty()
+    val requests = requestsResult.getOrNull().orEmpty()
+
+    // Ratings should not block the page if they fail.
+    val ratingsMap: Map<String, RatingInfo> =
+        runCatching {
+              val allListingIds = (proposals.map { it.listingId } + requests.map { it.listingId }).distinct()
+              allListingIds.associateWith { listingId ->
+                val ratings = ratingRepository.getRatingsOfListing(listingId)
+                val count = ratings.size
+                if (count == 0) RatingInfo()
+                else {
+                  val avg = ratings.sumOf { it.starRating.value.toDouble() } / count.toDouble()
+                  RatingInfo(averageRating = avg, totalRatings = count)
+                }
               }
             }
+            .getOrElse { e ->
+              Log.w("HomePageViewModel", "Failed to load listing ratings", e)
+              emptyMap()
+            }
 
-        _uiState.update { current ->
-          current.copy(
-              welcomeMessage = welcomeMsg ?: current.welcomeMessage,
-              proposals = topProposals,
-              requests = topRequests,
-              listingRatings = ratingsMap,
-          )
+    val errorMsg =
+        when {
+          welcomeMsg == null && (proposalsResult.isFailure || requestsResult.isFailure) -> generalError
+          welcomeMsg == null -> identificationErrorMsg
+          proposalsResult.isFailure || requestsResult.isFailure -> listingErrorMsg
+          else -> null
         }
-      } catch (e: Exception) {
-        Log.e("HomePageViewModel", "Failed to build HomeUiState, using fallback", e)
-        _uiState.update { current ->
-          current.copy(
-              proposals = emptyList(),
-              requests = emptyList(),
-              listingRatings = emptyMap(),
-          )
-        }
+
+    _uiState.update {
+      it.copy(
+          welcomeMessage = welcomeMsg ?: it.welcomeMessage,
+          proposals = proposals,
+          requests = requests,
+          listingRatings = ratingsMap,
+          errorMsg = errorMsg
+      )
       }
     }
   }
 
   /**
-   * Retrieves the current user's name.
-   * - Gets the logged-in user's ID from the session manager
-   * - Fetches the user's profile and returns their name
+   * Builds a welcome message for the current user.
    *
-   * Returns null if no user is logged in or if the profile cannot be retrieved. Logs a warning and
-   * safely returns null if an error occurs.
+   * @return A welcome message, or `null` if an error occurs.
    */
-  private suspend fun getUserName(): String? {
-    return runCatching {
-          val userId = UserSessionManager.getCurrentUserId()
-          if (userId != null) {
-            profileRepository.getProfile(userId)?.name
-          } else null
-        }
-        .onFailure { Log.w("HomePageViewModel", "Failed to get current profile", it) }
-        .getOrNull()
-  }
-
-  /**
-   * Builds the welcome message displayed to the user.
-   *
-   * This function attempts to retrieve the current user's name and returns a personalized welcome
-   * message if the name is available. If the username cannot be fetched, it falls back to a generic
-   * welcome message.
-   *
-   * @return A welcome message string, personalized when possible, or null if user lookup failed.
-   */
-  private suspend fun getWelcomeMsg(): String? {
-    val userName = runCatching { getUserName() }.getOrNull()
-    val userId = UserSessionManager.getCurrentUserId()
-    return if (userId != null) {
-      if (userName != null) "Welcome back, $userName!" else "Welcome back!"
-    } else {
-      null // No user ID means temporary auth issue, keep previous message
-    }
-  }
+  private suspend fun getWelcomeMsg(): String? =
+      try {
+        val userId = UserSessionManager.getCurrentUserId()
+        if (userId == null) throw Exception()
+        val userName = profileRepository.getProfile(userId)?.name
+        "Welcome back, $userName!"
+      } catch (e: Exception) {
+        Log.e("HomePageViewModel", "Failed to build welcome message", e)
+        null
+      }
 
   /**
    * Retrieves the top proposals from the repository.
@@ -204,7 +193,7 @@ class MainPageViewModel(
             }
           } catch (e: Exception) {
             Log.e("HomePageViewModel", "Failed to refresh HomeUiState", e)
-            // Do not delete old listings list for the user
+            _uiState.update { current -> current.copy(errorMsg = listingErrorMsg) }
           }
         }
   }

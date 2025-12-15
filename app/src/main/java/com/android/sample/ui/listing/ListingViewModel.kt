@@ -65,6 +65,7 @@ data class ListingUiState(
     val bookerProfiles: Map<String, Profile> = emptyMap(),
     val tutorRatingPending: Boolean = false,
     val currentUserId: String? = null,
+    val listingComments: List<String> = emptyList(),
     val hasExistingBooking: Boolean = false
 )
 
@@ -132,6 +133,10 @@ class ListingViewModel(
         loadListingRating(listingId)
 
         // If this is the owner's listing, load bookings
+        val listingRatings = ratingRepo.getRatingsOfListing(listingId)
+        val comments = listingRatings.map { it.comment.trim() }.filter { it.isNotBlank() }
+        _uiState.update { it.copy(listingComments = comments) }
+
         if (isOwnListing) {
           loadBookingsForListing(listingId)
         } else {
