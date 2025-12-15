@@ -1,6 +1,5 @@
 package com.android.sample.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -48,19 +47,28 @@ fun ProposalCard(
     modifier: Modifier = Modifier,
     testTag: String = ProposalCardTestTags.CARD
 ) {
-  Card(
-      shape = MaterialTheme.shapes.medium,
-      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-      modifier = modifier.clickable { onClick(proposal.listingId) }.testTag(testTag)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
-              ProposalCardContent(proposal = proposal, rating = rating)
-              Spacer(modifier = Modifier.width(16.dp))
-              ProposalCardPriceSection(hourlyRate = proposal.hourlyRate)
-            }
-      }
+  ListingCardBase(
+      id = proposal.listingId,
+      title = proposal.displayTitle(),
+      description = proposal.description,
+      locationName = proposal.location.name,
+      createdAt = proposal.createdAt,
+      hourlyRate = proposal.hourlyRate,
+      isActive = proposal.isActive,
+      rating = rating,
+      cardContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+      badgeActiveColor = MaterialTheme.colorScheme.primaryContainer,
+      badgeActiveTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+      priceColor = MaterialTheme.colorScheme.primary,
+      testTagCard = testTag,
+      testTagTitle = ProposalCardTestTags.TITLE,
+      testTagDescription = ProposalCardTestTags.DESCRIPTION,
+      testTagHourlyRate = ProposalCardTestTags.HOURLY_RATE,
+      testTagLocation = ProposalCardTestTags.LOCATION,
+      testTagCreatedDate = ProposalCardTestTags.CREATED_DATE,
+      testTagStatusBadge = ProposalCardTestTags.STATUS_BADGE,
+      onClick = onClick,
+      modifier = modifier)
 }
 
 @Composable

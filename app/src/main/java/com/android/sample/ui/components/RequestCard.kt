@@ -1,6 +1,5 @@
 package com.android.sample.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -38,23 +37,32 @@ object RequestCardTestTags {
 fun RequestCard(
     request: Request,
     onClick: (String) -> Unit,
-    rating: RatingInfo? = null, // <- added parameter
+    rating: RatingInfo? = null,
     modifier: Modifier = Modifier,
     testTag: String = RequestCardTestTags.CARD
 ) {
-  Card(
-      shape = MaterialTheme.shapes.medium,
-      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-      modifier = modifier.clickable { onClick(request.listingId) }.testTag(testTag)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
-              RequestCardContent(request = request, rating = rating) // <- forward rating
-              Spacer(modifier = Modifier.width(16.dp))
-              RequestCardPriceSection(hourlyRate = request.hourlyRate)
-            }
-      }
+  ListingCardBase(
+      id = request.listingId,
+      title = request.displayTitle(),
+      description = request.description,
+      locationName = request.location.name,
+      createdAt = request.createdAt,
+      hourlyRate = request.hourlyRate,
+      isActive = request.isActive,
+      rating = rating,
+      cardContainerColor = MaterialTheme.colorScheme.surface,
+      badgeActiveColor = MaterialTheme.colorScheme.secondaryContainer,
+      badgeActiveTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
+      priceColor = MaterialTheme.colorScheme.secondary,
+      testTagCard = testTag,
+      testTagTitle = RequestCardTestTags.TITLE,
+      testTagDescription = RequestCardTestTags.DESCRIPTION,
+      testTagHourlyRate = RequestCardTestTags.HOURLY_RATE,
+      testTagLocation = RequestCardTestTags.LOCATION,
+      testTagCreatedDate = RequestCardTestTags.CREATED_DATE,
+      testTagStatusBadge = RequestCardTestTags.STATUS_BADGE,
+      onClick = onClick,
+      modifier = modifier)
 }
 
 @Composable

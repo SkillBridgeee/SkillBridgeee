@@ -30,7 +30,6 @@ import com.android.sample.model.listing.Listing
 import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.user.Profile
 import java.util.Locale
-import kotlin.compareTo
 
 object ListingCardTestTags {
   const val CARD = "ListingCardTestTags.CARD"
