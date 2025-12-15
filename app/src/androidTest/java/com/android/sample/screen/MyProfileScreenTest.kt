@@ -980,8 +980,7 @@ class MyProfileScreenTest {
         val newState = current.copy(updateSuccess = true)
         val field = MyProfileViewModel::class.java.getDeclaredField("_uiState")
         field.isAccessible = true
-        val stateFlow =
-            field.get(this) as MutableStateFlow<MyProfileUIState>
+        val stateFlow = field.get(this) as MutableStateFlow<MyProfileUIState>
         stateFlow.value = newState
       }
     }
