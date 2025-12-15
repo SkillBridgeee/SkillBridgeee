@@ -62,7 +62,8 @@ data class ListingUiState(
     val listingDeleted: Boolean = false,
     val bookerProfiles: Map<String, Profile> = emptyMap(),
     val tutorRatingPending: Boolean = false,
-    val currentUserId: String? = null
+    val currentUserId: String? = null,
+    val hasExistingBooking: Boolean = false
 )
 
 /**
@@ -129,10 +130,45 @@ class ListingViewModel(
         // If this is the owner's listing, load bookings
         if (isOwnListing) {
           loadBookingsForListing(listingId)
+        } else {
+          // Check if the user already has a booking for this listing
+          checkExistingBooking(listingId, currentUserId)
         }
       } catch (e: Exception) {
         _uiState.update {
           it.copy(isLoading = false, error = "Failed to load listing: ${e.message}")
+        }
+      }
+    }
+  }
+
+  /**
+   * Check if the current user already has a booking for this listing
+   *
+   * @param listingId The ID of the listing
+   * @param userId The current user's ID
+   */
+  private fun checkExistingBooking(listingId: String, userId: String?) {
+    if (userId == null) return
+
+    viewModelScope.launch {
+      try {
+        val bookings = bookingRepo.getBookingsByListing(listingId)
+        // Active bookings are those that are not CANCELLED or COMPLETED
+        val hasExistingBooking =
+            bookings.any { booking ->
+              booking.bookerId == userId &&
+                  booking.status != BookingStatus.CANCELLED &&
+                  booking.status != BookingStatus.COMPLETED
+            }
+        _uiState.update { it.copy(hasExistingBooking = hasExistingBooking) }
+      } catch (e: Exception) {
+        Log.e("ListingViewModel", "Failed to check existing bookings", e)
+        // On error, show a warning message to the user
+        _uiState.update {
+          it.copy(
+              error = "Failed to check existing bookings. Please try again.",
+              hasExistingBooking = false)
         }
       }
     }
