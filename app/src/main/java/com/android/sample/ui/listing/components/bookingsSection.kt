@@ -29,10 +29,10 @@ import com.android.sample.ui.listing.ListingUiState
  */
 fun LazyListScope.bookingsSection(
     uiState: ListingUiState,
-    onApproveBooking: (String) -> Unit,
-    onRejectBooking: (String) -> Unit,
-    onPaymentComplete: (String) -> Unit,
-    onPaymentReceived: (String) -> Unit,
+    onApproveBooking: (String) -> Unit = {},
+    onRejectBooking: (String) -> Unit = {},
+    onPaymentComplete: (String) -> Unit = {},
+    onPaymentReceived: (String) -> Unit = {},
 ) {
   item {
     Text(
