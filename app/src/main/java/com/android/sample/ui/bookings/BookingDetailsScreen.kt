@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +58,7 @@ import com.android.sample.model.listing.ListingType
 import com.android.sample.ui.bookings.BookingDetailsStrings.BOOKING_REQUEST_FROM
 import com.android.sample.ui.bookings.BookingDetailsStrings.TAP_TO_VIEW_STUDENT_PROFILE
 import com.android.sample.ui.components.RatingStarsInput
+import com.android.sample.ui.components.VerticalScrollHint
 import com.android.sample.ui.listing.ListingScreenTestTags
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -220,97 +222,110 @@ fun BookingDetailsContent(
     onPaymentReceived: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-  Column(
-      modifier =
-          modifier
-              .fillMaxWidth()
-              .verticalScroll(rememberScrollState())
-              .testTag(BookingDetailsTestTag.CONTENT),
-      verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
-        // Header
-        BookingHeader(uiState)
+  val scrollState = rememberScrollState()
+  val showHint by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
 
-        HorizontalDivider()
+  Box(modifier = modifier.fillMaxSize()) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .testTag(BookingDetailsTestTag.CONTENT),
+        verticalArrangement = Arrangement.spacedBy(16.dp)) {
 
-        // Info about the creator
-        InfoCreator(uiState = uiState, onCreatorClick = onCreatorClick)
+          // Header
+          BookingHeader(uiState)
 
-        HorizontalDivider()
-
-        // Info about the courses
-        InfoListing(uiState)
-
-        HorizontalDivider()
-
-        // Schedule
-        InfoSchedule(uiState)
-
-        HorizontalDivider()
-
-        // Description
-        InfoDesc(uiState)
-
-        HorizontalDivider()
-
-        // Total Price
-        TotalPriceLabel(uiState)
-
-        HorizontalDivider()
-
-        // Let the student mark the session as completed once it is confirmed
-        if (uiState.booking.status == BookingStatus.CONFIRMED) {
-          // Determine if current user is the tutor based on listing type
-          // PROPOSAL: creator is tutor, REQUEST: booker is tutor
-          val isTutor =
-              when (uiState.listing.type) {
-                ListingType.PROPOSAL -> uiState.isCreator
-                ListingType.REQUEST -> uiState.isBooker
-              }
-          ConfirmCompletionSection(
-              paymentStatus = uiState.booking.paymentStatus,
-              isTutor = isTutor,
-              onMarkCompleted = onMarkCompleted)
-        }
-
-        if (uiState.booking.status == BookingStatus.COMPLETED) {
-          RatingSections(
-              uiState = uiState,
-              onSubmitBookerRatings = onSubmitBookerRatings,
-              onSubmitCreatorRating = onSubmitCreatorRating)
-        }
-
-        // Accept/Deny buttons for tutors when a listing is booked
-        if (uiState.booking.status == BookingStatus.PENDING && uiState.isCreator) {
           HorizontalDivider()
 
-          // Show booker information
-          InfoBooker(uiState = uiState, onBookerClick = onBookerClick)
+          // Info about the creator
+          InfoCreator(uiState = uiState, onCreatorClick = onCreatorClick)
 
-          Spacer(modifier = Modifier.height(8.dp))
+          HorizontalDivider()
 
-          Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            Button(onClick = { uiState.onAcceptBooking() }) { Text(BookingDetailsStrings.ACCEPT) }
-            Button(onClick = { uiState.onDenyBooking() }) { Text(BookingDetailsStrings.DENY) }
+          // Info about the courses
+          InfoListing(uiState)
+
+          HorizontalDivider()
+
+          // Schedule
+          InfoSchedule(uiState)
+
+          HorizontalDivider()
+
+          // Description
+          InfoDesc(uiState)
+
+          HorizontalDivider()
+
+          // Total Price
+          TotalPriceLabel(uiState)
+
+          HorizontalDivider()
+
+          // Let the student mark the session as completed once it is confirmed
+          if (uiState.booking.status == BookingStatus.CONFIRMED) {
+            // Determine if current user is the tutor based on listing type
+            // PROPOSAL: creator is tutor, REQUEST: booker is tutor
+            val isTutor =
+                when (uiState.listing.type) {
+                  ListingType.PROPOSAL -> uiState.isCreator
+                  ListingType.REQUEST -> uiState.isBooker
+                }
+            ConfirmCompletionSection(
+                paymentStatus = uiState.booking.paymentStatus,
+                isTutor = isTutor,
+                onMarkCompleted = onMarkCompleted)
+          }
+
+          if (uiState.booking.status == BookingStatus.COMPLETED) {
+            RatingSections(
+                uiState = uiState,
+                onSubmitBookerRatings = onSubmitBookerRatings,
+                onSubmitCreatorRating = onSubmitCreatorRating)
+          }
+
+          // Accept/Deny buttons for tutors when a listing is booked
+          if (uiState.booking.status == BookingStatus.PENDING && uiState.isCreator) {
+            HorizontalDivider()
+
+            // Show booker information
+            InfoBooker(uiState = uiState, onBookerClick = onBookerClick)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly) {
+                  Button(onClick = { uiState.onAcceptBooking() }) {
+                    Text(BookingDetailsStrings.ACCEPT)
+                  }
+                  Button(onClick = { uiState.onDenyBooking() }) { Text(BookingDetailsStrings.DENY) }
+                }
+          }
+
+          // Payment actions based on the payment status - only for CONFIRMED bookings
+          if (uiState.booking.status == BookingStatus.CONFIRMED) {
+            // Determine if current user is the tutor based on listing type
+            // PROPOSAL: creator is tutor, REQUEST: booker is tutor
+            val isTutorForPayment =
+                when (uiState.listing.type) {
+                  ListingType.PROPOSAL -> uiState.isCreator
+                  ListingType.REQUEST -> uiState.isBooker
+                }
+            PaymentActionSection(
+                booking = uiState.booking,
+                isCreator = isTutorForPayment,
+                onPaymentComplete = onPaymentComplete,
+                onPaymentReceived = onPaymentReceived)
           }
         }
-
-        // Payment actions based on the payment status - only for CONFIRMED bookings
-        if (uiState.booking.status == BookingStatus.CONFIRMED) {
-          // Determine if current user is the tutor based on listing type
-          // PROPOSAL: creator is tutor, REQUEST: booker is tutor
-          val isTutorForPayment =
-              when (uiState.listing.type) {
-                ListingType.PROPOSAL -> uiState.isCreator
-                ListingType.REQUEST -> uiState.isBooker
-              }
-          PaymentActionSection(
-              booking = uiState.booking,
-              isCreator = isTutorForPayment,
-              onPaymentComplete = onPaymentComplete,
-              onPaymentReceived = onPaymentReceived)
-        }
-      }
+    VerticalScrollHint(
+        visible = showHint,
+        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
+  }
 }
 
 /**
@@ -627,7 +642,6 @@ private fun BookingStatus(status: BookingStatus) {
  * that the session actually took place.
  *
  * @param paymentStatus The current payment status of the booking.
- * @param listingType The type of listing (PROPOSAL or REQUEST) to determine payment roles.
  * @param isTutor Whether the current user is the listing creator.
  * @param onMarkCompleted Callback triggered when the user confirms marking the booking as
  *   completed.
