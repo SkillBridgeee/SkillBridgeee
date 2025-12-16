@@ -181,7 +181,8 @@ fun ListingScreen(
             onNavigateToProfile = onNavigateToProfile,
             autoFillDatesForTesting = autoFillDatesForTesting,
             listingComments = uiState.listingComments,
-        )
+            onPaymentComplete = { bookingId -> viewModel.markPaymentComplete(bookingId) },
+            onPaymentReceived = { bookingId -> viewModel.confirmPaymentReceived(bookingId) })
       }
     }
   }

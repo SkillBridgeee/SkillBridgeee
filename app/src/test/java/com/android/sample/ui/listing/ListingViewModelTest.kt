@@ -1012,6 +1012,229 @@ class ListingViewModelTest {
     assertNotNull(viewModel.uiState.value.listing)
   }
 
+  // Tests for markPaymentComplete()
+
+  @Test
+  fun markPaymentComplete_success_updatesPaymentStatusToPaid() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PENDING_PAYMENT))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.markPaymentComplete("booking-1")
+    advanceUntilIdle()
+
+    // Verify payment status was updated
+    val updatedBooking = bookingRepo.getBooking("booking-1")
+    assertNotNull(updatedBooking)
+    assertEquals(com.android.sample.model.booking.PaymentStatus.PAID, updatedBooking?.paymentStatus)
+  }
+
+  @Test
+  fun markPaymentComplete_exception_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PENDING_PAYMENT))
+    val bookingRepo =
+        object : FakeBookingRepo(bookings.toMutableList()) {
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: com.android.sample.model.booking.PaymentStatus
+          ) {
+            throw RuntimeException("Payment service error")
+          }
+        }
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Should not crash
+    viewModel.markPaymentComplete("booking-1")
+    advanceUntilIdle()
+
+    assertNotNull(viewModel.uiState.value.listing)
+  }
+
+  @Test
+  fun markPaymentComplete_refreshesBookings() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PENDING_PAYMENT))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.markPaymentComplete("booking-1")
+    advanceUntilIdle()
+
+    // Verify bookings were refreshed with updated payment status
+    val updatedBookings = viewModel.uiState.value.listingBookings
+    assertEquals(1, updatedBookings.size)
+    assertEquals(
+        com.android.sample.model.booking.PaymentStatus.PAID, updatedBookings[0].paymentStatus)
+  }
+
+  // Tests for confirmPaymentReceived()
+
+  @Test
+  fun confirmPaymentReceived_success_updatesPaymentStatusToConfirmed() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PAID))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.confirmPaymentReceived("booking-1")
+    advanceUntilIdle()
+
+    // Verify payment status was updated
+    val updatedBooking = bookingRepo.getBooking("booking-1")
+    assertNotNull(updatedBooking)
+    assertEquals(
+        com.android.sample.model.booking.PaymentStatus.CONFIRMED, updatedBooking?.paymentStatus)
+  }
+
+  @Test
+  fun confirmPaymentReceived_exception_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PAID))
+    val bookingRepo =
+        object : FakeBookingRepo(bookings.toMutableList()) {
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: com.android.sample.model.booking.PaymentStatus
+          ) {
+            throw RuntimeException("Payment service error")
+          }
+        }
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Should not crash
+    viewModel.confirmPaymentReceived("booking-1")
+    advanceUntilIdle()
+
+    assertNotNull(viewModel.uiState.value.listing)
+  }
+
+  @Test
+  fun confirmPaymentReceived_refreshesBookings() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PAID))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.confirmPaymentReceived("booking-1")
+    advanceUntilIdle()
+
+    // Verify bookings were refreshed with updated payment status
+    val updatedBookings = viewModel.uiState.value.listingBookings
+    assertEquals(1, updatedBookings.size)
+    assertEquals(
+        com.android.sample.model.booking.PaymentStatus.CONFIRMED, updatedBookings[0].paymentStatus)
+  }
+
+  @Test
+  fun markPaymentComplete_withoutLoadingListing_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookingRepo = FakeBookingRepo()
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    // Do not load listing
+    viewModel.markPaymentComplete("booking-1")
+    advanceUntilIdle()
+
+    // Should not crash, listing should still be null
+    assertNull(viewModel.uiState.value.listing)
+  }
+
+  @Test
+  fun confirmPaymentReceived_withoutLoadingListing_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookingRepo = FakeBookingRepo()
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    // Do not load listing
+    viewModel.confirmPaymentReceived("booking-1")
+    advanceUntilIdle()
+
+    // Should not crash, listing should still be null
+    assertNull(viewModel.uiState.value.listing)
+  }
+
   // Tests for state management methods
 
   @Test
