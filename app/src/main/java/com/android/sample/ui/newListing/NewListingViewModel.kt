@@ -383,6 +383,16 @@ class NewListingViewModel(
   @Suppress("DEPRECATION")
   fun fetchLocationFromGps(provider: GpsLocationProvider, context: Context) {
     viewModelScope.launch {
+      // Check if location services are enabled
+      if (!provider.isLocationEnabled()) {
+        _uiState.update {
+          it.copy(
+              invalidLocationMsg =
+                  "Location services are disabled. Please enable location in your device settings.")
+        }
+        return@launch
+      }
+
       try {
         val androidLoc = provider.getCurrentLocation()
         if (androidLoc != null) {

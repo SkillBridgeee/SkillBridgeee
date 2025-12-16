@@ -24,6 +24,18 @@ import kotlinx.coroutines.withTimeout
  *   location" from an actual permission failure).
  */
 open class GpsLocationProvider(private val context: Context) {
+
+  /**
+   * Checks if location services are enabled on the device.
+   *
+   * @return true if GPS or Network provider is enabled, false otherwise.
+   */
+  open fun isLocationEnabled(): Boolean {
+    val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    return lm.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+        lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+  }
+
   open suspend fun getCurrentLocation(timeoutMs: Long = 10_000): Location? =
       withTimeout(timeoutMs) {
         suspendCancellableCoroutine { cont ->

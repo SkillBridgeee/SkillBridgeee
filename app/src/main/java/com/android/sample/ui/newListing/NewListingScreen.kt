@@ -338,7 +338,7 @@ private fun LocationSection(
           locationQuery = listingUIState.locationQuery,
           locationSuggestions = listingUIState.locationSuggestions,
           onLocationQueryChange = listingViewModel::setLocationQuery,
-          errorMsg = listingUIState.invalidLocationMsg,
+          errorMsg = null, // Don't pass error to the field to prevent button sliding
           onLocationSelected = { location ->
             listingViewModel.setLocationQuery(location.name)
             listingViewModel.setLocation(location)
@@ -366,6 +366,15 @@ private fun LocationSection(
                 contentDescription = "Use my location",
                 tint = MaterialTheme.colorScheme.primary)
           }
+    }
+
+    // Display error message outside the Box so button doesn't move
+    listingUIState.invalidLocationMsg?.let { errorMsg ->
+      Text(
+          text = errorMsg,
+          color = MaterialTheme.colorScheme.error,
+          style = MaterialTheme.typography.bodySmall,
+          modifier = Modifier.padding(start = 16.dp, top = 4.dp))
     }
   }
 }
