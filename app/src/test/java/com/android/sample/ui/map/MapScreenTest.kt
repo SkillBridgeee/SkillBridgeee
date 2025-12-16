@@ -133,8 +133,8 @@ class MapScreenTest {
             associatedListingId = "listing1",
             listingCreatorId = "user1",
             bookerId = "user2",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
     val pin =
         BookingPin(
             bookingId = "b1",

@@ -606,8 +606,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "other-user",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking1)
@@ -660,8 +660,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "current-user",
             bookerId = "student-id",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
@@ -710,8 +710,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "other",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
@@ -751,8 +751,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "other",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
@@ -791,8 +791,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "other",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
@@ -828,8 +828,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "other",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
@@ -864,8 +864,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "other",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
@@ -899,8 +899,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "tutor-id",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
@@ -935,8 +935,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "current-user",
             bookerId = "student-id",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking)
@@ -1000,8 +1000,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "user1",
             bookerId = "user2",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     val bookingPin =
         BookingPin(
@@ -1033,8 +1033,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "user1",
             bookerId = "user2",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     val bookingPin =
         BookingPin(
@@ -1066,8 +1066,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "user1",
             bookerId = "user2",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     val bookingPin =
         BookingPin(
@@ -1156,8 +1156,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "other1",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     val booking2 =
         com.android.sample.model.booking.Booking(
@@ -1165,8 +1165,8 @@ class MapViewModelTest {
             associatedListingId = "listing2",
             listingCreatorId = "other2",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     val booking3 =
         com.android.sample.model.booking.Booking(
@@ -1174,8 +1174,8 @@ class MapViewModelTest {
             associatedListingId = "listing3",
             listingCreatorId = "other3",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date())
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000))
 
     coEvery { profileRepository.getAllProfiles() } returns emptyList()
     coEvery { bookingRepository.getAllBookings() } returns listOf(booking1, booking2, booking3)
@@ -1221,8 +1221,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "user1",
             bookerId = "user2",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date(),
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000),
             price = 25.50)
 
     val bookingPin =
@@ -1261,8 +1261,8 @@ class MapViewModelTest {
             associatedListingId = "listing1",
             listingCreatorId = "other",
             bookerId = "current-user",
-            sessionStart = java.util.Date(),
-            sessionEnd = java.util.Date(),
+            sessionStart = java.util.Date(System.currentTimeMillis() + 1800000),
+            sessionEnd = java.util.Date(System.currentTimeMillis() + 5400000),
             price = 30.0)
 
     val listing =

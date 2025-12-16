@@ -456,7 +456,11 @@ class ListingScreenTest {
     waitForListingLoaded()
 
     // Simulate booking attempt that will fail
-    compose.runOnUiThread { vm.createBooking(Date(), Date(System.currentTimeMillis() + 3600000)) }
+    compose.runOnUiThread {
+      vm.createBooking(
+          Date(System.currentTimeMillis() + 1800000), // 30 min from now
+          Date(System.currentTimeMillis() + 5400000)) // 1.5 hours from now
+    }
 
     // Wait for error dialog
     compose.waitUntil(WAIT_TIMEOUT_MS) {
@@ -622,7 +626,11 @@ class ListingScreenTest {
     waitForListingLoaded()
 
     // Trigger a failing booking
-    compose.runOnUiThread { vm.createBooking(Date(), Date(System.currentTimeMillis() + 3_600_000)) }
+    compose.runOnUiThread {
+      vm.createBooking(
+          Date(System.currentTimeMillis() + 1800000), // 30 min from now
+          Date(System.currentTimeMillis() + 5400000)) // 1.5 hours from now
+    }
 
     // Error dialog appears
     compose.waitUntil(WAIT_TIMEOUT_MS) {
