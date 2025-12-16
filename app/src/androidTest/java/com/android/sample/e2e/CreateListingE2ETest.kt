@@ -243,7 +243,8 @@ class CreateListingE2ETest : E2ETestBase() {
 
         composeTestRule.waitForIdle()
 
-        // Enter location - if this fails, test exits gracefully as location service may not be available
+        // Enter location - if this fails, test exits gracefully as location service may not be
+        // available
         try {
           composeTestRule
               .onNodeWithText("Location", substring = true, ignoreCase = true)
@@ -264,7 +265,8 @@ class CreateListingE2ETest : E2ETestBase() {
             var attempts = 0
             while (attempts < 10 && !suggestionClicked) {
               try {
-                val nodes = composeTestRule.onAllNodesWithTag("suggestLocation").fetchSemanticsNodes()
+                val nodes =
+                    composeTestRule.onAllNodesWithTag("suggestLocation").fetchSemanticsNodes()
                 if (nodes.isNotEmpty()) {
                   composeTestRule.onAllNodesWithTag("suggestLocation").onFirst().performClick()
                   suggestionClicked = true
