@@ -43,7 +43,7 @@ fun RequestCard(
       hourlyRate = request.hourlyRate,
       isActive = request.isActive,
       rating = rating,
-      cardContainerColor = MaterialTheme.colorScheme.surface,
+      cardContainerColor = MaterialTheme.colorScheme.surfaceVariant,
       badgeActiveColor = MaterialTheme.colorScheme.secondaryContainer,
       badgeActiveTextColor = MaterialTheme.colorScheme.onSecondaryContainer,
       priceColor = MaterialTheme.colorScheme.secondary,
