@@ -15,6 +15,7 @@ import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.ListingRepositoryProvider
 import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingInfo
 import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.rating.RatingType
@@ -50,6 +51,7 @@ import kotlinx.coroutines.launch
 data class ListingUiState(
     val listing: Listing? = null,
     val creator: Profile? = null,
+    val listingRating: RatingInfo = RatingInfo(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val isOwnListing: Boolean = false,
@@ -128,6 +130,9 @@ class ListingViewModel(
               error = null)
         }
 
+        loadListingRating(listingId)
+
+        // If this is the owner's listing, load bookings
         val listingRatings = ratingRepo.getRatingsOfListing(listingId)
         val comments = listingRatings.map { it.comment.trim() }.filter { it.isNotBlank() }
         _uiState.update { it.copy(listingComments = comments) }
@@ -564,6 +569,29 @@ class ListingViewModel(
               error = "Failed to delete listing: ${e.message}",
               listingDeleted = false)
         }
+      }
+    }
+  }
+
+  private fun loadListingRating(listingId: String) {
+    viewModelScope.launch {
+      try {
+        val ratings = ratingRepo.getRatingsOfListing(listingId)
+        val listingRatings = ratings.filter { it.ratingType == RatingType.LISTING }
+
+        val info =
+            if (listingRatings.isEmpty()) {
+              RatingInfo()
+            } else {
+              val avg =
+                  listingRatings.map { it.starRating.ordinal + 1 }.average() // ONE=1 ... FIVE=5
+              RatingInfo(averageRating = avg, totalRatings = listingRatings.size)
+            }
+
+        _uiState.update { it.copy(listingRating = info) }
+      } catch (e: Exception) {
+        Log.w("ListingViewModel", "Failed to load listing rating", e)
+        // keep default RatingInfo() so UI doesn't crash
       }
     }
   }

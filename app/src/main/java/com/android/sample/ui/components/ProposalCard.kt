@@ -1,19 +1,18 @@
 package com.android.sample.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.android.sample.model.listing.Proposal
-import java.util.Locale
+import com.android.sample.model.map.Location
+import com.android.sample.model.rating.RatingInfo
+import com.android.sample.model.skill.ExpertiseLevel
+import com.android.sample.model.skill.MainSubject
+import com.android.sample.model.skill.Skill
+import java.util.Date
 
 object ProposalCardTestTags {
   const val CARD = "ProposalCardTestTags.CARD"
@@ -37,61 +36,32 @@ object ProposalCardTestTags {
 fun ProposalCard(
     proposal: Proposal,
     onClick: (String) -> Unit,
+    rating: RatingInfo? = null,
     modifier: Modifier = Modifier,
     testTag: String = ProposalCardTestTags.CARD
 ) {
-  Card(
-      shape = MaterialTheme.shapes.medium,
-      colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-      modifier = modifier.clickable { onClick(proposal.listingId) }.testTag(testTag)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically) {
-              ProposalCardContent(proposal = proposal)
-              Spacer(modifier = Modifier.width(16.dp))
-              ProposalCardPriceSection(hourlyRate = proposal.hourlyRate)
-            }
-      }
-}
-
-@Composable
-private fun RowScope.ProposalCardContent(proposal: Proposal) {
-  Column(modifier = Modifier.weight(1f)) {
-    StatusBadge(
-        isActive = proposal.isActive,
-        activeColor = MaterialTheme.colorScheme.primaryContainer,
-        activeTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        testTag = ProposalCardTestTags.STATUS_BADGE)
-
-    CardTitle(title = proposal.displayTitle(), testTag = ProposalCardTestTags.TITLE)
-    Spacer(modifier = Modifier.height(4.dp))
-    CardDescription(description = proposal.description, testTag = ProposalCardTestTags.DESCRIPTION)
-    LocationAndDateRow(
-        locationName = proposal.location.name,
-        createdAt = proposal.createdAt,
-        locationTestTag = ProposalCardTestTags.LOCATION,
-        dateTestTag = ProposalCardTestTags.CREATED_DATE)
-  }
-}
-
-@Composable
-private fun ProposalCardPriceSection(hourlyRate: Double) {
-  Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center) {
-    Text(
-        text = String.format(Locale.getDefault(), "$%.2f/hr", hourlyRate),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.testTag(ProposalCardTestTags.HOURLY_RATE))
-
-    Spacer(modifier = Modifier.height(8.dp))
-
-    Icon(
-        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-        contentDescription = "View details",
-        tint = MaterialTheme.colorScheme.onSurfaceVariant)
-  }
+  ListingCardBase(
+      id = proposal.listingId,
+      title = proposal.displayTitle(),
+      description = proposal.description,
+      locationName = proposal.location.name,
+      createdAt = proposal.createdAt,
+      hourlyRate = proposal.hourlyRate,
+      isActive = proposal.isActive,
+      rating = rating,
+      cardContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+      badgeActiveColor = MaterialTheme.colorScheme.primaryContainer,
+      badgeActiveTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+      priceColor = MaterialTheme.colorScheme.primary,
+      testTagCard = testTag,
+      testTagTitle = ProposalCardTestTags.TITLE,
+      testTagDescription = ProposalCardTestTags.DESCRIPTION,
+      testTagHourlyRate = ProposalCardTestTags.HOURLY_RATE,
+      testTagLocation = ProposalCardTestTags.LOCATION,
+      testTagCreatedDate = ProposalCardTestTags.CREATED_DATE,
+      testTagStatusBadge = ProposalCardTestTags.STATUS_BADGE,
+      onClick = onClick,
+      modifier = modifier)
 }
 
 @Preview
@@ -105,15 +75,16 @@ private fun ProposalCardPreview() {
                 creatorUserId = "user-42",
                 description = "Math tutoring for high school students",
                 hourlyRate = 25.0,
-                location = com.android.sample.model.map.Location(name = "Campus Library"),
+                location = Location(name = "Campus Library"),
                 isActive = true,
                 skill =
-                    com.android.sample.model.skill.Skill(
-                        mainSubject = com.android.sample.model.skill.MainSubject.ACADEMICS,
+                    Skill(
+                        mainSubject = MainSubject.ACADEMICS,
                         skill = "Algebra",
                         skillTime = 5.0,
-                        expertise = com.android.sample.model.skill.ExpertiseLevel.ADVANCED),
-                createdAt = java.util.Date()),
-        onClick = {})
+                        expertise = ExpertiseLevel.ADVANCED),
+                createdAt = Date()),
+        onClick = {},
+        rating = RatingInfo(averageRating = 4.5, totalRatings = 10))
   }
 }

@@ -6,6 +6,9 @@ import com.android.sample.mockRepository.profileRepo.ProfileFakeRepoWorking
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingType
 import com.android.sample.model.skill.Skill
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -133,6 +136,40 @@ class MainPageViewModelTest {
         emptyList<com.android.sample.model.listing.Listing>()
   }
 
+  private val fakeRatingRepo =
+      object : RatingRepository {
+        override fun getNewUid() = "r1"
+
+        override suspend fun hasRating(
+            fromUserId: String,
+            toUserId: String,
+            ratingType: RatingType,
+            targetObjectId: String
+        ) = false
+
+        override suspend fun getAllRatings(): List<Rating> = emptyList()
+
+        override suspend fun getRating(ratingId: String): Rating? = null
+
+        override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
+
+        override suspend fun getRatingsByToUser(toUserId: String): List<Rating> = emptyList()
+
+        override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
+
+        override suspend fun addRating(rating: Rating) {}
+
+        override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+        override suspend fun deleteRating(ratingId: String) {}
+
+        override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+        override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+        override suspend fun deleteAllRatingOfUser(userId: String) {}
+      }
+
   // ---------- Helpers ----------
 
   private fun profile(id: String, name: String) =
@@ -152,7 +189,11 @@ class MainPageViewModelTest {
 
     val proposals = listOf(proposal("u1"), proposal("u2"))
 
-    val vm = MainPageViewModel(FakeProfileRepository(profiles), FakeListingRepository(proposals))
+    val vm =
+        MainPageViewModel(
+            profileRepository = FakeProfileRepository(profiles),
+            listingRepository = FakeListingRepository(proposals),
+            ratingRepository = fakeRatingRepo)
 
     advanceUntilIdle()
     val state = vm.uiState.first()
@@ -169,7 +210,10 @@ class MainPageViewModelTest {
     com.android.sample.model.authentication.UserSessionManager.clearSession()
 
     val vm =
-        MainPageViewModel(FakeProfileRepository(emptyList()), FakeListingRepository(emptyList()))
+        MainPageViewModel(
+            profileRepository = FakeProfileRepository(emptyList()),
+            listingRepository = FakeListingRepository(emptyList()),
+            ratingRepository = fakeRatingRepo)
 
     advanceUntilIdle()
     val state = vm.uiState.first()
@@ -189,7 +233,11 @@ class MainPageViewModelTest {
           }
         }
 
-    val vm = MainPageViewModel(FakeProfileRepository(emptyList()), failingListings)
+    val vm =
+        MainPageViewModel(
+            profileRepository = FakeProfileRepository(emptyList()),
+            listingRepository = FakeListingRepository(emptyList()),
+            ratingRepository = fakeRatingRepo)
 
     advanceUntilIdle()
     val state = vm.uiState.first()
@@ -204,7 +252,11 @@ class MainPageViewModelTest {
     val profileRepo = ProfileFakeRepoWorking()
     val listingRepo = ListingFakeRepoWorking()
 
-    val vm = MainPageViewModel(profileRepository = profileRepo, listingRepository = listingRepo)
+    val vm =
+        MainPageViewModel(
+            profileRepository = profileRepo,
+            listingRepository = listingRepo,
+            ratingRepository = fakeRatingRepo)
 
     advanceUntilIdle()
     val state1 = vm.uiState.first()

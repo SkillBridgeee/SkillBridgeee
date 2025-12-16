@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.ListingType
+import com.android.sample.ui.components.RatingStars
 import com.android.sample.ui.listing.ListingScreenTestTags
 import com.android.sample.ui.listing.ListingUiState
 import java.text.SimpleDateFormat
@@ -96,6 +98,11 @@ fun ListingContent(
         item {
           // Description card (if present)
           DescriptionCard(listing.description)
+        }
+
+        item {
+          // Listing rating (ADD THIS ITEM)
+          ListingRatingCard(uiState.listingRating)
         }
 
         item {
@@ -327,6 +334,37 @@ private fun PostedDate(date: Date) {
       style = MaterialTheme.typography.bodySmall,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       modifier = Modifier.testTag(ListingScreenTestTags.CREATED_DATE))
+}
+
+/** Listing rating card */
+@Composable
+private fun ListingRatingCard(rating: com.android.sample.model.rating.RatingInfo) {
+  val avg = rating.averageRating.coerceIn(0.0, 5.0)
+  val filledValue = kotlin.math.round(avg * 2) / 2.0 // optional: rounds to nearest 0.5
+
+  Card(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+      Text(
+          text = "Listing rating",
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.Bold)
+
+      Row(verticalAlignment = Alignment.CenterVertically) {
+        RatingStars(ratingOutOfFive = filledValue)
+        Spacer(Modifier.width(8.dp))
+        val ratingText =
+            if (rating.totalRatings == 0) {
+              "No ratings yet"
+            } else {
+              String.format(Locale.getDefault(), "%.1f (%d)", avg, rating.totalRatings)
+            }
+        Text(
+            text = ratingText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+      }
+    }
+  }
 }
 
 @Composable

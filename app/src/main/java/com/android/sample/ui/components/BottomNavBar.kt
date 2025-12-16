@@ -81,7 +81,10 @@ fun BottomNavBar(navController: NavHostController) {
             RouteStackManager.clear()
             RouteStackManager.addRoute(item.route)
             navController.navigate(item.route) {
-              popUpTo(NavRoutes.HOME) { saveState = true }
+              popUpTo(navController.graph.startDestinationId) {
+                saveState = true
+                inclusive = (item.route == NavRoutes.HOME)
+              }
               launchSingleTop = true
               restoreState = true
             }
