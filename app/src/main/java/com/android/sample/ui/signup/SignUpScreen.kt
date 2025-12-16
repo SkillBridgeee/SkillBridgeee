@@ -261,22 +261,46 @@ private fun LocationBlock(
         }
       }
 
-  Box(modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.ADDRESS)) {
-    RoundEdgedLocationInputField(
-        locationQuery = state.locationQuery,
-        locationSuggestions = state.locationSuggestions,
-        onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },
-        onLocationSelected = { location -> vm.onEvent(SignUpEvent.LocationSelected(location)) },
-        style =
-            com.android.sample.ui.components.LocationFieldStyle(
-                shape = fieldShape, colors = fieldColors, enabled = !state.submitting))
+  // Check if the error is location-related
+  val locationError =
+      state.error?.let { error ->
+        if (error.contains("location", ignoreCase = true) ||
+            error.contains("GPS", ignoreCase = true) ||
+            error.contains("permission", ignoreCase = true)) {
+          error
+        } else {
+          null
+        }
+      }
 
-    LocationIconButton(
-        context = context,
-        permission = permission,
-        permissionLauncher = permissionLauncher,
-        vm = vm,
-        enabled = !state.submitting)
+  Column(modifier = Modifier.fillMaxWidth().testTag(SignUpScreenTestTags.ADDRESS)) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+      RoundEdgedLocationInputField(
+          locationQuery = state.locationQuery,
+          locationSuggestions = state.locationSuggestions,
+          onLocationQueryChange = { vm.onEvent(SignUpEvent.LocationQueryChanged(it)) },
+          onLocationSelected = { location -> vm.onEvent(SignUpEvent.LocationSelected(location)) },
+          errorMsg = null, // Don't pass error to the field component
+          style =
+              com.android.sample.ui.components.LocationFieldStyle(
+                  shape = fieldShape, colors = fieldColors, enabled = !state.submitting))
+
+      LocationIconButton(
+          context = context,
+          permission = permission,
+          permissionLauncher = permissionLauncher,
+          vm = vm,
+          enabled = !state.submitting)
+    }
+
+    // Display error message outside the Box so button doesn't move
+    locationError?.let {
+      Text(
+          text = it,
+          color = MaterialTheme.colorScheme.error,
+          style = MaterialTheme.typography.bodySmall,
+          modifier = Modifier.padding(start = 16.dp, top = 4.dp))
+    }
   }
 }
 
@@ -382,7 +406,16 @@ private fun MessagesBlock(state: SignUpUiState) {
     Spacer(Modifier.height(8.dp))
     VerificationEmailCard(state.email)
   } else {
-    state.error?.let { ErrorMessage(it) }
+    // Filter out location-related errors as they're shown under the location field
+    state.error?.let { error ->
+      val isLocationError =
+          error.contains("location", ignoreCase = true) ||
+              error.contains("GPS", ignoreCase = true) ||
+              error.contains("permission", ignoreCase = true)
+      if (!isLocationError) {
+        ErrorMessage(error)
+      }
+    }
   }
 }
 

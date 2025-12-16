@@ -209,4 +209,52 @@ class GpsLocationProviderTest {
     // Verify removal was attempted on cancellation
     verify(lm, atLeastOnce()).removeUpdates(any(LocationListener::class.java))
   }
+
+  @Test
+  fun `isLocationEnabled returns true when GPS provider is enabled`() {
+    val context = mock(Context::class.java)
+    val lm = mock(LocationManager::class.java)
+    `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(lm)
+    `when`(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)).thenReturn(true)
+    `when`(lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)).thenReturn(false)
+
+    val provider = GpsLocationProvider(context)
+    assertTrue(provider.isLocationEnabled())
+  }
+
+  @Test
+  fun `isLocationEnabled returns true when Network provider is enabled`() {
+    val context = mock(Context::class.java)
+    val lm = mock(LocationManager::class.java)
+    `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(lm)
+    `when`(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)).thenReturn(false)
+    `when`(lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)).thenReturn(true)
+
+    val provider = GpsLocationProvider(context)
+    assertTrue(provider.isLocationEnabled())
+  }
+
+  @Test
+  fun `isLocationEnabled returns true when both providers are enabled`() {
+    val context = mock(Context::class.java)
+    val lm = mock(LocationManager::class.java)
+    `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(lm)
+    `when`(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)).thenReturn(true)
+    `when`(lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)).thenReturn(true)
+
+    val provider = GpsLocationProvider(context)
+    assertTrue(provider.isLocationEnabled())
+  }
+
+  @Test
+  fun `isLocationEnabled returns false when both providers are disabled`() {
+    val context = mock(Context::class.java)
+    val lm = mock(LocationManager::class.java)
+    `when`(context.getSystemService(Context.LOCATION_SERVICE)).thenReturn(lm)
+    `when`(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)).thenReturn(false)
+    `when`(lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)).thenReturn(false)
+
+    val provider = GpsLocationProvider(context)
+    assertFalse(provider.isLocationEnabled())
+  }
 }

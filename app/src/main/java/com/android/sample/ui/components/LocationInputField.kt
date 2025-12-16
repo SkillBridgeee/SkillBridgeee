@@ -140,6 +140,7 @@ fun RoundEdgedLocationInputField(
     onLocationQueryChange: (String) -> Unit,
     onLocationSelected: (Location) -> Unit,
     modifier: Modifier = Modifier,
+    errorMsg: String? = null,
     style: LocationFieldStyle = LocationFieldStyle()
 ) {
   var showDropdown by remember { mutableStateOf(false) }
@@ -159,6 +160,7 @@ fun RoundEdgedLocationInputField(
         enabled = style.enabled,
         shape = style.shape,
         colors = colors,
+        isError = errorMsg != null,
         modifier = Modifier.fillMaxWidth().testTag(LocationInputFieldTestTags.INPUT_LOCATION))
 
     DropdownMenu(
