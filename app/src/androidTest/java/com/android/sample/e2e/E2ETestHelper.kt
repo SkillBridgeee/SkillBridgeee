@@ -3,8 +3,6 @@ package com.android.sample.e2e
 import android.content.Context
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.ComposeTestRule
-import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.communication.ConversationManager

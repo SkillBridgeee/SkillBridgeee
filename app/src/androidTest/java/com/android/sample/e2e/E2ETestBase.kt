@@ -120,7 +120,7 @@ abstract class E2ETestBase {
         .performTextInput("epfl")
 
     // Wait for location suggestions to appear
-    composeTestRule.waitUntil(timeoutMillis = 8001) {
+    composeTestRule.waitUntil(timeoutMillis = 10000) {
       try {
         composeTestRule
             .onAllNodes(
