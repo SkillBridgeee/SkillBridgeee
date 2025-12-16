@@ -72,7 +72,7 @@ class MessagingE2ETest : E2ETestBase() {
 
   /** Navigates to the Discussion screen via the top app bar messages icon. */
   private suspend fun navigateToDiscussionScreen() {
-    composeTestRule.waitUntil(timeoutMillis = 15000) {
+    composeTestRule.waitUntil(timeoutMillis = 5000) {
       try {
         composeTestRule
             .onAllNodesWithTag(TopAppBarTestTag.MESSAGES_ICON, useUnmergedTree = true)
@@ -102,7 +102,7 @@ class MessagingE2ETest : E2ETestBase() {
 
     if (isLoading) {
       Log.d(TAG, "→ Waiting for loading to complete...")
-      composeTestRule.waitUntil(timeoutMillis = 20000) {
+      composeTestRule.waitUntil(timeoutMillis = 10000) {
         composeTestRule
             .onAllNodesWithTag("discussion_loading_indicator", useUnmergedTree = true)
             .fetchSemanticsNodes()

@@ -40,18 +40,11 @@ class BookingsSectionTest {
   private fun setBookingsContent(
       uiState: ListingUiState,
       onApprove: (String) -> Unit = {},
-      onReject: (String) -> Unit = {},
-      onPaymentComplete: (String) -> Unit = {},
-      onPaymentReceived: (String) -> Unit = {}
+      onReject: (String) -> Unit = {}
   ) {
     compose.setContent {
       LazyColumn {
-        bookingsSection(
-            uiState = uiState,
-            onApproveBooking = onApprove,
-            onRejectBooking = onReject,
-            onPaymentComplete = onPaymentComplete,
-            onPaymentReceived = onPaymentReceived)
+        bookingsSection(uiState = uiState, onApproveBooking = onApprove, onRejectBooking = onReject)
       }
     }
   }
