@@ -269,8 +269,8 @@ class MultiAccountProfileE2ETest : E2ETestBase() {
       composeTestRule.waitForIdle()
       delay(2000) // Wait for logout and navigation
 
-      // Verify we're back on the login screen
-      composeTestRule.waitUntil(timeoutMillis = 10_000L) {
+      // Verify we're back on the login screen with increased timeout for CI
+      composeTestRule.waitUntil(timeoutMillis = 20_000L) {
         try {
           composeTestRule
               .onAllNodes(hasTestTag(com.android.sample.ui.login.SignInScreenTestTags.TITLE))

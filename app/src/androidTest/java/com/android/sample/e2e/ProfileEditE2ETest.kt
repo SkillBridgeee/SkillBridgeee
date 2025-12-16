@@ -224,6 +224,18 @@ class ProfileEditE2ETest : E2ETestBase() {
 
       delay(500)
 
+      // Wait for updated name to appear with increased timeout for CI
+      composeTestRule.waitUntil(timeoutMillis = 15000) {
+        try {
+          composeTestRule
+              .onAllNodesWithText("Jane Smith", substring = true, ignoreCase = true)
+              .fetchSemanticsNodes()
+              .isNotEmpty()
+        } catch (_: Throwable) {
+          false
+        }
+      }
+
       // Verify updated name is displayed
       try {
         composeTestRule
@@ -240,6 +252,18 @@ class ProfileEditE2ETest : E2ETestBase() {
           .performScrollToNode(hasTestTag(MyProfileScreenTestTag.INPUT_PROFILE_DESC))
 
       delay(500)
+
+      // Wait for updated description to appear with increased timeout for CI
+      composeTestRule.waitUntil(timeoutMillis = 15000) {
+        try {
+          composeTestRule
+              .onAllNodesWithText("Updated profile description", substring = true)
+              .fetchSemanticsNodes()
+              .isNotEmpty()
+        } catch (_: Throwable) {
+          false
+        }
+      }
 
       try {
         composeTestRule

@@ -3,6 +3,8 @@ package com.android.sample.e2e
 import android.content.Context
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.communication.ConversationManager
@@ -335,6 +337,62 @@ object E2ETestHelper {
       }
 
       return user
+    }
+  }
+
+  /**
+   * Waits for a node with specific text to appear with retry logic. More robust than simple
+   * waitUntil for CI environments.
+   *
+   * @param composeTestRule The ComposeTestRule for the test
+   * @param text The text to search for
+   * @param substring Whether to match substring
+   * @param ignoreCase Whether to ignore case
+   * @param timeoutMillis Maximum time to wait in milliseconds (default: 15 seconds for CI)
+   */
+  fun waitForTextToAppear(
+      composeTestRule: ComposeTestRule,
+      text: String,
+      substring: Boolean = true,
+      ignoreCase: Boolean = true,
+      timeoutMillis: Long = 15_000L
+  ) {
+    composeTestRule.waitUntil(timeoutMillis = timeoutMillis) {
+      try {
+        composeTestRule
+            .onAllNodesWithText(text, substring = substring, ignoreCase = ignoreCase)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+      } catch (_: Throwable) {
+        false
+      }
+    }
+  }
+
+  /**
+   * Waits for a node with specific tag to appear with retry logic. More robust than simple
+   * waitUntil for CI environments.
+   *
+   * @param composeTestRule The ComposeTestRule for the test
+   * @param tag The test tag to search for
+   * @param useUnmergedTree Whether to use unmerged tree
+   * @param timeoutMillis Maximum time to wait in milliseconds (default: 15 seconds for CI)
+   */
+  fun waitForTagToAppear(
+      composeTestRule: ComposeTestRule,
+      tag: String,
+      useUnmergedTree: Boolean = false,
+      timeoutMillis: Long = 15_000L
+  ) {
+    composeTestRule.waitUntil(timeoutMillis = timeoutMillis) {
+      try {
+        composeTestRule
+            .onAllNodesWithTag(tag, useUnmergedTree = useUnmergedTree)
+            .fetchSemanticsNodes()
+            .isNotEmpty()
+      } catch (_: Throwable) {
+        false
+      }
     }
   }
 }

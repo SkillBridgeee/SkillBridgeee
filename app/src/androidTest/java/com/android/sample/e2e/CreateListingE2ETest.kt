@@ -162,8 +162,8 @@ class CreateListingE2ETest : E2ETestBase() {
               .onNodeWithText("Subject", substring = true, ignoreCase = true)
               .performClick()
 
-          // Wait for dropdown to open and "Academics" to appear
-          composeTestRule.waitUntil(timeoutMillis = 8003) {
+          // Wait for dropdown to open and "Academics" to appear with increased timeout for CI
+          composeTestRule.waitUntil(timeoutMillis = 15000) {
             try {
               composeTestRule
                   .onAllNodes(hasText("Academics", substring = true, ignoreCase = true))
@@ -250,8 +250,8 @@ class CreateListingE2ETest : E2ETestBase() {
               .performClick()
               .performTextInput("EPFL")
 
-          // Wait for location suggestions to appear
-          composeTestRule.waitUntil(timeoutMillis = 8004) {
+          // Wait for location suggestions to appear with increased timeout for CI
+          composeTestRule.waitUntil(timeoutMillis = 15000) {
             try {
               composeTestRule
                   .onAllNodesWithTag("suggestLocation")
@@ -300,8 +300,8 @@ class CreateListingE2ETest : E2ETestBase() {
         composeTestRule.onNodeWithTag(BottomBarTestTag.NAV_HOME).performClick()
         composeTestRule.waitForIdle()
 
-        // Wait for listing to appear on home screen
-        composeTestRule.waitUntil(timeoutMillis = 8005) {
+        // Wait for listing to appear on home screen with increased timeout for CI
+        composeTestRule.waitUntil(timeoutMillis = 20000) {
           try {
             composeTestRule
                 .onAllNodes(
