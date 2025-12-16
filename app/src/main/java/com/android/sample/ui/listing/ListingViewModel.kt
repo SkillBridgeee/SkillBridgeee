@@ -273,6 +273,25 @@ class ListingViewModel(
         it.copy(bookingInProgress = true, bookingError = null, bookingSuccess = false)
       }
       try {
+        // Validate that dates are not in the past
+        val now = Date()
+        if (sessionStart.before(now)) {
+          _uiState.update {
+            it.copy(
+                bookingInProgress = false,
+                bookingError = "Invalid session time: Start time cannot be in the past")
+          }
+          return@launch
+        }
+        if (sessionEnd.before(now)) {
+          _uiState.update {
+            it.copy(
+                bookingInProgress = false,
+                bookingError = "Invalid session time: End time cannot be in the past")
+          }
+          return@launch
+        }
+
         // Validate session times
         val durationMillis = sessionEnd.time - sessionStart.time
         if (durationMillis <= 0) {
