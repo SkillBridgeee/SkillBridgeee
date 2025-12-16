@@ -75,6 +75,8 @@ fun ListingContent(
     onNavigateToProfile: (String) -> Unit = {},
     autoFillDatesForTesting: Boolean = false,
     listingComments: List<String> = emptyList(),
+    onPaymentComplete: (String) -> Unit = {},
+    onPaymentReceived: (String) -> Unit = {},
 ) {
   val listing = uiState.listing ?: return
   val creator = uiState.creator
@@ -141,7 +143,9 @@ fun ListingContent(
             onRejectBooking = onRejectBooking,
             onDeleteListing = onDeleteListing,
             onEditListing = onEditListing,
-            onShowDuplicateWarning = { showDuplicateWarningDialog = true })
+            onShowDuplicateWarning = { showDuplicateWarningDialog = true },
+            onPaymentComplete = onPaymentComplete,
+            onPaymentReceived = onPaymentReceived)
       }
 
   // Booking dialog
@@ -394,11 +398,17 @@ private fun LazyListScope.actionSection(
     onRejectBooking: (String) -> Unit,
     onDeleteListing: () -> Unit,
     onEditListing: () -> Unit,
-    onShowDuplicateWarning: () -> Unit = {}
+    onShowDuplicateWarning: () -> Unit = {},
+    onPaymentComplete: (String) -> Unit = {},
+    onPaymentReceived: (String) -> Unit = {}
 ) {
   if (uiState.isOwnListing) {
     bookingsSection(
-        uiState = uiState, onApproveBooking = onApproveBooking, onRejectBooking = onRejectBooking)
+        uiState = uiState,
+        onApproveBooking = onApproveBooking,
+        onRejectBooking = onRejectBooking,
+        onPaymentComplete = onPaymentComplete,
+        onPaymentReceived = onPaymentReceived)
 
     item { Spacer(Modifier.height(8.dp)) }
 
