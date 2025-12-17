@@ -24,12 +24,15 @@ import com.android.sample.ui.listing.ListingUiState
  * @param uiState UI state containing bookings and loading state
  * @param onApproveBooking Callback when a booking is approved
  * @param onRejectBooking Callback when a booking is rejected
- * @param modifier Modifier for the section
+ * @param onPaymentComplete Callback when payment is marked as complete
+ * @param onPaymentReceived Callback when payment received is confirmed
  */
 fun LazyListScope.bookingsSection(
     uiState: ListingUiState,
-    onApproveBooking: (String) -> Unit,
-    onRejectBooking: (String) -> Unit,
+    onApproveBooking: (String) -> Unit = {},
+    onRejectBooking: (String) -> Unit = {},
+    onPaymentComplete: (String) -> Unit = {},
+    onPaymentReceived: (String) -> Unit = {},
 ) {
   item {
     Text(
@@ -70,6 +73,8 @@ fun LazyListScope.bookingsSection(
             bookerProfile = uiState.bookerProfiles[booking.bookerId],
             onApprove = { onApproveBooking(booking.bookingId) },
             onReject = { onRejectBooking(booking.bookingId) },
+            onPaymentComplete = { onPaymentComplete(booking.bookingId) },
+            onPaymentReceived = { onPaymentReceived(booking.bookingId) },
             currentUserId = uiState.currentUserId,
             listingType = uiState.listing?.type)
       }

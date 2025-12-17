@@ -8,6 +8,7 @@ import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.BookingRepository
 import com.android.sample.model.booking.BookingRepositoryProvider
 import com.android.sample.model.booking.BookingStatus
+import com.android.sample.model.booking.PaymentStatus
 import com.android.sample.model.communication.ConversationManager
 import com.android.sample.model.communication.conversation.ConversationRepositoryProvider
 import com.android.sample.model.communication.overViewConv.OverViewConvRepositoryProvider
@@ -273,6 +274,25 @@ class ListingViewModel(
         it.copy(bookingInProgress = true, bookingError = null, bookingSuccess = false)
       }
       try {
+        // Validate that dates are not in the past
+        val now = Date()
+        if (sessionStart.before(now)) {
+          _uiState.update {
+            it.copy(
+                bookingInProgress = false,
+                bookingError = "Invalid session time: Start time cannot be in the past")
+          }
+          return@launch
+        }
+        if (sessionEnd.before(now)) {
+          _uiState.update {
+            it.copy(
+                bookingInProgress = false,
+                bookingError = "Invalid session time: End time cannot be in the past")
+          }
+          return@launch
+        }
+
         // Validate session times
         val durationMillis = sessionEnd.time - sessionStart.time
         if (durationMillis <= 0) {
@@ -379,6 +399,40 @@ class ListingViewModel(
         _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
       } catch (e: Exception) {
         Log.w("ListingViewModel", "Couldnt reject the booking", e)
+      }
+    }
+  }
+
+  /**
+   * Mark payment as complete (called by the student/payer)
+   *
+   * @param bookingId The ID of the booking to update
+   */
+  fun markPaymentComplete(bookingId: String) {
+    viewModelScope.launch {
+      try {
+        bookingRepo.updatePaymentStatus(bookingId, PaymentStatus.PAID)
+        // Refresh bookings to show updated status
+        _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
+      } catch (e: Exception) {
+        Log.w("ListingViewModel", "Couldn't update payment status", e)
+      }
+    }
+  }
+
+  /**
+   * Confirm payment received (called by the tutor/receiver)
+   *
+   * @param bookingId The ID of the booking to update
+   */
+  fun confirmPaymentReceived(bookingId: String) {
+    viewModelScope.launch {
+      try {
+        bookingRepo.updatePaymentStatus(bookingId, PaymentStatus.CONFIRMED)
+        // Refresh bookings to show updated status
+        _uiState.value.listing?.let { loadBookingsForListing(it.listingId) }
+      } catch (e: Exception) {
+        Log.w("ListingViewModel", "Couldn't confirm payment", e)
       }
     }
   }
