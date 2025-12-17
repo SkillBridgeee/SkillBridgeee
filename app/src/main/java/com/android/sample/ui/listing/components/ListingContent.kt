@@ -2,6 +2,7 @@ package com.android.sample.ui.listing.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
@@ -26,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.android.sample.model.booking.BookingStatus
 import com.android.sample.model.listing.ListingType
 import com.android.sample.ui.components.RatingStars
+import com.android.sample.ui.components.VerticalScrollHint
 import com.android.sample.ui.listing.ListingScreenTestTags
 import com.android.sample.ui.listing.ListingUiState
 import java.text.SimpleDateFormat
@@ -58,7 +62,6 @@ object ListingContentTestTags {
  * @param onRejectBooking Callback when a booking is rejected
  * @param onDeleteListing Callback when a listing is deleted
  * @param onEditListing Callback when a listing is edited
- * @param onSubmitTutorRating Callback when a tutor rating is submitted
  * @param modifier Modifier for the content
  * @param onNavigateToProfile Callback when creator's name is clicked with creator's profile ID
  * @param autoFillDatesForTesting Whether to autofill dates for testing
@@ -83,70 +86,85 @@ fun ListingContent(
   var showBookingDialog by remember { mutableStateOf(false) }
   var showDuplicateWarningDialog by remember { mutableStateOf(false) }
 
-  LazyColumn(
-      modifier = modifier.fillMaxSize().padding(16.dp).testTag("listingContentLazyColumn"),
-      verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { TypeBadge(listingType = listing.type) }
+  val listState = rememberLazyListState()
 
-        item {
-          // Title/Description
-          Text(
-              text = listing.displayTitle(),
-              style = MaterialTheme.typography.headlineMedium,
-              fontWeight = FontWeight.Bold,
-              modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
+  val showHint by remember {
+    derivedStateOf {
+      listState.firstVisibleItemIndex == 0 &&
+          listState.layoutInfo.totalItemsCount > listState.layoutInfo.visibleItemsInfo.size
+    }
+  }
+  Box(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxSize().padding(16.dp).testTag("listingContentLazyColumn"),
+        verticalArrangement = Arrangement.spacedBy(16.dp)) {
+          item { TypeBadge(listingType = listing.type) }
+
+          item {
+            // Title/Description
+            Text(
+                text = listing.displayTitle(),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.testTag(ListingScreenTestTags.TITLE))
+          }
+
+          item {
+            // Description card (if present)
+            DescriptionCard(listing.description)
+          }
+
+          item {
+            // Listing rating (ADD THIS ITEM)
+            ListingRatingCard(uiState.listingRating)
+          }
+
+          item {
+            // Creator info (if available)
+            creator?.let { CreatorCard(it, onNavigateToProfile) }
+          }
+
+          item { // Skill details
+            SkillDetailsCard(skill = listing.skill)
+          }
+
+          item { // Location
+            LocationCard(locationName = listing.location.name)
+          }
+
+          item { // Hourly rate
+            HourlyRateCard(hourlyRate = listing.hourlyRate)
+          }
+
+          if (listingComments.isNotEmpty()) {
+            item { CommentsSection(listingComments) }
+          }
+
+          item { // Created date
+            PostedDate(listing.createdAt)
+            Spacer(Modifier.height(8.dp))
+          }
+
+          item { Spacer(Modifier.height(8.dp)) }
+
+          // Action section
+          actionSection(
+              uiState = uiState,
+              onShowBookingDialog = { showBookingDialog = true },
+              onApproveBooking = onApproveBooking,
+              onRejectBooking = onRejectBooking,
+              onDeleteListing = onDeleteListing,
+              onEditListing = onEditListing,
+              onShowDuplicateWarning = { showDuplicateWarningDialog = true },
+              onPaymentComplete = onPaymentComplete,
+              onPaymentReceived = onPaymentReceived)
         }
 
-        item {
-          // Description card (if present)
-          DescriptionCard(listing.description)
-        }
-
-        item {
-          // Listing rating (ADD THIS ITEM)
-          ListingRatingCard(uiState.listingRating)
-        }
-
-        item {
-          // Creator info (if available)
-          creator?.let { CreatorCard(it, onNavigateToProfile) }
-        }
-
-        item { // Skill details
-          SkillDetailsCard(skill = listing.skill)
-        }
-
-        item { // Location
-          LocationCard(locationName = listing.location.name)
-        }
-
-        item { // Hourly rate
-          HourlyRateCard(hourlyRate = listing.hourlyRate)
-        }
-
-        if (listingComments.isNotEmpty()) {
-          item { CommentsSection(listingComments) }
-        }
-
-        item { // Created date
-          PostedDate(listing.createdAt)
-          Spacer(Modifier.height(8.dp))
-        }
-
-        item { Spacer(Modifier.height(8.dp)) }
-
-        // Action section
-        actionSection(
-            uiState = uiState,
-            onShowBookingDialog = { showBookingDialog = true },
-            onApproveBooking = onApproveBooking,
-            onRejectBooking = onRejectBooking,
-            onDeleteListing = onDeleteListing,
-            onEditListing = onEditListing,
-            onShowDuplicateWarning = { showDuplicateWarningDialog = true },
-            onPaymentComplete = onPaymentComplete,
-            onPaymentReceived = onPaymentReceived)
-      }
+    VerticalScrollHint(
+        visible = showHint,
+        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
+  }
 
   // Booking dialog
   if (showBookingDialog) {
