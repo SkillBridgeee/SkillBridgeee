@@ -7,6 +7,7 @@ import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
 import com.android.sample.model.rating.RatingInfo
+import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
@@ -15,14 +16,27 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.profile.ProfileScreen
 import com.android.sample.ui.profile.ProfileScreenTestTags
 import com.android.sample.ui.profile.ProfileScreenViewModel
+import com.android.sample.utils.fakeRepo.fakeRating.RatingFakeRepoWorking
 import java.util.Date
+import org.junit.After
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 class ProfileScreenTest {
 
   @get:Rule val compose = createComposeRule()
+
+  @Before
+  fun initRatingProviderForTests() {
+    RatingRepositoryProvider.setForTests(RatingFakeRepoWorking())
+  }
+
+  @After
+  fun cleanupRatingProvider() {
+    RatingRepositoryProvider.clearForTests()
+  }
 
   private val sampleProfile =
       Profile(
@@ -159,7 +173,7 @@ class ProfileScreenTest {
     val listingRepo =
         FakeListingRepo(
             mutableListOf(sampleProposal1, sampleProposal2), mutableListOf(sampleRequest))
-    return ProfileScreenViewModel(profileRepo, listingRepo)
+    return ProfileScreenViewModel(profileRepo, listingRepo, RatingRepositoryProvider.repository)
   }
 
   // Helper to set up the screen and wait for it to load
@@ -276,7 +290,7 @@ class ProfileScreenTest {
   fun profileScreen_emptyProposals_showsEmptyState() {
     val profileRepo = FakeProfileRepo(sampleProfile)
     val listingRepo = FakeListingRepo(mutableListOf(), mutableListOf(sampleRequest))
-    val vm = ProfileScreenViewModel(profileRepo, listingRepo)
+    val vm = ProfileScreenViewModel(profileRepo, listingRepo, RatingRepositoryProvider.repository)
 
     setupScreen(viewModel = vm)
 
@@ -290,7 +304,7 @@ class ProfileScreenTest {
   fun profileScreen_profileNotFound_showsError() {
     val profileRepo = FakeProfileRepo(null)
     val listingRepo = FakeListingRepo()
-    val vm = ProfileScreenViewModel(profileRepo, listingRepo)
+    val vm = ProfileScreenViewModel(profileRepo, listingRepo, RatingRepositoryProvider.repository)
 
     setupScreen(viewModel = vm, profileId = "non-existent")
 
@@ -304,7 +318,7 @@ class ProfileScreenTest {
   fun profileScreen_initialLoad_showsLoadingIndicator() {
     val profileRepo = FakeProfileRepo(sampleProfile)
     val listingRepo = FakeListingRepo()
-    val vm = ProfileScreenViewModel(profileRepo, listingRepo)
+    val vm = ProfileScreenViewModel(profileRepo, listingRepo, RatingRepositoryProvider.repository)
 
     compose.setContent {
       ProfileScreen(

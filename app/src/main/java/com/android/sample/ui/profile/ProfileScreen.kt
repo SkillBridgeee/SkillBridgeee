@@ -23,10 +23,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.sample.model.listing.ListingRepositoryProvider
+import com.android.sample.model.rating.RatingRepositoryProvider
 import com.android.sample.model.user.ProfileRepositoryProvider
 import com.android.sample.ui.components.ProposalCard
 import com.android.sample.ui.components.RatingStars
 import com.android.sample.ui.components.RequestCard
+import java.util.Locale
 
 object ProfileScreenTestTags {
   const val SCREEN = "ProfileScreenTestTags.SCREEN"
@@ -74,7 +76,8 @@ fun ProfileScreen(
     viewModel: ProfileScreenViewModel = viewModel {
       ProfileScreenViewModel(
           profileRepository = ProfileRepositoryProvider.repository,
-          listingRepository = ListingRepositoryProvider.repository)
+          listingRepository = ListingRepositoryProvider.repository,
+          ratingRepository = RatingRepositoryProvider.repository)
     }
 ) {
   // Properly observe StateFlow in Compose
@@ -248,13 +251,15 @@ private fun ProfileContent(
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer)
                             Spacer(modifier = Modifier.height(8.dp))
-                            RatingStars(ratingOutOfFive = profile.tutorRating.averageRating)
+                            RatingStars(ratingOutOfFive = uiState.tutorAvg)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text =
                                     String.format(
-                                        "%.1f (${profile.tutorRating.totalRatings})",
-                                        profile.tutorRating.averageRating),
+                                        Locale.US,
+                                        "%.1f (%d)",
+                                        uiState.tutorAvg,
+                                        uiState.tutorCount),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier =
@@ -278,13 +283,15 @@ private fun ProfileContent(
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer)
                             Spacer(modifier = Modifier.height(8.dp))
-                            RatingStars(ratingOutOfFive = profile.studentRating.averageRating)
+                            RatingStars(ratingOutOfFive = uiState.studentAvg)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text =
                                     String.format(
-                                        "%.1f (${profile.studentRating.totalRatings})",
-                                        profile.studentRating.averageRating),
+                                        Locale.US,
+                                        "%.1f (%d)",
+                                        uiState.studentAvg,
+                                        uiState.studentCount),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 modifier =
