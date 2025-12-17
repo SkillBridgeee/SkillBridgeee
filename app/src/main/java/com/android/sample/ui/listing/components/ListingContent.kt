@@ -156,27 +156,15 @@ fun ListingContent(
               onRejectBooking = onRejectBooking,
               onDeleteListing = onDeleteListing,
               onEditListing = onEditListing,
-              onShowDuplicateWarning = { showDuplicateWarningDialog = true })
+              onShowDuplicateWarning = { showDuplicateWarningDialog = true },
+              onPaymentComplete = onPaymentComplete,
+              onPaymentReceived = onPaymentReceived)
         }
 
     VerticalScrollHint(
         visible = showHint,
         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp))
   }
-        item { Spacer(Modifier.height(8.dp)) }
-
-        // Action section
-        actionSection(
-            uiState = uiState,
-            onShowBookingDialog = { showBookingDialog = true },
-            onApproveBooking = onApproveBooking,
-            onRejectBooking = onRejectBooking,
-            onDeleteListing = onDeleteListing,
-            onEditListing = onEditListing,
-            onShowDuplicateWarning = { showDuplicateWarningDialog = true },
-            onPaymentComplete = onPaymentComplete,
-            onPaymentReceived = onPaymentReceived)
-      }
 
   // Booking dialog
   if (showBookingDialog) {
