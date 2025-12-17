@@ -118,26 +118,6 @@ abstract class E2ETestBase {
         .onNodeWithTag(com.android.sample.ui.components.LocationInputFieldTestTags.INPUT_LOCATION)
         .assertExists()
         .performTextInput("epfl")
-
-    // Wait for location suggestions to appear
-    composeTestRule.waitUntil(timeoutMillis = 8001) {
-      try {
-        composeTestRule
-            .onAllNodes(
-                hasTestTag(com.android.sample.ui.components.LocationInputFieldTestTags.SUGGESTION))
-            .fetchSemanticsNodes()
-            .isNotEmpty()
-      } catch (_: Throwable) {
-        false
-      }
-    }
-
-    // Click the first location suggestion
-    composeTestRule
-        .onAllNodesWithTag(com.android.sample.ui.components.LocationInputFieldTestTags.SUGGESTION)
-        .onFirst()
-        .performClick()
-
     // Enter education level
     composeTestRule
         .onNodeWithTag(SignUpScreenTestTags.LEVEL_OF_EDUCATION)

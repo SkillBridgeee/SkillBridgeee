@@ -215,7 +215,7 @@ class BookListingE2ETest : E2ETestBase() {
                 associatedListingId = listingId,
                 listingCreatorId = tutorUser!!.uid,
                 bookerId = student.uid,
-                sessionStart = Date(),
+                sessionStart = Date(System.currentTimeMillis() + 30 * 60 * 1000), // 30 min from now
                 sessionEnd = Date(System.currentTimeMillis() + 2 * 60 * 60 * 1000),
                 status = BookingStatus.PENDING,
                 price = 40.0)
@@ -236,7 +236,8 @@ class BookListingE2ETest : E2ETestBase() {
                   associatedListingId = selectedListingId!!,
                   listingCreatorId = tutorUser!!.uid,
                   bookerId = student.uid,
-                  sessionStart = Date(),
+                  sessionStart =
+                      Date(System.currentTimeMillis() + 30 * 60 * 1000), // 30 min from now
                   sessionEnd = Date(System.currentTimeMillis() + 2 * 60 * 60 * 1000),
                   status = BookingStatus.CONFIRMED,
                   price = 40.0)
