@@ -6,7 +6,11 @@ import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
+import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingInfo
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.rating.RatingType
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
@@ -17,12 +21,52 @@ import com.android.sample.ui.profile.ProfileScreenTestTags
 import com.android.sample.ui.profile.ProfileScreenViewModel
 import java.util.Date
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
 class ProfileScreenTest {
 
   @get:Rule val compose = createComposeRule()
+
+  @Before
+  fun initRatingProviderForTests() {
+    RatingRepositoryProvider.setForTests(FakeRatingRepository())
+  }
+
+  // Minimal fake implementation used for tests
+  private class FakeRatingRepository : RatingRepository {
+    override fun getNewUid(): String = "fake-rating-uid"
+
+    override suspend fun getAllRatings(): List<Rating> = emptyList()
+
+    override suspend fun getRating(ratingId: String): Rating? = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsByToUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
+
+    override suspend fun addRating(rating: Rating) {}
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+    override suspend fun deleteRating(ratingId: String) {}
+
+    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {}
+
+    override suspend fun hasRating(
+        fromUserId: String,
+        toUserId: String,
+        ratingType: RatingType,
+        targetObjectId: String
+    ): Boolean = false
+  }
 
   private val sampleProfile =
       Profile(
@@ -159,7 +203,7 @@ class ProfileScreenTest {
     val listingRepo =
         FakeListingRepo(
             mutableListOf(sampleProposal1, sampleProposal2), mutableListOf(sampleRequest))
-    return ProfileScreenViewModel(profileRepo, listingRepo)
+    return ProfileScreenViewModel(profileRepo, listingRepo, RatingRepositoryProvider.repository)
   }
 
   // Helper to set up the screen and wait for it to load
@@ -276,7 +320,7 @@ class ProfileScreenTest {
   fun profileScreen_emptyProposals_showsEmptyState() {
     val profileRepo = FakeProfileRepo(sampleProfile)
     val listingRepo = FakeListingRepo(mutableListOf(), mutableListOf(sampleRequest))
-    val vm = ProfileScreenViewModel(profileRepo, listingRepo)
+    val vm = ProfileScreenViewModel(profileRepo, listingRepo, RatingRepositoryProvider.repository)
 
     setupScreen(viewModel = vm)
 
@@ -290,7 +334,7 @@ class ProfileScreenTest {
   fun profileScreen_profileNotFound_showsError() {
     val profileRepo = FakeProfileRepo(null)
     val listingRepo = FakeListingRepo()
-    val vm = ProfileScreenViewModel(profileRepo, listingRepo)
+    val vm = ProfileScreenViewModel(profileRepo, listingRepo, RatingRepositoryProvider.repository)
 
     setupScreen(viewModel = vm, profileId = "non-existent")
 
@@ -304,7 +348,7 @@ class ProfileScreenTest {
   fun profileScreen_initialLoad_showsLoadingIndicator() {
     val profileRepo = FakeProfileRepo(sampleProfile)
     val listingRepo = FakeListingRepo()
-    val vm = ProfileScreenViewModel(profileRepo, listingRepo)
+    val vm = ProfileScreenViewModel(profileRepo, listingRepo, RatingRepositoryProvider.repository)
 
     compose.setContent {
       ProfileScreen(
