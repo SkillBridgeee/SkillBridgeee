@@ -6,11 +6,8 @@ import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
 import com.android.sample.model.map.Location
-import com.android.sample.model.rating.Rating
 import com.android.sample.model.rating.RatingInfo
-import com.android.sample.model.rating.RatingRepository
 import com.android.sample.model.rating.RatingRepositoryProvider
-import com.android.sample.model.rating.RatingType
 import com.android.sample.model.skill.ExpertiseLevel
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.skill.Skill
@@ -19,7 +16,9 @@ import com.android.sample.model.user.ProfileRepository
 import com.android.sample.ui.profile.ProfileScreen
 import com.android.sample.ui.profile.ProfileScreenTestTags
 import com.android.sample.ui.profile.ProfileScreenViewModel
+import com.android.sample.utils.fakeRepo.fakeRating.RatingFakeRepoWorking
 import java.util.Date
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -31,41 +30,12 @@ class ProfileScreenTest {
 
   @Before
   fun initRatingProviderForTests() {
-    RatingRepositoryProvider.setForTests(FakeRatingRepository())
+    RatingRepositoryProvider.setForTests(RatingFakeRepoWorking())
   }
 
-  // Minimal fake implementation used for tests
-  private class FakeRatingRepository : RatingRepository {
-    override fun getNewUid(): String = "fake-rating-uid"
-
-    override suspend fun getAllRatings(): List<Rating> = emptyList()
-
-    override suspend fun getRating(ratingId: String): Rating? = null
-
-    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
-
-    override suspend fun getRatingsByToUser(userId: String): List<Rating> = emptyList()
-
-    override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
-
-    override suspend fun addRating(rating: Rating) {}
-
-    override suspend fun updateRating(ratingId: String, rating: Rating) {}
-
-    override suspend fun deleteRating(ratingId: String) {}
-
-    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
-
-    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
-
-    override suspend fun deleteAllRatingOfUser(userId: String) {}
-
-    override suspend fun hasRating(
-        fromUserId: String,
-        toUserId: String,
-        ratingType: RatingType,
-        targetObjectId: String
-    ): Boolean = false
+  @After
+  fun cleanupRatingProvider() {
+    RatingRepositoryProvider.clearForTests()
   }
 
   private val sampleProfile =

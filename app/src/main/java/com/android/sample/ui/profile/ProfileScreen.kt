@@ -260,6 +260,8 @@ private fun ProfileContent(
                                         "%.1f (%d)",
                                         uiState.tutorAvg,
                                         uiState.tutorCount),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier =
                                     Modifier.testTag(ProfileScreenTestTags.TUTOR_RATING_VALUE))
                           }
@@ -290,6 +292,8 @@ private fun ProfileContent(
                                         "%.1f (%d)",
                                         uiState.studentAvg,
                                         uiState.studentCount),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
                                 modifier =
                                     Modifier.testTag(ProfileScreenTestTags.STUDENT_RATING_VALUE))
                           }

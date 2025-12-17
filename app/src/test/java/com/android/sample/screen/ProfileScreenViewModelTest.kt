@@ -43,6 +43,7 @@ class ProfileScreenViewModelTest {
   @After
   fun tearDown() {
     Dispatchers.resetMain()
+    RatingRepositoryProvider.clearForTests()
   }
 
   // -------- Fake Repositories ------------------------------------------------------
