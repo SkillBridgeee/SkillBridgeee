@@ -672,7 +672,7 @@ class ListingViewModelTest {
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
 
-    val sessionStart = Date()
+    val sessionStart = Date(System.currentTimeMillis() + 1600000)
     val sessionEnd = Date(System.currentTimeMillis() + 3600000)
     viewModel.createBooking(sessionStart, sessionEnd)
     advanceUntilIdle()
@@ -694,8 +694,8 @@ class ListingViewModelTest {
     val ratingRepo = FakeRatingRepo()
     val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
 
-    val sessionStart = Date()
-    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    val sessionStart = Date(System.currentTimeMillis() + 1800000) // 30 min from now
+    val sessionEnd = Date(System.currentTimeMillis() + 5400000) // 1.5 hours from now
     viewModel.createBooking(sessionStart, sessionEnd)
     advanceUntilIdle()
 
@@ -717,8 +717,8 @@ class ListingViewModelTest {
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
 
-    val sessionStart = Date()
-    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    val sessionStart = Date(System.currentTimeMillis() + 1800000) // 30 min from now
+    val sessionEnd = Date(System.currentTimeMillis() + 5400000) // 1.5 hours from now
     viewModel.createBooking(sessionStart, sessionEnd)
     advanceUntilIdle()
 
@@ -741,8 +741,8 @@ class ListingViewModelTest {
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
 
-    val sessionStart = Date()
-    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    val sessionStart = Date(System.currentTimeMillis() + 1800000) // 30 min from now
+    val sessionEnd = Date(System.currentTimeMillis() + 5400000) // 1.5 hours from now
     viewModel.createBooking(sessionStart, sessionEnd)
     advanceUntilIdle()
 
@@ -793,8 +793,8 @@ class ListingViewModelTest {
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
 
-    val sessionStart = Date()
-    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    val sessionStart = Date(System.currentTimeMillis() + 1800000) // 30 min from now
+    val sessionEnd = Date(System.currentTimeMillis() + 5400000) // 1.5 hours from now
     viewModel.createBooking(sessionStart, sessionEnd)
     advanceUntilIdle()
 
@@ -824,13 +824,92 @@ class ListingViewModelTest {
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
 
-    val sessionStart = Date()
-    val sessionEnd = Date(System.currentTimeMillis() + 7200000) // 2 hours later
+    val sessionStart = Date(System.currentTimeMillis() + 1800000) // 30 min from now
+    val sessionEnd = Date(System.currentTimeMillis() + 9000000) // 2.5 hours from now
     viewModel.createBooking(sessionStart, sessionEnd)
     advanceUntilIdle()
 
     assertEquals(1, bookings.size)
     assertEquals(60.0, bookings[0].price, 0.01) // 30.0 * 2 = 60.0
+  }
+
+  @Test
+  fun createBooking_startTimeInPast_showsError() = runTest {
+    UserSessionManager.setCurrentUserId("user-123")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Start time is in the past (1 hour ago)
+    val sessionStart = Date(System.currentTimeMillis() - 3600000)
+    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.bookingError)
+    assertTrue(state.bookingError!!.contains("Start time cannot be in the past"))
+    assertFalse(state.bookingSuccess)
+    assertFalse(bookingRepo.addBookingCalled)
+  }
+
+  @Test
+  fun createBooking_endTimeInPast_showsError() = runTest {
+    UserSessionManager.setCurrentUserId("user-123")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // End time is in the past (1 hour ago)
+    val sessionStart = Date(System.currentTimeMillis() + 1800000) // 30 min from now
+    val sessionEnd = Date(System.currentTimeMillis() - 3600000) // 1 hour ago
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.bookingError)
+    assertTrue(state.bookingError!!.contains("End time cannot be in the past"))
+    assertFalse(state.bookingSuccess)
+    assertFalse(bookingRepo.addBookingCalled)
+  }
+
+  @Test
+  fun createBooking_bothTimesInPast_showsStartTimeError() = runTest {
+    UserSessionManager.setCurrentUserId("user-123")
+
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo(mapOf("creator-456" to sampleCreator))
+    val bookingRepo = FakeBookingRepo()
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Both times are in the past
+    val sessionStart = Date(System.currentTimeMillis() - 7200000) // 2 hours ago
+    val sessionEnd = Date(System.currentTimeMillis() - 3600000) // 1 hour ago
+    viewModel.createBooking(sessionStart, sessionEnd)
+    advanceUntilIdle()
+
+    val state = viewModel.uiState.value
+    assertNotNull(state.bookingError)
+    // Should show start time error first (checked first in validation)
+    assertTrue(state.bookingError!!.contains("Start time cannot be in the past"))
+    assertFalse(state.bookingSuccess)
+    assertFalse(bookingRepo.addBookingCalled)
   }
 
   // Tests for approveBooking()
@@ -931,6 +1010,229 @@ class ListingViewModelTest {
     advanceUntilIdle()
 
     assertNotNull(viewModel.uiState.value.listing)
+  }
+
+  // Tests for markPaymentComplete()
+
+  @Test
+  fun markPaymentComplete_success_updatesPaymentStatusToPaid() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PENDING_PAYMENT))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.markPaymentComplete("booking-1")
+    advanceUntilIdle()
+
+    // Verify payment status was updated
+    val updatedBooking = bookingRepo.getBooking("booking-1")
+    assertNotNull(updatedBooking)
+    assertEquals(com.android.sample.model.booking.PaymentStatus.PAID, updatedBooking?.paymentStatus)
+  }
+
+  @Test
+  fun markPaymentComplete_exception_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PENDING_PAYMENT))
+    val bookingRepo =
+        object : FakeBookingRepo(bookings.toMutableList()) {
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: com.android.sample.model.booking.PaymentStatus
+          ) {
+            throw RuntimeException("Payment service error")
+          }
+        }
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Should not crash
+    viewModel.markPaymentComplete("booking-1")
+    advanceUntilIdle()
+
+    assertNotNull(viewModel.uiState.value.listing)
+  }
+
+  @Test
+  fun markPaymentComplete_refreshesBookings() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PENDING_PAYMENT))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.markPaymentComplete("booking-1")
+    advanceUntilIdle()
+
+    // Verify bookings were refreshed with updated payment status
+    val updatedBookings = viewModel.uiState.value.listingBookings
+    assertEquals(1, updatedBookings.size)
+    assertEquals(
+        com.android.sample.model.booking.PaymentStatus.PAID, updatedBookings[0].paymentStatus)
+  }
+
+  // Tests for confirmPaymentReceived()
+
+  @Test
+  fun confirmPaymentReceived_success_updatesPaymentStatusToConfirmed() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PAID))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.confirmPaymentReceived("booking-1")
+    advanceUntilIdle()
+
+    // Verify payment status was updated
+    val updatedBooking = bookingRepo.getBooking("booking-1")
+    assertNotNull(updatedBooking)
+    assertEquals(
+        com.android.sample.model.booking.PaymentStatus.CONFIRMED, updatedBooking?.paymentStatus)
+  }
+
+  @Test
+  fun confirmPaymentReceived_exception_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PAID))
+    val bookingRepo =
+        object : FakeBookingRepo(bookings.toMutableList()) {
+          override suspend fun updatePaymentStatus(
+              bookingId: String,
+              paymentStatus: com.android.sample.model.booking.PaymentStatus
+          ) {
+            throw RuntimeException("Payment service error")
+          }
+        }
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    // Should not crash
+    viewModel.confirmPaymentReceived("booking-1")
+    advanceUntilIdle()
+
+    assertNotNull(viewModel.uiState.value.listing)
+  }
+
+  @Test
+  fun confirmPaymentReceived_refreshesBookings() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookings =
+        listOf(
+            sampleBooking.copy(
+                status = BookingStatus.CONFIRMED,
+                paymentStatus = com.android.sample.model.booking.PaymentStatus.PAID))
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo =
+        FakeProfileRepo(mapOf("creator-456" to sampleCreator, "booker-789" to sampleBookerProfile))
+    val bookingRepo = FakeBookingRepo(bookings.toMutableList())
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    viewModel.loadListing("listing-123")
+    advanceUntilIdle()
+
+    viewModel.confirmPaymentReceived("booking-1")
+    advanceUntilIdle()
+
+    // Verify bookings were refreshed with updated payment status
+    val updatedBookings = viewModel.uiState.value.listingBookings
+    assertEquals(1, updatedBookings.size)
+    assertEquals(
+        com.android.sample.model.booking.PaymentStatus.CONFIRMED, updatedBookings[0].paymentStatus)
+  }
+
+  @Test
+  fun markPaymentComplete_withoutLoadingListing_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookingRepo = FakeBookingRepo()
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    // Do not load listing
+    viewModel.markPaymentComplete("booking-1")
+    advanceUntilIdle()
+
+    // Should not crash, listing should still be null
+    assertNull(viewModel.uiState.value.listing)
+  }
+
+  @Test
+  fun confirmPaymentReceived_withoutLoadingListing_handledGracefully() = runTest {
+    UserSessionManager.setCurrentUserId("creator-456")
+
+    val bookingRepo = FakeBookingRepo()
+    val listingRepo = FakeListingRepo(sampleProposal)
+    val profileRepo = FakeProfileRepo()
+    val ratingRepo = FakeRatingRepo()
+    val viewModel = ListingViewModel(listingRepo, profileRepo, bookingRepo, ratingRepo)
+
+    // Do not load listing
+    viewModel.confirmPaymentReceived("booking-1")
+    advanceUntilIdle()
+
+    // Should not crash, listing should still be null
+    assertNull(viewModel.uiState.value.listing)
   }
 
   // Tests for state management methods
@@ -1040,8 +1342,8 @@ class ListingViewModelTest {
 
     assertFalse(viewModel.uiState.value.bookingInProgress)
 
-    val sessionStart = Date()
-    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    val sessionStart = Date(System.currentTimeMillis() + 1800000) // 30 min from now
+    val sessionEnd = Date(System.currentTimeMillis() + 5400000) // 1.5 hours from now
     viewModel.createBooking(sessionStart, sessionEnd)
 
     advanceUntilIdle()
@@ -1244,8 +1546,8 @@ class ListingViewModelTest {
     viewModel.loadListing("listing-123")
     advanceUntilIdle()
 
-    val sessionStart = Date()
-    val sessionEnd = Date(System.currentTimeMillis() + 3600000)
+    val sessionStart = Date(System.currentTimeMillis() + 1800000) // 30 min from now
+    val sessionEnd = Date(System.currentTimeMillis() + 5400000) // 1.5 hours from now
 
     // Act
     viewModel.createBooking(sessionStart, sessionEnd)
