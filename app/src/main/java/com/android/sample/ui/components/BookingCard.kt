@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.android.sample.model.authentication.UserSessionManager
 import com.android.sample.model.booking.Booking
 import com.android.sample.model.booking.color
 import com.android.sample.model.booking.dateString
@@ -79,7 +80,7 @@ fun BookingCard(
 
           Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = cardTitle(listingType, listingTitle),
+                text = cardTitle(listing, listingTitle),
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -134,11 +135,16 @@ fun BookingCard(
 }
 
 @Composable
-private fun cardTitle(listingType: ListingType, listingTitle: String): AnnotatedString {
+private fun cardTitle(listing: Listing, listingTitle: String): AnnotatedString {
+  val currentUser = UserSessionManager.getCurrentUserId()
   val tutorStudentPrefix: String =
-      when (listingType) {
-        ListingType.REQUEST -> "Tutor for "
-        ListingType.PROPOSAL -> "Student for "
+      when (listing.type) {
+        ListingType.REQUEST -> {
+          if (listing.creatorUserId == currentUser) "Student for " else "Tutor for "
+        }
+        ListingType.PROPOSAL -> {
+          if (listing.creatorUserId == currentUser) "Tutor for " else "Student for "
+        }
       }
   val styledText = buildAnnotatedString {
     withStyle(style = SpanStyle(fontSize = MaterialTheme.typography.bodySmall.fontSize)) {

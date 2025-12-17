@@ -57,6 +57,7 @@ import com.android.sample.model.booking.name
 import com.android.sample.model.listing.ListingType
 import com.android.sample.ui.bookings.BookingDetailsStrings.BOOKING_REQUEST_FROM
 import com.android.sample.ui.bookings.BookingDetailsStrings.TAP_TO_VIEW_STUDENT_PROFILE
+import com.android.sample.ui.bookings.BookingDetailsStrings.TAP_TO_VIEW_TUTOR_PROFILE
 import com.android.sample.ui.components.RatingStarsInput
 import com.android.sample.ui.components.VerticalScrollHint
 import com.android.sample.ui.listing.ListingScreenTestTags
@@ -101,6 +102,7 @@ object BookingDetailsStrings {
   const val BOOKING_REQUEST_FROM = "Booking Request From:"
 
   const val TAP_TO_VIEW_STUDENT_PROFILE = "Tap name to view student profile"
+  const val TAP_TO_VIEW_TUTOR_PROFILE = "Tap name to view tutor profile"
   const val ACCEPT = "Accept"
   const val DENY = "Deny"
   const val BOOKING_HEADER_TEACHER = "Teacher for : "
@@ -488,8 +490,13 @@ private fun InfoBooker(uiState: BookingUIState, onBookerClick: (String) -> Unit)
                   modifier = Modifier.testTag(BookingDetailsTestTag.BOOKER_NAME))
             }
 
+        val text =
+            when (uiState.listing.type) {
+              ListingType.REQUEST -> TAP_TO_VIEW_TUTOR_PROFILE
+              ListingType.PROPOSAL -> TAP_TO_VIEW_STUDENT_PROFILE
+            }
         Text(
-            text = TAP_TO_VIEW_STUDENT_PROFILE,
+            text = text,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
       }
