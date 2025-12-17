@@ -10,6 +10,10 @@ import com.android.sample.model.listing.Listing
 import com.android.sample.model.listing.ListingRepository
 import com.android.sample.model.listing.Proposal
 import com.android.sample.model.listing.Request
+import com.android.sample.model.rating.Rating
+import com.android.sample.model.rating.RatingRepository
+import com.android.sample.model.rating.RatingRepositoryProvider
+import com.android.sample.model.rating.RatingType
 import com.android.sample.model.skill.MainSubject
 import com.android.sample.model.user.Profile
 import com.android.sample.model.user.ProfileRepository
@@ -47,6 +51,7 @@ class NavGraphCoverageTest {
     mockkStatic(FirebaseAuth::class)
     staticAuth = mockk(relaxed = true)
     every { FirebaseAuth.getInstance() } returns staticAuth
+    RatingRepositoryProvider.setForTests(FakeRatingRepo())
   }
 
   @After
@@ -66,6 +71,9 @@ class NavGraphCoverageTest {
     } catch (_: Throwable) {}
     try {
       unmockkStatic("com.android.sample.MainActivityKt")
+    } catch (_: Throwable) {}
+    try {
+      com.android.sample.model.rating.RatingRepositoryProvider.clearForTests()
     } catch (_: Throwable) {}
   }
 
@@ -115,6 +123,39 @@ class NavGraphCoverageTest {
         location: com.android.sample.model.map.Location,
         radiusKm: Double
     ): List<Listing> = emptyList()
+  }
+
+  private class FakeRatingRepo : RatingRepository {
+    override fun getNewUid(): String = "fake-rating-uid"
+
+    override suspend fun getAllRatings(): List<Rating> = emptyList()
+
+    override suspend fun getRating(ratingId: String): Rating? = null
+
+    override suspend fun getRatingsByFromUser(fromUserId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsByToUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun getRatingsOfListing(listingId: String): List<Rating> = emptyList()
+
+    override suspend fun addRating(rating: Rating) {}
+
+    override suspend fun updateRating(ratingId: String, rating: Rating) {}
+
+    override suspend fun deleteRating(ratingId: String) {}
+
+    override suspend fun getTutorRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun getStudentRatingsOfUser(userId: String): List<Rating> = emptyList()
+
+    override suspend fun deleteAllRatingOfUser(userId: String) {}
+
+    override suspend fun hasRating(
+        fromUserId: String,
+        toUserId: String,
+        ratingType: RatingType,
+        targetObjectId: String
+    ): Boolean = false
   }
 
   // Helper to create a properly mocked BookingDetailsViewModel with a real StateFlow
